@@ -19,6 +19,13 @@ builder
 
 var app = builder.Build();
 
+// 🟢 Run event processor once on startup
+using (var scope = app.Services.CreateScope())
+{
+    var processor = scope.ServiceProvider.GetRequiredService<EventProcessor>();
+    await processor.ProcessEvents();
+}
+
 app.MapGraphQL();
 
 app.RunWithGraphQLCommands(args);

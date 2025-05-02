@@ -5,21 +5,33 @@ using MusicGQL.Db.Models.Projections;
 
 namespace MusicGQL.Aggregates;
 
-public class EventProcessor(EventDbContext dbContext)
+public class EventProcessor(EventDbContext dbContext, ILogger<EventProcessor> logger)
 {
     public async Task ProcessEvents()
     {
         var checkpoint = await dbContext.EventCheckpoints.FindAsync("LikedSongs");
         var lastId = checkpoint?.LastProcessedEventId ?? 0;
 
-        checkpoint ??= new EventCheckpoint { Id = "LikedSongs" };
+        if (checkpoint == null)
+        {
+            checkpoint = new EventCheckpoint { Id = "LikedSongs" };
+            dbContext.EventCheckpoints.Add(checkpoint);
+        }
 
         var events = await dbContext.Events
             .Where(e => e.Id > lastId)
             .OrderBy(e => e.Id)
             .ToListAsync();
 
-        var projection = await dbContext.LikedSongsProjections.FindAsync(1) ?? new LikedSongsProjection();
+        logger.LogInformation("Processing {Count} unhandled events..", events.Count);
+
+        var projection = await dbContext.LikedSongsProjections.FindAsync(1);
+
+        if (projection == null)
+        {
+            projection = new LikedSongsProjection { Id = 1 };
+            dbContext.LikedSongsProjections.Add(projection);
+        }
 
         foreach (var e in events)
         {
@@ -29,8 +41,6 @@ public class EventProcessor(EventDbContext dbContext)
 
         projection.LastUpdatedAt = DateTime.UtcNow;
 
-        dbContext.Update(projection);
-        dbContext.Update(checkpoint);
         await dbContext.SaveChangesAsync();
     }
 }
