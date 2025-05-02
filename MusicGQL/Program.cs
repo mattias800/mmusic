@@ -2,6 +2,8 @@ using Hqub.MusicBrainz;
 using Microsoft.EntityFrameworkCore;
 using MusicGQL.Aggregates;
 using MusicGQL.Db;
+using MusicGQL.Features.User.Mutations;
+using MusicGQL.Types;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,7 +17,11 @@ builder.Services.AddDbContext<EventDbContext>(options =>
 builder
     .AddGraphQL()
     .AddDiagnosticEventListener<MyExecutionEventListener>()
-    .AddTypes();
+    .AddMutationConventions(applyToAllMutations: true)
+    .AddQueryType<Query>()
+    .AddMutationType<Mutation>()
+    .AddTypeExtension<LikeSongMutation>()
+    ;
 
 var app = builder.Build();
 

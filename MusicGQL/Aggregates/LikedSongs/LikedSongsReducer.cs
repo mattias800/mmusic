@@ -10,16 +10,16 @@ public static class LikedSongsReducer
     {
         return ev switch
         {
-            LikedSong e => projection.LikedSongReleaseIds.Any(releaseId => releaseId == e.ReleaseId)
+            LikedSong e => projection.LikedSongRecordingIds.Any(releaseId => releaseId == e.RecordingId)
                 ? projection
                 : projection with
                 {
-                    LikedSongReleaseIds = [..projection.LikedSongReleaseIds, e.ReleaseId]
+                    LikedSongRecordingIds = [..projection.LikedSongRecordingIds, e.RecordingId]
                 },
             UnlikedSong e => projection with
             {
-                LikedSongReleaseIds =
-                projection.LikedSongReleaseIds.Where(releaseId => releaseId != e.ReleaseId).ToList()
+                LikedSongRecordingIds =
+                projection.LikedSongRecordingIds.Where(releaseId => releaseId != e.RecordingId).ToList()
             },
             _ => projection
         };

@@ -22,7 +22,7 @@ public class EventDbContext(DbContextOptions<EventDbContext> options) : DbContex
             .HasValue<UnlikedSong>("UnlikedSong");
 
         modelBuilder.Entity<LikedSongsProjection>()
-            .Property(p => p.LikedSongReleaseIds)
+            .Property(p => p.LikedSongRecordingIds)
             .HasConversion(
                 v => string.Join(',', v),
                 v => v.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList())
