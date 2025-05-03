@@ -6,22 +6,21 @@ namespace MusicGQL.Aggregates.LikedSongs;
 
 public static class LikedSongsReducer
 {
-    public static LikedSongsProjection Reduce(LikedSongsProjection projection, Event ev)
+    public static void Reduce(LikedSongsProjection projection, Event ev)
     {
-        return ev switch
+        switch (ev)
         {
-            LikedSong e => projection.LikedSongRecordingIds.Any(releaseId => releaseId == e.RecordingId)
-                ? projection
-                : projection with
+            case LikedSong e:
+                if (!projection.LikedSongRecordingIds.Contains(e.RecordingId))
                 {
-                    LikedSongRecordingIds = [..projection.LikedSongRecordingIds, e.RecordingId]
-                },
-            UnlikedSong e => projection with
-            {
-                LikedSongRecordingIds =
-                projection.LikedSongRecordingIds.Where(releaseId => releaseId != e.RecordingId).ToList()
-            },
-            _ => projection
-        };
+                    projection.LikedSongRecordingIds.Add(e.RecordingId);
+                }
+
+                break;
+
+            case UnlikedSong e:
+                projection.LikedSongRecordingIds.RemoveAll(id => id == e.RecordingId);
+                break;
+        }
     }
 }

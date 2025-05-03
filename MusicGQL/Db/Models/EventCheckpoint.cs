@@ -1,4 +1,4 @@
-namespace MusicGQL.Db.Models.Projections;
+namespace MusicGQL.Db.Models;
 
 public class EventCheckpoint
 {

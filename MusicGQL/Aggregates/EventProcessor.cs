@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using MusicGQL.Aggregates.LikedSongs;
 using MusicGQL.Db;
+using MusicGQL.Db.Models;
 using MusicGQL.Db.Models.Projections;
 
 namespace MusicGQL.Aggregates;
@@ -35,12 +36,13 @@ public class EventProcessor(EventDbContext dbContext, ILogger<EventProcessor> lo
 
         foreach (var e in events)
         {
-            projection = LikedSongsReducer.Reduce(projection, e);
+            LikedSongsReducer.Reduce(projection, e);
             checkpoint.LastProcessedEventId = e.Id;
         }
 
         projection.LastUpdatedAt = DateTime.UtcNow;
 
+        logger.LogInformation("Liked songs: {Songs}", projection.LikedSongRecordingIds);
         await dbContext.SaveChangesAsync();
     }
 }
