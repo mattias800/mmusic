@@ -8,6 +8,9 @@ public record Release([property: GraphQLIgnore] Hqub.MusicBrainz.Entities.Releas
     [ID] public string Id => Model.Id;
     public string Title => Model.Title;
     public string? Barcode => Model.Barcode;
+    public string? Country => Model.Country;
+    public string? Status => Model.Status;
+    public string? Quality => Model.Quality;
     public IEnumerable<Genre> Genres => Model.Genres?.Select(g => new Genre(g)) ?? [];
     public IEnumerable<Medium> Media => Model.Media?.Select(m => new Medium(m)) ?? [];
     public ReleaseGroup? ReleaseGroup => Model.ReleaseGroup is null ? null : new(Model.ReleaseGroup);
