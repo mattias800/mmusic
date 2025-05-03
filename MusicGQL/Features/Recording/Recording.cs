@@ -16,12 +16,12 @@ public record Recording([property: GraphQLIgnore] Hqub.MusicBrainz.Entities.Reco
         return releases.Select(a => new Release.Release(a));
     }
 
-    public async Task<Release.Release?> MainAlbum([Service] MusicBrainzClient client)
+    public async Task<Release.Release> MainAlbum([Service] MusicBrainzClient client)
     {
         var releases =
             await client.Releases.BrowseAsync("recording", Model.Id, 25, 0, "recordings", "genres", "release-groups");
         var mainAlbum = MainAlbumFinder.FindMainAlbum(releases);
-        return mainAlbum is null ? null : new Release.Release(mainAlbum);
+        return new Release.Release(mainAlbum);
     }
 
     public async Task<IEnumerable<Artist.Artist>> Artists([Service] MusicBrainzClient client)

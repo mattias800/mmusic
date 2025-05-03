@@ -10,9 +10,16 @@ public record ReleaseSearchRoot
         return artists.Items.Select(a => new Release(a));
     }
 
-    public async Task<Release?> ById([Service] MusicBrainzClient client, string id)
+    public async Task<Release?> ById([Service] MusicBrainzClient client, [ID] string id)
     {
-        var recording = await client.Releases.GetAsync(id);
-        return recording != null ? new Release(recording) : null;
+        try
+        {
+            var recording = await client.Releases.GetAsync(id);
+            return recording != null ? new Release(recording) : null;
+        }
+        catch
+        {
+            return null;
+        }
     }
 }

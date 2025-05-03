@@ -1,9 +1,13 @@
-import path from "path"
-import tailwindcss from "@tailwindcss/vite"
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
+import path from "path";
+import tailwindcss from "@tailwindcss/vite";
+import { defineConfig, ProxyOptions } from "vite";
+import react from "@vitejs/plugin-react";
 
-// https://vite.dev/config/
+const proxyOptions: ProxyOptions = {
+  target: "http://[::1]:5095",
+  ws: true,
+};
+
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   resolve: {
@@ -11,4 +15,11 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
-})
+  server: {
+    port: 3000,
+    strictPort: true,
+    proxy: {
+      "/graphql": proxyOptions,
+    },
+  },
+});

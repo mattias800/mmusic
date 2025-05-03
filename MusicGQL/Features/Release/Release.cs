@@ -22,4 +22,10 @@ public record Release([property: GraphQLIgnore] Hqub.MusicBrainz.Entities.Releas
         var recordings = await client.Recordings.BrowseAsync("release", Id);
         return recordings.Items.Select(r => new Recording.Recording(r));
     }
+
+    public async Task<IEnumerable<Artist.Artist>> Artists([Service] MusicBrainzClient client)
+    {
+        var release = await client.Releases.GetAsync(Id, "artist-credits");
+        return release.Credits.Select(a => new Artist.Artist(a.Artist));
+    }
 }

@@ -1,0 +1,23 @@
+import * as React from "react";
+import { LikedSongsList } from "@/features/liked-songs/LikedSongsList.tsx";
+import { graphql } from "@/gql";
+import { useQuery } from "urql";
+
+export interface LikedSongsProps {}
+
+export const likedSongsQuery = graphql(`
+  query LikedSongsQuery {
+    viewer {
+      id
+      ...LikedSongsList_User
+    }
+  }
+`);
+
+export const LikedSongs: React.FC<LikedSongsProps> = () => {
+  const [{ error, data, fetching }] = useQuery({ query: likedSongsQuery });
+  if (fetching) return <div>Loading...</div>;
+  if (error) return <div>Error: {error.message}</div>;
+  if (!data?.viewer) return <div>No data</div>;
+  return <LikedSongsList user={data?.viewer} />;
+};

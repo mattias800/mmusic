@@ -5,7 +5,7 @@ namespace MusicGQL.Features.Release;
 
 public static class MainAlbumFinder
 {
-    public static MbRelease? FindMainAlbum(
+    public static MbRelease FindMainAlbum(
         ReleaseList releaseList)
     {
         var allAlbums = releaseList
@@ -32,7 +32,7 @@ public static class MainAlbumFinder
             return FindPrioritizedRegionalAlbum(allSingles);
         }
 
-        return null;
+        return releaseList.Items.First();
     }
 
     public static MbRelease FindPrioritizedRegionalAlbum(
