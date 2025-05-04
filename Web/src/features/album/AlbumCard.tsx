@@ -26,7 +26,7 @@ export const AlbumCard: React.FC<AlbumCardProps> = (props) => {
 
   return (
     <button
-      className="flex flex-col w-64 gap-2"
+      className="flex flex-col w-64 gap-2 cursor-pointer"
       onClick={() => navigate("/album/" + release.id)}
     >
       <div className="overflow-hidden rounded-md flex flex-col gap-2 w-64">
