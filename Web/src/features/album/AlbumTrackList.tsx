@@ -1,5 +1,7 @@
 import { FragmentType, graphql, useFragment } from "@/gql";
 import * as React from "react";
+import { formatTrackLength } from "@/common/TrackLengthFormatter.ts";
+import { Link } from "react-router";
 
 interface AlbumTrackListProps {
   release: FragmentType<typeof albumTrackListReleaseFragment>;
@@ -33,31 +35,34 @@ export const AlbumTrackList: React.FC<AlbumTrackListProps> = (props) => {
         <span className="hidden md:block text-right pr-4">⏱️</span>
       </div>
       {/* Songs */}
-      {[
-        ["Club Bizarre", "31,526,462", "5:00"],
-        ["Jack", "161,328", "4:05"],
-        ["Love Religion - Video Edit", "5,260,253", "3:34"],
-        ["Die Mission", "166,222", "4:15"],
-        ["Movin'", "173,875", "5:28"],
-        ["If Looks Could Kill", "134,284", "6:20"],
-        ["Joy", "89,328", "4:55"],
-        ["Das Boot II", "937,166", "5:17"],
-        ["Dark Room Rituals", "82,546", "4:57"],
-      ].map(([title, plays, duration], idx) => (
+      {release.recordings.map((recording, idx) => (
         <div
-          key={title}
+          key={recording.id}
           className="grid grid-cols-[60px_1fr_auto_auto] md:grid-cols-[60px_1fr_auto_auto] items-center text-sm hover:bg-white/10 py-2 px-2 rounded"
         >
           <span className="text-center text-white/60">{idx + 1}</span>
           <div className="text-left">
-            <div className="font-medium">{title}</div>
-            <div className="text-white/50 text-xs">U96</div>
+            <div className="font-medium">{recording.title}</div>
+            <div className="text-white/50 text-xs">
+              {recording.artists.map((artist, index) => (
+                <React.Fragment key={artist.id}>
+                  {index > 0 && ", "}
+                  <Link
+                    to={`/artist/${artist.id}`}
+                    className="hover:underline"
+                  >
+                    {artist.name}
+                  </Link>
+                </React.Fragment>
+              ))}
+            </div>
           </div>
           <span className="hidden md:block text-right pr-8 text-white/70">
-            {plays}
+            {/* Placeholder for plays count which is not in the data */}
+            {Math.floor(Math.random() * 1000000).toLocaleString()}
           </span>
           <span className="hidden md:block text-right pr-4 text-white/70">
-            {duration}
+            {recording.length ? formatTrackLength(recording.length) : ""}
           </span>
         </div>
       ))}

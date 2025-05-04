@@ -10,6 +10,7 @@ export const albumHeaderReleaseFragment = graphql(`
   fragment AlbumHeader_Release on Release {
     id
     title
+    coverArtUri
     artists {
       id
       name
@@ -23,7 +24,7 @@ export const AlbumHeader: React.FC<AlbumHeaderProps> = (props) => {
   return (
     <div className="flex flex-col sm:flex-row gap-6 items-center sm:items-end mb-8">
       <img
-        src="https://cdn-images.dzcdn.net/images/cover/2a6ba6be3606384210b67130a70a7c4e/1900x1900-000000-80-0-0.jpg"
+        src={release.coverArtUri}
         alt={release.title + " album cover"}
         className="w-48 h-48 rounded shadow-lg"
       />
