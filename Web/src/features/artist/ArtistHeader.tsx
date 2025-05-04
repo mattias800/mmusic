@@ -10,6 +10,7 @@ export const artistHeaderArtistFragment = graphql(`
   fragment ArtistHeader_Artist on Artist {
     id
     name
+    listeners
     images {
       artistBackground
     }
@@ -30,14 +31,16 @@ export const ArtistHeader: React.FC<ArtistHeaderProps> = (props) => {
         <h1 className="text-4xl md:text-7xl font-bold  text-white drop-shadow-lg">
           {artist.name}
         </h1>
-        <p className="text-white text-sm">1,294,847 monthly listeners</p>
+        <p className="text-white text-sm">
+          {new Intl.NumberFormat().format(artist.listeners)} monthly listeners
+        </p>
       </div>
 
       {/* Full-width artist image as background */}
       <div className="w-full h-[300px] md:h-[400px] overflow-hidden relative">
-        {artist.images && (
+        {artist.images?.artistBackground && (
           <img
-            src={artist.images?.artistBackground}
+            src={artist.images.artistBackground}
             alt={artist.name + " background image"}
             className="w-full h-full object-cover"
           />

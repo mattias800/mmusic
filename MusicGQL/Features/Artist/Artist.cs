@@ -1,10 +1,8 @@
-using System.Collections;
 using Hqub.Lastfm;
 using MusicGQL.Features.Recording;
 using MusicGQL.Features.Release;
 using MusicGQL.Integration.MusicBrainz;
 using TrackSeries.FanArtTV.Client;
-using Track = Hqub.Lastfm.Entities.Track;
 
 namespace MusicGQL.Features.Artist;
 
@@ -77,5 +75,11 @@ public record Artist([property: GraphQLIgnore] Hqub.MusicBrainz.Entities.Artist 
         {
             return null;
         }
+    }
+
+    public async Task<long?> Listeners([Service] LastfmClient lastfmClient)
+    {
+        var info = await lastfmClient.Artist.GetInfoByMbidAsync(Model.Id);
+        return info.Statistics.Listeners;
     }
 }
