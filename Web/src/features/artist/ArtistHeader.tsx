@@ -10,6 +10,9 @@ export const artistHeaderArtistFragment = graphql(`
   fragment ArtistHeader_Artist on Artist {
     id
     name
+    images {
+      artistBackground
+    }
   }
 `);
 
@@ -32,11 +35,13 @@ export const ArtistHeader: React.FC<ArtistHeaderProps> = (props) => {
 
       {/* Full-width artist image as background */}
       <div className="w-full h-[300px] md:h-[400px] overflow-hidden relative">
-        <img
-          src="https://geo-media.beatport.com/image_size/590x404/c27fc408-67d0-4503-a334-e8e66d7f28b5.jpg"
-          alt="U96"
-          className="w-full h-full object-cover"
-        />
+        {artist.images && (
+          <img
+            src={artist.images?.artistBackground}
+            alt={artist.name + " background image"}
+            className="w-full h-full object-cover"
+          />
+        )}
         {/* Gradient overlay to ensure text visibility */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/70 to-transparent"></div>
       </div>

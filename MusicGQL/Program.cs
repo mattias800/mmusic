@@ -15,7 +15,6 @@ var builder = WebApplication.CreateBuilder(args);
 builder
     .Services.AddMemoryCache()
     .AddSingleton<IMemoryCache, MemoryCache>()
-    .AddSingleton<MusicBrainzClient>()
     .AddSingleton<MusicBrainzService>()
     .AddScoped<LikeSongHandler>()
     .AddScoped<UnlikeSongHandler>()
@@ -43,6 +42,20 @@ builder.Services.AddSingleton<LastfmClient>(sp =>
 {
     var options = sp.GetRequiredService<IOptions<LastfmOptions>>().Value;
     return new LastfmClient(options.ApiKey);
+});
+
+builder.Services.AddHttpClient<MusicBrainzClient>(client =>
+{
+    client.BaseAddress = new Uri("https://musicbrainz.org/ws/2/");
+    client.DefaultRequestHeaders.Add("User-Agent", "Hqub.MusicBrainz/3.0 (https://github.com/avatar29A/MusicBrainz)");
+    client.DefaultRequestHeaders.Add("Accept", "application/json");
+});
+
+builder.Services.AddFanArtTVClient(options =>
+{
+    var fanartOptions = builder.Configuration.GetSection("Fanart").Get<FanartOptions>();
+    options.ApiKey = fanartOptions?.ApiKey;
+    options.BaseAddress = fanartOptions?.BaseAddress;
 });
 
 var app = builder.Build();

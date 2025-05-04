@@ -53,14 +53,22 @@ public record Artist([property: GraphQLIgnore] Hqub.MusicBrainz.Entities.Artist 
         var tracks = await lastfmClient.Artist.GetTopTracksByMbidAsync(Model.Id);
 
         return tracks
+            .Where(t => t.MBID is not null)
             .OrderByDescending(t => t.Statistics.PlayCount)
             .Take(10)
-            .Select(t => new LastFmTrack(t));
+            .Select(t => new LastFmTrack(t)).ToList();
     }
 
-    public async Task<ArtistImages> Images([Service] FanArtTVClient fanartClient)
+    public async Task<ArtistImages?> Images([Service] IFanArtTVClient fanartClient)
     {
-        var artist = await fanartClient.Music.GetArtistAsync(Model.Id);
-        return new(artist);
+        try
+        {
+            var artist = await fanartClient.Music.GetArtistAsync(Model.Id);
+            return new(artist);
+        }
+        catch
+        {
+            return null;
+        }
     }
 }
