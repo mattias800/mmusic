@@ -10,8 +10,8 @@ using MusicGQL.Types;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services
-    .AddMemoryCache()
+builder
+    .Services.AddMemoryCache()
     .AddSingleton<IMemoryCache, MemoryCache>()
     .AddSingleton<MusicBrainzClient>()
     .AddSingleton<MusicBrainzService>()
@@ -20,7 +20,8 @@ builder.Services
     .AddScoped<EventProcessor>();
 
 builder.Services.AddDbContext<EventDbContext>(options =>
-    options.UseSqlite("Data Source=events.db"));
+    options.UseSqlite("Data Source=events.db")
+);
 
 builder
     .AddGraphQL()
@@ -31,8 +32,7 @@ builder
     .AddTypeExtension<UnlikeSongMutation>()
     .AddType<LikedSongSuccess>()
     .AddType<LikedSongAlreadyLiked>()
-    .AddType<LikedSongSongDoesNotExist>()
-    ;
+    .AddType<LikedSongSongDoesNotExist>();
 
 var app = builder.Build();
 

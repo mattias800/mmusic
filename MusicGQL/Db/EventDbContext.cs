@@ -16,19 +16,25 @@ public class EventDbContext(DbContextOptions<EventDbContext> options) : DbContex
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<Event>()
+        modelBuilder
+            .Entity<Event>()
             .HasDiscriminator<string>("Discriminator")
             .HasValue<LikedSong>("LikedSong")
             .HasValue<UnlikedSong>("UnlikedSong");
 
-        modelBuilder.Entity<LikedSongsProjection>()
+        modelBuilder
+            .Entity<LikedSongsProjection>()
             .Property(p => p.LikedSongRecordingIds)
             .HasConversion(
                 v => string.Join(',', v),
-                v => v.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList())
-            .Metadata.SetValueComparer(new ValueComparer<List<string>>(
-                (c1, c2) => c1 != null && c2 != null && c1.SequenceEqual(c2),
-                c => c.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())),
-                c => c.ToList()));
+                v => v.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList()
+            )
+            .Metadata.SetValueComparer(
+                new ValueComparer<List<string>>(
+                    (c1, c2) => c1 != null && c2 != null && c1.SequenceEqual(c2),
+                    c => c.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())),
+                    c => c.ToList()
+                )
+            );
     }
 }

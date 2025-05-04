@@ -3,10 +3,7 @@ using MusicGQL.Db;
 
 namespace MusicGQL.Features.LikedSongs.Commands;
 
-public class UnlikeSongHandler(
-    EventDbContext dbContext,
-    EventProcessor eventProcessor
-)
+public class UnlikeSongHandler(EventDbContext dbContext, EventProcessor eventProcessor)
 {
     public async Task<Result> Handle(Command command)
     {
@@ -17,10 +14,9 @@ public class UnlikeSongHandler(
             return new Result.AlreadyNotLiked();
         }
 
-        dbContext.Events.Add(new Db.Models.Events.UnlikedSong
-        {
-            RecordingId = command.RecordingId
-        });
+        dbContext.Events.Add(
+            new Db.Models.Events.UnlikedSong { RecordingId = command.RecordingId }
+        );
 
         await dbContext.SaveChangesAsync();
         await eventProcessor.ProcessEvents();

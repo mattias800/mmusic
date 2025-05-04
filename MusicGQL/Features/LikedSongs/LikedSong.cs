@@ -4,7 +4,8 @@ namespace MusicGQL.Features.LikedSongs;
 
 public record LikedSong([property: GraphQLIgnore] string RecordingId)
 {
-    [ID] public string Id => RecordingId;
+    [ID]
+    public string Id => RecordingId;
 
     public async Task<Recording.Recording?> Recording([Service] MusicBrainzService mbService)
     {

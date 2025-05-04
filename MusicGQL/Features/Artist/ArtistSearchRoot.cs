@@ -4,7 +4,10 @@ namespace MusicGQL.Features.Artist;
 
 public record ArtistSearchRoot
 {
-    public async Task<IEnumerable<Artist>> SearchByName([Service] MusicBrainzService mbService, string name)
+    public async Task<IEnumerable<Artist>> SearchByName(
+        [Service] MusicBrainzService mbService,
+        string name
+    )
     {
         var artists = await mbService.SearchArtistByNameAsync(name);
         return artists.Select(a => new Artist(a));

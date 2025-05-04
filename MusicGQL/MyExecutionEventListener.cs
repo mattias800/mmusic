@@ -7,10 +7,7 @@ namespace MusicGQL;
 public class MyExecutionEventListener(ILogger<MyExecutionEventListener> logger)
     : ExecutionDiagnosticEventListener
 {
-    public override void RequestError(
-        IRequestContext context,
-        Exception exception
-    )
+    public override void RequestError(IRequestContext context, Exception exception)
     {
         logger.LogError(exception, "A request error occurred!");
     }

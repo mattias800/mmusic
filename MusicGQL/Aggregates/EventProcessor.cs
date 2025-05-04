@@ -19,8 +19,8 @@ public class EventProcessor(EventDbContext dbContext, ILogger<EventProcessor> lo
             dbContext.EventCheckpoints.Add(checkpoint);
         }
 
-        var events = await dbContext.Events
-            .Where(e => e.Id > lastId)
+        var events = await dbContext
+            .Events.Where(e => e.Id > lastId)
             .OrderBy(e => e.Id)
             .ToListAsync();
 

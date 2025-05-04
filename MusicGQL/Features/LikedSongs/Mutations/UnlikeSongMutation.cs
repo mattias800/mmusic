@@ -15,7 +15,7 @@ public record UnlikeSongMutation
         {
             UnlikeSongHandler.Result.Success => new(true),
             UnlikeSongHandler.Result.AlreadyNotLiked => new(true),
-            _ => throw new ArgumentOutOfRangeException()
+            _ => throw new ArgumentOutOfRangeException(),
         };
     }
 }

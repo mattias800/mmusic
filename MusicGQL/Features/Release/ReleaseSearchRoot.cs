@@ -4,7 +4,10 @@ namespace MusicGQL.Features.Release;
 
 public record ReleaseSearchRoot
 {
-    public async Task<IEnumerable<Release>> SearchByName([Service] MusicBrainzService mbService, string name)
+    public async Task<IEnumerable<Release>> SearchByName(
+        [Service] MusicBrainzService mbService,
+        string name
+    )
     {
         var releases = await mbService.SearchReleaseByNameAsync(name);
         return releases.Select(a => new Release(a));

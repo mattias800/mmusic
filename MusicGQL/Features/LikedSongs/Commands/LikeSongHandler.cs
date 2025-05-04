@@ -33,11 +33,9 @@ public class LikeSongHandler(
             return new Result.SongDoesNotExist();
         }
 
-
-        dbContext.Events.Add(new MusicGQL.Db.Models.Events.LikedSong
-        {
-            RecordingId = command.RecordingId
-        });
+        dbContext.Events.Add(
+            new MusicGQL.Db.Models.Events.LikedSong { RecordingId = command.RecordingId }
+        );
 
         await dbContext.SaveChangesAsync();
         await eventProcessor.ProcessEvents();

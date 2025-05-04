@@ -5,7 +5,8 @@ namespace MusicGQL.Features.Artist;
 
 public record Artist([property: GraphQLIgnore] Hqub.MusicBrainz.Entities.Artist Model)
 {
-    [ID] public string Id => Model.Id;
+    [ID]
+    public string Id => Model.Id;
     public string Name => Model.Name;
     public string SortName => Model.SortName;
     public string? Disambiguation => Model.Disambiguation;
@@ -17,7 +18,9 @@ public record Artist([property: GraphQLIgnore] Hqub.MusicBrainz.Entities.Artist 
         return releases.Select(r => new Release.Release(r));
     }
 
-    public async Task<IEnumerable<ReleaseGroup>> ReleaseGroups([Service] MusicBrainzService mbService)
+    public async Task<IEnumerable<ReleaseGroup>> ReleaseGroups(
+        [Service] MusicBrainzService mbService
+    )
     {
         var releaseGroups = await mbService.GetReleaseGroupsForArtistAsync(Id);
         return releaseGroups.Select(r => new ReleaseGroup(r));
@@ -27,13 +30,17 @@ public record Artist([property: GraphQLIgnore] Hqub.MusicBrainz.Entities.Artist 
     {
         var releaseGroups = await mbService.GetReleaseGroupsForArtistAsync(Id);
         var albumReleaseGroups = releaseGroups.Where(r => r.IsAlbum()).ToList();
-        var albums = await Task.WhenAll(albumReleaseGroups.Select(async rg =>
-        {
-            var releases = await mbService.GetReleasesForReleaseGroupAsync(rg.Id);
-            return MainAlbumFinder.GetMainReleaseInReleaseGroup(releases);
-        }));
+        var albums = await Task.WhenAll(
+            albumReleaseGroups.Select(async rg =>
+            {
+                var releases = await mbService.GetReleasesForReleaseGroupAsync(rg.Id);
+                return MainAlbumFinder.GetMainReleaseInReleaseGroup(releases);
+            })
+        );
 
-        return albums.OfType<Hqub.MusicBrainz.Entities.Release>().Where(r => r.Status == "Official")
+        return albums
+            .OfType<Hqub.MusicBrainz.Entities.Release>()
+            .Where(r => r.Status == "Official")
             .Select(r => new Release.Release(r));
     }
 }
