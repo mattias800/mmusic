@@ -80,7 +80,14 @@ public record Artist([property: GraphQLIgnore] Hqub.MusicBrainz.Entities.Artist 
 
     public async Task<long?> Listeners([Service] LastfmClient lastfmClient)
     {
-        var info = await lastfmClient.Artist.GetInfoByMbidAsync(Model.Id);
-        return info.Statistics.Listeners;
+        try
+        {
+            var info = await lastfmClient.Artist.GetInfoByMbidAsync(Model.Id);
+            return info.Statistics.Listeners;
+        }
+        catch
+        {
+            return null;
+        }
     }
 }
