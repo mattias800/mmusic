@@ -31,7 +31,10 @@ export const AlbumCard: React.FC<AlbumCardProps> = (props) => {
           "portrait" === "portrait" ? "aspect-[3/4]" : "aspect-square",
         )}
       />
-      <span>{release.artists[0].name}</span>
+      <div>
+        <div className={"bold"}>{release.title}</div>
+        <div className={"text-shadow-gray-400"}>{release.artists[0].name}</div>
+      </div>
     </div>
   );
 };

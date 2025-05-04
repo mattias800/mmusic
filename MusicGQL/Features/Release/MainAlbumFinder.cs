@@ -4,7 +4,24 @@ namespace MusicGQL.Features.Release;
 
 public static class MainAlbumFinder
 {
-    public static MbRelease FindMainAlbum(
+    
+    public static MbRelease? GetMainReleaseInReleaseGroup(List<MbRelease> releases)
+    {
+        var official = releases.Where(r => r.Status == "Official").ToList();
+
+        var releasesAvailable = official.Count != 0 ? official : releases;
+
+        return releasesAvailable // filter by official only
+            .OrderBy(r =>
+                r.Country == "XW" ? 0 :
+                r.Country == "US" ? 1 :
+                r.Country == "GB" ? 2 : 3
+            )
+            .ThenBy(r => r.Date) // prefer earlier date
+            .FirstOrDefault() ?? releasesAvailable.FirstOrDefault();
+    }
+
+    public static MbRelease FindMainAlbumForSong(
         List<MbRelease> releaseList)
     {
         var allAlbums = releaseList

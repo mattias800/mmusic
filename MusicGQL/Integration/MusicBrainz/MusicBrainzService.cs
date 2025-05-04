@@ -23,7 +23,7 @@ public class MusicBrainzService(MusicBrainzClient client, IMemoryCache cache)
     public async Task<List<Artist>> SearchArtistByNameAsync(string name)
     {
         var result = await ExecuteThrottledAsync($"search_artist:{name}", TimeSpan.FromHours(1),
-            () => client.Artists.SearchAsync(name, 20));
+            () => client.Artists.SearchAsync(name, 100));
         return result?.Items ?? [];
     }
 
@@ -49,7 +49,7 @@ public class MusicBrainzService(MusicBrainzClient client, IMemoryCache cache)
     public async Task<List<Recording>> SearchRecordingByNameAsync(string name)
     {
         var result = await ExecuteThrottledAsync($"search_recording:{name}", TimeSpan.FromHours(1),
-            () => client.Recordings.SearchAsync(name, 20));
+            () => client.Recordings.SearchAsync(name, 100));
         return result?.Items ?? [];
     }
 
@@ -70,7 +70,17 @@ public class MusicBrainzService(MusicBrainzClient client, IMemoryCache cache)
     public async Task<List<Release>> GetReleasesForRecordingAsync(string recordingId)
     {
         var result = await ExecuteThrottledAsync($"recording:{recordingId}:releases", TimeSpan.FromDays(1),
-            () => client.Releases.BrowseAsync("recording", recordingId, 25, 0, "recordings", "genres", "release-groups",
+            () => client.Releases.BrowseAsync("recording", recordingId, 100, 0, "recordings", "genres",
+                "release-groups",
+                "artist-credits"));
+        return result?.Items ?? [];
+    }
+
+    public async Task<List<Release>> GetReleasesForReleaseGroupAsync(string releaseGroupId)
+    {
+        var result = await ExecuteThrottledAsync($"release-group:{releaseGroupId}:releases", TimeSpan.FromDays(1),
+            () => client.Releases.BrowseAsync("release-group", releaseGroupId, 100, 0, "recordings", "genres",
+                "release-groups",
                 "artist-credits"));
         return result?.Items ?? [];
     }
@@ -80,6 +90,15 @@ public class MusicBrainzService(MusicBrainzClient client, IMemoryCache cache)
         var result = await ExecuteThrottledAsync($"search_release:{name}", TimeSpan.FromDays(1),
             () => client.Releases.SearchAsync(name));
 
+        return result?.Items ?? [];
+    }
+
+    // Release groups
+
+    public async Task<List<ReleaseGroup>> GetReleaseGroupsForArtistAsync(string artistId)
+    {
+        var result = await ExecuteThrottledAsync($"artist:{artistId}:release-groups", TimeSpan.FromDays(1),
+            () => client.ReleaseGroups.BrowseAsync("artist", artistId, 100, 0));
         return result?.Items ?? [];
     }
 

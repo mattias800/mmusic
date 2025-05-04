@@ -18,7 +18,7 @@ public record Recording([property: GraphQLIgnore] Hqub.MusicBrainz.Entities.Reco
     public async Task<Release.Release> MainAlbum([Service] MusicBrainzService mbService)
     {
         var releases = await mbService.GetReleasesForRecordingAsync(Model.Id);
-        var mainAlbum = MainAlbumFinder.FindMainAlbum(releases);
+        var mainAlbum = MainAlbumFinder.FindMainAlbumForSong(releases);
         return new Release.Release(mainAlbum);
     }
 

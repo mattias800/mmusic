@@ -6,6 +6,7 @@ import { ShuffleButton } from "@/components/buttons/ShuffleButton.tsx";
 import { DotsButton } from "@/components/buttons/DotsButton.tsx";
 import { FollowButton } from "@/components/buttons/FollowButton.tsx";
 import { FragmentType, graphql, useFragment } from "@/gql";
+import { ArtistAlbumList } from "@/features/artist/ArtistAlbumList.tsx";
 
 interface ArtistPanelProps {
   artist: FragmentType<typeof artistPanelArtistFragment>;
@@ -15,6 +16,7 @@ export const artistPanelArtistFragment = graphql(`
   fragment ArtistPanel_Artist on Artist {
     id
     name
+    ...ArtistAlbumList_Artist
   }
 `);
 
@@ -57,6 +59,7 @@ export const ArtistPanel: React.FC<ArtistPanelProps> = (props) => {
         <DotsButton />
       </div>
       <PopularArtistTracks />
+      <ArtistAlbumList artist={artist} />
     </div>
   );
 };
