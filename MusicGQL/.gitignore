@@ -2,3 +2,6 @@ bin/
 obj/
 appsettings.Development.json
 appsettings.json
+events.db
+events.db-shm
+events.db-wal
