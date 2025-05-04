@@ -10,7 +10,7 @@ public record RecordingSearchRoot
         return artists.Items.Select(a => new Recording(a));
     }
 
-    public async Task<Recording?> ById([Service] MusicBrainzClient client, string id)
+    public async Task<Recording?> ById([Service] MusicBrainzClient client, [ID] string id)
     {
         var recording = await client.Recordings.GetAsync(id);
         return recording != null ? new Recording(recording) : null;

@@ -6,11 +6,12 @@ import { ArtistPanel } from "@/features/artist/ArtistPanel";
 
 export interface ArtistProps {}
 
-export const albumQuery = graphql(`
-  query AlbumQuery($artistId: ID!) {
+export const artistQuery = graphql(`
+  query ArtistQuery($artistId: ID!) {
     artist {
       byId(id: $artistId) {
         id
+        ...ArtistPanel_Artist
       }
     }
   }
@@ -19,14 +20,14 @@ export const albumQuery = graphql(`
 export const Artist: React.FC<ArtistProps> = () => {
   const { artistId } = useParams<{ artistId: string }>();
   const [{ error, data, fetching }] = useQuery({
-    query: albumQuery,
+    query: artistQuery,
     variables: { artistId: artistId! },
-    pause: true,
+    pause: !artistId,
   });
 
-  // if (fetching) return <div>Loading...</div>;
-  // if (error) return <div>Error: {error.message}</div>;
-  // if (!data?.release.byId) return <div>No data</div>;
+  if (fetching) return <div>Loading...</div>;
+  if (error) return <div>Error: {error.message}</div>;
+  if (!data?.artist.byId) return <div>No data</div>;
 
-  return <ArtistPanel />;
+  return <ArtistPanel artist={data.artist.byId} />;
 };
