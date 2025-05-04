@@ -4,6 +4,7 @@ import { Link } from "react-router";
 
 export interface SearchResultArtistProps {
   artists: Array<FragmentType<typeof searchResultArtistFragment>>;
+  onClickSearchResult: () => void;
 }
 
 export const searchResultArtistFragment = graphql(`
@@ -16,9 +17,10 @@ export const searchResultArtistFragment = graphql(`
   }
 `);
 
-export const SearchResultArtist: React.FC<SearchResultArtistProps> = (
-  props,
-) => {
+export const SearchResultArtist: React.FC<SearchResultArtistProps> = ({
+  onClickSearchResult,
+  ...props
+}) => {
   const artists = useFragment(searchResultArtistFragment, props.artists);
 
   if (!artists || artists.length === 0) {
@@ -34,6 +36,7 @@ export const SearchResultArtist: React.FC<SearchResultArtistProps> = (
             to={`/artist/${artist.id}`}
             key={artist.id}
             className="flex items-center p-2 hover:bg-white/10 rounded-md transition-colors"
+            onClick={onClickSearchResult}
           >
             {artist.images?.artistThumb ? (
               <img

@@ -5,6 +5,7 @@ import { formatTrackLength } from "@/common/TrackLengthFormatter.ts";
 
 export interface SearchResultRecordingProps {
   recordings: Array<FragmentType<typeof searchResultRecordingFragment>>;
+  onClickSearchResult: () => void;
 }
 
 export const searchResultRecordingFragment = graphql(`
@@ -24,9 +25,10 @@ export const searchResultRecordingFragment = graphql(`
   }
 `);
 
-export const SearchResultRecording: React.FC<SearchResultRecordingProps> = (
-  props,
-) => {
+export const SearchResultRecording: React.FC<SearchResultRecordingProps> = ({
+  onClickSearchResult,
+  ...props
+}) => {
   const recordings = useFragment(
     searchResultRecordingFragment,
     props.recordings,
@@ -77,6 +79,7 @@ export const SearchResultRecording: React.FC<SearchResultRecordingProps> = (
                     <Link
                       to={`/album/${recording.mainAlbum.id}`}
                       className="hover:underline"
+                      onClick={onClickSearchResult}
                     >
                       {recording.mainAlbum.title}
                     </Link>

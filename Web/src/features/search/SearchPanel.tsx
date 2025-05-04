@@ -7,6 +7,7 @@ import { SearchResult } from "@/features/search/SearchResult.tsx";
 
 export interface SearchPanelProps {
   searchText: string;
+  onClickSearchResult: () => void;
 }
 
 const query = graphql(`
@@ -15,7 +16,10 @@ const query = graphql(`
   }
 `);
 
-export const SearchPanel: React.FC<SearchPanelProps> = ({ searchText }) => {
+export const SearchPanel: React.FC<SearchPanelProps> = ({
+  searchText,
+  onClickSearchResult,
+}) => {
   const [debouncedText, setDebouncedText] = useState(searchText);
 
   useEffect(() => {
@@ -41,7 +45,12 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({ searchText }) => {
   return (
     <div className={"relative"}>
       <div className={"absolute z-20"}>
-        <SearchResult fetching={fetching} query={data} skipped={skipped} />
+        <SearchResult
+          fetching={fetching}
+          query={data}
+          skipped={skipped}
+          onClickSearchResult={onClickSearchResult}
+        />
       </div>
     </div>
   );

@@ -4,6 +4,7 @@ import { Link } from "react-router";
 
 export interface SearchResultReleaseGroupProps {
   releaseGroups: Array<FragmentType<typeof searchResultReleaseGroupFragment>>;
+  onClickSearchResult: () => void;
 }
 
 export const searchResultReleaseGroupFragment = graphql(`
@@ -20,7 +21,7 @@ export const searchResultReleaseGroupFragment = graphql(`
 
 export const SearchResultReleaseGroup: React.FC<
   SearchResultReleaseGroupProps
-> = (props) => {
+> = ({ onClickSearchResult, ...props }) => {
   const releaseGroups = useFragment(
     searchResultReleaseGroupFragment,
     props.releaseGroups,
@@ -39,6 +40,7 @@ export const SearchResultReleaseGroup: React.FC<
             to={`/album/${releaseGroup.mainRelease?.id || releaseGroup.id}`}
             key={releaseGroup.id}
             className="flex items-center p-2 hover:bg-white/10 rounded-md transition-colors"
+            onClick={onClickSearchResult}
           >
             {releaseGroup.mainRelease?.coverArtUri ? (
               <img

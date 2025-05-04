@@ -8,6 +8,7 @@ export interface SearchResultProps {
   query?: FragmentType<typeof searchResultQueryFragment>;
   fetching?: boolean;
   skipped?: boolean;
+  onClickSearchResult: () => void;
 }
 
 export const searchResultQueryFragment = graphql(`
@@ -33,6 +34,7 @@ export const searchResultQueryFragment = graphql(`
 export const SearchResult: React.FC<SearchResultProps> = ({
   fetching,
   skipped,
+  onClickSearchResult,
   ...props
 }) => {
   const query = useFragment(searchResultQueryFragment, props.query);
@@ -52,7 +54,9 @@ export const SearchResult: React.FC<SearchResultProps> = ({
   if (!query) {
     return (
       <div className="w-96 rounded-2xl bg-black p-4 shadow-lg border border-white/10">
-        <div className="text-white text-center py-4">{JSON.stringify(query)}</div>
+        <div className="text-white text-center py-4">
+          {JSON.stringify(query)}
+        </div>
       </div>
     );
   }
@@ -73,19 +77,26 @@ export const SearchResult: React.FC<SearchResultProps> = ({
   return (
     <div className="w-96 rounded-2xl bg-black shadow-lg border border-white/10 max-h-[80vh] overflow-y-auto">
       {query.artist?.searchByName && query.artist.searchByName.length > 0 && (
-        <SearchResultArtist artists={query.artist.searchByName} />
+        <SearchResultArtist
+          artists={query.artist.searchByName}
+          onClickSearchResult={onClickSearchResult}
+        />
       )}
 
       {query.releaseGroup?.searchByName &&
         query.releaseGroup.searchByName.length > 0 && (
           <SearchResultReleaseGroup
             releaseGroups={query.releaseGroup.searchByName}
+            onClickSearchResult={onClickSearchResult}
           />
         )}
 
       {query.recording?.searchByName &&
         query.recording.searchByName.length > 0 && (
-          <SearchResultRecording recordings={query.recording.searchByName} />
+          <SearchResultRecording
+            recordings={query.recording.searchByName}
+            onClickSearchResult={onClickSearchResult}
+          />
         )}
     </div>
   );

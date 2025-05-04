@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Input } from "@/components/ui/input.tsx";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { SearchPanel } from "@/features/search/SearchPanel.tsx";
 
 export interface SearchInputProps {}
@@ -10,6 +10,12 @@ export const SearchInput: React.FC<SearchInputProps> = () => {
   const [inFocus, setInFocus] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
   const popupRef = useRef<HTMLDivElement>(null);
+
+  const onClickSearchResult = useCallback(() => {
+    setTimeout(() => {
+      setInFocus(false);
+    }, 100);
+  }, []);
 
   // Handle clicks outside the form and popup
   useEffect(() => {
@@ -41,7 +47,10 @@ export const SearchInput: React.FC<SearchInputProps> = () => {
       </form>
       {value && inFocus && (
         <div ref={popupRef}>
-          <SearchPanel searchText={value} />
+          <SearchPanel
+            searchText={value}
+            onClickSearchResult={onClickSearchResult}
+          />
         </div>
       )}
     </div>
