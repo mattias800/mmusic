@@ -5,6 +5,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Heart } from "lucide-react";
 import { NavLink } from "react-router";
 import * as React from "react";
+import { SearchInput } from "../search/SearchInput";
 
 interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {
   playlists: Playlist[];
@@ -20,6 +21,7 @@ export function Sidebar({ className, playlists }: SidebarProps) {
             Discover
           </h2>
           <div className="space-y-1">
+            <SearchInput />
             <Button
               variant={pathname === "/liked-songs" ? "secondary" : "ghost"}
               className="w-full justify-start"

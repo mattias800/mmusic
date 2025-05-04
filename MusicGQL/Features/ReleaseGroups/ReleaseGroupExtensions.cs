@@ -1,6 +1,6 @@
 using MbReleaseGroup = Hqub.MusicBrainz.Entities.ReleaseGroup;
 
-namespace MusicGQL.Features.Release;
+namespace MusicGQL.Features.ReleaseGroups;
 
 public static class ReleaseGroupExtensions
 {

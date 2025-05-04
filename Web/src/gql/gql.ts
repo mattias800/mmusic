@@ -30,6 +30,7 @@ type Documents = {
     "\n  fragment PopularTrackRow_LastFmTrack on LastFmTrack {\n    id\n    playCount\n    summary\n    recording {\n      id\n      title\n      length\n      mainAlbum {\n        id\n        title\n        coverArtUri\n      }\n    }\n  }\n": typeof types.PopularTrackRow_LastFmTrackFragmentDoc,
     "\n  fragment LikedSongRow_LikedSong on LikedSong {\n    id\n    recording {\n      id\n      title\n      length\n      artists {\n        id\n        name\n      }\n      mainAlbum {\n        id\n        title\n        coverArtUri\n        artists {\n          id\n        }\n      }\n    }\n  }\n": typeof types.LikedSongRow_LikedSongFragmentDoc,
     "\n  fragment LikedSongsList_User on User {\n    id\n    likedSongs {\n      id\n      ...LikedSongRow_LikedSong\n    }\n  }\n": typeof types.LikedSongsList_UserFragmentDoc,
+    "\nquery SearchPanelQuery($text: String!) {\n  artist {\n    searchByName(name: $text) {\n      id\n      name\n      images {\n        artistThumb\n      }\n    }\n  }\n  release {\n    searchByName(name: $text) {\n      id\n      title\n      coverArtUri\n    }\n  }\n}\n": typeof types.SearchPanelQueryDocument,
 };
 const documents: Documents = {
     "\n  query AlbumQuery($releaseId: ID!) {\n    release {\n      byId(id: $releaseId) {\n        id\n        ...AlbumPanel_Release\n      }\n    }\n  }\n": types.AlbumQueryDocument,
@@ -48,6 +49,7 @@ const documents: Documents = {
     "\n  fragment PopularTrackRow_LastFmTrack on LastFmTrack {\n    id\n    playCount\n    summary\n    recording {\n      id\n      title\n      length\n      mainAlbum {\n        id\n        title\n        coverArtUri\n      }\n    }\n  }\n": types.PopularTrackRow_LastFmTrackFragmentDoc,
     "\n  fragment LikedSongRow_LikedSong on LikedSong {\n    id\n    recording {\n      id\n      title\n      length\n      artists {\n        id\n        name\n      }\n      mainAlbum {\n        id\n        title\n        coverArtUri\n        artists {\n          id\n        }\n      }\n    }\n  }\n": types.LikedSongRow_LikedSongFragmentDoc,
     "\n  fragment LikedSongsList_User on User {\n    id\n    likedSongs {\n      id\n      ...LikedSongRow_LikedSong\n    }\n  }\n": types.LikedSongsList_UserFragmentDoc,
+    "\nquery SearchPanelQuery($text: String!) {\n  artist {\n    searchByName(name: $text) {\n      id\n      name\n      images {\n        artistThumb\n      }\n    }\n  }\n  release {\n    searchByName(name: $text) {\n      id\n      title\n      coverArtUri\n    }\n  }\n}\n": types.SearchPanelQueryDocument,
 };
 
 /**
@@ -128,6 +130,10 @@ export function graphql(source: "\n  fragment LikedSongRow_LikedSong on LikedSon
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  fragment LikedSongsList_User on User {\n    id\n    likedSongs {\n      id\n      ...LikedSongRow_LikedSong\n    }\n  }\n"): (typeof documents)["\n  fragment LikedSongsList_User on User {\n    id\n    likedSongs {\n      id\n      ...LikedSongRow_LikedSong\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\nquery SearchPanelQuery($text: String!) {\n  artist {\n    searchByName(name: $text) {\n      id\n      name\n      images {\n        artistThumb\n      }\n    }\n  }\n  release {\n    searchByName(name: $text) {\n      id\n      title\n      coverArtUri\n    }\n  }\n}\n"): (typeof documents)["\nquery SearchPanelQuery($text: String!) {\n  artist {\n    searchByName(name: $text) {\n      id\n      name\n      images {\n        artistThumb\n      }\n    }\n  }\n  release {\n    searchByName(name: $text) {\n      id\n      title\n      coverArtUri\n    }\n  }\n}\n"];
 
 export function graphql(source: string) {
   return (documents as any)[source] ?? {};

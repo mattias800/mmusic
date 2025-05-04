@@ -1,5 +1,6 @@
 using Hqub.MusicBrainz.Entities;
 using MusicGQL.Integration.MusicBrainz;
+using ReleaseGroup = MusicGQL.Features.ReleaseGroups.ReleaseGroup;
 
 namespace MusicGQL.Features.Release;
 
