@@ -10,9 +10,10 @@ export interface ArtistAlbumListProps {
 export const artistAlbumListArtistFragment = graphql(`
   fragment ArtistAlbumList_Artist on Artist {
     id
-    albums {
+    mainAlbums {
       id
       date
+      year
       country
       releaseGroup {
         id
@@ -29,15 +30,12 @@ export const ArtistAlbumList: React.FC<ArtistAlbumListProps> = (props) => {
 
   return (
     <div className={"flex flex-wrap gap-8"}>
-      {artist.albums
-        .toSorted(byStringField((a) => a.date))
+      {artist.mainAlbums
+        .toSorted(byStringField((a) => a.year ?? ""))
         .toReversed()
         .map((release) => (
           <>
             <AlbumCard release={release} />
-            {release.date}
-            {release.country}
-            {JSON.stringify(release.releaseGroup)}
           </>
         ))}
     </div>

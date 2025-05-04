@@ -1,3 +1,5 @@
+using System.Collections;
+using Hqub.Lastfm;
 using MusicGQL.Features.Release;
 using MusicGQL.Integration.MusicBrainz;
 
@@ -26,10 +28,10 @@ public record Artist([property: GraphQLIgnore] Hqub.MusicBrainz.Entities.Artist 
         return releaseGroups.Select(r => new ReleaseGroup(r));
     }
 
-    public async Task<IEnumerable<Release.Release>> Albums([Service] MusicBrainzService mbService)
+    public async Task<IEnumerable<Release.Release>> MainAlbums([Service] MusicBrainzService mbService)
     {
         var releaseGroups = await mbService.GetReleaseGroupsForArtistAsync(Id);
-        var albumReleaseGroups = releaseGroups.Where(r => r.IsAlbum()).ToList();
+        var albumReleaseGroups = releaseGroups.Where(r => r.IsMainAlbum()).ToList();
         var albums = await Task.WhenAll(
             albumReleaseGroups.Select(async rg =>
             {
@@ -42,5 +44,10 @@ public record Artist([property: GraphQLIgnore] Hqub.MusicBrainz.Entities.Artist 
             .OfType<Hqub.MusicBrainz.Entities.Release>()
             .Where(r => r.Status == "Official")
             .Select(r => new Release.Release(r));
+    }
+
+    public async Task<IEnumerable<Recording.Recording>> TopTracks([Service] LastfmClient lastfmClient)
+    {
+        
     }
 }

@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "fuioM5ChXjc=",
+  "dgSpecHash": "x8+UWLooVIo=",
   "success": true,
   "projectFilePath": "/Users/mattias800/repos/mmusic/MusicGQL/MusicGQL.csproj",
   "expectedPackageFiles": [
@@ -42,6 +42,7 @@
     "/Users/mattias800/.nuget/packages/hotchocolate.utilities/15.1.3/hotchocolate.utilities.15.1.3.nupkg.sha512",
     "/Users/mattias800/.nuget/packages/hotchocolate.utilities.dependencyinjection/15.1.3/hotchocolate.utilities.dependencyinjection.15.1.3.nupkg.sha512",
     "/Users/mattias800/.nuget/packages/hotchocolate.validation/15.1.3/hotchocolate.validation.15.1.3.nupkg.sha512",
+    "/Users/mattias800/.nuget/packages/hqub.last.fm/2.5.0/hqub.last.fm.2.5.0.nupkg.sha512",
     "/Users/mattias800/.nuget/packages/humanizer.core/2.14.1/humanizer.core.2.14.1.nupkg.sha512",
     "/Users/mattias800/.nuget/packages/microsoft.bcl.asyncinterfaces/7.0.0/microsoft.bcl.asyncinterfaces.7.0.0.nupkg.sha512",
     "/Users/mattias800/.nuget/packages/microsoft.build.framework/17.8.3/microsoft.build.framework.17.8.3.nupkg.sha512",

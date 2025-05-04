@@ -1,6 +1,6 @@
 import * as React from "react";
-import { cn } from "@/lib/utils.ts";
 import { FragmentType, graphql, useFragment } from "@/gql";
+import { useNavigate } from "react-router";
 
 export interface AlbumCardProps {
   release: FragmentType<typeof albumCardReleaseFragment>;
@@ -10,6 +10,7 @@ export const albumCardReleaseFragment = graphql(`
   fragment AlbumCard_Release on Release {
     id
     title
+    year
     coverArtUri
     artists {
       id
@@ -21,20 +22,24 @@ export const albumCardReleaseFragment = graphql(`
 export const AlbumCard: React.FC<AlbumCardProps> = (props) => {
   const release = useFragment(albumCardReleaseFragment, props.release);
 
+  const navigate = useNavigate();
+
   return (
-    <div className="overflow-hidden rounded-md">
-      <img
-        src={release.coverArtUri}
-        alt={release.title}
-        className={cn(
-          "h-auto w-auto object-cover transition-all hover:scale-105",
-          "portrait" === "portrait" ? "aspect-[3/4]" : "aspect-square",
-        )}
-      />
-      <div>
-        <div className={"bold"}>{release.title}</div>
-        <div className={"text-shadow-gray-400"}>{release.artists[0].name}</div>
+    <button
+      className="flex flex-col w-64 gap-2"
+      onClick={() => navigate("/album/" + release.id)}
+    >
+      <div className="overflow-hidden rounded-md flex flex-col gap-2 w-64">
+        <img
+          src={release.coverArtUri}
+          alt={release.title}
+          className={
+            "h-64 w-64 object-cover transition-all hover:scale-105 aspect-square"
+          }
+        />
       </div>
-    </div>
+      <div className={"bold"}>{release.title}</div>
+      <div className={"text-gray-400 text-sm"}>{release.year}</div>
+    </button>
   );
 };

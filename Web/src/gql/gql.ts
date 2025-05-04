@@ -19,12 +19,13 @@ type Documents = {
     "\n  query LikedSongsQuery {\n    viewer {\n      id\n      ...LikedSongsList_User\n    }\n  }\n": typeof types.LikedSongsQueryDocument,
     "\n  fragment Playlist_User on User {\n    id\n    likedSongs {\n      id\n      ...LikedSongRow_LikedSong\n    }\n  }\n": typeof types.Playlist_UserFragmentDoc,
     "\n  fragment LikedSongRow_Recoding on Recording {\n    id\n    title\n    length\n    artists {\n      id\n      name\n    }\n    mainAlbum {\n      id\n      title\n      coverArtUri\n    }\n  }\n": typeof types.LikedSongRow_RecodingFragmentDoc,
-    "\n  fragment AlbumCard_Release on Release {\n    id\n    title\n    coverArtUri\n    artists {\n      id\n      name\n    }\n  }\n": typeof types.AlbumCard_ReleaseFragmentDoc,
+    "\n  fragment AlbumCard_Release on Release {\n    id\n    title\n    year\n    coverArtUri\n    artists {\n      id\n      name\n    }\n  }\n": typeof types.AlbumCard_ReleaseFragmentDoc,
     "\n  fragment AlbumHeader_Release on Release {\n    id\n    title\n    coverArtUri\n    artists {\n      id\n      name\n    }\n  }\n": typeof types.AlbumHeader_ReleaseFragmentDoc,
     "\n  fragment AlbumPanel_Release on Release {\n    id\n    ...AlbumHeader_Release\n    ...AlbumTrackList_Release\n  }\n": typeof types.AlbumPanel_ReleaseFragmentDoc,
     "\n  fragment AlbumTrackList_Release on Release {\n    id\n    recordings {\n      id\n      title\n      length\n      artists {\n        id\n        name\n      }\n    }\n  }\n": typeof types.AlbumTrackList_ReleaseFragmentDoc,
-    "\n  fragment ArtistAlbumList_Artist on Artist {\n    id\n    albums {\n      id\n      date\n      country\n      releaseGroup {\n        id\n        primaryType\n        secondaryTypes\n      }\n      ...AlbumCard_Release\n    }\n  }\n": typeof types.ArtistAlbumList_ArtistFragmentDoc,
-    "\n  fragment ArtistPanel_Artist on Artist {\n    id\n    name\n    ...ArtistAlbumList_Artist\n  }\n": typeof types.ArtistPanel_ArtistFragmentDoc,
+    "\n  fragment ArtistAlbumList_Artist on Artist {\n    id\n    mainAlbums {\n      id\n      date\n      year\n      country\n      releaseGroup {\n        id\n        primaryType\n        secondaryTypes\n      }\n      ...AlbumCard_Release\n    }\n  }\n": typeof types.ArtistAlbumList_ArtistFragmentDoc,
+    "\n  fragment ArtistHeader_Artist on Artist {\n    id\n    name\n  }\n": typeof types.ArtistHeader_ArtistFragmentDoc,
+    "\n  fragment ArtistPanel_Artist on Artist {\n    id\n    name\n    ...ArtistHeader_Artist\n    ...ArtistAlbumList_Artist\n  }\n": typeof types.ArtistPanel_ArtistFragmentDoc,
     "\n  fragment LikedSongRow_LikedSong on LikedSong {\n    id\n    recording {\n      id\n      title\n      length\n      artists {\n        id\n        name\n      }\n      mainAlbum {\n        id\n        title\n        coverArtUri\n        artists {\n          id\n        }\n      }\n    }\n  }\n": typeof types.LikedSongRow_LikedSongFragmentDoc,
     "\n  fragment LikedSongsList_User on User {\n    id\n    likedSongs {\n      id\n      ...LikedSongRow_LikedSong\n    }\n  }\n": typeof types.LikedSongsList_UserFragmentDoc,
 };
@@ -34,12 +35,13 @@ const documents: Documents = {
     "\n  query LikedSongsQuery {\n    viewer {\n      id\n      ...LikedSongsList_User\n    }\n  }\n": types.LikedSongsQueryDocument,
     "\n  fragment Playlist_User on User {\n    id\n    likedSongs {\n      id\n      ...LikedSongRow_LikedSong\n    }\n  }\n": types.Playlist_UserFragmentDoc,
     "\n  fragment LikedSongRow_Recoding on Recording {\n    id\n    title\n    length\n    artists {\n      id\n      name\n    }\n    mainAlbum {\n      id\n      title\n      coverArtUri\n    }\n  }\n": types.LikedSongRow_RecodingFragmentDoc,
-    "\n  fragment AlbumCard_Release on Release {\n    id\n    title\n    coverArtUri\n    artists {\n      id\n      name\n    }\n  }\n": types.AlbumCard_ReleaseFragmentDoc,
+    "\n  fragment AlbumCard_Release on Release {\n    id\n    title\n    year\n    coverArtUri\n    artists {\n      id\n      name\n    }\n  }\n": types.AlbumCard_ReleaseFragmentDoc,
     "\n  fragment AlbumHeader_Release on Release {\n    id\n    title\n    coverArtUri\n    artists {\n      id\n      name\n    }\n  }\n": types.AlbumHeader_ReleaseFragmentDoc,
     "\n  fragment AlbumPanel_Release on Release {\n    id\n    ...AlbumHeader_Release\n    ...AlbumTrackList_Release\n  }\n": types.AlbumPanel_ReleaseFragmentDoc,
     "\n  fragment AlbumTrackList_Release on Release {\n    id\n    recordings {\n      id\n      title\n      length\n      artists {\n        id\n        name\n      }\n    }\n  }\n": types.AlbumTrackList_ReleaseFragmentDoc,
-    "\n  fragment ArtistAlbumList_Artist on Artist {\n    id\n    albums {\n      id\n      date\n      country\n      releaseGroup {\n        id\n        primaryType\n        secondaryTypes\n      }\n      ...AlbumCard_Release\n    }\n  }\n": types.ArtistAlbumList_ArtistFragmentDoc,
-    "\n  fragment ArtistPanel_Artist on Artist {\n    id\n    name\n    ...ArtistAlbumList_Artist\n  }\n": types.ArtistPanel_ArtistFragmentDoc,
+    "\n  fragment ArtistAlbumList_Artist on Artist {\n    id\n    mainAlbums {\n      id\n      date\n      year\n      country\n      releaseGroup {\n        id\n        primaryType\n        secondaryTypes\n      }\n      ...AlbumCard_Release\n    }\n  }\n": types.ArtistAlbumList_ArtistFragmentDoc,
+    "\n  fragment ArtistHeader_Artist on Artist {\n    id\n    name\n  }\n": types.ArtistHeader_ArtistFragmentDoc,
+    "\n  fragment ArtistPanel_Artist on Artist {\n    id\n    name\n    ...ArtistHeader_Artist\n    ...ArtistAlbumList_Artist\n  }\n": types.ArtistPanel_ArtistFragmentDoc,
     "\n  fragment LikedSongRow_LikedSong on LikedSong {\n    id\n    recording {\n      id\n      title\n      length\n      artists {\n        id\n        name\n      }\n      mainAlbum {\n        id\n        title\n        coverArtUri\n        artists {\n          id\n        }\n      }\n    }\n  }\n": types.LikedSongRow_LikedSongFragmentDoc,
     "\n  fragment LikedSongsList_User on User {\n    id\n    likedSongs {\n      id\n      ...LikedSongRow_LikedSong\n    }\n  }\n": types.LikedSongsList_UserFragmentDoc,
 };
@@ -81,7 +83,7 @@ export function graphql(source: "\n  fragment LikedSongRow_Recoding on Recording
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment AlbumCard_Release on Release {\n    id\n    title\n    coverArtUri\n    artists {\n      id\n      name\n    }\n  }\n"): (typeof documents)["\n  fragment AlbumCard_Release on Release {\n    id\n    title\n    coverArtUri\n    artists {\n      id\n      name\n    }\n  }\n"];
+export function graphql(source: "\n  fragment AlbumCard_Release on Release {\n    id\n    title\n    year\n    coverArtUri\n    artists {\n      id\n      name\n    }\n  }\n"): (typeof documents)["\n  fragment AlbumCard_Release on Release {\n    id\n    title\n    year\n    coverArtUri\n    artists {\n      id\n      name\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -97,11 +99,15 @@ export function graphql(source: "\n  fragment AlbumTrackList_Release on Release 
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment ArtistAlbumList_Artist on Artist {\n    id\n    albums {\n      id\n      date\n      country\n      releaseGroup {\n        id\n        primaryType\n        secondaryTypes\n      }\n      ...AlbumCard_Release\n    }\n  }\n"): (typeof documents)["\n  fragment ArtistAlbumList_Artist on Artist {\n    id\n    albums {\n      id\n      date\n      country\n      releaseGroup {\n        id\n        primaryType\n        secondaryTypes\n      }\n      ...AlbumCard_Release\n    }\n  }\n"];
+export function graphql(source: "\n  fragment ArtistAlbumList_Artist on Artist {\n    id\n    mainAlbums {\n      id\n      date\n      year\n      country\n      releaseGroup {\n        id\n        primaryType\n        secondaryTypes\n      }\n      ...AlbumCard_Release\n    }\n  }\n"): (typeof documents)["\n  fragment ArtistAlbumList_Artist on Artist {\n    id\n    mainAlbums {\n      id\n      date\n      year\n      country\n      releaseGroup {\n        id\n        primaryType\n        secondaryTypes\n      }\n      ...AlbumCard_Release\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment ArtistPanel_Artist on Artist {\n    id\n    name\n    ...ArtistAlbumList_Artist\n  }\n"): (typeof documents)["\n  fragment ArtistPanel_Artist on Artist {\n    id\n    name\n    ...ArtistAlbumList_Artist\n  }\n"];
+export function graphql(source: "\n  fragment ArtistHeader_Artist on Artist {\n    id\n    name\n  }\n"): (typeof documents)["\n  fragment ArtistHeader_Artist on Artist {\n    id\n    name\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  fragment ArtistPanel_Artist on Artist {\n    id\n    name\n    ...ArtistHeader_Artist\n    ...ArtistAlbumList_Artist\n  }\n"): (typeof documents)["\n  fragment ArtistPanel_Artist on Artist {\n    id\n    name\n    ...ArtistHeader_Artist\n    ...ArtistAlbumList_Artist\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
