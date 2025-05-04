@@ -1,4 +1,3 @@
-import { CheckCircle } from "lucide-react";
 import * as React from "react";
 import { LargePlayButton } from "@/components/buttons/LargePlayButton.tsx";
 import { PopularArtistTracks } from "@/features/artist/PopularArtistTracks.tsx";
@@ -18,6 +17,7 @@ export const artistPanelArtistFragment = graphql(`
     id
     name
     ...ArtistHeader_Artist
+    ...PopularArtistTracks_Artist
     ...ArtistAlbumList_Artist
   }
 `);
@@ -36,7 +36,7 @@ export const ArtistPanel: React.FC<ArtistPanelProps> = (props) => {
         <FollowButton />
         <DotsButton />
       </div>
-      <PopularArtistTracks />
+      <PopularArtistTracks artist={artist} />
       <div className={"mt-12"} />
 
       <div className="px-6 md:px-10 mt-4">

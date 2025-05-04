@@ -1,14 +1,16 @@
 using System.Collections;
 using Hqub.Lastfm;
+using MusicGQL.Features.Recording;
 using MusicGQL.Features.Release;
 using MusicGQL.Integration.MusicBrainz;
+using TrackSeries.FanArtTV.Client;
+using Track = Hqub.Lastfm.Entities.Track;
 
 namespace MusicGQL.Features.Artist;
 
 public record Artist([property: GraphQLIgnore] Hqub.MusicBrainz.Entities.Artist Model)
 {
-    [ID]
-    public string Id => Model.Id;
+    [ID] public string Id => Model.Id;
     public string Name => Model.Name;
     public string SortName => Model.SortName;
     public string? Disambiguation => Model.Disambiguation;
@@ -46,8 +48,19 @@ public record Artist([property: GraphQLIgnore] Hqub.MusicBrainz.Entities.Artist 
             .Select(r => new Release.Release(r));
     }
 
-    public async Task<IEnumerable<Recording.Recording>> TopTracks([Service] LastfmClient lastfmClient)
+    public async Task<IEnumerable<LastFmTrack>> TopTracks([Service] LastfmClient lastfmClient)
     {
-        
+        var tracks = await lastfmClient.Artist.GetTopTracksByMbidAsync(Model.Id);
+
+        return tracks
+            .OrderByDescending(t => t.Statistics.PlayCount)
+            .Take(10)
+            .Select(t => new LastFmTrack(t));
+    }
+
+    public async Task<ArtistImages> Images([Service] FanArtTVClient fanartClient)
+    {
+        var artist = await fanartClient.Music.GetArtistAsync(Model.Id);
+        return new(artist);
     }
 }

@@ -1,6 +1,8 @@
+using Hqub.Lastfm;
 using Hqub.MusicBrainz;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Options;
 using MusicGQL.Aggregates;
 using MusicGQL.Db;
 using MusicGQL.Features.LikedSongs.Commands;
@@ -33,6 +35,15 @@ builder
     .AddType<LikedSongSuccess>()
     .AddType<LikedSongAlreadyLiked>()
     .AddType<LikedSongSongDoesNotExist>();
+
+builder.Services.Configure<LastfmOptions>(
+    builder.Configuration.GetSection("Lastfm"));
+
+builder.Services.AddSingleton<LastfmClient>(sp =>
+{
+    var options = sp.GetRequiredService<IOptions<LastfmOptions>>().Value;
+    return new LastfmClient(options.ApiKey);
+});
 
 var app = builder.Build();
 
