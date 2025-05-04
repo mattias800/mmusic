@@ -11,6 +11,7 @@ interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 export function Sidebar({ className, playlists }: SidebarProps) {
+  const { pathname } = window.location;
   return (
     <div className={cn("pb-12", className)}>
       <div className="space-y-4 py-4">
@@ -19,13 +20,17 @@ export function Sidebar({ className, playlists }: SidebarProps) {
             Discover
           </h2>
           <div className="space-y-1">
-            <Button variant="ghost" className="w-full justify-start" asChild>
+            <Button
+              variant={pathname === "/liked-songs" ? "secondary" : "ghost"}
+              className="w-full justify-start"
+              asChild
+            >
               <NavLink to={"/liked-songs"}>
                 <Heart className="mr-2 h-4 w-4" />
                 Liked songs
               </NavLink>
             </Button>
-            <Button variant="secondary" className="w-full justify-start">
+            <Button variant="ghost" className="w-full justify-start">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24"

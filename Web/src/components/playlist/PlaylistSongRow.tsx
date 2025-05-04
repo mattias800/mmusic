@@ -3,33 +3,30 @@ import { FragmentType, graphql, useFragment } from "@/gql";
 import { formatTrackLength } from "@/common/TrackLengthFormatter.ts";
 import { Link } from "react-router";
 
-export interface LikedSongRowProps {
-  likedSong: FragmentType<typeof likedSongRowFragment>;
+export interface PlaylistSongRowProps {
+  song: FragmentType<typeof playlistSongRowFragment>;
   index: number;
 }
 
-export const likedSongRowFragment = graphql(`
-  fragment LikedSongRow_LikedSong on LikedSong {
+export const playlistSongRowFragment = graphql(`
+  fragment LikedSongRow_Recoding on Recording {
     id
-    recording {
+    title
+    length
+    artists {
+      id
+      name
+    }
+    mainAlbum {
       id
       title
-      length
-      artists {
-        id
-        name
-      }
-      mainAlbum {
-        id
-        title
-        coverArtUri
-      }
+      coverArtUri
     }
   }
 `);
 
-export const LikedSongRow: React.FC<LikedSongRowProps> = (props) => {
-  const { recording } = useFragment(likedSongRowFragment, props.likedSong);
+export const PlaylistSongRow: React.FC<PlaylistSongRowProps> = (props) => {
+  const recording = useFragment(playlistSongRowFragment, props.song);
 
   return (
     <div className="grid grid-cols-[40px_48px_1fr_1fr_150px_48px] gap-4 items-center px-4 py-3 hover:bg-neutral-800 rounded">
