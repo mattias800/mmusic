@@ -14,9 +14,12 @@ export const albumTrackListReleaseFragment = graphql(`
       id
       title
       length
-      artists {
-        id
+      nameCredits {
         name
+        artist {
+          id
+          name
+        }
       }
     }
   }
@@ -44,13 +47,10 @@ export const AlbumTrackList: React.FC<AlbumTrackListProps> = (props) => {
           <div className="text-left">
             <div className="font-medium">{recording.title}</div>
             <div className="text-white/50 text-xs">
-              {recording.artists.map((artist, index) => (
+              {recording.nameCredits.map(({ artist }, index) => (
                 <React.Fragment key={artist.id}>
                   {index > 0 && ", "}
-                  <Link
-                    to={`/artist/${artist.id}`}
-                    className="hover:underline"
-                  >
+                  <Link to={`/artist/${artist.id}`} className="hover:underline">
                     {artist.name}
                   </Link>
                 </React.Fragment>

@@ -70,7 +70,7 @@ public record Artist([property: GraphQLIgnore] Hqub.MusicBrainz.Entities.Artist 
         try
         {
             var artist = await fanartClient.Music.GetArtistAsync(Model.Id);
-            return new(artist);
+            return artist is null ? null : new(artist);
         }
         catch
         {

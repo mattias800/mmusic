@@ -9,7 +9,7 @@ public record Recording([property: GraphQLIgnore] Hqub.MusicBrainz.Entities.Reco
     public string Title => Model.Title;
     public int? Length => Model.Length;
 
-    public IEnumerable<NameCredit> NameCredits => Model.Credits.Select(c => new NameCredit(c));
+    public IEnumerable<NameCredit> NameCredits => Model.Credits?.Select(c => new NameCredit(c)) ?? [];
 
     public async Task<IEnumerable<Release.Release>> Releases([Service] MusicBrainzService mbService)
     {
