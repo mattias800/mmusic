@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Input } from "@/components/ui/input.tsx";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { SearchPanel } from "@/features/search/SearchPanel.tsx";
 
 export interface SearchInputProps {}
@@ -8,16 +8,42 @@ export interface SearchInputProps {}
 export const SearchInput: React.FC<SearchInputProps> = () => {
   const [value, setValue] = useState("");
   const [inFocus, setInFocus] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
+  const popupRef = useRef<HTMLDivElement>(null);
+
+  // Handle clicks outside the form and popup
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        formRef.current &&
+        !formRef.current.contains(event.target as Node) &&
+        popupRef.current &&
+        !popupRef.current.contains(event.target as Node)
+      ) {
+        setInFocus(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
   return (
-    <form>
-      <Input
-        placeholder={"Search..."}
-        value={value}
-        onFocus={() => setInFocus(true)}
-        onBlur={() => setInFocus(false)}
-        onChange={(ev) => setValue(ev.target.value)}
-      />
-      {value && inFocus && <SearchPanel searchText={value} />}
-    </form>
+    <div>
+      <form ref={formRef} onFocus={() => setInFocus(true)}>
+        <Input
+          placeholder={"Search..."}
+          value={value}
+          onChange={(ev) => setValue(ev.target.value)}
+        />
+      </form>
+      {value && inFocus && (
+        <div ref={popupRef}>
+          <SearchPanel searchText={value} />
+        </div>
+      )}
+    </div>
   );
 };

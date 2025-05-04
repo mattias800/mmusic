@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Hqub.MusicBrainz;
 using Hqub.MusicBrainz.Entities;
 using Microsoft.Extensions.Caching.Hybrid;
@@ -200,7 +201,7 @@ public class MusicBrainzService(MusicBrainzClient client, HybridCache cache)
         );
         return result ?? [];
     }
-    
+
     private async Task<T?> ExecuteThrottledAsync<T>(
         string cacheKey,
         TimeSpan cacheDuration,
@@ -212,13 +213,18 @@ public class MusicBrainzService(MusicBrainzClient client, HybridCache cache)
             async cancellationToken =>
             {
                 await _throttle.WaitAsync(cancellationToken);
+                var stopwatch = Stopwatch.StartNew();
+
                 try
                 {
                     return await fetch();
                 }
                 finally
                 {
-                    await Task.Delay(1000, cancellationToken); // Rate limit: 1 req/sec
+                    stopwatch.Stop();
+
+                    var timeLeftForMusicBrainzLimit = Math.Max(1100 - (int)stopwatch.ElapsedMilliseconds, 0);
+                    await Task.Delay(timeLeftForMusicBrainzLimit, cancellationToken); // Rate limit: 1 req/sec
                     _throttle.Release();
                 }
             },
