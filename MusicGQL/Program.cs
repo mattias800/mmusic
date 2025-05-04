@@ -13,7 +13,9 @@ using MusicGQL.Types;
 var builder = WebApplication.CreateBuilder(args);
 
 builder
-    .Services.AddMemoryCache()
+    .Services
+    .AddHybridCache()
+    .Services
     .AddSingleton<IMemoryCache, MemoryCache>()
     .AddSingleton<MusicBrainzService>()
     .AddScoped<LikeSongHandler>()
@@ -23,6 +25,12 @@ builder
 builder.Services.AddDbContext<EventDbContext>(options =>
     options.UseSqlite("Data Source=events.db")
 );
+
+builder.Services.AddStackExchangeRedisCache(options =>
+{
+    options.Configuration =
+        builder.Configuration.GetConnectionString("RedisConnectionString");
+});
 
 builder
     .AddGraphQL()

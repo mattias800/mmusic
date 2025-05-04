@@ -1,10 +1,10 @@
 using Hqub.MusicBrainz;
 using Hqub.MusicBrainz.Entities;
-using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Caching.Hybrid;
 
 namespace MusicGQL.Integration.MusicBrainz;
 
-public class MusicBrainzService(MusicBrainzClient client, IMemoryCache cache)
+public class MusicBrainzService(MusicBrainzClient client, HybridCache cache)
 {
     private readonly SemaphoreSlim _throttle = new(1, 1);
 
@@ -22,9 +22,9 @@ public class MusicBrainzService(MusicBrainzClient client, IMemoryCache cache)
         var result = await ExecuteThrottledAsync(
             $"recording:{recordingId}:artists",
             TimeSpan.FromDays(1),
-            () => client.Artists.BrowseAsync("recording", recordingId)
+            async () => (await client.Artists.BrowseAsync("recording", recordingId)).Items
         );
-        return result?.Items ?? [];
+        return result ?? [];
     }
 
     public async Task<List<Artist>> SearchArtistByNameAsync(string name)
@@ -32,9 +32,9 @@ public class MusicBrainzService(MusicBrainzClient client, IMemoryCache cache)
         var result = await ExecuteThrottledAsync(
             $"search_artist:{name}",
             TimeSpan.FromHours(1),
-            () => client.Artists.SearchAsync(name, 100)
+            async () => (await client.Artists.SearchAsync(name, 100)).Items
         );
-        return result?.Items ?? [];
+        return result ?? [];
     }
 
     // Recordings
@@ -51,9 +51,9 @@ public class MusicBrainzService(MusicBrainzClient client, IMemoryCache cache)
         var result = await ExecuteThrottledAsync(
             $"artist:{artistId}:recordings",
             TimeSpan.FromDays(1),
-            () => client.Recordings.BrowseAsync("artist", artistId, 100)
+            async () => (await client.Recordings.BrowseAsync("artist", artistId, 100)).Items
         );
-        return result?.Items ?? [];
+        return result ?? [];
     }
 
     public async Task<List<Recording>> GetRecordingsForReleaseAsync(string releaseId)
@@ -61,9 +61,9 @@ public class MusicBrainzService(MusicBrainzClient client, IMemoryCache cache)
         var result = await ExecuteThrottledAsync(
             $"release:{releaseId}:recordings",
             TimeSpan.FromDays(1),
-            () => client.Recordings.BrowseAsync("release", releaseId, 100)
+            async () => (await client.Recordings.BrowseAsync("release", releaseId, 100)).Items
         );
-        return result?.Items ?? [];
+        return result ?? [];
     }
 
     public async Task<List<Recording>> SearchRecordingByNameAsync(string name)
@@ -71,9 +71,9 @@ public class MusicBrainzService(MusicBrainzClient client, IMemoryCache cache)
         var result = await ExecuteThrottledAsync(
             $"search_recording:{name}",
             TimeSpan.FromHours(1),
-            () => client.Recordings.SearchAsync(name, 100)
+            async () => (await client.Recordings.SearchAsync(name, 100)).Items
         );
-        return result?.Items ?? [];
+        return result ?? [];
     }
 
     // Releases
@@ -97,8 +97,8 @@ public class MusicBrainzService(MusicBrainzClient client, IMemoryCache cache)
         var result = await ExecuteThrottledAsync(
             $"artist:{artistId}:releases",
             TimeSpan.FromDays(1),
-            () =>
-                client.Releases.BrowseAsync(
+            async () =>
+                (await client.Releases.BrowseAsync(
                     "artist",
                     artistId,
                     100,
@@ -107,9 +107,9 @@ public class MusicBrainzService(MusicBrainzClient client, IMemoryCache cache)
                     "genres",
                     "release-groups",
                     "artist-credits"
-                )
+                )).Items
         );
-        return result?.Items ?? [];
+        return result ?? [];
     }
 
     public async Task<List<Release>> GetReleasesForRecordingAsync(string recordingId)
@@ -117,19 +117,18 @@ public class MusicBrainzService(MusicBrainzClient client, IMemoryCache cache)
         var result = await ExecuteThrottledAsync(
             $"recording:{recordingId}:releases",
             TimeSpan.FromDays(1),
-            () =>
-                client.Releases.BrowseAsync(
-                    "recording",
-                    recordingId,
-                    100,
-                    0,
-                    "recordings",
-                    "genres",
-                    "release-groups",
-                    "artist-credits"
-                )
+            async () => (await client.Releases.BrowseAsync(
+                "recording",
+                recordingId,
+                100,
+                0,
+                "recordings",
+                "genres",
+                "release-groups",
+                "artist-credits"
+            )).Items
         );
-        return result?.Items ?? [];
+        return result ?? [];
     }
 
     public async Task<List<Release>> GetReleasesForReleaseGroupAsync(string releaseGroupId)
@@ -137,8 +136,8 @@ public class MusicBrainzService(MusicBrainzClient client, IMemoryCache cache)
         var result = await ExecuteThrottledAsync(
             $"release-group:{releaseGroupId}:releases",
             TimeSpan.FromDays(1),
-            () =>
-                client.Releases.BrowseAsync(
+            async () =>
+                (await client.Releases.BrowseAsync(
                     "release-group",
                     releaseGroupId,
                     100,
@@ -147,9 +146,9 @@ public class MusicBrainzService(MusicBrainzClient client, IMemoryCache cache)
                     "genres",
                     "release-groups",
                     "artist-credits"
-                )
+                )).Items
         );
-        return result?.Items ?? [];
+        return result ?? [];
     }
 
     public async Task<List<Release>> SearchReleaseByNameAsync(string name)
@@ -157,10 +156,10 @@ public class MusicBrainzService(MusicBrainzClient client, IMemoryCache cache)
         var result = await ExecuteThrottledAsync(
             $"search_release:{name}",
             TimeSpan.FromDays(1),
-            () => client.Releases.SearchAsync(name)
+            async () => (await client.Releases.SearchAsync(name)).Items
         );
 
-        return result?.Items ?? [];
+        return result ?? [];
     }
 
     // Release groups
@@ -170,9 +169,9 @@ public class MusicBrainzService(MusicBrainzClient client, IMemoryCache cache)
         var result = await ExecuteThrottledAsync(
             $"artist:{artistId}:release-groups",
             TimeSpan.FromDays(1),
-            () => client.ReleaseGroups.BrowseAsync("artist", artistId, 100, 0)
+            async () => (await client.ReleaseGroups.BrowseAsync("artist", artistId, 100, 0)).Items
         );
-        return result?.Items ?? [];
+        return result ?? [];
     }
 
     private async Task<T?> ExecuteThrottledAsync<T>(
@@ -183,19 +182,23 @@ public class MusicBrainzService(MusicBrainzClient client, IMemoryCache cache)
     {
         return await cache.GetOrCreateAsync(
             cacheKey,
-            async entry =>
+            async cancellationToken =>
             {
-                entry.AbsoluteExpirationRelativeToNow = cacheDuration;
-                await _throttle.WaitAsync();
+                await _throttle.WaitAsync(cancellationToken);
                 try
                 {
                     return await fetch();
                 }
                 finally
                 {
-                    await Task.Delay(1000); // Rate limit: 1 req/sec
+                    await Task.Delay(1000, cancellationToken); // Rate limit: 1 req/sec
                     _throttle.Release();
                 }
+            },
+            new HybridCacheEntryOptions
+            {
+                LocalCacheExpiration = cacheDuration,
+                Expiration = cacheDuration
             }
         );
     }

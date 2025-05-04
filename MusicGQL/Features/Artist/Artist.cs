@@ -50,13 +50,20 @@ public record Artist([property: GraphQLIgnore] Hqub.MusicBrainz.Entities.Artist 
 
     public async Task<IEnumerable<LastFmTrack>> TopTracks([Service] LastfmClient lastfmClient)
     {
-        var tracks = await lastfmClient.Artist.GetTopTracksByMbidAsync(Model.Id);
+        try
+        {
+            var tracks = await lastfmClient.Artist.GetTopTracksByMbidAsync(Model.Id);
 
-        return tracks
-            .Where(t => t.MBID is not null)
-            .OrderByDescending(t => t.Statistics.PlayCount)
-            .Take(10)
-            .Select(t => new LastFmTrack(t)).ToList();
+            return tracks
+                .Where(t => t.MBID is not null)
+                .OrderByDescending(t => t.Statistics.PlayCount)
+                .Take(10)
+                .Select(t => new LastFmTrack(t)).ToList();
+        }
+        catch
+        {
+            return [];
+        }
     }
 
     public async Task<ArtistImages?> Images([Service] IFanArtTVClient fanartClient)
