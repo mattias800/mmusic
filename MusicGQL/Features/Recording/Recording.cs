@@ -5,8 +5,7 @@ namespace MusicGQL.Features.Recording;
 
 public record Recording([property: GraphQLIgnore] Hqub.MusicBrainz.Entities.Recording Model)
 {
-    [ID]
-    public string Id => Model.Id;
+    [ID] public string Id => Model.Id;
     public string Title => Model.Title;
     public int? Length => Model.Length;
 
@@ -16,11 +15,11 @@ public record Recording([property: GraphQLIgnore] Hqub.MusicBrainz.Entities.Reco
         return releases.Select(a => new Release.Release(a));
     }
 
-    public async Task<Release.Release> MainAlbum([Service] MusicBrainzService mbService)
+    public async Task<Release.Release?> MainAlbum([Service] MusicBrainzService mbService)
     {
         var releases = await mbService.GetReleasesForRecordingAsync(Model.Id);
         var mainAlbum = MainAlbumFinder.FindMainAlbumForSong(releases);
-        return new Release.Release(mainAlbum);
+        return mainAlbum is null ? null : new Release.Release(mainAlbum);
     }
 
     public async Task<IEnumerable<Artist.Artist>> Artists([Service] MusicBrainzService mbService)

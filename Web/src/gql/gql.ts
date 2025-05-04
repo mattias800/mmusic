@@ -30,7 +30,11 @@ type Documents = {
     "\n  fragment PopularTrackRow_LastFmTrack on LastFmTrack {\n    id\n    playCount\n    summary\n    recording {\n      id\n      title\n      length\n      mainAlbum {\n        id\n        title\n        coverArtUri\n      }\n    }\n  }\n": typeof types.PopularTrackRow_LastFmTrackFragmentDoc,
     "\n  fragment LikedSongRow_LikedSong on LikedSong {\n    id\n    recording {\n      id\n      title\n      length\n      artists {\n        id\n        name\n      }\n      mainAlbum {\n        id\n        title\n        coverArtUri\n        artists {\n          id\n        }\n      }\n    }\n  }\n": typeof types.LikedSongRow_LikedSongFragmentDoc,
     "\n  fragment LikedSongsList_User on User {\n    id\n    likedSongs {\n      id\n      ...LikedSongRow_LikedSong\n    }\n  }\n": typeof types.LikedSongsList_UserFragmentDoc,
-    "\nquery SearchPanelQuery($text: String!) {\n  artist {\n    searchByName(name: $text) {\n      id\n      name\n      images {\n        artistThumb\n      }\n    }\n  }\n  release {\n    searchByName(name: $text) {\n      id\n      title\n      coverArtUri\n    }\n  }\n}\n": typeof types.SearchPanelQueryDocument,
+    "\n  query SearchPanelQuery($text: String!) {\n    ...SearchResult_Query\n  }\n": typeof types.SearchPanelQueryDocument,
+    "\n  fragment SearchResult_Query on Query {\n    artist {\n      searchByName(name: $text, limit: 5) {\n        ...SearchResultArtist_Artist\n      }\n    }\n    releaseGroup {\n      searchByName(name: $text, limit: 5) {\n        ...SearchResultReleaseGroup_ReleaseGroup\n      }\n    }\n    recording {\n      searchByName(name: $text, limit: 5) {\n        ...SearchResultRecording_Recording\n      }\n    }\n  }\n": typeof types.SearchResult_QueryFragmentDoc,
+    "\n  fragment SearchResultArtist_Artist on Artist {\n    id\n    name\n    images {\n      artistThumb\n    }\n  }\n": typeof types.SearchResultArtist_ArtistFragmentDoc,
+    "\n  fragment SearchResultRecording_Recording on Recording {\n    id\n    title\n    length\n    artists {\n      id\n      name\n    }\n    mainAlbum {\n      id\n      title\n      coverArtUri\n    }\n  }\n": typeof types.SearchResultRecording_RecordingFragmentDoc,
+    "\n  fragment SearchResultReleaseGroup_ReleaseGroup on ReleaseGroup {\n    id\n    title\n    mainRelease {\n      id\n      title\n      coverArtUri\n    }\n  }\n": typeof types.SearchResultReleaseGroup_ReleaseGroupFragmentDoc,
 };
 const documents: Documents = {
     "\n  query AlbumQuery($releaseId: ID!) {\n    release {\n      byId(id: $releaseId) {\n        id\n        ...AlbumPanel_Release\n      }\n    }\n  }\n": types.AlbumQueryDocument,
@@ -49,7 +53,11 @@ const documents: Documents = {
     "\n  fragment PopularTrackRow_LastFmTrack on LastFmTrack {\n    id\n    playCount\n    summary\n    recording {\n      id\n      title\n      length\n      mainAlbum {\n        id\n        title\n        coverArtUri\n      }\n    }\n  }\n": types.PopularTrackRow_LastFmTrackFragmentDoc,
     "\n  fragment LikedSongRow_LikedSong on LikedSong {\n    id\n    recording {\n      id\n      title\n      length\n      artists {\n        id\n        name\n      }\n      mainAlbum {\n        id\n        title\n        coverArtUri\n        artists {\n          id\n        }\n      }\n    }\n  }\n": types.LikedSongRow_LikedSongFragmentDoc,
     "\n  fragment LikedSongsList_User on User {\n    id\n    likedSongs {\n      id\n      ...LikedSongRow_LikedSong\n    }\n  }\n": types.LikedSongsList_UserFragmentDoc,
-    "\nquery SearchPanelQuery($text: String!) {\n  artist {\n    searchByName(name: $text) {\n      id\n      name\n      images {\n        artistThumb\n      }\n    }\n  }\n  release {\n    searchByName(name: $text) {\n      id\n      title\n      coverArtUri\n    }\n  }\n}\n": types.SearchPanelQueryDocument,
+    "\n  query SearchPanelQuery($text: String!) {\n    ...SearchResult_Query\n  }\n": types.SearchPanelQueryDocument,
+    "\n  fragment SearchResult_Query on Query {\n    artist {\n      searchByName(name: $text, limit: 5) {\n        ...SearchResultArtist_Artist\n      }\n    }\n    releaseGroup {\n      searchByName(name: $text, limit: 5) {\n        ...SearchResultReleaseGroup_ReleaseGroup\n      }\n    }\n    recording {\n      searchByName(name: $text, limit: 5) {\n        ...SearchResultRecording_Recording\n      }\n    }\n  }\n": types.SearchResult_QueryFragmentDoc,
+    "\n  fragment SearchResultArtist_Artist on Artist {\n    id\n    name\n    images {\n      artistThumb\n    }\n  }\n": types.SearchResultArtist_ArtistFragmentDoc,
+    "\n  fragment SearchResultRecording_Recording on Recording {\n    id\n    title\n    length\n    artists {\n      id\n      name\n    }\n    mainAlbum {\n      id\n      title\n      coverArtUri\n    }\n  }\n": types.SearchResultRecording_RecordingFragmentDoc,
+    "\n  fragment SearchResultReleaseGroup_ReleaseGroup on ReleaseGroup {\n    id\n    title\n    mainRelease {\n      id\n      title\n      coverArtUri\n    }\n  }\n": types.SearchResultReleaseGroup_ReleaseGroupFragmentDoc,
 };
 
 /**
@@ -133,7 +141,23 @@ export function graphql(source: "\n  fragment LikedSongsList_User on User {\n   
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\nquery SearchPanelQuery($text: String!) {\n  artist {\n    searchByName(name: $text) {\n      id\n      name\n      images {\n        artistThumb\n      }\n    }\n  }\n  release {\n    searchByName(name: $text) {\n      id\n      title\n      coverArtUri\n    }\n  }\n}\n"): (typeof documents)["\nquery SearchPanelQuery($text: String!) {\n  artist {\n    searchByName(name: $text) {\n      id\n      name\n      images {\n        artistThumb\n      }\n    }\n  }\n  release {\n    searchByName(name: $text) {\n      id\n      title\n      coverArtUri\n    }\n  }\n}\n"];
+export function graphql(source: "\n  query SearchPanelQuery($text: String!) {\n    ...SearchResult_Query\n  }\n"): (typeof documents)["\n  query SearchPanelQuery($text: String!) {\n    ...SearchResult_Query\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  fragment SearchResult_Query on Query {\n    artist {\n      searchByName(name: $text, limit: 5) {\n        ...SearchResultArtist_Artist\n      }\n    }\n    releaseGroup {\n      searchByName(name: $text, limit: 5) {\n        ...SearchResultReleaseGroup_ReleaseGroup\n      }\n    }\n    recording {\n      searchByName(name: $text, limit: 5) {\n        ...SearchResultRecording_Recording\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment SearchResult_Query on Query {\n    artist {\n      searchByName(name: $text, limit: 5) {\n        ...SearchResultArtist_Artist\n      }\n    }\n    releaseGroup {\n      searchByName(name: $text, limit: 5) {\n        ...SearchResultReleaseGroup_ReleaseGroup\n      }\n    }\n    recording {\n      searchByName(name: $text, limit: 5) {\n        ...SearchResultRecording_Recording\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  fragment SearchResultArtist_Artist on Artist {\n    id\n    name\n    images {\n      artistThumb\n    }\n  }\n"): (typeof documents)["\n  fragment SearchResultArtist_Artist on Artist {\n    id\n    name\n    images {\n      artistThumb\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  fragment SearchResultRecording_Recording on Recording {\n    id\n    title\n    length\n    artists {\n      id\n      name\n    }\n    mainAlbum {\n      id\n      title\n      coverArtUri\n    }\n  }\n"): (typeof documents)["\n  fragment SearchResultRecording_Recording on Recording {\n    id\n    title\n    length\n    artists {\n      id\n      name\n    }\n    mainAlbum {\n      id\n      title\n      coverArtUri\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  fragment SearchResultReleaseGroup_ReleaseGroup on ReleaseGroup {\n    id\n    title\n    mainRelease {\n      id\n      title\n      coverArtUri\n    }\n  }\n"): (typeof documents)["\n  fragment SearchResultReleaseGroup_ReleaseGroup on ReleaseGroup {\n    id\n    title\n    mainRelease {\n      id\n      title\n      coverArtUri\n    }\n  }\n"];
 
 export function graphql(source: string) {
   return (documents as any)[source] ?? {};

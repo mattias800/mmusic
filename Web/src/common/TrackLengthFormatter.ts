@@ -1,3 +1,5 @@
+const numberFormatter = new Intl.NumberFormat();
+
 export const formatTrackLength = (length: number) => {
   // Length is in milliseconds, format as HH:MM:SS
   const totalSeconds = Math.floor(length / 1000);
@@ -11,3 +13,5 @@ export const formatTrackLength = (length: number) => {
     ? `${hours}:${padNumber(minutes)}:${padNumber(seconds)}`
     : `${minutes}:${padNumber(seconds)}`;
 };
+
+export const formatLargeNumber = (num: number) => numberFormatter.format(num);

@@ -9,7 +9,7 @@ public record Release([property: GraphQLIgnore] Hqub.MusicBrainz.Entities.Releas
     [ID] public string Id => Model.Id;
     public string Title => Model.Title;
     public string? Date => Model.Date;
-    public string? Year => Model.Date?.Split("-").FirstOrDefault();
+    public string? Year => (Model.ReleaseGroup.FirstReleaseDate ?? Model.Date)?.Split("-").FirstOrDefault();
     public string? Barcode => Model.Barcode;
     public string? Country => Model.Country;
     public string? Status => Model.Status;

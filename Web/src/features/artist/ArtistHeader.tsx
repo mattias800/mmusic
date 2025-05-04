@@ -1,6 +1,7 @@
 import { FragmentType, graphql, useFragment } from "@/gql";
 import * as React from "react";
 import { CheckCircle } from "lucide-react";
+import { formatLargeNumber } from "@/common/TrackLengthFormatter.ts";
 
 export interface ArtistHeaderProps {
   artist: FragmentType<typeof artistHeaderArtistFragment>;
@@ -32,7 +33,7 @@ export const ArtistHeader: React.FC<ArtistHeaderProps> = (props) => {
           {artist.name}
         </h1>
         <p className="text-white text-sm">
-          {new Intl.NumberFormat().format(artist.listeners)} monthly listeners
+          {formatLargeNumber(artist.listeners)} monthly listeners
         </p>
       </div>
 

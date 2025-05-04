@@ -26,7 +26,7 @@ export const ArtistPanel: React.FC<ArtistPanelProps> = (props) => {
   const artist = useFragment(artistPanelArtistFragment, props.artist);
 
   return (
-    <div className="bg-gradient-to-b from-neutral-800 to-black text-white min-h-screen">
+    <div className="bg-gradient-to-b from-neutral-800 to-black text-white min-h-screen pb-12">
       <ArtistHeader artist={artist} />
 
       {/* Controls */}

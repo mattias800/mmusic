@@ -1,6 +1,9 @@
 import { FragmentType, graphql, useFragment } from "@/gql";
 import * as React from "react";
-import { formatTrackLength } from "@/common/TrackLengthFormatter.ts";
+import {
+  formatLargeNumber,
+  formatTrackLength,
+} from "@/common/TrackLengthFormatter.ts";
 
 interface PopularTrackProps {
   track: FragmentType<typeof popularTrackRowLastFmTrackFragment>;
@@ -40,17 +43,19 @@ export const PopularTrackRow: React.FC<PopularTrackProps> = (props) => {
       }`}
     >
       <span>{props.active ? "▶" : props.index}</span>
-      <img
-        src={track.recording?.mainAlbum.coverArtUri}
-        alt={track.recording?.mainAlbum.title}
-        className={
-          "h-12 w-12 object-cover transition-all hover:scale-105 aspect-square rounded-md"
-        }
-      />
+      {track.recording?.mainAlbum && (
+        <img
+          src={track.recording?.mainAlbum.coverArtUri}
+          alt={track.recording?.mainAlbum.title}
+          className={
+            "h-12 w-12 object-cover transition-all hover:scale-105 aspect-square rounded-md"
+          }
+        />
+      )}
 
       <span className="truncate">{track.recording?.title}</span>
       <span className="text-sm text-neutral-400 text-right">
-        {track.playCount}
+        {formatLargeNumber(track.playCount)}
       </span>
       <span className="text-sm text-neutral-400 text-right">
         {formatTrackLength(track.recording?.length ?? 0)}

@@ -27,12 +27,13 @@ public class MusicBrainzService(MusicBrainzClient client, HybridCache cache)
         return result ?? [];
     }
 
-    public async Task<List<Artist>> SearchArtistByNameAsync(string name)
+    public async Task<List<Artist>> SearchArtistByNameAsync(string name, int limit = 25, int offset = 0
+    )
     {
         var result = await ExecuteThrottledAsync(
-            $"search_artist:{name}",
+            $"search_artist:{name}:{limit}:{offset}",
             TimeSpan.FromHours(1),
-            async () => (await client.Artists.SearchAsync(name, 100)).Items
+            async () => (await client.Artists.SearchAsync(name, limit, offset)).Items
         );
         return result ?? [];
     }
@@ -66,12 +67,12 @@ public class MusicBrainzService(MusicBrainzClient client, HybridCache cache)
         return result ?? [];
     }
 
-    public async Task<List<Recording>> SearchRecordingByNameAsync(string name)
+    public async Task<List<Recording>> SearchRecordingByNameAsync(string name, int limit = 25, int offset = 0)
     {
         var result = await ExecuteThrottledAsync(
-            $"search_recording:{name}",
+            $"search_recording:{name}:{limit}:{offset}",
             TimeSpan.FromHours(1),
-            async () => (await client.Recordings.SearchAsync(name, 100)).Items
+            async () => (await client.Recordings.SearchAsync(name, limit, offset)).Items
         );
         return result ?? [];
     }
@@ -125,7 +126,10 @@ public class MusicBrainzService(MusicBrainzClient client, HybridCache cache)
                 "recordings",
                 "genres",
                 "release-groups",
-                "artist-credits"
+                "artist-credits",
+                "annotation",
+                "tags",
+                "ratings"
             )).Items
         );
         return result ?? [];
@@ -151,12 +155,12 @@ public class MusicBrainzService(MusicBrainzClient client, HybridCache cache)
         return result ?? [];
     }
 
-    public async Task<List<Release>> SearchReleaseByNameAsync(string name)
+    public async Task<List<Release>> SearchReleaseByNameAsync(string name, int limit = 25, int offset = 0)
     {
         var result = await ExecuteThrottledAsync(
-            $"search_release:{name}",
+            $"search_release:{name}:{limit}:{offset}",
             TimeSpan.FromDays(1),
-            async () => (await client.Releases.SearchAsync(name)).Items
+            async () => (await client.Releases.SearchAsync(name, limit, offset)).Items
         );
 
         return result ?? [];
@@ -176,12 +180,12 @@ public class MusicBrainzService(MusicBrainzClient client, HybridCache cache)
                 )
         );
 
-    public async Task<List<ReleaseGroup>> SearchReleaseGroupByNameAsync(string name)
+    public async Task<List<ReleaseGroup>> SearchReleaseGroupByNameAsync(string name, int limit = 25, int offset = 0)
     {
         var result = await ExecuteThrottledAsync(
-            $"search_release_group:{name}",
+            $"search_release_group:{name}:{limit}:{offset}",
             TimeSpan.FromDays(1),
-            async () => (await client.ReleaseGroups.SearchAsync(name)).Items
+            async () => (await client.ReleaseGroups.SearchAsync(name, limit, offset)).Items
         );
 
         return result ?? [];
@@ -196,7 +200,7 @@ public class MusicBrainzService(MusicBrainzClient client, HybridCache cache)
         );
         return result ?? [];
     }
-
+    
     private async Task<T?> ExecuteThrottledAsync<T>(
         string cacheKey,
         TimeSpan cacheDuration,

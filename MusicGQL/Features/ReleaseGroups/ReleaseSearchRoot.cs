@@ -6,10 +6,12 @@ public record ReleaseGroupSearchRoot
 {
     public async Task<IEnumerable<ReleaseGroup>> SearchByName(
         [Service] MusicBrainzService mbService,
-        string name
+        string name,
+        int limit = 25,
+        int offset = 0
     )
     {
-        var releases = await mbService.SearchReleaseGroupByNameAsync(name);
+        var releases = await mbService.SearchReleaseGroupByNameAsync(name, limit, offset);
         return releases.Select(a => new ReleaseGroup(a));
     }
 
