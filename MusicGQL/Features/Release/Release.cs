@@ -1,5 +1,5 @@
-using Hqub.MusicBrainz;
 using Hqub.MusicBrainz.Entities;
+using MusicGQL.Integration.MusicBrainz;
 
 namespace MusicGQL.Features.Release;
 
@@ -17,15 +17,11 @@ public record Release([property: GraphQLIgnore] Hqub.MusicBrainz.Entities.Releas
 
     public string CoverArtUri => CoverArtArchive.GetCoverArtUri(Model.Id).ToString();
 
-    public async Task<IEnumerable<Recording.Recording>> Recordings([Service] MusicBrainzClient client)
-    {
-        var recordings = await client.Recordings.BrowseAsync("release", Id);
-        return recordings.Items.Select(r => new Recording.Recording(r));
-    }
+    public async Task<IEnumerable<Artist.Artist>> Artists() => Model.Credits.Select(a => new Artist.Artist(a.Artist));
 
-    public async Task<IEnumerable<Artist.Artist>> Artists([Service] MusicBrainzClient client)
+    public async Task<IEnumerable<Recording.Recording>> Recordings([Service] MusicBrainzService mbService)
     {
-        var release = await client.Releases.GetAsync(Id, "artist-credits");
-        return release.Credits.Select(a => new Artist.Artist(a.Artist));
+        var recordings = await mbService.GetRecordingsForReleaseAsync(Id);
+        return recordings.Select(r => new Recording.Recording(r));
     }
 }

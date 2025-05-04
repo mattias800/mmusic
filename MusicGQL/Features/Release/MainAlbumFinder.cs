@@ -1,4 +1,3 @@
-using Hqub.MusicBrainz.Entities.Collections;
 using MbRelease = Hqub.MusicBrainz.Entities.Release;
 
 namespace MusicGQL.Features.Release;
@@ -6,7 +5,7 @@ namespace MusicGQL.Features.Release;
 public static class MainAlbumFinder
 {
     public static MbRelease FindMainAlbum(
-        ReleaseList releaseList)
+        List<MbRelease> releaseList)
     {
         var allAlbums = releaseList
             .Where(r => r.ReleaseGroup?.PrimaryType == "Album").ToList();
@@ -32,7 +31,7 @@ public static class MainAlbumFinder
             return FindPrioritizedRegionalAlbum(allSingles);
         }
 
-        return releaseList.Items.First();
+        return releaseList.First();
     }
 
     public static MbRelease FindPrioritizedRegionalAlbum(

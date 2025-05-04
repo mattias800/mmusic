@@ -1,15 +1,20 @@
 using Hqub.MusicBrainz;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using MusicGQL.Aggregates;
 using MusicGQL.Db;
 using MusicGQL.Features.LikedSongs.Commands;
 using MusicGQL.Features.LikedSongs.Mutations;
+using MusicGQL.Integration.MusicBrainz;
 using MusicGQL.Types;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services
+    .AddMemoryCache()
+    .AddSingleton<IMemoryCache, MemoryCache>()
     .AddSingleton<MusicBrainzClient>()
+    .AddSingleton<MusicBrainzService>()
     .AddScoped<LikeSongHandler>()
     .AddScoped<UnlikeSongHandler>()
     .AddScoped<EventProcessor>();

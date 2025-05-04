@@ -1,20 +1,20 @@
-using Hqub.MusicBrainz;
+using MusicGQL.Integration.MusicBrainz;
 
 namespace MusicGQL.Features.Release;
 
 public record ReleaseSearchRoot
 {
-    public async Task<IEnumerable<Release>> SearchByName([Service] MusicBrainzClient client, string name)
+    public async Task<IEnumerable<Release>> SearchByName([Service] MusicBrainzService mbService, string name)
     {
-        var artists = await client.Releases.SearchAsync(name, 20);
-        return artists.Items.Select(a => new Release(a));
+        var releases = await mbService.SearchReleaseByNameAsync(name);
+        return releases.Select(a => new Release(a));
     }
 
-    public async Task<Release?> ById([Service] MusicBrainzClient client, [ID] string id)
+    public async Task<Release?> ById([Service] MusicBrainzService mbService, [ID] string id)
     {
         try
         {
-            var recording = await client.Releases.GetAsync(id);
+            var recording = await mbService.GetReleaseByIdAsync(id);
             return recording != null ? new Release(recording) : null;
         }
         catch

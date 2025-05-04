@@ -1,4 +1,4 @@
-using Hqub.MusicBrainz;
+using MusicGQL.Integration.MusicBrainz;
 
 namespace MusicGQL.Features.Artist;
 
@@ -10,9 +10,9 @@ public record Artist([property: GraphQLIgnore] Hqub.MusicBrainz.Entities.Artist 
     public string? Disambiguation => Model.Disambiguation;
     public string? Type => Model.Type;
 
-    public async Task<IEnumerable<Release.Release>> Releases([Service] MusicBrainzClient client)
+    public async Task<IEnumerable<Release.Release>> Releases([Service] MusicBrainzService mbService)
     {
-        var releases = await client.Releases.BrowseAsync("artist", Id, 25, 0, "recordings", "genres", "release-groups");
-        return releases.Items.Select(r => new Release.Release(r));
+        var releases = await mbService.GetReleasesForArtistAsync(Id);
+        return releases.Select(r => new Release.Release(r));
     }
 }
