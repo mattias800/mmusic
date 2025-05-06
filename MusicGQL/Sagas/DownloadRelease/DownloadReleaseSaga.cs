@@ -8,11 +8,14 @@ public class DownloadReleaseSaga(IBus bus) :
     Saga<DownloadReleaseSagaData>,
     IAmInitiatedBy<DownloadReleaseQueuedEvent>,
     IHandleMessages<FoundReleaseInMusicBrainz>,
+    IHandleMessages<ReleaseNotFoundInMusicBrainz>,
     IHandleMessages<FoundReleaseDownload>
 {
     protected override void CorrelateMessages(ICorrelationConfig<DownloadReleaseSagaData> config)
     {
         config.Correlate<DownloadReleaseQueuedEvent>(m => m.MusicBrainzReleaseId, s => s.MusicBrainzReleaseId);
+        config.Correlate<FoundReleaseInMusicBrainz>(m => m.MusicBrainzReleaseId, s => s.MusicBrainzReleaseId);
+        config.Correlate<FoundReleaseDownload>(m => m.MusicBrainzReleaseId, s => s.MusicBrainzReleaseId);
     }
 
     public async Task Handle(DownloadReleaseQueuedEvent message)
@@ -28,7 +31,13 @@ public class DownloadReleaseSaga(IBus bus) :
     public async Task Handle(FoundReleaseInMusicBrainz message)
     {
         Data.Release = message.Release;
-        await bus.Send(new SearchReleaseDownload(message.Release));
+        await bus.Send(new SearchReleaseDownload(message.MusicBrainzReleaseId, message.Release));
+    }
+
+    public Task Handle(ReleaseNotFoundInMusicBrainz message)
+    {
+        MarkAsComplete();
+        return Task.CompletedTask;
     }
 
     public Task Handle(FoundReleaseDownload message)

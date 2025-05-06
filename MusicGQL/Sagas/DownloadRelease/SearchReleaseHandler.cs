@@ -16,6 +16,6 @@ public sealed class SearchReleaseHandler(
 
         logger.LogInformation("Found download for release: {Release}", message.Release.Title);
 
-        await bus.Send(new FoundReleaseDownload(message.Release));
+        await bus.Send(new FoundReleaseDownload(message.MusicBrainzReleaseId, message.Release));
     }
 }

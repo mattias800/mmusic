@@ -25,7 +25,7 @@ public class LookupReleaseInMusicBrainzHandler(
             logger.LogInformation("Found release with ID: {MusicBrainzReleaseId}, {Artist} - {Title}",
                 message.MusicBrainzReleaseId, release.Credits.First().Artist.Name, release.Title);
 
-            await bus.Send(new FoundReleaseInMusicBrainz(release));
+            await bus.Send(new FoundReleaseInMusicBrainz(message.MusicBrainzReleaseId, release));
         }
     }
 }

@@ -73,7 +73,14 @@ builder.Services.AddFanArtTVClient(options =>
 
 builder.Services.AddRebus(rebus =>
         rebus
-            .Routing(r => r.TypeBased().MapAssemblyOf<ApplicationAssemblyReference>("mmusic-queue"))
+            .Routing(r => r.TypeBased()
+                .Map<DownloadReleaseQueuedEvent>("mmusic-queue")
+                .Map<LookupReleaseInMusicBrainz>("mmusic-queue")
+                .Map<FoundReleaseInMusicBrainz>("mmusic-queue")
+                .Map<ReleaseNotFoundInMusicBrainz>("mmusic-queue")
+                .Map<SearchReleaseDownload>("mmusic-queue")
+                .Map<FoundReleaseDownload>("mmusic-queue")
+            )
             .Transport(t =>
                 t.UseRabbitMq(
                     builder.Configuration.GetConnectionString("MessageBroker"),
@@ -93,7 +100,9 @@ builder.Services.AddRebus(rebus =>
     }
 );
 
-builder.Services.AutoRegisterHandlersFromAssemblyOf<ApplicationAssemblyReference>();
+builder.Services.AddRebusHandler<DownloadReleaseSaga>();
+builder.Services.AddRebusHandler<LookupReleaseInMusicBrainzHandler>();
+builder.Services.AddRebusHandler<SearchReleaseHandler>();
 
 var app = builder.Build();
 
