@@ -16,7 +16,7 @@ services:
     ulimits:
       memlock: -1
     ports:
-      - "6379:6379"
+      - "6380:6379"
     volumes:
       - garnetdata:/data
 

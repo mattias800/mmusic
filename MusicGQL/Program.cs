@@ -23,7 +23,7 @@ builder
     .AddScoped<EventProcessor>();
 
 builder.Services.AddDbContext<EventDbContext>(options =>
-    options.UseSqlite("Data Source=events.db")
+    options.UseNpgsql(builder.Configuration.GetConnectionString("PostgresConnectionString"))
 );
 
 builder.Services.AddStackExchangeRedisCache(options =>
