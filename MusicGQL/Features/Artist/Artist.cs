@@ -9,7 +9,8 @@ namespace MusicGQL.Features.Artist;
 
 public record Artist([property: GraphQLIgnore] Hqub.MusicBrainz.Entities.Artist Model)
 {
-    [ID] public string Id => Model.Id;
+    [ID]
+    public string Id => Model.Id;
     public string Name => Model.Name;
     public string SortName => Model.SortName;
     public string? Disambiguation => Model.Disambiguation;
@@ -29,7 +30,9 @@ public record Artist([property: GraphQLIgnore] Hqub.MusicBrainz.Entities.Artist 
         return releaseGroups.Select(r => new ReleaseGroup(r));
     }
 
-    public async Task<IEnumerable<Release.Release>> MainAlbums([Service] MusicBrainzService mbService)
+    public async Task<IEnumerable<Release.Release>> MainAlbums(
+        [Service] MusicBrainzService mbService
+    )
     {
         var releaseGroups = await mbService.GetReleaseGroupsForArtistAsync(Id);
         var albumReleaseGroups = releaseGroups.Where(r => r.IsMainAlbum()).ToList();
@@ -57,7 +60,8 @@ public record Artist([property: GraphQLIgnore] Hqub.MusicBrainz.Entities.Artist 
                 .Where(t => t.MBID is not null)
                 .OrderByDescending(t => t.Statistics.PlayCount)
                 .Take(10)
-                .Select(t => new LastFmTrack(t)).ToList();
+                .Select(t => new LastFmTrack(t))
+                .ToList();
         }
         catch
         {

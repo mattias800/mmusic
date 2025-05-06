@@ -6,17 +6,17 @@ namespace MusicGQL.Features.LikedSongs.Mutations;
 [ExtendObjectType(typeof(Mutation))]
 public record LikeSongMutation
 {
-    public async Task<LikedSongResult> LikeSong(
+    public async Task<LikeSongResult> LikeSong(
         [Service] LikeSongHandler likeSongHandler,
-        LikedSongInput input
+        LikeSongInput input
     )
     {
         return await likeSongHandler.Handle(new(Guid.NewGuid(), input.RecordingId)) switch
         {
             // TODO Correct user
-            LikeSongHandler.Result.Success => new LikedSongSuccess(new User.User(0)),
-            LikeSongHandler.Result.AlreadyLiked => new LikedSongAlreadyLiked("Song already liked!"),
-            LikeSongHandler.Result.SongDoesNotExist => new LikedSongSongDoesNotExist(
+            LikeSongHandler.Result.Success => new LikeSongSuccess(new User.User(0)),
+            LikeSongHandler.Result.AlreadyLiked => new LikeSongAlreadyLiked("Song already liked!"),
+            LikeSongHandler.Result.SongDoesNotExist => new LikeSongSongDoesNotExist(
                 "Song does not exist in MusicBrainz!"
             ),
             _ => throw new ArgumentOutOfRangeException(),
@@ -24,13 +24,15 @@ public record LikeSongMutation
     }
 }
 
-public record LikedSongInput(string RecordingId);
+public record LikeSongInput(string RecordingId);
 
-[UnionType("LikedSongResult")]
-public abstract record LikedSongResult { };
+[UnionType("LikeSongResult")]
+public abstract record LikeSongResult
+{
+};
 
-public record LikedSongSuccess(User.User Viewer) : LikedSongResult;
+public record LikeSongSuccess(User.User Viewer) : LikeSongResult;
 
-public record LikedSongAlreadyLiked(string Message) : LikedSongResult;
+public record LikeSongAlreadyLiked(string Message) : LikeSongResult;
 
-public record LikedSongSongDoesNotExist(string Message) : LikedSongResult;
+public record LikeSongSongDoesNotExist(string Message) : LikeSongResult;

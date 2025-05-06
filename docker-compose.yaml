@@ -1,7 +1,7 @@
 version: '3.8'
 services:
-  db:
-    image: postgres:15
+  postgres:
+    image: postgres:latest
     restart: always
     environment:
       POSTGRES_DB: mmusic
@@ -12,14 +12,26 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
   garnet:
-    image: 'ghcr.io/microsoft/garnet'
+    image: ghcr.io/microsoft/garnet
     ulimits:
       memlock: -1
     ports:
       - "6380:6379"
     volumes:
       - garnetdata:/data
+  rabbitmq:
+    image: rabbitmq:3-management
+    restart: always
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
 
 volumes:
   postgres_data:
   garnetdata:
+  rabbitmq_data:

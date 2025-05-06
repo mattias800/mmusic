@@ -11,17 +11,17 @@ public static class MainAlbumFinder
         var releasesAvailable = official.Count != 0 ? official : releases;
 
         return releasesAvailable // filter by official only
-            .OrderBy(r =>
-                r.Country switch
-                {
-                    "XW" => 0,
-                    "US" => 1,
-                    "GB" => 2,
-                    _ => 3
-                }
-            )
-            .ThenBy(r => r.Date) // prefer earlier date
-            .LastOrDefault() ?? releases.LastOrDefault();
+                .OrderBy(r =>
+                    r.Country switch
+                    {
+                        "XW" => 0,
+                        "US" => 1,
+                        "GB" => 2,
+                        _ => 3,
+                    }
+                )
+                .ThenBy(r => r.Date) // prefer earlier date
+                .LastOrDefault() ?? releases.LastOrDefault();
     }
 
     public static MbRelease? FindMainAlbumForSong(List<MbRelease> releases)
@@ -31,7 +31,10 @@ public static class MainAlbumFinder
         var releasesAvailable = official.Count != 0 ? official : releases;
 
         var allAlbums = releasesAvailable
-            .Where(r => r.ReleaseGroup?.PrimaryType == "Album" && r.ReleaseGroup.SecondaryTypes.Count == 0).ToList();
+            .Where(r =>
+                r.ReleaseGroup?.PrimaryType == "Album" && r.ReleaseGroup.SecondaryTypes.Count == 0
+            )
+            .ToList();
 
         if (allAlbums.Count > 0)
         {
@@ -45,7 +48,9 @@ public static class MainAlbumFinder
             return FindPrioritizedRegionalAlbum(allEps);
         }
 
-        var allSingles = releasesAvailable.Where(r => r.ReleaseGroup?.PrimaryType == "Single").ToList();
+        var allSingles = releasesAvailable
+            .Where(r => r.ReleaseGroup?.PrimaryType == "Single")
+            .ToList();
 
         if (allSingles.Count > 0)
         {
@@ -63,8 +68,8 @@ public static class MainAlbumFinder
         }
 
         return releases.LastOrDefault(a => a.Country == "XW")
-               ?? releases.LastOrDefault(a => a.Country == "US")
-               ?? releases.LastOrDefault(a => a.Country == "GB")
-               ?? releases.LastOrDefault();
+            ?? releases.LastOrDefault(a => a.Country == "US")
+            ?? releases.LastOrDefault(a => a.Country == "GB")
+            ?? releases.LastOrDefault();
     }
 };
