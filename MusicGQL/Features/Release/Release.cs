@@ -6,12 +6,13 @@ namespace MusicGQL.Features.Release;
 
 public record Release([property: GraphQLIgnore] Hqub.MusicBrainz.Entities.Release Model)
 {
-    [ID]
-    public string Id => Model.Id;
+    [ID] public string Id => Model.Id;
     public string Title => Model.Title;
     public string? Date => Model.Date;
+
     public string? Year =>
         (Model.ReleaseGroup.FirstReleaseDate ?? Model.Date)?.Split("-").FirstOrDefault();
+
     public string? Barcode => Model.Barcode;
     public string? Country => Model.Country;
     public string? Status => Model.Status;
@@ -24,7 +25,10 @@ public record Release([property: GraphQLIgnore] Hqub.MusicBrainz.Entities.Releas
 
     public string CoverArtUri => CoverArtArchive.GetCoverArtUri(Model.Id).ToString();
 
-    public async Task<IEnumerable<Artist.Artist>> Artists() =>
+    public IEnumerable<NameCredit> NameCredit =>
+        Model.Credits.Select(c => new NameCredit(c));
+
+    public IEnumerable<Artist.Artist> Artists() =>
         Model.Credits.Select(a => new Artist.Artist(a.Artist));
 
     public async Task<IEnumerable<Recording.Recording>> Recordings(
