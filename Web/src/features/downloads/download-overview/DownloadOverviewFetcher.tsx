@@ -1,6 +1,6 @@
 import { graphql } from "@/gql";
 import * as React from "react";
-import { useQuery } from "urql";
+import { useQuery, useSubscription } from "urql";
 import { DownloadOverview } from "@/features/downloads/download-overview/DownloadOverview.tsx";
 
 export interface DownloadOverviewFetcherProps {}
@@ -32,6 +32,8 @@ export const DownloadOverviewFetcher: React.FC<
   const [{ data, error, fetching }] = useQuery({
     query: downloadOverviewFetcherQuery,
   });
+
+  useSubscription({ query: downloadOverviewFetcherSubscription });
 
   if (fetching) {
     return <div>Loading...</div>;

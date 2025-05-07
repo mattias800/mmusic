@@ -24,7 +24,10 @@ export const DownloadOverview: React.FC<DownloadOverviewProps> = (props) => {
   return (
     <div className={"flex flex-col gap-12"}>
       {downloadStatuses.map((downloadStatus) => (
-        <DownloadStatus downloadStatus={downloadStatus} />
+        <DownloadStatus
+          key={downloadStatus.id}
+          downloadStatus={downloadStatus}
+        />
       ))}
     </div>
   );

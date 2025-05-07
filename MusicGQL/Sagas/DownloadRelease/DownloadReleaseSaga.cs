@@ -7,18 +7,32 @@ using Rebus.Sagas;
 
 namespace MusicGQL.Sagas.DownloadRelease;
 
-public class DownloadReleaseSaga(IBus bus, ITopicEventSender sender) :
-    Saga<DownloadReleaseSagaData>,
-    IAmInitiatedBy<DownloadReleaseQueuedEvent>,
-    IHandleMessages<FoundReleaseInMusicBrainz>,
-    IHandleMessages<ReleaseNotFoundInMusicBrainz>,
-    IHandleMessages<FoundReleaseDownload>
+public class DownloadReleaseSaga(IBus bus, ITopicEventSender sender)
+    : Saga<DownloadReleaseSagaData>,
+        IAmInitiatedBy<DownloadReleaseQueuedEvent>,
+        IHandleMessages<FoundReleaseInMusicBrainz>,
+        IHandleMessages<FoundRecordingsForReleaseInMusicBrainz>,
+        IHandleMessages<ReleaseNotFoundInMusicBrainz>,
+        IHandleMessages<FoundReleaseDownload>
 {
     protected override void CorrelateMessages(ICorrelationConfig<DownloadReleaseSagaData> config)
     {
-        config.Correlate<DownloadReleaseQueuedEvent>(m => m.MusicBrainzReleaseId, s => s.MusicBrainzReleaseId);
-        config.Correlate<FoundReleaseInMusicBrainz>(m => m.MusicBrainzReleaseId, s => s.MusicBrainzReleaseId);
-        config.Correlate<FoundReleaseDownload>(m => m.MusicBrainzReleaseId, s => s.MusicBrainzReleaseId);
+        config.Correlate<DownloadReleaseQueuedEvent>(
+            m => m.MusicBrainzReleaseId,
+            s => s.MusicBrainzReleaseId
+        );
+        config.Correlate<FoundReleaseInMusicBrainz>(
+            m => m.MusicBrainzReleaseId,
+            s => s.MusicBrainzReleaseId
+        );
+        config.Correlate<FoundRecordingsForReleaseInMusicBrainz>(
+            m => m.MusicBrainzReleaseId,
+            s => s.MusicBrainzReleaseId
+        );
+        config.Correlate<FoundReleaseDownload>(
+            m => m.MusicBrainzReleaseId,
+            s => s.MusicBrainzReleaseId
+        );
     }
 
     public async Task Handle(DownloadReleaseQueuedEvent message)
@@ -28,7 +42,7 @@ public class DownloadReleaseSaga(IBus bus, ITopicEventSender sender) :
             return;
         }
 
-        Data.StatusDescription = "Looking up release in MusicBrainz";
+        Data.StatusDescription = "Looking up release";
 
         await sender.SendAsync(nameof(Subscription.DownloadStarted), Data);
         await bus.Send(new LookupReleaseInMusicBrainz(message.MusicBrainzReleaseId));
@@ -36,25 +50,77 @@ public class DownloadReleaseSaga(IBus bus, ITopicEventSender sender) :
 
     public async Task Handle(FoundReleaseInMusicBrainz message)
     {
+        // UI
+        Data.ArtistName = message.Release.Credits.First().Artist.Name;
+        Data.ReleaseName = message.Release.Title;
+        Data.StatusDescription = "Looking up tracks";
+        // Data
         Data.Release = message.Release;
-        Data.StatusDescription = "Searching for download";
 
-        await sender.SendAsync(nameof(Subscription.DownloadStatusUpdated), new DownloadStatus(Data));
-        await bus.Send(new SearchReleaseDownload(message.MusicBrainzReleaseId, message.Release));
+        await sender.SendAsync(
+            nameof(Subscription.DownloadStatusUpdated),
+            new DownloadStatus(Data)
+        );
+
+        await bus.Send(
+            new LookupRecordingsForReleaseInMusicBrainz(
+                message.MusicBrainzReleaseId,
+                message.Release
+            )
+        );
     }
 
     public async Task Handle(ReleaseNotFoundInMusicBrainz message)
     {
         Data.StatusDescription = "No download found";
 
-        await sender.SendAsync(nameof(Subscription.DownloadStatusUpdated), new DownloadStatus(Data));
+        await sender.SendAsync(
+            nameof(Subscription.DownloadStatusUpdated),
+            new DownloadStatus(Data)
+        );
         MarkAsComplete();
+    }
+
+    public async Task Handle(FoundRecordingsForReleaseInMusicBrainz message)
+    {
+        // UI
+        Data.NumberOfTracks = message.Recordings.Count;
+        Data.TracksDownloaded = 0;
+        Data.StatusDescription = "Downloading...";
+        // Data
+        Data.Recordings = message.Recordings;
+
+        await sender.SendAsync(
+            nameof(Subscription.DownloadStatusUpdated),
+            new DownloadStatus(Data)
+        );
+
+        foreach (var recording in message.Recordings)
+        {
+            await Task.Delay(3000);
+            Data.TracksDownloaded++;
+            await sender.SendAsync(
+                nameof(Subscription.DownloadStatusUpdated),
+                new DownloadStatus(Data)
+            );
+        }
+
+        await bus.Send(
+            new SearchReleaseDownload(
+                Data.MusicBrainzReleaseId,
+                message.Release,
+                message.Recordings
+            )
+        );
     }
 
     public async Task Handle(FoundReleaseDownload message)
     {
         Data.StatusDescription = "Download found";
-        await sender.SendAsync(nameof(Subscription.DownloadStatusUpdated), new DownloadStatus(Data));
+        await sender.SendAsync(
+            nameof(Subscription.DownloadStatusUpdated),
+            new DownloadStatus(Data)
+        );
         MarkAsComplete();
     }
 }

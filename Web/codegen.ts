@@ -13,6 +13,12 @@ const config: CodegenConfig = {
         output: "schema.json",
       },
     },
+    "./src/gql/introspection.json": {
+      plugins: ["introspection"],
+      config: {
+        minify: false,
+      },
+    },
   },
 };
 

@@ -37,8 +37,12 @@ builder.Services.AddStackExchangeRedisCache(options =>
 
 builder
     .AddGraphQL()
-    .AddRedisSubscriptions((sp) =>
-        ConnectionMultiplexer.Connect(builder.Configuration.GetConnectionString("Redis") ?? string.Empty))
+    .AddRedisSubscriptions(
+        (sp) =>
+            ConnectionMultiplexer.Connect(
+                builder.Configuration.GetConnectionString("Redis") ?? string.Empty
+            )
+    )
     .AddDiagnosticEventListener<MyExecutionEventListener>()
     .AddQueryType<Query>()
     .AddMutationType<Mutation>()
@@ -76,15 +80,20 @@ builder.Services.AddFanArtTVClient(options =>
     options.BaseAddress = fanartOptions?.BaseAddress;
 });
 
-builder.Services.AddRebus(rebus =>
+builder.Services.AddRebus(
+    rebus =>
         rebus
-            .Routing(r => r.TypeBased()
-                .Map<DownloadReleaseQueuedEvent>("mmusic-queue")
-                .Map<LookupReleaseInMusicBrainz>("mmusic-queue")
-                .Map<FoundReleaseInMusicBrainz>("mmusic-queue")
-                .Map<ReleaseNotFoundInMusicBrainz>("mmusic-queue")
-                .Map<SearchReleaseDownload>("mmusic-queue")
-                .Map<FoundReleaseDownload>("mmusic-queue")
+            .Routing(r =>
+                r.TypeBased()
+                    .Map<DownloadReleaseQueuedEvent>("mmusic-queue")
+                    .Map<LookupReleaseInMusicBrainz>("mmusic-queue")
+                    .Map<LookupRecordingsForReleaseInMusicBrainz>("mmusic-queue")
+                    .Map<FoundReleaseInMusicBrainz>("mmusic-queue")
+                    .Map<FoundRecordingsForReleaseInMusicBrainz>("mmusic-queue")
+                    .Map<ReleaseNotFoundInMusicBrainz>("mmusic-queue")
+                    .Map<NoRecordingsFoundInMusicBrainz>("mmusic-queue")
+                    .Map<SearchReleaseDownload>("mmusic-queue")
+                    .Map<FoundReleaseDownload>("mmusic-queue")
             )
             .Transport(t =>
                 t.UseRabbitMq(
@@ -99,7 +108,8 @@ builder.Services.AddRebus(rebus =>
                     "sagas",
                     "saga_indexes"
                 )
-            ), onCreated: async bus =>
+            ),
+    onCreated: async bus =>
     {
         await bus.Subscribe<FoundReleaseInMusicBrainz>();
         await bus.Subscribe<FoundReleaseDownload>();
@@ -108,6 +118,7 @@ builder.Services.AddRebus(rebus =>
 
 builder.Services.AddRebusHandler<DownloadReleaseSaga>();
 builder.Services.AddRebusHandler<LookupReleaseInMusicBrainzHandler>();
+builder.Services.AddRebusHandler<LookupRecordingsForReleaseInMusicBrainzHandler>();
 builder.Services.AddRebusHandler<SearchReleaseHandler>();
 
 var app = builder.Build();

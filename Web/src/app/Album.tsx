@@ -9,6 +9,7 @@ export interface AlbumProps {}
 export const albumQuery = graphql(`
   query AlbumQuery($releaseId: ID!) {
     release {
+      id
       byId(id: $releaseId) {
         id
         ...AlbumPanel_Release

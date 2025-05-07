@@ -14,7 +14,7 @@ import { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/
  * Learn more about it here: https://the-guild.dev/graphql/codegen/plugins/presets/preset-client#reducing-bundle-size
  */
 type Documents = {
-    "\n  query AlbumQuery($releaseId: ID!) {\n    release {\n      byId(id: $releaseId) {\n        id\n        ...AlbumPanel_Release\n      }\n    }\n  }\n": typeof types.AlbumQueryDocument,
+    "\n  query AlbumQuery($releaseId: ID!) {\n    release {\n      id\n      byId(id: $releaseId) {\n        id\n        ...AlbumPanel_Release\n      }\n    }\n  }\n": typeof types.AlbumQueryDocument,
     "\n  query ArtistQuery($artistId: ID!) {\n    artist {\n      byId(id: $artistId) {\n        id\n        ...ArtistPanel_Artist\n      }\n    }\n  }\n": typeof types.ArtistQueryDocument,
     "\n  query LikedSongsQuery {\n    viewer {\n      id\n      ...LikedSongsList_User\n    }\n  }\n": typeof types.LikedSongsQueryDocument,
     "\n  fragment Playlist_User on User {\n    id\n    likedSongs {\n      id\n      ...LikedSongRow_LikedSong\n    }\n  }\n": typeof types.Playlist_UserFragmentDoc,
@@ -31,7 +31,7 @@ type Documents = {
     "\n  fragment DownloadOverview_DownloadStatus on DownloadStatus {\n    id\n    ...DownloadStatus_DownloadStatus\n  }\n": typeof types.DownloadOverview_DownloadStatusFragmentDoc,
     "\n  query DownloadOverviewQuery {\n    download {\n      id\n      all {\n        id\n        ...DownloadOverview_DownloadStatus\n      }\n    }\n  }\n": typeof types.DownloadOverviewQueryDocument,
     "\n  subscription DownloadOverviewSubscription {\n    downloadStatusUpdated {\n      id\n      ...DownloadOverview_DownloadStatus\n    }\n  }\n": typeof types.DownloadOverviewSubscriptionDocument,
-    "\n  fragment DownloadStatus_DownloadStatus on DownloadStatus {\n    id\n    release {\n      id\n      title\n      year\n      artists {\n        id\n        name\n      }\n      recordings {\n        id\n      }\n    }\n  }\n": typeof types.DownloadStatus_DownloadStatusFragmentDoc,
+    "\n  fragment DownloadStatus_DownloadStatus on DownloadStatus {\n    id\n    numberOfTracks\n    tracksDownloaded\n    statusDescription\n    release {\n      id\n      title\n      year\n      artists {\n        id\n        name\n      }\n      recordings {\n        id\n      }\n    }\n  }\n": typeof types.DownloadStatus_DownloadStatusFragmentDoc,
     "\n  fragment LikedSongRow_LikedSong on LikedSong {\n    id\n    recording {\n      id\n      title\n      length\n      artists {\n        id\n        name\n      }\n      mainAlbum {\n        id\n        title\n        coverArtUri\n        artists {\n          id\n        }\n      }\n    }\n  }\n": typeof types.LikedSongRow_LikedSongFragmentDoc,
     "\n  fragment LikedSongsList_User on User {\n    id\n    likedSongs {\n      id\n      ...LikedSongRow_LikedSong\n    }\n  }\n": typeof types.LikedSongsList_UserFragmentDoc,
     "\n  query SearchPanelQuery($text: String!) {\n    ...SearchResult_Query\n  }\n": typeof types.SearchPanelQueryDocument,
@@ -41,7 +41,7 @@ type Documents = {
     "\n  fragment SearchResultReleaseGroup_ReleaseGroup on ReleaseGroup {\n    id\n    title\n    mainRelease {\n      id\n      title\n      coverArtUri\n    }\n  }\n": typeof types.SearchResultReleaseGroup_ReleaseGroupFragmentDoc,
 };
 const documents: Documents = {
-    "\n  query AlbumQuery($releaseId: ID!) {\n    release {\n      byId(id: $releaseId) {\n        id\n        ...AlbumPanel_Release\n      }\n    }\n  }\n": types.AlbumQueryDocument,
+    "\n  query AlbumQuery($releaseId: ID!) {\n    release {\n      id\n      byId(id: $releaseId) {\n        id\n        ...AlbumPanel_Release\n      }\n    }\n  }\n": types.AlbumQueryDocument,
     "\n  query ArtistQuery($artistId: ID!) {\n    artist {\n      byId(id: $artistId) {\n        id\n        ...ArtistPanel_Artist\n      }\n    }\n  }\n": types.ArtistQueryDocument,
     "\n  query LikedSongsQuery {\n    viewer {\n      id\n      ...LikedSongsList_User\n    }\n  }\n": types.LikedSongsQueryDocument,
     "\n  fragment Playlist_User on User {\n    id\n    likedSongs {\n      id\n      ...LikedSongRow_LikedSong\n    }\n  }\n": types.Playlist_UserFragmentDoc,
@@ -58,7 +58,7 @@ const documents: Documents = {
     "\n  fragment DownloadOverview_DownloadStatus on DownloadStatus {\n    id\n    ...DownloadStatus_DownloadStatus\n  }\n": types.DownloadOverview_DownloadStatusFragmentDoc,
     "\n  query DownloadOverviewQuery {\n    download {\n      id\n      all {\n        id\n        ...DownloadOverview_DownloadStatus\n      }\n    }\n  }\n": types.DownloadOverviewQueryDocument,
     "\n  subscription DownloadOverviewSubscription {\n    downloadStatusUpdated {\n      id\n      ...DownloadOverview_DownloadStatus\n    }\n  }\n": types.DownloadOverviewSubscriptionDocument,
-    "\n  fragment DownloadStatus_DownloadStatus on DownloadStatus {\n    id\n    release {\n      id\n      title\n      year\n      artists {\n        id\n        name\n      }\n      recordings {\n        id\n      }\n    }\n  }\n": types.DownloadStatus_DownloadStatusFragmentDoc,
+    "\n  fragment DownloadStatus_DownloadStatus on DownloadStatus {\n    id\n    numberOfTracks\n    tracksDownloaded\n    statusDescription\n    release {\n      id\n      title\n      year\n      artists {\n        id\n        name\n      }\n      recordings {\n        id\n      }\n    }\n  }\n": types.DownloadStatus_DownloadStatusFragmentDoc,
     "\n  fragment LikedSongRow_LikedSong on LikedSong {\n    id\n    recording {\n      id\n      title\n      length\n      artists {\n        id\n        name\n      }\n      mainAlbum {\n        id\n        title\n        coverArtUri\n        artists {\n          id\n        }\n      }\n    }\n  }\n": types.LikedSongRow_LikedSongFragmentDoc,
     "\n  fragment LikedSongsList_User on User {\n    id\n    likedSongs {\n      id\n      ...LikedSongRow_LikedSong\n    }\n  }\n": types.LikedSongsList_UserFragmentDoc,
     "\n  query SearchPanelQuery($text: String!) {\n    ...SearchResult_Query\n  }\n": types.SearchPanelQueryDocument,
@@ -85,7 +85,7 @@ export function graphql(source: string): unknown;
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query AlbumQuery($releaseId: ID!) {\n    release {\n      byId(id: $releaseId) {\n        id\n        ...AlbumPanel_Release\n      }\n    }\n  }\n"): (typeof documents)["\n  query AlbumQuery($releaseId: ID!) {\n    release {\n      byId(id: $releaseId) {\n        id\n        ...AlbumPanel_Release\n      }\n    }\n  }\n"];
+export function graphql(source: "\n  query AlbumQuery($releaseId: ID!) {\n    release {\n      id\n      byId(id: $releaseId) {\n        id\n        ...AlbumPanel_Release\n      }\n    }\n  }\n"): (typeof documents)["\n  query AlbumQuery($releaseId: ID!) {\n    release {\n      id\n      byId(id: $releaseId) {\n        id\n        ...AlbumPanel_Release\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -153,7 +153,7 @@ export function graphql(source: "\n  subscription DownloadOverviewSubscription {
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment DownloadStatus_DownloadStatus on DownloadStatus {\n    id\n    release {\n      id\n      title\n      year\n      artists {\n        id\n        name\n      }\n      recordings {\n        id\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment DownloadStatus_DownloadStatus on DownloadStatus {\n    id\n    release {\n      id\n      title\n      year\n      artists {\n        id\n        name\n      }\n      recordings {\n        id\n      }\n    }\n  }\n"];
+export function graphql(source: "\n  fragment DownloadStatus_DownloadStatus on DownloadStatus {\n    id\n    numberOfTracks\n    tracksDownloaded\n    statusDescription\n    release {\n      id\n      title\n      year\n      artists {\n        id\n        name\n      }\n      recordings {\n        id\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment DownloadStatus_DownloadStatus on DownloadStatus {\n    id\n    numberOfTracks\n    tracksDownloaded\n    statusDescription\n    release {\n      id\n      title\n      year\n      artists {\n        id\n        name\n      }\n      recordings {\n        id\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

@@ -2,6 +2,7 @@ import { Client, fetchExchange, mapExchange, subscriptionExchange } from "urql";
 import { getApiUrl, getWsApiUrl } from "./ApiUrlProvider";
 import { createClient as createWSClient } from "graphql-ws";
 import { handleUrqlError } from "./UrqlClientErrorHandler";
+import { optimisticCacheExchange } from "@/UrqlCache.ts";
 
 const wsClient = createWSClient({
   url: getWsApiUrl(),
@@ -37,6 +38,7 @@ const customFetch: typeof fetch = (uri, options) => {
 };
 
 const prodExchanges = [
+  optimisticCacheExchange,
   mapExchange({
     onError: (_, op) => handleUrqlError(op, () => urqlClient),
   }),
