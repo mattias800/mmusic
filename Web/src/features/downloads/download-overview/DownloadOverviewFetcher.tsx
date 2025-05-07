@@ -1,6 +1,7 @@
 import { graphql } from "@/gql";
 import * as React from "react";
 import { useQuery } from "urql";
+import { DownloadOverview } from "@/features/downloads/download-overview/DownloadOverview.tsx";
 
 export interface DownloadOverviewFetcherProps {}
 
@@ -10,12 +11,7 @@ export const downloadOverviewFetcherQuery = graphql(`
       id
       all {
         id
-        release {
-          id
-          artists {
-            name
-          }
-        }
+        ...DownloadOverview_DownloadStatus
       }
     }
   }
@@ -25,12 +21,7 @@ export const downloadOverviewFetcherSubscription = graphql(`
   subscription DownloadOverviewSubscription {
     downloadStatusUpdated {
       id
-      release {
-        id
-        artists {
-          name
-        }
-      }
+      ...DownloadOverview_DownloadStatus
     }
   }
 `);
@@ -48,6 +39,9 @@ export const DownloadOverviewFetcher: React.FC<
   if (error) {
     return <div>Error: {error.message}</div>;
   }
+  if (!data) {
+    return <div>Error: No data</div>;
+  }
 
-  return <div></div>;
+  return <DownloadOverview downloadStatuses={data.download.all} />;
 };

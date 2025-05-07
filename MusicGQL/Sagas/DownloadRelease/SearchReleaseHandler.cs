@@ -12,7 +12,7 @@ public sealed class SearchReleaseHandler(
     {
         logger.LogInformation("Searching download for release: {Release}", message.Release.Title);
 
-        await Task.Delay(2000);
+        await Task.Delay(20000);
 
         logger.LogInformation("Found download for release: {Release}", message.Release.Title);
 

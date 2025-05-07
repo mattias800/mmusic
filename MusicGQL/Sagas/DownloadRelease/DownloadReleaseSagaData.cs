@@ -10,5 +10,7 @@ public class DownloadReleaseSagaData : ISagaData
     
     // Update these to our use-case
     public string MusicBrainzReleaseId { get; set; }
+    
+    public string StatusDescription { get; set; }
     public Release? Release { get; set; }
 }

@@ -27,6 +27,8 @@ public class DownloadReleaseSaga(IBus bus, ITopicEventSender sender) :
             return;
         }
 
+        Data.StatusDescription = "Looking up release in MusicBrainz";
+
         await sender.SendAsync(nameof(Subscription.DownloadStarted), Data);
         await bus.Send(new LookupReleaseInMusicBrainz(message.MusicBrainzReleaseId));
     }
@@ -34,18 +36,23 @@ public class DownloadReleaseSaga(IBus bus, ITopicEventSender sender) :
     public async Task Handle(FoundReleaseInMusicBrainz message)
     {
         Data.Release = message.Release;
+        Data.StatusDescription = "Searching for download";
+
         await sender.SendAsync(nameof(Subscription.DownloadStatusUpdated), Data);
         await bus.Send(new SearchReleaseDownload(message.MusicBrainzReleaseId, message.Release));
     }
 
     public async Task Handle(ReleaseNotFoundInMusicBrainz message)
     {
+        Data.StatusDescription = "No download found";
+
         await sender.SendAsync(nameof(Subscription.DownloadStatusUpdated), Data);
         MarkAsComplete();
     }
 
     public async Task Handle(FoundReleaseDownload message)
     {
+        Data.StatusDescription = "Download found";
         await sender.SendAsync(nameof(Subscription.DownloadStatusUpdated), Data);
         MarkAsComplete();
     }
