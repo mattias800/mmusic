@@ -14,6 +14,9 @@ public class EventDbContext(DbContextOptions<EventDbContext> options) : DbContex
     // Projections
     public DbSet<LikedSongsProjection> LikedSongsProjections { get; set; }
 
+    // Sagas
+    public DbSet<Saga> Sagas { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder

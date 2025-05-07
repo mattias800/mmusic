@@ -13,6 +13,7 @@ using MusicGQL.Sagas.DownloadRelease;
 using MusicGQL.Types;
 using Rebus.Config;
 using Rebus.Routing.TypeBased;
+using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -35,9 +36,12 @@ builder.Services.AddStackExchangeRedisCache(options =>
 
 builder
     .AddGraphQL()
+    .AddRedisSubscriptions((sp) =>
+        ConnectionMultiplexer.Connect(builder.Configuration.GetConnectionString("Redis") ?? string.Empty))
     .AddDiagnosticEventListener<MyExecutionEventListener>()
     .AddQueryType<Query>()
     .AddMutationType<Mutation>()
+    .AddSubscriptionType<Subscription>()
     .AddTypeExtension<StartDownloadReleaseMutation>()
     .AddType<StartDownloadReleaseSuccess>()
     .AddTypeExtension<LikeSongMutation>()
@@ -112,6 +116,10 @@ using (var scope = app.Services.CreateScope())
     var processor = scope.ServiceProvider.GetRequiredService<EventProcessor>();
     await processor.ProcessEvents();
 }
+
+app.UseRouting();
+
+app.UseWebSockets();
 
 app.MapGraphQL();
 

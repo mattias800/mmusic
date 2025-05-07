@@ -4,6 +4,9 @@ namespace MusicGQL.Features.ReleaseGroups;
 
 public record ReleaseGroupSearchRoot
 {
+    [ID]
+    public string GetId() => "ReleaseGroupSearchRoot";
+
     public async Task<IEnumerable<ReleaseGroup>> SearchByName(
         [Service] MusicBrainzService mbService,
         string name,

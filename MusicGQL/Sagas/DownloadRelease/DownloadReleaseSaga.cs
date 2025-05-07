@@ -1,10 +1,12 @@
+using HotChocolate.Subscriptions;
+using MusicGQL.Types;
 using Rebus.Bus;
 using Rebus.Handlers;
 using Rebus.Sagas;
 
 namespace MusicGQL.Sagas.DownloadRelease;
 
-public class DownloadReleaseSaga(IBus bus) :
+public class DownloadReleaseSaga(IBus bus, ITopicEventSender sender) :
     Saga<DownloadReleaseSagaData>,
     IAmInitiatedBy<DownloadReleaseQueuedEvent>,
     IHandleMessages<FoundReleaseInMusicBrainz>,
@@ -25,24 +27,26 @@ public class DownloadReleaseSaga(IBus bus) :
             return;
         }
 
+        await sender.SendAsync(nameof(Subscription.DownloadStarted), Data);
         await bus.Send(new LookupReleaseInMusicBrainz(message.MusicBrainzReleaseId));
     }
 
     public async Task Handle(FoundReleaseInMusicBrainz message)
     {
         Data.Release = message.Release;
+        await sender.SendAsync(nameof(Subscription.DownloadStatusUpdated), Data);
         await bus.Send(new SearchReleaseDownload(message.MusicBrainzReleaseId, message.Release));
     }
 
-    public Task Handle(ReleaseNotFoundInMusicBrainz message)
+    public async Task Handle(ReleaseNotFoundInMusicBrainz message)
     {
+        await sender.SendAsync(nameof(Subscription.DownloadStatusUpdated), Data);
         MarkAsComplete();
-        return Task.CompletedTask;
     }
 
-    public Task Handle(FoundReleaseDownload message)
+    public async Task Handle(FoundReleaseDownload message)
     {
+        await sender.SendAsync(nameof(Subscription.DownloadStatusUpdated), Data);
         MarkAsComplete();
-        return Task.CompletedTask;
     }
 }
