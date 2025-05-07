@@ -1,4 +1,5 @@
 using HotChocolate.Subscriptions;
+using MusicGQL.Features.Downloads;
 using MusicGQL.Types;
 using Rebus.Bus;
 using Rebus.Handlers;
@@ -38,7 +39,7 @@ public class DownloadReleaseSaga(IBus bus, ITopicEventSender sender) :
         Data.Release = message.Release;
         Data.StatusDescription = "Searching for download";
 
-        await sender.SendAsync(nameof(Subscription.DownloadStatusUpdated), Data);
+        await sender.SendAsync(nameof(Subscription.DownloadStatusUpdated), new DownloadStatus(Data));
         await bus.Send(new SearchReleaseDownload(message.MusicBrainzReleaseId, message.Release));
     }
 
@@ -46,14 +47,14 @@ public class DownloadReleaseSaga(IBus bus, ITopicEventSender sender) :
     {
         Data.StatusDescription = "No download found";
 
-        await sender.SendAsync(nameof(Subscription.DownloadStatusUpdated), Data);
+        await sender.SendAsync(nameof(Subscription.DownloadStatusUpdated), new DownloadStatus(Data));
         MarkAsComplete();
     }
 
     public async Task Handle(FoundReleaseDownload message)
     {
         Data.StatusDescription = "Download found";
-        await sender.SendAsync(nameof(Subscription.DownloadStatusUpdated), Data);
+        await sender.SendAsync(nameof(Subscription.DownloadStatusUpdated), new DownloadStatus(Data));
         MarkAsComplete();
     }
 }

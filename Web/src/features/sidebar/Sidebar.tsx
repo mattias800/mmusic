@@ -182,7 +182,7 @@ export function Sidebar({ className }: SidebarProps) {
             Downloads
           </h2>
           <ScrollArea className="h-[300px] px-1">
-            <div className="space-y-1">
+            <div className="pt-4">
               <DownloadOverviewFetcher />
             </div>
           </ScrollArea>

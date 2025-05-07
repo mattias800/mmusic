@@ -197,6 +197,7 @@ export type Release = {
   barcode?: Maybe<Scalars['String']['output']>;
   country?: Maybe<Scalars['String']['output']>;
   coverArtUri: Scalars['String']['output'];
+  credits: Array<NameCredit>;
   date?: Maybe<Scalars['String']['output']>;
   genres: Array<Genre>;
   id: Scalars['ID']['output'];

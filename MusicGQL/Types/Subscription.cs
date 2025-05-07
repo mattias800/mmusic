@@ -6,8 +6,8 @@ namespace MusicGQL.Types;
 public class Subscription
 {
     [Subscribe]
-    public DownloadStatus DownloadStatusUpdated([EventMessage] DownloadReleaseSagaData model) => new(model);
+    public DownloadStatus DownloadStatusUpdated([EventMessage] DownloadStatus s) => s;
 
     [Subscribe]
-    public DownloadStatus DownloadStarted([EventMessage] DownloadReleaseSagaData model) => new(model);
+    public DownloadStatus DownloadStarted([EventMessage] DownloadStatus s) => s;
 }

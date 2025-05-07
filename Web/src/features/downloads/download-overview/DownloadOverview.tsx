@@ -22,13 +22,7 @@ export const DownloadOverview: React.FC<DownloadOverviewProps> = (props) => {
   );
 
   return (
-    <div className={"flex flex-col"}>
-      {downloadStatuses.length === 0 && <span>No downloads in progress</span>}
-      {downloadStatuses.length > 0 && (
-        <span className={"mb-2"}>
-          Downloads in progress: {downloadStatuses.length}
-        </span>
-      )}
+    <div className={"flex flex-col gap-12"}>
       {downloadStatuses.map((downloadStatus) => (
         <DownloadStatus downloadStatus={downloadStatus} />
       ))}

@@ -12,12 +12,5 @@ public class Saga
 
     [Column("revision")] public int Revision { get; set; }
 
-    [Column("data", TypeName = "jsonb")] public string Data { get; set; } = default!;
-
-    [NotMapped]
-    public DownloadReleaseSagaData? ParsedData =>
-        JsonSerializer.Deserialize<DownloadReleaseSagaData>(Data, new JsonSerializerOptions
-        {
-            PropertyNameCaseInsensitive = true
-        });
+    [Column("data")] public byte[] Data { get; set; } = default!;
 }

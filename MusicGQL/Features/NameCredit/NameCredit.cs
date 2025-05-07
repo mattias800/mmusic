@@ -1,6 +1,6 @@
 using MbNameCredit = Hqub.MusicBrainz.Entities.NameCredit;
 
-namespace MusicGQL.Features.Release;
+namespace MusicGQL.Features.NameCredit;
 
 public record NameCredit([property: GraphQLIgnore] MbNameCredit Model)
 {

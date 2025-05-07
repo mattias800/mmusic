@@ -44,7 +44,7 @@ export const DownloadStatus: React.FC<DownloadStatusProps> = (props) => {
         <h2 className="text-xl font-bold truncate">{release?.title}</h2>
         <p className="text-sm text-zinc-400">
           {release?.artists.map((artist) => artist.name).join(", ")} &bull;{" "}
-          {release?.year}
+          {release?.year} &bull; {totalTracks} tracks
         </p>
       </div>
 
@@ -56,7 +56,7 @@ export const DownloadStatus: React.FC<DownloadStatusProps> = (props) => {
       </div>
 
       <p className="text-sm text-zinc-300">
-        Downloading {downloadedTracks} of {totalTracks} tracks
+        Downloading...
       </p>
     </div>
   );

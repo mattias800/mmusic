@@ -13,6 +13,7 @@ using MusicGQL.Sagas.DownloadRelease;
 using MusicGQL.Types;
 using Rebus.Config;
 using Rebus.Routing.TypeBased;
+using Rebus.Serialization.Json;
 using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -91,6 +92,7 @@ builder.Services.AddRebus(rebus =>
                     "mmusic-queue"
                 )
             )
+            // Use JSON serialization so EF can query the database
             .Sagas(s =>
                 s.StoreInPostgres(
                     builder.Configuration.GetConnectionString("Postgres"),
