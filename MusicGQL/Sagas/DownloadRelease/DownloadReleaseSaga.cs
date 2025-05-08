@@ -1,6 +1,5 @@
 using HotChocolate.Subscriptions;
 using MusicGQL.Features.Downloads;
-using MusicGQL.Types;
 using Rebus.Bus;
 using Rebus.Handlers;
 using Rebus.Sagas;
@@ -44,7 +43,7 @@ public class DownloadReleaseSaga(IBus bus, ITopicEventSender sender)
 
         Data.StatusDescription = "Looking up release";
 
-        await sender.SendAsync(nameof(Subscription.DownloadStarted), Data);
+        await sender.SendAsync(nameof(DownloadSubscription.DownloadStarted), Data);
         await bus.Send(new LookupReleaseInMusicBrainz(message.MusicBrainzReleaseId));
     }
 
@@ -58,7 +57,7 @@ public class DownloadReleaseSaga(IBus bus, ITopicEventSender sender)
         Data.Release = message.Release;
 
         await sender.SendAsync(
-            nameof(Subscription.DownloadStatusUpdated),
+            nameof(DownloadSubscription.DownloadStatusUpdated),
             new DownloadStatus(Data)
         );
 
@@ -75,7 +74,7 @@ public class DownloadReleaseSaga(IBus bus, ITopicEventSender sender)
         Data.StatusDescription = "No download found";
 
         await sender.SendAsync(
-            nameof(Subscription.DownloadStatusUpdated),
+            nameof(DownloadSubscription.DownloadStatusUpdated),
             new DownloadStatus(Data)
         );
         MarkAsComplete();
@@ -91,16 +90,17 @@ public class DownloadReleaseSaga(IBus bus, ITopicEventSender sender)
         Data.Recordings = message.Recordings;
 
         await sender.SendAsync(
-            nameof(Subscription.DownloadStatusUpdated),
+            nameof(DownloadSubscription.DownloadStatusUpdated),
             new DownloadStatus(Data)
         );
 
         foreach (var recording in message.Recordings)
         {
-            await Task.Delay(3000);
+            await Task.Delay(2000);
+
             Data.TracksDownloaded++;
             await sender.SendAsync(
-                nameof(Subscription.DownloadStatusUpdated),
+                nameof(DownloadSubscription.DownloadStatusUpdated),
                 new DownloadStatus(Data)
             );
         }
@@ -118,7 +118,7 @@ public class DownloadReleaseSaga(IBus bus, ITopicEventSender sender)
     {
         Data.StatusDescription = "Download found";
         await sender.SendAsync(
-            nameof(Subscription.DownloadStatusUpdated),
+            nameof(DownloadSubscription.DownloadStatusUpdated),
             new DownloadStatus(Data)
         );
         MarkAsComplete();

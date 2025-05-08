@@ -5,7 +5,9 @@ using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using MusicGQL.Aggregates;
 using MusicGQL.Db;
+using MusicGQL.Features.Downloads;
 using MusicGQL.Features.Downloads.Mutations;
+using MusicGQL.Features.External.SoulSeek;
 using MusicGQL.Features.LikedSongs.Commands;
 using MusicGQL.Features.LikedSongs.Mutations;
 using MusicGQL.Integration.MusicBrainz;
@@ -13,7 +15,6 @@ using MusicGQL.Sagas.DownloadRelease;
 using MusicGQL.Types;
 using Rebus.Config;
 using Rebus.Routing.TypeBased;
-using Rebus.Serialization.Json;
 using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -47,6 +48,8 @@ builder
     .AddQueryType<Query>()
     .AddMutationType<Mutation>()
     .AddSubscriptionType<Subscription>()
+    .AddTypeExtension<SoulSeekSubscription>()
+    .AddTypeExtension<DownloadSubscription>()
     .AddTypeExtension<StartDownloadReleaseMutation>()
     .AddType<StartDownloadReleaseSuccess>()
     .AddTypeExtension<LikeSongMutation>()

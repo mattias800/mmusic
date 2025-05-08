@@ -17,7 +17,7 @@ public class LookupReleaseInMusicBrainzHandler(
             message.MusicBrainzReleaseId
         );
 
-        await Task.Delay(5000);
+        await Task.Delay(2000);
 
         var release = await service.GetReleaseByIdAsync(message.MusicBrainzReleaseId);
         if (release is null)
