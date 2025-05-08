@@ -34,9 +34,7 @@ export const ArtistAlbumList: React.FC<ArtistAlbumListProps> = (props) => {
         .toSorted(byStringField((a) => a.year ?? ""))
         .toReversed()
         .map((release) => (
-          <>
-            <AlbumCard release={release} />
-          </>
+          <AlbumCard release={release} key={release.id} />
         ))}
     </div>
   );

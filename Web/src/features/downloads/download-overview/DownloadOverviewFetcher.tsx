@@ -35,14 +35,8 @@ export const DownloadOverviewFetcher: React.FC<
 
   useSubscription({ query: downloadOverviewFetcherSubscription });
 
-  if (fetching) {
-    return <div>Loading...</div>;
-  }
-  if (error) {
-    return <div>Error: {error.message}</div>;
-  }
-  if (!data) {
-    return <div>Error: No data</div>;
+  if (fetching || error || !data) {
+    return null;
   }
 
   return <DownloadOverview downloadStatuses={data.download.all} />;

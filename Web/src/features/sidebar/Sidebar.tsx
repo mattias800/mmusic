@@ -6,6 +6,7 @@ import { NavLink } from "react-router";
 import * as React from "react";
 import { SearchInput } from "../search/SearchInput";
 import { DownloadOverviewFetcher } from "@/features/downloads/download-overview/DownloadOverviewFetcher.tsx";
+import { SoulSeekNetworkStatusFetcher } from "@/features/soul-seek-network-status/SoulSeekNetworkStatusFetcher.tsx";
 
 interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {}
 
@@ -178,11 +179,11 @@ export function Sidebar({ className }: SidebarProps) {
           </div>
         </div>
         <div className="py-2">
-          <h2 className="relative px-7 text-lg font-semibold tracking-tight">
-            Downloads
+          <h2 className="relative px-7 text-lg font-semibold tracking-tight gap-8 flex">
+            Downloads <SoulSeekNetworkStatusFetcher />
           </h2>
           <ScrollArea className="h-[300px] px-1">
-            <div className="pt-4">
+            <div className="pt-4 px-6">
               <DownloadOverviewFetcher />
             </div>
           </ScrollArea>

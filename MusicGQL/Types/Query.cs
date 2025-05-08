@@ -1,5 +1,6 @@
 using MusicGQL.Features.Artist;
 using MusicGQL.Features.Downloads;
+using MusicGQL.Features.External;
 using MusicGQL.Features.Recording;
 using MusicGQL.Features.Release;
 using MusicGQL.Features.ReleaseGroups;
@@ -15,4 +16,5 @@ public class Query
     public ReleaseGroupSearchRoot ReleaseGroup => new();
     public User Viewer => new(0);
     public DownloadsSearchRoot Download => new();
+    public ExternalRoot External => new();
 }

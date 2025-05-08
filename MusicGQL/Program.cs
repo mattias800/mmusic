@@ -8,6 +8,7 @@ using MusicGQL.Db;
 using MusicGQL.Features.Downloads;
 using MusicGQL.Features.Downloads.Mutations;
 using MusicGQL.Features.External.SoulSeek;
+using MusicGQL.Features.External.SoulSeek.Integration;
 using MusicGQL.Features.LikedSongs.Commands;
 using MusicGQL.Features.LikedSongs.Mutations;
 using MusicGQL.Integration.MusicBrainz;
@@ -15,13 +16,25 @@ using MusicGQL.Sagas.DownloadRelease;
 using MusicGQL.Types;
 using Rebus.Config;
 using Rebus.Routing.TypeBased;
+using Soulseek;
+using Soulseek.Diagnostics;
 using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.Configure<SoulSeekConnectOptions>(builder.Configuration.GetSection("SoulSeek"));
+
 builder
     .Services.AddHybridCache()
     .Services.AddSingleton<IMemoryCache, MemoryCache>()
+    .AddSingleton<ISoulseekClient, SoulseekClient>(_ => new SoulseekClient(
+        options: new SoulseekClientOptions(
+            maximumConcurrentUploads: 5,
+            maximumConcurrentDownloads: 5,
+            minimumDiagnosticLevel: DiagnosticLevel.Debug
+        )
+    ))
+    .AddSingleton<SoulSeekService>()
     .AddSingleton<MusicBrainzService>()
     .AddScoped<LikeSongHandler>()
     .AddScoped<UnlikeSongHandler>()
@@ -131,6 +144,9 @@ using (var scope = app.Services.CreateScope())
 {
     var processor = scope.ServiceProvider.GetRequiredService<EventProcessor>();
     await processor.ProcessEvents();
+
+    var soulSeekService = scope.ServiceProvider.GetRequiredService<SoulSeekService>();
+    _ = soulSeekService.Connect();
 }
 
 app.UseRouting();
@@ -139,4 +155,5 @@ app.UseWebSockets();
 
 app.MapGraphQL();
 
-app.RunWithGraphQLCommands(args);
+app.Run();
+//app.RunWithGraphQLCommands(args);
