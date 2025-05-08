@@ -2,7 +2,7 @@ using MusicGQL.Integration.MusicBrainz;
 using Rebus.Bus;
 using Rebus.Handlers;
 
-namespace MusicGQL.Sagas.DownloadRelease;
+namespace MusicGQL.Sagas.DownloadRelease.Handlers;
 
 public class LookupRecordingsForReleaseInMusicBrainzHandler(
     ILogger<LookupRecordingsForReleaseInMusicBrainzHandler> logger,
@@ -17,13 +17,12 @@ public class LookupRecordingsForReleaseInMusicBrainzHandler(
             message.MusicBrainzReleaseId
         );
 
-        await Task.Delay(2000);
-
         try
         {
             var recordings = await service.GetRecordingsForReleaseAsync(
                 message.MusicBrainzReleaseId
             );
+
             logger.LogInformation(
                 "Found {Num} recordings for release ID: {MusicBrainzReleaseId}",
                 recordings.Count,
@@ -44,6 +43,7 @@ public class LookupRecordingsForReleaseInMusicBrainzHandler(
                 "Could not find recordings for release ID: {MusicBrainzReleaseId}",
                 message.MusicBrainzReleaseId
             );
+
             await bus.Send(new NoRecordingsFoundInMusicBrainz(message.MusicBrainzReleaseId));
         }
     }

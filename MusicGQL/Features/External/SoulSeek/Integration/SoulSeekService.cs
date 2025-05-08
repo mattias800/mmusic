@@ -18,7 +18,7 @@ public class SoulSeekService(
         client.Connected += OnConnected;
         client.Disconnected += OnDisconnected;
 
-        await Task.Delay(10000);
+        await Task.Delay(1000);
 
         State = new SoulSeekState(NetworkState: SoulSeekNetworkState.Connecting);
 
@@ -55,6 +55,7 @@ public class SoulSeekService(
             "Publishing Soulseek status update: {Status}",
             stateSnapshot.NetworkState
         );
+
         _ = eventSender.SendAsync(
             nameof(SoulSeekSubscription.SoulSeekStatusUpdated),
             stateSnapshot

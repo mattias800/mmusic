@@ -20,4 +20,8 @@ public class DownloadReleaseSagaData : ISagaData
     public string MusicBrainzReleaseId { get; set; }
     public Release? Release { get; set; }
     public List<Recording>? Recordings { get; set; }
+
+    public Queue<DownloadQueueItem>? DownloadQueue { get; set; }
 }
+
+public record DownloadQueueItem(string Username, string FileName, string LocalFileName);

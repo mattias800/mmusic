@@ -2,7 +2,7 @@ using MusicGQL.Integration.MusicBrainz;
 using Rebus.Bus;
 using Rebus.Handlers;
 
-namespace MusicGQL.Sagas.DownloadRelease;
+namespace MusicGQL.Sagas.DownloadRelease.Handlers;
 
 public class LookupReleaseInMusicBrainzHandler(
     ILogger<LookupReleaseInMusicBrainzHandler> logger,
@@ -16,8 +16,6 @@ public class LookupReleaseInMusicBrainzHandler(
             "Looking up release with ID: {MusicBrainzReleaseId}",
             message.MusicBrainzReleaseId
         );
-
-        await Task.Delay(2000);
 
         var release = await service.GetReleaseByIdAsync(message.MusicBrainzReleaseId);
         if (release is null)

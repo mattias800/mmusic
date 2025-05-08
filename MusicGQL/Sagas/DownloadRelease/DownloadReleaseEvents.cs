@@ -15,12 +15,9 @@ public record FoundReleaseInMusicBrainz(string MusicBrainzReleaseId, Release Rel
 public record FoundRecordingsForReleaseInMusicBrainz(
     string MusicBrainzReleaseId,
     Release Release,
-    List<Recording> Recordings);
+    List<Recording> Recordings
+);
 
 public record ReleaseNotFoundInMusicBrainz(string MusicBrainzReleaseId);
 
 public record NoRecordingsFoundInMusicBrainz(string MusicBrainzReleaseId);
-
-public record SearchReleaseDownload(string MusicBrainzReleaseId, Release Release, List<Recording> Recordings);
-
-public record FoundReleaseDownload(string MusicBrainzReleaseId, Release Release, List<Recording> Recordings);

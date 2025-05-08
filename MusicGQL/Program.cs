@@ -13,6 +13,7 @@ using MusicGQL.Features.LikedSongs.Commands;
 using MusicGQL.Features.LikedSongs.Mutations;
 using MusicGQL.Integration.MusicBrainz;
 using MusicGQL.Sagas.DownloadRelease;
+using MusicGQL.Sagas.DownloadRelease.Handlers;
 using MusicGQL.Types;
 using Rebus.Config;
 using Rebus.Routing.TypeBased;
@@ -108,8 +109,6 @@ builder.Services.AddRebus(
                     .Map<FoundRecordingsForReleaseInMusicBrainz>("mmusic-queue")
                     .Map<ReleaseNotFoundInMusicBrainz>("mmusic-queue")
                     .Map<NoRecordingsFoundInMusicBrainz>("mmusic-queue")
-                    .Map<SearchReleaseDownload>("mmusic-queue")
-                    .Map<FoundReleaseDownload>("mmusic-queue")
             )
             .Transport(t =>
                 t.UseRabbitMq(
@@ -128,14 +127,12 @@ builder.Services.AddRebus(
     onCreated: async bus =>
     {
         await bus.Subscribe<FoundReleaseInMusicBrainz>();
-        await bus.Subscribe<FoundReleaseDownload>();
     }
 );
 
 builder.Services.AddRebusHandler<DownloadReleaseSaga>();
 builder.Services.AddRebusHandler<LookupReleaseInMusicBrainzHandler>();
 builder.Services.AddRebusHandler<LookupRecordingsForReleaseInMusicBrainzHandler>();
-builder.Services.AddRebusHandler<SearchReleaseHandler>();
 
 var app = builder.Build();
 
