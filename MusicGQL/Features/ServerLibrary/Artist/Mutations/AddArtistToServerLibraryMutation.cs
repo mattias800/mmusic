@@ -1,5 +1,7 @@
 using MusicGQL.Features.ServerLibrary.Artist.Handlers;
+using MusicGQL.Features.ServerLibrary.Artist.Sagas;
 using MusicGQL.Types;
+using Rebus.Bus;
 
 namespace MusicGQL.Features.ServerLibrary.Artist.Mutations;
 
@@ -8,19 +10,26 @@ public class AddArtistToServerLibraryMutation
 {
     public async Task<AddArtistToServerLibraryResult> AddArtistToServerLibrary(
         [Service] AddArtistToServerLibraryHandler handler,
+        [Service] IBus bus,
         AddArtistToServerLibraryInput input
     )
     {
         return await handler.Handle(new(input.ArtistId)) switch
         {
-            AddArtistToServerLibraryHandler.Result.Success =>
+            AddArtistToServerLibraryHandler.Result.Success => await StartAddArtistSaga(
+                bus,
+                input.ArtistId,
                 new AddArtistToServerLibraryResult.AddArtistToServerLibrarySuccess(
                     new ArtistServerAvailability(input.ArtistId)
-                ),
-            AddArtistToServerLibraryHandler.Result.AlreadyAdded =>
+                )
+            ),
+            AddArtistToServerLibraryHandler.Result.AlreadyAdded => await StartAddArtistSaga(
+                bus,
+                input.ArtistId,
                 new AddArtistToServerLibraryResult.AddArtistToServerLibraryArtistAlreadyAdded(
                     "Artist already added!"
-                ),
+                )
+            ),
             AddArtistToServerLibraryHandler.Result.ArtistDoesNotExist =>
                 new AddArtistToServerLibraryResult.AddArtistToServerLibraryArtistDoesNotExist(
                     "Artist does not exist in MusicBrainz!"
@@ -29,6 +38,16 @@ public class AddArtistToServerLibraryMutation
                 "Unhandled result."
             ),
         };
+    }
+
+    private async Task<AddArtistToServerLibraryResult> StartAddArtistSaga(
+        IBus bus,
+        string artistId,
+        AddArtistToServerLibraryResult success
+    )
+    {
+        await bus.Send(new AddArtistToServerLibrarySagaEvents.StartAddArtist(artistId));
+        return success;
     }
 };
 

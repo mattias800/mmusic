@@ -1,6 +1,7 @@
 using MusicGQL.Integration.MusicBrainz;
 using MusicGQL.Sagas.DownloadRelease.Handlers;
 using Rebus.Bus;
+using Rebus.Handlers;
 
 namespace MusicGQL.Features.ServerLibrary.Artist.Sagas.Events;
 
@@ -8,7 +9,7 @@ public class FindArtistInMusicBrainzHandler(
     ILogger<LookupRecordingsForReleaseInMusicBrainzHandler> logger,
     IBus bus,
     MusicBrainzService service
-)
+) : IHandleMessages<AddArtistToServerLibrarySagaEvents.FindArtistInMusicBrainz>
 {
     public async Task Handle(AddArtistToServerLibrarySagaEvents.FindArtistInMusicBrainz message)
     {

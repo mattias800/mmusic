@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using MusicGQL.Db;
+using MusicGQL.Db.Models.ServerLibrary;
 using MusicGQL.EventProcessor;
 using MusicGQL.Features.Downloads;
 using MusicGQL.Features.Downloads.Mutations;
@@ -15,6 +16,8 @@ using MusicGQL.Features.LikedSongs.Mutations;
 using MusicGQL.Features.ServerLibrary.Artist.Aggregate;
 using MusicGQL.Features.ServerLibrary.Artist.Handlers;
 using MusicGQL.Features.ServerLibrary.Artist.Mutations;
+using MusicGQL.Features.ServerLibrary.Artist.Sagas;
+using MusicGQL.Features.ServerLibrary.Artist.Sagas.Events;
 using MusicGQL.Features.ServerLibrary.ReleaseGroup.Aggregate;
 using MusicGQL.Features.ServerLibrary.ReleaseGroup.Handlers;
 using MusicGQL.Features.ServerLibrary.ReleaseGroup.Mutations;
@@ -57,6 +60,8 @@ builder
 builder.Services.AddDbContext<EventDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Postgres"))
 );
+
+builder.Services.AddAutoMapper(typeof(Program));
 
 builder.Services.AddStackExchangeRedisCache(options =>
 {
@@ -125,6 +130,14 @@ builder.Services.AddRebus(
         rebus
             .Routing(r =>
                 r.TypeBased()
+                    .Map<AddArtistToServerLibrarySagaEvents.StartAddArtist>("mmusic-queue")
+                    .Map<AddArtistToServerLibrarySagaEvents.FindArtistInMusicBrainz>("mmusic-queue")
+                    .Map<AddArtistToServerLibrarySagaEvents.FoundArtistInMusicBrainz>(
+                        "mmusic-queue"
+                    )
+                    .Map<AddArtistToServerLibrarySagaEvents.DidNotFindArtistInMusicBrainz>(
+                        "mmusic-queue"
+                    )
                     .Map<DownloadReleaseQueuedEvent>("mmusic-queue")
                     .Map<LookupReleaseInMusicBrainz>("mmusic-queue")
                     .Map<LookupRecordingsForReleaseInMusicBrainz>("mmusic-queue")
@@ -152,6 +165,9 @@ builder.Services.AddRebus(
         await bus.Subscribe<FoundReleaseInMusicBrainz>();
     }
 );
+
+builder.Services.AddRebusHandler<AddArtistToServerLibrarySaga>();
+builder.Services.AddRebusHandler<FindArtistInMusicBrainzHandler>();
 
 builder.Services.AddRebusHandler<DownloadReleaseSaga>();
 builder.Services.AddRebusHandler<LookupReleaseInMusicBrainzHandler>();

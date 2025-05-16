@@ -1,4 +1,6 @@
+using AutoMapper;
 using HotChocolate.Subscriptions;
+using Microsoft.EntityFrameworkCore;
 using MusicGQL.Db;
 using Rebus.Bus;
 using Rebus.Handlers;
@@ -9,7 +11,9 @@ namespace MusicGQL.Features.ServerLibrary.Artist.Sagas;
 public class AddArtistToServerLibrarySaga(
     IBus bus,
     ITopicEventSender sender,
-    EventDbContext dbContext
+    EventDbContext dbContext,
+    ILogger<AddArtistToServerLibrarySaga> logger,
+    IMapper mapper
 )
     : Saga<AddArtistToServerLibrarySagaData>,
         IAmInitiatedBy<AddArtistToServerLibrarySagaEvents.StartAddArtist>,
@@ -45,32 +49,42 @@ public class AddArtistToServerLibrarySaga(
             return;
         }
 
+        logger.LogInformation("Starting AddArtistToServerLibrarySaga");
+
+        var existingArtist = await dbContext.Artists.FirstOrDefaultAsync(a =>
+            a.Id == message.ArtistMbId
+        );
+
+        if (existingArtist is not null)
+        {
+            logger.LogInformation("Artist is already in the library");
+
+            MarkAsComplete();
+            return;
+        }
+
         Data.StatusDescription = "Looking up release";
 
         // await sender.SendAsync(nameof(DownloadSubscription.DownloadStarted), Data);
+
         await bus.Send(
             new AddArtistToServerLibrarySagaEvents.FindArtistInMusicBrainz(new(message.ArtistMbId))
         );
     }
 
-    public Task Handle(AddArtistToServerLibrarySagaEvents.FoundArtistInMusicBrainz message)
+    public async Task Handle(AddArtistToServerLibrarySagaEvents.FoundArtistInMusicBrainz message)
     {
-        dbContext.Artists.Add(new Db.Models.ServerLibrary.Artist()
-        {
-            Id = message.Artist.Id,
-            Type = message.Artist.Type,
-            Name = message.Artist.Name,
-            SortName = message.Artist.SortName,
-            Area = message.Artist.Area,
-            BeginArea = message.Artist.BeginArea,
-            EndArea = message.Artist.EndArea,
-            Country = message.Artist.Country,
-            Disambiguation = message.Artist.Disambiguation,
-        })
+        logger.LogInformation("Saving artist to library database");
+
+        var dbArtist = mapper.Map<Db.Models.ServerLibrary.Artist>(message.Artist);
+        dbContext.Artists.Add(dbArtist);
+        await dbContext.SaveChangesAsync();
+        MarkAsComplete();
     }
 
     public Task Handle(AddArtistToServerLibrarySagaEvents.DidNotFindArtistInMusicBrainz message)
     {
         MarkAsComplete();
+        return Task.CompletedTask;
     }
 }
