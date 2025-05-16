@@ -2,6 +2,7 @@ using Hqub.Lastfm;
 using MusicGQL.Features.Recording;
 using MusicGQL.Features.Release;
 using MusicGQL.Features.ReleaseGroups;
+using MusicGQL.Features.ServerLibrary.Artist;
 using MusicGQL.Integration.MusicBrainz;
 using TrackSeries.FanArtTV.Client;
 
@@ -94,4 +95,6 @@ public record Artist([property: GraphQLIgnore] Hqub.MusicBrainz.Entities.Artist 
             return null;
         }
     }
+
+    public ArtistServerAvailability ServerAvailability() => new(Model.Id);
 }

@@ -1,12 +1,11 @@
 using Hqub.MusicBrainz;
-using MusicGQL.Aggregates;
 using MusicGQL.Db;
 
 namespace MusicGQL.Features.LikedSongs.Commands;
 
 public class LikeSongHandler(
     EventDbContext dbContext,
-    EventProcessor eventProcessor,
+    EventProcessor.EventProcessorWorker eventProcessorWorker,
     MusicBrainzClient client
 )
 {
@@ -38,7 +37,7 @@ public class LikeSongHandler(
         );
 
         await dbContext.SaveChangesAsync();
-        await eventProcessor.ProcessEvents();
+        await eventProcessorWorker.ProcessEvents();
         return new Result.Success();
     }
 

@@ -3,14 +3,21 @@ using Hqub.MusicBrainz;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
-using MusicGQL.Aggregates;
 using MusicGQL.Db;
+using MusicGQL.EventProcessor;
 using MusicGQL.Features.Downloads;
 using MusicGQL.Features.Downloads.Mutations;
 using MusicGQL.Features.External.SoulSeek;
 using MusicGQL.Features.External.SoulSeek.Integration;
+using MusicGQL.Features.LikedSongs.Aggregate;
 using MusicGQL.Features.LikedSongs.Commands;
 using MusicGQL.Features.LikedSongs.Mutations;
+using MusicGQL.Features.ServerLibrary.Artist.Aggregate;
+using MusicGQL.Features.ServerLibrary.Artist.Handlers;
+using MusicGQL.Features.ServerLibrary.Artist.Mutations;
+using MusicGQL.Features.ServerLibrary.ReleaseGroup.Aggregate;
+using MusicGQL.Features.ServerLibrary.ReleaseGroup.Handlers;
+using MusicGQL.Features.ServerLibrary.ReleaseGroup.Mutations;
 using MusicGQL.Integration.MusicBrainz;
 using MusicGQL.Sagas.DownloadRelease;
 using MusicGQL.Sagas.DownloadRelease.Handlers;
@@ -39,7 +46,13 @@ builder
     .AddSingleton<MusicBrainzService>()
     .AddScoped<LikeSongHandler>()
     .AddScoped<UnlikeSongHandler>()
-    .AddScoped<EventProcessor>();
+    .AddScoped<AddReleaseGroupToServerLibraryHandler>()
+    .AddScoped<AddArtistToServerLibraryHandler>()
+    // Event processors
+    .AddScoped<LikedSongsEventProcessor>()
+    .AddScoped<ReleaseGroupsAddedToServerLibraryProcessor>()
+    .AddScoped<ArtistsAddedToServerLibraryProcessor>()
+    .AddScoped<EventProcessorWorker>();
 
 builder.Services.AddDbContext<EventDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Postgres"))
@@ -66,11 +79,21 @@ builder
     .AddTypeExtension<DownloadSubscription>()
     .AddTypeExtension<StartDownloadReleaseMutation>()
     .AddType<StartDownloadReleaseSuccess>()
-    .AddTypeExtension<LikeSongMutation>()
     .AddTypeExtension<UnlikeSongMutation>()
-    .AddType<LikeSongSuccess>()
-    .AddType<LikeSongAlreadyLiked>()
-    .AddType<LikeSongSongDoesNotExist>();
+    .AddTypeExtension<LikeSongMutation>()
+    .AddType<LikeSongResult.LikeSongSuccess>()
+    .AddType<LikeSongResult.LikeSongAlreadyLiked>()
+    .AddType<LikeSongResult.LikeSongSongDoesNotExist>()
+    .AddTypeExtension<AddReleaseGroupToServerLibraryMutation>()
+    .AddType<AddReleaseGroupToServerLibraryResult.AddReleaseGroupToServerLibrarySuccess>()
+    .AddType<AddReleaseGroupToServerLibraryResult.AddReleaseGroupToServerLibraryReleaseGroupAlreadyAdded>()
+    .AddType<AddReleaseGroupToServerLibraryResult.AddReleaseGroupToServerLibraryReleaseGroupDoesNotExist>()
+    .AddType<AddReleaseGroupToServerLibraryResult.AddReleaseGroupToServerLibraryUnknownError>()
+    .AddTypeExtension<AddArtistToServerLibraryMutation>()
+    .AddType<AddArtistToServerLibraryResult.AddArtistToServerLibrarySuccess>()
+    .AddType<AddArtistToServerLibraryResult.AddArtistToServerLibraryArtistAlreadyAdded>()
+    .AddType<AddArtistToServerLibraryResult.AddArtistToServerLibraryArtistDoesNotExist>()
+    .AddType<AddArtistToServerLibraryResult.AddArtistToServerLibraryUnknownError>();
 
 builder.Services.Configure<LastfmOptions>(builder.Configuration.GetSection("Lastfm"));
 
@@ -139,7 +162,7 @@ var app = builder.Build();
 // 🟢 Run event processor once on startup
 using (var scope = app.Services.CreateScope())
 {
-    var processor = scope.ServiceProvider.GetRequiredService<EventProcessor>();
+    var processor = scope.ServiceProvider.GetRequiredService<EventProcessorWorker>();
     await processor.ProcessEvents();
 
     var soulSeekService = scope.ServiceProvider.GetRequiredService<SoulSeekService>();

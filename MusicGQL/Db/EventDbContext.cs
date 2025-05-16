@@ -13,6 +13,8 @@ public class EventDbContext(DbContextOptions<EventDbContext> options) : DbContex
 
     // Projections
     public DbSet<LikedSongsProjection> LikedSongsProjections { get; set; }
+    public DbSet<ArtistsAddedToServerLibraryProjection> ArtistsAddedToServerLibraryProjection { get; set; }
+    public DbSet<ReleaseGroupsAddedToServerLibraryProjection> ReleaseGroupsAddedToServerLibraryProjection { get; set; }
 
     // Sagas
     public DbSet<Saga> Sagas { get; set; }

@@ -1,0 +1,312 @@
+"""
+The purpose of the `cost` directive is to define a `weight` for GraphQL types, fields, and arguments. Static analysis can use these weights when calculating the overall cost of a query or response.
+"""
+directive @cost(
+  """
+  The `weight` argument defines what value to add to the overall cost for every appearance, or possible appearance, of a type, field, argument, etc.
+  """
+  weight: String!
+) on ARGUMENT_DEFINITION | ENUM | FIELD_DEFINITION | INPUT_FIELD_DEFINITION | OBJECT | SCALAR
+
+type AddArtistToServerLibraryArtistAlreadyAdded {
+  message: String!
+}
+
+type AddArtistToServerLibraryArtistDoesNotExist {
+  message: String!
+}
+
+input AddArtistToServerLibraryInput {
+  artistId: ID!
+}
+
+union AddArtistToServerLibraryResult = AddArtistToServerLibraryArtistAlreadyAdded | AddArtistToServerLibraryArtistDoesNotExist | AddArtistToServerLibrarySuccess | AddArtistToServerLibraryUnknownError
+
+type AddArtistToServerLibrarySuccess {
+  serverAvailability: ArtistServerAvailability!
+}
+
+type AddArtistToServerLibraryUnknownError {
+  message: String!
+}
+
+input AddReleaseGroupToServerLibraryInput {
+  releaseGroupId: String!
+}
+
+type AddReleaseGroupToServerLibraryReleaseGroupAlreadyAdded {
+  message: String!
+}
+
+type AddReleaseGroupToServerLibraryReleaseGroupDoesNotExist {
+  message: String!
+}
+
+union AddReleaseGroupToServerLibraryResult = AddReleaseGroupToServerLibraryReleaseGroupAlreadyAdded | AddReleaseGroupToServerLibraryReleaseGroupDoesNotExist | AddReleaseGroupToServerLibrarySuccess | AddReleaseGroupToServerLibraryUnknownError
+
+type AddReleaseGroupToServerLibrarySuccess {
+  viewer: User!
+}
+
+type AddReleaseGroupToServerLibraryUnknownError {
+  message: String!
+}
+
+type Artist {
+  disambiguation: String
+  id: ID!
+  images: ArtistImages
+  listeners: Long
+  mainAlbums: [Release!]!
+  name: String!
+  releaseGroups: [ReleaseGroup!]!
+  releases: [Release!]!
+  serverAvailability: ArtistServerAvailability!
+  sortName: String!
+  topTracks: [LastFmTrack!]!
+  type: String
+}
+
+type ArtistImages {
+  artistBackground: String
+  artistThumb: String
+  hdMusicLogo: String
+  musicBanner: String
+  musicLogo: String
+}
+
+type ArtistInServerLibrary {
+  artist: Artist
+}
+
+type ArtistSearchRoot {
+  byId(id: ID!): Artist
+  id: ID!
+  searchByName(limit: Int! = 25, name: String!, offset: Int! = 0): [Artist!]!
+}
+
+type ArtistServerAvailability {
+  artist: Artist
+  id: ID!
+  isInServerLibrary: Boolean!
+}
+
+type ArtistsInServerLibrarySearchRoot {
+  all: [ArtistInServerLibrary!]!
+}
+
+type DownloadStatus {
+  artistName: String
+  id: ID!
+  numberOfTracks: Int
+  release: Release
+  releaseName: String
+  statusDescription: String!
+  tracksDownloaded: Int
+}
+
+type DownloadsSearchRoot {
+  all: [DownloadStatus!]!
+  id: ID!
+}
+
+type ExternalRoot {
+  id: ID!
+  soulSeek: SoulSeekRoot!
+}
+
+type Genre {
+  id: ID!
+  name: String!
+}
+
+type LastFmTrack {
+  id: ID!
+  playCount: Long
+  recording: Recording
+  summary: String
+  userPlayCount: Int
+}
+
+type LikeSongAlreadyLiked {
+  message: String!
+}
+
+input LikeSongInput {
+  recordingId: String!
+}
+
+union LikeSongResult = LikeSongAlreadyLiked | LikeSongSongDoesNotExist | LikeSongSuccess
+
+type LikeSongSongDoesNotExist {
+  message: String!
+}
+
+type LikeSongSuccess {
+  viewer: User!
+}
+
+type LikedSong {
+  id: ID!
+  recording: Recording
+}
+
+"""
+The `Long` scalar type represents non-fractional signed whole 64-bit numeric values. Long can represent values between -(2^63) and 2^63 - 1.
+"""
+scalar Long
+
+type Medium {
+  trackCount: Int!
+  tracks: [Track!]!
+}
+
+type Mutation {
+  addArtistToServerLibrary(input: AddArtistToServerLibraryInput!): AddArtistToServerLibraryResult!
+  addReleaseGroupToServerLibrary(input: AddReleaseGroupToServerLibraryInput!): AddReleaseGroupToServerLibraryResult!
+  likeSong(input: LikeSongInput!): LikeSongResult!
+  ping: Boolean!
+  startDownloadRelease(input: StartDownloadReleaseInput!): StartDownloadReleaseResult!
+  unlikeSong(input: UnlikedSongInput!): UnlikedSongPayload!
+}
+
+type NameCredit {
+  artist: Artist!
+  joinPhrase: String
+  name: String!
+}
+
+type Ping {
+  id: ID!
+}
+
+type Query {
+  artist: ArtistSearchRoot!
+  download: DownloadsSearchRoot!
+  external: ExternalRoot!
+  recording: RecordingSearchRoot!
+  release: ReleaseSearchRoot!
+  releaseGroup: ReleaseGroupSearchRoot!
+  serverLibrary: ServerLibrarySearchRoot!
+  viewer: User!
+}
+
+type Recording {
+  artists: [Artist!]!
+  id: ID!
+  length: Int
+  mainAlbum: Release
+  nameCredits: [NameCredit!]!
+  releases: [Release!]!
+  title: String!
+}
+
+type RecordingSearchRoot {
+  byId(id: ID!): Recording
+  id: ID!
+  searchByName(limit: Int! = 25, name: String!, offset: Int! = 0): [Recording!]!
+}
+
+type Release {
+  artists: [Artist!]!
+  barcode: String
+  country: String
+  coverArtUri: String!
+  credits: [NameCredit!]!
+  date: String
+  genres: [Genre!]!
+  id: ID!
+  media: [Medium!]!
+  quality: String
+  recordings: [Recording!]!
+  releaseGroup: ReleaseGroup
+  status: String
+  title: String!
+  year: String
+}
+
+type ReleaseGroup {
+  firstReleaseDate: String
+  id: ID!
+  mainRelease: Release
+  primaryType: String
+  secondaryTypes: [String!]!
+  title: String!
+}
+
+type ReleaseGroupInServerLibrary {
+  releaseGroup: ReleaseGroup
+}
+
+type ReleaseGroupSearchRoot {
+  byId(id: ID!): ReleaseGroup
+  id: ID!
+  searchByName(limit: Int! = 25, name: String!, offset: Int! = 0): [ReleaseGroup!]!
+}
+
+type ReleaseGroupsInServerLibrarySearchRoot {
+  all: [ReleaseGroupInServerLibrary!]!
+}
+
+type ReleaseSearchRoot {
+  byId(id: ID!): Release
+  id: ID!
+  searchByName(limit: Int! = 25, name: String!, offset: Int! = 0): [Release!]!
+}
+
+type ServerLibrarySearchRoot {
+  artistsInServerLibrary: ArtistsInServerLibrarySearchRoot!
+  releaseGroupsInServerLibrary: ReleaseGroupsInServerLibrarySearchRoot!
+}
+
+type SoulSeekRoot {
+  id: ID!
+  status: SoulSeekStatus!
+}
+
+type SoulSeekStatus {
+  id: ID!
+  status: SoulSeekStatusType!
+}
+
+enum SoulSeekStatusType {
+  CONNECTING
+  OFFLINE
+  ONLINE
+}
+
+input StartDownloadReleaseInput {
+  releaseId: String!
+}
+
+union StartDownloadReleaseResult = StartDownloadReleaseSuccess
+
+type StartDownloadReleaseSuccess {
+  success: Boolean!
+}
+
+type Subscription {
+  downloadStarted: DownloadStatus!
+  downloadStatusUpdated: DownloadStatus!
+  ping: Ping!
+  soulSeekStatusUpdated: SoulSeekStatus!
+}
+
+type Track {
+  id: ID!
+  position: Int!
+  recording: Recording!
+}
+
+input UnlikedSongInput {
+  recordingId: String!
+}
+
+type UnlikedSongPayload {
+  success: Boolean!
+}
+
+type User {
+  id: Int!
+  likedSongs: [LikedSong!]!
+}

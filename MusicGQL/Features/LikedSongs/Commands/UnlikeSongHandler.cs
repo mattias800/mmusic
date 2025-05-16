@@ -1,9 +1,11 @@
-using MusicGQL.Aggregates;
 using MusicGQL.Db;
 
 namespace MusicGQL.Features.LikedSongs.Commands;
 
-public class UnlikeSongHandler(EventDbContext dbContext, EventProcessor eventProcessor)
+public class UnlikeSongHandler(
+    EventDbContext dbContext,
+    EventProcessor.EventProcessorWorker eventProcessorWorker
+)
 {
     public async Task<Result> Handle(Command command)
     {
@@ -19,7 +21,7 @@ public class UnlikeSongHandler(EventDbContext dbContext, EventProcessor eventPro
         );
 
         await dbContext.SaveChangesAsync();
-        await eventProcessor.ProcessEvents();
+        await eventProcessorWorker.ProcessEvents();
         return new Result.Success();
     }
 

@@ -1,4 +1,4 @@
-schema: schema.json
+schema: schema.graphql
 extensions:
   endpoints:
     Default GraphQL Endpoint:
