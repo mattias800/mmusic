@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore.ChangeTracking;
 using MusicGQL.Db.Models;
 using MusicGQL.Db.Models.Events;
 using MusicGQL.Db.Models.Projections;
+using MusicGQL.Db.Models.ServerLibrary;
 
 namespace MusicGQL.Db;
 
@@ -10,6 +11,9 @@ public class EventDbContext(DbContextOptions<EventDbContext> options) : DbContex
 {
     public DbSet<Event> Events { get; set; }
     public DbSet<EventCheckpoint> EventCheckpoints { get; set; }
+
+    // Music library
+    public DbSet<Artist> Artists { get; set; }
 
     // Projections
     public DbSet<LikedSongsProjection> LikedSongsProjections { get; set; }
