@@ -15,7 +15,7 @@ export type TypesWithNoId = 'AlbumImages' | 'ArtistImages' | 'ArtistInServerLibr
  * Union type of all GraphQL object types that have an id field.
  * This is used for reference and validation.
  */
-export type TypesWithId = 'Artist' | 'ArtistServerAvailability' | 'DownloadStatus' | 'ExternalRoot' | 'Genre' | 'LastFmTrack' | 'LikedSong' | 'Ping' | 'Recording' | 'Release' | 'ReleaseGroup' | 'ReleaseGroupSearchRoot' | 'SoulSeekRoot' | 'SoulSeekStatus' | 'Track' | 'Url' | 'User';
+export type TypesWithId = 'Artist' | 'ArtistServerAvailability' | 'DownloadStatus' | 'ExternalRoot' | 'Genre' | 'LastFmTrack' | 'LikedSong' | 'Ping' | 'Recording' | 'RecordingStreamingServiceInfo' | 'Release' | 'ReleaseGroup' | 'ReleaseGroupSearchRoot' | 'SoulSeekRoot' | 'SoulSeekStatus' | 'Track' | 'Url' | 'User';
 
 /**
  * Type guard to check if a type has an id field.
@@ -23,7 +23,7 @@ export type TypesWithId = 'Artist' | 'ArtistServerAvailability' | 'DownloadStatu
  * @returns True if the type has an id field, false otherwise
  */
 export function hasIdField(type: string): type is TypesWithId {
-  const typesWithId: string[] = ['Artist', 'ArtistServerAvailability', 'DownloadStatus', 'ExternalRoot', 'Genre', 'LastFmTrack', 'LikedSong', 'Ping', 'Recording', 'Release', 'ReleaseGroup', 'ReleaseGroupSearchRoot', 'SoulSeekRoot', 'SoulSeekStatus', 'Track', 'Url', 'User'];
+  const typesWithId: string[] = ['Artist', 'ArtistServerAvailability', 'DownloadStatus', 'ExternalRoot', 'Genre', 'LastFmTrack', 'LikedSong', 'Ping', 'Recording', 'RecordingStreamingServiceInfo', 'Release', 'ReleaseGroup', 'ReleaseGroupSearchRoot', 'SoulSeekRoot', 'SoulSeekStatus', 'Track', 'Url', 'User'];
   return typesWithId.includes(type);
 }
 

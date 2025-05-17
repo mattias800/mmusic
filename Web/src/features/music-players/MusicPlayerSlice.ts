@@ -1,17 +1,24 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
-export type MusicPlayer = "youtube-music";
+export type MusicPlayer =
+  | "youtube-video-id"
+  | "youtube-video-search"
+  | "recording";
 
 export interface MusicPlayerState {
   isOpen: boolean;
   currentMusicPlayer: MusicPlayer | undefined;
-  youtubeId: string | undefined;
+  youtubeVideoId: string | undefined;
+  youtubeVideoSearchText: string | undefined;
+  recordingId: string | undefined;
 }
 
 const initialState: MusicPlayerState = {
   isOpen: false,
   currentMusicPlayer: undefined,
-  youtubeId: undefined,
+  youtubeVideoId: undefined,
+  youtubeVideoSearchText: undefined,
+  recordingId: undefined,
 };
 
 export const musicPlayerSlice = createSlice({
@@ -21,13 +28,38 @@ export const musicPlayerSlice = createSlice({
     open: (state) => {
       state.isOpen = true;
     },
-    openYoutubeMusicId: (
+    close: (state) => {
+      state.isOpen = false;
+    },
+    openYoutubeVideoId: (
       state,
-      action: PayloadAction<{ youtubeId: string }>,
+      action: PayloadAction<{ youtubeVideoId: string }>,
     ) => {
-      state.youtubeId = action.payload.youtubeId;
+      state.youtubeVideoId = action.payload.youtubeVideoId;
+      state.youtubeVideoSearchText = undefined;
+      state.recordingId = undefined;
       state.isOpen = true;
-      state.currentMusicPlayer = "youtube-music";
+      state.currentMusicPlayer = "youtube-video-id";
+    },
+    openYoutubeVideoSearchText: (
+      state,
+      action: PayloadAction<{ searchText: string }>,
+    ) => {
+      state.youtubeVideoId = undefined;
+      state.youtubeVideoSearchText = action.payload.searchText;
+      state.recordingId = undefined;
+      state.isOpen = true;
+      state.currentMusicPlayer = "youtube-video-search";
+    },
+    openRecordingId: (
+      state,
+      action: PayloadAction<{ recordingId: string }>,
+    ) => {
+      state.youtubeVideoId = undefined;
+      state.youtubeVideoSearchText = undefined;
+      state.recordingId = action.payload.recordingId;
+      state.isOpen = true;
+      state.currentMusicPlayer = "recording";
     },
   },
 });

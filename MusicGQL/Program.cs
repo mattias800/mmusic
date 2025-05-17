@@ -1,3 +1,5 @@
+using Google.Apis.Services;
+using Google.Apis.YouTube.v3;
 using Hqub.Lastfm;
 using Hqub.MusicBrainz;
 using Microsoft.EntityFrameworkCore;
@@ -20,7 +22,9 @@ using MusicGQL.Features.ServerLibrary.Artist.Sagas.Events;
 using MusicGQL.Features.ServerLibrary.ReleaseGroup.Aggregate;
 using MusicGQL.Features.ServerLibrary.ReleaseGroup.Handlers;
 using MusicGQL.Features.ServerLibrary.ReleaseGroup.Mutations;
+using MusicGQL.Features.YouTube.Configuration;
 using MusicGQL.Integration.MusicBrainz;
+using MusicGQL.Integration.Youtube;
 using MusicGQL.Sagas.DownloadRelease;
 using MusicGQL.Sagas.DownloadRelease.Handlers;
 using MusicGQL.Types;
@@ -29,8 +33,14 @@ using Rebus.Routing.TypeBased;
 using Soulseek;
 using Soulseek.Diagnostics;
 using StackExchange.Redis;
+using YouTubeService = MusicGQL.Integration.Youtube.YouTubeService;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Configure YouTubeServiceOptions
+builder.Services.Configure<YouTubeServiceOptions>(
+    builder.Configuration.GetSection(YouTubeServiceOptions.SectionName)
+);
 
 builder.Services.Configure<SoulSeekConnectOptions>(builder.Configuration.GetSection("SoulSeek"));
 
@@ -49,6 +59,7 @@ builder
     ))
     .AddSingleton<SoulSeekService>()
     .AddSingleton<MusicBrainzService>()
+    .AddSingleton<YouTubeService>()
     .AddScoped<LikeSongHandler>()
     .AddScoped<UnlikeSongHandler>()
     .AddScoped<AddReleaseGroupToServerLibraryHandler>()
@@ -57,7 +68,26 @@ builder
     .AddScoped<LikedSongsEventProcessor>()
     .AddScoped<ReleaseGroupsAddedToServerLibraryProcessor>()
     .AddScoped<ArtistsAddedToServerLibraryProcessor>()
-    .AddScoped<EventProcessorWorker>();
+    .AddScoped<EventProcessorWorker>()
+    // Register YouTubeService
+    .AddSingleton<Google.Apis.YouTube.v3.YouTubeService>(sp =>
+    {
+        var options = sp.GetRequiredService<IOptions<YouTubeServiceOptions>>().Value;
+        if (string.IsNullOrWhiteSpace(options.ApiKey))
+        {
+            throw new InvalidOperationException(
+                "YouTube API key is not configured. Please set it in appsettings.json."
+            );
+        }
+
+        return new Google.Apis.YouTube.v3.YouTubeService(
+            new BaseClientService.Initializer
+            {
+                ApiKey = options.ApiKey,
+                ApplicationName = options.ApplicationName ?? "MusicGQL",
+            }
+        );
+    });
 
 builder.Services.AddDbContext<EventDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Postgres"))

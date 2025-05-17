@@ -38,18 +38,6 @@ public record Recording([property: GraphQLIgnore] Hqub.MusicBrainz.Entities.Reco
         return Model.Relations?.Select(r => new Relation(r)) ?? [];
     }
 
-    public string? YoutubeMusicUrl()
-    {
-        var r = Model.Relations.FirstOrDefault(r => r.Url.Resource.Contains("youtube"));
-        return r?.Url.Resource;
-    }
-
-    public string? YoutubeMusicId()
-    {
-        var r = Model.Relations.FirstOrDefault(r => r.Url.Resource.Contains("youtube"));
-        return r?.Url.Resource.Split("v=").LastOrDefault();
-    }
-
     public async Task<LastFmStatistics?> Statistics([Service] LastfmClient lastfmClient)
     {
         try
@@ -62,4 +50,6 @@ public record Recording([property: GraphQLIgnore] Hqub.MusicBrainz.Entities.Reco
             return null;
         }
     }
+
+    public RecordingStreamingServiceInfo StreamingServiceInfo() => new(Model);
 }

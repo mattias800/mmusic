@@ -32,11 +32,13 @@ export const PlaylistSongRow: React.FC<PlaylistSongRowProps> = (props) => {
     <div className="grid grid-cols-[40px_48px_1fr_1fr_150px_48px] gap-4 items-center px-4 py-3 hover:bg-neutral-800 rounded">
       <span className="text-neutral-400 text-right">{props.index}</span>
 
-      <img
-        src={recording?.mainAlbum.coverArtUri}
-        alt="Cover"
-        className="w-12 h-12 rounded"
-      />
+      {recording?.mainAlbum && (
+        <img
+          src={recording.mainAlbum.coverArtUri}
+          alt="Cover"
+          className="w-12 h-12 rounded"
+        />
+      )}
 
       <div className="min-w-0">
         <p className="text-white truncate">{recording?.title}</p>
@@ -46,7 +48,7 @@ export const PlaylistSongRow: React.FC<PlaylistSongRowProps> = (props) => {
       </div>
 
       <div className="text-neutral-400 truncate hidden md:block">
-        {recording && (
+        {recording.mainAlbum && (
           <Link
             to={"/album/" + recording.mainAlbum.id}
             className="hover:underline"

@@ -209,14 +209,20 @@ type Recording {
   relations: [Relation!]!
   releases: [Release!]!
   statistics: LastFmStatistics
+  streamingServiceInfo: RecordingStreamingServiceInfo!
   title: String!
-  youtubeMusicId: String
-  youtubeMusicUrl: String
 }
 
 type RecordingSearchRoot {
   byId(id: ID!): Recording
   searchByName(limit: Int! = 25, name: String!, offset: Int! = 0): [Recording!]!
+}
+
+type RecordingStreamingServiceInfo {
+  id: ID!
+  youtubeMusicUrl: String
+  youtubeSearchVideoId: String
+  youtubeVideoId: String
 }
 
 type Relation {

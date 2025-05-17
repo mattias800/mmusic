@@ -14,12 +14,10 @@ import {
   ContextMenuSubTrigger,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu.tsx";
-import { PlusCircle } from "lucide-react";
+import { Play, PlusCircle, Search } from "lucide-react";
 import { playlists } from "@/components/playlists.ts";
 import { useNavigate } from "react-router";
-import { PlayButton } from "@/components/buttons/PlayButton.tsx";
-import { useAppDispatch } from "@/ReduxAppHooks.ts";
-import { musicPlayerSlice } from "@/features/music-players/MusicPlayerSlice.ts";
+import { RecordingPlayButton } from "@/features/music-players/RecordingPlayButton.tsx";
 
 interface TopArtistTrackItemProps {
   track: FragmentType<typeof topArtistTrackItemLastFmTrackFragment>;
@@ -36,7 +34,7 @@ export const topArtistTrackItemLastFmTrackFragment = graphql(`
       id
       title
       length
-      youtubeMusicId
+      ...RecordingPlayButton_Recording
       relations {
         attributes
         url {
@@ -67,8 +65,6 @@ export const TopArtistTrackItem: React.FC<TopArtistTrackItemProps> = (
 ) => {
   const track = useFragment(topArtistTrackItemLastFmTrackFragment, props.track);
 
-  const dispatch = useAppDispatch();
-
   const navigate = useNavigate();
 
   if (track.recording == null) {
@@ -94,22 +90,30 @@ export const TopArtistTrackItem: React.FC<TopArtistTrackItemProps> = (
               }
             />
           )}
-
           <div className={"flex gap-4 items-center"}>
-            <span className="truncate">{track.recording?.title}</span>
-            {track.recording.youtubeMusicId && (
-              <PlayButton
-                onClick={() =>
-                  track.recording?.youtubeMusicId &&
-                  dispatch(
-                    musicPlayerSlice.actions.openYoutubeMusicId({
-                      youtubeId: track.recording.youtubeMusicId,
-                    }),
-                  )
-                }
-              />
-            )}
+            <RecordingPlayButton
+              recording={track.recording}
+              renderButton={(onClick, needsYoutubeSearch) => (
+                <button
+                  className={
+                    "truncate cursor-pointer hover:underline flex items-center gap-4"
+                  }
+                  onClick={onClick}
+                >
+                  <span>{track.recording?.title}</span>
+                  {needsYoutubeSearch ? (
+                    <Search className={"h-4 w-4"} />
+                  ) : (
+                    <Play className={"h-4 w-4"} />
+                  )}
+                </button>
+              )}
+              renderWhenNotPlayable={() => (
+                <span className="truncate">{track.recording?.title}</span>
+              )}
+            />
           </div>
+
           <span className="text-sm text-neutral-400 text-right">
             {formatLargeNumber(track.playCount)}
           </span>

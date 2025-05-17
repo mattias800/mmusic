@@ -5,9 +5,8 @@ import {
   formatTrackLength,
 } from "@/common/TrackLengthFormatter.ts";
 import { Link } from "react-router";
-import { PlayButton } from "@/components/buttons/PlayButton.tsx";
-import { musicPlayerSlice } from "@/features/music-players/MusicPlayerSlice.ts";
-import { useAppDispatch } from "@/ReduxAppHooks.ts";
+import { RecordingPlayButton } from "@/features/music-players/RecordingPlayButton.tsx";
+import { Play, Search } from "lucide-react";
 
 interface AlbumTrackListProps {
   releaseGroup: FragmentType<typeof albumTrackListReleaseGroupFragment>;
@@ -22,9 +21,9 @@ export const albumTrackListReleaseGroupFragment = graphql(`
       title
       recordings {
         id
+        ...RecordingPlayButton_Recording
         title
         length
-        youtubeMusicId
         statistics {
           playCount
         }
@@ -46,8 +45,6 @@ export const AlbumTrackList: React.FC<AlbumTrackListProps> = (props) => {
     props.releaseGroup,
   );
 
-  const dispatch = useAppDispatch();
-
   const release = releaseGroup.mainRelease;
 
   return (
@@ -67,7 +64,25 @@ export const AlbumTrackList: React.FC<AlbumTrackListProps> = (props) => {
         >
           <span className="text-center text-white/60">{idx + 1}</span>
           <div className="text-left">
-            <div className="font-medium">{recording.title}</div>
+            <RecordingPlayButton
+              recording={recording}
+              renderButton={(onClick, needsYoutubeSearch) => (
+                <button
+                  className="font-medium hover:underline cursor-pointer flex items-center gap-4"
+                  onClick={onClick}
+                >
+                  {recording.title}
+                  {needsYoutubeSearch ? (
+                    <Search className={"h-4 w-4"} />
+                  ) : (
+                    <Play className={"h-4 w-4"} />
+                  )}
+                </button>
+              )}
+              renderWhenNotPlayable={() => (
+                <span className="font-medium">{recording.title}</span>
+              )}
+            />
             <div className="text-white/50 text-xs">
               {recording.nameCredits.map(({ artist }, index) => (
                 <React.Fragment key={artist.id}>
@@ -79,22 +94,8 @@ export const AlbumTrackList: React.FC<AlbumTrackListProps> = (props) => {
               ))}
             </div>
           </div>
-          <span className="hidden md:block text-right pr-8 ">
-            {recording.youtubeMusicId && (
-              <PlayButton
-                onClick={() =>
-                  recording?.youtubeMusicId &&
-                  dispatch(
-                    musicPlayerSlice.actions.openYoutubeMusicId({
-                      youtubeId: recording.youtubeMusicId,
-                    }),
-                  )
-                }
-              />
-            )}
-            <span className={"text-white/70"}>
-              {formatLargeNumber(recording.statistics?.playCount ?? 0)}
-            </span>
+          <span className="hidden md:block text-right pr-8 text-white/70">
+            {formatLargeNumber(recording.statistics?.playCount ?? 0)}
           </span>
           <span className="hidden md:block text-right pr-4 text-white/70">
             {recording.length ? formatTrackLength(recording.length) : ""}
