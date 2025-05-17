@@ -72,6 +72,10 @@ builder.Services.AddStackExchangeRedisCache(options =>
 
 builder
     .AddGraphQL()
+    .ModifyRequestOptions(o =>
+    {
+        o.ExecutionTimeout = TimeSpan.FromSeconds(60);
+    })
     .AddRedisSubscriptions(
         (sp) =>
             ConnectionMultiplexer.Connect(
