@@ -20,7 +20,6 @@ export const artistPanelArtistFragment = graphql(`
     ...ArtistHeader_Artist
     ...PopularArtistTracks_Artist
     ...ArtistInLibraryButton_Artist
-    ...ArtistAlbumList_Artist
   }
 `);
 
@@ -44,7 +43,7 @@ export const ArtistPanel: React.FC<ArtistPanelProps> = (props) => {
 
       <div className="px-6 md:px-10 mt-4">
         <h2 className="text-xl font-semibold mb-4">Albums</h2>
-        <ArtistAlbumList artist={artist} />
+        <ArtistAlbumList artistId={artist.id} />
       </div>
     </div>
   );

@@ -19,14 +19,14 @@ export const albumQuery = graphql(`
 
 export const Album: React.FC = () => {
   const { releaseGroupId } = useParams<{ releaseGroupId: string }>();
-  const [{ error, data, fetching }] = useQuery({
+  const [{ error, data, fetching, stale }] = useQuery({
     query: albumQuery,
     variables: { releaseGroupId: releaseGroupId! },
     pause: !releaseGroupId,
   });
 
   console.log({releaseGroupId});
-  if (fetching) return <ScreenSpinner />;
+  if (fetching || stale) return <ScreenSpinner />;
   if (error) return <div>Error: {error.message}</div>;
   if (!data?.releaseGroup.byId) return <div>No data</div>;
 

@@ -20,13 +20,13 @@ export const artistQuery = graphql(`
 
 export const Artist: React.FC<ArtistProps> = () => {
   const { artistId } = useParams<{ artistId: string }>();
-  const [{ error, data, fetching }] = useQuery({
+  const [{ error, data, fetching, stale }] = useQuery({
     query: artistQuery,
     variables: { artistId: artistId! },
     pause: !artistId,
   });
 
-  if (fetching) return <ScreenSpinner/>;
+  if (fetching || stale) return <ScreenSpinner />;
   if (error) return <div>Error: {error.message}</div>;
   if (!data?.artist.byId) return <div>No data</div>;
 

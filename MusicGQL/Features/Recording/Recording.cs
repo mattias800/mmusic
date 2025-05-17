@@ -1,4 +1,5 @@
 using MusicGQL.Features.Release;
+using MusicGQL.Features.ReleaseGroups;
 using MusicGQL.Integration.MusicBrainz;
 
 namespace MusicGQL.Features.Recording;

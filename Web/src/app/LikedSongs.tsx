@@ -16,8 +16,10 @@ export const likedSongsQuery = graphql(`
 `);
 
 export const LikedSongs: React.FC<LikedSongsProps> = () => {
-  const [{ error, data, fetching }] = useQuery({ query: likedSongsQuery });
-  if (fetching) return <ScreenSpinner/>;
+  const [{ error, data, fetching, stale }] = useQuery({
+    query: likedSongsQuery,
+  });
+  if (fetching || stale) return <ScreenSpinner />;
   if (error) return <div>Error: {error.message}</div>;
   if (!data?.viewer) return <div>No data</div>;
   return <LikedSongsList user={data?.viewer} />;
