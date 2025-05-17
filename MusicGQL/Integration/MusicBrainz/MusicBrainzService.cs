@@ -209,7 +209,7 @@ public class MusicBrainzService(MusicBrainzClient client, HybridCache cache)
         ExecuteThrottledAsync(
             $"release_group:{releaseGroupId}",
             TimeSpan.FromDays(1),
-            () => client.ReleaseGroups.GetAsync(releaseGroupId, "recordings", "genres")
+            () => client.ReleaseGroups.GetAsync(releaseGroupId, "genres", "artist-credits")
         );
 
     public async Task<List<ReleaseGroup>> SearchReleaseGroupByNameAsync(
@@ -232,7 +232,17 @@ public class MusicBrainzService(MusicBrainzClient client, HybridCache cache)
         var result = await ExecuteThrottledAsync(
             $"artist:{artistId}:release-groups",
             TimeSpan.FromDays(1),
-            async () => (await client.ReleaseGroups.BrowseAsync("artist", artistId, 100, 0)).Items
+            async () =>
+                (
+                    await client.ReleaseGroups.BrowseAsync(
+                        "artist",
+                        artistId,
+                        100,
+                        0,
+                        "genres",
+                        "artist-credits"
+                    )
+                ).Items
         );
         return result ?? [];
     }

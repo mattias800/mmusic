@@ -10,7 +10,13 @@ public record ReleaseGroup([property: GraphQLIgnore] Hqub.MusicBrainz.Entities.R
     public string Title => Model.Title;
     public string? PrimaryType => Model.PrimaryType;
     public IEnumerable<string> SecondaryTypes => Model.SecondaryTypes;
+
+    public IEnumerable<NameCredit.NameCredit> Credits() =>
+        Model.Credits?.Select(c => new NameCredit.NameCredit(c)) ?? [];
+
     public string? FirstReleaseDate => Model.FirstReleaseDate;
+    public string? FirstReleaseYear => Model.FirstReleaseDate?.Split("-").FirstOrDefault();
+    public IEnumerable<string> Tags => Model.Tags.Select(t => t.Name);
 
     public async Task<Release.Release?> MainRelease([Service] MusicBrainzService mbService)
     {
