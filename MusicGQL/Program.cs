@@ -35,7 +35,10 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.Configure<SoulSeekConnectOptions>(builder.Configuration.GetSection("SoulSeek"));
 
 builder
-    .Services.AddHybridCache()
+    .Services.AddHybridCache(options =>
+    {
+        options.MaximumPayloadBytes = 10485760; // 10 MB
+    })
     .Services.AddSingleton<IMemoryCache, MemoryCache>()
     .AddSingleton<ISoulseekClient, SoulseekClient>(_ => new SoulseekClient(
         options: new SoulseekClientOptions(

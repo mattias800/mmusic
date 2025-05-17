@@ -269,7 +269,7 @@ public class MusicBrainzService(MusicBrainzClient client, HybridCache cache)
                     stopwatch.Stop();
 
                     var timeLeftForMusicBrainzLimit = Math.Max(
-                        1100 - (int)stopwatch.ElapsedMilliseconds,
+                        1500 - (int)stopwatch.ElapsedMilliseconds,
                         0
                     );
                     await Task.Delay(timeLeftForMusicBrainzLimit, cancellationToken); // Rate limit: 1 req/sec

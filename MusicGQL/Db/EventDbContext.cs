@@ -15,6 +15,7 @@ public class EventDbContext(DbContextOptions<EventDbContext> options) : DbContex
 
     // Music library
     public DbSet<Artist> Artists { get; set; }
+    public DbSet<Area> Areas { get; set; }
 
     // Projections
     public DbSet<LikedSongsProjection> LikedSongsProjections { get; set; }

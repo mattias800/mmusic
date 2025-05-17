@@ -77,6 +77,73 @@ public class AddArtistToServerLibrarySaga(
         logger.LogInformation("Saving artist to library database");
 
         var dbArtist = mapper.Map<Db.Models.ServerLibrary.Artist>(message.Artist);
+
+        // Handle Area
+        if (dbArtist.Area != null)
+        {
+            var existingArea = await dbContext.Areas.FindAsync(dbArtist.Area.Id);
+            if (existingArea != null)
+            {
+                dbContext.Entry(existingArea).CurrentValues.SetValues(dbArtist.Area);
+                dbArtist.Area = existingArea;
+            }
+            else
+            {
+                dbContext.Areas.Add(dbArtist.Area);
+            }
+        }
+
+        // Handle BeginArea
+        if (dbArtist.BeginArea != null)
+        {
+            // If BeginArea is the same as Area, reuse the tracked entity
+            if (dbArtist.Area != null && dbArtist.BeginArea.Id == dbArtist.Area.Id)
+            {
+                dbArtist.BeginArea = dbArtist.Area;
+            }
+            else
+            {
+                var existingBeginArea = await dbContext.Areas.FindAsync(dbArtist.BeginArea.Id);
+                if (existingBeginArea != null)
+                {
+                    dbContext.Entry(existingBeginArea).CurrentValues.SetValues(dbArtist.BeginArea);
+                    dbArtist.BeginArea = existingBeginArea;
+                }
+                else
+                {
+                    dbContext.Areas.Add(dbArtist.BeginArea);
+                }
+            }
+        }
+
+        // Handle EndArea
+        if (dbArtist.EndArea != null)
+        {
+            // If EndArea is the same as Area, reuse the tracked entity
+            if (dbArtist.Area != null && dbArtist.EndArea.Id == dbArtist.Area.Id)
+            {
+                dbArtist.EndArea = dbArtist.Area;
+            }
+            // If EndArea is the same as BeginArea, reuse the tracked entity
+            else if (dbArtist.BeginArea != null && dbArtist.EndArea.Id == dbArtist.BeginArea.Id)
+            {
+                dbArtist.EndArea = dbArtist.BeginArea;
+            }
+            else
+            {
+                var existingEndArea = await dbContext.Areas.FindAsync(dbArtist.EndArea.Id);
+                if (existingEndArea != null)
+                {
+                    dbContext.Entry(existingEndArea).CurrentValues.SetValues(dbArtist.EndArea);
+                    dbArtist.EndArea = existingEndArea;
+                }
+                else
+                {
+                    dbContext.Areas.Add(dbArtist.EndArea);
+                }
+            }
+        }
+
         dbContext.Artists.Add(dbArtist);
         await dbContext.SaveChangesAsync();
         MarkAsComplete();
