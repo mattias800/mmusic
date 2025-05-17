@@ -1,6 +1,6 @@
 import * as React from "react";
 import { LargePlayButton } from "@/components/buttons/LargePlayButton.tsx";
-import { PopularArtistTracks } from "@/features/artist/PopularArtistTracks.tsx";
+import { TopArtistTracks } from "@/features/artist/TopArtistTracks.tsx";
 import { ShuffleButton } from "@/components/buttons/ShuffleButton.tsx";
 import { DotsButton } from "@/components/buttons/DotsButton.tsx";
 import { FollowButton } from "@/components/buttons/FollowButton.tsx";
@@ -8,6 +8,7 @@ import { FragmentType, graphql, useFragment } from "@/gql";
 import { ArtistAlbumList } from "@/features/artist/ArtistAlbumList.tsx";
 import { ArtistHeader } from "@/features/artist/ArtistHeader.tsx";
 import { ArtistInLibraryButton } from "@/features/add-artist-to-server-library/ArtistInLibraryButton.tsx";
+import { ArtistSingleList } from "@/features/artist/ArtistSingleList.tsx";
 
 interface ArtistPanelProps {
   artist: FragmentType<typeof artistPanelArtistFragment>;
@@ -18,7 +19,7 @@ export const artistPanelArtistFragment = graphql(`
     id
     name
     ...ArtistHeader_Artist
-    ...PopularArtistTracks_Artist
+    ...TopArtistTracks_Artist
     ...ArtistInLibraryButton_Artist
   }
 `);
@@ -38,12 +39,17 @@ export const ArtistPanel: React.FC<ArtistPanelProps> = (props) => {
         <DotsButton />
         <ArtistInLibraryButton artist={artist} />
       </div>
-      <PopularArtistTracks artist={artist} />
+      <TopArtistTracks artist={artist} />
       <div className={"mt-12"} />
 
       <div className="px-6 md:px-10 mt-4">
         <h2 className="text-xl font-semibold mb-4">Albums</h2>
         <ArtistAlbumList artistId={artist.id} />
+      </div>
+
+      <div className="px-6 md:px-10 mt-4">
+        <h2 className="text-xl font-semibold mb-4">Singles</h2>
+        <ArtistSingleList artistId={artist.id} />
       </div>
     </div>
   );

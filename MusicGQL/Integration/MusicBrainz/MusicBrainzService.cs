@@ -44,12 +44,15 @@ public class MusicBrainzService(MusicBrainzClient client, HybridCache cache)
 
     // Recordings
 
-    public Task<Recording?> GetRecordingByIdAsync(string id) =>
-        ExecuteThrottledAsync(
+    public async Task<Recording?> GetRecordingByIdAsync(string id)
+    {
+        var result = await ExecuteThrottledAsync(
             $"recording:{id}",
             TimeSpan.FromDays(1),
-            () => client.Recordings.GetAsync(id, "artist-credits")
+            () => client.Recordings.GetAsync(id, "artist-credits", "url-rels")
         );
+        return result;
+    }
 
     public async Task<List<Recording>> GetRecordingsForArtistAsync(string artistId)
     {
@@ -63,7 +66,8 @@ public class MusicBrainzService(MusicBrainzClient client, HybridCache cache)
                         artistId,
                         100,
                         0,
-                        "artist-credits"
+                        "artist-credits",
+                        "url-rels"
                     )
                 ).Items
         );
@@ -82,7 +86,8 @@ public class MusicBrainzService(MusicBrainzClient client, HybridCache cache)
                         releaseId,
                         100,
                         0,
-                        "artist-credits"
+                        "artist-credits",
+                        "url-rels"
                     )
                 ).Items
         );

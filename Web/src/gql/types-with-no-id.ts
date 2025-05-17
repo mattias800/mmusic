@@ -9,13 +9,13 @@
  * This is used to ensure that the cacheKeys object in UrqlCacheKeys.ts
  * includes all types without an id and doesn't include types with an id.
  */
-export type TypesWithNoId = 'AlbumImages' | 'ArtistImages' | 'ArtistInServerLibrary' | 'ArtistsInServerLibrarySearchRoot' | 'Medium' | 'NameCredit' | 'ReleaseGroupInServerLibrary' | 'ReleaseGroupsInServerLibrarySearchRoot' | 'ServerLibrarySearchRoot';
+export type TypesWithNoId = 'AlbumImages' | 'ArtistImages' | 'ArtistInServerLibrary' | 'ArtistSearchRoot' | 'ArtistsInServerLibrarySearchRoot' | 'DownloadsSearchRoot' | 'LastFmStatistics' | 'Medium' | 'NameCredit' | 'RecordingSearchRoot' | 'Relation' | 'ReleaseGroupInServerLibrary' | 'ReleaseGroupsInServerLibrarySearchRoot' | 'ReleaseSearchRoot' | 'ServerLibrarySearchRoot';
 
 /**
  * Union type of all GraphQL object types that have an id field.
  * This is used for reference and validation.
  */
-export type TypesWithId = 'Artist' | 'ArtistSearchRoot' | 'ArtistServerAvailability' | 'DownloadStatus' | 'DownloadsSearchRoot' | 'ExternalRoot' | 'Genre' | 'LastFmTrack' | 'LikedSong' | 'Ping' | 'Recording' | 'RecordingSearchRoot' | 'Release' | 'ReleaseGroup' | 'ReleaseGroupSearchRoot' | 'ReleaseSearchRoot' | 'SoulSeekRoot' | 'SoulSeekStatus' | 'Track' | 'User';
+export type TypesWithId = 'Artist' | 'ArtistServerAvailability' | 'DownloadStatus' | 'ExternalRoot' | 'Genre' | 'LastFmTrack' | 'LikedSong' | 'Ping' | 'Recording' | 'Release' | 'ReleaseGroup' | 'ReleaseGroupSearchRoot' | 'SoulSeekRoot' | 'SoulSeekStatus' | 'Track' | 'Url' | 'User';
 
 /**
  * Type guard to check if a type has an id field.
@@ -23,7 +23,7 @@ export type TypesWithId = 'Artist' | 'ArtistSearchRoot' | 'ArtistServerAvailabil
  * @returns True if the type has an id field, false otherwise
  */
 export function hasIdField(type: string): type is TypesWithId {
-  const typesWithId: string[] = ['Artist', 'ArtistSearchRoot', 'ArtistServerAvailability', 'DownloadStatus', 'DownloadsSearchRoot', 'ExternalRoot', 'Genre', 'LastFmTrack', 'LikedSong', 'Ping', 'Recording', 'RecordingSearchRoot', 'Release', 'ReleaseGroup', 'ReleaseGroupSearchRoot', 'ReleaseSearchRoot', 'SoulSeekRoot', 'SoulSeekStatus', 'Track', 'User'];
+  const typesWithId: string[] = ['Artist', 'ArtistServerAvailability', 'DownloadStatus', 'ExternalRoot', 'Genre', 'LastFmTrack', 'LikedSong', 'Ping', 'Recording', 'Release', 'ReleaseGroup', 'ReleaseGroupSearchRoot', 'SoulSeekRoot', 'SoulSeekStatus', 'Track', 'Url', 'User'];
   return typesWithId.includes(type);
 }
 
@@ -33,6 +33,6 @@ export function hasIdField(type: string): type is TypesWithId {
  * @returns True if the type doesn't have an id field, false otherwise
  */
 export function hasNoIdField(type: string): type is TypesWithNoId {
-  const typesWithNoId: string[] = ['AlbumImages', 'ArtistImages', 'ArtistInServerLibrary', 'ArtistsInServerLibrarySearchRoot', 'Medium', 'NameCredit', 'ReleaseGroupInServerLibrary', 'ReleaseGroupsInServerLibrarySearchRoot', 'ServerLibrarySearchRoot'];
+  const typesWithNoId: string[] = ['AlbumImages', 'ArtistImages', 'ArtistInServerLibrary', 'ArtistSearchRoot', 'ArtistsInServerLibrarySearchRoot', 'DownloadsSearchRoot', 'LastFmStatistics', 'Medium', 'NameCredit', 'RecordingSearchRoot', 'Relation', 'ReleaseGroupInServerLibrary', 'ReleaseGroupsInServerLibrarySearchRoot', 'ReleaseSearchRoot', 'ServerLibrarySearchRoot'];
   return typesWithNoId.includes(type);
 }

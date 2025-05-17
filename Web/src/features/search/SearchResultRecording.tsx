@@ -63,9 +63,18 @@ export const SearchResultRecording: React.FC<SearchResultRecordingProps> = ({
               <span className="text-white text-xs">♪</span>
             </div>
           )}
-          <div className="flex-grow">
+          <div className="flex-grow overflow-hidden">
             <p className="text-white font-medium">{recording.title}</p>
-            <p className="text-xs text-white/60">
+            <p
+              className="text-xs text-white/60"
+              style={{
+                overflowWrap: "break-word",
+                display: "-webkit-box",
+                WebkitBoxOrient: "vertical",
+                WebkitLineClamp: "3",
+                overflow: "hidden",
+              }}
+            >
               {recording.artists.map((artist, index) => (
                 <React.Fragment key={artist.id}>
                   {index > 0 && ", "}

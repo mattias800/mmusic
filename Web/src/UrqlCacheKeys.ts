@@ -10,4 +10,10 @@ export const cacheKeys: Record<TypesWithNoId, KeyGenerator> = {
   ReleaseGroupInServerLibrary: () => null,
   ReleaseGroupsInServerLibrarySearchRoot: () => null,
   ServerLibrarySearchRoot: () => null,
+  AlbumImages: () => null,
+  Relation: () => null,
+  ArtistSearchRoot: () => null,
+  DownloadsSearchRoot: () => null,
+  RecordingSearchRoot: () => null,
+  ReleaseSearchRoot: () => null,
 };

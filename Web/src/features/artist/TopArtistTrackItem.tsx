@@ -17,15 +17,18 @@ import {
 import { PlusCircle } from "lucide-react";
 import { playlists } from "@/components/playlists.ts";
 import { useNavigate } from "react-router";
+import { PlayButton } from "@/components/buttons/PlayButton.tsx";
+import { useAppDispatch } from "@/ReduxAppHooks.ts";
+import { musicPlayerSlice } from "@/features/music-players/MusicPlayerSlice.ts";
 
-interface PopularTrackProps {
-  track: FragmentType<typeof popularTrackRowLastFmTrackFragment>;
+interface TopArtistTrackItemProps {
+  track: FragmentType<typeof topArtistTrackItemLastFmTrackFragment>;
   index: number;
   active?: boolean;
 }
 
-export const popularTrackRowLastFmTrackFragment = graphql(`
-  fragment PopularTrackRow_LastFmTrack on LastFmTrack {
+export const topArtistTrackItemLastFmTrackFragment = graphql(`
+  fragment TopArtistTrackItem_LastFmTrack on LastFmTrack {
     id
     playCount
     summary
@@ -33,17 +36,38 @@ export const popularTrackRowLastFmTrackFragment = graphql(`
       id
       title
       length
+      youtubeMusicId
+      relations {
+        attributes
+        url {
+          id
+          resource
+        }
+        direction
+        end
+        begin
+        typeId
+        targetType
+        type
+      }
       mainAlbum {
         id
         title
         coverArtUri
+        releaseGroup {
+          id
+        }
       }
     }
   }
 `);
 
-export const PopularTrackRow: React.FC<PopularTrackProps> = (props) => {
-  const track = useFragment(popularTrackRowLastFmTrackFragment, props.track);
+export const TopArtistTrackItem: React.FC<TopArtistTrackItemProps> = (
+  props,
+) => {
+  const track = useFragment(topArtistTrackItemLastFmTrackFragment, props.track);
+
+  const dispatch = useAppDispatch();
 
   const navigate = useNavigate();
 
@@ -60,6 +84,7 @@ export const PopularTrackRow: React.FC<PopularTrackProps> = (props) => {
           }`}
         >
           <span>{props.active ? "▶" : props.index}</span>
+
           {track.recording?.mainAlbum && (
             <img
               src={track.recording?.mainAlbum.coverArtUri}
@@ -70,7 +95,21 @@ export const PopularTrackRow: React.FC<PopularTrackProps> = (props) => {
             />
           )}
 
-          <span className="truncate">{track.recording?.title}</span>
+          <div className={"flex gap-4 items-center"}>
+            <span className="truncate">{track.recording?.title}</span>
+            {track.recording.youtubeMusicId && (
+              <PlayButton
+                onClick={() =>
+                  track.recording?.youtubeMusicId &&
+                  dispatch(
+                    musicPlayerSlice.actions.openYoutubeMusicId({
+                      youtubeId: track.recording.youtubeMusicId,
+                    }),
+                  )
+                }
+              />
+            )}
+          </div>
           <span className="text-sm text-neutral-400 text-right">
             {formatLargeNumber(track.playCount)}
           </span>
@@ -83,8 +122,8 @@ export const PopularTrackRow: React.FC<PopularTrackProps> = (props) => {
         {track.recording.mainAlbum && (
           <ContextMenuItem
             onClick={() =>
-              track.recording?.mainAlbum &&
-              navigate("/album/" + track.recording.mainAlbum.id)
+              track.recording?.mainAlbum?.releaseGroup &&
+              navigate(`/album/${track.recording.mainAlbum.releaseGroup.id}`)
             }
           >
             Go to album

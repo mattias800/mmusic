@@ -4,9 +4,6 @@ namespace MusicGQL.Features.Recording;
 
 public record RecordingSearchRoot
 {
-    [ID]
-    public string GetId() => "RecordingSearchRoot";
-
     public async Task<IEnumerable<Recording>> SearchByName(
         [Service] MusicBrainzService mbService,
         string name,

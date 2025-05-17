@@ -8,7 +8,6 @@ import { ScreenSpinner } from "@/components/spinner/ScreenSpinner.tsx";
 export const albumQuery = graphql(`
   query AlbumQuery($releaseGroupId: ID!) {
     releaseGroup {
-      id
       byId(id: $releaseGroupId) {
         id
         ...AlbumPanel_ReleaseGroup

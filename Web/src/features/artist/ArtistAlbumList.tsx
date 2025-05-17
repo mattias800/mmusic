@@ -1,4 +1,4 @@
-import { FragmentType, graphql, useFragment } from "@/gql";
+import { graphql } from "@/gql";
 import * as React from "react";
 import { AlbumCard } from "@/features/album/AlbumCard.tsx";
 import { byStringField } from "@/common/sorting/Comparators.ts";

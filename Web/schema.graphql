@@ -87,7 +87,6 @@ type ArtistInServerLibrary {
 
 type ArtistSearchRoot {
   byId(id: ID!): Artist
-  id: ID!
   searchByName(limit: Int! = 25, name: String!, offset: Int! = 0): [Artist!]!
 }
 
@@ -113,7 +112,6 @@ type DownloadStatus {
 
 type DownloadsSearchRoot {
   all: [DownloadStatus!]!
-  id: ID!
 }
 
 type ExternalRoot {
@@ -124,6 +122,11 @@ type ExternalRoot {
 type Genre {
   id: ID!
   name: String!
+}
+
+type LastFmStatistics {
+  listeners: Long!
+  playCount: Long!
 }
 
 type LastFmTrack {
@@ -203,14 +206,28 @@ type Recording {
   length: Int
   mainAlbum: Release
   nameCredits: [NameCredit!]!
+  relations: [Relation!]!
   releases: [Release!]!
+  statistics: LastFmStatistics
   title: String!
+  youtubeMusicId: String
+  youtubeMusicUrl: String
 }
 
 type RecordingSearchRoot {
   byId(id: ID!): Recording
-  id: ID!
   searchByName(limit: Int! = 25, name: String!, offset: Int! = 0): [Recording!]!
+}
+
+type Relation {
+  attributes: [String!]
+  begin: String
+  direction: String
+  end: String
+  targetType: String
+  type: String
+  typeId: String
+  url: Url
 }
 
 type Release {
@@ -240,6 +257,7 @@ type ReleaseGroup {
   images: AlbumImages
   mainRelease: Release
   primaryType: String
+  relations: [Relation!]!
   secondaryTypes: [String!]!
   tags: [String!]!
   title: String!
@@ -261,7 +279,6 @@ type ReleaseGroupsInServerLibrarySearchRoot {
 
 type ReleaseSearchRoot {
   byId(id: ID!): Release
-  id: ID!
   searchByName(limit: Int! = 25, name: String!, offset: Int! = 0): [Release!]!
 }
 
@@ -315,6 +332,11 @@ input UnlikedSongInput {
 
 type UnlikedSongPayload {
   success: Boolean!
+}
+
+type Url {
+  id: String
+  resource: String
 }
 
 type User {

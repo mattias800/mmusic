@@ -1,5 +1,5 @@
+using Hqub.Lastfm;
 using MusicGQL.Features.Release;
-using MusicGQL.Features.ReleaseGroups;
 using MusicGQL.Integration.MusicBrainz;
 
 namespace MusicGQL.Features.Recording;
@@ -31,5 +31,35 @@ public record Recording([property: GraphQLIgnore] Hqub.MusicBrainz.Entities.Reco
     {
         var artists = await mbService.GetArtistsForRecordingAsync(Model.Id);
         return artists.Select(a => new Artist.Artist(a));
+    }
+
+    public IEnumerable<Relation> Relations()
+    {
+        return Model.Relations?.Select(r => new Relation(r)) ?? [];
+    }
+
+    public string? YoutubeMusicUrl()
+    {
+        var r = Model.Relations.FirstOrDefault(r => r.Url.Resource.Contains("youtube"));
+        return r?.Url.Resource;
+    }
+
+    public string? YoutubeMusicId()
+    {
+        var r = Model.Relations.FirstOrDefault(r => r.Url.Resource.Contains("youtube"));
+        return r?.Url.Resource.Split("v=").LastOrDefault();
+    }
+
+    public async Task<LastFmStatistics?> Statistics([Service] LastfmClient lastfmClient)
+    {
+        try
+        {
+            var track = await lastfmClient.Track.GetInfoByMbidAsync(Model.Id);
+            return track is null ? null : new(track.Statistics);
+        }
+        catch
+        {
+            return null;
+        }
     }
 }

@@ -1,7 +1,13 @@
 import { FragmentType, graphql, useFragment } from "@/gql";
 import * as React from "react";
-import { formatTrackLength } from "@/common/TrackLengthFormatter.ts";
+import {
+  formatLargeNumber,
+  formatTrackLength,
+} from "@/common/TrackLengthFormatter.ts";
 import { Link } from "react-router";
+import { PlayButton } from "@/components/buttons/PlayButton.tsx";
+import { musicPlayerSlice } from "@/features/music-players/MusicPlayerSlice.ts";
+import { useAppDispatch } from "@/ReduxAppHooks.ts";
 
 interface AlbumTrackListProps {
   releaseGroup: FragmentType<typeof albumTrackListReleaseGroupFragment>;
@@ -18,6 +24,10 @@ export const albumTrackListReleaseGroupFragment = graphql(`
         id
         title
         length
+        youtubeMusicId
+        statistics {
+          playCount
+        }
         nameCredits {
           name
           artist {
@@ -35,6 +45,8 @@ export const AlbumTrackList: React.FC<AlbumTrackListProps> = (props) => {
     albumTrackListReleaseGroupFragment,
     props.releaseGroup,
   );
+
+  const dispatch = useAppDispatch();
 
   const release = releaseGroup.mainRelease;
 
@@ -67,9 +79,22 @@ export const AlbumTrackList: React.FC<AlbumTrackListProps> = (props) => {
               ))}
             </div>
           </div>
-          <span className="hidden md:block text-right pr-8 text-white/70">
-            {/* Placeholder for plays count which is not in the data */}
-            {Math.floor(Math.random() * 1000000).toLocaleString()}
+          <span className="hidden md:block text-right pr-8 ">
+            {recording.youtubeMusicId && (
+              <PlayButton
+                onClick={() =>
+                  recording?.youtubeMusicId &&
+                  dispatch(
+                    musicPlayerSlice.actions.openYoutubeMusicId({
+                      youtubeId: recording.youtubeMusicId,
+                    }),
+                  )
+                }
+              />
+            )}
+            <span className={"text-white/70"}>
+              {formatLargeNumber(recording.statistics?.playCount ?? 0)}
+            </span>
           </span>
           <span className="hidden md:block text-right pr-4 text-white/70">
             {recording.length ? formatTrackLength(recording.length) : ""}

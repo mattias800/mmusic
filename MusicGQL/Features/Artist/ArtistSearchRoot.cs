@@ -4,9 +4,6 @@ namespace MusicGQL.Features.Artist;
 
 public record ArtistSearchRoot
 {
-    [ID]
-    public string GetId() => "ArtistSearchRoot";
-
     public async Task<IEnumerable<Artist>> SearchByName(
         [Service] MusicBrainzService mbService,
         string name,

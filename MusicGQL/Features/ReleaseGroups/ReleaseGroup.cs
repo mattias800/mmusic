@@ -1,5 +1,4 @@
 using Hqub.MusicBrainz.Entities;
-using MusicGQL.Features.Artist;
 using MusicGQL.Features.Release;
 using MusicGQL.Integration.MusicBrainz;
 using TrackSeries.FanArtTV.Client;
@@ -26,23 +25,32 @@ public record ReleaseGroup([property: GraphQLIgnore] Hqub.MusicBrainz.Entities.R
         [Service] MusicBrainzService mbService
     )
     {
-        var artistInfo = await fanartClient.Music.GetAlbumAsync(Model.Credits.First().Artist.Id);
-
-        var m = artistInfo.Albums.GetValueOrDefault(Guid.Parse(Model.Id));
-
-        if (m is not null)
+        try
         {
-            var coverArt = m.AlbumCover?.FirstOrDefault()?.Url;
-            if (coverArt is not null)
+            var artistInfo = await fanartClient.Music.GetAlbumAsync(
+                Model.Credits.First().Artist.Id
+            );
+
+            var m = artistInfo.Albums.GetValueOrDefault(Guid.Parse(Model.Id));
+
+            if (m is not null)
             {
-                return coverArt;
+                var coverArt = m.AlbumCover?.FirstOrDefault()?.Url;
+                if (coverArt is not null)
+                {
+                    return coverArt;
+                }
             }
+
+            var all = await mbService.GetReleasesForReleaseGroupAsync(Id);
+            var best = MainAlbumFinder.GetMainReleaseInReleaseGroup(all.ToList());
+
+            return best is null ? null : CoverArtArchive.GetCoverArtUri(best.Id).ToString();
         }
-
-        var all = await mbService.GetReleasesForReleaseGroupAsync(Id);
-        var best = MainAlbumFinder.GetMainReleaseInReleaseGroup(all.ToList());
-
-        return best is null ? null : CoverArtArchive.GetCoverArtUri(best.Id).ToString();
+        catch
+        {
+            return null;
+        }
     }
 
     public async Task<AlbumImages?> Images([Service] IFanArtTVClient fanartClient)
@@ -67,5 +75,10 @@ public record ReleaseGroup([property: GraphQLIgnore] Hqub.MusicBrainz.Entities.R
         var all = await mbService.GetReleasesForReleaseGroupAsync(Id);
         var best = MainAlbumFinder.GetMainReleaseInReleaseGroup(all.ToList());
         return best is null ? null : new Release.Release(best);
+    }
+
+    public IEnumerable<Recording.Relation> Relations()
+    {
+        return Model.Relations.Select(r => new Recording.Relation(r));
     }
 }

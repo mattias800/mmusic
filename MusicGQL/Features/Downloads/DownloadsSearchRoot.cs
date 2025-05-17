@@ -8,9 +8,6 @@ namespace MusicGQL.Features.Downloads;
 
 public record DownloadsSearchRoot
 {
-    [ID]
-    public string GetId() => "DownloadSearchRoot";
-
     public async Task<IEnumerable<DownloadStatus>> All(
         [Service] EventDbContext dbContext,
         ILogger<DownloadsSearchRoot> logger

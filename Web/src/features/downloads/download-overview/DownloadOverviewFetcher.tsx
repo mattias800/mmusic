@@ -8,7 +8,6 @@ export interface DownloadOverviewFetcherProps {}
 export const downloadOverviewFetcherQuery = graphql(`
   query DownloadOverviewQuery {
     download {
-      id
       all {
         id
         ...DownloadOverview_DownloadStatus
