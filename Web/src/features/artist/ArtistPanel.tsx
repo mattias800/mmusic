@@ -19,8 +19,8 @@ export const artistPanelArtistFragment = graphql(`
     name
     ...ArtistHeader_Artist
     ...PopularArtistTracks_Artist
-    ...ArtistAlbumList_Artist
     ...ArtistInLibraryButton_Artist
+    ...ArtistAlbumList_Artist
   }
 `);
 

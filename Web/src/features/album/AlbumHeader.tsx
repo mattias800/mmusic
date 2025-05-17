@@ -1,25 +1,52 @@
 import { FragmentType, graphql, useFragment } from "@/gql";
 import * as React from "react";
 import { Link } from "react-router";
+import { sumBy } from "lodash-es";
+import { formatAlbumLength } from "@/common/AlbumLengthFormatter.ts";
 
 export interface AlbumHeaderProps {
-  release: FragmentType<typeof albumHeaderReleaseFragment>;
+  releaseGroup: FragmentType<typeof albumHeaderReleaseGroupFragment>;
 }
 
-export const albumHeaderReleaseFragment = graphql(`
-  fragment AlbumHeader_Release on Release {
+export const albumHeaderReleaseGroupFragment = graphql(`
+  fragment AlbumHeader_ReleaseGroup on ReleaseGroup {
     id
     title
-    coverArtUri
-    artists {
+    mainRelease {
       id
-      name
+      title
+      coverArtUri
+      year
+
+      artists {
+        id
+        name
+      }
+      recordings {
+        id
+        length
+      }
     }
   }
 `);
 
 export const AlbumHeader: React.FC<AlbumHeaderProps> = (props) => {
-  const release = useFragment(albumHeaderReleaseFragment, props.release);
+  const releaseGroup = useFragment(
+    albumHeaderReleaseGroupFragment,
+    props.releaseGroup,
+  );
+
+  const release = releaseGroup.mainRelease;
+  const numTracks = release?.recordings.length ?? 0;
+
+  const numSongsText = numTracks === 1 ? "1 song" : `${numTracks} songs`;
+  const albumTime = formatAlbumLength(
+    sumBy(release?.recordings ?? [], (recording) => recording.length ?? 0),
+  );
+
+  if (!release) {
+    return null;
+  }
 
   return (
     <div className="flex flex-col sm:flex-row gap-6 items-center sm:items-end mb-8">
@@ -39,7 +66,7 @@ export const AlbumHeader: React.FC<AlbumHeaderProps> = (props) => {
             {release.artists[0].name}
           </Link>
           <p className="text-sm text-gray-300">
-            • 1995 • 9 songs, 43 min 55 sec
+            • {release.year} • {numSongsText}, {albumTime}
           </p>
         </div>
       </div>

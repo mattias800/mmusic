@@ -11,7 +11,7 @@ export const AppRouter: React.FC<AppRouterProps> = () => {
   return (
     <Routes>
       <Route path="/" element={<Home />} />
-      <Route path="/album/:releaseId" element={<Album />} />
+      <Route path="/album/:releaseGroupId" element={<Album />} />
       <Route path="/artist/:artistId" element={<Artist />} />
       <Route path="/liked-songs" element={<LikedSongs />} />
     </Routes>

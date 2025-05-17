@@ -3,6 +3,7 @@ import * as React from "react";
 import { useQuery } from "urql";
 import { useParams } from "react-router";
 import { ArtistPanel } from "@/features/artist/ArtistPanel";
+import { ScreenSpinner } from "@/components/spinner/ScreenSpinner.tsx";
 
 export interface ArtistProps {}
 
@@ -25,7 +26,7 @@ export const Artist: React.FC<ArtistProps> = () => {
     pause: !artistId,
   });
 
-  if (fetching) return <div>Loading...</div>;
+  if (fetching) return <ScreenSpinner/>;
   if (error) return <div>Error: {error.message}</div>;
   if (!data?.artist.byId) return <div>No data</div>;
 

@@ -1,5 +1,7 @@
-import type { PluginFunction } from "@graphql-codegen/plugin-helpers/typings";
-import { GraphQLObjectType, GraphQLSchema } from "graphql";
+/* eslint-disable */
+import type { PluginFunction } from "@graphql-codegen/plugin-helpers";
+import * as graphql from "graphql";
+
 
 /**
  * GraphQL CodeGen plugin that generates a TypesWithNoId type.
@@ -9,20 +11,59 @@ import { GraphQLObjectType, GraphQLSchema } from "graphql";
  */
 export const plugin: PluginFunction = (schema) => {
   // Get the GraphQL schema
-  const graphQLSchema = schema as unknown as GraphQLSchema;
+  const graphQLSchema = schema;
 
   // Get all types from the schema
   const typeMap = graphQLSchema.getTypeMap();
 
+  // Identify mutation result types
+  const mutationResultTypeNames = new Set<string>();
+  const mutationType = graphQLSchema.getMutationType();
+
+  if (mutationType) {
+    const mutationFields: graphql.GraphQLFieldMap<any, any> = mutationType.getFields();
+    Object.keys(mutationFields).forEach((fieldName) => {
+      const mutationField: graphql.GraphQLField<any, any, any> = mutationFields[fieldName];
+      let returnType = mutationField.type;
+      // Unwrap NonNull and List types to get the underlying named type
+      while (
+        returnType instanceof graphql.GraphQLNonNull ||
+        returnType instanceof graphql.GraphQLList
+      ) {
+        returnType = returnType.ofType;
+      }
+
+      if (returnType instanceof graphql.GraphQLObjectType) {
+        mutationResultTypeNames.add(returnType.name);
+      } else if (returnType instanceof graphql.GraphQLUnionType) {
+        returnType.getTypes().forEach((memberType) => {
+          // Members of a UnionType are ObjectTypes
+          mutationResultTypeNames.add(memberType.name);
+        });
+      }
+    });
+  }
+
   // Filter out internal types, scalars, unions, interfaces, etc.
   const objectTypes = Object.values(typeMap).filter(
-    (type) =>
-      type instanceof GraphQLObjectType &&
-      !type.name.startsWith("__") && // Skip internal types
-      type.name !== "Query" && // Skip Query type
-      type.name !== "Mutation" && // Skip Mutation type
-      type.name !== "Subscription" // Skip Subscription type
-  ) as GraphQLObjectType[];
+    (type): type is graphql.GraphQLObjectType => {
+      if (!(type instanceof graphql.GraphQLObjectType)) return false;
+      if (type.name.startsWith("__")) return false; // Skip internal types
+      if (type.name.endsWith("Input")) return false; // Skip input types
+      // Skip Query, Mutation (root), and Subscription types
+      if (
+        type.name === "Query" ||
+        type.name === "Mutation" ||
+        type.name === "Subscription"
+      ) {
+        return false;
+      }
+      // Exclude identified mutation result types
+      if (mutationResultTypeNames.has(type.name)) return false;
+
+      return true;
+    }
+  );
 
   // Separate types into those with and without an id field
   const typesWithId: string[] = [];

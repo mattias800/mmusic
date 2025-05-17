@@ -53,15 +53,16 @@ type AddReleaseGroupToServerLibraryUnknownError {
 }
 
 type Artist {
+  albums: [ReleaseGroup!]!
   disambiguation: String
   id: ID!
   images: ArtistImages
   listeners: Long
-  mainAlbums: [Release!]!
   name: String!
   releaseGroups: [ReleaseGroup!]!
   releases: [Release!]!
   serverAvailability: ArtistServerAvailability!
+  singles: [ReleaseGroup!]!
   sortName: String!
   topTracks: [LastFmTrack!]!
   type: String
@@ -226,11 +227,14 @@ type Release {
 }
 
 type ReleaseGroup {
+  credits: [NameCredit!]!
   firstReleaseDate: String
+  firstReleaseYear: String
   id: ID!
   mainRelease: Release
   primaryType: String
   secondaryTypes: [String!]!
+  tags: [String!]!
   title: String!
 }
 

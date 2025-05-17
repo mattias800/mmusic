@@ -3,32 +3,32 @@ import * as React from "react";
 import { useQuery } from "urql";
 import { useParams } from "react-router";
 import { AlbumPanel } from "@/features/album/AlbumPanel.tsx";
-
-export interface AlbumProps {}
+import { ScreenSpinner } from "@/components/spinner/ScreenSpinner.tsx";
 
 export const albumQuery = graphql(`
-  query AlbumQuery($releaseId: ID!) {
-    release {
+  query AlbumQuery($releaseGroupId: ID!) {
+    releaseGroup {
       id
-      byId(id: $releaseId) {
+      byId(id: $releaseGroupId) {
         id
-        ...AlbumPanel_Release
+        ...AlbumPanel_ReleaseGroup
       }
     }
   }
 `);
 
-export const Album: React.FC<AlbumProps> = () => {
-  const { releaseId } = useParams<{ releaseId: string }>();
+export const Album: React.FC = () => {
+  const { releaseGroupId } = useParams<{ releaseGroupId: string }>();
   const [{ error, data, fetching }] = useQuery({
     query: albumQuery,
-    variables: { releaseId: releaseId! },
-    pause: !releaseId,
+    variables: { releaseGroupId: releaseGroupId! },
+    pause: !releaseGroupId,
   });
 
-  if (fetching) return <div>Loading...</div>;
+  console.log({releaseGroupId});
+  if (fetching) return <ScreenSpinner />;
   if (error) return <div>Error: {error.message}</div>;
-  if (!data?.release.byId) return <div>No data</div>;
+  if (!data?.releaseGroup.byId) return <div>No data</div>;
 
-  return <AlbumPanel release={data.release.byId} />;
+  return <AlbumPanel releaseGroup={data.releaseGroup.byId} />;
 };

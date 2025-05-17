@@ -13,4 +13,9 @@ public static class ReleaseGroupExtensions
     {
         return releaseGroup.PrimaryType == "Album" && releaseGroup.SecondaryTypes.Count == 0;
     }
+
+    public static bool IsMainSingle(this MbReleaseGroup releaseGroup)
+    {
+        return releaseGroup.PrimaryType == "Single" && releaseGroup.SecondaryTypes.Count == 0;
+    }
 }

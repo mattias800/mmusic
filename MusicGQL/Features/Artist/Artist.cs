@@ -31,24 +31,20 @@ public record Artist([property: GraphQLIgnore] Hqub.MusicBrainz.Entities.Artist 
         return releaseGroups.Select(r => new ReleaseGroup(r));
     }
 
-    public async Task<IEnumerable<Release.Release>> MainAlbums(
-        [Service] MusicBrainzService mbService
-    )
+    public async Task<IEnumerable<ReleaseGroup>> Albums([Service] MusicBrainzService mbService)
     {
         var releaseGroups = await mbService.GetReleaseGroupsForArtistAsync(Id);
         var albumReleaseGroups = releaseGroups.Where(r => r.IsMainAlbum()).ToList();
-        var albums = await Task.WhenAll(
-            albumReleaseGroups.Select(async rg =>
-            {
-                var releases = await mbService.GetReleasesForReleaseGroupAsync(rg.Id);
-                return MainAlbumFinder.GetMainReleaseInReleaseGroup(releases);
-            })
-        );
 
-        return albums
-            .OfType<Hqub.MusicBrainz.Entities.Release>()
-            .Where(r => r.Status == "Official")
-            .Select(r => new Release.Release(r));
+        return albumReleaseGroups.Select(r => new ReleaseGroup(r));
+    }
+
+    public async Task<IEnumerable<ReleaseGroup>> Singles([Service] MusicBrainzService mbService)
+    {
+        var releaseGroups = await mbService.GetReleaseGroupsForArtistAsync(Id);
+        var albumReleaseGroups = releaseGroups.Where(r => r.IsMainSingle()).ToList();
+
+        return albumReleaseGroups.Select(r => new ReleaseGroup(r));
     }
 
     public async Task<IEnumerable<LastFmTrack>> TopTracks([Service] LastfmClient lastfmClient)

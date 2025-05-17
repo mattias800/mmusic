@@ -14,20 +14,21 @@ import { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/
  * Learn more about it here: https://the-guild.dev/graphql/codegen/plugins/presets/preset-client#reducing-bundle-size
  */
 type Documents = {
-    "\n  query AlbumQuery($releaseId: ID!) {\n    release {\n      id\n      byId(id: $releaseId) {\n        id\n        ...AlbumPanel_Release\n      }\n    }\n  }\n": typeof types.AlbumQueryDocument,
+    "\n  query AlbumQuery($releaseGroupId: ID!) {\n    releaseGroup {\n      id\n      byId(id: $releaseGroupId) {\n        id\n        ...AlbumPanel_ReleaseGroup\n      }\n    }\n  }\n": typeof types.AlbumQueryDocument,
     "\n  query ArtistQuery($artistId: ID!) {\n    artist {\n      byId(id: $artistId) {\n        id\n        ...ArtistPanel_Artist\n      }\n    }\n  }\n": typeof types.ArtistQueryDocument,
     "\n  query LikedSongsQuery {\n    viewer {\n      id\n      ...LikedSongsList_User\n    }\n  }\n": typeof types.LikedSongsQueryDocument,
     "\n  fragment Playlist_User on User {\n    id\n    likedSongs {\n      id\n      ...LikedSongRow_LikedSong\n    }\n  }\n": typeof types.Playlist_UserFragmentDoc,
     "\n  fragment LikedSongRow_Recoding on Recording {\n    id\n    title\n    length\n    artists {\n      id\n      name\n    }\n    mainAlbum {\n      id\n      title\n      coverArtUri\n    }\n  }\n": typeof types.LikedSongRow_RecodingFragmentDoc,
     "\nmutation AddArtistToServerLibrary($artistId: ID!) {\n  addArtistToServerLibrary(input: { artistId: $artistId }) {\n    __typename\n    ... on AddArtistToServerLibrarySuccess {\n      serverAvailability {\n        id\n        isInServerLibrary\n      }\n    }\n  }\n}": typeof types.AddArtistToServerLibraryDocument,
     "\n  fragment ArtistInLibraryButton_Artist on Artist {\n    id\n    serverAvailability {\n      id\n      isInServerLibrary\n    }\n  }\n": typeof types.ArtistInLibraryButton_ArtistFragmentDoc,
-    "\n  fragment AlbumCard_Release on Release {\n    id\n    title\n    year\n    coverArtUri\n    artists {\n      id\n      name\n    }\n  }\n": typeof types.AlbumCard_ReleaseFragmentDoc,
-    "\n  fragment AlbumHeader_Release on Release {\n    id\n    title\n    coverArtUri\n    year\n    \n    artists {\n      id\n      name\n    }\n  }\n": typeof types.AlbumHeader_ReleaseFragmentDoc,
-    "\n  fragment AlbumPanel_Release on Release {\n    id\n    ...AlbumHeader_Release\n    ...AlbumTrackList_Release\n  }\n": typeof types.AlbumPanel_ReleaseFragmentDoc,
-    "\n  fragment AlbumTrackList_Release on Release {\n    id\n    recordings {\n      id\n      title\n      length\n      nameCredits {\n        name\n        artist {\n          id\n          name\n        }\n      }\n    }\n  }\n": typeof types.AlbumTrackList_ReleaseFragmentDoc,
-    "\n  fragment ArtistAlbumList_Artist on Artist {\n    id\n    mainAlbums {\n      id\n      date\n      year\n      country\n      releaseGroup {\n        id\n        primaryType\n        secondaryTypes\n      }\n      ...AlbumCard_Release\n    }\n  }\n": typeof types.ArtistAlbumList_ArtistFragmentDoc,
+    "\n  fragment AlbumCard_ReleaseGroup on ReleaseGroup {\n    id\n    title\n    firstReleaseYear\n    credits {\n      name\n      artist {\n        id\n        name\n      }\n    }\n    mainRelease {\n      id\n      coverArtUri\n    }\n  }\n": typeof types.AlbumCard_ReleaseGroupFragmentDoc,
+    "\n  fragment AlbumHeader_ReleaseGroup on ReleaseGroup {\n    id\n    title\n    mainRelease {\n      id\n      title\n      coverArtUri\n      year\n\n      artists {\n        id\n        name\n      }\n      recordings {\n        id\n        length\n      }\n    }\n  }\n": typeof types.AlbumHeader_ReleaseGroupFragmentDoc,
+    "\n  fragment AlbumPanel_ReleaseGroup on ReleaseGroup {\n    id\n    ...AlbumHeader_ReleaseGroup\n    ...AlbumTrackList_ReleaseGroup\n  }\n": typeof types.AlbumPanel_ReleaseGroupFragmentDoc,
+    "\n  fragment AlbumTrackList_ReleaseGroup on ReleaseGroup {\n    id\n    title\n    mainRelease {\n      id\n      title\n      recordings {\n        id\n        title\n        length\n        nameCredits {\n          name\n          artist {\n            id\n            name\n          }\n        }\n      }\n    }\n  }\n": typeof types.AlbumTrackList_ReleaseGroupFragmentDoc,
+    "\n  fragment ArtistAlbumList_Artist on Artist {\n    id\n    albums {\n      id\n      firstReleaseDate\n      ...AlbumCard_ReleaseGroup\n    }\n  }\n": typeof types.ArtistAlbumList_ArtistFragmentDoc,
     "\n  fragment ArtistHeader_Artist on Artist {\n    id\n    name\n    listeners\n    images {\n      artistBackground\n    }\n  }\n": typeof types.ArtistHeader_ArtistFragmentDoc,
-    "\n  fragment ArtistPanel_Artist on Artist {\n    id\n    name\n    ...ArtistHeader_Artist\n    ...PopularArtistTracks_Artist\n    ...ArtistAlbumList_Artist\n    ...ArtistInLibraryButton_Artist\n  }\n": typeof types.ArtistPanel_ArtistFragmentDoc,
+    "\n  fragment ArtistPanel_Artist on Artist {\n    id\n    name\n    ...ArtistHeader_Artist\n    ...PopularArtistTracks_Artist\n    ...ArtistInLibraryButton_Artist\n    ...ArtistAlbumList_Artist\n  }\n": typeof types.ArtistPanel_ArtistFragmentDoc,
+    "\n  fragment ArtistSingleList_Artist on Artist {\n    id\n    singles {\n      id\n      firstReleaseDate\n      ...AlbumCard_ReleaseGroup\n    }\n  }\n": typeof types.ArtistSingleList_ArtistFragmentDoc,
     "\n  fragment PopularArtistTracks_Artist on Artist {\n    id\n    topTracks {\n      id\n      ...PopularTrackRow_LastFmTrack\n    }\n  }\n": typeof types.PopularArtistTracks_ArtistFragmentDoc,
     "\n  fragment PopularTrackRow_LastFmTrack on LastFmTrack {\n    id\n    playCount\n    summary\n    recording {\n      id\n      title\n      length\n      mainAlbum {\n        id\n        title\n        coverArtUri\n      }\n    }\n  }\n": typeof types.PopularTrackRow_LastFmTrackFragmentDoc,
     "\n  fragment DownloadOverview_DownloadStatus on DownloadStatus {\n    id\n    ...DownloadStatus_DownloadStatus\n  }\n": typeof types.DownloadOverview_DownloadStatusFragmentDoc,
@@ -44,20 +45,21 @@ type Documents = {
     "\n  query SoulSeekNetworkStatusQuery {\n    external {\n      id\n      soulSeek {\n        id\n        status {\n          ...SoulSeekNetworkStatus_SoulSeekStatus\n        }\n      }\n    }\n  }\n": typeof types.SoulSeekNetworkStatusQueryDocument,
 };
 const documents: Documents = {
-    "\n  query AlbumQuery($releaseId: ID!) {\n    release {\n      id\n      byId(id: $releaseId) {\n        id\n        ...AlbumPanel_Release\n      }\n    }\n  }\n": types.AlbumQueryDocument,
+    "\n  query AlbumQuery($releaseGroupId: ID!) {\n    releaseGroup {\n      id\n      byId(id: $releaseGroupId) {\n        id\n        ...AlbumPanel_ReleaseGroup\n      }\n    }\n  }\n": types.AlbumQueryDocument,
     "\n  query ArtistQuery($artistId: ID!) {\n    artist {\n      byId(id: $artistId) {\n        id\n        ...ArtistPanel_Artist\n      }\n    }\n  }\n": types.ArtistQueryDocument,
     "\n  query LikedSongsQuery {\n    viewer {\n      id\n      ...LikedSongsList_User\n    }\n  }\n": types.LikedSongsQueryDocument,
     "\n  fragment Playlist_User on User {\n    id\n    likedSongs {\n      id\n      ...LikedSongRow_LikedSong\n    }\n  }\n": types.Playlist_UserFragmentDoc,
     "\n  fragment LikedSongRow_Recoding on Recording {\n    id\n    title\n    length\n    artists {\n      id\n      name\n    }\n    mainAlbum {\n      id\n      title\n      coverArtUri\n    }\n  }\n": types.LikedSongRow_RecodingFragmentDoc,
     "\nmutation AddArtistToServerLibrary($artistId: ID!) {\n  addArtistToServerLibrary(input: { artistId: $artistId }) {\n    __typename\n    ... on AddArtistToServerLibrarySuccess {\n      serverAvailability {\n        id\n        isInServerLibrary\n      }\n    }\n  }\n}": types.AddArtistToServerLibraryDocument,
     "\n  fragment ArtistInLibraryButton_Artist on Artist {\n    id\n    serverAvailability {\n      id\n      isInServerLibrary\n    }\n  }\n": types.ArtistInLibraryButton_ArtistFragmentDoc,
-    "\n  fragment AlbumCard_Release on Release {\n    id\n    title\n    year\n    coverArtUri\n    artists {\n      id\n      name\n    }\n  }\n": types.AlbumCard_ReleaseFragmentDoc,
-    "\n  fragment AlbumHeader_Release on Release {\n    id\n    title\n    coverArtUri\n    year\n    \n    artists {\n      id\n      name\n    }\n  }\n": types.AlbumHeader_ReleaseFragmentDoc,
-    "\n  fragment AlbumPanel_Release on Release {\n    id\n    ...AlbumHeader_Release\n    ...AlbumTrackList_Release\n  }\n": types.AlbumPanel_ReleaseFragmentDoc,
-    "\n  fragment AlbumTrackList_Release on Release {\n    id\n    recordings {\n      id\n      title\n      length\n      nameCredits {\n        name\n        artist {\n          id\n          name\n        }\n      }\n    }\n  }\n": types.AlbumTrackList_ReleaseFragmentDoc,
-    "\n  fragment ArtistAlbumList_Artist on Artist {\n    id\n    mainAlbums {\n      id\n      date\n      year\n      country\n      releaseGroup {\n        id\n        primaryType\n        secondaryTypes\n      }\n      ...AlbumCard_Release\n    }\n  }\n": types.ArtistAlbumList_ArtistFragmentDoc,
+    "\n  fragment AlbumCard_ReleaseGroup on ReleaseGroup {\n    id\n    title\n    firstReleaseYear\n    credits {\n      name\n      artist {\n        id\n        name\n      }\n    }\n    mainRelease {\n      id\n      coverArtUri\n    }\n  }\n": types.AlbumCard_ReleaseGroupFragmentDoc,
+    "\n  fragment AlbumHeader_ReleaseGroup on ReleaseGroup {\n    id\n    title\n    mainRelease {\n      id\n      title\n      coverArtUri\n      year\n\n      artists {\n        id\n        name\n      }\n      recordings {\n        id\n        length\n      }\n    }\n  }\n": types.AlbumHeader_ReleaseGroupFragmentDoc,
+    "\n  fragment AlbumPanel_ReleaseGroup on ReleaseGroup {\n    id\n    ...AlbumHeader_ReleaseGroup\n    ...AlbumTrackList_ReleaseGroup\n  }\n": types.AlbumPanel_ReleaseGroupFragmentDoc,
+    "\n  fragment AlbumTrackList_ReleaseGroup on ReleaseGroup {\n    id\n    title\n    mainRelease {\n      id\n      title\n      recordings {\n        id\n        title\n        length\n        nameCredits {\n          name\n          artist {\n            id\n            name\n          }\n        }\n      }\n    }\n  }\n": types.AlbumTrackList_ReleaseGroupFragmentDoc,
+    "\n  fragment ArtistAlbumList_Artist on Artist {\n    id\n    albums {\n      id\n      firstReleaseDate\n      ...AlbumCard_ReleaseGroup\n    }\n  }\n": types.ArtistAlbumList_ArtistFragmentDoc,
     "\n  fragment ArtistHeader_Artist on Artist {\n    id\n    name\n    listeners\n    images {\n      artistBackground\n    }\n  }\n": types.ArtistHeader_ArtistFragmentDoc,
-    "\n  fragment ArtistPanel_Artist on Artist {\n    id\n    name\n    ...ArtistHeader_Artist\n    ...PopularArtistTracks_Artist\n    ...ArtistAlbumList_Artist\n    ...ArtistInLibraryButton_Artist\n  }\n": types.ArtistPanel_ArtistFragmentDoc,
+    "\n  fragment ArtistPanel_Artist on Artist {\n    id\n    name\n    ...ArtistHeader_Artist\n    ...PopularArtistTracks_Artist\n    ...ArtistInLibraryButton_Artist\n    ...ArtistAlbumList_Artist\n  }\n": types.ArtistPanel_ArtistFragmentDoc,
+    "\n  fragment ArtistSingleList_Artist on Artist {\n    id\n    singles {\n      id\n      firstReleaseDate\n      ...AlbumCard_ReleaseGroup\n    }\n  }\n": types.ArtistSingleList_ArtistFragmentDoc,
     "\n  fragment PopularArtistTracks_Artist on Artist {\n    id\n    topTracks {\n      id\n      ...PopularTrackRow_LastFmTrack\n    }\n  }\n": types.PopularArtistTracks_ArtistFragmentDoc,
     "\n  fragment PopularTrackRow_LastFmTrack on LastFmTrack {\n    id\n    playCount\n    summary\n    recording {\n      id\n      title\n      length\n      mainAlbum {\n        id\n        title\n        coverArtUri\n      }\n    }\n  }\n": types.PopularTrackRow_LastFmTrackFragmentDoc,
     "\n  fragment DownloadOverview_DownloadStatus on DownloadStatus {\n    id\n    ...DownloadStatus_DownloadStatus\n  }\n": types.DownloadOverview_DownloadStatusFragmentDoc,
@@ -91,7 +93,7 @@ export function graphql(source: string): unknown;
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query AlbumQuery($releaseId: ID!) {\n    release {\n      id\n      byId(id: $releaseId) {\n        id\n        ...AlbumPanel_Release\n      }\n    }\n  }\n"): (typeof documents)["\n  query AlbumQuery($releaseId: ID!) {\n    release {\n      id\n      byId(id: $releaseId) {\n        id\n        ...AlbumPanel_Release\n      }\n    }\n  }\n"];
+export function graphql(source: "\n  query AlbumQuery($releaseGroupId: ID!) {\n    releaseGroup {\n      id\n      byId(id: $releaseGroupId) {\n        id\n        ...AlbumPanel_ReleaseGroup\n      }\n    }\n  }\n"): (typeof documents)["\n  query AlbumQuery($releaseGroupId: ID!) {\n    releaseGroup {\n      id\n      byId(id: $releaseGroupId) {\n        id\n        ...AlbumPanel_ReleaseGroup\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -119,23 +121,23 @@ export function graphql(source: "\n  fragment ArtistInLibraryButton_Artist on Ar
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment AlbumCard_Release on Release {\n    id\n    title\n    year\n    coverArtUri\n    artists {\n      id\n      name\n    }\n  }\n"): (typeof documents)["\n  fragment AlbumCard_Release on Release {\n    id\n    title\n    year\n    coverArtUri\n    artists {\n      id\n      name\n    }\n  }\n"];
+export function graphql(source: "\n  fragment AlbumCard_ReleaseGroup on ReleaseGroup {\n    id\n    title\n    firstReleaseYear\n    credits {\n      name\n      artist {\n        id\n        name\n      }\n    }\n    mainRelease {\n      id\n      coverArtUri\n    }\n  }\n"): (typeof documents)["\n  fragment AlbumCard_ReleaseGroup on ReleaseGroup {\n    id\n    title\n    firstReleaseYear\n    credits {\n      name\n      artist {\n        id\n        name\n      }\n    }\n    mainRelease {\n      id\n      coverArtUri\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment AlbumHeader_Release on Release {\n    id\n    title\n    coverArtUri\n    year\n    \n    artists {\n      id\n      name\n    }\n  }\n"): (typeof documents)["\n  fragment AlbumHeader_Release on Release {\n    id\n    title\n    coverArtUri\n    year\n    \n    artists {\n      id\n      name\n    }\n  }\n"];
+export function graphql(source: "\n  fragment AlbumHeader_ReleaseGroup on ReleaseGroup {\n    id\n    title\n    mainRelease {\n      id\n      title\n      coverArtUri\n      year\n\n      artists {\n        id\n        name\n      }\n      recordings {\n        id\n        length\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment AlbumHeader_ReleaseGroup on ReleaseGroup {\n    id\n    title\n    mainRelease {\n      id\n      title\n      coverArtUri\n      year\n\n      artists {\n        id\n        name\n      }\n      recordings {\n        id\n        length\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment AlbumPanel_Release on Release {\n    id\n    ...AlbumHeader_Release\n    ...AlbumTrackList_Release\n  }\n"): (typeof documents)["\n  fragment AlbumPanel_Release on Release {\n    id\n    ...AlbumHeader_Release\n    ...AlbumTrackList_Release\n  }\n"];
+export function graphql(source: "\n  fragment AlbumPanel_ReleaseGroup on ReleaseGroup {\n    id\n    ...AlbumHeader_ReleaseGroup\n    ...AlbumTrackList_ReleaseGroup\n  }\n"): (typeof documents)["\n  fragment AlbumPanel_ReleaseGroup on ReleaseGroup {\n    id\n    ...AlbumHeader_ReleaseGroup\n    ...AlbumTrackList_ReleaseGroup\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment AlbumTrackList_Release on Release {\n    id\n    recordings {\n      id\n      title\n      length\n      nameCredits {\n        name\n        artist {\n          id\n          name\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment AlbumTrackList_Release on Release {\n    id\n    recordings {\n      id\n      title\n      length\n      nameCredits {\n        name\n        artist {\n          id\n          name\n        }\n      }\n    }\n  }\n"];
+export function graphql(source: "\n  fragment AlbumTrackList_ReleaseGroup on ReleaseGroup {\n    id\n    title\n    mainRelease {\n      id\n      title\n      recordings {\n        id\n        title\n        length\n        nameCredits {\n          name\n          artist {\n            id\n            name\n          }\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment AlbumTrackList_ReleaseGroup on ReleaseGroup {\n    id\n    title\n    mainRelease {\n      id\n      title\n      recordings {\n        id\n        title\n        length\n        nameCredits {\n          name\n          artist {\n            id\n            name\n          }\n        }\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment ArtistAlbumList_Artist on Artist {\n    id\n    mainAlbums {\n      id\n      date\n      year\n      country\n      releaseGroup {\n        id\n        primaryType\n        secondaryTypes\n      }\n      ...AlbumCard_Release\n    }\n  }\n"): (typeof documents)["\n  fragment ArtistAlbumList_Artist on Artist {\n    id\n    mainAlbums {\n      id\n      date\n      year\n      country\n      releaseGroup {\n        id\n        primaryType\n        secondaryTypes\n      }\n      ...AlbumCard_Release\n    }\n  }\n"];
+export function graphql(source: "\n  fragment ArtistAlbumList_Artist on Artist {\n    id\n    albums {\n      id\n      firstReleaseDate\n      ...AlbumCard_ReleaseGroup\n    }\n  }\n"): (typeof documents)["\n  fragment ArtistAlbumList_Artist on Artist {\n    id\n    albums {\n      id\n      firstReleaseDate\n      ...AlbumCard_ReleaseGroup\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -143,7 +145,11 @@ export function graphql(source: "\n  fragment ArtistHeader_Artist on Artist {\n 
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment ArtistPanel_Artist on Artist {\n    id\n    name\n    ...ArtistHeader_Artist\n    ...PopularArtistTracks_Artist\n    ...ArtistAlbumList_Artist\n    ...ArtistInLibraryButton_Artist\n  }\n"): (typeof documents)["\n  fragment ArtistPanel_Artist on Artist {\n    id\n    name\n    ...ArtistHeader_Artist\n    ...PopularArtistTracks_Artist\n    ...ArtistAlbumList_Artist\n    ...ArtistInLibraryButton_Artist\n  }\n"];
+export function graphql(source: "\n  fragment ArtistPanel_Artist on Artist {\n    id\n    name\n    ...ArtistHeader_Artist\n    ...PopularArtistTracks_Artist\n    ...ArtistInLibraryButton_Artist\n    ...ArtistAlbumList_Artist\n  }\n"): (typeof documents)["\n  fragment ArtistPanel_Artist on Artist {\n    id\n    name\n    ...ArtistHeader_Artist\n    ...PopularArtistTracks_Artist\n    ...ArtistInLibraryButton_Artist\n    ...ArtistAlbumList_Artist\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  fragment ArtistSingleList_Artist on Artist {\n    id\n    singles {\n      id\n      firstReleaseDate\n      ...AlbumCard_ReleaseGroup\n    }\n  }\n"): (typeof documents)["\n  fragment ArtistSingleList_Artist on Artist {\n    id\n    singles {\n      id\n      firstReleaseDate\n      ...AlbumCard_ReleaseGroup\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

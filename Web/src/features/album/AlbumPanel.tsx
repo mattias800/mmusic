@@ -9,25 +9,25 @@ import { AlbumTrackList } from "@/features/album/AlbumTrackList.tsx";
 import { FragmentType, graphql, useFragment } from "@/gql";
 
 export interface AlbumPanelProps {
-  release: FragmentType<typeof albumPanelReleaseFragment>;
+  releaseGroup: FragmentType<typeof albumPanelReleaseGroupFragment>;
 }
 
-export const albumPanelReleaseFragment = graphql(`
-  fragment AlbumPanel_Release on Release {
+export const albumPanelReleaseGroupFragment = graphql(`
+  fragment AlbumPanel_ReleaseGroup on ReleaseGroup {
     id
-    ...AlbumHeader_Release
-    ...AlbumTrackList_Release
+    ...AlbumHeader_ReleaseGroup
+    ...AlbumTrackList_ReleaseGroup
   }
 `);
 
 export const AlbumPanel: React.FC<AlbumPanelProps> = (props) => {
-  const release = useFragment(albumPanelReleaseFragment, props.release);
+  const releaseGroup = useFragment(albumPanelReleaseGroupFragment, props.releaseGroup);
 
   return (
     <PageCard
       header={
         <>
-          <AlbumHeader release={release}/>
+          <AlbumHeader releaseGroup={releaseGroup}/>
 
           <div className="flex items-center gap-6 mb-6">
             <LargePlayButton />
@@ -38,7 +38,7 @@ export const AlbumPanel: React.FC<AlbumPanelProps> = (props) => {
         </>
       }
     >
-      <AlbumTrackList release={release}/>
+      <AlbumTrackList releaseGroup={releaseGroup}/>
 
       <div className="text-white/40 text-xs mt-12">
         <p>© 1995 King Size Records</p>
