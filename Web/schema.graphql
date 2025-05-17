@@ -31,7 +31,7 @@ type AddArtistToServerLibraryUnknownError {
 }
 
 input AddReleaseGroupToServerLibraryInput {
-  releaseGroupId: String!
+  releaseGroupId: ID!
 }
 
 type AddReleaseGroupToServerLibraryReleaseGroupAlreadyAdded {

@@ -31,7 +31,12 @@ export const ArtistInLibraryButton: React.FC<ArtistInLibraryButtonProps> = (
 
   if (inLibrary) {
     return (
-      <button className="border rounded-full px-1 py-1 text-sm bg-green-500 text-black transition flex gap-2 items-center">
+      <button
+        className="border rounded-full px-1 py-1 text-sm bg-green-500 text-black transition flex gap-2 items-center"
+        onClick={() =>
+          !fetching && addArtistToServerLibrary({ artistId: artist.id })
+        }
+      >
         <Check />
       </button>
     );

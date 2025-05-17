@@ -1,63 +1,70 @@
-import { FragmentType, graphql, useFragment } from "@/gql";
+import { graphql } from "@/gql";
 import * as React from "react";
 import { Link } from "react-router";
+import { useQuery } from "urql";
+import { SearchResultGroup } from "@/features/search/components/SearchResultGroup.tsx";
 
 export interface SearchResultArtistProps {
-  artists: Array<FragmentType<typeof searchResultArtistFragment>>;
+  searchText: string;
   onClickSearchResult: () => void;
 }
 
-export const searchResultArtistFragment = graphql(`
-  fragment SearchResultArtist_Artist on Artist {
-    id
-    name
-    images {
-      artistThumb
+const artistSearchQuery = graphql(`
+  query SearchResultArtistSearch($text: String!) {
+    artist {
+      searchByName(name: $text, limit: 5) {
+        id
+        name
+        images {
+          artistThumb
+        }
+      }
     }
   }
 `);
 
 export const SearchResultArtist: React.FC<SearchResultArtistProps> = ({
   onClickSearchResult,
-  ...props
+  searchText,
 }) => {
-  const artists = useFragment(searchResultArtistFragment, props.artists);
+  const [{ data, fetching }] = useQuery({
+    query: artistSearchQuery,
+    variables: { text: searchText },
+  });
 
-  if (!artists || artists.length === 0) {
-    return null;
-  }
+  const artists = data?.artist.searchByName;
 
   return (
-    <div className="p-4">
-      <h3 className="text-lg font-semibold mb-3 text-white">Artists</h3>
-      <div className="space-y-2">
-        {artists.map((artist) => (
-          <Link
-            to={`/artist/${artist.id}`}
-            key={artist.id}
-            className="flex items-center p-2 hover:bg-white/10 rounded-md transition-colors"
-            onClick={onClickSearchResult}
-          >
-            {artist.images?.artistThumb ? (
-              <img
-                src={artist.images.artistThumb}
-                alt={artist.name}
-                className="w-10 h-10 rounded-full object-cover mr-3"
-              />
-            ) : (
-              <div className="w-10 h-10 rounded-full bg-neutral-700 flex items-center justify-center mr-3">
-                <span className="text-white text-xs">
-                  {artist.name.substring(0, 2).toUpperCase()}
-                </span>
-              </div>
-            )}
-            <div>
-              <p className="text-white font-medium">{artist.name}</p>
-              <p className="text-xs text-white/60">Artist</p>
+    <SearchResultGroup
+      heading={"Artists"}
+      fetching={fetching}
+      items={artists}
+      renderItem={(artist) => (
+        <Link
+          to={`/artist/${artist.id}`}
+          key={artist.id}
+          className="flex items-center p-2 hover:bg-white/10 rounded-md transition-colors"
+          onClick={onClickSearchResult}
+        >
+          {artist.images?.artistThumb ? (
+            <img
+              src={artist.images.artistThumb}
+              alt={artist.name}
+              className="w-10 h-10 rounded-full object-cover mr-3"
+            />
+          ) : (
+            <div className="w-10 h-10 rounded-full bg-neutral-700 flex items-center justify-center mr-3">
+              <span className="text-white text-xs">
+                {artist.name.substring(0, 2).toUpperCase()}
+              </span>
             </div>
-          </Link>
-        ))}
-      </div>
-    </div>
+          )}
+          <div>
+            <p className="text-white font-medium">{artist.name}</p>
+            <p className="text-xs text-white/60">Artist</p>
+          </div>
+        </Link>
+      )}
+    />
   );
 };
