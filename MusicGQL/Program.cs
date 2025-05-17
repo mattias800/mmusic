@@ -4,7 +4,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using MusicGQL.Db;
-using MusicGQL.Db.Models.ServerLibrary;
 using MusicGQL.EventProcessor;
 using MusicGQL.Features.Downloads;
 using MusicGQL.Features.Downloads.Mutations;

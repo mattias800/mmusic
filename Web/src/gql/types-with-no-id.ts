@@ -9,7 +9,7 @@
  * This is used to ensure that the cacheKeys object in UrqlCacheKeys.ts
  * includes all types without an id and doesn't include types with an id.
  */
-export type TypesWithNoId = 'ArtistImages' | 'ArtistInServerLibrary' | 'ArtistsInServerLibrarySearchRoot' | 'Medium' | 'NameCredit' | 'ReleaseGroupInServerLibrary' | 'ReleaseGroupsInServerLibrarySearchRoot' | 'ServerLibrarySearchRoot';
+export type TypesWithNoId = 'AlbumImages' | 'ArtistImages' | 'ArtistInServerLibrary' | 'ArtistsInServerLibrarySearchRoot' | 'Medium' | 'NameCredit' | 'ReleaseGroupInServerLibrary' | 'ReleaseGroupsInServerLibrarySearchRoot' | 'ServerLibrarySearchRoot';
 
 /**
  * Union type of all GraphQL object types that have an id field.
@@ -33,6 +33,6 @@ export function hasIdField(type: string): type is TypesWithId {
  * @returns True if the type doesn't have an id field, false otherwise
  */
 export function hasNoIdField(type: string): type is TypesWithNoId {
-  const typesWithNoId: string[] = ['ArtistImages', 'ArtistInServerLibrary', 'ArtistsInServerLibrarySearchRoot', 'Medium', 'NameCredit', 'ReleaseGroupInServerLibrary', 'ReleaseGroupsInServerLibrarySearchRoot', 'ServerLibrarySearchRoot'];
+  const typesWithNoId: string[] = ['AlbumImages', 'ArtistImages', 'ArtistInServerLibrary', 'ArtistsInServerLibrarySearchRoot', 'Medium', 'NameCredit', 'ReleaseGroupInServerLibrary', 'ReleaseGroupsInServerLibrarySearchRoot', 'ServerLibrarySearchRoot'];
   return typesWithNoId.includes(type);
 }

@@ -359,6 +359,42 @@
       },
       {
         "kind": "OBJECT",
+        "name": "AlbumImages",
+        "description": null,
+        "isOneOf": null,
+        "fields": [
+          {
+            "name": "albumCover",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "SCALAR",
+              "name": "String",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "cdArt",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "SCALAR",
+              "name": "String",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "inputFields": null,
+        "interfaces": [],
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "OBJECT",
         "name": "Artist",
         "description": null,
         "isOneOf": null,
@@ -2472,6 +2508,18 @@
         "isOneOf": null,
         "fields": [
           {
+            "name": "coverArtUri",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "SCALAR",
+              "name": "String",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "credits",
             "description": null,
             "args": [],
@@ -2531,6 +2579,18 @@
                 "name": "ID",
                 "ofType": null
               }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "images",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "OBJECT",
+              "name": "AlbumImages",
+              "ofType": null
             },
             "isDeprecated": false,
             "deprecationReason": null

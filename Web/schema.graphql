@@ -52,6 +52,11 @@ type AddReleaseGroupToServerLibraryUnknownError {
   message: String!
 }
 
+type AlbumImages {
+  albumCover: String
+  cdArt: String
+}
+
 type Artist {
   albums: [ReleaseGroup!]!
   disambiguation: String
@@ -227,10 +232,12 @@ type Release {
 }
 
 type ReleaseGroup {
+  coverArtUri: String
   credits: [NameCredit!]!
   firstReleaseDate: String
   firstReleaseYear: String
   id: ID!
+  images: AlbumImages
   mainRelease: Release
   primaryType: String
   secondaryTypes: [String!]!

@@ -11,16 +11,13 @@ export const albumCardReleaseGroupFragment = graphql(`
     id
     title
     firstReleaseYear
+    coverArtUri
     credits {
       name
       artist {
         id
         name
       }
-    }
-    mainRelease {
-      id
-      coverArtUri
     }
   }
 `);
@@ -31,30 +28,28 @@ export const AlbumCard: React.FC<AlbumCardProps> = (props) => {
     props.releaseGroup,
   );
 
-  const release = releaseGroup.mainRelease;
-
   const navigate = useNavigate();
-
-  if (release == null) {
-    return null;
-  }
 
   return (
     <button
       className="flex flex-col w-64 gap-2 cursor-pointer"
       onClick={() => navigate("/album/" + releaseGroup.id)}
     >
-      <div className="overflow-hidden rounded-md flex flex-col gap-2 w-64">
-        <img
-          src={release.coverArtUri}
-          alt={releaseGroup.title}
-          className={
-            "h-64 w-64 object-cover transition-all hover:scale-105 aspect-square"
-          }
-        />
-      </div>
+      {releaseGroup.coverArtUri && (
+        <div className="overflow-hidden rounded-md flex flex-col gap-2 w-64">
+          <img
+            src={releaseGroup.coverArtUri}
+            alt={releaseGroup.title}
+            className={
+              "h-64 w-64 object-cover transition-all hover:scale-105 aspect-square"
+            }
+          />
+        </div>
+      )}
       <div className={"bold"}>{releaseGroup.title}</div>
-      <div className={"text-gray-400 text-sm"}>{releaseGroup.firstReleaseYear}</div>
+      <div className={"text-gray-400 text-sm"}>
+        {releaseGroup.firstReleaseYear}
+      </div>
     </button>
   );
 };
