@@ -1,12 +1,12 @@
-using Hqub.MusicBrainz;
 using MusicGQL.Db;
+using MusicGQL.Integration.MusicBrainz;
 
 namespace MusicGQL.Features.LikedSongs.Commands;
 
 public class LikeSongHandler(
     EventDbContext dbContext,
     EventProcessor.EventProcessorWorker eventProcessorWorker,
-    MusicBrainzClient client
+    MusicBrainzService mbService
 )
 {
     public async Task<Result> Handle(Command command)
@@ -20,7 +20,7 @@ public class LikeSongHandler(
 
         try
         {
-            var recording = await client.Recordings.GetAsync(command.RecordingId);
+            var recording = await mbService.GetRecordingByIdAsync(command.RecordingId);
 
             if (recording is null)
             {

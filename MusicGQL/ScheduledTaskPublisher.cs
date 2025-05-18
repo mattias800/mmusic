@@ -1,4 +1,5 @@
 using MusicGQL.Features.ServerLibrary.Artist.Handlers;
+using MusicGQL.Features.ServerLibrary.ReleaseGroup.Handlers;
 using Rebus.Bus;
 
 namespace MusicGQL;
@@ -20,9 +21,13 @@ public class ScheduledTaskPublisher(
             try
             {
                 using var scope = scopeFactory.CreateScope();
-                var handler =
+                var processMissingArtistsInServerLibraryHandler =
                     scope.ServiceProvider.GetRequiredService<ProcessMissingArtistsInServerLibraryHandler>();
-                await handler.Handle(new());
+                var processMissingReleaseGroupsInServerLibraryHandler =
+                    scope.ServiceProvider.GetRequiredService<ProcessMissingReleaseGroupsInServerLibraryHandler>();
+
+                await processMissingArtistsInServerLibraryHandler.Handle(new());
+                await processMissingReleaseGroupsInServerLibraryHandler.Handle(new());
             }
             catch (Exception ex)
             {

@@ -4,7 +4,6 @@ using MusicGQL.Db.Models;
 using MusicGQL.Db.Models.Events;
 using MusicGQL.Db.Models.Events.ServerLibrary;
 using MusicGQL.Db.Models.Projections;
-using MusicGQL.Db.Models.ServerLibrary;
 using MusicGQL.Db.Models.ServerLibrary.MusicMetaData;
 
 namespace MusicGQL.Db;
@@ -92,49 +91,67 @@ public class EventDbContext(DbContextOptions<EventDbContext> options) : DbContex
 
         modelBuilder.Entity<Artist>(artist =>
         {
-            artist.OwnsOne(a => a.Rating, rating =>
-            {
-                rating.Property(r => r.Value).HasColumnName("RatingValue");
-                rating.Property(r => r.VotesCount).HasColumnName("RatingVotesCount");
-            });
+            artist.OwnsOne(
+                a => a.Rating,
+                rating =>
+                {
+                    rating.Property(r => r.Value).HasColumnName("RatingValue");
+                    rating.Property(r => r.VotesCount).HasColumnName("RatingVotesCount");
+                }
+            );
             artist.OwnsOne(a => a.LifeSpan);
             artist.OwnsMany(a => a.Aliases);
-            artist.OwnsMany(a => a.Relations, relation => 
-            {
-                relation.OwnsOne(r => r.Url);
-            });
+            artist.OwnsMany(
+                a => a.Relations,
+                relation =>
+                {
+                    relation.OwnsOne(r => r.Url);
+                }
+            );
             artist.OwnsMany(a => a.Tags);
         });
 
         modelBuilder.Entity<ReleaseGroup>(rg =>
         {
-            rg.OwnsOne(r => r.Rating, rating =>
-            {
-                rating.Property(r => r.Value).HasColumnName("RatingValue");
-                rating.Property(r => r.VotesCount).HasColumnName("RatingVotesCount");
-            });
+            rg.OwnsOne(
+                r => r.Rating,
+                rating =>
+                {
+                    rating.Property(r => r.Value).HasColumnName("RatingValue");
+                    rating.Property(r => r.VotesCount).HasColumnName("RatingVotesCount");
+                }
+            );
             rg.OwnsMany(r => r.Aliases);
             rg.OwnsMany(r => r.Credits);
-            rg.OwnsMany(r => r.Relations, relation => 
-            {
-                relation.OwnsOne(r => r.Url);
-            });
+            rg.OwnsMany(
+                r => r.Relations,
+                relation =>
+                {
+                    relation.OwnsOne(r => r.Url);
+                }
+            );
             rg.OwnsMany(r => r.Tags);
         });
 
         modelBuilder.Entity<Recording>(recording =>
         {
-            recording.OwnsOne(r => r.Rating, rating =>
-            {
-                rating.Property(r => r.Value).HasColumnName("RatingValue");
-                rating.Property(r => r.VotesCount).HasColumnName("RatingVotesCount");
-            });
+            recording.OwnsOne(
+                r => r.Rating,
+                rating =>
+                {
+                    rating.Property(r => r.Value).HasColumnName("RatingValue");
+                    rating.Property(r => r.VotesCount).HasColumnName("RatingVotesCount");
+                }
+            );
             recording.OwnsMany(r => r.Aliases);
             recording.OwnsMany(r => r.Credits);
-            recording.OwnsMany(r => r.Relations, relation => 
-            {
-                relation.OwnsOne(r => r.Url);
-            });
+            recording.OwnsMany(
+                r => r.Relations,
+                relation =>
+                {
+                    relation.OwnsOne(r => r.Url);
+                }
+            );
             recording.OwnsMany(r => r.Tags);
         });
 
@@ -142,31 +159,45 @@ public class EventDbContext(DbContextOptions<EventDbContext> options) : DbContex
         {
             release.OwnsOne(r => r.CoverArtArchive);
             release.OwnsMany(r => r.Labels);
-            release.OwnsMany(r => r.Media, media =>
-            {
-                media.OwnsMany(m => m.Discs);
-                media.OwnsMany(m => m.Tracks);
-            });
+            release.OwnsMany(
+                r => r.Media,
+                media =>
+                {
+                    media.OwnsMany(m => m.Discs);
+                    media.OwnsMany(m => m.Tracks);
+                }
+            );
             release.OwnsMany(r => r.Credits);
-            release.OwnsMany(r => r.Relations, relation => 
-            {
-                relation.OwnsOne(r => r.Url);
-            });
+            release.OwnsMany(
+                r => r.Relations,
+                relation =>
+                {
+                    relation.OwnsOne(r => r.Url);
+                }
+            );
             release.OwnsMany(r => r.Tags);
             release.OwnsOne(r => r.TextRepresentation);
-            // We will add more for Release here as we process other types
+            release.OwnsMany(r => r.Aliases);
         });
 
         modelBuilder.Entity<Work>(work =>
         {
             work.OwnsMany(w => w.Aliases);
-            work.OwnsMany(w => w.Relations, relation =>
-            {
-                relation.OwnsOne(r => r.Url);
-                // Note: Relation also has Artist and Work navigation properties.
-                // Artist is an independent entity, Work is the current entity being configured.
-                // This means a Relation owned by a Work can point back to the Work (or another Work) or an Artist.
-            });
+            work.OwnsMany(
+                w => w.Relations,
+                relation =>
+                {
+                    relation.OwnsOne(r => r.Url);
+                    // Note: Relation also has Artist and Work navigation properties.
+                    // Artist is an independent entity, Work is the current entity being configured.
+                    // This means a Relation owned by a Work can point back to the Work (or another Work) or an Artist.
+                }
+            );
+        });
+
+        modelBuilder.Entity<Label>(label =>
+        {
+            label.OwnsMany(l => l.Aliases);
         });
     }
 }

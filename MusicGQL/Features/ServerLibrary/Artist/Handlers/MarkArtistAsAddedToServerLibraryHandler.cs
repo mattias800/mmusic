@@ -1,13 +1,14 @@
 using Hqub.MusicBrainz;
 using MusicGQL.Db;
 using MusicGQL.Db.Models.Events.ServerLibrary;
+using MusicGQL.Integration.MusicBrainz;
 
 namespace MusicGQL.Features.ServerLibrary.Artist.Handlers;
 
 public class MarkArtistAsAddedToServerLibraryHandler(
     EventDbContext dbContext,
     EventProcessor.EventProcessorWorker eventProcessorWorker,
-    MusicBrainzClient client
+    MusicBrainzService mbService
 )
 {
     public async Task<Result> Handle(Command command)
@@ -21,7 +22,7 @@ public class MarkArtistAsAddedToServerLibraryHandler(
 
         try
         {
-            var artist = await client.Artists.GetAsync(command.ArtistId);
+            var artist = await mbService.GetArtistByIdAsync(command.ArtistId);
 
             if (artist is null)
             {

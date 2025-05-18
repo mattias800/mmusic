@@ -1,5 +1,3 @@
-using System.ComponentModel.DataAnnotations;
-
 namespace MusicGQL.Db.Models.ServerLibrary.MusicMetaData;
 
 public class Url

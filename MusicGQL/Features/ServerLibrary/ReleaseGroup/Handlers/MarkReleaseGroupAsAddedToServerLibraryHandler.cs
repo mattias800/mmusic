@@ -1,13 +1,13 @@
-using Hqub.MusicBrainz;
 using MusicGQL.Db;
 using MusicGQL.Db.Models.Events.ServerLibrary;
+using MusicGQL.Integration.MusicBrainz;
 
 namespace MusicGQL.Features.ServerLibrary.ReleaseGroup.Handlers;
 
 public class MarkReleaseGroupAsAddedToServerLibraryHandler(
     EventDbContext dbContext,
     EventProcessor.EventProcessorWorker eventProcessorWorker,
-    MusicBrainzClient client
+    MusicBrainzService mbService
 )
 {
     public async Task<Result> Handle(Command command)
@@ -21,7 +21,7 @@ public class MarkReleaseGroupAsAddedToServerLibraryHandler(
 
         try
         {
-            var artist = await client.ReleaseGroups.GetAsync(command.ReleaseGroupId);
+            var artist = await mbService.GetReleaseGroupByIdAsync(command.ReleaseGroupId);
 
             if (artist is null)
             {

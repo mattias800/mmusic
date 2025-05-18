@@ -1,5 +1,4 @@
 using Google.Apis.Services;
-using Google.Apis.YouTube.v3;
 using Hqub.Lastfm;
 using Hqub.MusicBrainz;
 using Microsoft.EntityFrameworkCore;
@@ -26,7 +25,6 @@ using MusicGQL.Features.ServerLibrary.ReleaseGroup.Sagas;
 using MusicGQL.Features.ServerLibrary.ReleaseGroup.Sagas.Events;
 using MusicGQL.Features.YouTube.Configuration;
 using MusicGQL.Integration.MusicBrainz;
-using MusicGQL.Integration.Youtube;
 using MusicGQL.Sagas.DownloadRelease;
 using MusicGQL.Sagas.DownloadRelease.Handlers;
 using MusicGQL.Types;
@@ -67,6 +65,7 @@ builder
     .AddScoped<MarkReleaseGroupAsAddedToServerLibraryHandler>()
     .AddScoped<MarkArtistAsAddedToServerLibraryHandler>()
     .AddScoped<ProcessMissingArtistsInServerLibraryHandler>()
+    .AddScoped<ProcessMissingReleaseGroupsInServerLibraryHandler>()
     // Event processors
     .AddScoped<LikedSongsEventProcessor>()
     .AddScoped<ReleaseGroupsAddedToServerLibraryProcessor>()
@@ -217,8 +216,12 @@ builder.Services.AddRebus(
     }
 );
 
+// Add artist saga
 builder.Services.AddRebusHandler<AddArtistToServerLibrarySaga>();
 builder.Services.AddRebusHandler<FindArtistInMusicBrainzHandler>();
+
+// Add release group saga
+builder.Services.AddRebusHandler<AddReleaseGroupToServerLibrarySaga>();
 builder.Services.AddRebusHandler<FindReleaseGroupInMusicBrainzHandler>();
 
 builder.Services.AddRebusHandler<DownloadReleaseSaga>();

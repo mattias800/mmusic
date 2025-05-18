@@ -5,7 +5,6 @@ using MusicGQL.Db;
 using Rebus.Bus;
 using Rebus.Handlers;
 using Rebus.Sagas;
-using System.Threading.Tasks;
 
 namespace MusicGQL.Features.ServerLibrary.ReleaseGroup.Sagas;
 
@@ -50,7 +49,10 @@ public class AddReleaseGroupToServerLibrarySaga(
             return;
         }
 
-        logger.LogInformation("Starting AddReleaseGroupToServerLibrarySaga for {ReleaseGroupMbId}", message.ReleaseGroupMbId);
+        logger.LogInformation(
+            "Starting AddReleaseGroupToServerLibrarySaga for {ReleaseGroupMbId}",
+            message.ReleaseGroupMbId
+        );
 
         var existingReleaseGroup = await dbContext.ReleaseGroups.FirstOrDefaultAsync(a =>
             a.Id == message.ReleaseGroupMbId
@@ -58,7 +60,10 @@ public class AddReleaseGroupToServerLibrarySaga(
 
         if (existingReleaseGroup is not null)
         {
-            logger.LogInformation("ReleaseGroup {ReleaseGroupMbId} is already in the library", message.ReleaseGroupMbId);
+            logger.LogInformation(
+                "ReleaseGroup {ReleaseGroupMbId} is already in the library",
+                message.ReleaseGroupMbId
+            );
             MarkAsComplete();
             return;
         }
@@ -75,24 +80,30 @@ public class AddReleaseGroupToServerLibrarySaga(
         AddReleaseGroupToServerLibrarySagaEvents.FoundReleaseGroupInMusicBrainz message
     )
     {
-        logger.LogInformation($"Saving release group {message.ReleaseGroupMbId} to library database");
+        logger.LogInformation(
+            $"Saving release group {message.ReleaseGroupMbId} to library database"
+        );
 
         try
         {
-            var rgDto = message.ReleaseGroup; 
+            var rgDto = message.ReleaseGroup;
 
             var rgEntity = await dbContext.ReleaseGroups.FindAsync(message.ReleaseGroupMbId);
             bool isNewReleaseGroup = rgEntity == null;
 
             if (isNewReleaseGroup)
             {
-                logger.LogInformation($"ReleaseGroup {message.ReleaseGroupMbId} not found, creating new.");
+                logger.LogInformation(
+                    $"ReleaseGroup {message.ReleaseGroupMbId} not found, creating new."
+                );
                 rgEntity = mapper.Map<Db.Models.ServerLibrary.MusicMetaData.ReleaseGroup>(rgDto);
             }
             else
             {
-                logger.LogInformation($"ReleaseGroup {message.ReleaseGroupMbId} found, updating existing.");
-                mapper.Map(rgDto, rgEntity); 
+                logger.LogInformation(
+                    $"ReleaseGroup {message.ReleaseGroupMbId} found, updating existing."
+                );
+                mapper.Map(rgDto, rgEntity);
             }
 
             if (rgEntity.Credits != null)
@@ -101,16 +112,18 @@ public class AddReleaseGroupToServerLibrarySaga(
                 {
                     if (nameCredit.Artist != null)
                     {
-                        var artistDataFromDto = nameCredit.Artist; 
+                        var artistDataFromDto = nameCredit.Artist;
                         Db.Models.ServerLibrary.MusicMetaData.Artist artistToProcess;
 
-                        var existingArtistInDb = await dbContext.Artists.FindAsync(artistDataFromDto.Id);
+                        var existingArtistInDb = await dbContext.Artists.FindAsync(
+                            artistDataFromDto.Id
+                        );
 
                         if (existingArtistInDb != null)
                         {
                             mapper.Map(artistDataFromDto, existingArtistInDb);
                             artistToProcess = existingArtistInDb;
-                            nameCredit.Artist = artistToProcess; 
+                            nameCredit.Artist = artistToProcess;
                         }
                         else
                         {
@@ -124,7 +137,7 @@ public class AddReleaseGroupToServerLibrarySaga(
                     }
                 }
             }
-            
+
             dbContext.AttachKnownEntities(rgEntity);
 
             if (isNewReleaseGroup)
@@ -142,8 +155,11 @@ public class AddReleaseGroupToServerLibrarySaga(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, $"Error saving ReleaseGroup {message.ReleaseGroupMbId} to library database");
-            MarkAsComplete(); 
+            logger.LogError(
+                ex,
+                $"Error saving ReleaseGroup {message.ReleaseGroupMbId} to library database"
+            );
+            MarkAsComplete();
         }
     }
 
@@ -151,7 +167,10 @@ public class AddReleaseGroupToServerLibrarySaga(
         AddReleaseGroupToServerLibrarySagaEvents.DidNotFindReleaseGroupInMusicBrainz message
     )
     {
-        logger.LogWarning("Did not find ReleaseGroup {ReleaseGroupMbId} in MusicBrainz. Completing saga.", message.ReleaseGroupMbId);
+        logger.LogWarning(
+            "Did not find ReleaseGroup {ReleaseGroupMbId} in MusicBrainz. Completing saga.",
+            message.ReleaseGroupMbId
+        );
         MarkAsComplete();
         return Task.CompletedTask;
     }
