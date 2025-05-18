@@ -64,7 +64,7 @@ builder
     .AddSingleton<YouTubeService>()
     .AddScoped<LikeSongHandler>()
     .AddScoped<UnlikeSongHandler>()
-    .AddScoped<AddReleaseGroupToServerLibraryHandler>()
+    .AddScoped<MarkReleaseGroupAsAddedToServerLibraryHandler>()
     .AddScoped<MarkArtistAsAddedToServerLibraryHandler>()
     .AddScoped<ProcessMissingArtistsInServerLibraryHandler>()
     // Event processors

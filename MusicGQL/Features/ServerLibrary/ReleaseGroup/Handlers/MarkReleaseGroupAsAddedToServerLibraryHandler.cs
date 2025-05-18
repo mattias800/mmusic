@@ -4,7 +4,7 @@ using MusicGQL.Db.Models.Events.ServerLibrary;
 
 namespace MusicGQL.Features.ServerLibrary.ReleaseGroup.Handlers;
 
-public class AddReleaseGroupToServerLibraryHandler(
+public class MarkReleaseGroupAsAddedToServerLibraryHandler(
     EventDbContext dbContext,
     EventProcessor.EventProcessorWorker eventProcessorWorker,
     MusicBrainzClient client

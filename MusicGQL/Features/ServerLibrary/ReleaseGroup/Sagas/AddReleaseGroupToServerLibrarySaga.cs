@@ -78,13 +78,78 @@ public class AddReleaseGroupToServerLibrarySaga(
         AddReleaseGroupToServerLibrarySagaEvents.FoundReleaseGroupInMusicBrainz message
     )
     {
-        logger.LogInformation("Saving artist to library database");
+        logger.LogInformation("Saving release group to library database");
 
-        var dbReleaseGroup = mapper.Map<Db.Models.ServerLibrary.MusicMetaData.ReleaseGroup>(
-            message.ReleaseGroup
-        );
+        // --- Release Group Handling ---
+        var allIncomingRgIds = message.ReleaseGroups.Select(rg => rg.Id).ToHashSet();
+        var existingRgIdsInDb = await dbContext
+            .ReleaseGroups.AsNoTracking()
+            .Where(rg => allIncomingRgIds.Contains(rg.Id))
+            .Select(rg => rg.Id)
+            .ToHashSetAsync();
 
-        dbContext.ReleaseGroups.Add(dbReleaseGroup);
+        foreach (var rgDto in message.ReleaseGroups)
+        {
+            var rgEntity = mapper.Map<Db.Models.ServerLibrary.MusicMetaData.ReleaseGroup>(rgDto);
+
+            // Stitch Artist credits
+            if (rgEntity.Credits != null)
+            {
+                foreach (var nameCredit in rgEntity.Credits)
+                {
+                    if (nameCredit.Artist != null && nameCredit.Artist.Id == artistEntity.Id)
+                    {
+                        nameCredit.Artist = artistEntity;
+                    }
+                }
+            }
+
+            // --- Explicit Rating Handling before AttachKnownEntities ---
+            if (rgEntity.Rating != null)
+            {
+                var mappedRating = rgEntity.Rating;
+                if (mappedRating.Id != 0) // Indicates an existing Rating ID from source
+                {
+                    var existingRating = await dbContext.Ratings.FindAsync(mappedRating.Id);
+                    if (existingRating != null)
+                    {
+                        // Rating exists in DB, use the tracked instance and update its properties
+                        mapper.Map(mappedRating, existingRating); // Update existing with values from DTO
+                        rgEntity.Rating = existingRating; // Point RG to the tracked Rating entity
+                    }
+                    else
+                    {
+                        // Rating ID specified but not found in DB. This is an FK violation if RatingId is not nullable.
+                        // If ReleaseGroup.RatingId is nullable, setting rgEntity.Rating = null is an option.
+                        // Otherwise, this is a data integrity issue.
+                        logger.LogWarning(
+                            $"ReleaseGroup {rgEntity.Id} references RatingId {mappedRating.Id} which does not exist. Setting Rating to null for this RG. This may fail if ReleaseGroup.RatingId is not nullable."
+                        );
+                        rgEntity.Rating = null;
+                    }
+                }
+                else // mappedRating.Id is 0, treat as a new Rating to be inserted
+                {
+                    // Add the new Rating to the context. EF will handle its insertion.
+                    // If AttachKnownEntities also tries to add it, ensure it's idempotent or handles already-tracked entities.
+                    dbContext.Ratings.Add(mappedRating);
+                }
+            }
+            // If rgEntity.Rating was null from DTO, it remains null.
+            // If ReleaseGroup.RatingId is non-nullable in DB, this will cause an error at SaveChanges if rgEntity.Rating is null.
+
+            dbContext.AttachKnownEntities(rgEntity);
+
+            if (existingRgIdsInDb.Contains(rgEntity.Id))
+            {
+                dbContext.Entry(rgEntity).State = EntityState.Modified;
+            }
+            else
+            {
+                dbContext.Entry(rgEntity).State = EntityState.Added;
+            }
+        }
+
         await dbContext.SaveChangesAsync();
         MarkAsComplete();
     }

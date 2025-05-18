@@ -2,6 +2,7 @@ using AutoMapper;
 using HotChocolate.Subscriptions;
 using Microsoft.EntityFrameworkCore;
 using MusicGQL.Db;
+using MusicGQL.Features.ServerLibrary.ReleaseGroup.Handlers;
 using Rebus.Bus;
 using Rebus.Handlers;
 using Rebus.Sagas;
@@ -13,6 +14,7 @@ public class AddArtistToServerLibrarySaga(
     ITopicEventSender sender,
     EventDbContext dbContext,
     ILogger<AddArtistToServerLibrarySaga> logger,
+    MarkReleaseGroupAsAddedToServerLibraryHandler markReleaseGroupAsAddedToServerLibraryHandler,
     IMapper mapper
 )
     : Saga<AddArtistToServerLibrarySagaData>,
@@ -63,68 +65,42 @@ public class AddArtistToServerLibrarySaga(
 
     public async Task Handle(AddArtistToServerLibrarySagaEvents.FoundArtistInMusicBrainz message)
     {
-        logger.LogInformation("Saving artist and release groups to library database");
+        logger.LogInformation(
+            "Saving artist and marking release groups as added to library database"
+        );
 
         try
         {
             // --- Artist Handling ---
-            var artistEntity = await dbContext.Artists.FirstOrDefaultAsync(a => a.Id == message.ArtistMbId);
+            var artistEntity = await dbContext.Artists.FirstOrDefaultAsync(a =>
+                a.Id == message.ArtistMbId
+            );
 
             if (artistEntity == null)
             {
                 logger.LogInformation("Artist not found in library database, creating new one");
-                artistEntity = mapper.Map<Db.Models.ServerLibrary.MusicMetaData.Artist>(message.Artist);
+                artistEntity = mapper.Map<Db.Models.ServerLibrary.MusicMetaData.Artist>(
+                    message.Artist
+                );
                 dbContext.Artists.Add(artistEntity); // EF Core starts tracking artistEntity
             }
             else
             {
-                logger.LogInformation("Artist already exists in library database, updating existing one");
+                logger.LogInformation(
+                    "Artist already exists in library database, updating existing one"
+                );
                 mapper.Map(message.Artist, artistEntity); // Update properties of tracked artistEntity
             }
 
-            // --- Release Group Handling ---
-            var allIncomingRgIds = message.ReleaseGroups.Select(rg => rg.Id).ToHashSet();
-            var existingRgIdsInDb = await dbContext.ReleaseGroups
-                .AsNoTracking()
-                .Where(rg => allIncomingRgIds.Contains(rg.Id))
-                .Select(rg => rg.Id)
-                .ToHashSetAsync();
+            await dbContext.SaveChangesAsync();
 
-            foreach (var rgDto in message.ReleaseGroups)
+            var releaseGroupIds = message.ReleaseGroups.Select(r => r.Id).ToList();
+
+            foreach (var releaseGroupId in releaseGroupIds)
             {
-                var rgEntity = mapper.Map<Db.Models.ServerLibrary.MusicMetaData.ReleaseGroup>(rgDto);
-
-                // ** CORRECTED FIX for Artist tracking conflict via NameCredit **
-                if (rgEntity.Credits != null)
-                {
-                    foreach (var nameCredit in rgEntity.Credits)
-                    {
-                        // If this NameCredit's artist is the main artist we are processing,
-                        // ensure it points to the single, tracked artistEntity instance.
-                        if (nameCredit.Artist != null && nameCredit.Artist.Id == artistEntity.Id)
-                        {
-                            nameCredit.Artist = artistEntity;
-                        }
-                        // If nameCredit.Artist is some *other* artist not yet tracked or a different one,
-                        // AttachKnownEntities will handle it. The critical part is not to re-track artistEntity.
-                    }
-                }
-
-                // AttachKnownEntities will process rgEntity and its children (e.g., rgEntity.Area, rgEntity.Credits).
-                // Artists within Credits should now either be the correctly tracked artistEntity or other artists to be processed by AttachKnownEntities.
-                dbContext.AttachKnownEntities(rgEntity);
-
-                if (existingRgIdsInDb.Contains(rgEntity.Id))
-                {
-                    dbContext.Entry(rgEntity).State = EntityState.Modified;
-                }
-                else
-                {
-                    dbContext.Entry(rgEntity).State = EntityState.Added;
-                }
+                await markReleaseGroupAsAddedToServerLibraryHandler.Handle(new(releaseGroupId));
             }
 
-            await dbContext.SaveChangesAsync();
             MarkAsComplete();
         }
         catch (Exception ex)

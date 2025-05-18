@@ -7,22 +7,22 @@ namespace MusicGQL.Features.ServerLibrary.ReleaseGroup.Mutations;
 public class AddReleaseGroupToServerLibraryMutation
 {
     public async Task<AddReleaseGroupToServerLibraryResult> AddReleaseGroupToServerLibrary(
-        [Service] AddReleaseGroupToServerLibraryHandler handler,
+        [Service] MarkReleaseGroupAsAddedToServerLibraryHandler handler,
         AddReleaseGroupToServerLibraryInput input
     )
     {
         return await handler.Handle(new(input.ReleaseGroupId)) switch
         {
             // TODO Correct user
-            AddReleaseGroupToServerLibraryHandler.Result.Success =>
+            MarkReleaseGroupAsAddedToServerLibraryHandler.Result.Success =>
                 new AddReleaseGroupToServerLibraryResult.AddReleaseGroupToServerLibrarySuccess(
                     new User.User(0)
                 ),
-            AddReleaseGroupToServerLibraryHandler.Result.AlreadyAdded =>
+            MarkReleaseGroupAsAddedToServerLibraryHandler.Result.AlreadyAdded =>
                 new AddReleaseGroupToServerLibraryResult.AddReleaseGroupToServerLibraryReleaseGroupAlreadyAdded(
                     "ReleaseGroup already added!"
                 ),
-            AddReleaseGroupToServerLibraryHandler.Result.ReleaseGroupDoesNotExist =>
+            MarkReleaseGroupAsAddedToServerLibraryHandler.Result.ReleaseGroupDoesNotExist =>
                 new AddReleaseGroupToServerLibraryResult.AddReleaseGroupToServerLibraryReleaseGroupDoesNotExist(
                     "ReleaseGroup does not exist in MusicBrainz!"
                 ),
