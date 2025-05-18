@@ -3,7 +3,7 @@ namespace MusicGQL.Db.Models.ServerLibrary.MusicMetaData;
 public class CoverArtArchive
 {
     public bool Artwork { get; set; }
-    public int Count { get; set; }
+    public int? Count { get; set; }
     public bool Front { get; set; }
     public bool Back { get; set; }
 

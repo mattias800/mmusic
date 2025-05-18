@@ -5,6 +5,7 @@ using MusicGQL.Db;
 using Rebus.Bus;
 using Rebus.Handlers;
 using Rebus.Sagas;
+using MusicGQL.Integration.MusicBrainz;
 
 namespace MusicGQL.Features.ServerLibrary.ReleaseGroup.Sagas;
 
@@ -13,7 +14,8 @@ public class AddReleaseGroupToServerLibrarySaga(
     ITopicEventSender sender,
     EventDbContext dbContext,
     ILogger<AddReleaseGroupToServerLibrarySaga> logger,
-    IMapper mapper
+    IMapper mapper,
+    MusicBrainzService musicBrainzService
 )
     : Saga<AddReleaseGroupToServerLibrarySagaData>,
         IAmInitiatedBy<AddReleaseGroupToServerLibrarySagaEvents.StartAddReleaseGroup>,
@@ -113,17 +115,13 @@ public class AddReleaseGroupToServerLibrarySaga(
                     if (nameCredit.Artist != null)
                     {
                         var artistDataFromDto = nameCredit.Artist;
+                        Db.Models.ServerLibrary.MusicMetaData.Artist? existingArtistInDb = await dbContext.Artists.FindAsync(artistDataFromDto.Id);
                         Db.Models.ServerLibrary.MusicMetaData.Artist artistToProcess;
-
-                        var existingArtistInDb = await dbContext.Artists.FindAsync(
-                            artistDataFromDto.Id
-                        );
 
                         if (existingArtistInDb != null)
                         {
                             mapper.Map(artistDataFromDto, existingArtistInDb);
                             artistToProcess = existingArtistInDb;
-                            nameCredit.Artist = artistToProcess;
                         }
                         else
                         {
@@ -134,6 +132,7 @@ public class AddReleaseGroupToServerLibrarySaga(
                                 dbContext.Artists.Add(artistToProcess);
                             }
                         }
+                        nameCredit.Artist = artistToProcess;
                     }
                 }
             }
@@ -147,6 +146,128 @@ public class AddReleaseGroupToServerLibrarySaga(
             else
             {
                 dbContext.Entry(rgEntity).State = EntityState.Modified;
+            }
+
+            // --- Fetch and Process Releases for the Release Group ---
+            var releaseDtos = await musicBrainzService.GetReleasesForReleaseGroupAsync(rgEntity.Id);
+
+            if (releaseDtos != null)
+            {
+                foreach (var releaseDto in releaseDtos)
+                {
+                    var releaseEntity = await dbContext.Releases.Include(r => r.Media).ThenInclude(m => m.Tracks).ThenInclude(t => t.Recording).FirstOrDefaultAsync(r => r.Id == releaseDto.Id);
+                    bool isNewRelease = releaseEntity == null;
+
+                    if (isNewRelease)
+                    {
+                        logger.LogInformation($"Release {releaseDto.Id} for RG {rgEntity.Id} not found, creating new.");
+                        releaseEntity = mapper.Map<Db.Models.ServerLibrary.MusicMetaData.Release>(releaseDto);
+                        releaseEntity.ReleaseGroup = rgEntity; 
+                    }
+                    else
+                    {
+                        logger.LogInformation($"Release {releaseDto.Id} for RG {rgEntity.Id} found, updating existing.");
+                        if (releaseEntity.ReleaseGroup == null || releaseEntity.ReleaseGroup.Id != rgEntity.Id) {
+                             releaseEntity.ReleaseGroup = rgEntity;
+                        }
+                        mapper.Map(releaseDto, releaseEntity);
+                    }
+
+                    if (releaseEntity.Credits != null)
+                    {
+                        foreach (var nameCredit in releaseEntity.Credits)
+                        {
+                            if (nameCredit.Artist != null)
+                            {
+                                var artistDataFromDto = nameCredit.Artist;
+                                Db.Models.ServerLibrary.MusicMetaData.Artist? existingArtistInDb = await dbContext.Artists.FindAsync(artistDataFromDto.Id);
+                                Db.Models.ServerLibrary.MusicMetaData.Artist artistToProcess;
+
+                                if (existingArtistInDb != null)
+                                {
+                                    mapper.Map(artistDataFromDto, existingArtistInDb);
+                                    artistToProcess = existingArtistInDb;
+                                }
+                                else
+                                {
+                                    artistToProcess = artistDataFromDto;
+                                    var entry = dbContext.Entry(artistToProcess);
+                                    if (entry.State == EntityState.Detached)
+                                    {
+                                        dbContext.Artists.Add(artistToProcess);
+                                    }
+                                }
+                                nameCredit.Artist = artistToProcess;
+                            }
+                        }
+                    }
+                    
+                    if (releaseEntity.Media != null)
+                    {
+                        foreach (var mediumEntity in releaseEntity.Media)
+                        {
+                            if (mediumEntity.Tracks != null)
+                            {
+                                foreach (var trackEntity in mediumEntity.Tracks)
+                                {
+                                    if (trackEntity.Recording != null)
+                                    {
+                                        var recordingDataFromDto = trackEntity.Recording; // This is the mapped Recording entity from Release DTO
+                                        var recordingEntity = await dbContext.Recordings.FindAsync(recordingDataFromDto.Id);
+                                        bool isNewRecording = recordingEntity == null;
+
+                                        if (isNewRecording)
+                                        {
+                                            logger.LogInformation($"Recording {recordingDataFromDto.Id} for Release {releaseEntity.Id} not found, creating new.");
+                                            recordingEntity = recordingDataFromDto; // Assumes it's already fully mapped by AutoMapper
+                                        }
+                                        else
+                                        {
+                                            logger.LogInformation($"Recording {recordingDataFromDto.Id} for Release {releaseEntity.Id} found, updating existing.");
+                                            mapper.Map(recordingDataFromDto, recordingEntity); 
+                                            trackEntity.Recording = recordingEntity; // Ensure track points to tracked instance
+                                        }
+
+                                        if (recordingEntity.Credits != null)
+                                        {
+                                            foreach (var nameCredit in recordingEntity.Credits)
+                                            {
+                                                 if (nameCredit.Artist != null)
+                                                 {
+                                                    var artistDataFromDto = nameCredit.Artist;
+                                                    Db.Models.ServerLibrary.MusicMetaData.Artist? existingArtistInDb = await dbContext.Artists.FindAsync(artistDataFromDto.Id);
+                                                    Db.Models.ServerLibrary.MusicMetaData.Artist artistToProcess;
+
+                                                    if (existingArtistInDb != null)
+                                                    {
+                                                        mapper.Map(artistDataFromDto, existingArtistInDb);
+                                                        artistToProcess = existingArtistInDb;
+                                                    }
+                                                    else
+                                                    {
+                                                        artistToProcess = artistDataFromDto;
+                                                        var entry = dbContext.Entry(artistToProcess);
+                                                        if (entry.State == EntityState.Detached)
+                                                        {
+                                                            dbContext.Artists.Add(artistToProcess);
+                                                        }
+                                                    }
+                                                    nameCredit.Artist = artistToProcess;
+                                                 }
+                                            }
+                                        }
+                                        
+                                        dbContext.AttachKnownEntities(recordingEntity);
+                                        dbContext.Entry(recordingEntity).State = isNewRecording ? EntityState.Added : EntityState.Modified;
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    dbContext.AttachKnownEntities(releaseEntity);
+                    dbContext.Entry(releaseEntity).State = isNewRelease ? EntityState.Added : EntityState.Modified;
+                }
             }
 
             await dbContext.SaveChangesAsync();
