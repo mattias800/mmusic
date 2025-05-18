@@ -5,6 +5,7 @@ using MusicGQL.Db.Models.Events;
 using MusicGQL.Db.Models.Events.ServerLibrary;
 using MusicGQL.Db.Models.Projections;
 using MusicGQL.Db.Models.ServerLibrary;
+using MusicGQL.Db.Models.ServerLibrary.MusicMetaData;
 
 namespace MusicGQL.Db;
 
@@ -16,6 +17,11 @@ public class EventDbContext(DbContextOptions<EventDbContext> options) : DbContex
     // Music library
     public DbSet<Artist> Artists { get; set; }
     public DbSet<Area> Areas { get; set; }
+    public DbSet<Genre> Genres { get; set; }
+    public DbSet<Label> Labels { get; set; }
+    public DbSet<Recording> Recordings { get; set; }
+    public DbSet<Release> Releases { get; set; }
+    public DbSet<ReleaseGroup> ReleaseGroups { get; set; }
 
     // Projections
     public DbSet<LikedSongsProjection> LikedSongsProjections { get; set; }

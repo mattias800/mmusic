@@ -22,6 +22,8 @@ using MusicGQL.Features.ServerLibrary.Artist.Sagas.Events;
 using MusicGQL.Features.ServerLibrary.ReleaseGroup.Aggregate;
 using MusicGQL.Features.ServerLibrary.ReleaseGroup.Handlers;
 using MusicGQL.Features.ServerLibrary.ReleaseGroup.Mutations;
+using MusicGQL.Features.ServerLibrary.ReleaseGroup.Sagas;
+using MusicGQL.Features.ServerLibrary.ReleaseGroup.Sagas.Events;
 using MusicGQL.Features.YouTube.Configuration;
 using MusicGQL.Integration.MusicBrainz;
 using MusicGQL.Integration.Youtube;
@@ -63,7 +65,8 @@ builder
     .AddScoped<LikeSongHandler>()
     .AddScoped<UnlikeSongHandler>()
     .AddScoped<AddReleaseGroupToServerLibraryHandler>()
-    .AddScoped<AddArtistToServerLibraryHandler>()
+    .AddScoped<MarkArtistAsAddedToServerLibraryHandler>()
+    .AddScoped<ProcessMissingArtistsInServerLibraryHandler>()
     // Event processors
     .AddScoped<LikedSongsEventProcessor>()
     .AddScoped<ReleaseGroupsAddedToServerLibraryProcessor>()
@@ -174,6 +177,18 @@ builder.Services.AddRebus(
                     .Map<AddArtistToServerLibrarySagaEvents.DidNotFindArtistInMusicBrainz>(
                         "mmusic-queue"
                     )
+                    .Map<AddReleaseGroupToServerLibrarySagaEvents.StartAddReleaseGroup>(
+                        "mmusic-queue"
+                    )
+                    .Map<AddReleaseGroupToServerLibrarySagaEvents.FindReleaseGroupInMusicBrainz>(
+                        "mmusic-queue"
+                    )
+                    .Map<AddReleaseGroupToServerLibrarySagaEvents.FoundReleaseGroupInMusicBrainz>(
+                        "mmusic-queue"
+                    )
+                    .Map<AddReleaseGroupToServerLibrarySagaEvents.DidNotFindReleaseGroupInMusicBrainz>(
+                        "mmusic-queue"
+                    )
                     .Map<DownloadReleaseQueuedEvent>("mmusic-queue")
                     .Map<LookupReleaseInMusicBrainz>("mmusic-queue")
                     .Map<LookupRecordingsForReleaseInMusicBrainz>("mmusic-queue")
@@ -204,10 +219,13 @@ builder.Services.AddRebus(
 
 builder.Services.AddRebusHandler<AddArtistToServerLibrarySaga>();
 builder.Services.AddRebusHandler<FindArtistInMusicBrainzHandler>();
+builder.Services.AddRebusHandler<FindReleaseGroupInMusicBrainzHandler>();
 
 builder.Services.AddRebusHandler<DownloadReleaseSaga>();
 builder.Services.AddRebusHandler<LookupReleaseInMusicBrainzHandler>();
 builder.Services.AddRebusHandler<LookupRecordingsForReleaseInMusicBrainzHandler>();
+
+builder.Services.AddHostedService<ScheduledTaskPublisher>();
 
 var app = builder.Build();
 

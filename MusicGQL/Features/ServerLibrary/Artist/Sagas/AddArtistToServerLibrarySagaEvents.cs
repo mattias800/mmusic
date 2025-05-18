@@ -8,7 +8,8 @@ public record AddArtistToServerLibrarySagaEvents
 
     public record FoundArtistInMusicBrainz(
         string ArtistMbId,
-        Hqub.MusicBrainz.Entities.Artist Artist
+        Hqub.MusicBrainz.Entities.Artist Artist,
+        IEnumerable<Hqub.MusicBrainz.Entities.ReleaseGroup> ReleaseGroups
     );
 
     public record DidNotFindArtistInMusicBrainz(string ArtistMbId);

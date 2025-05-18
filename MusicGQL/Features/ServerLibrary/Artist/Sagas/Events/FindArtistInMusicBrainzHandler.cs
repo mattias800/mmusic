@@ -31,10 +31,13 @@ public class FindArtistInMusicBrainzHandler(
 
             logger.LogInformation("Found artist ID: {Id}", message.ArtistMbId);
 
+            var releaseGroups = await service.GetReleaseGroupsForArtistAsync(artist.Id);
+
             await bus.Send(
                 new AddArtistToServerLibrarySagaEvents.FoundArtistInMusicBrainz(
                     message.ArtistMbId,
-                    artist
+                    artist,
+                    releaseGroups
                 )
             );
         }

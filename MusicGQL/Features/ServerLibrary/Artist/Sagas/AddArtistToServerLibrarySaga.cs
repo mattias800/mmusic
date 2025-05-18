@@ -46,24 +46,13 @@ public class AddArtistToServerLibrarySaga(
     {
         if (!IsNew)
         {
+            logger.LogInformation("AddArtistToServerLibrarySaga is not new, skipping");
             return;
         }
 
         logger.LogInformation("Starting AddArtistToServerLibrarySaga");
 
-        var existingArtist = await dbContext.Artists.FirstOrDefaultAsync(a =>
-            a.Id == message.ArtistMbId
-        );
-
-        if (existingArtist is not null)
-        {
-            logger.LogInformation("Artist is already in the library");
-
-            MarkAsComplete();
-            return;
-        }
-
-        Data.StatusDescription = "Looking up release";
+        Data.StatusDescription = "Looking up artist";
 
         // await sender.SendAsync(nameof(DownloadSubscription.DownloadStarted), Data);
 
@@ -74,79 +63,68 @@ public class AddArtistToServerLibrarySaga(
 
     public async Task Handle(AddArtistToServerLibrarySagaEvents.FoundArtistInMusicBrainz message)
     {
-        logger.LogInformation("Saving artist to library database");
+        logger.LogInformation("Saving artist and release groups to library database");
 
-        var dbArtist = mapper.Map<Db.Models.ServerLibrary.Artist>(message.Artist);
-
-        // Handle Area
-        if (dbArtist.Area != null)
+        try
         {
-            var existingArea = await dbContext.Areas.FindAsync(dbArtist.Area.Id);
-            if (existingArea != null)
+            // Check if the artist is already in the database
+            var dbArtist = await dbContext.Artists.FirstOrDefaultAsync(a =>
+                a.Id == message.ArtistMbId
+            );
+
+            if (dbArtist == null)
             {
-                dbContext.Entry(existingArea).CurrentValues.SetValues(dbArtist.Area);
-                dbArtist.Area = existingArea;
+                logger.LogInformation("Artist not found in library database, creating new one");
+
+                // Map and attach full object graph
+                dbArtist = mapper.Map<Db.Models.ServerLibrary.MusicMetaData.Artist>(message.Artist);
+                dbContext.AttachKnownEntities(dbArtist);
+                dbContext.Artists.Add(dbArtist);
             }
             else
             {
-                dbContext.Areas.Add(dbArtist.Area);
+                logger.LogInformation("Artist already exists in library database");
             }
-        }
 
-        // Handle BeginArea
-        if (dbArtist.BeginArea != null)
-        {
-            // If BeginArea is the same as Area, reuse the tracked entity
-            if (dbArtist.Area != null && dbArtist.BeginArea.Id == dbArtist.Area.Id)
+            // Map incoming release groups
+            var dbReleaseGroups = message
+                .ReleaseGroups.Select(
+                    mapper.Map<Db.Models.ServerLibrary.MusicMetaData.ReleaseGroup>
+                )
+                .ToList();
+
+            // Get IDs of release groups already in the DB
+            var incomingIds = dbReleaseGroups.Select(rg => rg.Id).ToList();
+            var existingIds = await dbContext
+                .ReleaseGroups.AsNoTracking()
+                .Where(rg => incomingIds.Contains(rg.Id))
+                .Select(rg => rg.Id)
+                .ToHashSetAsync();
+
+            foreach (var releaseGroup in dbReleaseGroups)
             {
-                dbArtist.BeginArea = dbArtist.Area;
-            }
-            else
-            {
-                var existingBeginArea = await dbContext.Areas.FindAsync(dbArtist.BeginArea.Id);
-                if (existingBeginArea != null)
+                dbContext.AttachKnownEntities(releaseGroup);
+
+                if (existingIds.Contains(releaseGroup.Id))
                 {
-                    dbContext.Entry(existingBeginArea).CurrentValues.SetValues(dbArtist.BeginArea);
-                    dbArtist.BeginArea = existingBeginArea;
+                    // Mark for update
+                    dbContext.Entry(releaseGroup).State = EntityState.Modified;
                 }
                 else
                 {
-                    dbContext.Areas.Add(dbArtist.BeginArea);
+                    // Insert new
+                    dbContext.ReleaseGroups.Add(releaseGroup);
                 }
             }
-        }
 
-        // Handle EndArea
-        if (dbArtist.EndArea != null)
+            await dbContext.SaveChangesAsync();
+            MarkAsComplete();
+        }
+        catch (Exception ex)
         {
-            // If EndArea is the same as Area, reuse the tracked entity
-            if (dbArtist.Area != null && dbArtist.EndArea.Id == dbArtist.Area.Id)
-            {
-                dbArtist.EndArea = dbArtist.Area;
-            }
-            // If EndArea is the same as BeginArea, reuse the tracked entity
-            else if (dbArtist.BeginArea != null && dbArtist.EndArea.Id == dbArtist.BeginArea.Id)
-            {
-                dbArtist.EndArea = dbArtist.BeginArea;
-            }
-            else
-            {
-                var existingEndArea = await dbContext.Areas.FindAsync(dbArtist.EndArea.Id);
-                if (existingEndArea != null)
-                {
-                    dbContext.Entry(existingEndArea).CurrentValues.SetValues(dbArtist.EndArea);
-                    dbArtist.EndArea = existingEndArea;
-                }
-                else
-                {
-                    dbContext.Areas.Add(dbArtist.EndArea);
-                }
-            }
+            logger.LogError(ex, "Error saving artist and release groups to library database");
+            MarkAsComplete();
         }
-
-        dbContext.Artists.Add(dbArtist);
-        await dbContext.SaveChangesAsync();
-        MarkAsComplete();
     }
 
     public Task Handle(AddArtistToServerLibrarySagaEvents.DidNotFindArtistInMusicBrainz message)

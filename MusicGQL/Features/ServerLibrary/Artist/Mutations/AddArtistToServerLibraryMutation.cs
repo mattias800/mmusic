@@ -9,28 +9,28 @@ namespace MusicGQL.Features.ServerLibrary.Artist.Mutations;
 public class AddArtistToServerLibraryMutation
 {
     public async Task<AddArtistToServerLibraryResult> AddArtistToServerLibrary(
-        [Service] AddArtistToServerLibraryHandler handler,
+        [Service] MarkArtistAsAddedToServerLibraryHandler handler,
         [Service] IBus bus,
         AddArtistToServerLibraryInput input
     )
     {
         return await handler.Handle(new(input.ArtistId)) switch
         {
-            AddArtistToServerLibraryHandler.Result.Success => await StartAddArtistSaga(
+            MarkArtistAsAddedToServerLibraryHandler.Result.Success => await StartAddArtistSaga(
                 bus,
                 input.ArtistId,
                 new AddArtistToServerLibraryResult.AddArtistToServerLibrarySuccess(
                     new ArtistServerAvailability(input.ArtistId)
                 )
             ),
-            AddArtistToServerLibraryHandler.Result.AlreadyAdded => await StartAddArtistSaga(
+            MarkArtistAsAddedToServerLibraryHandler.Result.AlreadyAdded => await StartAddArtistSaga(
                 bus,
                 input.ArtistId,
                 new AddArtistToServerLibraryResult.AddArtistToServerLibraryArtistAlreadyAdded(
                     "Artist already added!"
                 )
             ),
-            AddArtistToServerLibraryHandler.Result.ArtistDoesNotExist =>
+            MarkArtistAsAddedToServerLibraryHandler.Result.ArtistDoesNotExist =>
                 new AddArtistToServerLibraryResult.AddArtistToServerLibraryArtistDoesNotExist(
                     "Artist does not exist in MusicBrainz!"
                 ),

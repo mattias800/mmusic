@@ -4,7 +4,7 @@ using MusicGQL.Db.Models.Events.ServerLibrary;
 
 namespace MusicGQL.Features.ServerLibrary.Artist.Handlers;
 
-public class AddArtistToServerLibraryHandler(
+public class MarkArtistAsAddedToServerLibraryHandler(
     EventDbContext dbContext,
     EventProcessor.EventProcessorWorker eventProcessorWorker,
     MusicBrainzClient client
