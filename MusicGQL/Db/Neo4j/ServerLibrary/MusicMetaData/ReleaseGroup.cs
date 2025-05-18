@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-
 namespace MusicGQL.Db.Neo4j.ServerLibrary.MusicMetaData;
 
 public class ReleaseGroup

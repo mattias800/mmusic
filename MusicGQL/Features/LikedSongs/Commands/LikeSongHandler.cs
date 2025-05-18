@@ -1,4 +1,3 @@
-using MusicGQL.Db;
 using MusicGQL.Db.Postgres;
 using MusicGQL.Integration.MusicBrainz;
 

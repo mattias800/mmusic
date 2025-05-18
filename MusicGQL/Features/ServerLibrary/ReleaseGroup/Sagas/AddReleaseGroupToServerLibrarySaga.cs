@@ -1,10 +1,5 @@
-using System.Collections.Generic;
-using System.Linq;
 using AutoMapper;
-using HotChocolate.Subscriptions;
-using Microsoft.EntityFrameworkCore;
-using MusicGQL.Db;
-using MusicGQL.Db.Postgres;
+using Hqub.MusicBrainz.Entities;
 using MusicGQL.Integration.MusicBrainz;
 using Neo4j.Driver;
 using Rebus.Bus;
@@ -18,7 +13,8 @@ public class AddReleaseGroupToServerLibrarySaga(
     IDriver neo4jDriver,
     ILogger<AddReleaseGroupToServerLibrarySaga> logger,
     IMapper mapper,
-    MusicBrainzService musicBrainzService
+    MusicBrainzService musicBrainzService,
+    ReleaseGroupPersistenceService releaseGroupPersistenceService
 )
     : Saga<AddReleaseGroupToServerLibrarySagaData>,
         IAmInitiatedBy<AddReleaseGroupToServerLibrarySagaEvents.StartAddReleaseGroup>,
@@ -79,237 +75,9 @@ public class AddReleaseGroupToServerLibrarySaga(
 
         try
         {
-            // 1. Save ReleaseGroup
-            var releaseGroupToSave = mapper.Map<Db.Neo4j.ServerLibrary.MusicMetaData.ReleaseGroup>(
-                message.ReleaseGroup
-            );
-            await session.ExecuteWriteAsync(async tx =>
-            {
-                await tx.RunAsync(
-                    "MERGE (rg:ReleaseGroup {Id: $id}) "
-                        + "ON CREATE SET rg.Title = $title, rg.PrimaryType = $primaryType, rg.SecondaryTypes = $secondaryTypes, rg.FirstReleaseDate = $firstReleaseDate "
-                        + "ON MATCH SET rg.Title = $title, rg.PrimaryType = $primaryType, rg.SecondaryTypes = $secondaryTypes, rg.FirstReleaseDate = $firstReleaseDate",
-                    new
-                    {
-                        id = releaseGroupToSave.Id,
-                        title = releaseGroupToSave.Title,
-                        primaryType = releaseGroupToSave.PrimaryType,
-                        secondaryTypes = releaseGroupToSave.SecondaryTypes,
-                        firstReleaseDate = releaseGroupToSave.FirstReleaseDate,
-                    }
-                );
+            await SaveReleaseGroupAndItsArtistsAsync(session, message.ReleaseGroup);
 
-                // 2. Save ReleaseGroup Artist Credits
-                if (message.ReleaseGroup.Credits != null)
-                {
-                    foreach (var creditDto in message.ReleaseGroup.Credits)
-                    {
-                        if (creditDto.Artist == null || string.IsNullOrEmpty(creditDto.Artist.Id)) continue;
-                        var artistToSave = mapper.Map<Db.Neo4j.ServerLibrary.MusicMetaData.Artist>(
-                            creditDto.Artist
-                        );
-                        await tx.RunAsync(
-                            "MERGE (a:Artist {Id: $artistId}) ON CREATE SET a.Name = $name, a.SortName = $sortName, a.Gender = $gender "
-                                + "ON MATCH SET a.Name = $name, a.SortName = $sortName, a.Gender = $gender",
-                            new
-                            {
-                                artistId = artistToSave.Id,
-                                name = artistToSave.Name,
-                                sortName = artistToSave.SortName,
-                                gender = artistToSave.Gender,
-                            }
-                        );
-                        await tx.RunAsync(
-                            "MATCH (rg:ReleaseGroup {Id: $rgId}), (a:Artist {Id: $artistId}) "
-                                + "MERGE (a)-[r:CREDITED_ON_RELEASE_GROUP]->(rg) ON CREATE SET r.joinPhrase = $joinPhrase",
-                            new
-                            {
-                                rgId = releaseGroupToSave.Id,
-                                artistId = artistToSave.Id,
-                                joinPhrase = creditDto.JoinPhrase,
-                            }
-                        );
-                    }
-                }
-            });
-            logger.LogInformation(
-                $"ReleaseGroup {releaseGroupToSave.Id} and its main artist credits saved/updated in Neo4j"
-            );
-
-            // 3. Fetch and Process Releases for the Release Group
-            var releaseDtos = await musicBrainzService.GetReleasesForReleaseGroupAsync(
-                releaseGroupToSave.Id
-            );
-            if (releaseDtos != null)
-            {
-                foreach (var releaseDto in releaseDtos)
-                {
-                    var releaseToSave = mapper.Map<Db.Neo4j.ServerLibrary.MusicMetaData.Release>(
-                        releaseDto
-                    );
-                    await session.ExecuteWriteAsync(async tx =>
-                    {
-                        await tx.RunAsync(
-                            "MERGE (r:Release {Id: $id}) "
-                                + "ON CREATE SET r.Title = $title, r.Date = $date, r.Status = $status "
-                                + "ON MATCH SET r.Title = $title, r.Date = $date, r.Status = $status",
-                            new
-                            {
-                                id = releaseToSave.Id,
-                                title = releaseToSave.Title,
-                                date = releaseToSave.Date,
-                                status = releaseToSave.Status,
-                            }
-                        );
-                        // Link Release to ReleaseGroup
-                        await tx.RunAsync(
-                            "MATCH (rg:ReleaseGroup {Id: $rgId}), (r:Release {Id: $releaseId}) "
-                                + "MERGE (r)-[:RELEASE_OF]->(rg)",
-                            new { rgId = releaseGroupToSave.Id, releaseId = releaseToSave.Id }
-                        );
-
-                        // 4. Save Release Artist Credits
-                        if (releaseDto.Credits != null)
-                        {
-                            foreach (var creditDto in releaseDto.Credits)
-                            {
-                                if (
-                                    creditDto.Artist == null
-                                    || string.IsNullOrEmpty(creditDto.Artist.Id)
-                                )
-                                    continue;
-                                var artistToSave =
-                                    mapper.Map<Db.Neo4j.ServerLibrary.MusicMetaData.Artist>(
-                                        creditDto.Artist
-                                    );
-                                await tx.RunAsync(
-                                    "MERGE (a:Artist {Id: $artistId}) ON CREATE SET a.Name = $name, a.SortName = $sortName, a.Gender = $gender "
-                                        + "ON MATCH SET a.Name = $name, a.SortName = $sortName, a.Gender = $gender",
-                                    new
-                                    {
-                                        artistId = artistToSave.Id,
-                                        name = artistToSave.Name,
-                                        sortName = artistToSave.SortName,
-                                        gender = artistToSave.Gender,
-                                    }
-                                );
-                                await tx.RunAsync(
-                                    "MATCH (rel:Release {Id: $releaseId}), (a:Artist {Id: $artistId}) "
-                                        + "MERGE (a)-[r:CREDITED_ON_RELEASE]->(rel) ON CREATE SET r.joinPhrase = $joinPhrase",
-                                    new
-                                    {
-                                        releaseId = releaseToSave.Id,
-                                        artistId = artistToSave.Id,
-                                        joinPhrase = creditDto.JoinPhrase,
-                                    }
-                                );
-                            }
-                        }
-
-                        // 5. Process Media and Tracks for each Release
-                        if (releaseDto.Media != null)
-                        {
-                            foreach (var mediumDto in releaseDto.Media)
-                            {
-                                // For simplicity, medium properties can be part of Release or Track if not complex.
-                                // If Medium needs to be a node: MERGE (m:Medium {Id: ...}) SET m.Position = mediumDto.Position, m.Format = mediumDto.Format
-                                // MATCH (r:Release {Id: releaseToSave.Id}) MERGE (r)-[:HAS_MEDIUM]->(m)
-
-                                if (mediumDto.Tracks != null)
-                                {
-                                    foreach (var trackDto in mediumDto.Tracks)
-                                    {
-                                        if (
-                                            trackDto.Recording == null
-                                            || string.IsNullOrEmpty(trackDto.Recording.Id)
-                                        )
-                                            continue;
-                                        var recordingToSave =
-                                            mapper.Map<Db.Neo4j.ServerLibrary.MusicMetaData.Recording>(
-                                                trackDto.Recording
-                                            );
-                                        await tx.RunAsync(
-                                            "MERGE (rec:Recording {Id: $id}) "
-                                                + "ON CREATE SET rec.Title = $title, rec.Length = $length, rec.Disambiguation = $disambiguation "
-                                                + "ON MATCH SET rec.Title = $title, rec.Length = $length, rec.Disambiguation = $disambiguation",
-                                            new
-                                            {
-                                                id = recordingToSave.Id,
-                                                title = recordingToSave.Title,
-                                                length = recordingToSave.Length,
-                                                disambiguation = recordingToSave.Disambiguation,
-                                            }
-                                        );
-
-                                        // Link Recording to Release (perhaps via a Track node if Track has more meaning/properties or its own ID)
-                                        // For now, directly linking Recording to Release for simplicity, implying track info might be on relationship or recording itself.
-                                        // A more detailed model might be: (Release)-[:HAS_TRACK {position: trackDto.Position, title: trackDto.Title }]->(Recording)
-                                        await tx.RunAsync(
-                                            "MATCH (rel:Release {Id: $releaseId}), (rec:Recording {Id: $recordingId}) "
-                                                + "MERGE (rel)-[:HAS_RECORDING {trackPosition: $pos, trackTitle: $trackTitle, trackNumber: $trackNum, mediumPosition: $mediumPos, mediumFormat: $mediumFmt }]->(rec)",
-                                            new
-                                            {
-                                                releaseId = releaseToSave.Id,
-                                                recordingId = recordingToSave.Id,
-                                                pos = trackDto.Position,
-                                                trackTitle = trackDto.Recording.Title,
-                                                trackNum = trackDto.Number,
-                                                mediumPos = mediumDto.Position,
-                                                mediumFmt = mediumDto.Format,
-                                            }
-                                        );
-
-                                        // 6. Save Recording Artist Credits
-                                        if (trackDto.Recording.Credits != null)
-                                        {
-                                            foreach (
-                                                var creditDto in trackDto
-                                                    .Recording
-                                                    .Credits
-                                            )
-                                            {
-                                                if (
-                                                    creditDto.Artist == null
-                                                    || string.IsNullOrEmpty(creditDto.Artist.Id)
-                                                )
-                                                    continue;
-                                                var artistToSave =
-                                                    mapper.Map<Db.Neo4j.ServerLibrary.MusicMetaData.Artist>(
-                                                        creditDto.Artist
-                                                    );
-                                                await tx.RunAsync(
-                                                    "MERGE (a:Artist {Id: $artistId}) ON CREATE SET a.Name = $name, a.SortName = $sortName, a.Gender = $gender "
-                                                        + "ON MATCH SET a.Name = $name, a.SortName = $sortName, a.Gender = $gender",
-                                                    new
-                                                    {
-                                                        artistId = artistToSave.Id,
-                                                        name = artistToSave.Name,
-                                                        sortName = artistToSave.SortName,
-                                                        gender = artistToSave.Gender,
-                                                    }
-                                                );
-                                                await tx.RunAsync(
-                                                    "MATCH (rec:Recording {Id: $recordingId}), (a:Artist {Id: $artistId}) "
-                                                        + "MERGE (a)-[r:CREDITED_ON_RECORDING]->(rec) ON CREATE SET r.joinPhrase = $joinPhrase",
-                                                    new
-                                                    {
-                                                        recordingId = recordingToSave.Id,
-                                                        artistId = artistToSave.Id,
-                                                        joinPhrase = creditDto.JoinPhrase,
-                                                    }
-                                                );
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    });
-                    logger.LogInformation(
-                        $"Release {releaseToSave.Id} and its data saved/updated in Neo4j"
-                    );
-                }
-            }
+            await ProcessAllReleasesForReleaseGroupAsync(session, message.ReleaseGroup.Id);
 
             MarkAsComplete();
         }
@@ -334,5 +102,153 @@ public class AddReleaseGroupToServerLibrarySaga(
         );
         MarkAsComplete();
         return Task.CompletedTask;
+    }
+
+    private async Task SaveReleaseGroupAndItsArtistsAsync(
+        IAsyncSession session,
+        Hqub.MusicBrainz.Entities.ReleaseGroup releaseGroupDto
+    )
+    {
+        var releaseGroupToSave = mapper.Map<Db.Neo4j.ServerLibrary.MusicMetaData.ReleaseGroup>(
+            releaseGroupDto
+        );
+        await session.ExecuteWriteAsync(async tx =>
+        {
+            await releaseGroupPersistenceService.SaveReleaseGroupNodeAsync(
+                (IAsyncTransaction)tx,
+                releaseGroupToSave
+            );
+
+            if (releaseGroupDto.Credits != null)
+            {
+                await releaseGroupPersistenceService.SaveArtistCreditsForParentAsync(
+                    (IAsyncTransaction)tx,
+                    releaseGroupToSave.Id,
+                    releaseGroupDto.Credits,
+                    "ReleaseGroup",
+                    "rgId",
+                    "CREDITED_ON_RELEASE_GROUP"
+                );
+            }
+        });
+        logger.LogInformation(
+            $"ReleaseGroup {releaseGroupToSave.Id} and its main artist credits saved/updated in Neo4j"
+        );
+    }
+
+    private async Task ProcessAllReleasesForReleaseGroupAsync(
+        IAsyncSession session,
+        string releaseGroupMbId
+    )
+    {
+        var releaseDtos = await musicBrainzService.GetReleasesForReleaseGroupAsync(
+            releaseGroupMbId
+        );
+        if (releaseDtos != null)
+        {
+            foreach (var releaseDto in releaseDtos)
+            {
+                await ProcessSingleReleaseAsync(session, releaseDto, releaseGroupMbId);
+            }
+        }
+    }
+
+    private async Task ProcessSingleReleaseAsync(
+        IAsyncSession session,
+        Hqub.MusicBrainz.Entities.Release releaseDto,
+        string releaseGroupMbId
+    )
+    {
+        var releaseToSave = mapper.Map<Db.Neo4j.ServerLibrary.MusicMetaData.Release>(releaseDto);
+        await session.ExecuteWriteAsync(async tx =>
+        {
+            await releaseGroupPersistenceService.SaveReleaseNodeAsync(
+                (IAsyncTransaction)tx,
+                releaseToSave
+            );
+            await releaseGroupPersistenceService.LinkReleaseToReleaseGroupAsync(
+                (IAsyncTransaction)tx,
+                releaseGroupMbId,
+                releaseToSave.Id
+            );
+
+            if (releaseDto.Credits != null)
+            {
+                await releaseGroupPersistenceService.SaveArtistCreditsForParentAsync(
+                    (IAsyncTransaction)tx,
+                    releaseToSave.Id,
+                    releaseDto.Credits,
+                    "Release",
+                    "releaseId",
+                    "CREDITED_ON_RELEASE"
+                );
+            }
+
+            if (releaseDto.Media != null)
+            {
+                await ProcessMediaAndTracksForReleaseAsync(
+                    (IAsyncTransaction)tx,
+                    releaseDto,
+                    releaseToSave.Id
+                );
+            }
+        });
+        logger.LogInformation($"Release {releaseToSave.Id} and its data saved/updated in Neo4j");
+    }
+
+    private async Task ProcessMediaAndTracksForReleaseAsync(
+        IAsyncTransaction tx,
+        Hqub.MusicBrainz.Entities.Release releaseDto,
+        string releaseId
+    )
+    {
+        if (releaseDto.Media == null)
+            return;
+
+        foreach (var mediumDto in releaseDto.Media)
+        {
+            if (mediumDto.Tracks != null)
+            {
+                foreach (var trackDto in mediumDto.Tracks)
+                {
+                    await ProcessSingleTrackAsync(tx, trackDto, mediumDto, releaseId);
+                }
+            }
+        }
+    }
+
+    private async Task ProcessSingleTrackAsync(
+        IAsyncTransaction tx,
+        Track trackDto,
+        Medium mediumDto,
+        string releaseId
+    )
+    {
+        if (trackDto.Recording == null || string.IsNullOrEmpty(trackDto.Recording.Id))
+            return;
+
+        var recordingToSave = mapper.Map<Db.Neo4j.ServerLibrary.MusicMetaData.Recording>(
+            trackDto.Recording
+        );
+        await releaseGroupPersistenceService.SaveRecordingNodeAsync(tx, recordingToSave);
+        await releaseGroupPersistenceService.LinkRecordingToReleaseAsync(
+            tx,
+            releaseId,
+            recordingToSave.Id,
+            trackDto,
+            mediumDto
+        );
+
+        if (trackDto.Recording.Credits != null)
+        {
+            await releaseGroupPersistenceService.SaveArtistCreditsForParentAsync(
+                tx,
+                recordingToSave.Id,
+                trackDto.Recording.Credits,
+                "Recording",
+                "recordingId",
+                "CREDITED_ON_RECORDING"
+            );
+        }
     }
 }

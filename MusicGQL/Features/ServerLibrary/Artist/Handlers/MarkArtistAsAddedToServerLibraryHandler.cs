@@ -1,5 +1,3 @@
-using Hqub.MusicBrainz;
-using MusicGQL.Db;
 using MusicGQL.Db.Postgres;
 using MusicGQL.Db.Postgres.Models.Events.ServerLibrary;
 using MusicGQL.Integration.MusicBrainz;

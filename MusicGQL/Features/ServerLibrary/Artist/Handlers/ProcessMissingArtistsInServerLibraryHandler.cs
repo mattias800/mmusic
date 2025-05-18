@@ -1,5 +1,3 @@
-using Microsoft.EntityFrameworkCore;
-using MusicGQL.Db;
 using MusicGQL.Db.Postgres;
 using MusicGQL.Features.ServerLibrary.Artist.Sagas;
 using Neo4j.Driver;

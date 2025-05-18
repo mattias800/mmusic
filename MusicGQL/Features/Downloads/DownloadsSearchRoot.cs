@@ -1,6 +1,5 @@
 using System.Text;
 using Microsoft.EntityFrameworkCore;
-using MusicGQL.Db;
 using MusicGQL.Db.Postgres;
 using MusicGQL.Sagas.DownloadRelease;
 using Newtonsoft.Json;
