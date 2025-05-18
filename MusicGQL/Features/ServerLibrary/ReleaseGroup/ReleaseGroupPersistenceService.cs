@@ -1,4 +1,7 @@
+using System.Collections.Generic; // For IEnumerable
+using System.Threading.Tasks; // For Task
 using AutoMapper;
+using Hqub.MusicBrainz.Entities;
 using Neo4j.Driver;
 using MbMedium = Hqub.MusicBrainz.Entities.Medium;
 using MbTrack = Hqub.MusicBrainz.Entities.Track;
@@ -62,7 +65,7 @@ public class ReleaseGroupPersistenceService(IMapper mapper)
             var artistToSave = mapper.Map<Db.Neo4j.ServerLibrary.MusicMetaData.Artist>(
                 creditDto.Artist
             );
-            await SaveArtistNodeAsync(tx, artistToSave); // Call local SaveArtistNodeAsync
+            await SaveArtistNodeAsync(tx, artistToSave);
 
             string query =
                 $"MATCH (p:{parentLabel} {{Id: ${parentIdQueryKey}}}), (a:Artist {{Id: $artistId}}) "
@@ -72,7 +75,7 @@ public class ReleaseGroupPersistenceService(IMapper mapper)
             {
                 { parentIdQueryKey, parentEntityId },
                 { "artistId", artistToSave.Id },
-                { "joinPhrase", creditDto.JoinPhrase },
+                { "joinPhrase", creditDto.JoinPhrase ?? string.Empty },
             };
             await tx.RunAsync(query, parameters);
         }
@@ -110,6 +113,34 @@ public class ReleaseGroupPersistenceService(IMapper mapper)
         );
     }
 
+    public async Task SaveMediumNodeAsync(
+        IAsyncTransaction tx,
+        string mediumNodeId,
+        string releaseMbId,
+        Medium mediumDto
+    )
+    {
+        await tx.RunAsync(
+            "MERGE (m:Medium {Id: $mediumId}) "
+                + "ON CREATE SET m.Position = $position, m.Format = $format, m.TrackCount = $trackCount "
+                + "ON MATCH SET m.Position = $position, m.Format = $format, m.TrackCount = $trackCount",
+            new
+            {
+                mediumId = mediumNodeId,
+                position = mediumDto.Position,
+                format = mediumDto.Format ?? string.Empty,
+                trackCount = mediumDto.TrackCount
+            }
+        );
+
+        // Link Medium to its Release
+        await tx.RunAsync(
+            "MATCH (rel:Release {Id: $releaseId}), (m:Medium {Id: $mediumId}) "
+                + "MERGE (rel)-[:HAS_MEDIUM]->(m)",
+            new { releaseId = releaseMbId, mediumId = mediumNodeId }
+        );
+    }
+
     public async Task SaveRecordingNodeAsync(
         IAsyncTransaction tx,
         Db.Neo4j.ServerLibrary.MusicMetaData.Recording recordingToSave
@@ -124,31 +155,28 @@ public class ReleaseGroupPersistenceService(IMapper mapper)
                 id = recordingToSave.Id,
                 title = recordingToSave.Title,
                 length = recordingToSave.Length,
-                disambiguation = recordingToSave.Disambiguation,
+                disambiguation = recordingToSave.Disambiguation ?? string.Empty,
             }
         );
     }
 
-    public async Task LinkRecordingToReleaseAsync(
+    public async Task LinkTrackOnMediumToRecordingAsync(
         IAsyncTransaction tx,
-        string releaseId,
-        string recordingId,
-        MbTrack trackDto,
-        MbMedium mediumDto
+        string mediumNodeId,
+        string recordingMbId,
+        Track trackDto
     )
     {
         await tx.RunAsync(
-            "MATCH (rel:Release {Id: $releaseId}), (rec:Recording {Id: $recordingId}) "
-                + "MERGE (rel)-[:HAS_RECORDING {trackPosition: $pos, trackTitle: $trackTitle, trackNumber: $trackNum, mediumPosition: $mediumPos, mediumFormat: $mediumFmt }]->(rec)",
+            "MATCH (m:Medium {Id: $mediumId}), (rec:Recording {Id: $recordingId}) "
+                + "MERGE (m)-[r:INCLUDES_TRACK {Position: $trackPos, Number: $trackNum, Title: $trackTitle}]->(rec)",
             new
             {
-                releaseId,
-                recordingId,
-                pos = trackDto.Position,
-                trackTitle = trackDto.Recording.Title,
-                trackNum = trackDto.Number,
-                mediumPos = mediumDto.Position,
-                mediumFmt = mediumDto.Format,
+                mediumId = mediumNodeId,
+                recordingId = recordingMbId,
+                trackPos = trackDto.Position,
+                trackNum = trackDto.Number ?? string.Empty,
+                trackTitle = trackDto.Recording?.Title ?? string.Empty
             }
         );
     }
