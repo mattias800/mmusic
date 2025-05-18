@@ -12,7 +12,7 @@ public class Release
     public TextRepresentation TextRepresentation { get; set; }
     public string Date { get; set; }
     public string Country { get; set; }
-    public string Barcode { get; set; }
+    public string? Barcode { get; set; }
     public ReleaseGroup ReleaseGroup { get; set; }
     public CoverArtArchive CoverArtArchive { get; set; }
     public List<NameCredit> Credits { get; set; }
