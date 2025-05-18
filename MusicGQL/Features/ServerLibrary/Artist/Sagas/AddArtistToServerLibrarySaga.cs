@@ -67,53 +67,60 @@ public class AddArtistToServerLibrarySaga(
 
         try
         {
-            // Check if the artist is already in the database
-            var dbArtist = await dbContext.Artists.FirstOrDefaultAsync(a =>
-                a.Id == message.ArtistMbId
-            );
+            // --- Artist Handling ---
+            var artistEntity = await dbContext.Artists.FirstOrDefaultAsync(a => a.Id == message.ArtistMbId);
 
-            if (dbArtist == null)
+            if (artistEntity == null)
             {
                 logger.LogInformation("Artist not found in library database, creating new one");
-
-                // Map and attach full object graph
-                dbArtist = mapper.Map<Db.Models.ServerLibrary.MusicMetaData.Artist>(message.Artist);
-                dbContext.AttachKnownEntities(dbArtist);
-                dbContext.Artists.Add(dbArtist);
+                artistEntity = mapper.Map<Db.Models.ServerLibrary.MusicMetaData.Artist>(message.Artist);
+                dbContext.Artists.Add(artistEntity); // EF Core starts tracking artistEntity
             }
             else
             {
-                logger.LogInformation("Artist already exists in library database");
+                logger.LogInformation("Artist already exists in library database, updating existing one");
+                mapper.Map(message.Artist, artistEntity); // Update properties of tracked artistEntity
             }
 
-            // Map incoming release groups
-            var dbReleaseGroups = message
-                .ReleaseGroups.Select(
-                    mapper.Map<Db.Models.ServerLibrary.MusicMetaData.ReleaseGroup>
-                )
-                .ToList();
-
-            // Get IDs of release groups already in the DB
-            var incomingIds = dbReleaseGroups.Select(rg => rg.Id).ToList();
-            var existingIds = await dbContext
-                .ReleaseGroups.AsNoTracking()
-                .Where(rg => incomingIds.Contains(rg.Id))
+            // --- Release Group Handling ---
+            var allIncomingRgIds = message.ReleaseGroups.Select(rg => rg.Id).ToHashSet();
+            var existingRgIdsInDb = await dbContext.ReleaseGroups
+                .AsNoTracking()
+                .Where(rg => allIncomingRgIds.Contains(rg.Id))
                 .Select(rg => rg.Id)
                 .ToHashSetAsync();
 
-            foreach (var releaseGroup in dbReleaseGroups)
+            foreach (var rgDto in message.ReleaseGroups)
             {
-                dbContext.AttachKnownEntities(releaseGroup);
+                var rgEntity = mapper.Map<Db.Models.ServerLibrary.MusicMetaData.ReleaseGroup>(rgDto);
 
-                if (existingIds.Contains(releaseGroup.Id))
+                // ** CORRECTED FIX for Artist tracking conflict via NameCredit **
+                if (rgEntity.Credits != null)
                 {
-                    // Mark for update
-                    dbContext.Entry(releaseGroup).State = EntityState.Modified;
+                    foreach (var nameCredit in rgEntity.Credits)
+                    {
+                        // If this NameCredit's artist is the main artist we are processing,
+                        // ensure it points to the single, tracked artistEntity instance.
+                        if (nameCredit.Artist != null && nameCredit.Artist.Id == artistEntity.Id)
+                        {
+                            nameCredit.Artist = artistEntity;
+                        }
+                        // If nameCredit.Artist is some *other* artist not yet tracked or a different one,
+                        // AttachKnownEntities will handle it. The critical part is not to re-track artistEntity.
+                    }
+                }
+
+                // AttachKnownEntities will process rgEntity and its children (e.g., rgEntity.Area, rgEntity.Credits).
+                // Artists within Credits should now either be the correctly tracked artistEntity or other artists to be processed by AttachKnownEntities.
+                dbContext.AttachKnownEntities(rgEntity);
+
+                if (existingRgIdsInDb.Contains(rgEntity.Id))
+                {
+                    dbContext.Entry(rgEntity).State = EntityState.Modified;
                 }
                 else
                 {
-                    // Insert new
-                    dbContext.ReleaseGroups.Add(releaseGroup);
+                    dbContext.Entry(rgEntity).State = EntityState.Added;
                 }
             }
 
