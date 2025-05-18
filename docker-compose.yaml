@@ -19,6 +19,15 @@ services:
       - "6380:6379"
     volumes:
       - garnetdata:/data
+  neo4j:
+    image: neo4j:latest
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    volumes:
+      - neo4j_data:/data
+    environment:
+      - NEO4J_AUTH=none
   rabbitmq:
     image: rabbitmq:3-management
     restart: always
@@ -35,3 +44,4 @@ volumes:
   postgres_data:
   garnetdata:
   rabbitmq_data:
+  neo4j_data:

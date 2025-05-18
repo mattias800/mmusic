@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using MusicGQL.Db;
+using MusicGQL.Db.Postgres;
 using MusicGQL.Features.ServerLibrary.Artist.Sagas;
+using Neo4j.Driver;
 using Rebus.Bus;
 
 namespace MusicGQL.Features.ServerLibrary.Artist.Handlers;
@@ -8,6 +10,7 @@ namespace MusicGQL.Features.ServerLibrary.Artist.Handlers;
 public class ProcessMissingArtistsInServerLibraryHandler(
     EventDbContext dbContext,
     IBus bus,
+    IDriver neo4jDriver,
     ILogger<ProcessMissingArtistsInServerLibraryHandler> logger
 )
 {
@@ -23,7 +26,20 @@ public class ProcessMissingArtistsInServerLibraryHandler(
             return new Result.Success();
         }
 
-        var artistIdsInLibrary = await dbContext.Artists.Select(a => a.Id).ToListAsync();
+        var artistIdsInLibrary = new List<string>();
+        await using var session = neo4jDriver.AsyncSession();
+        try
+        {
+            var reader = await session.RunAsync("MATCH (a:Artist) RETURN a.Id AS Id");
+            await foreach (var record in reader)
+            {
+                artistIdsInLibrary.Add(record["Id"].As<string>());
+            }
+        }
+        finally
+        {
+            await session.CloseAsync();
+        }
 
         var artistIdsToAdd = artistsMarked
             .ArtistMbIds.Where(a => !artistIdsInLibrary.Contains(a))

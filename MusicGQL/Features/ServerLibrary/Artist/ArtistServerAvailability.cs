@@ -1,3 +1,4 @@
+using MusicGQL.Db.Postgres;
 using MusicGQL.Integration.MusicBrainz;
 
 namespace MusicGQL.Features.ServerLibrary.Artist;
@@ -21,7 +22,7 @@ public record ArtistServerAvailability([property: GraphQLIgnore] string ArtistMb
         return new(artist);
     }
 
-    public async Task<bool> IsInServerLibrary([Service] Db.EventDbContext dbContext)
+    public async Task<bool> IsInServerLibrary([Service] EventDbContext dbContext)
     {
         var artist = await dbContext.ArtistsAddedToServerLibraryProjection.FindAsync(1);
         return artist?.ArtistMbIds.Contains(ArtistMbId) ?? false;

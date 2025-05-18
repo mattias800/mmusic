@@ -27,6 +27,7 @@
     <PackageReference Include="Microsoft.Extensions.Caching.Hybrid" Version="9.4.0" />
     <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="9.0.2" />
     <PackageReference Include="MusicBrainzAPI" Version="3.1.1" />
+    <PackageReference Include="Neo4j.Driver.Reactive" Version="5.28.1" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
     <PackageReference Include="Rebus" Version="8.8.0" />
@@ -37,6 +38,7 @@
     <PackageReference Include="TrackSeries.FanArtTV.Client" Version="1.2.4" />
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="Db\Neo4j\" />
     <Folder Include="Migrations\" />
   </ItemGroup>
 </Project>

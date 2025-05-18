@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using MusicGQL.Db;
+using MusicGQL.Db.Postgres;
 using MusicGQL.Features.ServerLibrary.ReleaseGroup.Sagas;
+using Neo4j.Driver;
 using Rebus.Bus;
 
 namespace MusicGQL.Features.ServerLibrary.ReleaseGroup.Handlers;
@@ -8,6 +10,7 @@ namespace MusicGQL.Features.ServerLibrary.ReleaseGroup.Handlers;
 public class ProcessMissingReleaseGroupsInServerLibraryHandler(
     EventDbContext dbContext,
     IBus bus,
+    IDriver neo4jDriver,
     ILogger<ProcessMissingReleaseGroupsInServerLibraryHandler> logger
 )
 {
@@ -24,12 +27,23 @@ public class ProcessMissingReleaseGroupsInServerLibraryHandler(
             return new Result.Success();
         }
 
-        var releaseGroupIdsInLibrary = await dbContext
-            .ReleaseGroups.Select(a => a.Id)
-            .ToListAsync();
+        var releaseGroupIdsInLibrary = new List<string>();
+        await using var session = neo4jDriver.AsyncSession();
+        try
+        {
+            var reader = await session.RunAsync("MATCH (rg:ReleaseGroup) RETURN rg.Id AS Id");
+            await foreach (var record in reader)
+            {
+                releaseGroupIdsInLibrary.Add(record["Id"].As<string>());
+            }
+        }
+        finally
+        {
+            await session.CloseAsync();
+        }
 
         var releaseGroupIdsToAdd = releaseGroupsMarked
-            .ReleaseGroupMbIds.Where(a => !releaseGroupIdsInLibrary.Contains(a))
+            .ReleaseGroupMbIds.Where(id => !releaseGroupIdsInLibrary.Contains(id))
             .ToList();
 
         logger.LogInformation(

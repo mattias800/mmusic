@@ -1,4 +1,5 @@
 using MusicGQL.Db;
+using MusicGQL.Db.Postgres;
 using MusicGQL.Integration.MusicBrainz;
 
 namespace MusicGQL.Features.LikedSongs.Commands;
@@ -33,7 +34,7 @@ public class LikeSongHandler(
         }
 
         dbContext.Events.Add(
-            new MusicGQL.Db.Models.Events.LikedSong { RecordingId = command.RecordingId }
+            new Db.Postgres.Models.Events.LikedSong { RecordingId = command.RecordingId }
         );
 
         await dbContext.SaveChangesAsync();

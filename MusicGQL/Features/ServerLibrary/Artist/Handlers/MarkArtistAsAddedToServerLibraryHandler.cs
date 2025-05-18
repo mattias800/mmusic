@@ -1,6 +1,7 @@
 using Hqub.MusicBrainz;
 using MusicGQL.Db;
-using MusicGQL.Db.Models.Events.ServerLibrary;
+using MusicGQL.Db.Postgres;
+using MusicGQL.Db.Postgres.Models.Events.ServerLibrary;
 using MusicGQL.Integration.MusicBrainz;
 
 namespace MusicGQL.Features.ServerLibrary.Artist.Handlers;

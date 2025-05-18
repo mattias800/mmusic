@@ -1,8 +1,7 @@
 using AutoMapper;
 using HotChocolate.Subscriptions;
-using Microsoft.EntityFrameworkCore;
-using MusicGQL.Db;
 using MusicGQL.Features.ServerLibrary.ReleaseGroup.Handlers;
+using Neo4j.Driver;
 using Rebus.Bus;
 using Rebus.Handlers;
 using Rebus.Sagas;
@@ -12,7 +11,7 @@ namespace MusicGQL.Features.ServerLibrary.Artist.Sagas;
 public class AddArtistToServerLibrarySaga(
     IBus bus,
     ITopicEventSender sender,
-    EventDbContext dbContext,
+    IDriver neo4jDriver,
     ILogger<AddArtistToServerLibrarySaga> logger,
     MarkReleaseGroupAsAddedToServerLibraryHandler markReleaseGroupAsAddedToServerLibraryHandler,
     IMapper mapper
@@ -59,40 +58,41 @@ public class AddArtistToServerLibrarySaga(
         // await sender.SendAsync(nameof(DownloadSubscription.DownloadStarted), Data);
 
         await bus.Send(
-            new AddArtistToServerLibrarySagaEvents.FindArtistInMusicBrainz(new(message.ArtistMbId))
+            new AddArtistToServerLibrarySagaEvents.FindArtistInMusicBrainz(message.ArtistMbId)
         );
     }
 
     public async Task Handle(AddArtistToServerLibrarySagaEvents.FoundArtistInMusicBrainz message)
     {
         logger.LogInformation(
-            "Saving artist and marking release groups as added to library database"
+            "Saving artist to Neo4j and marking release groups as added to library database"
         );
 
         try
         {
-            // --- Artist Handling ---
-            var artistEntity = await dbContext.Artists.FirstOrDefaultAsync(a =>
-                a.Id == message.ArtistMbId
+            // --- Artist Handling with Neo4j ---
+            var artistToSave = mapper.Map<Db.Neo4j.ServerLibrary.MusicMetaData.Artist>(
+                message.Artist
             );
 
-            if (artistEntity == null)
+            await using var session = neo4jDriver.AsyncSession();
+            await session.ExecuteWriteAsync(async tx =>
             {
-                logger.LogInformation("Artist not found in library database, creating new one");
-                artistEntity = mapper.Map<Db.Models.ServerLibrary.MusicMetaData.Artist>(
-                    message.Artist
+                await tx.RunAsync(
+                    "MERGE (a:Artist {Id: $id}) "
+                        + "ON CREATE SET a.Name = $name, a.SortName = $sortName, a.Gender = $gender "
+                        + "ON MATCH SET a.Name = $name, a.SortName = $sortName, a.Gender = $gender",
+                    new
+                    {
+                        id = artistToSave.Id,
+                        name = artistToSave.Name,
+                        sortName = artistToSave.SortName,
+                        gender = artistToSave.Gender,
+                    }
                 );
-                dbContext.Artists.Add(artistEntity); // EF Core starts tracking artistEntity
-            }
-            else
-            {
-                logger.LogInformation(
-                    "Artist already exists in library database, updating existing one"
-                );
-                mapper.Map(message.Artist, artistEntity); // Update properties of tracked artistEntity
-            }
+            });
 
-            await dbContext.SaveChangesAsync();
+            logger.LogInformation("Artist {ArtistMbId} saved/updated in Neo4j", artistToSave.Id);
 
             var releaseGroupIds = message.ReleaseGroups.Select(r => r.Id).ToList();
 
@@ -105,13 +105,17 @@ public class AddArtistToServerLibrarySaga(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error saving artist and release groups to library database");
+            logger.LogError(ex, "Error saving artist to Neo4j and processing release groups");
             MarkAsComplete();
         }
     }
 
     public Task Handle(AddArtistToServerLibrarySagaEvents.DidNotFindArtistInMusicBrainz message)
     {
+        logger.LogInformation(
+            "Artist {ArtistMbId} not found in MusicBrainz, completing saga.",
+            message.ArtistMbId
+        );
         MarkAsComplete();
         return Task.CompletedTask;
     }

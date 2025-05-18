@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using MusicGQL.Db;
+using MusicGQL.Db.Postgres;
 using MusicGQL.EventProcessor;
 using MusicGQL.Features.Downloads;
 using MusicGQL.Features.Downloads.Mutations;
@@ -28,6 +29,7 @@ using MusicGQL.Integration.MusicBrainz;
 using MusicGQL.Sagas.DownloadRelease;
 using MusicGQL.Sagas.DownloadRelease.Handlers;
 using MusicGQL.Types;
+using Neo4j.Driver;
 using Rebus.Config;
 using Rebus.Routing.TypeBased;
 using Soulseek;
@@ -91,6 +93,8 @@ builder
         );
     });
 
+builder.Services.AddSingleton(GraphDatabase.Driver("bolt://localhost:7687", AuthTokens.None));
+
 builder.Services.AddDbContext<EventDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Postgres"))
 );
@@ -115,7 +119,7 @@ builder
             )
     )
     .AddDiagnosticEventListener<MyExecutionEventListener>()
-    .AddQueryType<Query>()
+    .AddQueryType<MusicGQL.Types.Query>()
     .AddMutationType<Mutation>()
     .AddSubscriptionType<Subscription>()
     .AddTypeExtension<SoulSeekSubscription>()

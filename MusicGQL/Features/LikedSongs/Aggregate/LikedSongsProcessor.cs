@@ -1,7 +1,8 @@
 using MusicGQL.Db;
-using MusicGQL.Db.Models;
-using MusicGQL.Db.Models.Events;
-using MusicGQL.Db.Models.Projections;
+using MusicGQL.Db.Postgres;
+using MusicGQL.Db.Postgres.Models;
+using MusicGQL.Db.Postgres.Models.Events;
+using MusicGQL.Db.Postgres.Models.Projections;
 
 namespace MusicGQL.Features.LikedSongs.Aggregate;
 
@@ -33,7 +34,7 @@ public class LikedSongsEventProcessor : EventProcessor.EventProcessor<LikedSongs
     {
         switch (ev)
         {
-            case Db.Models.Events.LikedSong e:
+            case Db.Postgres.Models.Events.LikedSong e:
                 if (!aggregate.LikedSongRecordingIds.Contains(e.RecordingId))
                 {
                     aggregate.LikedSongRecordingIds.Add(e.RecordingId);

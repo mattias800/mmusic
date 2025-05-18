@@ -1,5 +1,6 @@
 using MusicGQL.Db;
-using MusicGQL.Db.Models;
+using MusicGQL.Db.Postgres;
+using MusicGQL.Db.Postgres.Models;
 
 namespace MusicGQL.EventProcessor;
 

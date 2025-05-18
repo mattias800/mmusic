@@ -1,7 +1,8 @@
 using MusicGQL.Db;
-using MusicGQL.Db.Models;
-using MusicGQL.Db.Models.Events.ServerLibrary;
-using MusicGQL.Db.Models.Projections;
+using MusicGQL.Db.Postgres;
+using MusicGQL.Db.Postgres.Models;
+using MusicGQL.Db.Postgres.Models.Events.ServerLibrary;
+using MusicGQL.Db.Postgres.Models.Projections;
 
 namespace MusicGQL.Features.ServerLibrary.ReleaseGroup.Aggregate;
 

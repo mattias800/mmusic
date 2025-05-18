@@ -1,4 +1,6 @@
 using MusicGQL.Db;
+using MusicGQL.Db.Postgres;
+using MusicGQL.Db.Postgres.Models.Events;
 
 namespace MusicGQL.Features.LikedSongs.Commands;
 
@@ -16,9 +18,7 @@ public class UnlikeSongHandler(
             return new Result.AlreadyNotLiked();
         }
 
-        dbContext.Events.Add(
-            new Db.Models.Events.UnlikedSong { RecordingId = command.RecordingId }
-        );
+        dbContext.Events.Add(new UnlikedSong { RecordingId = command.RecordingId });
 
         await dbContext.SaveChangesAsync();
         await eventProcessorWorker.ProcessEvents();
