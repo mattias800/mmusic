@@ -9,7 +9,7 @@ public class Artist
     public string Type { get; set; }
     public string Name { get; set; }
     public string SortName { get; set; }
-    public string Gender { get; set; }
+    public string? Gender { get; set; }
     public LifeSpan LifeSpan { get; set; }
     public Area? Area { get; set; }
     public Area? BeginArea { get; set; }

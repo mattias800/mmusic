@@ -78,80 +78,113 @@ public class AddReleaseGroupToServerLibrarySaga(
         AddReleaseGroupToServerLibrarySagaEvents.FoundReleaseGroupInMusicBrainz message
     )
     {
-        logger.LogInformation("Saving release group to library database");
+        logger.LogInformation($"Saving release group {message.ReleaseGroupMbId} to library database");
 
-        // --- Release Group Handling ---
-        var allIncomingRgIds = message.ReleaseGroups.Select(rg => rg.Id).ToHashSet();
-        var existingRgIdsInDb = await dbContext
-            .ReleaseGroups.AsNoTracking()
-            .Where(rg => allIncomingRgIds.Contains(rg.Id))
-            .Select(rg => rg.Id)
-            .ToHashSetAsync();
-
-        foreach (var rgDto in message.ReleaseGroups)
+        try
         {
-            var rgEntity = mapper.Map<Db.Models.ServerLibrary.MusicMetaData.ReleaseGroup>(rgDto);
+            var rgDto = message.ReleaseGroup; // This is the single Hqub.MusicBrainz.Entities.ReleaseGroup DTO
 
-            // Stitch Artist credits
+            // --- Main ReleaseGroup Entity Handling ---
+            var rgEntity = await dbContext.ReleaseGroups.FindAsync(message.ReleaseGroupMbId);
+            bool isNewReleaseGroup = rgEntity == null;
+
+            if (isNewReleaseGroup)
+            {
+                logger.LogInformation($"ReleaseGroup {message.ReleaseGroupMbId} not found, creating new.");
+                rgEntity = mapper.Map<Db.Models.ServerLibrary.MusicMetaData.ReleaseGroup>(rgDto);
+                // Note: We will explicitly set state to Added later, after AttachKnownEntities
+            }
+            else
+            {
+                logger.LogInformation($"ReleaseGroup {message.ReleaseGroupMbId} found, updating existing.");
+                mapper.Map(rgDto, rgEntity); // Update properties of the tracked rgEntity
+            }
+
+            // --- Artist Credits Handling (Stitching/Adding Artists) ---
             if (rgEntity.Credits != null)
             {
                 foreach (var nameCredit in rgEntity.Credits)
                 {
-                    if (nameCredit.Artist != null && nameCredit.Artist.Id == artistEntity.Id)
+                    if (nameCredit.Artist != null)
                     {
-                        nameCredit.Artist = artistEntity;
+                        // artistInCredit is the EF model instance, mapped by AutoMapper from the Hqub DTO graph.
+                        var artistInCredit = nameCredit.Artist; 
+                        var existingArtist = await dbContext.Artists.FindAsync(artistInCredit.Id);
+
+                        if (existingArtist != null)
+                        {
+                            // Artist already exists in DB. Update it and make sure NameCredit points to the tracked one.
+                            mapper.Map(artistInCredit, existingArtist); // Update properties of existing tracked entity
+                            nameCredit.Artist = existingArtist; // Stitch: nameCredit now points to the tracked DB entity
+                        }
+                        else
+                        {
+                            // Artist does not exist in DB. The artistInCredit is a new entity.
+                            // Check if it's already tracked (e.g. if multiple credits point to the same new artist object)
+                            var entry = dbContext.Entry(artistInCredit);
+                            if (entry.State == EntityState.Detached)
+                            {
+                                // It's a new artist and not yet tracked, so add it explicitly.
+                                // This ensures its sub-graph (Area, etc.) is also processed by AttachKnownEntities if not already handled.
+                                dbContext.Artists.Add(artistInCredit);
+                            }
+                            // If state is not Detached, it means it's already tracked (e.g., Added, Unchanged from a previous Add call for the same instance)
+                            // nameCredit.Artist already points to this new, now-tracked or soon-to-be-added artistInCredit instance.
+                        }
                     }
                 }
             }
 
-            // --- Explicit Rating Handling before AttachKnownEntities ---
+            // --- Rating Handling ---
             if (rgEntity.Rating != null)
             {
                 var mappedRating = rgEntity.Rating;
-                if (mappedRating.Id != 0) // Indicates an existing Rating ID from source
+                if (mappedRating.Id != 0) // Existing Rating ID from source
                 {
                     var existingRating = await dbContext.Ratings.FindAsync(mappedRating.Id);
                     if (existingRating != null)
                     {
-                        // Rating exists in DB, use the tracked instance and update its properties
-                        mapper.Map(mappedRating, existingRating); // Update existing with values from DTO
-                        rgEntity.Rating = existingRating; // Point RG to the tracked Rating entity
+                        mapper.Map(mappedRating, existingRating);
+                        rgEntity.Rating = existingRating;
                     }
                     else
                     {
-                        // Rating ID specified but not found in DB. This is an FK violation if RatingId is not nullable.
-                        // If ReleaseGroup.RatingId is nullable, setting rgEntity.Rating = null is an option.
-                        // Otherwise, this is a data integrity issue.
-                        logger.LogWarning(
-                            $"ReleaseGroup {rgEntity.Id} references RatingId {mappedRating.Id} which does not exist. Setting Rating to null for this RG. This may fail if ReleaseGroup.RatingId is not nullable."
-                        );
-                        rgEntity.Rating = null;
+                        logger.LogWarning($"ReleaseGroup {rgEntity.Id} references RatingId {mappedRating.Id} which does not exist. Nullifying Rating.");
+                        rgEntity.Rating = null; // Assumes ReleaseGroup.RatingId is nullable
                     }
                 }
-                else // mappedRating.Id is 0, treat as a new Rating to be inserted
+                else // New Rating (Id = 0)
                 {
-                    // Add the new Rating to the context. EF will handle its insertion.
-                    // If AttachKnownEntities also tries to add it, ensure it's idempotent or handles already-tracked entities.
+                    // Explicitly add new Rating. AttachKnownEntities might not handle it correctly for FKs.
                     dbContext.Ratings.Add(mappedRating);
                 }
             }
-            // If rgEntity.Rating was null from DTO, it remains null.
-            // If ReleaseGroup.RatingId is non-nullable in DB, this will cause an error at SaveChanges if rgEntity.Rating is null.
 
+            // --- Area Handling (Example, if ReleaseGroup has a direct Area) ---
+            // if (rgEntity.Area != null) { /* Similar logic as Rating */ }
+
+            // Attach the main rgEntity and its potentially modified/newly related graph parts.
             dbContext.AttachKnownEntities(rgEntity);
 
-            if (existingRgIdsInDb.Contains(rgEntity.Id))
-            {
-                dbContext.Entry(rgEntity).State = EntityState.Modified;
-            }
-            else
+            // Explicitly set state for the main ReleaseGroup entity
+            if (isNewReleaseGroup)
             {
                 dbContext.Entry(rgEntity).State = EntityState.Added;
             }
-        }
+            else
+            {
+                dbContext.Entry(rgEntity).State = EntityState.Modified;
+            }
 
-        await dbContext.SaveChangesAsync();
-        MarkAsComplete();
+            await dbContext.SaveChangesAsync();
+            logger.LogInformation($"Successfully saved ReleaseGroup {message.ReleaseGroupMbId}");
+            MarkAsComplete();
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, $"Error saving ReleaseGroup {message.ReleaseGroupMbId} to library database");
+            MarkAsComplete(); // Ensure saga completes even on error
+        }
     }
 
     public Task Handle(

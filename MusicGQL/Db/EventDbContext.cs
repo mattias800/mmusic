@@ -21,7 +21,7 @@ public class EventDbContext(DbContextOptions<EventDbContext> options) : DbContex
     public DbSet<Label> Labels { get; set; }
     public DbSet<Recording> Recordings { get; set; }
     public DbSet<Release> Releases { get; set; }
-    public DbSet<Release> Ratings { get; set; }
+    public DbSet<Rating> Ratings { get; set; }
     public DbSet<ReleaseGroup> ReleaseGroups { get; set; }
 
     // Projections
