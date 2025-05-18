@@ -1,6 +1,5 @@
 using Hqub.Lastfm;
 using MusicGQL.Common;
-using MusicGQL.Features.Release;
 using MusicGQL.Integration.MusicBrainz;
 
 namespace MusicGQL.Features.Recording;

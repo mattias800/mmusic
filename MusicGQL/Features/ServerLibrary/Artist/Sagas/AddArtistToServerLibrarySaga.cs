@@ -1,9 +1,5 @@
-using System;
-using System.Linq;
-using System.Threading.Tasks;
 using AutoMapper;
 using HotChocolate.Subscriptions;
-using Microsoft.Extensions.Logging;
 using MusicGQL.Features.ServerLibrary.ReleaseGroup;
 using MusicGQL.Features.ServerLibrary.ReleaseGroup.Handlers;
 using Neo4j.Driver;

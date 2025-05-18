@@ -1,9 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using AutoMapper;
-using Hqub.MusicBrainz.Entities;
-using Microsoft.Extensions.Logging;
 using MusicGQL.Common;
 using MusicGQL.Integration.MusicBrainz;
 using Neo4j.Driver;
@@ -91,15 +86,34 @@ public class AddReleaseGroupToServerLibrarySaga(
         );
 
         logger.LogInformation(
-            "Fetched {ReleaseCount} releases for release group {MbId}",
+            "Fetched {ReleaseCount} releases for release group {Title}",
             allReleaseDtos.Count,
-            releaseGroupDto.Id
+            releaseGroupDto.Title
         );
 
+        var mainRelease = MainAlbumFinder.GetMainReleaseInReleaseGroup(allReleaseDtos.ToList());
+
+        if (mainRelease == null)
+        {
+            logger.LogWarning(
+                "No main release found for release group {Title} after fetching {Count} releases. Only the release group itself will be persisted",
+                releaseGroupDto.Title,
+                allReleaseDtos.Count
+            );
+        }
+        else
+        {
+            logger.LogInformation(
+                "Prioritized main release for release group {RgTitle} is {MainReleaseTitle} ({MainReleaseId})",
+                releaseGroupDto.Title,
+                mainRelease.Title,
+                mainRelease.Id
+            );
+        }
+
         logger.LogInformation(
-            "Persisting all data for release group {MbId} and its {ReleaseCount} releases",
-            releaseGroupDto.Id,
-            allReleaseDtos.Count
+            "Persisting data for release group {MbId} (and its main release if found)",
+            releaseGroupDto.Id
         );
 
         await using var session = driver.AsyncSession();
@@ -134,14 +148,11 @@ public class AddReleaseGroupToServerLibrarySaga(
                     );
                 }
 
-                // 3. Process EACH Release found for the Release Group
-                foreach (var currentReleaseDto in allReleaseDtos)
+                // 3. Process ONLY the Main Release (if found)
+                if (mainRelease != null)
                 {
-                    if (currentReleaseDto == null)
-                        continue;
-
                     var releaseToSave = mapper.Map<Db.Neo4j.ServerLibrary.MusicMetaData.Release>(
-                        currentReleaseDto
+                        mainRelease
                     );
                     await releaseGroupPersistenceService.SaveReleaseNodeAsync(
                         (IAsyncTransaction)tx,
@@ -153,33 +164,33 @@ public class AddReleaseGroupToServerLibrarySaga(
                         releaseToSave.Id
                     );
                     logger.LogInformation(
-                        "Saved Release {ReleaseTitle} ({ReleaseId}) and linked to RG {RgTitle}",
+                        "Saved Main Release {ReleaseTitle} ({ReleaseId}) and linked to RG {RgTitle}",
                         releaseToSave.Title,
                         releaseToSave.Id,
                         rgToSave.Title
                     );
 
-                    // 4. Save Release Artist Credits for the current Release
-                    if (currentReleaseDto.Credits != null)
+                    // 4. Save Main Release Artist Credits
+                    if (mainRelease.Credits != null)
                     {
                         await releaseGroupPersistenceService.SaveArtistCreditsForParentAsync(
                             (IAsyncTransaction)tx,
                             releaseToSave.Id,
-                            currentReleaseDto.Credits,
+                            mainRelease.Credits,
                             "Release",
                             "releaseId",
                             "CREDITED_ON_RELEASE"
                         );
                         logger.LogInformation(
-                            "Saved artist credits for release {Title}",
+                            "Saved artist credits for main release {Title}",
                             releaseToSave.Title
                         );
                     }
 
-                    // 5. Process Media and Tracks for the current Release
-                    if (currentReleaseDto.Media != null)
+                    // 5. Process Media and Tracks for the Main Release
+                    if (mainRelease.Media != null)
                     {
-                        foreach (var mediumDto in currentReleaseDto.Media)
+                        foreach (var mediumDto in mainRelease.Media)
                         {
                             if (mediumDto == null)
                                 continue;
@@ -192,7 +203,7 @@ public class AddReleaseGroupToServerLibrarySaga(
                                 mediumDto
                             );
                             logger.LogInformation(
-                                "Saved Medium {MediumId} (Pos: {MediumPos}) for Release {ReleaseTitle}",
+                                "Saved Medium {MediumId} (Pos: {MediumPos}) for Main Release {ReleaseTitle}",
                                 mediumNodeId,
                                 mediumDto.Position,
                                 releaseToSave.Title
@@ -212,6 +223,16 @@ public class AddReleaseGroupToServerLibrarySaga(
                                         mapper.Map<Db.Neo4j.ServerLibrary.MusicMetaData.Recording>(
                                             trackDto.Recording
                                         );
+                                    if (recordingToSave == null)
+                                    {
+                                        logger.LogWarning(
+                                            "Mapping Recording DTO for Track {TrackPos} on Medium {MediumPos} resulted in a null object. Skipping track",
+                                            trackDto.Position,
+                                            mediumDto.Position
+                                        );
+                                        continue;
+                                    }
+
                                     await releaseGroupPersistenceService.SaveRecordingNodeAsync(
                                         (IAsyncTransaction)tx,
                                         recordingToSave
@@ -244,7 +265,10 @@ public class AddReleaseGroupToServerLibrarySaga(
                                             "recordingId",
                                             "CREDITED_ON_RECORDING"
                                         );
-                                        logger.LogInformation("Saved artist credits for recording {RecordingTitle}", recordingToSave?.Title ?? string.Empty);
+                                        logger.LogInformation(
+                                            "Saved artist credits for recording {RecordingTitle}",
+                                            recordingToSave?.Title ?? string.Empty
+                                        );
                                     }
                                 }
                             }
@@ -254,7 +278,7 @@ public class AddReleaseGroupToServerLibrarySaga(
             });
 
             logger.LogInformation(
-                "Successfully persisted all data for release group {Title}",
+                "Successfully persisted data for release group {Title}",
                 releaseGroupDto.Title
             );
             MarkAsComplete();

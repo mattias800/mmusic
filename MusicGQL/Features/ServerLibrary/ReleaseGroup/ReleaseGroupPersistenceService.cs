@@ -1,10 +1,6 @@
-using System.Collections.Generic; // For IEnumerable
-using System.Threading.Tasks; // For Task
 using AutoMapper;
 using Hqub.MusicBrainz.Entities;
 using Neo4j.Driver;
-using MbMedium = Hqub.MusicBrainz.Entities.Medium;
-using MbTrack = Hqub.MusicBrainz.Entities.Track;
 
 namespace MusicGQL.Features.ServerLibrary.ReleaseGroup;
 
@@ -129,7 +125,7 @@ public class ReleaseGroupPersistenceService(IMapper mapper)
                 mediumId = mediumNodeId,
                 position = mediumDto.Position,
                 format = mediumDto.Format ?? string.Empty,
-                trackCount = mediumDto.TrackCount
+                trackCount = mediumDto.TrackCount,
             }
         );
 
@@ -176,7 +172,7 @@ public class ReleaseGroupPersistenceService(IMapper mapper)
                 recordingId = recordingMbId,
                 trackPos = trackDto.Position,
                 trackNum = trackDto.Number ?? string.Empty,
-                trackTitle = trackDto.Recording?.Title ?? string.Empty
+                trackTitle = trackDto.Recording?.Title ?? string.Empty,
             }
         );
     }
