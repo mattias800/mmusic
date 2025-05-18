@@ -1,5 +1,10 @@
+using System;
+using System.Linq;
+using System.Threading.Tasks;
 using AutoMapper;
 using HotChocolate.Subscriptions;
+using Microsoft.Extensions.Logging;
+using MusicGQL.Features.ServerLibrary.ReleaseGroup;
 using MusicGQL.Features.ServerLibrary.ReleaseGroup.Handlers;
 using Neo4j.Driver;
 using Rebus.Bus;
@@ -13,8 +18,9 @@ public class AddArtistToServerLibrarySaga(
     ITopicEventSender sender,
     IDriver driver,
     ILogger<AddArtistToServerLibrarySaga> logger,
+    IMapper mapper,
     MarkReleaseGroupAsAddedToServerLibraryHandler markReleaseGroupAsAddedToServerLibraryHandler,
-    IMapper mapper
+    ReleaseGroupPersistenceService releaseGroupPersistenceService
 )
     : Saga<AddArtistToServerLibrarySagaData>,
         IAmInitiatedBy<AddArtistToServerLibrarySagaEvents.StartAddArtist>,
@@ -65,12 +71,12 @@ public class AddArtistToServerLibrarySaga(
     public async Task Handle(AddArtistToServerLibrarySagaEvents.FoundArtistInMusicBrainz message)
     {
         logger.LogInformation(
-            "Saving artist to Neo4j and marking release groups as added to library database"
+            "Processing artist {ArtistMbId} for persistence and handling associated release groups",
+            message.Artist.Id
         );
 
         try
         {
-            // --- Artist Handling with Neo4j ---
             var artistToSave = mapper.Map<Db.Neo4j.ServerLibrary.MusicMetaData.Artist>(
                 message.Artist
             );
@@ -78,23 +84,24 @@ public class AddArtistToServerLibrarySaga(
             await using var session = driver.AsyncSession();
             await session.ExecuteWriteAsync(async tx =>
             {
-                await tx.RunAsync(
-                    "MERGE (a:Artist {Id: $id}) "
-                        + "ON CREATE SET a.Name = $name, a.SortName = $sortName, a.Gender = $gender "
-                        + "ON MATCH SET a.Name = $name, a.SortName = $sortName, a.Gender = $gender",
-                    new
-                    {
-                        id = artistToSave.Id,
-                        name = artistToSave.Name,
-                        sortName = artistToSave.SortName,
-                        gender = artistToSave.Gender,
-                    }
+                await releaseGroupPersistenceService.SaveArtistNodeAsync(
+                    (IAsyncTransaction)tx,
+                    artistToSave
                 );
             });
 
             logger.LogInformation("Artist {ArtistMbId} saved/updated in Neo4j", artistToSave.Id);
 
-            var releaseGroupIds = message.ReleaseGroups.Select(r => r.Id).ToList();
+            var releaseGroupIds = message
+                .ReleaseGroups.Where(r => r.PrimaryType == "Album" && r.SecondaryTypes.Count == 0)
+                .Select(r => r.Id)
+                .ToList();
+
+            logger.LogInformation(
+                "Found {Count} release groups associated with artist {ArtistMbId}. Marking them...",
+                releaseGroupIds.Count,
+                artistToSave.Id
+            );
 
             foreach (var releaseGroupId in releaseGroupIds)
             {
@@ -113,7 +120,7 @@ public class AddArtistToServerLibrarySaga(
     public Task Handle(AddArtistToServerLibrarySagaEvents.DidNotFindArtistInMusicBrainz message)
     {
         logger.LogInformation(
-            "Artist {ArtistMbId} not found in MusicBrainz, completing saga.",
+            "Artist {ArtistMbId} not found in MusicBrainz, completing saga",
             message.ArtistMbId
         );
         MarkAsComplete();

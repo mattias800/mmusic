@@ -1,6 +1,6 @@
 using MbRelease = Hqub.MusicBrainz.Entities.Release;
 
-namespace MusicGQL.Features.Release;
+namespace MusicGQL.Common;
 
 public static class MainAlbumFinder
 {

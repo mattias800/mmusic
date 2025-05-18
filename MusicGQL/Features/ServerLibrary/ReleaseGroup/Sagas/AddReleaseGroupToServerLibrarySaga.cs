@@ -1,5 +1,5 @@
 using AutoMapper;
-using Hqub.MusicBrainz.Entities;
+using MusicGQL.Common;
 using MusicGQL.Integration.MusicBrainz;
 using Neo4j.Driver;
 using Rebus.Bus;
@@ -67,8 +67,27 @@ public class AddReleaseGroupToServerLibrarySaga(
         AddReleaseGroupToServerLibrarySagaEvents.FoundReleaseGroupInMusicBrainz message
     )
     {
+        var releaseGroupDto = message.ReleaseGroup;
+
         logger.LogInformation(
-            "Processing ReleaseGroup {MessageReleaseGroupMbId} and associated data for Neo4j",
+            "Fetching all releases for release group {MbId}",
+            message.ReleaseGroupMbId
+        );
+
+        var releaseDtos = await musicBrainzService.GetReleasesForReleaseGroupAsync(
+            releaseGroupDto.Id
+        );
+
+        logger.LogInformation(
+            "Fetched {ReleaseCount} releases for release group {MbId}",
+            releaseDtos.Count,
+            releaseGroupDto.Id
+        );
+
+        var mainRelease = MainAlbumFinder.GetMainReleaseInReleaseGroup(releaseDtos);
+
+        logger.LogInformation(
+            "Persisting all data for release group {MbId}",
             message.ReleaseGroupMbId
         );
 
@@ -76,18 +95,144 @@ public class AddReleaseGroupToServerLibrarySaga(
 
         try
         {
-            await SaveReleaseGroupAndItsArtistsAsync(session, message.ReleaseGroup);
+            await session.ExecuteWriteAsync(async tx =>
+            {
+                // 1. Save release group itself
+                var releaseGroupToSave =
+                    mapper.Map<Db.Neo4j.ServerLibrary.MusicMetaData.ReleaseGroup>(releaseGroupDto);
 
-            await ProcessAllReleasesForReleaseGroupAsync(session, message.ReleaseGroup.Id);
+                await releaseGroupPersistenceService.SaveReleaseGroupNodeAsync(
+                    (IAsyncTransaction)tx,
+                    releaseGroupToSave
+                );
 
+                logger.LogInformation("Saved release group {Title}", releaseGroupToSave.Title);
+
+                // 2. Save ReleaseGroup Artist Credits
+                if (releaseGroupDto.Credits != null)
+                {
+                    await releaseGroupPersistenceService.SaveArtistCreditsForParentAsync(
+                        (IAsyncTransaction)tx,
+                        releaseGroupToSave.Id,
+                        releaseGroupDto.Credits,
+                        "ReleaseGroup",
+                        "rgId",
+                        "CREDITED_ON_RELEASE_GROUP"
+                    );
+                    logger.LogInformation(
+                        "Saved artist credits for release group {Title}",
+                        releaseGroupToSave.Title
+                    );
+                }
+
+                var releaseToSave = mapper.Map<Db.Neo4j.ServerLibrary.MusicMetaData.Release>(
+                    mainRelease
+                );
+                await releaseGroupPersistenceService.SaveReleaseNodeAsync(
+                    (IAsyncTransaction)tx,
+                    releaseToSave
+                );
+                await releaseGroupPersistenceService.LinkReleaseToReleaseGroupAsync(
+                    (IAsyncTransaction)tx,
+                    releaseGroupToSave.Id,
+                    releaseToSave.Id
+                );
+                logger.LogInformation(
+                    "Saved main release {ReleaseTitle} and linked to release group {ReleaseGroupTitle}",
+                    releaseToSave.Title,
+                    releaseGroupToSave.Title
+                );
+
+                // 4. Save Release Artist Credits
+                if (mainRelease.Credits != null)
+                {
+                    await releaseGroupPersistenceService.SaveArtistCreditsForParentAsync(
+                        (IAsyncTransaction)tx,
+                        releaseToSave.Id,
+                        mainRelease.Credits,
+                        "Release",
+                        "releaseId",
+                        "CREDITED_ON_RELEASE"
+                    );
+                    logger.LogInformation(
+                        "Saved artist credits for release {Title}",
+                        releaseToSave.Title
+                    );
+                }
+
+                // 5. Process Media and Tracks for each Release
+                if (mainRelease.Media != null)
+                {
+                    foreach (var mediumDto in mainRelease.Media)
+                    {
+                        if (mediumDto.Tracks != null)
+                        {
+                            foreach (var trackDto in mediumDto.Tracks)
+                            {
+                                if (
+                                    trackDto.Recording == null
+                                    || string.IsNullOrEmpty(trackDto.Recording.Id)
+                                )
+                                    continue;
+
+                                var recordingToSave =
+                                    mapper.Map<Db.Neo4j.ServerLibrary.MusicMetaData.Recording>(
+                                        trackDto.Recording
+                                    );
+
+                                await releaseGroupPersistenceService.SaveRecordingNodeAsync(
+                                    (IAsyncTransaction)tx,
+                                    recordingToSave
+                                );
+
+                                await releaseGroupPersistenceService.LinkRecordingToReleaseAsync(
+                                    (IAsyncTransaction)tx,
+                                    releaseToSave.Id,
+                                    recordingToSave.Id,
+                                    trackDto,
+                                    mediumDto
+                                );
+
+                                logger.LogInformation(
+                                    "Saved recording {RecordingTitle} and linked to Release {ReleaseTitle}",
+                                    recordingToSave.Title,
+                                    releaseToSave.Title
+                                );
+
+                                // 6. Save Recording Artist Credits
+                                if (trackDto.Recording.Credits != null)
+                                {
+                                    await releaseGroupPersistenceService.SaveArtistCreditsForParentAsync(
+                                        (IAsyncTransaction)tx,
+                                        recordingToSave.Id,
+                                        trackDto.Recording.Credits,
+                                        "Recording",
+                                        "recordingId",
+                                        "CREDITED_ON_RECORDING"
+                                    );
+                                    logger.LogInformation(
+                                        "Saved artist credits for recording {RecordingTitle}",
+                                        recordingToSave.Title
+                                    );
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            logger.LogInformation(
+                "Successfully persisted all data for release group {Title}",
+                message.ReleaseGroup.Title
+            );
             MarkAsComplete();
         }
         catch (Exception ex)
         {
             logger.LogError(
                 ex,
-                "Error processing ReleaseGroup {MessageReleaseGroupMbId} for Neo4j: {ExMessage}",
-                message.ReleaseGroupMbId,
+                "Error persisting data for release group {Title}: {ExMessage}",
+                message.ReleaseGroup.Title,
                 ex.Message
             );
             MarkAsComplete(); // Ensure saga completes even on error
@@ -99,160 +244,10 @@ public class AddReleaseGroupToServerLibrarySaga(
     )
     {
         logger.LogInformation(
-            "ReleaseGroup {MessageReleaseGroupMbId} not found in MusicBrainz, completing saga",
+            "Release group {MessageReleaseGroupMbId} not found in MusicBrainz, completing saga",
             message.ReleaseGroupMbId
         );
         MarkAsComplete();
         return Task.CompletedTask;
-    }
-
-    private async Task SaveReleaseGroupAndItsArtistsAsync(
-        IAsyncSession session,
-        Hqub.MusicBrainz.Entities.ReleaseGroup releaseGroupDto
-    )
-    {
-        var releaseGroupToSave = mapper.Map<Db.Neo4j.ServerLibrary.MusicMetaData.ReleaseGroup>(
-            releaseGroupDto
-        );
-        await session.ExecuteWriteAsync(async tx =>
-        {
-            await releaseGroupPersistenceService.SaveReleaseGroupNodeAsync(
-                (IAsyncTransaction)tx,
-                releaseGroupToSave
-            );
-
-            if (releaseGroupDto.Credits != null)
-            {
-                await releaseGroupPersistenceService.SaveArtistCreditsForParentAsync(
-                    (IAsyncTransaction)tx,
-                    releaseGroupToSave.Id,
-                    releaseGroupDto.Credits,
-                    "ReleaseGroup",
-                    "rgId",
-                    "CREDITED_ON_RELEASE_GROUP"
-                );
-            }
-        });
-        logger.LogInformation(
-            "ReleaseGroup {Id} and its main artist credits saved/updated in Neo4j",
-            releaseGroupToSave.Id
-        );
-    }
-
-    private async Task ProcessAllReleasesForReleaseGroupAsync(
-        IAsyncSession session,
-        string releaseGroupMbId
-    )
-    {
-        var releaseDtos = await musicBrainzService.GetReleasesForReleaseGroupAsync(
-            releaseGroupMbId
-        );
-
-        if (releaseDtos != null)
-        {
-            foreach (var releaseDto in releaseDtos)
-            {
-                await ProcessSingleReleaseAsync(session, releaseDto, releaseGroupMbId);
-            }
-        }
-    }
-
-    private async Task ProcessSingleReleaseAsync(
-        IAsyncSession session,
-        Hqub.MusicBrainz.Entities.Release releaseDto,
-        string releaseGroupMbId
-    )
-    {
-        var releaseToSave = mapper.Map<Db.Neo4j.ServerLibrary.MusicMetaData.Release>(releaseDto);
-        await session.ExecuteWriteAsync(async tx =>
-        {
-            await releaseGroupPersistenceService.SaveReleaseNodeAsync(
-                (IAsyncTransaction)tx,
-                releaseToSave
-            );
-            await releaseGroupPersistenceService.LinkReleaseToReleaseGroupAsync(
-                (IAsyncTransaction)tx,
-                releaseGroupMbId,
-                releaseToSave.Id
-            );
-
-            if (releaseDto.Credits != null)
-            {
-                await releaseGroupPersistenceService.SaveArtistCreditsForParentAsync(
-                    (IAsyncTransaction)tx,
-                    releaseToSave.Id,
-                    releaseDto.Credits,
-                    "Release",
-                    "releaseId",
-                    "CREDITED_ON_RELEASE"
-                );
-            }
-
-            if (releaseDto.Media != null)
-            {
-                await ProcessMediaAndTracksForReleaseAsync(
-                    (IAsyncTransaction)tx,
-                    releaseDto,
-                    releaseToSave.Id
-                );
-            }
-        });
-        logger.LogInformation("Release {Id} and its data saved/updated in Neo4j", releaseToSave.Id);
-    }
-
-    private async Task ProcessMediaAndTracksForReleaseAsync(
-        IAsyncTransaction tx,
-        Hqub.MusicBrainz.Entities.Release releaseDto,
-        string releaseId
-    )
-    {
-        if (releaseDto.Media == null)
-            return;
-
-        foreach (var mediumDto in releaseDto.Media)
-        {
-            if (mediumDto.Tracks != null)
-            {
-                foreach (var trackDto in mediumDto.Tracks)
-                {
-                    await ProcessSingleTrackAsync(tx, trackDto, mediumDto, releaseId);
-                }
-            }
-        }
-    }
-
-    private async Task ProcessSingleTrackAsync(
-        IAsyncTransaction tx,
-        Track trackDto,
-        Medium mediumDto,
-        string releaseId
-    )
-    {
-        if (trackDto.Recording == null || string.IsNullOrEmpty(trackDto.Recording.Id))
-            return;
-
-        var recordingToSave = mapper.Map<Db.Neo4j.ServerLibrary.MusicMetaData.Recording>(
-            trackDto.Recording
-        );
-        await releaseGroupPersistenceService.SaveRecordingNodeAsync(tx, recordingToSave);
-        await releaseGroupPersistenceService.LinkRecordingToReleaseAsync(
-            tx,
-            releaseId,
-            recordingToSave.Id,
-            trackDto,
-            mediumDto
-        );
-
-        if (trackDto.Recording.Credits != null)
-        {
-            await releaseGroupPersistenceService.SaveArtistCreditsForParentAsync(
-                tx,
-                recordingToSave.Id,
-                trackDto.Recording.Credits,
-                "Recording",
-                "recordingId",
-                "CREDITED_ON_RECORDING"
-            );
-        }
     }
 }

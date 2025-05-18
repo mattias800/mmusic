@@ -18,6 +18,7 @@ using MusicGQL.Features.ServerLibrary.Artist.Handlers;
 using MusicGQL.Features.ServerLibrary.Artist.Mutations;
 using MusicGQL.Features.ServerLibrary.Artist.Sagas;
 using MusicGQL.Features.ServerLibrary.Artist.Sagas.Events;
+using MusicGQL.Features.ServerLibrary.ReleaseGroup;
 using MusicGQL.Features.ServerLibrary.ReleaseGroup.Aggregate;
 using MusicGQL.Features.ServerLibrary.ReleaseGroup.Handlers;
 using MusicGQL.Features.ServerLibrary.ReleaseGroup.Mutations;
@@ -58,6 +59,7 @@ builder
             minimumDiagnosticLevel: DiagnosticLevel.Debug
         )
     ))
+    .AddSingleton<ReleaseGroupPersistenceService>()
     .AddSingleton<SoulSeekService>()
     .AddSingleton<MusicBrainzService>()
     .AddSingleton<YouTubeService>()

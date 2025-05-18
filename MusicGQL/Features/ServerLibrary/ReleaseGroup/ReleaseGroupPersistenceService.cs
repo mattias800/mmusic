@@ -1,6 +1,7 @@
 using AutoMapper;
-using Hqub.MusicBrainz.Entities;
 using Neo4j.Driver;
+using MbMedium = Hqub.MusicBrainz.Entities.Medium;
+using MbTrack = Hqub.MusicBrainz.Entities.Track;
 
 namespace MusicGQL.Features.ServerLibrary.ReleaseGroup;
 
@@ -132,8 +133,8 @@ public class ReleaseGroupPersistenceService(IMapper mapper)
         IAsyncTransaction tx,
         string releaseId,
         string recordingId,
-        Track trackDto,
-        Medium mediumDto
+        MbTrack trackDto,
+        MbMedium mediumDto
     )
     {
         await tx.RunAsync(
