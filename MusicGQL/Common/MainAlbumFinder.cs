@@ -10,18 +10,24 @@ public static class MainAlbumFinder
 
         var releasesAvailable = official.Count != 0 ? official : releases;
 
+        var worldWideReleases = releasesAvailable.Where(r => r.Country == "XW").ToList();
+
+        if (worldWideReleases.Any())
+        {
+            return worldWideReleases.Last();
+        }
+
         return releasesAvailable // filter by official only
                 .OrderBy(r =>
                     r.Country switch
                     {
-                        "XW" => 0,
                         "US" => 1,
                         "GB" => 2,
                         _ => 3,
                     }
                 )
                 .ThenBy(r => r.Date) // prefer earlier date
-                .LastOrDefault() ?? releases.LastOrDefault();
+                .FirstOrDefault() ?? releases.FirstOrDefault();
     }
 
     public static MbRelease? FindMainAlbumForSong(List<MbRelease> releases)

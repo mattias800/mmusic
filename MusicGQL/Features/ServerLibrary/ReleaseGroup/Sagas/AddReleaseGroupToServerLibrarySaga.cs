@@ -79,7 +79,10 @@ public class AddReleaseGroupToServerLibrarySaga(
             return;
         }
 
-        logger.LogInformation("Fetching all releases for release group {MbId}", releaseGroupDto.Id);
+        logger.LogInformation(
+            "Fetching all releases for release group {Title}",
+            releaseGroupDto.Title
+        );
 
         var allReleaseDtos = await musicBrainzService.GetReleasesForReleaseGroupAsync(
             releaseGroupDto.Id
