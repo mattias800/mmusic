@@ -2,7 +2,6 @@ namespace MusicGQL.Db.Models.ServerLibrary.MusicMetaData;
 
 public class Relation
 {
-    public int Id { get; set; } // Not part of MusicBrainz
     public string Type { get; set; }
     public string TypeId { get; set; }
     public string TargetType { get; set; }

@@ -2,7 +2,6 @@ namespace MusicGQL.Db.Models.ServerLibrary.MusicMetaData;
 
 public class Medium
 {
-    public int Id { get; set; } // Not part of MusicBrainz
     public int TrackCount { get; set; }
     public int Position { get; set; }
     public string Format { get; set; }

@@ -2,8 +2,6 @@ namespace MusicGQL.Db.Models.ServerLibrary.MusicMetaData;
 
 public class CoverArtArchive
 {
-    public int Id { get; set; } // Not part of MusicBrainz
-
     public bool Artwork { get; set; }
     public int Count { get; set; }
     public bool Front { get; set; }

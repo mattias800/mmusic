@@ -4,8 +4,7 @@ namespace MusicGQL.Db.Models.ServerLibrary.MusicMetaData;
 
 public class Track
 {
-    [Key]
-    public string Id { get; set; }
+    public string Id { get; set; } // From MusicBrainz API
     public string Number { get; set; }
     public int Position { get; set; }
     public int? Length { get; set; }

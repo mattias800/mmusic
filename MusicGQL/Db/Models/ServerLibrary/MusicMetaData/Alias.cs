@@ -2,7 +2,6 @@ namespace MusicGQL.Db.Models.ServerLibrary.MusicMetaData;
 
 public class Alias
 {
-    public int Id { get; set; } // Not part of MusicBrainz
     public string Name { get; set; }
     public string SortName { get; set; }
     public string Type { get; set; }

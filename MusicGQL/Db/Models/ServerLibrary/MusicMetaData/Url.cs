@@ -4,7 +4,6 @@ namespace MusicGQL.Db.Models.ServerLibrary.MusicMetaData;
 
 public class Url
 {
-    [Key]
-    public string Id { get; set; }
+    public string Id { get; set; } // From MusicBrainz API
     public string Resource { get; set; }
 }

@@ -21,8 +21,8 @@ public class EventDbContext(DbContextOptions<EventDbContext> options) : DbContex
     public DbSet<Label> Labels { get; set; }
     public DbSet<Recording> Recordings { get; set; }
     public DbSet<Release> Releases { get; set; }
-    public DbSet<Rating> Ratings { get; set; }
     public DbSet<ReleaseGroup> ReleaseGroups { get; set; }
+    public DbSet<Work> Works { get; set; }
 
     // Projections
     public DbSet<LikedSongsProjection> LikedSongsProjections { get; set; }
@@ -89,5 +89,84 @@ public class EventDbContext(DbContextOptions<EventDbContext> options) : DbContex
                     c => c.ToList()
                 )
             );
+
+        modelBuilder.Entity<Artist>(artist =>
+        {
+            artist.OwnsOne(a => a.Rating, rating =>
+            {
+                rating.Property(r => r.Value).HasColumnName("RatingValue");
+                rating.Property(r => r.VotesCount).HasColumnName("RatingVotesCount");
+            });
+            artist.OwnsOne(a => a.LifeSpan);
+            artist.OwnsMany(a => a.Aliases);
+            artist.OwnsMany(a => a.Relations, relation => 
+            {
+                relation.OwnsOne(r => r.Url);
+            });
+            artist.OwnsMany(a => a.Tags);
+        });
+
+        modelBuilder.Entity<ReleaseGroup>(rg =>
+        {
+            rg.OwnsOne(r => r.Rating, rating =>
+            {
+                rating.Property(r => r.Value).HasColumnName("RatingValue");
+                rating.Property(r => r.VotesCount).HasColumnName("RatingVotesCount");
+            });
+            rg.OwnsMany(r => r.Aliases);
+            rg.OwnsMany(r => r.Credits);
+            rg.OwnsMany(r => r.Relations, relation => 
+            {
+                relation.OwnsOne(r => r.Url);
+            });
+            rg.OwnsMany(r => r.Tags);
+        });
+
+        modelBuilder.Entity<Recording>(recording =>
+        {
+            recording.OwnsOne(r => r.Rating, rating =>
+            {
+                rating.Property(r => r.Value).HasColumnName("RatingValue");
+                rating.Property(r => r.VotesCount).HasColumnName("RatingVotesCount");
+            });
+            recording.OwnsMany(r => r.Aliases);
+            recording.OwnsMany(r => r.Credits);
+            recording.OwnsMany(r => r.Relations, relation => 
+            {
+                relation.OwnsOne(r => r.Url);
+            });
+            recording.OwnsMany(r => r.Tags);
+        });
+
+        modelBuilder.Entity<Release>(release =>
+        {
+            release.OwnsOne(r => r.CoverArtArchive);
+            release.OwnsMany(r => r.Labels);
+            release.OwnsMany(r => r.Media, media =>
+            {
+                media.OwnsMany(m => m.Discs);
+                media.OwnsMany(m => m.Tracks);
+            });
+            release.OwnsMany(r => r.Credits);
+            release.OwnsMany(r => r.Relations, relation => 
+            {
+                relation.OwnsOne(r => r.Url);
+            });
+            release.OwnsMany(r => r.Tags);
+            release.OwnsOne(r => r.TextRepresentation);
+            // We will add more for Release here as we process other types
+        });
+
+        modelBuilder.Entity<Work>(work =>
+        {
+            work.OwnsMany(w => w.Aliases);
+            work.OwnsMany(w => w.Relations, relation =>
+            {
+                relation.OwnsOne(r => r.Url);
+                // Note: Relation also has Artist and Work navigation properties.
+                // Artist is an independent entity, Work is the current entity being configured.
+                // This means a Relation owned by a Work can point back to the Work (or another Work) or an Artist.
+            });
+        });
     }
 }
