@@ -10,7 +10,7 @@ namespace MusicGQL.Features.ServerLibrary.ReleaseGroup.Sagas;
 
 public class AddReleaseGroupToServerLibrarySaga(
     IBus bus,
-    IDriver neo4jDriver,
+    IDriver driver,
     ILogger<AddReleaseGroupToServerLibrarySaga> logger,
     IMapper mapper,
     MusicBrainzService musicBrainzService,
@@ -68,10 +68,11 @@ public class AddReleaseGroupToServerLibrarySaga(
     )
     {
         logger.LogInformation(
-            $"Processing ReleaseGroup {message.ReleaseGroupMbId} and associated data for Neo4j."
+            "Processing ReleaseGroup {MessageReleaseGroupMbId} and associated data for Neo4j",
+            message.ReleaseGroupMbId
         );
 
-        await using var session = neo4jDriver.AsyncSession();
+        await using var session = driver.AsyncSession();
 
         try
         {
@@ -98,7 +99,8 @@ public class AddReleaseGroupToServerLibrarySaga(
     )
     {
         logger.LogInformation(
-            $"ReleaseGroup {message.ReleaseGroupMbId} not found in MusicBrainz, completing saga."
+            "ReleaseGroup {MessageReleaseGroupMbId} not found in MusicBrainz, completing saga",
+            message.ReleaseGroupMbId
         );
         MarkAsComplete();
         return Task.CompletedTask;
@@ -132,7 +134,8 @@ public class AddReleaseGroupToServerLibrarySaga(
             }
         });
         logger.LogInformation(
-            $"ReleaseGroup {releaseGroupToSave.Id} and its main artist credits saved/updated in Neo4j"
+            "ReleaseGroup {Id} and its main artist credits saved/updated in Neo4j",
+            releaseGroupToSave.Id
         );
     }
 
@@ -144,6 +147,7 @@ public class AddReleaseGroupToServerLibrarySaga(
         var releaseDtos = await musicBrainzService.GetReleasesForReleaseGroupAsync(
             releaseGroupMbId
         );
+
         if (releaseDtos != null)
         {
             foreach (var releaseDto in releaseDtos)
@@ -193,7 +197,7 @@ public class AddReleaseGroupToServerLibrarySaga(
                 );
             }
         });
-        logger.LogInformation($"Release {releaseToSave.Id} and its data saved/updated in Neo4j");
+        logger.LogInformation("Release {Id} and its data saved/updated in Neo4j", releaseToSave.Id);
     }
 
     private async Task ProcessMediaAndTracksForReleaseAsync(
