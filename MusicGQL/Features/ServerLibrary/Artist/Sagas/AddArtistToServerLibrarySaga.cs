@@ -11,7 +11,7 @@ namespace MusicGQL.Features.ServerLibrary.Artist.Sagas;
 public class AddArtistToServerLibrarySaga(
     IBus bus,
     ITopicEventSender sender,
-    IDriver neo4jDriver,
+    IDriver driver,
     ILogger<AddArtistToServerLibrarySaga> logger,
     MarkReleaseGroupAsAddedToServerLibraryHandler markReleaseGroupAsAddedToServerLibraryHandler,
     IMapper mapper
@@ -75,7 +75,7 @@ public class AddArtistToServerLibrarySaga(
                 message.Artist
             );
 
-            await using var session = neo4jDriver.AsyncSession();
+            await using var session = driver.AsyncSession();
             await session.ExecuteWriteAsync(async tx =>
             {
                 await tx.RunAsync(

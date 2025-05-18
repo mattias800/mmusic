@@ -253,7 +253,7 @@ public class AddReleaseGroupToServerLibrarySaga(
                                                 recordingId = recordingToSave.Id,
                                                 pos = trackDto.Position,
                                                 trackTitle = trackDto.Recording.Title,
-                                                trackNumber = trackDto.Number,
+                                                trackNum = trackDto.Number,
                                                 mediumPos = mediumDto.Position,
                                                 mediumFmt = mediumDto.Format,
                                             }

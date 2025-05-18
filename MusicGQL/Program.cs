@@ -4,7 +4,6 @@ using Hqub.MusicBrainz;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
-using MusicGQL.Db;
 using MusicGQL.Db.Postgres;
 using MusicGQL.EventProcessor;
 using MusicGQL.Features.Downloads;
@@ -113,7 +112,7 @@ builder
         o.ExecutionTimeout = TimeSpan.FromSeconds(60);
     })
     .AddRedisSubscriptions(
-        (sp) =>
+        (_) =>
             ConnectionMultiplexer.Connect(
                 builder.Configuration.GetConnectionString("Redis") ?? string.Empty
             )
@@ -138,6 +137,9 @@ builder
     .AddType<AddReleaseGroupToServerLibraryResult.AddReleaseGroupToServerLibraryUnknownError>()
     .AddTypeExtension<AddArtistToServerLibraryMutation>()
     .AddType<AddArtistToServerLibraryResult.AddArtistToServerLibrarySuccess>()
+    .AddType<AddArtistToServerLibraryResult.AddArtistToServerLibraryArtistAlreadyAdded>()
+    .AddType<AddArtistToServerLibraryResult.AddArtistToServerLibraryArtistDoesNotExist>()
+    .AddType<AddArtistToServerLibraryResult.AddArtistToServerLibraryUnknownError>()
     .AddType<AddArtistToServerLibraryResult.AddArtistToServerLibraryArtistAlreadyAdded>()
     .AddType<AddArtistToServerLibraryResult.AddArtistToServerLibraryArtistDoesNotExist>()
     .AddType<AddArtistToServerLibraryResult.AddArtistToServerLibraryUnknownError>();
@@ -235,6 +237,9 @@ builder.Services.AddRebusHandler<LookupRecordingsForReleaseInMusicBrainzHandler>
 builder.Services.AddHostedService<ScheduledTaskPublisher>();
 
 var app = builder.Build();
+
+// Ensure Neo4j constraints are created/verified on startup
+await Neo4JSchemaSetup.EnsureConstraintsAsync(app.Services, app.Logger);
 
 // 🟢 Run event processor once on startup
 using (var scope = app.Services.CreateScope())
