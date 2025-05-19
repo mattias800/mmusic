@@ -44,6 +44,11 @@ public class EventProcessorWorker(
             likedSongsEventProcessor.ProcessEvent(ev, dbContext);
         }
 
+        if (events.Count > 0)
+        {
+            checkpoint.LastProcessedEventId = events.Last().Id;
+        }
+
         await dbContext.SaveChangesAsync();
     }
 }

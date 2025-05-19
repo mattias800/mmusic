@@ -24,6 +24,7 @@ using MusicGQL.Features.ServerLibrary.ReleaseGroup.Handlers;
 using MusicGQL.Features.ServerLibrary.ReleaseGroup.Mutations;
 using MusicGQL.Features.ServerLibrary.ReleaseGroup.Sagas;
 using MusicGQL.Features.ServerLibrary.ReleaseGroup.Sagas.Events;
+using MusicGQL.Features.Spotify.Configuration;
 using MusicGQL.Features.YouTube.Configuration;
 using MusicGQL.Integration.MusicBrainz;
 using MusicGQL.Sagas.DownloadRelease;
@@ -34,6 +35,7 @@ using Rebus.Config;
 using Rebus.Routing.TypeBased;
 using Soulseek;
 using Soulseek.Diagnostics;
+using SpotifyAPI.Web;
 using StackExchange.Redis;
 using YouTubeService = MusicGQL.Integration.Youtube.YouTubeService;
 
@@ -42,6 +44,11 @@ var builder = WebApplication.CreateBuilder(args);
 // Configure YouTubeServiceOptions
 builder.Services.Configure<YouTubeServiceOptions>(
     builder.Configuration.GetSection(YouTubeServiceOptions.SectionName)
+);
+
+// Configure SpotifyClientOptions
+builder.Services.Configure<SpotifyClientOptions>(
+    builder.Configuration.GetSection(SpotifyClientOptions.SectionName)
 );
 
 builder.Services.Configure<SoulSeekConnectOptions>(builder.Configuration.GetSection("SoulSeek"));
@@ -80,9 +87,7 @@ builder
         var options = sp.GetRequiredService<IOptions<YouTubeServiceOptions>>().Value;
         if (string.IsNullOrWhiteSpace(options.ApiKey))
         {
-            throw new InvalidOperationException(
-                "YouTube API key is not configured. Please set it in appsettings.json."
-            );
+            throw new InvalidOperationException("YouTube API key is not configured.");
         }
 
         return new Google.Apis.YouTube.v3.YouTubeService(
@@ -93,6 +98,26 @@ builder
             }
         );
     });
+
+// Add Spotify Client
+builder.Services.AddSingleton<SpotifyClient>(serviceProvider =>
+{
+    var options = serviceProvider.GetRequiredService<IOptions<SpotifyClientOptions>>().Value;
+
+    if (string.IsNullOrEmpty(options.ClientId) || string.IsNullOrEmpty(options.ClientSecret))
+    {
+        throw new InvalidOperationException("Spotify ClientId or ClientSecret is not configured.");
+    }
+
+    var spotifyConfig = SpotifyClientConfig.CreateDefault();
+    var request = new ClientCredentialsRequest(options.ClientId, options.ClientSecret);
+    // It's generally not recommended to block on async calls in this manner in a synchronous context.
+    // However, during application startup, this is often acceptable.
+    // Consider if a fully async setup is possible or more appropriate for your application's needs.
+    var response = new OAuthClient(spotifyConfig).RequestToken(request).GetAwaiter().GetResult();
+
+    return new SpotifyClient(spotifyConfig.WithToken(response.AccessToken));
+});
 
 builder.Services.AddSingleton(GraphDatabase.Driver("bolt://localhost:7687", AuthTokens.None));
 

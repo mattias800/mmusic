@@ -35,6 +35,8 @@
     <PackageReference Include="Rebus.RabbitMq" Version="10.0.0" />
     <PackageReference Include="Rebus.ServiceProvider" Version="10.3.0" />
     <PackageReference Include="Soulseek" Version="7.0.3" />
+    <PackageReference Include="SpotifyAPI.Web" Version="7.2.1" />
+    <PackageReference Include="SpotifyAPI.Web.Auth" Version="7.2.1" />
     <PackageReference Include="TrackSeries.FanArtTV.Client" Version="1.2.4" />
   </ItemGroup>
   <ItemGroup>
