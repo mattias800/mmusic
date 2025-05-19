@@ -42,6 +42,8 @@
   <ItemGroup>
     <Folder Include="Db\Neo4j\" />
     <Folder Include="Features\ServerLibrary\Utils\" />
+    <Folder Include="Features\Spotify\" />
+    <Folder Include="Features\YouTube\" />
     <Folder Include="Migrations\" />
   </ItemGroup>
 </Project>

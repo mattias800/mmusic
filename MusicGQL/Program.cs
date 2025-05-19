@@ -27,6 +27,7 @@ using MusicGQL.Features.ServerLibrary.ReleaseGroup.Sagas.Events;
 using MusicGQL.Features.Spotify.Configuration;
 using MusicGQL.Features.YouTube.Configuration;
 using MusicGQL.Integration.MusicBrainz;
+using MusicGQL.Integration.Spotify;
 using MusicGQL.Sagas.DownloadRelease;
 using MusicGQL.Sagas.DownloadRelease.Handlers;
 using MusicGQL.Types;
@@ -70,6 +71,7 @@ builder
     .AddSingleton<SoulSeekService>()
     .AddSingleton<MusicBrainzService>()
     .AddSingleton<YouTubeService>()
+    .AddSingleton<SpotifyService>()
     .AddScoped<LikeSongHandler>()
     .AddScoped<UnlikeSongHandler>()
     .AddScoped<MarkReleaseGroupAsAddedToServerLibraryHandler>()
