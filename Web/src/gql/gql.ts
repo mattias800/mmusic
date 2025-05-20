@@ -45,8 +45,6 @@ type Documents = {
     "\n  fragment SoulSeekNetworkStatus_SoulSeekStatus on SoulSeekStatus {\n    id\n    status\n  }\n": typeof types.SoulSeekNetworkStatus_SoulSeekStatusFragmentDoc,
     "\n  subscription SoulSeekNetworkStatusSubscription {\n    soulSeekStatusUpdated {\n      ...SoulSeekNetworkStatus_SoulSeekStatus\n    }\n  }\n": typeof types.SoulSeekNetworkStatusSubscriptionDocument,
     "\n  query SoulSeekNetworkStatusQuery {\n    external {\n      id\n      soulSeek {\n        id\n        status {\n          ...SoulSeekNetworkStatus_SoulSeekStatus\n        }\n      }\n    }\n  }\n": typeof types.SoulSeekNetworkStatusQueryDocument,
-    "\n  query GetSpotifyPlaylistsForUser($username: String!) {\n    playlist {\n      importPlaylists {\n        spotify {\n          spotifyPlaylistsForUser(username: $username) {\n            id\n            name\n            coverImageUrl\n            description\n          }\n        }\n      }\n    }\n  }\n": typeof types.GetSpotifyPlaylistsForUserDocument,
-    "\n  mutation ImportSpotifyPlaylistById($playlistId: String!, $userId: Int!) {\n    importSpotifyPlaylistById(playlistId: $playlistId, userId: $userId)\n  }\n": typeof types.ImportSpotifyPlaylistByIdDocument,
 };
 const documents: Documents = {
     "\n  query AlbumQuery($releaseGroupId: ID!) {\n    releaseGroup {\n      byId(id: $releaseGroupId) {\n        id\n        ...AlbumPanel_ReleaseGroup\n      }\n    }\n  }\n": types.AlbumQueryDocument,
@@ -80,8 +78,6 @@ const documents: Documents = {
     "\n  fragment SoulSeekNetworkStatus_SoulSeekStatus on SoulSeekStatus {\n    id\n    status\n  }\n": types.SoulSeekNetworkStatus_SoulSeekStatusFragmentDoc,
     "\n  subscription SoulSeekNetworkStatusSubscription {\n    soulSeekStatusUpdated {\n      ...SoulSeekNetworkStatus_SoulSeekStatus\n    }\n  }\n": types.SoulSeekNetworkStatusSubscriptionDocument,
     "\n  query SoulSeekNetworkStatusQuery {\n    external {\n      id\n      soulSeek {\n        id\n        status {\n          ...SoulSeekNetworkStatus_SoulSeekStatus\n        }\n      }\n    }\n  }\n": types.SoulSeekNetworkStatusQueryDocument,
-    "\n  query GetSpotifyPlaylistsForUser($username: String!) {\n    playlist {\n      importPlaylists {\n        spotify {\n          spotifyPlaylistsForUser(username: $username) {\n            id\n            name\n            coverImageUrl\n            description\n          }\n        }\n      }\n    }\n  }\n": types.GetSpotifyPlaylistsForUserDocument,
-    "\n  mutation ImportSpotifyPlaylistById($playlistId: String!, $userId: Int!) {\n    importSpotifyPlaylistById(playlistId: $playlistId, userId: $userId)\n  }\n": types.ImportSpotifyPlaylistByIdDocument,
 };
 
 /**
@@ -222,14 +218,6 @@ export function graphql(source: "\n  subscription SoulSeekNetworkStatusSubscript
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  query SoulSeekNetworkStatusQuery {\n    external {\n      id\n      soulSeek {\n        id\n        status {\n          ...SoulSeekNetworkStatus_SoulSeekStatus\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  query SoulSeekNetworkStatusQuery {\n    external {\n      id\n      soulSeek {\n        id\n        status {\n          ...SoulSeekNetworkStatus_SoulSeekStatus\n        }\n      }\n    }\n  }\n"];
-/**
- * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function graphql(source: "\n  query GetSpotifyPlaylistsForUser($username: String!) {\n    playlist {\n      importPlaylists {\n        spotify {\n          spotifyPlaylistsForUser(username: $username) {\n            id\n            name\n            coverImageUrl\n            description\n          }\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  query GetSpotifyPlaylistsForUser($username: String!) {\n    playlist {\n      importPlaylists {\n        spotify {\n          spotifyPlaylistsForUser(username: $username) {\n            id\n            name\n            coverImageUrl\n            description\n          }\n        }\n      }\n    }\n  }\n"];
-/**
- * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function graphql(source: "\n  mutation ImportSpotifyPlaylistById($playlistId: String!, $userId: Int!) {\n    importSpotifyPlaylistById(playlistId: $playlistId, userId: $userId)\n  }\n"): (typeof documents)["\n  mutation ImportSpotifyPlaylistById($playlistId: String!, $userId: Int!) {\n    importSpotifyPlaylistById(playlistId: $playlistId, userId: $userId)\n  }\n"];
 
 export function graphql(source: string) {
   return (documents as any)[source] ?? {};
