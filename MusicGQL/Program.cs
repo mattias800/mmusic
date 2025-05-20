@@ -31,7 +31,6 @@ using MusicGQL.Features.ServerLibrary.ReleaseGroup.Handlers;
 using MusicGQL.Features.ServerLibrary.ReleaseGroup.Mutations;
 using MusicGQL.Features.ServerLibrary.ReleaseGroup.Sagas;
 using MusicGQL.Features.ServerLibrary.ReleaseGroup.Sagas.Events;
-using MusicGQL.Features.Users;
 using MusicGQL.Features.Users.Aggregate;
 using MusicGQL.Features.Users.Handlers;
 using MusicGQL.Features.Users.Mutations;
@@ -201,12 +200,12 @@ builder
     .AddType<AddArtistToServerLibraryResult.AddArtistToServerLibraryArtistDoesNotExist>()
     .AddType<AddArtistToServerLibraryResult.AddArtistToServerLibraryUnknownError>()
     .AddTypeExtension<CreateUserMutation>()
-    .AddType<CreateUserPayload>()
-    .AddType<CreateUserErrorPayload>()
+    .AddType<CreateUserResult.Success>()
+    .AddType<CreateUserResult.Error>()
     .AddType<UserProjection>()
-    .AddType<LoginSuccessPayload>()
-    .AddType<LoginErrorPayload>()
-    .AddType<User>();
+    .AddTypeExtension<SignInMutation>()
+    .AddType<SignInResult.Success>()
+    .AddType<SignInResult.Error>();
 
 builder.Services.Configure<LastfmOptions>(builder.Configuration.GetSection("Lastfm"));
 

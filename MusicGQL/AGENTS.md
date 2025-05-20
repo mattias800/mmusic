@@ -9,6 +9,17 @@ This document provides guidelines for AI agents assisting with the development o
 - **Key Areas:** Pay attention to `Program.cs` for service and GraphQL registrations, `Features` for business logic,
   `Db/Postgres` for database models and event sourcing, and `Integration` for external service communications.
 
+## Libraries
+
+This project uses several libraries and frameworks. Familiarize yourself with them:
+- ASP.NET Core
+- HotChocolate (GraphQL)
+- Entity Framework Core
+- Neo4j
+
+This project does NOT use:
+- MediatR
+
 ## 2. Code Style and Conventions (C# & ASP.NET Core)
 
 - **Naming Conventions:** Follow standard C# naming conventions (e.g., PascalCase for classes, methods, properties).

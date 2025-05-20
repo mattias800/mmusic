@@ -16,14 +16,16 @@ public class AddReleaseGroupToServerLibraryMutation
         {
             // TODO Correct user
             MarkReleaseGroupAsAddedToServerLibraryHandler.Result.Success =>
-                new AddReleaseGroupToServerLibraryResult.AddReleaseGroupToServerLibrarySuccess(),
+                new AddReleaseGroupToServerLibraryResult.AddReleaseGroupToServerLibrarySuccess(
+                    true
+                ),
             MarkReleaseGroupAsAddedToServerLibraryHandler.Result.AlreadyAdded =>
                 new AddReleaseGroupToServerLibraryResult.AddReleaseGroupToServerLibraryReleaseGroupAlreadyAdded(
-                    "ReleaseGroup already added!"
+                    "Release group already added!"
                 ),
             MarkReleaseGroupAsAddedToServerLibraryHandler.Result.ReleaseGroupDoesNotExist =>
                 new AddReleaseGroupToServerLibraryResult.AddReleaseGroupToServerLibraryReleaseGroupDoesNotExist(
-                    "ReleaseGroup does not exist in MusicBrainz!"
+                    "Release group does not exist in MusicBrainz!"
                 ),
             _ =>
                 new AddReleaseGroupToServerLibraryResult.AddReleaseGroupToServerLibraryUnknownError(
@@ -38,7 +40,8 @@ public record AddReleaseGroupToServerLibraryInput([property: ID] string ReleaseG
 [UnionType("AddReleaseGroupToServerLibraryResult")]
 public abstract record AddReleaseGroupToServerLibraryResult
 {
-    public record AddReleaseGroupToServerLibrarySuccess : AddReleaseGroupToServerLibraryResult;
+    public record AddReleaseGroupToServerLibrarySuccess(bool Success)
+        : AddReleaseGroupToServerLibraryResult;
 
     public record AddReleaseGroupToServerLibraryReleaseGroupAlreadyAdded(string Message)
         : AddReleaseGroupToServerLibraryResult;
