@@ -8,6 +8,36 @@ directive @cost(
   weight: String!
 ) on ARGUMENT_DEFINITION | ENUM | FIELD_DEFINITION | INPUT_FIELD_DEFINITION | OBJECT | SCALAR
 
+"""
+The purpose of the `@listSize` directive is to either inform the static analysis about the size of returned lists (if that information is statically available), or to point the analysis to where to find that information.
+"""
+directive @listSize(
+  """
+  The `assumedSize` argument can be used to statically define the maximum length of a list returned by a field.
+  """
+  assumedSize: Int
+
+  """
+  The `requireOneSlicingArgument` argument can be used to inform the static analysis that it should expect that exactly one of the defined slicing arguments is present in a query. If that is not the case (i.e., if none or multiple slicing arguments are present), the static analysis may throw an error.
+  """
+  requireOneSlicingArgument: Boolean! = true
+
+  """
+  The `sizedFields` argument can be used to define that the value of the `assumedSize` argument or of a slicing argument does not affect the size of a list returned by a field itself, but that of a list returned by one of its sub-fields.
+  """
+  sizedFields: [String!]
+
+  """
+  The `slicingArgumentDefaultValue` argument can be used to define a default value for a slicing argument, which is used if the argument is not present in a query.
+  """
+  slicingArgumentDefaultValue: Int
+
+  """
+  The `slicingArguments` argument can be used to define which of the field's arguments with numeric type are slicing arguments, so that their value determines the size of the list returned by that field. It may specify a list of multiple slicing arguments.
+  """
+  slicingArguments: [String!]
+) on FIELD_DEFINITION
+
 type AddArtistToServerLibraryArtistAlreadyAdded {
   message: String!
 }
@@ -45,7 +75,7 @@ type AddReleaseGroupToServerLibraryReleaseGroupDoesNotExist {
 union AddReleaseGroupToServerLibraryResult = AddReleaseGroupToServerLibraryReleaseGroupAlreadyAdded | AddReleaseGroupToServerLibraryReleaseGroupDoesNotExist | AddReleaseGroupToServerLibrarySuccess | AddReleaseGroupToServerLibraryUnknownError
 
 type AddReleaseGroupToServerLibrarySuccess {
-  viewer: User!
+  success: Boolean!
 }
 
 type AddReleaseGroupToServerLibraryUnknownError {
@@ -99,6 +129,17 @@ type ArtistServerAvailability {
 type ArtistsInServerLibrarySearchRoot {
   all: [ArtistInServerLibrary!]!
 }
+
+type CreateUserError {
+  message: String!
+}
+
+type CreateUserSuccess {
+  user: User!
+}
+
+"""The `DateTime` scalar represents an ISO-8601 compliant date time type."""
+scalar DateTime
 
 type DownloadStatus {
   artistName: String
@@ -177,7 +218,7 @@ type Medium {
 type Mutation {
   addArtistToServerLibrary(input: AddArtistToServerLibraryInput!): AddArtistToServerLibraryResult!
   addReleaseGroupToServerLibrary(input: AddReleaseGroupToServerLibraryInput!): AddReleaseGroupToServerLibraryResult!
-  importSpotifyPlaylistById(playlistId: String!, userId: Int!): Boolean!
+  importSpotifyPlaylistById(playlistId: String!, userId: UUID!): Boolean!
   likeSong(input: LikeSongInput!): LikeSongResult!
   ping: Boolean!
   startDownloadRelease(input: StartDownloadReleaseInput!): StartDownloadReleaseResult!
@@ -188,6 +229,25 @@ type NameCredit {
   artist: Artist!
   joinPhrase: String
   name: String!
+}
+
+"""Information about pagination in a connection."""
+type PageInfo {
+  """When paginating forwards, the cursor to continue."""
+  endCursor: String
+
+  """
+  Indicates whether more edges exist following the set defined by the clients arguments.
+  """
+  hasNextPage: Boolean!
+
+  """
+  Indicates whether more edges exist prior the set defined by the clients arguments.
+  """
+  hasPreviousPage: Boolean!
+
+  """When paginating backwards, the cursor to continue."""
+  startCursor: String
 }
 
 type Ping {
@@ -207,7 +267,8 @@ type Query {
   release: ReleaseSearchRoot!
   releaseGroup: ReleaseGroupSearchRoot!
   serverLibrary: ServerLibrarySearchRoot!
-  viewer: User!
+  user: UserSearchRoot!
+  viewer: User
 }
 
 type Recording {
@@ -303,6 +364,14 @@ type ServerLibrarySearchRoot {
   releaseGroupsInServerLibrary: ReleaseGroupsInServerLibrarySearchRoot!
 }
 
+type SignInError {
+  message: String!
+}
+
+type SignInSuccess {
+  user: User!
+}
+
 type SoulSeekRoot {
   id: ID!
   status: SoulSeekStatus!
@@ -353,6 +422,8 @@ type Track {
   recording: Recording!
 }
 
+scalar UUID
+
 input UnlikedSongInput {
   recordingId: String!
 }
@@ -367,6 +438,56 @@ type Url {
 }
 
 type User {
-  id: Int!
+  createdAt: DateTime!
+  id: ID!
   likedSongs: [LikedSong!]!
+  updatedAt: DateTime!
+  username: String!
+}
+
+type UserProjection {
+  createdAt: DateTime!
+  passwordHash: String
+  updatedAt: DateTime!
+  userId: UUID!
+  username: String!
+}
+
+type UserSearchRoot {
+  users(
+    """Returns the elements in the list that come after the specified cursor."""
+    after: String
+
+    """
+    Returns the elements in the list that come before the specified cursor.
+    """
+    before: String
+
+    """Returns the first _n_ elements from the list."""
+    first: Int
+
+    """Returns the last _n_ elements from the list."""
+    last: Int
+  ): UsersConnection
+}
+
+"""A connection to a list of items."""
+type UsersConnection {
+  """A list of edges."""
+  edges: [UsersEdge!]
+
+  """A flattened list of the nodes."""
+  nodes: [User!]
+
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+}
+
+"""An edge in a connection."""
+type UsersEdge {
+  """A cursor for use in pagination."""
+  cursor: String!
+
+  """The item at the end of the edge."""
+  node: User!
 }

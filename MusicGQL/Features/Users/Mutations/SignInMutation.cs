@@ -25,7 +25,7 @@ public class SignInMutation
 
         if (user == null || string.IsNullOrEmpty(user.PasswordHash))
         {
-            return new SignInResult.Error("Invalid username or password.");
+            return new SignInError("Invalid username or password.");
         }
 
         var verifyResult = await verifyPasswordHandler.Handle(
@@ -34,7 +34,7 @@ public class SignInMutation
 
         if (!verifyResult.IsValid)
         {
-            return new SignInResult.Error("Invalid username or password.");
+            return new SignInError("Invalid username or password.");
         }
 
         var claims = new List<Claim>
@@ -56,16 +56,15 @@ public class SignInMutation
             authProperties
         );
 
-        return new SignInResult.Success(new(user));
+        return new SignInSuccess(new(user));
     }
 }
 
 public record SignInInput(string Username, string Password);
 
 [UnionType]
-public abstract record SignInResult
-{
-    public record Success(User User) : SignInResult;
+public abstract record SignInResult;
 
-    public record Error(string Message) : SignInResult;
-}
+public record SignInSuccess(User User) : SignInResult;
+
+public record SignInError(string Message) : SignInResult;

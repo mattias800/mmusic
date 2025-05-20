@@ -200,12 +200,12 @@ builder
     .AddType<AddArtistToServerLibraryResult.AddArtistToServerLibraryArtistDoesNotExist>()
     .AddType<AddArtistToServerLibraryResult.AddArtistToServerLibraryUnknownError>()
     .AddTypeExtension<CreateUserMutation>()
-    .AddType<CreateUserResult.Success>()
-    .AddType<CreateUserResult.Error>()
+    .AddType<CreateUserSuccess>()
+    .AddType<CreateUserError>()
     .AddType<UserProjection>()
     .AddTypeExtension<SignInMutation>()
-    .AddType<SignInResult.Success>()
-    .AddType<SignInResult.Error>();
+    .AddType<SignInSuccess>()
+    .AddType<SignInError>();
 
 builder.Services.Configure<LastfmOptions>(builder.Configuration.GetSection("Lastfm"));
 

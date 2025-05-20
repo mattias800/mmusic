@@ -7,7 +7,8 @@ namespace MusicGQL.Features.Users;
 
 public record User([property: GraphQLIgnore] UserProjection Model)
 {
-    public Guid UserId => Model.UserId;
+    [ID]
+    public string Id => Model.UserId.ToString();
     public string Username => Model.Username;
 
     public DateTime CreatedAt => Model.CreatedAt;

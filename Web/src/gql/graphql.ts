@@ -14,8 +14,11 @@ export type Scalars = {
   Boolean: { input: boolean; output: boolean; }
   Int: { input: number; output: number; }
   Float: { input: number; output: number; }
+  /** The `DateTime` scalar represents an ISO-8601 compliant date time type. */
+  DateTime: { input: any; output: any; }
   /** The `Long` scalar type represents non-fractional signed whole 64-bit numeric values. Long can represent values between -(2^63) and 2^63 - 1. */
   Long: { input: any; output: any; }
+  UUID: { input: any; output: any; }
 };
 
 export type AddArtistToServerLibraryArtistAlreadyAdded = {
@@ -62,7 +65,7 @@ export type AddReleaseGroupToServerLibraryResult = AddReleaseGroupToServerLibrar
 
 export type AddReleaseGroupToServerLibrarySuccess = {
   __typename?: 'AddReleaseGroupToServerLibrarySuccess';
-  viewer: User;
+  success: Scalars['Boolean']['output'];
 };
 
 export type AddReleaseGroupToServerLibraryUnknownError = {
@@ -135,6 +138,16 @@ export type ArtistServerAvailability = {
 export type ArtistsInServerLibrarySearchRoot = {
   __typename?: 'ArtistsInServerLibrarySearchRoot';
   all: Array<ArtistInServerLibrary>;
+};
+
+export type CreateUserError = {
+  __typename?: 'CreateUserError';
+  message: Scalars['String']['output'];
+};
+
+export type CreateUserSuccess = {
+  __typename?: 'CreateUserSuccess';
+  user: User;
 };
 
 export type DownloadStatus = {
@@ -242,7 +255,7 @@ export type MutationAddReleaseGroupToServerLibraryArgs = {
 
 export type MutationImportSpotifyPlaylistByIdArgs = {
   playlistId: Scalars['String']['input'];
-  userId: Scalars['Int']['input'];
+  userId: Scalars['UUID']['input'];
 };
 
 
@@ -267,6 +280,19 @@ export type NameCredit = {
   name: Scalars['String']['output'];
 };
 
+/** Information about pagination in a connection. */
+export type PageInfo = {
+  __typename?: 'PageInfo';
+  /** When paginating forwards, the cursor to continue. */
+  endCursor?: Maybe<Scalars['String']['output']>;
+  /** Indicates whether more edges exist following the set defined by the clients arguments. */
+  hasNextPage: Scalars['Boolean']['output'];
+  /** Indicates whether more edges exist prior the set defined by the clients arguments. */
+  hasPreviousPage: Scalars['Boolean']['output'];
+  /** When paginating backwards, the cursor to continue. */
+  startCursor?: Maybe<Scalars['String']['output']>;
+};
+
 export type Ping = {
   __typename?: 'Ping';
   id: Scalars['ID']['output'];
@@ -287,7 +313,8 @@ export type Query = {
   release: ReleaseSearchRoot;
   releaseGroup: ReleaseGroupSearchRoot;
   serverLibrary: ServerLibrarySearchRoot;
-  viewer: User;
+  user: UserSearchRoot;
+  viewer?: Maybe<User>;
 };
 
 export type Recording = {
@@ -430,6 +457,16 @@ export type ServerLibrarySearchRoot = {
   releaseGroupsInServerLibrary: ReleaseGroupsInServerLibrarySearchRoot;
 };
 
+export type SignInError = {
+  __typename?: 'SignInError';
+  message: Scalars['String']['output'];
+};
+
+export type SignInSuccess = {
+  __typename?: 'SignInSuccess';
+  user: User;
+};
+
 export type SoulSeekRoot = {
   __typename?: 'SoulSeekRoot';
   id: Scalars['ID']['output'];
@@ -509,8 +546,53 @@ export type Url = {
 
 export type User = {
   __typename?: 'User';
-  id: Scalars['Int']['output'];
+  createdAt: Scalars['DateTime']['output'];
+  id: Scalars['ID']['output'];
   likedSongs: Array<LikedSong>;
+  updatedAt: Scalars['DateTime']['output'];
+  username: Scalars['String']['output'];
+};
+
+export type UserProjection = {
+  __typename?: 'UserProjection';
+  createdAt: Scalars['DateTime']['output'];
+  passwordHash?: Maybe<Scalars['String']['output']>;
+  updatedAt: Scalars['DateTime']['output'];
+  userId: Scalars['UUID']['output'];
+  username: Scalars['String']['output'];
+};
+
+export type UserSearchRoot = {
+  __typename?: 'UserSearchRoot';
+  users?: Maybe<UsersConnection>;
+};
+
+
+export type UserSearchRootUsersArgs = {
+  after?: InputMaybe<Scalars['String']['input']>;
+  before?: InputMaybe<Scalars['String']['input']>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+  last?: InputMaybe<Scalars['Int']['input']>;
+};
+
+/** A connection to a list of items. */
+export type UsersConnection = {
+  __typename?: 'UsersConnection';
+  /** A list of edges. */
+  edges?: Maybe<Array<UsersEdge>>;
+  /** A flattened list of the nodes. */
+  nodes?: Maybe<Array<User>>;
+  /** Information to aid in pagination. */
+  pageInfo: PageInfo;
+};
+
+/** An edge in a connection. */
+export type UsersEdge = {
+  __typename?: 'UsersEdge';
+  /** A cursor for use in pagination. */
+  cursor: Scalars['String']['output'];
+  /** The item at the end of the edge. */
+  node: User;
 };
 
 export type AlbumQueryQueryVariables = Exact<{
@@ -536,12 +618,12 @@ export type ArtistQueryQuery = { __typename?: 'Query', artist: { __typename?: 'A
 export type LikedSongsQueryQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type LikedSongsQueryQuery = { __typename?: 'Query', viewer: (
-    { __typename?: 'User', id: number }
+export type LikedSongsQueryQuery = { __typename?: 'Query', viewer?: (
+    { __typename?: 'User', id: string }
     & { ' $fragmentRefs'?: { 'LikedSongsList_UserFragment': LikedSongsList_UserFragment } }
-  ) };
+  ) | null };
 
-export type Playlist_UserFragment = { __typename?: 'User', id: number, likedSongs: Array<(
+export type Playlist_UserFragment = { __typename?: 'User', id: string, likedSongs: Array<(
     { __typename?: 'LikedSong', id: string }
     & { ' $fragmentRefs'?: { 'LikedSongRow_LikedSongFragment': LikedSongRow_LikedSongFragment } }
   )> } & { ' $fragmentName'?: 'Playlist_UserFragment' };
@@ -633,7 +715,7 @@ export type DownloadStatus_DownloadStatusFragment = { __typename?: 'DownloadStat
 
 export type LikedSongRow_LikedSongFragment = { __typename?: 'LikedSong', id: string, recording?: { __typename?: 'Recording', id: string, title: string, length?: number | null, artists: Array<{ __typename?: 'Artist', id: string, name: string }>, mainAlbum?: { __typename?: 'Release', id: string, title: string, coverArtUri: string, artists: Array<{ __typename?: 'Artist', id: string }> } | null } | null } & { ' $fragmentName'?: 'LikedSongRow_LikedSongFragment' };
 
-export type LikedSongsList_UserFragment = { __typename?: 'User', id: number, likedSongs: Array<(
+export type LikedSongsList_UserFragment = { __typename?: 'User', id: string, likedSongs: Array<(
     { __typename?: 'LikedSong', id: string }
     & { ' $fragmentRefs'?: { 'LikedSongRow_LikedSongFragment': LikedSongRow_LikedSongFragment } }
   )> } & { ' $fragmentName'?: 'LikedSongsList_UserFragment' };

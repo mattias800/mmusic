@@ -15,11 +15,9 @@ public class CreateUserMutation
 
         return result switch
         {
-            CreateUserHandler.Result.Success success => new CreateUserResult.Success(
-                new(success.User)
-            ),
-            CreateUserHandler.Result.Error failure => new CreateUserResult.Error(failure.Message),
-            _ => new CreateUserResult.Error("An unexpected error occurred."),
+            CreateUserHandler.Result.Success success => new CreateUserSuccess(new(success.User)),
+            CreateUserHandler.Result.Error failure => new CreateUserError(failure.Message),
+            _ => new CreateUserError("An unexpected error occurred."),
         };
     }
 }
@@ -27,9 +25,8 @@ public class CreateUserMutation
 public record CreateUserInput(string Username, string Password);
 
 [UnionType]
-public abstract record CreateUserResult
-{
-    public record Success(User User) : CreateUserResult;
+public abstract record CreateUserResult;
 
-    public record Error(string Message) : CreateUserResult;
-}
+public record CreateUserSuccess(User User) : CreateUserResult;
+
+public record CreateUserError(string Message) : CreateUserResult;
