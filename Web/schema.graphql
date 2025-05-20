@@ -134,6 +134,13 @@ type CreateUserError {
   message: String!
 }
 
+input CreateUserInput {
+  password: String!
+  username: String!
+}
+
+union CreateUserResult = CreateUserError | CreateUserSuccess
+
 type CreateUserSuccess {
   user: User!
 }
@@ -218,9 +225,11 @@ type Medium {
 type Mutation {
   addArtistToServerLibrary(input: AddArtistToServerLibraryInput!): AddArtistToServerLibraryResult!
   addReleaseGroupToServerLibrary(input: AddReleaseGroupToServerLibraryInput!): AddReleaseGroupToServerLibraryResult!
+  createUser(input: CreateUserInput!): CreateUserResult!
   importSpotifyPlaylistById(playlistId: String!, userId: UUID!): Boolean!
   likeSong(input: LikeSongInput!): LikeSongResult!
   ping: Boolean!
+  signIn(input: SignInInput!): SignInResult!
   startDownloadRelease(input: StartDownloadReleaseInput!): StartDownloadReleaseResult!
   unlikeSong(input: UnlikedSongInput!): UnlikedSongPayload!
 }
@@ -367,6 +376,13 @@ type ServerLibrarySearchRoot {
 type SignInError {
   message: String!
 }
+
+input SignInInput {
+  password: String!
+  username: String!
+}
+
+union SignInResult = SignInError | SignInSuccess
 
 type SignInSuccess {
   user: User!

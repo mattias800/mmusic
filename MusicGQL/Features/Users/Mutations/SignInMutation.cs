@@ -12,7 +12,7 @@ namespace MusicGQL.Features.Users.Mutations;
 [ExtendObjectType(typeof(Mutation))]
 public class SignInMutation
 {
-    public async Task<object> SignIn(
+    public async Task<SignInResult> SignIn(
         SignInInput input,
         [Service] EventDbContext dbContext,
         [Service] VerifyPasswordHandler verifyPasswordHandler,

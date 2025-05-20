@@ -6,7 +6,7 @@ namespace MusicGQL.Features.Users.Mutations;
 [ExtendObjectType(typeof(Mutation))]
 public class CreateUserMutation
 {
-    public async Task<object> CreateUser(
+    public async Task<CreateUserResult> CreateUser(
         [Service] CreateUserHandler createUserHandler,
         CreateUserInput input
     )

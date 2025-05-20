@@ -1,14 +1,26 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useMutation } from "urql";
-// Updated import to SignInForm and SignInFormValues
-import { SignInForm, SignInFormValues } from "./SignInForm"; 
-import {
-  SignInDocument,
-  SignInMutation,
-  SignInMutationVariables,
-} from "@/gql/graphql";
+import { SignInForm, SignInFormValues } from "./SignInForm";
+import { graphql } from "@/gql";
 
 // import { useRouter } from 'next/router';
+
+export const signInMutation = graphql(`
+  mutation SignIn($username: String!, $password: String!)  {
+    signIn(input: {username: $username, password: $password}) {
+      __typename
+      ... on SignInSuccess {
+        user {
+          id
+          username
+        }
+      }
+      ... on SignInError {
+        message
+      }
+    }
+  }
+`);
 
 export function SignInPanel() {
   const [signInState, signIn] = useMutation<
@@ -52,7 +64,7 @@ export function SignInPanel() {
       <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-gray-800 px-6 py-8 shadow sm:rounded-lg sm:px-10">
           {/* Updated to use SignInForm */}
-          <SignInForm 
+          <SignInForm
             onSubmit={handleSignInSubmit}
             isLoading={signInState.fetching}
             errorMessage={errorMessage}
@@ -61,4 +73,4 @@ export function SignInPanel() {
       </div>
     </div>
   );
-} 
+}
