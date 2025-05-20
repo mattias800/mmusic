@@ -17,4 +17,12 @@ export const cacheKeys: Record<TypesWithNoId, KeyGenerator> = {
   ReleaseGroupsInServerLibrarySearchRoot: () => null,
   ReleaseSearchRoot: () => null,
   ServerLibrarySearchRoot: () => null,
+  ImportPlaylistSearchRoot: () => null,
+  PageInfo: () => null,
+  PlaylistSearchRoot: () => null,
+  SpotifyPlaylistSearchRoot: () => null,
+  UserProjection: () => null,
+  UserSearchRoot: () => null,
+  UsersConnection: () => null,
+  UsersEdge: () => null,
 };
