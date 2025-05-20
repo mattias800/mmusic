@@ -5,10 +5,11 @@ This document provides essential information for developers working on the MMusi
 ## Build and Configuration
 
 ### Prerequisites
+
 - bun
 
-
 ### Setup
+
 1. Install dependencies:
    ```bash
    bun install
@@ -26,18 +27,20 @@ This document provides essential information for developers working on the MMusi
    ```
 
 ### Project Structure
+
 - `/src`: Main source code
-  - `/app`: Page components
-  - `/assets`: Static assets
-  - `/common`: Shared utilities
-  - `/components`: Reusable UI components
-  - `/features`: Feature-specific components
-  - `/gql`: GraphQL related files
-  - `/hooks`: Custom React hooks
-  - `/lib`: Utility libraries
-  - `/test`: Test setup and utilities
+    - `/app`: Page components
+    - `/assets`: Static assets
+    - `/common`: Shared utilities
+    - `/components`: Reusable UI components
+    - `/features`: Feature-specific components
+    - `/gql`: GraphQL related files
+    - `/hooks`: Custom React hooks
+    - `/lib`: Utility libraries
+    - `/test`: Test setup and utilities
 
 ### Configuration Files
+
 - `vite.config.ts`: Vite configuration
 - `tsconfig.json`: TypeScript configuration
 - `eslint.config.js`: ESLint configuration
@@ -45,6 +48,7 @@ This document provides essential information for developers working on the MMusi
 - `codegen.ts`: GraphQL code generation configuration
 
 ### GraphQL Integration
+
 - The project uses GraphQL with the URQL client
 - GraphQL schema is defined in `schema.graphql`
 - Generate TypeScript types from GraphQL schema:
@@ -55,9 +59,11 @@ This document provides essential information for developers working on the MMusi
 ## Testing
 
 ### Testing Framework
+
 The project uses Vitest as the testing framework, along with React Testing Library for component testing.
 
 ### Running Tests
+
 - Run all tests once:
   ```bash
   bun test
@@ -74,6 +80,7 @@ The project uses Vitest as the testing framework, along with React Testing Libra
   ```
 
 ### Test File Structure
+
 - Test files should be placed next to the files they test
 - Use the naming convention `*.test.ts` or `*.test.tsx`
 - Example directory structure:
@@ -88,46 +95,52 @@ The project uses Vitest as the testing framework, along with React Testing Libra
 ### Writing Tests
 
 #### Utility Tests
+
 Here's an example of testing utility functions:
 
 ```typescript
 // src/common/utils/string-utils.test.ts
-import { describe, it, expect } from 'vitest';
-import { capitalizeFirstLetter, truncateString } from './string-utils';
+import {describe, it, expect} from 'vitest';
+import {capitalizeFirstLetter, truncateString} from './string-utils';
 
 describe('String Utils', () => {
-  describe('capitalizeFirstLetter', () => {
-    it('should capitalize the first letter of a string', () => {
-      expect(capitalizeFirstLetter('hello')).toBe('Hello');
+    describe('capitalizeFirstLetter', () => {
+        it('should capitalize the first letter of a string', () => {
+            expect(capitalizeFirstLetter('hello')).toBe('Hello');
+        });
+
+        // More tests...
     });
-    
-    // More tests...
-  });
 });
 ```
 
 #### Component Tests
+
 Here's an example of testing a React component:
 
 ```typescript
 // src/components/ui/Alert.test.tsx
-import { describe, it, expect } from 'vitest';
-import { render, screen } from '@testing-library/react';
-import { Alert } from './Alert';
+import {describe, it, expect} from 'vitest';
+import {render, screen} from '@testing-library/react';
+import {Alert} from './Alert';
 
 describe('Alert Component', () => {
-  it('renders with default variant', () => {
-    render(<Alert>This is an alert</Alert>);
-    const alert = screen.getByRole('alert');
-    expect(alert).toBeInTheDocument();
-    expect(alert.textContent).toBe('This is an alert');
-  });
-  
-  // More tests...
+    it('renders with default variant', () => {
+        render(<Alert>This
+        is
+        an
+        alert < /Alert>);
+        const alert = screen.getByRole('alert');
+        expect(alert).toBeInTheDocument();
+        expect(alert.textContent).toBe('This is an alert');
+    });
+
+    // More tests...
 });
 ```
 
 ### Adding New Tests
+
 1. Create a new test file next to the file you want to test
 2. Import the necessary testing utilities
 3. Write your tests using the describe/it pattern
@@ -136,37 +149,44 @@ describe('Alert Component', () => {
 ## Code Style and Development Practices
 
 ### TypeScript
+
 - The project uses TypeScript for type safety
 - Follow the TypeScript configuration in `tsconfig.json`
 - Use explicit types for function parameters and return values
 
 ### React
+
 - The project uses React 19
 - Use functional components with hooks
 - Follow the component structure in the existing codebase
 
 ### Styling
+
 - The project uses Tailwind CSS for styling
 - Use the `cn` utility function from `src/lib/utils.ts` for conditional class names
 - Follow the component styling patterns in the existing UI components
 
 ### State Management
+
 - The project uses Redux Toolkit for global state management
 - Use React hooks for component-level state
 
 ### Code Formatting
+
 - Use Prettier for code formatting:
   ```bash
   bun prettier
   ```
 
 ### Linting
+
 - Use ESLint for code linting:
   ```bash
   bun lint
   ```
 
 ### GraphQL
+
 - Use the generated types from GraphQL schema
 - Follow the query/mutation patterns in the existing code
 - Use the URQL client for GraphQL operations
@@ -174,18 +194,59 @@ describe('Alert Component', () => {
 ## Debugging
 
 ### Development Server
+
 - The development server runs on port 3100
 - GraphQL requests are proxied to port 5095
 
 ### Browser DevTools
+
 - Use React DevTools for component debugging
 - Use Redux DevTools for state debugging
 - Use Network tab for API request debugging
 
 ## Deployment
+
 - The project is built using Vite
 - The build output is in the `dist` directory
 - Preview the production build:
   ```bash
   bun preview
   ```
+
+# Components
+
+## Page components
+
+All pages should be placed in app/pages/.
+They must be named with the suffix "Page" and should be exported as default.
+They should be added to AppRouter so the user can navigate to them.
+
+## Data dependencies
+
+### Fragments
+
+All components that rely on data from GraphQL should define its own dependencies in
+GraphQL fragments. The data should then be sent to the component as props.
+Use the `useFragment` function from @/gql to unmask the fragment.
+Use the `FragmentType<typeof fragmentVariable>` to define the type of the props.
+The name of the fragment should be the same as the component, but with GraphQL type and "Fragment" as suffixes.
+For example, UserList that uses the User type would have a fragment named `UserListUser_Fragment` and
+the variable would be named `userListUserFragment`.
+
+### Queries
+
+Any component that sends a GraphQL query should have "Fetcher" as suffix in its name.
+The query should be named like the component, but with "Query" as suffix.
+For example, the component AlbumPanelFetcher would have a query named AlbumPanelQuery,
+and the query variable should be named albumPanelQuery.
+
+### Code quality
+
+### useEffect
+
+Avoid useEffect when possible. They are almost never needed.
+
+## UI components
+
+Shared dumb UI components should be placed in common/components/.
+They should use Tailwind CSS for styling.
