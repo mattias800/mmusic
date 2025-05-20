@@ -176,6 +176,16 @@ type ImportPlaylistSearchRoot {
   spotify: SpotifyPlaylistSearchRoot!
 }
 
+type ImportSpotifyPlaylistError {
+  message: String!
+}
+
+union ImportSpotifyPlaylistResult = ImportSpotifyPlaylistError | ImportSpotifyPlaylistSuccess
+
+type ImportSpotifyPlaylistSuccess {
+  success: Boolean!
+}
+
 type LastFmStatistics {
   listeners: Long!
   playCount: Long!
@@ -226,7 +236,7 @@ type Mutation {
   addArtistToServerLibrary(input: AddArtistToServerLibraryInput!): AddArtistToServerLibraryResult!
   addReleaseGroupToServerLibrary(input: AddReleaseGroupToServerLibraryInput!): AddReleaseGroupToServerLibraryResult!
   createUser(input: CreateUserInput!): CreateUserResult!
-  importSpotifyPlaylistById(playlistId: String!, userId: UUID!): Boolean!
+  importSpotifyPlaylistById(playlistId: String!, userId: UUID!): ImportSpotifyPlaylistResult!
   likeSong(input: LikeSongInput!): LikeSongResult!
   ping: Boolean!
   signIn(input: SignInInput!): SignInResult!

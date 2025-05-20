@@ -1,8 +1,8 @@
 import * as React from "react";
-import { LoginPanel } from "@/features/auth/components/LoginPanel.tsx";
+import { SignInPanel } from "@/features/auth/components/SignInPanel.tsx";
 
 export interface HomeProps {}
 
 export const Home: React.FC<HomeProps> = () => {
-  return <LoginPanel />;
+  return <SignInPanel />;
 };

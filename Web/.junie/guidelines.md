@@ -32,15 +32,15 @@ This document provides essential information for developers working on the MMusi
 ### Project Structure
 
 - `/src`: Main source code
-    - `/app`: Page components
-    - `/assets`: Static assets
-    - `/common`: Shared utilities
-    - `/components`: Reusable UI components
-    - `/features`: Feature-specific components
-    - `/gql`: GraphQL related files
-    - `/hooks`: Custom React hooks
-    - `/lib`: Utility libraries
-    - `/test`: Test setup and utilities
+  - `/app`: Page components
+  - `/assets`: Static assets
+  - `/common`: Shared utilities
+  - `/components`: Reusable UI components
+  - `/features`: Feature-specific components
+  - `/gql`: GraphQL related files
+  - `/hooks`: Custom React hooks
+  - `/lib`: Utility libraries
+  - `/test`: Test setup and utilities
 
 ### Configuration Files
 
@@ -55,9 +55,12 @@ This document provides essential information for developers working on the MMusi
 - The project uses GraphQL with the URQL client
 - GraphQL schema is defined in `schema.graphql`
 - Generate TypeScript types from GraphQL schema:
+
   ```bash
   bun types
   ```
+
+- No functions or documents are generated, only types.
 
 ## Testing
 
@@ -105,17 +108,17 @@ Here's an example of testing utility functions:
 
 ```typescript
 // src/common/utils/string-utils.test.ts
-import {describe, it, expect} from "vitest";
-import {capitalizeFirstLetter, truncateString} from "./string-utils";
+import { describe, it, expect } from "vitest";
+import { capitalizeFirstLetter, truncateString } from "./string-utils";
 
 describe("String Utils", () => {
-    describe("capitalizeFirstLetter", () => {
-        it("should capitalize the first letter of a string", () => {
-            expect(capitalizeFirstLetter("hello")).toBe("Hello");
-        });
-
-        // More tests...
+  describe("capitalizeFirstLetter", () => {
+    it("should capitalize the first letter of a string", () => {
+      expect(capitalizeFirstLetter("hello")).toBe("Hello");
     });
+
+    // More tests...
+  });
 });
 ```
 
@@ -255,12 +258,51 @@ and the query variable should be named albumPanelQuery.
 
 There is no need to manually specify types for queries, they are inferred from the generated types.
 
+Here is an example of useQuery:
+
+```typescript
+const [{ error, data, fetching, stale }] = useQuery({
+  query: likedSongsQuery,
+});
+```
+
+And here is an example of a full fetcher component:
+
+```typescript jsx
+export interface LikedSongsProps {}
+
+export const likedSongsQuery = graphql(`
+  query LikedSongsQuery {
+    viewer {
+      id
+      ...LikedSongsList_User
+    }
+  }
+`);
+
+export const LikedSongs: React.FC<LikedSongsProps> = () => {
+  const [{ error, data, fetching, stale }] = useQuery({
+    query: likedSongsQuery,
+  });
+  if (fetching || stale) return <ScreenSpinner />;
+  if (error) return <div>Error: {error.message}</div>;
+  if (!data?.viewer) return <div>No data</div>;
+  return <LikedSongsList user={data?.viewer} />;
+};
+```
+
 ## Mutations
 
 Mutations should be placed in the same file as the component that uses them.
 They should be named after the logical operation that it performs, with "Mutation" as suffix.
 
 There is no need to manually specify types for mutations, they are inferred from the generated types.
+
+Here is an example of usage:
+
+```typescript
+const [{ fetching }, signIn] = useMutation(signInMutation);
+```
 
 ## GraphQL types
 
@@ -273,6 +315,9 @@ bun types
 These types are never to be modified manually.
 They are also never imported directly,
 since the types will be applied to all calls to the `graphql()` function.
+No functions or documents are generated, only types.
+
+You must generate the types after changing the GraphQL schema, or any fragment, query or mutation.
 
 ### Code quality
 

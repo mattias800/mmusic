@@ -6,22 +6,19 @@ using MusicGQL.Types;
 namespace MusicGQL.Features.Playlists.Import.Spotify.Mutations;
 
 [ExtendObjectType(typeof(Mutation))]
-public class SpotifyPlaylistImportMutation
+public class ImportSpotifyPlaylistMutation
 {
-    public async Task<bool> ImportSpotifyPlaylistById(
+    public async Task<ImportSpotifyPlaylistResult> ImportSpotifyPlaylistById(
         [Service] SpotifyService spotifyService,
         [Service] EventDbContext db,
         string playlistId,
         Guid userId
     )
     {
-        // 0. Fetch Playlist details from Spotify
         var spotifyPlaylist = await spotifyService.GetPlaylistDetailsAsync(playlistId);
         if (spotifyPlaylist == null)
         {
-            // Handle case where playlist is not found or error occurs
-            // For now, let's return false or throw an exception
-            return false; // Or throw new System.Exception("Spotify playlist not found");
+            return new ImportSpotifyPlaylistError("Spotify playlist not found");
         }
 
         // 1. Create Playlist event
@@ -60,6 +57,13 @@ public class SpotifyPlaylistImportMutation
         }
 
         await db.SaveChangesAsync();
-        return true;
+        return new ImportSpotifyPlaylistSuccess(true);
     }
 }
+
+[UnionType]
+public abstract record ImportSpotifyPlaylistResult;
+
+public record ImportSpotifyPlaylistSuccess(bool Success) : ImportSpotifyPlaylistResult;
+
+public record ImportSpotifyPlaylistError(string Message) : ImportSpotifyPlaylistResult;

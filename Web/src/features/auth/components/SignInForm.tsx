@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { TextInput } from '@/components/common/TextInput';
+import { TextInput } from '@/components/inputs/TextInput';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -75,4 +75,4 @@ export function SignInForm({ onSubmit, isLoading, errorMessage }: SignInFormProp
       </div>
     </form>
   );
-} 
+}

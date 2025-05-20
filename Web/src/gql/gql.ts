@@ -31,6 +31,7 @@ type Documents = {
     "\n  query ArtistSingleList($artistId: ID!) {\n    artist {\n      byId(id: $artistId) {\n        id\n        singles {\n          id\n          firstReleaseDate\n          ...AlbumCard_ReleaseGroup\n        }\n      }\n    }\n  }\n": typeof types.ArtistSingleListDocument,
     "\n  fragment TopArtistTrackItem_LastFmTrack on LastFmTrack {\n    id\n    playCount\n    summary\n    recording {\n      id\n      title\n      length\n      ...RecordingPlayButton_Recording\n      relations {\n        attributes\n        url {\n          id\n          resource\n        }\n        direction\n        end\n        begin\n        typeId\n        targetType\n        type\n      }\n      mainAlbum {\n        id\n        title\n        coverArtUri\n        releaseGroup {\n          id\n        }\n      }\n    }\n  }\n": typeof types.TopArtistTrackItem_LastFmTrackFragmentDoc,
     "\n  fragment TopArtistTracks_Artist on Artist {\n    id\n    topTracks {\n      id\n      ...TopArtistTrackItem_LastFmTrack\n    }\n  }\n": typeof types.TopArtistTracks_ArtistFragmentDoc,
+    "\n  mutation SignIn($username: String!, $password: String!) {\n    signIn(input: { username: $username, password: $password }) {\n      __typename\n      ... on SignInSuccess {\n        user {\n          id\n          username\n        }\n      }\n      ... on SignInError {\n        message\n      }\n    }\n  }\n": typeof types.SignInDocument,
     "\n  fragment DownloadOverview_DownloadStatus on DownloadStatus {\n    id\n    ...DownloadStatus_DownloadStatus\n  }\n": typeof types.DownloadOverview_DownloadStatusFragmentDoc,
     "\n  query DownloadOverviewQuery {\n    download {\n      all {\n        id\n        ...DownloadOverview_DownloadStatus\n      }\n    }\n  }\n": typeof types.DownloadOverviewQueryDocument,
     "\n  subscription DownloadOverviewSubscription {\n    downloadStatusUpdated {\n      id\n      ...DownloadOverview_DownloadStatus\n    }\n  }\n": typeof types.DownloadOverviewSubscriptionDocument,
@@ -45,6 +46,9 @@ type Documents = {
     "\n  fragment SoulSeekNetworkStatus_SoulSeekStatus on SoulSeekStatus {\n    id\n    status\n  }\n": typeof types.SoulSeekNetworkStatus_SoulSeekStatusFragmentDoc,
     "\n  subscription SoulSeekNetworkStatusSubscription {\n    soulSeekStatusUpdated {\n      ...SoulSeekNetworkStatus_SoulSeekStatus\n    }\n  }\n": typeof types.SoulSeekNetworkStatusSubscriptionDocument,
     "\n  query SoulSeekNetworkStatusQuery {\n    external {\n      id\n      soulSeek {\n        id\n        status {\n          ...SoulSeekNetworkStatus_SoulSeekStatus\n        }\n      }\n    }\n  }\n": typeof types.SoulSeekNetworkStatusQueryDocument,
+    "\n  query UserPlaylistsLoader_Query($spotifyUsername: String!) {\n    playlist {\n      importPlaylists {\n        spotify {\n          spotifyPlaylistsForUser(username: $spotifyUsername) {\n            id\n            ...UserPlaylistsList_SpotifyPlaylist\n          }\n        }\n      }\n    }\n  }\n": typeof types.UserPlaylistsLoader_QueryDocument,
+    "\n  mutation ImportSpotifyPlaylistById($playlistId: String!, $userId: UUID!) {\n    importSpotifyPlaylistById(playlistId: $playlistId, userId: $userId) {\n      __typename\n      ... on ImportSpotifyPlaylistSuccess {\n        success\n      }\n      ... on ImportSpotifyPlaylistError {\n        message\n      }\n    }\n  }\n": typeof types.ImportSpotifyPlaylistByIdDocument,
+    "\n  fragment UserPlaylistsList_SpotifyPlaylist on SpotifyPlaylist {\n    id\n    description\n    name\n    coverImageUrl\n  }\n": typeof types.UserPlaylistsList_SpotifyPlaylistFragmentDoc,
 };
 const documents: Documents = {
     "\n  query AlbumQuery($releaseGroupId: ID!) {\n    releaseGroup {\n      byId(id: $releaseGroupId) {\n        id\n        ...AlbumPanel_ReleaseGroup\n      }\n    }\n  }\n": types.AlbumQueryDocument,
@@ -64,6 +68,7 @@ const documents: Documents = {
     "\n  query ArtistSingleList($artistId: ID!) {\n    artist {\n      byId(id: $artistId) {\n        id\n        singles {\n          id\n          firstReleaseDate\n          ...AlbumCard_ReleaseGroup\n        }\n      }\n    }\n  }\n": types.ArtistSingleListDocument,
     "\n  fragment TopArtistTrackItem_LastFmTrack on LastFmTrack {\n    id\n    playCount\n    summary\n    recording {\n      id\n      title\n      length\n      ...RecordingPlayButton_Recording\n      relations {\n        attributes\n        url {\n          id\n          resource\n        }\n        direction\n        end\n        begin\n        typeId\n        targetType\n        type\n      }\n      mainAlbum {\n        id\n        title\n        coverArtUri\n        releaseGroup {\n          id\n        }\n      }\n    }\n  }\n": types.TopArtistTrackItem_LastFmTrackFragmentDoc,
     "\n  fragment TopArtistTracks_Artist on Artist {\n    id\n    topTracks {\n      id\n      ...TopArtistTrackItem_LastFmTrack\n    }\n  }\n": types.TopArtistTracks_ArtistFragmentDoc,
+    "\n  mutation SignIn($username: String!, $password: String!) {\n    signIn(input: { username: $username, password: $password }) {\n      __typename\n      ... on SignInSuccess {\n        user {\n          id\n          username\n        }\n      }\n      ... on SignInError {\n        message\n      }\n    }\n  }\n": types.SignInDocument,
     "\n  fragment DownloadOverview_DownloadStatus on DownloadStatus {\n    id\n    ...DownloadStatus_DownloadStatus\n  }\n": types.DownloadOverview_DownloadStatusFragmentDoc,
     "\n  query DownloadOverviewQuery {\n    download {\n      all {\n        id\n        ...DownloadOverview_DownloadStatus\n      }\n    }\n  }\n": types.DownloadOverviewQueryDocument,
     "\n  subscription DownloadOverviewSubscription {\n    downloadStatusUpdated {\n      id\n      ...DownloadOverview_DownloadStatus\n    }\n  }\n": types.DownloadOverviewSubscriptionDocument,
@@ -78,6 +83,9 @@ const documents: Documents = {
     "\n  fragment SoulSeekNetworkStatus_SoulSeekStatus on SoulSeekStatus {\n    id\n    status\n  }\n": types.SoulSeekNetworkStatus_SoulSeekStatusFragmentDoc,
     "\n  subscription SoulSeekNetworkStatusSubscription {\n    soulSeekStatusUpdated {\n      ...SoulSeekNetworkStatus_SoulSeekStatus\n    }\n  }\n": types.SoulSeekNetworkStatusSubscriptionDocument,
     "\n  query SoulSeekNetworkStatusQuery {\n    external {\n      id\n      soulSeek {\n        id\n        status {\n          ...SoulSeekNetworkStatus_SoulSeekStatus\n        }\n      }\n    }\n  }\n": types.SoulSeekNetworkStatusQueryDocument,
+    "\n  query UserPlaylistsLoader_Query($spotifyUsername: String!) {\n    playlist {\n      importPlaylists {\n        spotify {\n          spotifyPlaylistsForUser(username: $spotifyUsername) {\n            id\n            ...UserPlaylistsList_SpotifyPlaylist\n          }\n        }\n      }\n    }\n  }\n": types.UserPlaylistsLoader_QueryDocument,
+    "\n  mutation ImportSpotifyPlaylistById($playlistId: String!, $userId: UUID!) {\n    importSpotifyPlaylistById(playlistId: $playlistId, userId: $userId) {\n      __typename\n      ... on ImportSpotifyPlaylistSuccess {\n        success\n      }\n      ... on ImportSpotifyPlaylistError {\n        message\n      }\n    }\n  }\n": types.ImportSpotifyPlaylistByIdDocument,
+    "\n  fragment UserPlaylistsList_SpotifyPlaylist on SpotifyPlaylist {\n    id\n    description\n    name\n    coverImageUrl\n  }\n": types.UserPlaylistsList_SpotifyPlaylistFragmentDoc,
 };
 
 /**
@@ -165,6 +173,10 @@ export function graphql(source: "\n  fragment TopArtistTracks_Artist on Artist {
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
+export function graphql(source: "\n  mutation SignIn($username: String!, $password: String!) {\n    signIn(input: { username: $username, password: $password }) {\n      __typename\n      ... on SignInSuccess {\n        user {\n          id\n          username\n        }\n      }\n      ... on SignInError {\n        message\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation SignIn($username: String!, $password: String!) {\n    signIn(input: { username: $username, password: $password }) {\n      __typename\n      ... on SignInSuccess {\n        user {\n          id\n          username\n        }\n      }\n      ... on SignInError {\n        message\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
 export function graphql(source: "\n  fragment DownloadOverview_DownloadStatus on DownloadStatus {\n    id\n    ...DownloadStatus_DownloadStatus\n  }\n"): (typeof documents)["\n  fragment DownloadOverview_DownloadStatus on DownloadStatus {\n    id\n    ...DownloadStatus_DownloadStatus\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
@@ -218,6 +230,18 @@ export function graphql(source: "\n  subscription SoulSeekNetworkStatusSubscript
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  query SoulSeekNetworkStatusQuery {\n    external {\n      id\n      soulSeek {\n        id\n        status {\n          ...SoulSeekNetworkStatus_SoulSeekStatus\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  query SoulSeekNetworkStatusQuery {\n    external {\n      id\n      soulSeek {\n        id\n        status {\n          ...SoulSeekNetworkStatus_SoulSeekStatus\n        }\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query UserPlaylistsLoader_Query($spotifyUsername: String!) {\n    playlist {\n      importPlaylists {\n        spotify {\n          spotifyPlaylistsForUser(username: $spotifyUsername) {\n            id\n            ...UserPlaylistsList_SpotifyPlaylist\n          }\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  query UserPlaylistsLoader_Query($spotifyUsername: String!) {\n    playlist {\n      importPlaylists {\n        spotify {\n          spotifyPlaylistsForUser(username: $spotifyUsername) {\n            id\n            ...UserPlaylistsList_SpotifyPlaylist\n          }\n        }\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  mutation ImportSpotifyPlaylistById($playlistId: String!, $userId: UUID!) {\n    importSpotifyPlaylistById(playlistId: $playlistId, userId: $userId) {\n      __typename\n      ... on ImportSpotifyPlaylistSuccess {\n        success\n      }\n      ... on ImportSpotifyPlaylistError {\n        message\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation ImportSpotifyPlaylistById($playlistId: String!, $userId: UUID!) {\n    importSpotifyPlaylistById(playlistId: $playlistId, userId: $userId) {\n      __typename\n      ... on ImportSpotifyPlaylistSuccess {\n        success\n      }\n      ... on ImportSpotifyPlaylistError {\n        message\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  fragment UserPlaylistsList_SpotifyPlaylist on SpotifyPlaylist {\n    id\n    description\n    name\n    coverImageUrl\n  }\n"): (typeof documents)["\n  fragment UserPlaylistsList_SpotifyPlaylist on SpotifyPlaylist {\n    id\n    description\n    name\n    coverImageUrl\n  }\n"];
 
 export function graphql(source: string) {
   return (documents as any)[source] ?? {};
