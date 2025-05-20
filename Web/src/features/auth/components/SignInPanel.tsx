@@ -53,7 +53,7 @@ export function SignInPanel() {
   };
 
   return (
-    <div className="flex min-h-full flex-col justify-center px-6 py-12 lg:px-8 bg-gray-900 text-white">
+    <div className="flex min-h-full flex-col justify-center px-6 py-12 lg:px-8  text-white">
       <div className="sm:mx-auto sm:w-full sm:max-w-md flex flex-col items-center">
         <MmusicLogo width={"250px"} />
         <h2 className="mt-6 text-center text-2xl font-bold leading-9 tracking-tight text-gray-100">
@@ -62,7 +62,7 @@ export function SignInPanel() {
       </div>
 
       <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-gray-800 px-6 py-8 shadow sm:rounded-lg sm:px-10">
+        <div className="bg-gray-900 px-6 py-8 shadow sm:rounded-lg sm:px-10">
           <SignInForm
             onSubmit={handleSignInSubmit}
             isLoading={signInState.fetching}
