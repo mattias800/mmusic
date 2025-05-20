@@ -1,12 +1,11 @@
 using HotChocolate.Subscriptions;
-using MusicGQL.Features.Downloads;
-using MusicGQL.Sagas.DownloadRelease.Util;
+using MusicGQL.Features.Downloads.Sagas.Util;
 using Rebus.Bus;
 using Rebus.Handlers;
 using Rebus.Sagas;
 using Soulseek;
 
-namespace MusicGQL.Sagas.DownloadRelease;
+namespace MusicGQL.Features.Downloads.Sagas;
 
 public class DownloadReleaseSaga(
     IBus bus,

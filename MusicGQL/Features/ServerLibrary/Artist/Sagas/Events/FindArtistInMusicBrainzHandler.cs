@@ -1,5 +1,5 @@
+using MusicGQL.Features.Downloads.Sagas.Handlers;
 using MusicGQL.Integration.MusicBrainz;
-using MusicGQL.Sagas.DownloadRelease.Handlers;
 using Rebus.Bus;
 using Rebus.Handlers;
 

@@ -1,7 +1,6 @@
-using Hqub.MusicBrainz.Entities;
 using Rebus.Sagas;
 
-namespace MusicGQL.Sagas.DownloadRelease;
+namespace MusicGQL.Features.Downloads.Sagas;
 
 public class DownloadReleaseSagaData : ISagaData
 {
@@ -18,8 +17,8 @@ public class DownloadReleaseSagaData : ISagaData
 
     // Data
     public string MusicBrainzReleaseId { get; set; }
-    public Release? Release { get; set; }
-    public List<Recording>? Recordings { get; set; }
+    public Hqub.MusicBrainz.Entities.Release? Release { get; set; }
+    public List<Hqub.MusicBrainz.Entities.Recording>? Recordings { get; set; }
 
     public Queue<DownloadQueueItem>? DownloadQueue { get; set; }
 }

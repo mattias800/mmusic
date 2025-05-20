@@ -2,7 +2,7 @@ using MusicGQL.Integration.MusicBrainz;
 using Rebus.Bus;
 using Rebus.Handlers;
 
-namespace MusicGQL.Sagas.DownloadRelease.Handlers;
+namespace MusicGQL.Features.Downloads.Sagas.Handlers;
 
 public class LookupRecordingsForReleaseInMusicBrainzHandler(
     ILogger<LookupRecordingsForReleaseInMusicBrainzHandler> logger,

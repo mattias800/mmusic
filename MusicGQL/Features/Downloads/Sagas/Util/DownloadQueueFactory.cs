@@ -1,6 +1,6 @@
 using Soulseek;
 
-namespace MusicGQL.Sagas.DownloadRelease.Util;
+namespace MusicGQL.Features.Downloads.Sagas.Util;
 
 public static class DownloadQueueFactory
 {

@@ -1,7 +1,7 @@
 using System.Text;
 using Microsoft.EntityFrameworkCore;
 using MusicGQL.Db.Postgres;
-using MusicGQL.Sagas.DownloadRelease;
+using MusicGQL.Features.Downloads.Sagas;
 using Newtonsoft.Json;
 
 namespace MusicGQL.Features.Downloads;

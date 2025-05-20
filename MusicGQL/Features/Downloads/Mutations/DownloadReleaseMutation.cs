@@ -1,4 +1,4 @@
-using MusicGQL.Sagas.DownloadRelease;
+using MusicGQL.Features.Downloads.Sagas;
 using MusicGQL.Types;
 using Rebus.Bus;
 
@@ -20,8 +20,6 @@ public class StartDownloadReleaseMutation
 public record StartDownloadReleaseInput(string ReleaseId);
 
 [UnionType("StartDownloadReleaseResult")]
-public abstract record StartDownloadReleaseResult
-{
-};
+public abstract record StartDownloadReleaseResult { };
 
 public record StartDownloadReleaseSuccess(bool Success) : StartDownloadReleaseResult;

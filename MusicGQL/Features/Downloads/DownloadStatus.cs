@@ -1,4 +1,4 @@
-using MusicGQL.Sagas.DownloadRelease;
+using MusicGQL.Features.Downloads.Sagas;
 
 namespace MusicGQL.Features.Downloads;
 
