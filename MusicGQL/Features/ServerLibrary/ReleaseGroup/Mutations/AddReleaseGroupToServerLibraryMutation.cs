@@ -1,4 +1,5 @@
 using MusicGQL.Features.ServerLibrary.ReleaseGroup.Handlers;
+using MusicGQL.Features.Users;
 using MusicGQL.Types;
 
 namespace MusicGQL.Features.ServerLibrary.ReleaseGroup.Mutations;
@@ -15,9 +16,7 @@ public class AddReleaseGroupToServerLibraryMutation
         {
             // TODO Correct user
             MarkReleaseGroupAsAddedToServerLibraryHandler.Result.Success =>
-                new AddReleaseGroupToServerLibraryResult.AddReleaseGroupToServerLibrarySuccess(
-                    new User.User(0)
-                ),
+                new AddReleaseGroupToServerLibraryResult.AddReleaseGroupToServerLibrarySuccess(),
             MarkReleaseGroupAsAddedToServerLibraryHandler.Result.AlreadyAdded =>
                 new AddReleaseGroupToServerLibraryResult.AddReleaseGroupToServerLibraryReleaseGroupAlreadyAdded(
                     "ReleaseGroup already added!"
@@ -39,8 +38,7 @@ public record AddReleaseGroupToServerLibraryInput([property: ID] string ReleaseG
 [UnionType("AddReleaseGroupToServerLibraryResult")]
 public abstract record AddReleaseGroupToServerLibraryResult
 {
-    public record AddReleaseGroupToServerLibrarySuccess(User.User Viewer)
-        : AddReleaseGroupToServerLibraryResult;
+    public record AddReleaseGroupToServerLibrarySuccess : AddReleaseGroupToServerLibraryResult;
 
     public record AddReleaseGroupToServerLibraryReleaseGroupAlreadyAdded(string Message)
         : AddReleaseGroupToServerLibraryResult;

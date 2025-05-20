@@ -1,28 +1,55 @@
+using System; // For Guid
+using System.Security.Claims; // For ClaimTypes
+using System.Threading.Tasks; // For Task
+using HotChocolate.Types; // For [ExtendObjectType] and [UnionType]
+using Microsoft.AspNetCore.Http; // For IHttpContextAccessor
 using MusicGQL.Features.LikedSongs.Commands;
-using MusicGQL.Types;
+using MusicGQL.Features.Users; // For User type
+using MusicGQL.Types; // For Mutation base
+using MusicGQL.Db.Postgres; // For EventDbContext (to fetch UserProjection for Viewer)
+using Microsoft.EntityFrameworkCore; // For FirstOrDefaultAsync
 
 namespace MusicGQL.Features.LikedSongs.Mutations;
 
 [ExtendObjectType(typeof(Mutation))]
-public record LikeSongMutation
+public class LikeSongMutation // Changed to class as it now has dependencies
 {
     public async Task<LikeSongResult> LikeSong(
+        LikeSongInput input,
         [Service] LikeSongHandler likeSongHandler,
-        LikeSongInput input
+        [Service] IHttpContextAccessor httpContextAccessor, // Inject IHttpContextAccessor
+        [Service] EventDbContext dbContext // Inject EventDbContext to fetch viewer details
     )
     {
-        return await likeSongHandler.Handle(new(Guid.NewGuid(), input.RecordingId)) switch
+        var userIdString = httpContextAccessor.HttpContext?.User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!Guid.TryParse(userIdString, out var userId))
         {
-            // TODO Correct user
-            LikeSongHandler.Result.Success => new LikeSongResult.LikeSongSuccess(new User.User(0)),
-            LikeSongHandler.Result.AlreadyLiked => new LikeSongResult.LikeSongAlreadyLiked(
-                "Song already liked!"
-            ),
-            LikeSongHandler.Result.SongDoesNotExist => new LikeSongResult.LikeSongSongDoesNotExist(
-                "Song does not exist in MusicBrainz!"
-            ),
-            _ => throw new ArgumentOutOfRangeException(),
-        };
+            // User not authenticated or UserId claim is missing/invalid
+            // Return an appropriate error. For now, throwing, but a GraphQL error object is better.
+            // This could also be a specific LikeSongResult type like LikeSongResult.NotAuthenticated
+            throw new UnauthorizedAccessException("User not authenticated.");
+        }
+
+        var handlerResult = await likeSongHandler.Handle(new LikeSongHandler.Command(userId, input.RecordingId));
+        
+        switch (handlerResult)
+        {
+            case LikeSongHandler.Result.Success:
+                var userProjection = await dbContext.UserProjections.FirstOrDefaultAsync(u => u.UserId == userId);
+                if (userProjection == null)
+                {
+                    // This case should ideally not happen if user is authenticated
+                    throw new Exception("Authenticated user projection not found."); 
+                }
+                return new LikeSongResult.LikeSongSuccess(new User(userProjection));
+            case LikeSongHandler.Result.AlreadyLiked:
+                return new LikeSongResult.LikeSongAlreadyLiked("Song already liked!");
+            case LikeSongHandler.Result.SongDoesNotExist:
+                return new LikeSongResult.LikeSongSongDoesNotExist("Song does not exist in MusicBrainz!");
+            default:
+                // Log error: Unhandled handler result
+                throw new ArgumentOutOfRangeException(nameof(handlerResult), "Unhandled result from LikeSongHandler");
+        }
     }
 }
 
@@ -31,9 +58,8 @@ public record LikeSongInput(string RecordingId);
 [UnionType("LikeSongResult")]
 public abstract record LikeSongResult
 {
-    public record LikeSongSuccess(User.User Viewer) : LikeSongResult;
-
+    public record LikeSongSuccess(User Viewer) : LikeSongResult;
     public record LikeSongAlreadyLiked(string Message) : LikeSongResult;
-
     public record LikeSongSongDoesNotExist(string Message) : LikeSongResult;
+    // Consider adding: public record NotAuthenticated(string Message) : LikeSongResult;
 }

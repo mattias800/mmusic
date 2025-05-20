@@ -1,11 +1,14 @@
 using Google.Apis.Services;
 using Hqub.Lastfm;
 using Hqub.MusicBrainz;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using MusicGQL.Db.Postgres;
+using MusicGQL.Db.Postgres.Models.Projections;
 using MusicGQL.EventProcessor;
+using MusicGQL.Features.Authentication.Handlers;
 using MusicGQL.Features.Downloads;
 using MusicGQL.Features.Downloads.Mutations;
 using MusicGQL.Features.External.SoulSeek;
@@ -26,6 +29,10 @@ using MusicGQL.Features.ServerLibrary.ReleaseGroup.Handlers;
 using MusicGQL.Features.ServerLibrary.ReleaseGroup.Mutations;
 using MusicGQL.Features.ServerLibrary.ReleaseGroup.Sagas;
 using MusicGQL.Features.ServerLibrary.ReleaseGroup.Sagas.Events;
+using MusicGQL.Features.Users.Handlers;
+using MusicGQL.Features.Users.Mutations;
+using MusicGQL.Features.Users;
+using MusicGQL.Features.Users.Aggregate;
 using MusicGQL.Integration.MusicBrainz;
 using MusicGQL.Integration.Spotify;
 using MusicGQL.Integration.Spotify.Configuration;
@@ -84,7 +91,12 @@ builder
     .AddScoped<LikedSongsEventProcessor>()
     .AddScoped<ReleaseGroupsAddedToServerLibraryProcessor>()
     .AddScoped<ArtistsAddedToServerLibraryProcessor>()
+    .AddScoped<UserEventProcessor>()
     .AddScoped<EventProcessorWorker>()
+    // Register new Handlers
+    .AddScoped<HashPasswordHandler>()
+    .AddScoped<VerifyPasswordHandler>()
+    .AddScoped<CreateUserHandler>()
     // Register YouTubeService
     .AddSingleton<Google.Apis.YouTube.v3.YouTubeService>(sp =>
     {
@@ -129,7 +141,19 @@ builder.Services.AddDbContext<EventDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Postgres"))
 );
 
+// Add Authentication services
+builder
+    .Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.LoginPath = "/login"; // Path to the login page UI (to be created)
+        options.LogoutPath = "/logout";
+        // Further options can be configured here, like cookie expiration.
+    });
+builder.Services.AddAuthorization();
+
 builder.Services.AddAutoMapper(typeof(Program));
+builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddStackExchangeRedisCache(options =>
 {
@@ -175,7 +199,14 @@ builder
     .AddType<AddArtistToServerLibraryResult.AddArtistToServerLibraryUnknownError>()
     .AddType<AddArtistToServerLibraryResult.AddArtistToServerLibraryArtistAlreadyAdded>()
     .AddType<AddArtistToServerLibraryResult.AddArtistToServerLibraryArtistDoesNotExist>()
-    .AddType<AddArtistToServerLibraryResult.AddArtistToServerLibraryUnknownError>();
+    .AddType<AddArtistToServerLibraryResult.AddArtistToServerLibraryUnknownError>()
+    .AddTypeExtension<CreateUserMutation>()
+    .AddType<CreateUserPayload>()
+    .AddType<CreateUserErrorPayload>()
+    .AddType<UserProjection>()
+    .AddType<LoginSuccessPayload>()
+    .AddType<LoginErrorPayload>()
+    .AddType<User>();
 
 builder.Services.Configure<LastfmOptions>(builder.Configuration.GetSection("Lastfm"));
 
@@ -274,6 +305,11 @@ var app = builder.Build();
 // Ensure Neo4j constraints are created/verified on startup
 await Neo4JSchemaSetup.EnsureConstraintsAsync(app.Services, app.Logger);
 
+app.UseRouting(); // Ensure UseRouting is called before UseAuthentication and UseAuthorization
+
+app.UseAuthentication();
+app.UseAuthorization();
+
 // 🟢 Run event processor once on startup
 using (var scope = app.Services.CreateScope())
 {
@@ -283,8 +319,6 @@ using (var scope = app.Services.CreateScope())
     var soulSeekService = scope.ServiceProvider.GetRequiredService<SoulSeekService>();
     _ = soulSeekService.Connect();
 }
-
-app.UseRouting();
 
 app.UseWebSockets();
 

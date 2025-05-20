@@ -1,21 +1,35 @@
+using System;
+using System.Security.Claims;
+using System.Threading.Tasks;
+using HotChocolate.Types;
+using Microsoft.AspNetCore.Http;
 using MusicGQL.Features.LikedSongs.Commands;
 using MusicGQL.Types;
 
 namespace MusicGQL.Features.LikedSongs.Mutations;
 
 [ExtendObjectType(typeof(Mutation))]
-public record UnlikeSongMutation
+public class UnlikeSongMutation
 {
     public async Task<UnlikedSongPayload> UnlikeSong(
+        UnlikedSongInput input,
         [Service] UnlikeSongHandler unlikeSongHandler,
-        UnlikedSongInput input
+        [Service] IHttpContextAccessor httpContextAccessor
     )
     {
-        return await unlikeSongHandler.Handle(new(Guid.NewGuid(), input.RecordingId)) switch
+        var userIdString = httpContextAccessor.HttpContext?.User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!Guid.TryParse(userIdString, out var userId))
         {
-            UnlikeSongHandler.Result.Success => new(true),
-            UnlikeSongHandler.Result.AlreadyNotLiked => new(true),
-            _ => throw new ArgumentOutOfRangeException(),
+            throw new UnauthorizedAccessException("User not authenticated.");
+        }
+
+        var handlerResult = await unlikeSongHandler.Handle(new UnlikeSongHandler.Command(userId, input.RecordingId));
+
+        return handlerResult switch
+        {
+            UnlikeSongHandler.Result.Success => new UnlikedSongPayload(true),
+            UnlikeSongHandler.Result.AlreadyNotLiked => new UnlikedSongPayload(true),
+            _ => throw new ArgumentOutOfRangeException(nameof(handlerResult), "Unhandled result from UnlikeSongHandler"),
         };
     }
 }

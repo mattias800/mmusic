@@ -1,19 +1,23 @@
+using Microsoft.EntityFrameworkCore;
 using MusicGQL.Db.Postgres;
 using MusicGQL.Integration.MusicBrainz;
+using System;
+using System.Threading.Tasks;
 
 namespace MusicGQL.Features.LikedSongs.Commands;
 
 public class LikeSongHandler(
     EventDbContext dbContext,
-    EventProcessor.EventProcessorWorker eventProcessorWorker,
+    MusicGQL.EventProcessor.EventProcessorWorker eventProcessorWorker,
     MusicBrainzService mbService
 )
 {
     public async Task<Result> Handle(Command command)
     {
-        var exising = await dbContext.LikedSongsProjections.FindAsync(1);
+        var existingProjection = await dbContext.LikedSongsProjections
+            .FirstOrDefaultAsync(p => p.UserId == command.UserId);
 
-        if (exising?.LikedSongRecordingIds.Contains(command.RecordingId) ?? false)
+        if (existingProjection?.LikedSongRecordingIds.Contains(command.RecordingId) ?? false)
         {
             return new Result.AlreadyLiked();
         }
@@ -27,13 +31,17 @@ public class LikeSongHandler(
                 return new Result.SongDoesNotExist();
             }
         }
-        catch
+        catch (Exception ex)
         {
             return new Result.SongDoesNotExist();
         }
 
         dbContext.Events.Add(
-            new Db.Postgres.Models.Events.LikedSong { RecordingId = command.RecordingId }
+            new Db.Postgres.Models.Events.LikedSong 
+            { 
+                SubjectUserId = command.UserId,
+                RecordingId = command.RecordingId 
+            }
         );
 
         await dbContext.SaveChangesAsync();

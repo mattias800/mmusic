@@ -12,7 +12,7 @@ public class SpotifyPlaylistImportMutation
         [Service] SpotifyService spotifyService,
         [Service] EventDbContext db,
         string playlistId,
-        int userId
+        Guid userId
     )
     {
         // 0. Fetch Playlist details from Spotify
@@ -29,7 +29,7 @@ public class SpotifyPlaylistImportMutation
         var createdPlaylistEvent = new CreatedPlaylist
         {
             PlaylistId = playlistGuid,
-            UserId = userId,
+            ActorUserId = userId,
             Name = spotifyPlaylist.Name ?? string.Empty,
             SpotifyPlaylistId = spotifyPlaylist.Id,
             Description = spotifyPlaylist.Description,
@@ -53,7 +53,7 @@ public class SpotifyPlaylistImportMutation
                     RecordingId = track.Id, // Spotify Track ID
                     TrackName = track.Name ?? string.Empty,
                     ArtistName = track.Artists?.FirstOrDefault()?.Name ?? string.Empty,
-                    UserId = userId,
+                    ActorUserId = userId,
                     Position = position++,
                 }
             );

@@ -4,6 +4,7 @@ using MusicGQL.Db.Postgres.Models;
 using MusicGQL.Features.LikedSongs.Aggregate;
 using MusicGQL.Features.ServerLibrary.Artist.Aggregate;
 using MusicGQL.Features.ServerLibrary.ReleaseGroup.Aggregate;
+using MusicGQL.Features.Users.Aggregate;
 
 namespace MusicGQL.EventProcessor;
 
@@ -12,17 +13,18 @@ public class EventProcessorWorker(
     ILogger<EventProcessorWorker> logger,
     ReleaseGroupsAddedToServerLibraryProcessor releaseGroupsAddedToServerLibraryProcessor,
     ArtistsAddedToServerLibraryProcessor artistsAddedToServerLibraryProcessor,
-    LikedSongsEventProcessor likedSongsEventProcessor
+    LikedSongsEventProcessor likedSongsEventProcessor,
+    UserEventProcessor userEventProcessor
 )
 {
     public async Task ProcessEvents()
     {
-        var checkpoint = await dbContext.EventCheckpoints.FindAsync("LikedSongs");
+        var checkpoint = await dbContext.EventCheckpoints.FindAsync("DefaultEventProcessor");
         var lastId = checkpoint?.LastProcessedEventId ?? 0;
 
         if (checkpoint == null)
         {
-            checkpoint = new EventCheckpoint { Id = "LikedSongs" };
+            checkpoint = new EventCheckpoint { Id = "DefaultEventProcessor" };
             dbContext.EventCheckpoints.Add(checkpoint);
         }
 
@@ -36,12 +38,14 @@ public class EventProcessorWorker(
         await releaseGroupsAddedToServerLibraryProcessor.PrepareProcessing(dbContext);
         await artistsAddedToServerLibraryProcessor.PrepareProcessing(dbContext);
         await likedSongsEventProcessor.PrepareProcessing(dbContext);
+        await userEventProcessor.PrepareProcessing(dbContext);
 
         foreach (var ev in events)
         {
             releaseGroupsAddedToServerLibraryProcessor.ProcessEvent(ev, dbContext);
             artistsAddedToServerLibraryProcessor.ProcessEvent(ev, dbContext);
             likedSongsEventProcessor.ProcessEvent(ev, dbContext);
+            userEventProcessor.ProcessEvent(ev, dbContext);
         }
 
         if (events.Count > 0)

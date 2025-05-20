@@ -4,6 +4,7 @@ using MusicGQL.Db.Postgres.Models;
 using MusicGQL.Db.Postgres.Models.Events;
 using MusicGQL.Db.Postgres.Models.Events.Playlists;
 using MusicGQL.Db.Postgres.Models.Events.ServerLibrary;
+using MusicGQL.Db.Postgres.Models.Events.Users;
 using MusicGQL.Db.Postgres.Models.Projections;
 
 namespace MusicGQL.Db.Postgres;
@@ -17,6 +18,7 @@ public class EventDbContext(DbContextOptions<EventDbContext> options) : DbContex
     public DbSet<LikedSongsProjection> LikedSongsProjections { get; set; }
     public DbSet<ArtistsAddedToServerLibraryProjection> ArtistsAddedToServerLibraryProjection { get; set; }
     public DbSet<ReleaseGroupsAddedToServerLibraryProjection> ReleaseGroupsAddedToServerLibraryProjection { get; set; }
+    public DbSet<UserProjection> UserProjections { get; set; }
 
     // Sagas
     public DbSet<Saga> Sagas { get; set; }
@@ -32,7 +34,9 @@ public class EventDbContext(DbContextOptions<EventDbContext> options) : DbContex
             .HasValue<AddReleaseGroupToServerLibrary>("AddReleaseGroupToServerLibrary")
             .HasValue<CreatedPlaylist>("CreatedPlaylist")
             .HasValue<RenamedPlaylist>("RenamedPlaylist")
-            .HasValue<SongAddedToPlaylist>("SongAddedToPlaylist");
+            .HasValue<SongAddedToPlaylist>("SongAddedToPlaylist")
+            .HasValue<UserCreated>("UserCreated")
+            .HasValue<UserPasswordHashSet>("UserPasswordHashSet");
 
         // Do not include in migrations
         modelBuilder.Entity<Saga>().ToTable("sagas", t => t.ExcludeFromMigrations());
