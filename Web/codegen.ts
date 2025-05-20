@@ -15,7 +15,7 @@ const scalarConfig = {
 };
 
 const config: CodegenConfig = {
-  schema: "http://localhost:3100/graphql",
+  schema: "http://localhost:5095/graphql",
   documents: ["src/**/*.{ts,tsx}"],
   generates: {
     "./schema.graphql": {

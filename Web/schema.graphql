@@ -124,6 +124,10 @@ type Genre {
   name: String!
 }
 
+type ImportPlaylistSearchRoot {
+  spotify: SpotifyPlaylistSearchRoot!
+}
+
 type LastFmStatistics {
   listeners: Long!
   playCount: Long!
@@ -173,6 +177,7 @@ type Medium {
 type Mutation {
   addArtistToServerLibrary(input: AddArtistToServerLibraryInput!): AddArtistToServerLibraryResult!
   addReleaseGroupToServerLibrary(input: AddReleaseGroupToServerLibraryInput!): AddReleaseGroupToServerLibraryResult!
+  importSpotifyPlaylistById(playlistId: String!, userId: Int!): Boolean!
   likeSong(input: LikeSongInput!): LikeSongResult!
   ping: Boolean!
   startDownloadRelease(input: StartDownloadReleaseInput!): StartDownloadReleaseResult!
@@ -189,10 +194,15 @@ type Ping {
   id: ID!
 }
 
+type PlaylistSearchRoot {
+  importPlaylists: ImportPlaylistSearchRoot!
+}
+
 type Query {
   artist: ArtistSearchRoot!
   download: DownloadsSearchRoot!
   external: ExternalRoot!
+  playlist: PlaylistSearchRoot!
   recording: RecordingSearchRoot!
   release: ReleaseSearchRoot!
   releaseGroup: ReleaseGroupSearchRoot!
@@ -307,6 +317,17 @@ enum SoulSeekStatusType {
   CONNECTING
   OFFLINE
   ONLINE
+}
+
+type SpotifyPlaylist {
+  coverImageUrl: String
+  description: String
+  id: String!
+  name: String!
+}
+
+type SpotifyPlaylistSearchRoot {
+  spotifyPlaylistsForUser(username: String!): [SpotifyPlaylist!]!
 }
 
 input StartDownloadReleaseInput {

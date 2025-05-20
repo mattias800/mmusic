@@ -5,6 +5,15 @@ namespace MusicGQL.Integration.Spotify;
 
 public class SpotifyService(SpotifyClient client, HybridCache cache) : CachedService(cache)
 {
+    public async Task<FullPlaylist?> GetPlaylistDetailsAsync(string playlistId)
+    {
+        return await ExecuteThrottledAsync(
+            $"spotify:playlist:{playlistId}:details",
+            TimeSpan.FromDays(1),
+            async () => await client.Playlists.Get(playlistId)
+        );
+    }
+
     public async Task<IEnumerable<FullTrack>?> GetTracksFromPlaylist(string playlistId)
     {
         return await ExecuteThrottledAsync(

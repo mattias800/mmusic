@@ -13,6 +13,8 @@ using MusicGQL.Features.External.SoulSeek.Integration;
 using MusicGQL.Features.LikedSongs.Aggregate;
 using MusicGQL.Features.LikedSongs.Commands;
 using MusicGQL.Features.LikedSongs.Mutations;
+using MusicGQL.Features.Playlists.Import.Spotify;
+using MusicGQL.Features.Playlists.Import.Spotify.Mutations;
 using MusicGQL.Features.ServerLibrary.Artist.Aggregate;
 using MusicGQL.Features.ServerLibrary.Artist.Handlers;
 using MusicGQL.Features.ServerLibrary.Artist.Mutations;
@@ -24,10 +26,10 @@ using MusicGQL.Features.ServerLibrary.ReleaseGroup.Handlers;
 using MusicGQL.Features.ServerLibrary.ReleaseGroup.Mutations;
 using MusicGQL.Features.ServerLibrary.ReleaseGroup.Sagas;
 using MusicGQL.Features.ServerLibrary.ReleaseGroup.Sagas.Events;
-using MusicGQL.Features.Spotify.Configuration;
-using MusicGQL.Features.YouTube.Configuration;
 using MusicGQL.Integration.MusicBrainz;
 using MusicGQL.Integration.Spotify;
+using MusicGQL.Integration.Spotify.Configuration;
+using MusicGQL.Integration.Youtube.Configuration;
 using MusicGQL.Sagas.DownloadRelease;
 using MusicGQL.Sagas.DownloadRelease.Handlers;
 using MusicGQL.Types;
@@ -150,6 +152,8 @@ builder
     .AddQueryType<MusicGQL.Types.Query>()
     .AddMutationType<Mutation>()
     .AddSubscriptionType<Subscription>()
+    .AddTypeExtension<SpotifyPlaylistSearchRoot>()
+    .AddTypeExtension<SpotifyPlaylistImportMutation>()
     .AddTypeExtension<SoulSeekSubscription>()
     .AddTypeExtension<DownloadSubscription>()
     .AddTypeExtension<StartDownloadReleaseMutation>()

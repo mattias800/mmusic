@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using MusicGQL.Db.Postgres.Models;
 using MusicGQL.Db.Postgres.Models.Events;
+using MusicGQL.Db.Postgres.Models.Events.Playlists;
 using MusicGQL.Db.Postgres.Models.Events.ServerLibrary;
 using MusicGQL.Db.Postgres.Models.Projections;
 
@@ -28,7 +29,10 @@ public class EventDbContext(DbContextOptions<EventDbContext> options) : DbContex
             .HasValue<LikedSong>("LikedSong")
             .HasValue<UnlikedSong>("UnlikedSong")
             .HasValue<AddArtistToServerLibrary>("AddArtistToServerLibrary")
-            .HasValue<AddReleaseGroupToServerLibrary>("AddReleaseGroupToServerLibrary");
+            .HasValue<AddReleaseGroupToServerLibrary>("AddReleaseGroupToServerLibrary")
+            .HasValue<CreatedPlaylist>("CreatedPlaylist")
+            .HasValue<RenamedPlaylist>("RenamedPlaylist")
+            .HasValue<SongAddedToPlaylist>("SongAddedToPlaylist");
 
         // Do not include in migrations
         modelBuilder.Entity<Saga>().ToTable("sagas", t => t.ExcludeFromMigrations());

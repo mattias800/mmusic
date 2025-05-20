@@ -1,4 +1,4 @@
-namespace MusicGQL.Features.YouTube.Configuration
+namespace MusicGQL.Integration.Youtube.Configuration
 {
     public class YouTubeServiceOptions
     {
@@ -7,4 +7,4 @@ namespace MusicGQL.Features.YouTube.Configuration
         public string? ApiKey { get; set; }
         public string? ApplicationName { get; set; }
     }
-} 
+}

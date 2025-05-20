@@ -1,4 +1,4 @@
-namespace MusicGQL.Features.Spotify.Configuration;
+namespace MusicGQL.Integration.Spotify.Configuration;
 
 public class SpotifyClientOptions
 {
@@ -6,4 +6,4 @@ public class SpotifyClientOptions
 
     public string? ClientId { get; set; }
     public string? ClientSecret { get; set; }
-} 
+}
