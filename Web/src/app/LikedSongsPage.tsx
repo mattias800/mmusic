@@ -1,10 +1,7 @@
-import * as React from "react";
 import { LikedSongsList } from "@/features/liked-songs/LikedSongsList.tsx";
 import { graphql } from "@/gql";
 import { useQuery } from "urql";
 import { ScreenSpinner } from "@/components/spinner/ScreenSpinner.tsx";
-
-export interface LikedSongsProps {}
 
 export const likedSongsQuery = graphql(`
   query LikedSongsQuery {
@@ -15,7 +12,7 @@ export const likedSongsQuery = graphql(`
   }
 `);
 
-export const LikedSongs: React.FC<LikedSongsProps> = () => {
+export const LikedSongsPage = () => {
   const [{ error, data, fetching, stale }] = useQuery({
     query: likedSongsQuery,
   });

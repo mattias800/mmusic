@@ -1,5 +1,4 @@
 import { graphql } from "@/gql";
-import * as React from "react";
 import { useQuery } from "urql";
 import { useParams } from "react-router";
 import { AlbumPanel } from "@/features/album/AlbumPanel.tsx";
@@ -16,7 +15,7 @@ export const albumQuery = graphql(`
   }
 `);
 
-export const Album: React.FC = () => {
+export const AlbumPage = () => {
   const { releaseGroupId } = useParams<{ releaseGroupId: string }>();
   const [{ error, data, fetching, stale }] = useQuery({
     query: albumQuery,

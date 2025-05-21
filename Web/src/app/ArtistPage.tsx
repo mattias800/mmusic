@@ -1,11 +1,8 @@
 import { graphql } from "@/gql";
-import * as React from "react";
 import { useQuery } from "urql";
 import { useParams } from "react-router";
 import { ArtistPanel } from "@/features/artist/ArtistPanel";
 import { ScreenSpinner } from "@/components/spinner/ScreenSpinner.tsx";
-
-export interface ArtistProps {}
 
 export const artistQuery = graphql(`
   query ArtistQuery($artistId: ID!) {
@@ -18,7 +15,7 @@ export const artistQuery = graphql(`
   }
 `);
 
-export const Artist: React.FC<ArtistProps> = () => {
+export const ArtistPage = () => {
   const { artistId } = useParams<{ artistId: string }>();
   const [{ error, data, fetching, stale }] = useQuery({
     query: artistQuery,

@@ -1,25 +1,25 @@
 import * as React from "react";
 import { Route, Routes } from "react-router";
-import { Home } from "@/app/Home.tsx";
-import { LikedSongs } from "@/app/LikedSongs.tsx";
-import { Album } from "@/app/Album.tsx";
-import { Artist } from "@/app/Artist.tsx";
-import { ImportSpotifyPlaylist } from "@/app/ImportSpotifyPlaylist.tsx";
 import SetupPage from "@/app/Setup.tsx"; // Import the SetupPage component
 import ProfilePage from "@/app/ProfilePage.tsx"; // Import the actual ProfilePage component
+import { IndexPage } from "@/app/IndexPage.tsx";
+import { LikedSongsPage } from "@/app/LikedSongsPage.tsx";
+import { AlbumPage } from "@/app/AlbumPage.tsx";
+import { ArtistPage } from "@/app/ArtistPage.tsx";
+import { ImportSpotifyPlaylistPage } from "@/app/ImportSpotifyPlaylistPage.tsx";
 
 export interface AppRouterProps {}
 
 export const AppRouter: React.FC<AppRouterProps> = () => {
   return (
     <Routes>
-      <Route path="/" element={<Home />} />
-      <Route path="/album/:releaseGroupId" element={<Album />} />
-      <Route path="/artist/:artistId" element={<Artist />} />
-      <Route path="/liked-songs" element={<LikedSongs />} />
+      <Route path="/" element={<IndexPage />} />
+      <Route path="/album/:releaseGroupId" element={<AlbumPage />} />
+      <Route path="/artist/:artistId" element={<ArtistPage />} />
+      <Route path="/liked-songs" element={<LikedSongsPage />} />
       <Route
         path="/playlists/import/spotify"
-        element={<ImportSpotifyPlaylist />}
+        element={<ImportSpotifyPlaylistPage />}
       />
       <Route path="/setup" element={<SetupPage />} /> {/* Add the /setup route */}
       <Route path="/profile" element={<ProfilePage />} />

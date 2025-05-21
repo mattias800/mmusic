@@ -278,6 +278,7 @@ type PlaylistSearchRoot {
 }
 
 type Query {
+  areThereAnyUsers: Boolean!
   artist: ArtistSearchRoot!
   download: DownloadsSearchRoot!
   external: ExternalRoot!
