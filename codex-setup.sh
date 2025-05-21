@@ -16,9 +16,8 @@ else
 fi
 cd ..
 
-# Install Bun
+# Install dependencies
 
-apt-get install bun
 cd Web
 bun install
 cd ..
