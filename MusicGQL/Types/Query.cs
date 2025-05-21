@@ -70,4 +70,11 @@ public class Query
     public ExternalRoot External => new();
     public PlaylistSearchRoot Playlist => new();
     public UserSearchRoot User => new(); // This is for general user queries via UserSearchRoot
+
+    // New query to check if any users exist
+    public async Task<bool> GetAreThereAnyUsers(
+        [Service] EventDbContext dbContext)
+    {
+        return await dbContext.UserProjections.AnyAsync();
+    }
 }
