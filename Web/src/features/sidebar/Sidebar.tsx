@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils.ts";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Heart } from "lucide-react";
+import { Heart, User } from "lucide-react"; // Added User icon
 import { NavLink } from "react-router";
 import * as React from "react";
 import { SearchInput } from "../search/SearchInput";
@@ -29,6 +29,16 @@ export function Sidebar({ className }: SidebarProps) {
               <NavLink to={"/liked-songs"}>
                 <Heart className="mr-2 h-4 w-4" />
                 Liked songs
+              </NavLink>
+            </Button>
+            <Button
+              variant={pathname === "/profile" ? "secondary" : "ghost"}
+              className="w-full justify-start"
+              asChild
+            >
+              <NavLink to={"/profile"}>
+                <User className="mr-2 h-4 w-4" />
+                Profile
               </NavLink>
             </Button>
             <Button variant="ghost" className="w-full justify-start">
