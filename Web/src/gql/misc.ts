@@ -1,5 +1,10 @@
 import { gql } from 'urql';
 
+export const ARE_THERE_ANY_USERS_QUERY = gql`
+  query AreThereAnyUsers {
+    areThereAnyUsers
+  }
+`;
 
 export const CREATE_USER_MUTATION = gql`
   mutation CreateUser($username: String!, $password: String!) {

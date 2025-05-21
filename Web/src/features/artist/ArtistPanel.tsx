@@ -1,9 +1,9 @@
 import * as React from "react";
-import { LargePlayButton } from "@/common/components/buttons/LargePlayButton.tsx";
+import { LargePlayButton } from "@/components/buttons/LargePlayButton.tsx";
 import { TopArtistTracks } from "@/features/artist/TopArtistTracks.tsx";
-import { ShuffleButton } from "@/common/components/buttons/ShuffleButton.tsx";
-import { DotsButton } from "@/common/components/buttons/DotsButton.tsx";
-import { FollowButton } from "@/common/components/buttons/FollowButton.tsx";
+import { ShuffleButton } from "@/components/buttons/ShuffleButton.tsx";
+import { DotsButton } from "@/components/buttons/DotsButton.tsx";
+import { FollowButton } from "@/components/buttons/FollowButton.tsx";
 import { FragmentType, graphql, useFragment } from "@/gql";
 import { ArtistAlbumList } from "@/features/artist/ArtistAlbumList.tsx";
 import { ArtistHeader } from "@/features/artist/ArtistHeader.tsx";

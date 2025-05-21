@@ -1,12 +1,12 @@
 import * as React from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/common/components/ui/tabs";
-import { Button } from "@/common/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
-import { Separator } from "@/common/components/ui/separator";
-import { ScrollArea, ScrollBar } from "@/common/components/ui/scroll-area.tsx";
-import { listenNowAlbums, madeForYouAlbums } from "@/common/components/albums.ts";
-import { AlbumArtwork } from "@/common/components/album-artwork.tsx";
-import { PodcastEmptyPlaceholder } from "@/common/components/podcast-empty-placeholder.tsx";
+import { Separator } from "@/components/ui/separator";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area.tsx";
+import { listenNowAlbums, madeForYouAlbums } from "@/components/albums.ts";
+import { AlbumArtwork } from "@/components/album-artwork.tsx";
+import { PodcastEmptyPlaceholder } from "@/components/podcast-empty-placeholder.tsx";
 
 export interface OldAlbumPanelProps {}
 

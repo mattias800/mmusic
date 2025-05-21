@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { TextInput, Button, Alert, Stack } from '@mantine/core';
-import { AlertCircle } from 'lucide-react';
+import { TextInput } from '@/components/inputs/TextInput';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 export interface SignInFormValues {
   username: string;
@@ -23,51 +24,55 @@ export function SignInForm({ onSubmit, isLoading, errorMessage }: SignInFormProp
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <Stack gap="lg">
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div>
         <TextInput
           label="Username or Email"
           id="username"
           type="text"
           autoComplete="username"
           value={username}
-          onChange={(event: React.ChangeEvent<HTMLInputElement>) => setUsername(event.currentTarget.value)}
+          onChange={(e) => setUsername(e.target.value)}
           required
           placeholder="Enter your username or email"
           disabled={isLoading}
-          size="md"
         />
+      </div>
 
+      <div>
         <TextInput
           label="Password"
           id="password"
           type="password"
           autoComplete="current-password"
           value={password}
-          onChange={(event: React.ChangeEvent<HTMLInputElement>) => setPassword(event.currentTarget.value)}
+          onChange={(e) => setPassword(e.target.value)}
           required
           placeholder="Enter your password"
           disabled={isLoading}
-          size="md"
         />
+      </div>
 
-        {errorMessage && (
-          <Alert icon={<AlertCircle size="1rem" />} title="Error" color="red" variant="light">
-            {errorMessage}
-          </Alert>
-        )}
+      {errorMessage && (
+        <div className="p-3 rounded-md bg-red-900/30 border border-red-700">
+          <p className="text-sm text-red-400">{errorMessage}</p>
+        </div>
+      )}
 
+      <div>
         <Button
           type="submit"
-          fullWidth
-          loading={isLoading}
+          className={cn(
+            'w-full flex justify-center rounded-md px-3 py-2.5 text-sm font-semibold leading-6 shadow-sm',
+            isLoading
+              ? 'bg-gray-500 hover:bg-gray-500 cursor-not-allowed'
+              : 'bg-indigo-600 hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 text-white'
+          )}
           disabled={isLoading}
-          size="md"
-          variant="filled"
         >
           {isLoading ? 'Signing in...' : 'Sign in'}
         </Button>
-      </Stack>
+      </div>
     </form>
   );
 }

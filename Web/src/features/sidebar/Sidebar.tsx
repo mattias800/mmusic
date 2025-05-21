@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils.ts";
-import { Button } from "@/common/components/ui/button";
-import { ScrollArea } from "@/common/components/ui/scroll-area";
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Heart, User } from "lucide-react"; // Added User icon
 import { NavLink } from "react-router";
 import * as React from "react";
