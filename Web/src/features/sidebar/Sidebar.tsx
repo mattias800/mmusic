@@ -2,7 +2,6 @@ import { cn } from "@/lib/utils.ts";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Heart, User } from "lucide-react"; // Added User icon
-import { Heart, UserCircle } from "lucide-react";
 import { NavLink } from "react-router";
 import * as React from "react";
 import { SearchInput } from "../search/SearchInput";

@@ -19,6 +19,7 @@ type Documents = {
     "\n  query ArtistQuery($artistId: ID!) {\n    artist {\n      byId(id: $artistId) {\n        id\n        ...ArtistPanel_Artist\n      }\n    }\n  }\n": typeof types.ArtistQueryDocument,
     "\n  query LikedSongsQuery {\n    viewer {\n      id\n      ...LikedSongsList_User\n    }\n  }\n": typeof types.LikedSongsQueryDocument,
     "\n  query GetViewerProfile {\n    viewer {\n      id\n      username\n      createdAt\n      updatedAt\n      likedSongs {\n        id\n        recording { # Assuming 'recording' resolves to an object with a 'title'\n          id\n          title\n        }\n      }\n    }\n  }\n": typeof types.GetViewerProfileDocument,
+    "\n  query ProfilePage {\n    viewer {\n      id\n      ...UserProfilePanel_User\n    }\n  }\n": typeof types.ProfilePageDocument,
     "\n  fragment Playlist_User on User {\n    id\n    likedSongs {\n      id\n      ...LikedSongRow_LikedSong\n    }\n  }\n": typeof types.Playlist_UserFragmentDoc,
     "\n  fragment LikedSongRow_Recoding on Recording {\n    id\n    title\n    length\n    artists {\n      id\n      name\n    }\n    mainAlbum {\n      id\n      title\n      coverArtUri\n    }\n  }\n": typeof types.LikedSongRow_RecodingFragmentDoc,
     "\nmutation AddArtistToServerLibrary($artistId: ID!) {\n  addArtistToServerLibrary(input: { artistId: $artistId }) {\n    __typename\n    ... on AddArtistToServerLibrarySuccess {\n      serverAvailability {\n        id\n        isInServerLibrary\n      }\n    }\n  }\n}": typeof types.AddArtistToServerLibraryDocument,
@@ -51,6 +52,7 @@ type Documents = {
     "\n  query UserPlaylistsLoader_Query($spotifyUsername: String!) {\n    playlist {\n      importPlaylists {\n        spotify {\n          spotifyPlaylistsForUser(username: $spotifyUsername) {\n            id\n            ...UserPlaylistsList_SpotifyPlaylist\n          }\n        }\n      }\n    }\n  }\n": typeof types.UserPlaylistsLoader_QueryDocument,
     "\n  mutation ImportSpotifyPlaylistById($playlistId: String!, $userId: UUID!) {\n    importSpotifyPlaylistById(playlistId: $playlistId, userId: $userId) {\n      __typename\n      ... on ImportSpotifyPlaylistSuccess {\n        success\n      }\n      ... on ImportSpotifyPlaylistError {\n        message\n      }\n    }\n  }\n": typeof types.ImportSpotifyPlaylistByIdDocument,
     "\n  fragment UserPlaylistsList_SpotifyPlaylist on SpotifyPlaylist {\n    id\n    description\n    name\n    coverImageUrl\n  }\n": typeof types.UserPlaylistsList_SpotifyPlaylistFragmentDoc,
+    "\n  fragment UserProfilePanel_User on User {\n    id\n    username\n    createdAt\n    updatedAt\n    likedSongs {\n      id\n    }\n  }\n": typeof types.UserProfilePanel_UserFragmentDoc,
 };
 const documents: Documents = {
     "\n  query Bootstrap {\n    areThereAnyUsers\n    viewer {\n      id\n      username\n    }\n  }\n": types.BootstrapDocument,
@@ -58,6 +60,7 @@ const documents: Documents = {
     "\n  query ArtistQuery($artistId: ID!) {\n    artist {\n      byId(id: $artistId) {\n        id\n        ...ArtistPanel_Artist\n      }\n    }\n  }\n": types.ArtistQueryDocument,
     "\n  query LikedSongsQuery {\n    viewer {\n      id\n      ...LikedSongsList_User\n    }\n  }\n": types.LikedSongsQueryDocument,
     "\n  query GetViewerProfile {\n    viewer {\n      id\n      username\n      createdAt\n      updatedAt\n      likedSongs {\n        id\n        recording { # Assuming 'recording' resolves to an object with a 'title'\n          id\n          title\n        }\n      }\n    }\n  }\n": types.GetViewerProfileDocument,
+    "\n  query ProfilePage {\n    viewer {\n      id\n      ...UserProfilePanel_User\n    }\n  }\n": types.ProfilePageDocument,
     "\n  fragment Playlist_User on User {\n    id\n    likedSongs {\n      id\n      ...LikedSongRow_LikedSong\n    }\n  }\n": types.Playlist_UserFragmentDoc,
     "\n  fragment LikedSongRow_Recoding on Recording {\n    id\n    title\n    length\n    artists {\n      id\n      name\n    }\n    mainAlbum {\n      id\n      title\n      coverArtUri\n    }\n  }\n": types.LikedSongRow_RecodingFragmentDoc,
     "\nmutation AddArtistToServerLibrary($artistId: ID!) {\n  addArtistToServerLibrary(input: { artistId: $artistId }) {\n    __typename\n    ... on AddArtistToServerLibrarySuccess {\n      serverAvailability {\n        id\n        isInServerLibrary\n      }\n    }\n  }\n}": types.AddArtistToServerLibraryDocument,
@@ -90,6 +93,7 @@ const documents: Documents = {
     "\n  query UserPlaylistsLoader_Query($spotifyUsername: String!) {\n    playlist {\n      importPlaylists {\n        spotify {\n          spotifyPlaylistsForUser(username: $spotifyUsername) {\n            id\n            ...UserPlaylistsList_SpotifyPlaylist\n          }\n        }\n      }\n    }\n  }\n": types.UserPlaylistsLoader_QueryDocument,
     "\n  mutation ImportSpotifyPlaylistById($playlistId: String!, $userId: UUID!) {\n    importSpotifyPlaylistById(playlistId: $playlistId, userId: $userId) {\n      __typename\n      ... on ImportSpotifyPlaylistSuccess {\n        success\n      }\n      ... on ImportSpotifyPlaylistError {\n        message\n      }\n    }\n  }\n": types.ImportSpotifyPlaylistByIdDocument,
     "\n  fragment UserPlaylistsList_SpotifyPlaylist on SpotifyPlaylist {\n    id\n    description\n    name\n    coverImageUrl\n  }\n": types.UserPlaylistsList_SpotifyPlaylistFragmentDoc,
+    "\n  fragment UserProfilePanel_User on User {\n    id\n    username\n    createdAt\n    updatedAt\n    likedSongs {\n      id\n    }\n  }\n": types.UserProfilePanel_UserFragmentDoc,
 };
 
 /**
@@ -126,6 +130,10 @@ export function graphql(source: "\n  query LikedSongsQuery {\n    viewer {\n    
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  query GetViewerProfile {\n    viewer {\n      id\n      username\n      createdAt\n      updatedAt\n      likedSongs {\n        id\n        recording { # Assuming 'recording' resolves to an object with a 'title'\n          id\n          title\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  query GetViewerProfile {\n    viewer {\n      id\n      username\n      createdAt\n      updatedAt\n      likedSongs {\n        id\n        recording { # Assuming 'recording' resolves to an object with a 'title'\n          id\n          title\n        }\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query ProfilePage {\n    viewer {\n      id\n      ...UserProfilePanel_User\n    }\n  }\n"): (typeof documents)["\n  query ProfilePage {\n    viewer {\n      id\n      ...UserProfilePanel_User\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -254,6 +262,10 @@ export function graphql(source: "\n  mutation ImportSpotifyPlaylistById($playlis
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  fragment UserPlaylistsList_SpotifyPlaylist on SpotifyPlaylist {\n    id\n    description\n    name\n    coverImageUrl\n  }\n"): (typeof documents)["\n  fragment UserPlaylistsList_SpotifyPlaylist on SpotifyPlaylist {\n    id\n    description\n    name\n    coverImageUrl\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  fragment UserProfilePanel_User on User {\n    id\n    username\n    createdAt\n    updatedAt\n    likedSongs {\n      id\n    }\n  }\n"): (typeof documents)["\n  fragment UserProfilePanel_User on User {\n    id\n    username\n    createdAt\n    updatedAt\n    likedSongs {\n      id\n    }\n  }\n"];
 
 export function graphql(source: string) {
   return (documents as any)[source] ?? {};
