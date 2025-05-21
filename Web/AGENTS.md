@@ -298,7 +298,8 @@ export const LikedSongs: React.FC<LikedSongsProps> = () => {
 Mutations should be placed in the same file as the component that uses them.
 They should be named after the logical operation that it performs, with "Mutation" as suffix.
 
-There is no need to manually specify types for mutations, they are inferred from the generated types.
+There is no need to manually specify types for mutations, 
+the generated types include declarations for the graphql function.
 
 Here is an example of usage:
 
@@ -317,7 +318,8 @@ bun types
 These types are never to be modified manually.
 They are also never imported directly,
 since the types will be applied to all calls to the `graphql()` function.
-No functions or documents are generated, only types.
+GraphQL documents should never be imported from the generated source,
+instead, always use the variable created next to the React component.
 
 You must generate the types after changing the GraphQL schema, or any fragment, query or mutation.
 

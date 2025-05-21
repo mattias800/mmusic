@@ -240,6 +240,7 @@ type Mutation {
   likeSong(input: LikeSongInput!): LikeSongResult!
   ping: Boolean!
   signIn(input: SignInInput!): SignInResult!
+  signOut: SignOutResult!
   startDownloadRelease(input: StartDownloadReleaseInput!): StartDownloadReleaseResult!
   unlikeSong(input: UnlikedSongInput!): UnlikedSongPayload!
 }
@@ -397,6 +398,16 @@ union SignInResult = SignInError | SignInSuccess
 
 type SignInSuccess {
   user: User!
+}
+
+type SignOutError {
+  message: String!
+}
+
+union SignOutResult = SignOutError | SignOutSuccess
+
+type SignOutSuccess {
+  success: Boolean!
 }
 
 type SoulSeekRoot {

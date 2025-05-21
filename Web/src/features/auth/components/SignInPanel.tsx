@@ -3,6 +3,7 @@ import { useMutation } from "urql";
 import { SignInForm, SignInFormValues } from "./SignInForm";
 import { graphql } from "@/gql";
 import { MmusicLogo } from "@/components/logo/MmusicLogo.tsx";
+import { useNavigate } from "react-router";
 
 const signInMutation = graphql(`
   mutation SignIn($username: String!, $password: String!) {
@@ -27,7 +28,7 @@ export function SignInPanel() {
     undefined,
   );
 
-  const handleSignInSubmit = async (values: SignInFormValues) => {
+  const onSubmit = async (values: SignInFormValues) => {
     setErrorMessage(undefined);
     const result = await signIn({
       username: values.username,
@@ -38,9 +39,7 @@ export function SignInPanel() {
       setErrorMessage(result.error.message || "An unexpected error occurred.");
       console.error("Sign In GQL Error:", result.error);
     } else if (result.data?.signIn?.__typename === "SignInSuccess") {
-      console.log("Sign In successful:", result.data.signIn.user);
-      alert(`Sign In successful! Welcome ${result.data.signIn.user.username}`);
-      // TODO: Handle successful sign in
+      window.location.reload();
     } else if (result.data?.signIn?.__typename === "SignInError") {
       setErrorMessage(result.data.signIn.message);
     } else {
@@ -61,7 +60,7 @@ export function SignInPanel() {
       <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-gray-900 px-6 py-8 shadow sm:rounded-lg sm:px-10">
           <SignInForm
-            onSubmit={handleSignInSubmit}
+            onSubmit={onSubmit}
             isLoading={signInState.fetching}
             errorMessage={errorMessage}
           />

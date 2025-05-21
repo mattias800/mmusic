@@ -204,7 +204,10 @@ builder
     .AddType<UserProjection>()
     .AddTypeExtension<SignInMutation>()
     .AddType<SignInSuccess>()
-    .AddType<SignInError>();
+    .AddType<SignInError>()
+    .AddTypeExtension<SignOutMutation>()
+    .AddType<SignOutSuccess>()
+    .AddType<SignOutError>();
 
 builder.Services.Configure<LastfmOptions>(builder.Configuration.GetSection("Lastfm"));
 

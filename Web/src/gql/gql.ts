@@ -36,6 +36,7 @@ type Documents = {
     "\n  query ArtistSingleList($artistId: ID!) {\n    artist {\n      byId(id: $artistId) {\n        id\n        singles {\n          id\n          firstReleaseDate\n          ...AlbumCard_ReleaseGroup\n        }\n      }\n    }\n  }\n": typeof types.ArtistSingleListDocument,
     "\n  fragment TopArtistTrackItem_LastFmTrack on LastFmTrack {\n    id\n    playCount\n    summary\n    recording {\n      id\n      title\n      length\n      ...RecordingPlayButton_Recording\n      relations {\n        attributes\n        url {\n          id\n          resource\n        }\n        direction\n        end\n        begin\n        typeId\n        targetType\n        type\n      }\n      mainAlbum {\n        id\n        title\n        coverArtUri\n        releaseGroup {\n          id\n        }\n      }\n    }\n  }\n": typeof types.TopArtistTrackItem_LastFmTrackFragmentDoc,
     "\n  fragment TopArtistTracks_Artist on Artist {\n    id\n    topTracks {\n      id\n      ...TopArtistTrackItem_LastFmTrack\n    }\n  }\n": typeof types.TopArtistTracks_ArtistFragmentDoc,
+    "\n  mutation SignOut {\n    signOut {\n      __typename\n\n      ... on SignOutSuccess {\n        success\n      }\n      ... on SignOutError {\n        message\n      }\n    }\n  }\n": typeof types.SignOutDocument,
     "\n  fragment DownloadOverview_DownloadStatus on DownloadStatus {\n    id\n    ...DownloadStatus_DownloadStatus\n  }\n": typeof types.DownloadOverview_DownloadStatusFragmentDoc,
     "\n  query DownloadOverviewQuery {\n    download {\n      all {\n        id\n        ...DownloadOverview_DownloadStatus\n      }\n    }\n  }\n": typeof types.DownloadOverviewQueryDocument,
     "\n  subscription DownloadOverviewSubscription {\n    downloadStatusUpdated {\n      id\n      ...DownloadOverview_DownloadStatus\n    }\n  }\n": typeof types.DownloadOverviewSubscriptionDocument,
@@ -79,6 +80,7 @@ const documents: Documents = {
     "\n  query ArtistSingleList($artistId: ID!) {\n    artist {\n      byId(id: $artistId) {\n        id\n        singles {\n          id\n          firstReleaseDate\n          ...AlbumCard_ReleaseGroup\n        }\n      }\n    }\n  }\n": types.ArtistSingleListDocument,
     "\n  fragment TopArtistTrackItem_LastFmTrack on LastFmTrack {\n    id\n    playCount\n    summary\n    recording {\n      id\n      title\n      length\n      ...RecordingPlayButton_Recording\n      relations {\n        attributes\n        url {\n          id\n          resource\n        }\n        direction\n        end\n        begin\n        typeId\n        targetType\n        type\n      }\n      mainAlbum {\n        id\n        title\n        coverArtUri\n        releaseGroup {\n          id\n        }\n      }\n    }\n  }\n": types.TopArtistTrackItem_LastFmTrackFragmentDoc,
     "\n  fragment TopArtistTracks_Artist on Artist {\n    id\n    topTracks {\n      id\n      ...TopArtistTrackItem_LastFmTrack\n    }\n  }\n": types.TopArtistTracks_ArtistFragmentDoc,
+    "\n  mutation SignOut {\n    signOut {\n      __typename\n\n      ... on SignOutSuccess {\n        success\n      }\n      ... on SignOutError {\n        message\n      }\n    }\n  }\n": types.SignOutDocument,
     "\n  fragment DownloadOverview_DownloadStatus on DownloadStatus {\n    id\n    ...DownloadStatus_DownloadStatus\n  }\n": types.DownloadOverview_DownloadStatusFragmentDoc,
     "\n  query DownloadOverviewQuery {\n    download {\n      all {\n        id\n        ...DownloadOverview_DownloadStatus\n      }\n    }\n  }\n": types.DownloadOverviewQueryDocument,
     "\n  subscription DownloadOverviewSubscription {\n    downloadStatusUpdated {\n      id\n      ...DownloadOverview_DownloadStatus\n    }\n  }\n": types.DownloadOverviewSubscriptionDocument,
@@ -202,6 +204,10 @@ export function graphql(source: "\n  fragment TopArtistTrackItem_LastFmTrack on 
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  fragment TopArtistTracks_Artist on Artist {\n    id\n    topTracks {\n      id\n      ...TopArtistTrackItem_LastFmTrack\n    }\n  }\n"): (typeof documents)["\n  fragment TopArtistTracks_Artist on Artist {\n    id\n    topTracks {\n      id\n      ...TopArtistTrackItem_LastFmTrack\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  mutation SignOut {\n    signOut {\n      __typename\n\n      ... on SignOutSuccess {\n        success\n      }\n      ... on SignOutError {\n        message\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation SignOut {\n    signOut {\n      __typename\n\n      ... on SignOutSuccess {\n        success\n      }\n      ... on SignOutError {\n        message\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

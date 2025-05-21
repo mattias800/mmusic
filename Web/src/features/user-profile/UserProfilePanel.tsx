@@ -1,6 +1,7 @@
 import { LikedSong } from "@/gql/graphql";
 import { FragmentType, graphql, useFragment } from "@/gql";
 import React from "react";
+import { SignOutButton } from "@/features/auth/components/SignOutButton.tsx";
 
 export interface UserProfilePanelProps {
   user: FragmentType<typeof userProfilePanelUserFragment>;
@@ -27,6 +28,7 @@ export const UserProfilePanel: React.FC<UserProfilePanelProps> = (props) => {
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">My Profile</h1>
       <div className="bg-card text-card-foreground p-6 rounded-lg shadow">
+        <SignOutButton />
         <p className="mb-2">
           <strong>Username:</strong> {username}
         </p>
