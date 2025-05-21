@@ -1,7 +1,7 @@
 import { graphql } from "@/gql";
 import { useQuery } from "urql";
 import { useParams } from "react-router";
-import { ArtistPanel } from "@/features/artist/ArtistPanel";
+import { ArtistPanel } from "@/features/artist/artist-page/ArtistPanel.tsx";
 import { ScreenSpinner } from "@/components/spinner/ScreenSpinner.tsx";
 
 export const artistQuery = graphql(`

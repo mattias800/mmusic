@@ -9,13 +9,13 @@
  * This is used to ensure that the cacheKeys object in UrqlCacheKeys.ts
  * includes all types without an id and doesn't include types with an id.
  */
-export type TypesWithNoId = 'AlbumImages' | 'ArtistImages' | 'ArtistInServerLibrary' | 'ArtistSearchRoot' | 'ArtistsInServerLibrarySearchRoot' | 'DownloadsSearchRoot' | 'ImportPlaylistSearchRoot' | 'LastFmStatistics' | 'Medium' | 'NameCredit' | 'PageInfo' | 'PlaylistSearchRoot' | 'RecordingSearchRoot' | 'Relation' | 'ReleaseGroupInServerLibrary' | 'ReleaseGroupsInServerLibrarySearchRoot' | 'ReleaseSearchRoot' | 'ServerLibrarySearchRoot' | 'SpotifyPlaylistSearchRoot' | 'UserProjection' | 'UserSearchRoot' | 'UsersConnection' | 'UsersEdge';
+export type TypesWithNoId = 'AlbumImages' | 'ArtistImages' | 'ArtistInServerLibrary' | 'ArtistSearchRoot' | 'ArtistsInServerLibrarySearchRoot' | 'DownloadsSearchRoot' | 'ImportPlaylistSearchRoot' | 'LastFmStatistics' | 'Medium' | 'NameCredit' | 'PageInfo' | 'PlaylistSearchRoot' | 'RecommendationsSearchRoot' | 'RecordingSearchRoot' | 'Relation' | 'ReleaseGroupInServerLibrary' | 'ReleaseGroupsInServerLibrarySearchRoot' | 'ReleaseSearchRoot' | 'ServerLibrarySearchRoot' | 'SpotifyPlaylistSearchRoot' | 'UserProjection' | 'UserSearchRoot' | 'UsersConnection' | 'UsersEdge';
 
 /**
  * Union type of all GraphQL object types that have an id field.
  * This is used for reference and validation.
  */
-export type TypesWithId = 'Artist' | 'ArtistServerAvailability' | 'DownloadStatus' | 'ExternalRoot' | 'Genre' | 'LastFmTrack' | 'LikedSong' | 'Ping' | 'Recording' | 'RecordingStreamingServiceInfo' | 'Release' | 'ReleaseGroup' | 'ReleaseGroupSearchRoot' | 'SoulSeekRoot' | 'SoulSeekStatus' | 'SpotifyPlaylist' | 'Track' | 'Url' | 'User';
+export type TypesWithId = 'Artist' | 'ArtistServerAvailability' | 'DownloadStatus' | 'ExternalRoot' | 'Genre' | 'LastFmArtist' | 'LastFmTrack' | 'LikedSong' | 'Ping' | 'Recording' | 'RecordingStreamingServiceInfo' | 'Release' | 'ReleaseGroup' | 'ReleaseGroupSearchRoot' | 'SoulSeekRoot' | 'SoulSeekStatus' | 'SpotifyPlaylist' | 'Track' | 'Url' | 'User';
 
 /**
  * Type guard to check if a type has an id field.
@@ -23,7 +23,7 @@ export type TypesWithId = 'Artist' | 'ArtistServerAvailability' | 'DownloadStatu
  * @returns True if the type has an id field, false otherwise
  */
 export function hasIdField(type: string): type is TypesWithId {
-  const typesWithId: string[] = ['Artist', 'ArtistServerAvailability', 'DownloadStatus', 'ExternalRoot', 'Genre', 'LastFmTrack', 'LikedSong', 'Ping', 'Recording', 'RecordingStreamingServiceInfo', 'Release', 'ReleaseGroup', 'ReleaseGroupSearchRoot', 'SoulSeekRoot', 'SoulSeekStatus', 'SpotifyPlaylist', 'Track', 'Url', 'User'];
+  const typesWithId: string[] = ['Artist', 'ArtistServerAvailability', 'DownloadStatus', 'ExternalRoot', 'Genre', 'LastFmArtist', 'LastFmTrack', 'LikedSong', 'Ping', 'Recording', 'RecordingStreamingServiceInfo', 'Release', 'ReleaseGroup', 'ReleaseGroupSearchRoot', 'SoulSeekRoot', 'SoulSeekStatus', 'SpotifyPlaylist', 'Track', 'Url', 'User'];
   return typesWithId.includes(type);
 }
 
@@ -33,6 +33,6 @@ export function hasIdField(type: string): type is TypesWithId {
  * @returns True if the type doesn't have an id field, false otherwise
  */
 export function hasNoIdField(type: string): type is TypesWithNoId {
-  const typesWithNoId: string[] = ['AlbumImages', 'ArtistImages', 'ArtistInServerLibrary', 'ArtistSearchRoot', 'ArtistsInServerLibrarySearchRoot', 'DownloadsSearchRoot', 'ImportPlaylistSearchRoot', 'LastFmStatistics', 'Medium', 'NameCredit', 'PageInfo', 'PlaylistSearchRoot', 'RecordingSearchRoot', 'Relation', 'ReleaseGroupInServerLibrary', 'ReleaseGroupsInServerLibrarySearchRoot', 'ReleaseSearchRoot', 'ServerLibrarySearchRoot', 'SpotifyPlaylistSearchRoot', 'UserProjection', 'UserSearchRoot', 'UsersConnection', 'UsersEdge'];
+  const typesWithNoId: string[] = ['AlbumImages', 'ArtistImages', 'ArtistInServerLibrary', 'ArtistSearchRoot', 'ArtistsInServerLibrarySearchRoot', 'DownloadsSearchRoot', 'ImportPlaylistSearchRoot', 'LastFmStatistics', 'Medium', 'NameCredit', 'PageInfo', 'PlaylistSearchRoot', 'RecommendationsSearchRoot', 'RecordingSearchRoot', 'Relation', 'ReleaseGroupInServerLibrary', 'ReleaseGroupsInServerLibrarySearchRoot', 'ReleaseSearchRoot', 'ServerLibrarySearchRoot', 'SpotifyPlaylistSearchRoot', 'UserProjection', 'UserSearchRoot', 'UsersConnection', 'UsersEdge'];
   return typesWithNoId.includes(type);
 }

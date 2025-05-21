@@ -1,14 +1,18 @@
 import * as React from "react";
 import { LargePlayButton } from "@/components/buttons/LargePlayButton.tsx";
-import { TopArtistTracks } from "@/features/artist/TopArtistTracks.tsx";
+import { TopArtistTracks } from "@/features/artist/artist-page/TopArtistTracks.tsx";
 import { ShuffleButton } from "@/components/buttons/ShuffleButton.tsx";
 import { DotsButton } from "@/components/buttons/DotsButton.tsx";
 import { FollowButton } from "@/components/buttons/FollowButton.tsx";
 import { FragmentType, graphql, useFragment } from "@/gql";
-import { ArtistAlbumList } from "@/features/artist/ArtistAlbumList.tsx";
-import { ArtistHeader } from "@/features/artist/ArtistHeader.tsx";
+import { ArtistAlbumList } from "@/features/artist/artist-page/ArtistAlbumList.tsx";
+import { ArtistHeader } from "@/features/artist/artist-page/ArtistHeader.tsx";
 import { ArtistInLibraryButton } from "@/features/add-artist-to-server-library/ArtistInLibraryButton.tsx";
-import { ArtistSingleList } from "@/features/artist/ArtistSingleList.tsx";
+import { ArtistSingleList } from "@/features/artist/artist-page/ArtistSingleList.tsx";
+import { GradientContent } from "@/components/page-body/GradientContent.tsx";
+import { SectionHeading } from "@/components/headings/SectionHeading.tsx";
+import { Section } from "@/components/page-body/Section.tsx";
+import { SectionList } from "@/components/page-body/SectionList.tsx";
 
 interface ArtistPanelProps {
   artist: FragmentType<typeof artistPanelArtistFragment>;
@@ -28,7 +32,7 @@ export const ArtistPanel: React.FC<ArtistPanelProps> = (props) => {
   const artist = useFragment(artistPanelArtistFragment, props.artist);
 
   return (
-    <div className="bg-gradient-to-b from-neutral-800 to-black text-white min-h-screen pb-12">
+    <GradientContent>
       <ArtistHeader artist={artist} />
 
       {/* Controls */}
@@ -39,18 +43,20 @@ export const ArtistPanel: React.FC<ArtistPanelProps> = (props) => {
         <DotsButton />
         <ArtistInLibraryButton artist={artist} />
       </div>
-      <TopArtistTracks artist={artist} />
-      <div className={"mt-12"} />
 
-      <div className="px-6 md:px-10 mt-4">
-        <h2 className="text-xl font-semibold mb-4">Albums</h2>
-        <ArtistAlbumList artistId={artist.id} />
-      </div>
+      <SectionList>
+        <TopArtistTracks artist={artist} />
 
-      <div className="px-6 md:px-10 mt-4">
-        <h2 className="text-xl font-semibold mb-4">Singles</h2>
-        <ArtistSingleList artistId={artist.id} />
-      </div>
-    </div>
+        <Section>
+          <SectionHeading>Albums</SectionHeading>
+          <ArtistAlbumList artistId={artist.id} />
+        </Section>
+
+        <Section>
+          <h2 className="text-xl font-semibold mb-4">Singles</h2>
+          <ArtistSingleList artistId={artist.id} />
+        </Section>
+      </SectionList>
+    </GradientContent>
   );
 };

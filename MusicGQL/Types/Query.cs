@@ -1,3 +1,7 @@
+using System; // For Guid
+using System.Security.Claims; // For ClaimTypes
+using System.Threading.Tasks; // For Task
+using HotChocolate;
 using Microsoft.AspNetCore.Http; // For IHttpContextAccessor
 using Microsoft.EntityFrameworkCore; // For FirstOrDefaultAsync
 using MusicGQL.Db.Postgres; // For EventDbContext
@@ -5,15 +9,12 @@ using MusicGQL.Features.Artist;
 using MusicGQL.Features.Downloads;
 using MusicGQL.Features.External;
 using MusicGQL.Features.Playlists;
+using MusicGQL.Features.Recommendations; // For [Service] attribute if needed directly on properties, but methods are cleaner for this.
 using MusicGQL.Features.Recording;
 using MusicGQL.Features.Release;
 using MusicGQL.Features.ReleaseGroups;
 using MusicGQL.Features.ServerLibrary;
 using MusicGQL.Features.Users; // For User type and UserSearchRoot
-using System; // For Guid
-using System.Security.Claims; // For ClaimTypes
-using System.Threading.Tasks; // For Task
-using HotChocolate; // For [Service] attribute if needed directly on properties, but methods are cleaner for this.
 
 namespace MusicGQL.Types;
 
@@ -28,10 +29,11 @@ public class Query
     // This method will be resolved by HotChocolate as the 'viewer' field in the GraphQL schema.
     public async Task<User?> GetViewer(
         [Service] IHttpContextAccessor httpContextAccessor,
-        [Service] EventDbContext dbContext)
+        [Service] EventDbContext dbContext
+    )
     {
         var httpContext = httpContextAccessor.HttpContext;
-        if (httpContext == null) 
+        if (httpContext == null)
         {
             // This state is unexpected in a typical request pipeline.
             // Log.Error("HttpContext is null in GetViewer resolver.");
@@ -51,8 +53,9 @@ public class Query
             return null;
         }
 
-        var userProjection = await dbContext.UserProjections
-            .FirstOrDefaultAsync(up => up.UserId == userId);
+        var userProjection = await dbContext.UserProjections.FirstOrDefaultAsync(up =>
+            up.UserId == userId
+        );
 
         if (userProjection == null)
         {
@@ -69,11 +72,11 @@ public class Query
     public ServerLibrarySearchRoot ServerLibrary => new();
     public ExternalRoot External => new();
     public PlaylistSearchRoot Playlist => new();
+    public RecommendationsSearchRoot Recommendations => new();
     public UserSearchRoot User => new(); // This is for general user queries via UserSearchRoot
 
     // New query to check if any users exist
-    public async Task<bool> GetAreThereAnyUsers(
-        [Service] EventDbContext dbContext)
+    public async Task<bool> GetAreThereAnyUsers([Service] EventDbContext dbContext)
     {
         return await dbContext.UserProjections.AnyAsync();
     }

@@ -186,6 +186,14 @@ type ImportSpotifyPlaylistSuccess {
   success: Boolean!
 }
 
+type LastFmArtist {
+  artist: Artist
+  id: ID!
+  name: String!
+  playCount: Long
+  summary: String
+}
+
 type LastFmStatistics {
   listeners: Long!
   playCount: Long!
@@ -284,12 +292,17 @@ type Query {
   download: DownloadsSearchRoot!
   external: ExternalRoot!
   playlist: PlaylistSearchRoot!
+  recommendations: RecommendationsSearchRoot!
   recording: RecordingSearchRoot!
   release: ReleaseSearchRoot!
   releaseGroup: ReleaseGroupSearchRoot!
   serverLibrary: ServerLibrarySearchRoot!
   user: UserSearchRoot!
   viewer: User
+}
+
+type RecommendationsSearchRoot {
+  topArtists: [LastFmArtist!]!
 }
 
 type Recording {

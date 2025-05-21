@@ -3,7 +3,6 @@ import { useMutation } from "urql";
 import { SignInForm, SignInFormValues } from "./SignInForm";
 import { graphql } from "@/gql";
 import { MmusicLogo } from "@/components/logo/MmusicLogo.tsx";
-import { useNavigate } from "react-router";
 
 const signInMutation = graphql(`
   mutation SignIn($username: String!, $password: String!) {

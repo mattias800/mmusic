@@ -1,6 +1,7 @@
 import * as React from "react";
-import { TopArtistTrackItem } from "@/features/artist/TopArtistTrackItem.tsx";
+import { TopArtistTrackItem } from "@/features/artist/artist-page/TopArtistTrackItem.tsx";
 import { FragmentType, graphql, useFragment } from "@/gql";
+import { SectionHeading } from "@/components/headings/SectionHeading.tsx";
 
 export interface TopArtistTracksProps {
   artist: FragmentType<typeof topArtistTracksArtistFragment>;
@@ -21,7 +22,7 @@ export const TopArtistTracks: React.FC<TopArtistTracksProps> = (props) => {
 
   return (
     <div className="px-6 md:px-10 mt-4">
-      <h2 className="text-xl font-semibold mb-4">Popular</h2>
+      <SectionHeading>Popular</SectionHeading>
       <div>
         {artist.topTracks.map((track, index) => (
           <TopArtistTrackItem key={track.id} index={index + 1} track={track} />
