@@ -19,6 +19,16 @@ const topArtistRecommendationsQuery = graphql(`
           ...ArtistCard_Artist
         }
       }
+      topTracks {
+        id
+        name
+        summary
+        playCount
+      }
+      topTags {
+        name
+        url
+      }
     }
   }
 `);
@@ -42,11 +52,12 @@ export const TopArtistRecommendations: React.FC<
 
   return (
     <CardFlexList>
-      {data.recommendations.topArtists
-        .filter((l) => l.artist)
-        .map((lastFmArtist) => (
-          <ArtistCard artist={lastFmArtist.artist} key={lastFmArtist.id} />
-        ))}
+      {data.recommendations.topArtists.map(
+        (lastFmArtist) =>
+          lastFmArtist.artist && (
+            <ArtistCard artist={lastFmArtist.artist} key={lastFmArtist.id} />
+          ),
+      )}
     </CardFlexList>
   );
 };

@@ -1,4 +1,4 @@
-namespace MusicGQL.Features.Recording;
+namespace MusicGQL.Features.LastFm;
 
 public record LastFmStatistics([property: GraphQLIgnore] Hqub.Lastfm.Entities.Statistics Model)
 {

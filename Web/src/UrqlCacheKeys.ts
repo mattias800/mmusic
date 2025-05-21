@@ -10,6 +10,7 @@ export const cacheKeys: Record<TypesWithNoId, KeyGenerator> = {
   DownloadsSearchRoot: () => null,
   ImportPlaylistSearchRoot: () => null,
   LastFmStatistics: () => null,
+  LastFmTag: () => null,
   Medium: () => null,
   NameCredit: () => null,
   PageInfo: () => null,

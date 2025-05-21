@@ -1,6 +1,6 @@
 using MusicGQL.Integration.MusicBrainz;
 
-namespace MusicGQL.Features.Recording;
+namespace MusicGQL.Features.LastFm;
 
 public record LastFmArtist([property: GraphQLIgnore] Hqub.Lastfm.Entities.Artist Model)
 {
@@ -8,7 +8,7 @@ public record LastFmArtist([property: GraphQLIgnore] Hqub.Lastfm.Entities.Artist
     public string Id => Model.MBID;
 
     public string Name => Model.Name;
-    public long? PlayCount => Model.Statistics.PlayCount;
+    public LastFmStatistics Statistics => new(Model.Statistics);
     public string? Summary => Model.Biography.Summary;
 
     public async Task<Artist.Artist?> Artist([Service] MusicBrainzService mbService)

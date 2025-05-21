@@ -186,11 +186,18 @@ type ImportSpotifyPlaylistSuccess {
   success: Boolean!
 }
 
+type LastFmAlbum {
+  album: ReleaseGroup
+  id: ID!
+  name: String!
+  statistics: LastFmStatistics!
+}
+
 type LastFmArtist {
   artist: Artist
   id: ID!
   name: String!
-  playCount: Long
+  statistics: LastFmStatistics!
   summary: String
 }
 
@@ -199,12 +206,20 @@ type LastFmStatistics {
   playCount: Long!
 }
 
+type LastFmTag {
+  name: String!
+  url: String!
+}
+
 type LastFmTrack {
+  album: LastFmAlbum!
+  artist: LastFmArtist!
   id: ID!
+  name: String!
   playCount: Long
   recording: Recording
+  statistics: LastFmStatistics!
   summary: String
-  userPlayCount: Int
 }
 
 type LikeSongAlreadyLiked {
@@ -303,6 +318,8 @@ type Query {
 
 type RecommendationsSearchRoot {
   topArtists: [LastFmArtist!]!
+  topTags: [LastFmTag!]!
+  topTracks: [LastFmTrack!]!
 }
 
 type Recording {
