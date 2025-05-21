@@ -26,7 +26,7 @@ Please refer to the specific guidelines relevant to the part of the codebase you
 - **TypeScript:** Utilize TypeScript's features for strong typing. Define interfaces or types for props, state, and API payloads.
 - **Imports:** Use absolute paths with the `@/` alias (e.g., `@/features/...`) for imports within the `Web/src` directory.
 - **File Naming:** Use PascalCase for component files (e.g., `MyComponent.tsx`).
-- **Styling:** (User to specify preferred styling approach if any - e.g., CSS Modules, styled-components, Tailwind CSS). For now, inline styles are sometimes used for expediency, but consider maintainability.
+- **Styling:** Prioritize using Mantine (https://mantine.dev/) for generic UI components (buttons, inputs, lists, cards, etc.). Tailwind CSS (https://tailwindcss.com/) can be used for more custom components or when Mantine doesn't offer a suitable solution. Avoid inline styles where possible, favoring Mantine's props or Tailwind utility classes.
 
 ### Backend (C# & ASP.NET Core)
 - **Naming Conventions:** Follow standard C# naming conventions (e.g., PascalCase for classes, methods, properties).

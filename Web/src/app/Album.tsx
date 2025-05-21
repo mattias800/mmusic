@@ -3,7 +3,7 @@ import * as React from "react";
 import { useQuery } from "urql";
 import { useParams } from "react-router";
 import { AlbumPanel } from "@/features/album/AlbumPanel.tsx";
-import { ScreenSpinner } from "@/components/spinner/ScreenSpinner.tsx";
+import { ScreenSpinner } from "@/common/components/spinner/ScreenSpinner.tsx";
 
 export const albumQuery = graphql(`
   query AlbumQuery($releaseGroupId: ID!) {

@@ -1,6 +1,6 @@
 import * as React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Input } from "@/components/ui/input.tsx";
+import { Input } from "@/common/components/ui/input.tsx";
 import { SearchPanel } from "@/features/search/SearchPanel.tsx";
 
 export interface SearchInputProps {}

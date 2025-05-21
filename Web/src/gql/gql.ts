@@ -14,11 +14,11 @@ import { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/
  * Learn more about it here: https://the-guild.dev/graphql/codegen/plugins/presets/preset-client#reducing-bundle-size
  */
 type Documents = {
+    "\n  query Bootstrap {\n    areThereAnyUsers\n    viewer {\n      id\n      username\n    }\n  }\n": typeof types.BootstrapDocument,
     "\n  query AlbumQuery($releaseGroupId: ID!) {\n    releaseGroup {\n      byId(id: $releaseGroupId) {\n        id\n        ...AlbumPanel_ReleaseGroup\n      }\n    }\n  }\n": typeof types.AlbumQueryDocument,
     "\n  query ArtistQuery($artistId: ID!) {\n    artist {\n      byId(id: $artistId) {\n        id\n        ...ArtistPanel_Artist\n      }\n    }\n  }\n": typeof types.ArtistQueryDocument,
     "\n  query LikedSongsQuery {\n    viewer {\n      id\n      ...LikedSongsList_User\n    }\n  }\n": typeof types.LikedSongsQueryDocument,
-    "\n  fragment Playlist_User on User {\n    id\n    likedSongs {\n      id\n      ...LikedSongRow_LikedSong\n    }\n  }\n": typeof types.Playlist_UserFragmentDoc,
-    "\n  fragment LikedSongRow_Recoding on Recording {\n    id\n    title\n    length\n    artists {\n      id\n      name\n    }\n    mainAlbum {\n      id\n      title\n      coverArtUri\n    }\n  }\n": typeof types.LikedSongRow_RecodingFragmentDoc,
+    "\n  query GetViewerProfile {\n    viewer {\n      id\n      username\n      createdAt\n      updatedAt\n      likedSongs {\n        id\n        recording { # Assuming 'recording' resolves to an object with a 'title'\n          id\n          title\n        }\n      }\n    }\n  }\n": typeof types.GetViewerProfileDocument,
     "\nmutation AddArtistToServerLibrary($artistId: ID!) {\n  addArtistToServerLibrary(input: { artistId: $artistId }) {\n    __typename\n    ... on AddArtistToServerLibrarySuccess {\n      serverAvailability {\n        id\n        isInServerLibrary\n      }\n    }\n  }\n}": typeof types.AddArtistToServerLibraryDocument,
     "\n  fragment ArtistInLibraryButton_Artist on Artist {\n    id\n    serverAvailability {\n      id\n      isInServerLibrary\n    }\n  }\n": typeof types.ArtistInLibraryButton_ArtistFragmentDoc,
     "\n  fragment AlbumCard_ReleaseGroup on ReleaseGroup {\n    id\n    title\n    firstReleaseYear\n    coverArtUri\n    credits {\n      name\n      artist {\n        id\n        name\n      }\n    }\n  }\n": typeof types.AlbumCard_ReleaseGroupFragmentDoc,
@@ -51,11 +51,11 @@ type Documents = {
     "\n  fragment UserPlaylistsList_SpotifyPlaylist on SpotifyPlaylist {\n    id\n    description\n    name\n    coverImageUrl\n  }\n": typeof types.UserPlaylistsList_SpotifyPlaylistFragmentDoc,
 };
 const documents: Documents = {
+    "\n  query Bootstrap {\n    areThereAnyUsers\n    viewer {\n      id\n      username\n    }\n  }\n": types.BootstrapDocument,
     "\n  query AlbumQuery($releaseGroupId: ID!) {\n    releaseGroup {\n      byId(id: $releaseGroupId) {\n        id\n        ...AlbumPanel_ReleaseGroup\n      }\n    }\n  }\n": types.AlbumQueryDocument,
     "\n  query ArtistQuery($artistId: ID!) {\n    artist {\n      byId(id: $artistId) {\n        id\n        ...ArtistPanel_Artist\n      }\n    }\n  }\n": types.ArtistQueryDocument,
     "\n  query LikedSongsQuery {\n    viewer {\n      id\n      ...LikedSongsList_User\n    }\n  }\n": types.LikedSongsQueryDocument,
-    "\n  fragment Playlist_User on User {\n    id\n    likedSongs {\n      id\n      ...LikedSongRow_LikedSong\n    }\n  }\n": types.Playlist_UserFragmentDoc,
-    "\n  fragment LikedSongRow_Recoding on Recording {\n    id\n    title\n    length\n    artists {\n      id\n      name\n    }\n    mainAlbum {\n      id\n      title\n      coverArtUri\n    }\n  }\n": types.LikedSongRow_RecodingFragmentDoc,
+    "\n  query GetViewerProfile {\n    viewer {\n      id\n      username\n      createdAt\n      updatedAt\n      likedSongs {\n        id\n        recording { # Assuming 'recording' resolves to an object with a 'title'\n          id\n          title\n        }\n      }\n    }\n  }\n": types.GetViewerProfileDocument,
     "\nmutation AddArtistToServerLibrary($artistId: ID!) {\n  addArtistToServerLibrary(input: { artistId: $artistId }) {\n    __typename\n    ... on AddArtistToServerLibrarySuccess {\n      serverAvailability {\n        id\n        isInServerLibrary\n      }\n    }\n  }\n}": types.AddArtistToServerLibraryDocument,
     "\n  fragment ArtistInLibraryButton_Artist on Artist {\n    id\n    serverAvailability {\n      id\n      isInServerLibrary\n    }\n  }\n": types.ArtistInLibraryButton_ArtistFragmentDoc,
     "\n  fragment AlbumCard_ReleaseGroup on ReleaseGroup {\n    id\n    title\n    firstReleaseYear\n    coverArtUri\n    credits {\n      name\n      artist {\n        id\n        name\n      }\n    }\n  }\n": types.AlbumCard_ReleaseGroupFragmentDoc,
@@ -105,6 +105,10 @@ export function graphql(source: string): unknown;
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
+export function graphql(source: "\n  query Bootstrap {\n    areThereAnyUsers\n    viewer {\n      id\n      username\n    }\n  }\n"): (typeof documents)["\n  query Bootstrap {\n    areThereAnyUsers\n    viewer {\n      id\n      username\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
 export function graphql(source: "\n  query AlbumQuery($releaseGroupId: ID!) {\n    releaseGroup {\n      byId(id: $releaseGroupId) {\n        id\n        ...AlbumPanel_ReleaseGroup\n      }\n    }\n  }\n"): (typeof documents)["\n  query AlbumQuery($releaseGroupId: ID!) {\n    releaseGroup {\n      byId(id: $releaseGroupId) {\n        id\n        ...AlbumPanel_ReleaseGroup\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
@@ -117,11 +121,7 @@ export function graphql(source: "\n  query LikedSongsQuery {\n    viewer {\n    
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment Playlist_User on User {\n    id\n    likedSongs {\n      id\n      ...LikedSongRow_LikedSong\n    }\n  }\n"): (typeof documents)["\n  fragment Playlist_User on User {\n    id\n    likedSongs {\n      id\n      ...LikedSongRow_LikedSong\n    }\n  }\n"];
-/**
- * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
-export function graphql(source: "\n  fragment LikedSongRow_Recoding on Recording {\n    id\n    title\n    length\n    artists {\n      id\n      name\n    }\n    mainAlbum {\n      id\n      title\n      coverArtUri\n    }\n  }\n"): (typeof documents)["\n  fragment LikedSongRow_Recoding on Recording {\n    id\n    title\n    length\n    artists {\n      id\n      name\n    }\n    mainAlbum {\n      id\n      title\n      coverArtUri\n    }\n  }\n"];
+export function graphql(source: "\n  query GetViewerProfile {\n    viewer {\n      id\n      username\n      createdAt\n      updatedAt\n      likedSongs {\n        id\n        recording { # Assuming 'recording' resolves to an object with a 'title'\n          id\n          title\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  query GetViewerProfile {\n    viewer {\n      id\n      username\n      createdAt\n      updatedAt\n      likedSongs {\n        id\n        recording { # Assuming 'recording' resolves to an object with a 'title'\n          id\n          title\n        }\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

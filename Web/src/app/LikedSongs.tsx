@@ -2,7 +2,7 @@ import * as React from "react";
 import { LikedSongsList } from "@/features/liked-songs/LikedSongsList.tsx";
 import { graphql } from "@/gql";
 import { useQuery } from "urql";
-import { ScreenSpinner } from "@/components/spinner/ScreenSpinner.tsx";
+import { ScreenSpinner } from "@/common/components/spinner/ScreenSpinner.tsx";
 
 export interface LikedSongsProps {}
 

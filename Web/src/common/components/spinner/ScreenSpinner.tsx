@@ -1,6 +1,6 @@
 import * as React from "react";
-import { SpinnerSpacing } from "@/components/spinner/SpinnerSpacing.tsx";
-import { Spinner } from "@/components/spinner/Spinner.tsx";
+import { SpinnerSpacing } from "@/common/components/spinner/SpinnerSpacing.tsx";
+import { Spinner } from "@/common/components/spinner/Spinner.tsx";
 
 export interface ScreenSpinnerProps {}
 

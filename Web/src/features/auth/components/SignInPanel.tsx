@@ -2,9 +2,9 @@ import { useState } from "react";
 import { useMutation } from "urql";
 import { SignInForm, SignInFormValues } from "./SignInForm";
 import { graphql } from "@/gql";
-import { MmusicLogo } from "@/components/logo/MmusicLogo.tsx";
-
-// import { useRouter } from 'next/router';
+import { MmusicLogo } from "@/common/components/logo/MmusicLogo.tsx";
+import { Paper, Title, Center, Stack, Container } from "@mantine/core";
+import { showNotification } from "@mantine/notifications";
 
 export const signInMutation = graphql(`
   mutation SignIn($username: String!, $password: String!) {
@@ -42,7 +42,11 @@ export function SignInPanel() {
       console.error("Sign In GQL Error:", result.error);
     } else if (result.data?.signIn?.__typename === "SignInSuccess") {
       console.log("Sign In successful:", result.data.signIn.user);
-      alert(`Sign In successful! Welcome ${result.data.signIn.user.username}`);
+      showNotification({
+        title: "Sign In Successful",
+        message: `Welcome ${result.data.signIn.user.username}!`,
+        color: "green",
+      });
       // TODO: Handle successful sign in
     } else if (result.data?.signIn?.__typename === "SignInError") {
       setErrorMessage(result.data.signIn.message);
@@ -53,23 +57,23 @@ export function SignInPanel() {
   };
 
   return (
-    <div className="flex min-h-full flex-col justify-center px-6 py-12 lg:px-8  text-white">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md flex flex-col items-center">
-        <MmusicLogo width={"250px"} />
-        <h2 className="mt-6 text-center text-2xl font-bold leading-9 tracking-tight text-gray-100">
-          Sign in to your account
-        </h2>
-      </div>
+    <Container fluid className="flex min-h-full flex-col justify-center py-12 lg:px-8 text-white">
+      <Paper withBorder shadow="md" p="xl" radius="md" className="sm:mx-auto sm:w-full sm:max-w-md bg-gray-900">
+        <Stack align="center">
+          <MmusicLogo width={"200px"} />
+          <Title order={2} className="mt-6 text-center font-bold leading-9 tracking-tight text-gray-100">
+            Sign in to your account
+          </Title>
+        </Stack>
 
-      <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-gray-900 px-6 py-8 shadow sm:rounded-lg sm:px-10">
+        <div className="mt-10">
           <SignInForm
             onSubmit={handleSignInSubmit}
             isLoading={signInState.fetching}
             errorMessage={errorMessage}
           />
         </div>
-      </div>
-    </div>
+      </Paper>
+    </Container>
   );
 }

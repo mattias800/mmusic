@@ -2,7 +2,7 @@ import * as React from "react";
 import { musicPlayerSlice } from "@/features/music-players/MusicPlayerSlice.ts";
 import { FragmentType, graphql, useFragment } from "@/gql";
 import { useAppDispatch } from "@/ReduxAppHooks.ts";
-import { PlayButton } from "@/components/buttons/PlayButton.tsx";
+import { PlayButton } from "@/common/components/buttons/PlayButton.tsx";
 
 export interface RecordingPlayButtonProps {
   recording:

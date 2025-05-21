@@ -1,8 +1,8 @@
 import * as React from "react";
 import { graphql } from "@/gql";
 import { useQuery } from "urql";
-import { SpinnerSpacing } from "@/components/spinner/SpinnerSpacing.tsx";
-import { Spinner } from "@/components/spinner/Spinner.tsx";
+import { SpinnerSpacing } from "@/common/components/spinner/SpinnerSpacing.tsx";
+import { Spinner } from "@/common/components/spinner/Spinner.tsx";
 import { YoutubeMusicPlayer } from "@/features/music-players/youtube-music-player/YoutubeMusicPlayer.tsx";
 
 export interface YoutubeVideoSearchProps {

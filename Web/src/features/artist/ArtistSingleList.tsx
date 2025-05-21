@@ -3,8 +3,8 @@ import * as React from "react";
 import { byStringField } from "@/common/sorting/Comparators.ts";
 import { AlbumCard } from "@/features/album/AlbumCard.tsx";
 import { useQuery } from "urql";
-import { SpinnerSpacing } from "@/components/spinner/SpinnerSpacing.tsx";
-import { Spinner } from "@/components/spinner/Spinner.tsx";
+import { SpinnerSpacing } from "@/common/components/spinner/SpinnerSpacing.tsx";
+import { Spinner } from "@/common/components/spinner/Spinner.tsx";
 
 export interface ArtistSingleListProps {
   artistId: string;

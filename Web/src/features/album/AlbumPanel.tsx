@@ -1,10 +1,10 @@
 import * as React from "react";
-import { LargePlayButton } from "@/components/buttons/LargePlayButton.tsx";
-import { ShuffleButton } from "@/components/buttons/ShuffleButton.tsx";
-import { DotsButton } from "@/components/buttons/DotsButton.tsx";
-import { LargeLikeButton } from "@/components/buttons/LargeLikeButton.tsx";
+import { LargePlayButton } from "@/common/components/buttons/LargePlayButton.tsx";
+import { ShuffleButton } from "@/common/components/buttons/ShuffleButton.tsx";
+import { DotsButton } from "@/common/components/buttons/DotsButton.tsx";
+import { LargeLikeButton } from "@/common/components/buttons/LargeLikeButton.tsx";
 import { AlbumHeader } from "@/features/album/AlbumHeader.tsx";
-import { PageCard } from "@/components/PageCard.tsx";
+import { PageCard } from "@/common/components/PageCard.tsx";
 import { AlbumTrackList } from "@/features/album/AlbumTrackList.tsx";
 import { FragmentType, graphql, useFragment } from "@/gql";
 
