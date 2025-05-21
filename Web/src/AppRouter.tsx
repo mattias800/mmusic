@@ -1,7 +1,5 @@
 import * as React from "react";
 import { Route, Routes } from "react-router";
-import SetupPage from "@/app/Setup.tsx"; // Import the SetupPage component
-import ProfilePage from "@/app/ProfilePage.tsx"; // Import the actual ProfilePage component
 import { IndexPage } from "@/app/IndexPage.tsx";
 import { LikedSongsPage } from "@/app/LikedSongsPage.tsx";
 import { AlbumPage } from "@/app/AlbumPage.tsx";

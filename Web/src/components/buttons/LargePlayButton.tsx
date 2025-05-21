@@ -1,9 +1,10 @@
 import * as React from "react";
-import { Play, Pause, Download } from "lucide-react";
+import { Download, Pause, Play } from "lucide-react";
 
 export type LargePlayButtonIconVariant = "play" | "pause" | "download";
 
-export interface LargePlayButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+export interface LargePlayButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   iconVariant?: LargePlayButtonIconVariant;
 }
 

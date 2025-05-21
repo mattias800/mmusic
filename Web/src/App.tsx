@@ -9,6 +9,7 @@ import { store } from "@/Store.ts";
 import { MusicPlayer } from "@/features/music-players/MusicPlayer.tsx";
 import { Bootstrap } from "@/Bootstrap.tsx";
 import { SetupPage } from "@/app/SetupPage.tsx";
+import { SignInPage } from "@/app/SignInPage.tsx";
 
 function App() {
   return (
@@ -27,7 +28,7 @@ function App() {
                 </BrowserRouter>
               </>
             )}
-            renderNotAuthenticated={() => <span>Logga in då</span>}
+            renderNotAuthenticated={() => <SignInPage />}
           />
         </UrqlProvider>
       </ReduxProvider>

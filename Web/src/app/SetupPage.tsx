@@ -2,9 +2,44 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useMutation } from "urql";
+import { gql, useMutation } from "urql";
 import { useNavigate } from "react-router-dom";
-import { CREATE_USER_MUTATION, SIGN_IN_MUTATION } from "@/gql/misc"; // Adjusted path
+
+export const createUserMutation = gql`
+  mutation CreateUser($username: String!, $password: String!) {
+    createUser(input: { username: $username, password: $password }) {
+      __typename
+      ... on CreateUserSuccess {
+        # Assuming a similar success payload
+        user {
+          id
+          username
+        }
+      }
+      ... on CreateUserError {
+        # Assuming a similar error payload
+        message
+      }
+    }
+  }
+`;
+
+export const signInMutation = gql`
+  mutation SignIn($username: String!, $password: String!) {
+    signIn(input: { username: $username, password: $password }) {
+      __typename
+      ... on SignInSuccess {
+        user {
+          id
+          username
+        }
+      }
+      ... on SignInError {
+        message
+      }
+    }
+  }
+`;
 
 export const SetupPage = () => {
   const [username, setUsername] = useState("");
@@ -14,8 +49,8 @@ export const SetupPage = () => {
 
   const navigate = useNavigate();
 
-  const [, createUserMutation] = useMutation(CREATE_USER_MUTATION);
-  const [, signInMutation] = useMutation(SIGN_IN_MUTATION);
+  const [, createUser] = useMutation(createUserMutation);
+  const [, signIn] = useMutation(signInMutation);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -24,7 +59,7 @@ export const SetupPage = () => {
 
     try {
       // 1. Create User
-      const createUserResult = await createUserMutation({ username, password });
+      const createUserResult = await createUser({ username, password });
 
       if (createUserResult.error) {
         throw new Error(
@@ -45,7 +80,7 @@ export const SetupPage = () => {
       console.log("User created:", createUserData.user);
 
       // 2. Sign In User
-      const signInResult = await signInMutation({ username, password });
+      const signInResult = await signIn({ username, password });
 
       if (signInResult.error) {
         throw new Error(

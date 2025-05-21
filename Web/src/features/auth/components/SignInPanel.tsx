@@ -4,9 +4,7 @@ import { SignInForm, SignInFormValues } from "./SignInForm";
 import { graphql } from "@/gql";
 import { MmusicLogo } from "@/components/logo/MmusicLogo.tsx";
 
-// import { useRouter } from 'next/router';
-
-export const signInMutation = graphql(`
+const signInMutation = graphql(`
   mutation SignIn($username: String!, $password: String!) {
     signIn(input: { username: $username, password: $password }) {
       __typename
@@ -28,7 +26,6 @@ export function SignInPanel() {
   const [errorMessage, setErrorMessage] = useState<string | undefined>(
     undefined,
   );
-  // const router = useRouter();
 
   const handleSignInSubmit = async (values: SignInFormValues) => {
     setErrorMessage(undefined);

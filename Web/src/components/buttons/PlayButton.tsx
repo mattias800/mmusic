@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Play, Pause, Download, Search } from "lucide-react";
+import { Download, Pause, Play, Search } from "lucide-react";
 
 export type PlayButtonIconVariant = "play" | "pause" | "download" | "search";
 

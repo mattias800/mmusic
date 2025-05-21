@@ -1,7 +1,15 @@
 import * as React from "react";
 import { gql, useQuery } from "@urql/next"; // Assuming @urql/next based on task description
-import { Center, Loader, Text, Title, List, ThemeIcon, Stack } from "@mantine/core";
-import { IconCircleCheck, IconCircleDashed } from "@tabler/icons-react";
+import {
+  Center,
+  List,
+  Loader,
+  Stack,
+  Text,
+  ThemeIcon,
+  Title,
+} from "@mantine/core";
+import { IconCircleCheck } from "@tabler/icons-react";
 
 // Define the GraphQL query
 const GET_VIEWER_PROFILE = gql`
@@ -13,7 +21,8 @@ const GET_VIEWER_PROFILE = gql`
       updatedAt
       likedSongs {
         id
-        recording { # Assuming 'recording' resolves to an object with a 'title'
+        recording {
+          # Assuming 'recording' resolves to an object with a 'title'
           id
           title
         }
@@ -75,7 +84,9 @@ const ProfilePage: React.FC = () => {
         <strong>Last Updated:</strong> {formatDate(updatedAt)}
       </Text>
 
-      <Title order={3} mt="lg">Liked Songs</Title>
+      <Title order={3} mt="lg">
+        Liked Songs
+      </Title>
       {likedSongs && likedSongs.length > 0 ? (
         <List
           spacing="xs"

@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { TextInput } from '@/components/inputs/TextInput';
-import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
+import React, { useState } from "react";
+import { TextInput } from "@/components/inputs/TextInput";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 export interface SignInFormValues {
   username: string;
@@ -14,9 +14,13 @@ interface SignInFormProps {
   errorMessage?: string;
 }
 
-export function SignInForm({ onSubmit, isLoading, errorMessage }: SignInFormProps) {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+export function SignInForm({
+  onSubmit,
+  isLoading,
+  errorMessage,
+}: SignInFormProps) {
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -63,14 +67,14 @@ export function SignInForm({ onSubmit, isLoading, errorMessage }: SignInFormProp
         <Button
           type="submit"
           className={cn(
-            'w-full flex justify-center rounded-md px-3 py-2.5 text-sm font-semibold leading-6 shadow-sm',
+            "w-full flex justify-center rounded-md px-3 py-2.5 text-sm font-semibold leading-6 shadow-sm",
             isLoading
-              ? 'bg-gray-500 hover:bg-gray-500 cursor-not-allowed'
-              : 'bg-indigo-600 hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 text-white'
+              ? "bg-gray-500 hover:bg-gray-500 cursor-not-allowed"
+              : "bg-indigo-600 hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 text-white",
           )}
           disabled={isLoading}
         >
-          {isLoading ? 'Signing in...' : 'Sign in'}
+          {isLoading ? "Signing in..." : "Sign in"}
         </Button>
       </div>
     </form>

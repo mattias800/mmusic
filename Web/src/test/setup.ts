@@ -1,4 +1,4 @@
-import '@testing-library/jest-dom';
+import "@testing-library/jest-dom";
 
 // Mock global objects or APIs if needed
 // For example, if you need to mock window.matchMedia:

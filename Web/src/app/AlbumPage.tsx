@@ -23,7 +23,7 @@ export const AlbumPage = () => {
     pause: !releaseGroupId,
   });
 
-  console.log({releaseGroupId});
+  console.log({ releaseGroupId });
   if (fetching || stale) return <ScreenSpinner />;
   if (error) return <div>Error: {error.message}</div>;
   if (!data?.releaseGroup.byId) return <div>No data</div>;

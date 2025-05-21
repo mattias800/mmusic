@@ -20,5 +20,5 @@ export function capitalizeFirstLetter(str: string): string {
  */
 export function truncateString(str: string, maxLength: number): string {
   if (!str || str.length <= maxLength) return str;
-  return str.slice(0, maxLength) + '...';
+  return str.slice(0, maxLength) + "...";
 }

@@ -21,13 +21,16 @@ export const albumPanelReleaseGroupFragment = graphql(`
 `);
 
 export const AlbumPanel: React.FC<AlbumPanelProps> = (props) => {
-  const releaseGroup = useFragment(albumPanelReleaseGroupFragment, props.releaseGroup);
+  const releaseGroup = useFragment(
+    albumPanelReleaseGroupFragment,
+    props.releaseGroup,
+  );
 
   return (
     <PageCard
       header={
         <>
-          <AlbumHeader releaseGroup={releaseGroup}/>
+          <AlbumHeader releaseGroup={releaseGroup} />
 
           <div className="flex items-center gap-6 mb-6">
             <LargePlayButton />
@@ -38,7 +41,7 @@ export const AlbumPanel: React.FC<AlbumPanelProps> = (props) => {
         </>
       }
     >
-      <AlbumTrackList releaseGroup={releaseGroup}/>
+      <AlbumTrackList releaseGroup={releaseGroup} />
 
       <div className="text-white/40 text-xs mt-12">
         <p>© 1995 King Size Records</p>
