@@ -1,19 +1,33 @@
-import { cn } from "@/lib/utils.ts";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Heart, User } from "lucide-react"; // Added User icon
 import { NavLink } from "react-router";
-import * as React from "react";
 import { SearchInput } from "../search/SearchInput";
 import { DownloadOverviewFetcher } from "@/features/downloads/download-overview/DownloadOverviewFetcher.tsx";
 import { SoulSeekNetworkStatusFetcher } from "@/features/soul-seek-network-status/SoulSeekNetworkStatusFetcher.tsx";
+import { useQuery } from "urql"; // Import useQuery
+import { graphql } from "@/gql"; // Import generated types
 
-interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {}
+const sidebarQuery = graphql(`
+  query Sidebar {
+    viewer {
+      id
+      username
+    }
+  }
+`);
 
-export function Sidebar({ className }: SidebarProps) {
+export function Sidebar() {
   const { pathname } = window.location;
+
+  const [{ data }] = useQuery({
+    query: sidebarQuery,
+  });
+
+  const username = data?.viewer?.username ?? "Profile";
+
   return (
-    <div className={cn("pb-12", className)}>
+    <div id="sidebar" className={"h-full flex flex-col justify-between"}>
       <div className="space-y-4 py-4">
         <div className="px-3 py-2">
           <h2 className="mb-2 px-4 text-lg font-semibold tracking-tight">
@@ -29,16 +43,6 @@ export function Sidebar({ className }: SidebarProps) {
               <NavLink to={"/liked-songs"}>
                 <Heart className="mr-2 h-4 w-4" />
                 Liked songs
-              </NavLink>
-            </Button>
-            <Button
-              variant={pathname === "/profile" ? "secondary" : "ghost"}
-              className="w-full justify-start"
-              asChild
-            >
-              <NavLink to={"/profile"}>
-                <User className="mr-2 h-4 w-4" />
-                Profile
               </NavLink>
             </Button>
             <Button variant="ghost" className="w-full justify-start">
@@ -96,7 +100,7 @@ export function Sidebar({ className }: SidebarProps) {
             </Button>
           </div>
         </div>
-        <div className="px-3 py-2">
+        <div className="px-3 py-2 flex-grow">
           <h2 className="mb-2 px-4 text-lg font-semibold tracking-tight">
             Library
           </h2>
@@ -198,6 +202,18 @@ export function Sidebar({ className }: SidebarProps) {
             </div>
           </ScrollArea>
         </div>
+      </div>
+      <div className="px-4 py-4">
+        <Button
+          variant={pathname === "/profile" ? "secondary" : "ghost"}
+          className="w-full justify-start"
+          asChild
+        >
+          <NavLink to={"/profile"}>
+            <User className="mr-2 h-4 w-4" />
+            {username}
+          </NavLink>
+        </Button>
       </div>
     </div>
   );
