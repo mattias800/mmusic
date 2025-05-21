@@ -6,6 +6,7 @@ import { Album } from "@/app/Album.tsx";
 import { Artist } from "@/app/Artist.tsx";
 import { ImportSpotifyPlaylist } from "@/app/ImportSpotifyPlaylist.tsx";
 import SetupPage from "@/app/Setup.tsx"; // Import the SetupPage component
+import ProfilePage from "@/app/ProfilePage.tsx"; // Import the actual ProfilePage component
 
 export interface AppRouterProps {}
 
@@ -21,6 +22,7 @@ export const AppRouter: React.FC<AppRouterProps> = () => {
         element={<ImportSpotifyPlaylist />}
       />
       <Route path="/setup" element={<SetupPage />} /> {/* Add the /setup route */}
+      <Route path="/profile" element={<ProfilePage />} />
     </Routes>
   );
 };
