@@ -6,7 +6,12 @@ import { SearchInput } from "../search/SearchInput";
 import { DownloadOverviewFetcher } from "@/features/downloads/download-overview/DownloadOverviewFetcher.tsx";
 import { SoulSeekNetworkStatusFetcher } from "@/features/soul-seek-network-status/SoulSeekNetworkStatusFetcher.tsx";
 import { useQuery } from "urql"; // Import useQuery
-import { graphql } from "@/gql"; // Import generated types
+import { graphql } from "@/gql";
+import { cn } from "@/lib/utils.ts"; // Import generated types
+
+export interface SidebarProps {
+  className?: string;
+}
 
 const sidebarQuery = graphql(`
   query Sidebar {
@@ -17,7 +22,7 @@ const sidebarQuery = graphql(`
   }
 `);
 
-export function Sidebar() {
+export const Sidebar = ({ className }: SidebarProps) => {
   const { pathname } = window.location;
 
   const [{ data }] = useQuery({
@@ -27,7 +32,10 @@ export function Sidebar() {
   const username = data?.viewer?.username ?? "Profile";
 
   return (
-    <div id="sidebar" className={"h-full flex flex-col justify-between"}>
+    <div
+      id="sidebar"
+      className={cn("h-full flex flex-col justify-between", className)}
+    >
       <div className="space-y-4 py-4">
         <div className="px-3 py-2">
           <h2 className="mb-2 px-4 text-lg font-semibold tracking-tight">
@@ -217,4 +225,4 @@ export function Sidebar() {
       </div>
     </div>
   );
-}
+};
