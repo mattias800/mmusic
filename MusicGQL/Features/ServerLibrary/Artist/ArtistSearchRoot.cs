@@ -1,18 +1,18 @@
-using MusicGQL.Features.ServerLibrary.Artist.Db;
-using Neo4j.Driver;
+using MusicGQL.Integration.Neo4j;
 
 namespace MusicGQL.Features.ServerLibrary.Artist;
 
 public record ArtistSearchRoot
 {
-    public async Task<IEnumerable<Artist>> All(IDriver driver)
+    public async Task<IEnumerable<Artist>> All(Neo4jService service)
     {
-        await using var session = driver.AsyncSession();
-        var result = await session.RunAsync(
-            "MATCH (a:Artist) RETURN a ORDER BY a.name ASC LIMIT 100"
-        );
+        var allArtists = await service.AllArtists(25, 0);
+        return allArtists.Select(a => new Artist(a));
+    }
 
-        var x = (await result.ToListAsync())?.Select(r => r.As<DbArtist>());
-        return x?.Select(a => new Artist(a)) ?? [];
+    public async Task<IEnumerable<Artist>> SearchByName(Neo4jService service, string name)
+    {
+        var artists = await service.SearchArtistByNameAsync(name, 25, 0);
+        return artists.Select(a => new Artist(a));
     }
 }

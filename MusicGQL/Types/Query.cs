@@ -1,22 +1,15 @@
-using System; // For Guid
-using System.Security.Claims; // For ClaimTypes
-using System.Threading.Tasks; // For Task
-using HotChocolate;
-using Microsoft.AspNetCore.Http; // For IHttpContextAccessor
-using Microsoft.EntityFrameworkCore; // For FirstOrDefaultAsync
-using MusicGQL.Db.Postgres; // For EventDbContext
-using MusicGQL.Features.Artist;
+using System.Security.Claims;
+using Microsoft.EntityFrameworkCore;
+using MusicGQL.Db.Postgres;
 using MusicGQL.Features.Downloads;
 using MusicGQL.Features.External;
 using MusicGQL.Features.MusicBrainz;
-using MusicGQL.Features.MusicBrainz.Recording;
-using MusicGQL.Features.MusicBrainz.Release;
 using MusicGQL.Features.Playlists;
-using MusicGQL.Features.Recommendations; // For [Service] attribute if needed directly on properties, but methods are cleaner for this.
-using MusicGQL.Features.ServerLibrary;
+using MusicGQL.Features.Recommendations;
 using MusicGQL.Features.ServerLibrary.Artist;
+using MusicGQL.Features.ServerLibrary.Release;
 using MusicGQL.Features.ServerLibrary.ReleaseGroup;
-using MusicGQL.Features.Users; // For User type and UserSearchRoot
+using MusicGQL.Features.Users;
 
 namespace MusicGQL.Types;
 

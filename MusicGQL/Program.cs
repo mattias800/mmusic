@@ -36,6 +36,7 @@ using MusicGQL.Features.Users.Aggregate;
 using MusicGQL.Features.Users.Handlers;
 using MusicGQL.Features.Users.Mutations;
 using MusicGQL.Integration.MusicBrainz;
+using MusicGQL.Integration.Neo4j;
 using MusicGQL.Integration.Spotify;
 using MusicGQL.Integration.Spotify.Configuration;
 using MusicGQL.Integration.Youtube.Configuration;
@@ -77,6 +78,7 @@ builder
         )
     ))
     .AddSingleton<ReleaseGroupPersistenceService>()
+    .AddSingleton<Neo4jService>()
     .AddSingleton<SoulSeekService>()
     .AddSingleton<MusicBrainzService>()
     .AddSingleton<YouTubeService>()
