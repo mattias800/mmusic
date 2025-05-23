@@ -3,6 +3,7 @@ using MusicGQL.Features.ServerLibrary.Recording.Db;
 using MusicGQL.Features.ServerLibrary.Release.Db;
 using MusicGQL.Features.ServerLibrary.ReleaseGroup.Db;
 using Neo4j.Driver;
+using INode = Neo4j.Driver.INode;
 
 namespace MusicGQL.Integration.Neo4j;
 
@@ -14,7 +15,7 @@ public class Neo4jService(IDriver driver)
         var dbArtist = await ExecuteReadSingleAsync(
             "MATCH (a:Artist {Id: $id}) RETURN a",
             new { id },
-            record => record["a"].As<DbArtist>()
+            record => record["a"].As<INode>().ToDbArtist()
         );
         return dbArtist;
     }
@@ -27,7 +28,7 @@ public class Neo4jService(IDriver driver)
         var dbArtists = await ExecuteReadListAsync(
             "MATCH (a:Artist)-[:ARTIST_CREDIT_FOR_RECORDING]->(r:Recording {Id: $recordingId}) RETURN a",
             new { recordingId },
-            record => record["a"].As<DbArtist>()
+            record => record["a"].As<INode>().ToDbArtist()
         );
         return dbArtists;
     }
@@ -39,14 +40,14 @@ public class Neo4jService(IDriver driver)
     )
     {
         var dbArtists = await ExecuteReadListAsync(
-            "MATCH (a:Artist) WHERE toLower(a.Name) CONTAINS toLower($name) RETURN a ORDER BYCESIUN a.Name SKIP $offset LIMIT $limit",
+            "MATCH (a:Artist) WHERE toLower(a.Name) CONTAINS toLower($name) RETURN a ORDER BY a.Name SKIP $offset LIMIT $limit",
             new
             {
                 name,
                 offset,
                 limit,
             },
-            record => record["a"].As<DbArtist>()
+            record => record["a"].As<INode>().ToDbArtist()
         );
         return dbArtists;
     }
@@ -54,9 +55,9 @@ public class Neo4jService(IDriver driver)
     public async Task<List<DbArtist>> AllArtists(int limit = 25, int offset = 0)
     {
         var dbArtists = await ExecuteReadListAsync(
-            "MATCH (a:Artist) RETURN a ORDER BYCESIUN a.Name SKIP $offset LIMIT $limit",
+            "MATCH (a:Artist) RETURN a ORDER BY a.Name SKIP $offset LIMIT $limit",
             new { offset, limit },
-            record => record["a"].As<DbArtist>()
+            record => record["a"].As<INode>().ToDbArtist()
         );
         return dbArtists;
     }
@@ -67,7 +68,7 @@ public class Neo4jService(IDriver driver)
         var dbRecording = await ExecuteReadSingleAsync(
             "MATCH (r:Recording {Id: $id}) RETURN r",
             new { id },
-            record => record["r"].As<DbRecording>()
+            record => record["r"].As<INode>().ToDbRecording()
         );
         return dbRecording;
     }
@@ -78,7 +79,7 @@ public class Neo4jService(IDriver driver)
         var dbRecordings = await ExecuteReadListAsync(
             "MATCH (a:Artist {Id: $artistId})<-[:ARTIST_CREDIT_FOR_RECORDING]-(r:Recording) RETURN r",
             new { artistId },
-            record => record["r"].As<DbRecording>()
+            record => record["r"].As<INode>().ToDbRecording()
         );
         return dbRecordings;
     }
@@ -90,7 +91,7 @@ public class Neo4jService(IDriver driver)
         var dbRecordings = await ExecuteReadListAsync(
             "MATCH (rel:Release {Id: $releaseId})-[:HAS_MEDIUM]->(m:Medium)-[:INCLUDES_TRACK]->(r:Recording) RETURN DISTINCT r",
             new { releaseId },
-            record => record["r"].As<DbRecording>()
+            record => record["r"].As<INode>().ToDbRecording()
         );
         return dbRecordings;
     }
@@ -109,7 +110,7 @@ public class Neo4jService(IDriver driver)
                 offset,
                 limit,
             },
-            record => record["r"].As<DbRecording>()
+            record => record["r"].As<INode>().ToDbRecording()
         );
         return dbRecordings;
     }
@@ -120,7 +121,7 @@ public class Neo4jService(IDriver driver)
         var dbRelease = await ExecuteReadSingleAsync(
             "MATCH (rel:Release {Id: $releaseId}) RETURN rel",
             new { releaseId },
-            record => record["rel"].As<DbRelease>()
+            record => record["rel"].As<INode>().ToDbRelease()
         );
         return dbRelease;
     }
@@ -132,7 +133,7 @@ public class Neo4jService(IDriver driver)
         var dbReleases = await ExecuteReadListAsync(
             "MATCH (a:Artist {Id: $artistId})<-[:ARTIST_CREDIT_FOR_RELEASE]-(rel:Release) RETURN rel",
             new { artistId },
-            record => record["rel"].As<DbRelease>()
+            record => record["rel"].As<INode>().ToDbRelease()
         );
         return dbReleases;
     }
@@ -143,7 +144,7 @@ public class Neo4jService(IDriver driver)
         var dbReleases = await ExecuteReadListAsync(
             "MATCH (rec:Recording {Id: $recordingId})<-[:INCLUDES_TRACK]-(m:Medium)<-[:HAS_MEDIUM]-(rel:Release) RETURN DISTINCT rel",
             new { recordingId },
-            record => record["rel"].As<DbRelease>()
+            record => record["rel"].As<INode>().ToDbRelease()
         );
         return dbReleases;
     }
@@ -153,7 +154,7 @@ public class Neo4jService(IDriver driver)
         var dbReleases = await ExecuteReadListAsync(
             "MATCH (rg:ReleaseGroup {Id: $releaseGroupId})<-[:RELEASE_OF]-(rel:Release) RETURN rel",
             new { releaseGroupId },
-            record => record["rel"].As<DbRelease>()
+            record => record["rel"].As<INode>().ToDbRelease()
         );
         return dbReleases;
     }
@@ -172,7 +173,7 @@ public class Neo4jService(IDriver driver)
                 offset,
                 limit,
             },
-            record => record["rel"].As<DbRelease>()
+            record => record["rel"].As<INode>().ToDbRelease()
         );
         return dbReleases;
     }
@@ -183,7 +184,7 @@ public class Neo4jService(IDriver driver)
         var dbReleaseGroup = await ExecuteReadSingleAsync(
             "MATCH (rg:ReleaseGroup {Id: $releaseGroupId}) RETURN rg",
             new { releaseGroupId },
-            record => record["rg"].As<DbReleaseGroup>()
+            record => record["rg"].As<INode>().ToDbReleaseGroup()
         );
         return dbReleaseGroup;
     }
@@ -202,7 +203,7 @@ public class Neo4jService(IDriver driver)
                 offset,
                 limit,
             },
-            record => record["rg"].As<DbReleaseGroup>()
+            record => record["rg"].As<INode>().ToDbReleaseGroup()
         );
         return dbReleaseGroups;
     }
@@ -213,7 +214,7 @@ public class Neo4jService(IDriver driver)
         var dbReleaseGroups = await ExecuteReadListAsync(
             "MATCH (a:Artist {Id: $artistId})<-[:ARTIST_CREDIT_FOR_RELEASE_GROUP]-(rg:ReleaseGroup) RETURN rg",
             new { artistId },
-            record => record["rg"].As<DbReleaseGroup>()
+            record => record["rg"].As<INode>().ToDbReleaseGroup()
         );
         return dbReleaseGroups;
     }

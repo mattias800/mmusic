@@ -1,0 +1,61 @@
+using MusicGQL.Features.ServerLibrary.Artist.Db;
+using MusicGQL.Features.ServerLibrary.Recording.Db;
+using MusicGQL.Features.ServerLibrary.Release.Db;
+using MusicGQL.Features.ServerLibrary.ReleaseGroup.Db;
+using Neo4j.Driver;
+using INode = Neo4j.Driver.INode;
+
+namespace MusicGQL.Integration.Neo4j;
+
+public static class Neo4jNodeMapperExtensions
+{
+    public static DbArtist ToDbArtist(this INode node)
+    {
+        return new DbArtist
+        {
+            Id = node["Id"].As<string>() ?? string.Empty,
+            Name = node["Name"].As<string>() ?? string.Empty,
+            SortName = node["SortName"].As<string>() ?? string.Empty,
+            Gender =
+                node.Properties.TryGetValue("Gender", out var genderValue) && genderValue != null
+                    ? genderValue.As<string>()
+                    : null,
+        };
+    }
+
+    public static DbRecording ToDbRecording(this INode node)
+    {
+        return new DbRecording
+        {
+            Id = node["Id"].As<string>() ?? string.Empty,
+            Title = node["Title"].As<string>() ?? string.Empty,
+            Length = node["Length"]?.As<int?>(),
+            Disambiguation = node["Disambiguation"]?.As<string>(),
+        };
+    }
+
+    public static DbRelease ToDbRelease(this INode node)
+    {
+        return new DbRelease
+        {
+            Id = node["Id"].As<string>() ?? string.Empty,
+            Title = node["Title"].As<string>() ?? string.Empty,
+            Date = node["Date"]?.As<string>(),
+            Status = node["Status"]?.As<string>(),
+        };
+    }
+
+    public static DbReleaseGroup ToDbReleaseGroup(this INode node)
+    {
+        return new DbReleaseGroup
+        {
+            Id = node["Id"].As<string>() ?? string.Empty,
+            Title = node["Title"].As<string>() ?? string.Empty,
+            PrimaryType = node["PrimaryType"].As<string>() ?? string.Empty,
+            SecondaryTypes =
+                node["SecondaryTypes"]?.As<List<object>>()?.Select(s => s.ToString()).ToList()
+                ?? new List<string>(),
+            FirstReleaseDate = node["FirstReleaseDate"].As<string>() ?? string.Empty,
+        };
+    }
+}
