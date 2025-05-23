@@ -11,14 +11,16 @@ export interface SearchResultReleaseGroupProps {
 
 const albumSearchQuery = graphql(`
   query SearchResultAlbumSearch($text: String!) {
-    releaseGroup {
-      searchByName(name: $text, limit: 5) {
-        id
-        title
-        mainRelease {
+    musicBrainz {
+      releaseGroup {
+        searchByName(name: $text, limit: 5) {
           id
           title
-          coverArtUri
+          mainRelease {
+            id
+            title
+            coverArtUri
+          }
         }
       }
     }
@@ -33,7 +35,7 @@ export const SearchResultReleaseGroup: React.FC<
     variables: { text: searchText },
   });
 
-  const releaseGroups = data?.releaseGroup.searchByName;
+  const releaseGroups = data?.musicBrainz.releaseGroup.searchByName;
 
   return (
     <SearchResultGroup

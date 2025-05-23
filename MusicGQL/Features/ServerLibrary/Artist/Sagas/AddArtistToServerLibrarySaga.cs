@@ -1,6 +1,5 @@
 using AutoMapper;
 using HotChocolate.Subscriptions;
-using MusicGQL.Features.ServerLibrary.ReleaseGroup;
 using MusicGQL.Features.ServerLibrary.ReleaseGroup.Handlers;
 using MusicGQL.Features.ServerLibrary.ReleaseGroup.Service;
 using Neo4j.Driver;

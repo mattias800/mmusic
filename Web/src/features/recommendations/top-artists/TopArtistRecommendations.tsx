@@ -16,7 +16,7 @@ const topArtistRecommendationsQuery = graphql(`
         id
         artist {
           id
-          ...ArtistCard_Artist
+          ...ArtistCard_MbArtist
         }
       }
       topTracks {

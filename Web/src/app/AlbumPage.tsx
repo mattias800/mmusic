@@ -6,10 +6,12 @@ import { ScreenSpinner } from "@/components/spinner/ScreenSpinner.tsx";
 
 export const albumQuery = graphql(`
   query AlbumQuery($releaseGroupId: ID!) {
-    releaseGroup {
-      byId(id: $releaseGroupId) {
-        id
-        ...AlbumPanel_ReleaseGroup
+    musicBrainz {
+      releaseGroup {
+        byId(id: $releaseGroupId) {
+          id
+          ...AlbumPanel_ReleaseGroup
+        }
       }
     }
   }
@@ -26,7 +28,7 @@ export const AlbumPage = () => {
   console.log({ releaseGroupId });
   if (fetching || stale) return <ScreenSpinner />;
   if (error) return <div>Error: {error.message}</div>;
-  if (!data?.releaseGroup.byId) return <div>No data</div>;
+  if (!data?.musicBrainz.releaseGroup.byId) return <div>No data</div>;
 
-  return <AlbumPanel releaseGroup={data.releaseGroup.byId} />;
+  return <AlbumPanel releaseGroup={data.musicBrainz.releaseGroup.byId} />;
 };

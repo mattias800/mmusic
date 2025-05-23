@@ -9,7 +9,7 @@ export interface PlaylistSongRowProps {
 }
 
 export const playlistSongRowFragment = graphql(`
-  fragment LikedSongRow_Recoding on Recording {
+  fragment LikedSongRow_Recoding on MbRecording {
     id
     title
     length

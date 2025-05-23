@@ -1,4 +1,5 @@
 using MusicGQL.Features.ServerLibrary.Release.Db;
+using MusicGQL.Integration.Neo4j;
 
 namespace MusicGQL.Features.ServerLibrary.Release;
 
@@ -27,11 +28,9 @@ public record Release([property: GraphQLIgnore] DbRelease Model)
 
     // public IEnumerable<Artist.Artist> Artists() => Model.Credits.Select(a => new Artist(a.Artist));
 
-    // public async Task<IEnumerable<Recording>> Recordings(
-    //     [Service] MusicBrainzService mbService
-    // )
-    // {
-    //     var recordings = await mbService.GetRecordingsForReleaseAsync(Id);
-    //     return recordings.Select(r => new Recording.MbRecording(r));
-    // }
+    public async Task<IEnumerable<Recording.Recording>> Recordings(Neo4jService service)
+    {
+        var recordings = await service.GetRecordingsForReleaseAsync(Id);
+        return recordings.Select(r => new Recording.Recording(r));
+    }
 };

@@ -7,7 +7,7 @@ export interface AlbumCardProps {
 }
 
 export const albumCardReleaseGroupFragment = graphql(`
-  fragment AlbumCard_ReleaseGroup on ReleaseGroup {
+  fragment AlbumCard_ReleaseGroup on MbReleaseGroup {
     id
     title
     firstReleaseYear

@@ -9,7 +9,7 @@ export interface ArtistInLibraryButtonProps {
 }
 
 export const artistInLibraryButtonArtistFragment = graphql(`
-  fragment ArtistInLibraryButton_Artist on Artist {
+  fragment ArtistInLibraryButton_MbArtist on MbArtist {
     id
     serverAvailability {
       id

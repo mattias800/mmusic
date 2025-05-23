@@ -12,19 +12,21 @@ export interface SearchResultRecordingProps {
 
 const songSearchQuery = graphql(`
   query SearchResultSongSearch($text: String!) {
-    recording {
-      searchByName(name: $text, limit: 5) {
-        id
-        title
-        length
-        artists {
-          id
-          name
-        }
-        mainAlbum {
+    musicBrainz {
+      recording {
+        searchByName(name: $text, limit: 5) {
           id
           title
-          coverArtUri
+          length
+          artists {
+            id
+            name
+          }
+          mainAlbum {
+            id
+            title
+            coverArtUri
+          }
         }
       }
     }
@@ -40,7 +42,7 @@ export const SearchResultRecording: React.FC<SearchResultRecordingProps> = ({
     variables: { text: searchText },
   });
 
-  const recordings = data?.recording.searchByName;
+  const recordings = data?.musicBrainz.recording.searchByName;
 
   return (
     <SearchResultGroup

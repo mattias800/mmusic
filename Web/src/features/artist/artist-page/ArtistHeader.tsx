@@ -8,7 +8,7 @@ export interface ArtistHeaderProps {
 }
 
 export const artistHeaderArtistFragment = graphql(`
-  fragment ArtistHeader_Artist on Artist {
+  fragment ArtistHeader_MbArtist on MbArtist {
     id
     name
     listeners

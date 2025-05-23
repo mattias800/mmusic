@@ -11,12 +11,14 @@ export interface SearchResultArtistProps {
 
 const artistSearchQuery = graphql(`
   query SearchResultArtistSearch($text: String!) {
-    artist {
-      searchByName(name: $text, limit: 5) {
-        id
-        name
-        images {
-          artistThumb
+    musicBrainz {
+      artist {
+        searchByName(name: $text, limit: 5) {
+          id
+          name
+          images {
+            artistThumb
+          }
         }
       }
     }
@@ -32,7 +34,7 @@ export const SearchResultArtist: React.FC<SearchResultArtistProps> = ({
     variables: { text: searchText },
   });
 
-  const artists = data?.artist.searchByName;
+  const artists = data?.musicBrainz.artist.searchByName;
 
   return (
     <SearchResultGroup

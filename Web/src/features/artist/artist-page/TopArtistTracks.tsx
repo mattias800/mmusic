@@ -8,7 +8,7 @@ export interface TopArtistTracksProps {
 }
 
 export const topArtistTracksArtistFragment = graphql(`
-  fragment TopArtistTracks_Artist on Artist {
+  fragment TopArtistTracks_MbArtist on MbArtist {
     id
     topTracks {
       id

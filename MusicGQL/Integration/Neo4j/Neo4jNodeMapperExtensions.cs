@@ -16,10 +16,7 @@ public static class Neo4jNodeMapperExtensions
             Id = node["Id"].As<string>() ?? string.Empty,
             Name = node["Name"].As<string>() ?? string.Empty,
             SortName = node["SortName"].As<string>() ?? string.Empty,
-            Gender =
-                node.Properties.TryGetValue("Gender", out var genderValue) && genderValue != null
-                    ? genderValue.As<string>()
-                    : null,
+            Gender = node.Properties.GetValueOrDefault("Gender") as string,
         };
     }
 

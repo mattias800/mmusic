@@ -42,7 +42,6 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Features\ServerLibrary\ReleaseGroup\MusicBrainz\" />
-    <Folder Include="Features\ServerLibrary\Utils\" />
     <Folder Include="Features\Users\Handlers\" />
     <Folder Include="Features\Users\Queries\" />
     <Folder Include="Features\YouTube\" />

@@ -11,12 +11,14 @@ export interface YoutubeVideoSearchProps {
 
 export const youtubeVideoSearchQuery = graphql(`
   query YoutubeVideoSearch($recordingId: ID!) {
-    recording {
-      byId(id: $recordingId) {
-        id
-        streamingServiceInfo {
+    musicBrainz {
+      recording {
+        byId(id: $recordingId) {
           id
-          youtubeSearchVideoId
+          streamingServiceInfo {
+            id
+            youtubeSearchVideoId
+          }
         }
       }
     }
@@ -39,14 +41,17 @@ export const YoutubeVideoSearch: React.FC<YoutubeVideoSearchProps> = ({
     );
   }
 
-  if (!data?.recording.byId?.streamingServiceInfo.youtubeSearchVideoId) {
+  if (
+    !data?.musicBrainz.recording.byId?.streamingServiceInfo.youtubeSearchVideoId
+  ) {
     return <div>No Youtube Video Found</div>;
   }
 
   return (
     <YoutubeMusicPlayer
       youtubeVideoId={
-        data?.recording.byId?.streamingServiceInfo.youtubeSearchVideoId
+        data?.musicBrainz.recording.byId?.streamingServiceInfo
+          .youtubeSearchVideoId
       }
     />
   );

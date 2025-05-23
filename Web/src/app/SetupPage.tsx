@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { gql, useMutation } from "urql";
-import { useNavigate } from "react-router-dom";
 
 export const createUserMutation = gql`
   mutation CreateUser($username: String!, $password: String!) {
@@ -46,8 +45,6 @@ export const SetupPage = () => {
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-
-  const navigate = useNavigate();
 
   const [, createUser] = useMutation(createUserMutation);
   const [, signIn] = useMutation(signInMutation);
@@ -100,9 +97,7 @@ export const SetupPage = () => {
 
       console.log("Sign in successful:", signInData.user);
 
-      // 3. Navigate to root and reload to ensure client reflects new auth state
-      navigate("/", { replace: true });
-      window.location.reload(); // Reload the page
+      window.location.reload();
     } catch (error) {
       if (error instanceof Error) {
         setErrorMessage(error.message);

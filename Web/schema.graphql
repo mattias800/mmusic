@@ -82,52 +82,24 @@ type AddReleaseGroupToServerLibraryUnknownError {
   message: String!
 }
 
-type AlbumImages {
-  albumCover: String
-  cdArt: String
-}
-
 type Artist {
-  albums: [ReleaseGroup!]!
-  disambiguation: String
+  gender: String
   id: ID!
-  images: ArtistImages
-  listeners: Long
+  musicBrainzArtist: MbArtist
   name: String!
-  releaseGroups: [ReleaseGroup!]!
-  releases: [Release!]!
-  serverAvailability: ArtistServerAvailability!
-  singles: [ReleaseGroup!]!
   sortName: String!
   topTracks: [LastFmTrack!]!
-  type: String
-}
-
-type ArtistImages {
-  artistBackground: String
-  artistThumb: String
-  hdMusicLogo: String
-  musicBanner: String
-  musicLogo: String
-}
-
-type ArtistInServerLibrary {
-  artist: Artist
 }
 
 type ArtistSearchRoot {
-  byId(id: ID!): Artist
-  searchByName(limit: Int! = 25, name: String!, offset: Int! = 0): [Artist!]!
+  all: [Artist!]!
+  searchByName(name: String!): [Artist!]!
 }
 
 type ArtistServerAvailability {
-  artist: Artist
+  artist: MbArtist
   id: ID!
   isInServerLibrary: Boolean!
-}
-
-type ArtistsInServerLibrarySearchRoot {
-  all: [ArtistInServerLibrary!]!
 }
 
 type CreateUserError {
@@ -152,7 +124,7 @@ type DownloadStatus {
   artistName: String
   id: ID!
   numberOfTracks: Int
-  release: Release
+  release: MbRelease
   releaseName: String
   statusDescription: String!
   tracksDownloaded: Int
@@ -187,14 +159,14 @@ type ImportSpotifyPlaylistSuccess {
 }
 
 type LastFmAlbum {
-  album: ReleaseGroup
+  album: MbReleaseGroup
   id: ID!
   name: String!
   statistics: LastFmStatistics!
 }
 
 type LastFmArtist {
-  artist: Artist
+  artist: MbArtist
   id: ID!
   name: String!
   statistics: LastFmStatistics!
@@ -217,7 +189,7 @@ type LastFmTrack {
   id: ID!
   name: String!
   playCount: Long
-  recording: Recording
+  recording: MbRecording
   statistics: LastFmStatistics!
   summary: String
 }
@@ -242,7 +214,7 @@ type LikeSongSuccess {
 
 type LikedSong {
   id: ID!
-  recording: Recording
+  recording: MbRecording
 }
 
 """
@@ -250,9 +222,117 @@ The `Long` scalar type represents non-fractional signed whole 64-bit numeric val
 """
 scalar Long
 
-type Medium {
+type MbAlbumImages {
+  albumCover: String
+  cdArt: String
+}
+
+type MbArtist {
+  albums: [MbReleaseGroup!]!
+  disambiguation: String
+  id: ID!
+  images: MbArtistImages
+  listeners: Long
+  name: String!
+  releaseGroups: [MbReleaseGroup!]!
+  releases: [MbRelease!]!
+  serverAvailability: ArtistServerAvailability!
+  singles: [MbReleaseGroup!]!
+  sortName: String!
+  topTracks: [LastFmTrack!]!
+  type: String
+}
+
+type MbArtistImages {
+  artistBackground: String
+  artistThumb: String
+  hdMusicLogo: String
+  musicBanner: String
+  musicLogo: String
+}
+
+type MbMedium {
   trackCount: Int!
-  tracks: [Track!]!
+  tracks: [MbTrack!]!
+}
+
+type MbRecording {
+  artists: [MbArtist!]!
+  id: ID!
+  length: Int
+  mainAlbum: MbRelease
+  nameCredits: [NameCredit!]!
+  relations: [Relation!]!
+  releases: [MbRelease!]!
+  statistics: LastFmStatistics
+  streamingServiceInfo: RecordingStreamingServiceInfo!
+  title: String!
+}
+
+type MbRelease {
+  artists: [MbArtist!]!
+  barcode: String
+  country: String
+  coverArtUri: String!
+  credits: [NameCredit!]!
+  date: String
+  genres: [Genre!]!
+  id: ID!
+  media: [MbMedium!]!
+  quality: String
+  recordings: [MbRecording!]!
+  releaseGroup: MbReleaseGroup
+  status: String
+  title: String!
+  year: String
+}
+
+type MbReleaseGroup {
+  coverArtUri: String
+  credits: [NameCredit!]!
+  firstReleaseDate: String
+  firstReleaseYear: String
+  id: ID!
+  images: MbAlbumImages
+  mainRelease: MbRelease
+  primaryType: String
+  relations: [Relation!]!
+  secondaryTypes: [String!]!
+  tags: [String!]!
+  title: String!
+}
+
+type MbTrack {
+  id: ID!
+  mbRecording: MbRecording!
+  position: Int!
+}
+
+type MusicBrainzArtistSearchRoot {
+  byId(id: ID!): MbArtist
+  searchByName(limit: Int! = 25, name: String!, offset: Int! = 0): [MbArtist!]!
+}
+
+type MusicBrainzRecordingSearchRoot {
+  byId(id: ID!): MbRecording
+  searchByName(limit: Int! = 25, name: String!, offset: Int! = 0): [MbRecording!]!
+}
+
+type MusicBrainzReleaseGroupSearchRoot {
+  byId(id: ID!): MbReleaseGroup
+  searchByName(limit: Int! = 25, name: String!, offset: Int! = 0): [MbReleaseGroup!]!
+}
+
+type MusicBrainzReleaseSearchRoot {
+  byId(id: ID!): MbRelease
+  searchByName(limit: Int! = 25, name: String!, offset: Int! = 0): [MbRelease!]!
+}
+
+type MusicBrainzSearchRoot {
+  artist: MusicBrainzArtistSearchRoot!
+  recording: MusicBrainzRecordingSearchRoot!
+  release: MusicBrainzReleaseSearchRoot!
+  releaseGroup: MusicBrainzReleaseGroupSearchRoot!
 }
 
 type Mutation {
@@ -269,7 +349,7 @@ type Mutation {
 }
 
 type NameCredit {
-  artist: Artist!
+  artist: MbArtist!
   joinPhrase: String
   name: String!
 }
@@ -306,12 +386,11 @@ type Query {
   artist: ArtistSearchRoot!
   download: DownloadsSearchRoot!
   external: ExternalRoot!
+  musicBrainz: MusicBrainzSearchRoot!
   playlist: PlaylistSearchRoot!
   recommendations: RecommendationsSearchRoot!
-  recording: RecordingSearchRoot!
   release: ReleaseSearchRoot!
   releaseGroup: ReleaseGroupSearchRoot!
-  serverLibrary: ServerLibrarySearchRoot!
   user: UserSearchRoot!
   viewer: User
 }
@@ -320,24 +399,6 @@ type RecommendationsSearchRoot {
   topArtists: [LastFmArtist!]!
   topTags: [LastFmTag!]!
   topTracks: [LastFmTrack!]!
-}
-
-type Recording {
-  artists: [Artist!]!
-  id: ID!
-  length: Int
-  mainAlbum: Release
-  nameCredits: [NameCredit!]!
-  relations: [Relation!]!
-  releases: [Release!]!
-  statistics: LastFmStatistics
-  streamingServiceInfo: RecordingStreamingServiceInfo!
-  title: String!
-}
-
-type RecordingSearchRoot {
-  byId(id: ID!): Recording
-  searchByName(limit: Int! = 25, name: String!, offset: Int! = 0): [Recording!]!
 }
 
 type RecordingStreamingServiceInfo {
@@ -359,60 +420,25 @@ type Relation {
 }
 
 type Release {
-  artists: [Artist!]!
-  barcode: String
-  country: String
-  coverArtUri: String!
-  credits: [NameCredit!]!
   date: String
-  genres: [Genre!]!
-  id: ID!
-  media: [Medium!]!
-  quality: String
-  recordings: [Recording!]!
-  releaseGroup: ReleaseGroup
+  id: String!
   status: String
   title: String!
   year: String
 }
 
 type ReleaseGroup {
-  coverArtUri: String
-  credits: [NameCredit!]!
-  firstReleaseDate: String
-  firstReleaseYear: String
-  id: ID!
-  images: AlbumImages
-  mainRelease: Release
-  primaryType: String
-  relations: [Relation!]!
-  secondaryTypes: [String!]!
-  tags: [String!]!
-  title: String!
-}
-
-type ReleaseGroupInServerLibrary {
-  releaseGroup: ReleaseGroup
+  musicBrainzReleaseGroup: MbReleaseGroup
 }
 
 type ReleaseGroupSearchRoot {
-  byId(id: ID!): ReleaseGroup
-  id: ID!
-  searchByName(limit: Int! = 25, name: String!, offset: Int! = 0): [ReleaseGroup!]!
-}
-
-type ReleaseGroupsInServerLibrarySearchRoot {
-  all: [ReleaseGroupInServerLibrary!]!
+  all: [ReleaseGroup!]!
+  byId: ReleaseGroup
 }
 
 type ReleaseSearchRoot {
   byId(id: ID!): Release
   searchByName(limit: Int! = 25, name: String!, offset: Int! = 0): [Release!]!
-}
-
-type ServerLibrarySearchRoot {
-  artistsInServerLibrary: ArtistsInServerLibrarySearchRoot!
-  releaseGroupsInServerLibrary: ReleaseGroupsInServerLibrarySearchRoot!
 }
 
 type SignInError {
@@ -482,12 +508,6 @@ type Subscription {
   downloadStatusUpdated: DownloadStatus!
   ping: Ping!
   soulSeekStatusUpdated: SoulSeekStatus!
-}
-
-type Track {
-  id: ID!
-  position: Int!
-  recording: Recording!
 }
 
 scalar UUID

@@ -44,7 +44,7 @@ public class ReleaseGroupPersistenceService(IMapper mapper)
     public async Task SaveArtistCreditsForParentAsync(
         IAsyncTransaction tx,
         string parentEntityId,
-        IEnumerable<Hqub.MusicBrainz.Entities.NameCredit> creditDtos,
+        IEnumerable<NameCredit> creditDtos,
         string parentLabel,
         string parentIdQueryKey,
         string relationshipType

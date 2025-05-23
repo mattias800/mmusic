@@ -212,7 +212,7 @@ public class Neo4jService(IDriver driver)
     {
         // Assuming (Artist)-[:ARTIST_CREDIT_FOR_RELEASE_GROUP]->(ReleaseGroup)
         var dbReleaseGroups = await ExecuteReadListAsync(
-            "MATCH (a:Artist {Id: $artistId})<-[:ARTIST_CREDIT_FOR_RELEASE_GROUP]-(rg:ReleaseGroup) RETURN rg",
+            "MATCH (a:Artist {Id: $artistId})-[:CREDITED_ON_RELEASE_GROUP]->(rg:ReleaseGroup) RETURN rg",
             new { artistId },
             record => record["rg"].As<INode>().ToDbReleaseGroup()
         );
