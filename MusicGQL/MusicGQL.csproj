@@ -41,7 +41,7 @@
     <PackageReference Include="TrackSeries.FanArtTV.Client" Version="1.2.4" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Db\Neo4j\" />
+    <Folder Include="Features\ServerLibrary\ReleaseGroup\MusicBrainz\" />
     <Folder Include="Features\ServerLibrary\Utils\" />
     <Folder Include="Features\Users\Handlers\" />
     <Folder Include="Features\Users\Queries\" />

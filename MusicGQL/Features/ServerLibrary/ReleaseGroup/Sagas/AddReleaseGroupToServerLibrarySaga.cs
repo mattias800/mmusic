@@ -1,5 +1,6 @@
 using AutoMapper;
 using MusicGQL.Common;
+using MusicGQL.Features.ServerLibrary.ReleaseGroup.Service;
 using MusicGQL.Integration.MusicBrainz;
 using Neo4j.Driver;
 using Rebus.Bus;
@@ -125,9 +126,7 @@ public class AddReleaseGroupToServerLibrarySaga(
             await session.ExecuteWriteAsync(async tx =>
             {
                 // 1. Save release group itself
-                var rgToSave = mapper.Map<Db.Neo4j.ServerLibrary.MusicMetaData.ReleaseGroup>(
-                    releaseGroupDto
-                );
+                var rgToSave = mapper.Map<Db.DbReleaseGroup>(releaseGroupDto);
                 await releaseGroupPersistenceService.SaveReleaseGroupNodeAsync(
                     (IAsyncTransaction)tx,
                     rgToSave
@@ -154,9 +153,7 @@ public class AddReleaseGroupToServerLibrarySaga(
                 // 3. Process ONLY the Main Release (if found)
                 if (mainRelease != null)
                 {
-                    var releaseToSave = mapper.Map<Db.Neo4j.ServerLibrary.MusicMetaData.Release>(
-                        mainRelease
-                    );
+                    var releaseToSave = mapper.Map<Release.Db.DbRelease>(mainRelease);
                     await releaseGroupPersistenceService.SaveReleaseNodeAsync(
                         (IAsyncTransaction)tx,
                         releaseToSave
@@ -222,10 +219,9 @@ public class AddReleaseGroupToServerLibrarySaga(
                                     )
                                         continue;
 
-                                    var recordingToSave =
-                                        mapper.Map<Db.Neo4j.ServerLibrary.MusicMetaData.Recording>(
-                                            trackDto.Recording
-                                        );
+                                    var recordingToSave = mapper.Map<Recording.Db.DbRecording>(
+                                        trackDto.Recording
+                                    );
                                     if (recordingToSave == null)
                                     {
                                         logger.LogWarning(

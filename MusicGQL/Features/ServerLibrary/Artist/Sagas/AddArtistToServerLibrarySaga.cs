@@ -2,6 +2,7 @@ using AutoMapper;
 using HotChocolate.Subscriptions;
 using MusicGQL.Features.ServerLibrary.ReleaseGroup;
 using MusicGQL.Features.ServerLibrary.ReleaseGroup.Handlers;
+using MusicGQL.Features.ServerLibrary.ReleaseGroup.Service;
 using Neo4j.Driver;
 using Rebus.Bus;
 using Rebus.Handlers;
@@ -73,9 +74,7 @@ public class AddArtistToServerLibrarySaga(
 
         try
         {
-            var artistToSave = mapper.Map<Db.Neo4j.ServerLibrary.MusicMetaData.Artist>(
-                message.Artist
-            );
+            var artistToSave = mapper.Map<Db.DbArtist>(message.Artist);
 
             await using var session = driver.AsyncSession();
             await session.ExecuteWriteAsync(async tx =>

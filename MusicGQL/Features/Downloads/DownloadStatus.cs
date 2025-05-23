@@ -1,4 +1,5 @@
 using MusicGQL.Features.Downloads.Sagas;
+using MusicGQL.Features.MusicBrainz.Release;
 
 namespace MusicGQL.Features.Downloads;
 
@@ -17,6 +18,5 @@ public record DownloadStatus([property: GraphQLIgnore] DownloadReleaseSagaData M
 
     public int? TracksDownloaded() => Model.TracksDownloaded;
 
-    public Release.Release? Release =>
-        Model.Release is null ? null : new Release.Release(Model.Release);
+    public MbRelease? Release => Model.Release is null ? null : new MbRelease(Model.Release);
 }

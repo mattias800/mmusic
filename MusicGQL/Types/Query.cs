@@ -8,12 +8,14 @@ using MusicGQL.Db.Postgres; // For EventDbContext
 using MusicGQL.Features.Artist;
 using MusicGQL.Features.Downloads;
 using MusicGQL.Features.External;
+using MusicGQL.Features.MusicBrainz;
+using MusicGQL.Features.MusicBrainz.Recording;
+using MusicGQL.Features.MusicBrainz.Release;
 using MusicGQL.Features.Playlists;
 using MusicGQL.Features.Recommendations; // For [Service] attribute if needed directly on properties, but methods are cleaner for this.
-using MusicGQL.Features.Recording;
-using MusicGQL.Features.Release;
-using MusicGQL.Features.ReleaseGroups;
 using MusicGQL.Features.ServerLibrary;
+using MusicGQL.Features.ServerLibrary.Artist;
+using MusicGQL.Features.ServerLibrary.ReleaseGroup;
 using MusicGQL.Features.Users; // For User type and UserSearchRoot
 
 namespace MusicGQL.Types;
@@ -21,9 +23,10 @@ namespace MusicGQL.Types;
 public class Query
 {
     public ArtistSearchRoot Artist => new();
-    public RecordingSearchRoot Recording => new();
-    public ReleaseSearchRoot Release => new();
     public ReleaseGroupSearchRoot ReleaseGroup => new();
+    public ReleaseSearchRoot Release => new();
+
+    public MusicBrainzSearchRoot MusicBrainz => new();
 
     // Implemented Viewer field
     // This method will be resolved by HotChocolate as the 'viewer' field in the GraphQL schema.
@@ -69,7 +72,6 @@ public class Query
     }
 
     public DownloadsSearchRoot Download => new();
-    public ServerLibrarySearchRoot ServerLibrary => new();
     public ExternalRoot External => new();
     public PlaylistSearchRoot Playlist => new();
     public RecommendationsSearchRoot Recommendations => new();

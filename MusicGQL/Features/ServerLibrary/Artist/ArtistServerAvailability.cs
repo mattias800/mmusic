@@ -1,4 +1,5 @@
 using MusicGQL.Db.Postgres;
+using MusicGQL.Features.MusicBrainz.Artist;
 using MusicGQL.Integration.MusicBrainz;
 
 namespace MusicGQL.Features.ServerLibrary.Artist;
@@ -8,9 +9,7 @@ public record ArtistServerAvailability([property: GraphQLIgnore] string ArtistMb
     [ID]
     public string Id() => ArtistMbId;
 
-    public async Task<Features.Artist.Artist?> GetArtist(
-        [Service] MusicBrainzService musicBrainzService
-    )
+    public async Task<MbArtist?> GetArtist([Service] MusicBrainzService musicBrainzService)
     {
         var artist = await musicBrainzService.GetArtistByIdAsync(ArtistMbId);
 

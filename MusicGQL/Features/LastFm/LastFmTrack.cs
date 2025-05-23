@@ -1,4 +1,5 @@
 using Hqub.Lastfm.Entities;
+using MusicGQL.Features.MusicBrainz.Recording;
 using MusicGQL.Integration.MusicBrainz;
 
 namespace MusicGQL.Features.LastFm;
@@ -16,7 +17,7 @@ public record LastFmTrack([property: GraphQLIgnore] Track Model)
 
     public LastFmStatistics Statistics => new(Model.Statistics);
 
-    public async Task<Recording.Recording?> Recording([Service] MusicBrainzService mbService)
+    public async Task<MbRecording?> Recording([Service] MusicBrainzService mbService)
     {
         if (string.IsNullOrEmpty(Model.MBID))
         {
@@ -24,6 +25,6 @@ public record LastFmTrack([property: GraphQLIgnore] Track Model)
         }
 
         var release = await mbService.GetRecordingByIdAsync(Model.MBID);
-        return release is null ? null : new Recording.Recording(release);
+        return release is null ? null : new MbRecording(release);
     }
 }
