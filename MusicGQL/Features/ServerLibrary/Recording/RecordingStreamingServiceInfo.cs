@@ -1,10 +1,9 @@
+using MusicGQL.Features.ServerLibrary.Recording.Db;
 using MusicGQL.Integration.Youtube;
 
-namespace MusicGQL.Features.MusicBrainz.Recording;
+namespace MusicGQL.Features.ServerLibrary.Recording;
 
-public record RecordingStreamingServiceInfo(
-    [property: GraphQLIgnore] Hqub.MusicBrainz.Entities.Recording Model
-)
+public record RecordingStreamingServiceInfo([property: GraphQLIgnore] DbRecording Model)
 {
     [ID]
     public string Id => Model.Id;

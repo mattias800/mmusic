@@ -1,5 +1,3 @@
-using MusicGQL.Features.ServerLibrary.Artist.Db;
-
 namespace MusicGQL.Features.ServerLibrary.Common.Db;
 
 public class DbNameCredit

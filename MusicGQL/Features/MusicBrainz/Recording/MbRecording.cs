@@ -3,6 +3,7 @@ using MusicGQL.Common;
 using MusicGQL.Features.LastFm;
 using MusicGQL.Features.MusicBrainz.Artist;
 using MusicGQL.Features.MusicBrainz.Common;
+using MusicGQL.Features.ServerLibrary.Recording;
 using MusicGQL.Integration.MusicBrainz;
 
 namespace MusicGQL.Features.MusicBrainz.Recording;
@@ -14,8 +15,8 @@ public record MbRecording([property: GraphQLIgnore] Hqub.MusicBrainz.Entities.Re
     public string Title => Model.Title;
     public int? Length => Model.Length;
 
-    public IEnumerable<NameCredit> NameCredits =>
-        Model.Credits?.Select(c => new NameCredit(c)) ?? [];
+    public IEnumerable<MbNameCredit> NameCredits =>
+        Model.Credits?.Select(c => new MbNameCredit(c)) ?? [];
 
     public async Task<IEnumerable<Release.MbRelease>> Releases(
         [Service] MusicBrainzService mbService
@@ -38,9 +39,9 @@ public record MbRecording([property: GraphQLIgnore] Hqub.MusicBrainz.Entities.Re
         return artists.Select(a => new MbArtist(a));
     }
 
-    public IEnumerable<Relation> Relations()
+    public IEnumerable<MbRelation> Relations()
     {
-        return Model.Relations?.Select(r => new Relation(r)) ?? [];
+        return Model.Relations?.Select(r => new MbRelation(r)) ?? [];
     }
 
     public async Task<LastFmStatistics?> Statistics([Service] LastfmClient lastfmClient)
@@ -56,5 +57,5 @@ public record MbRecording([property: GraphQLIgnore] Hqub.MusicBrainz.Entities.Re
         }
     }
 
-    public RecordingStreamingServiceInfo StreamingServiceInfo() => new(Model);
+    public MbRecordingStreamingServiceInfo StreamingServiceInfo() => new(Model);
 }

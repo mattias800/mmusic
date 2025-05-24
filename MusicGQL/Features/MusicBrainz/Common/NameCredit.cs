@@ -1,9 +1,9 @@
+using Hqub.MusicBrainz.Entities;
 using MusicGQL.Features.MusicBrainz.Artist;
-using MbNameCredit = Hqub.MusicBrainz.Entities.NameCredit;
 
 namespace MusicGQL.Features.MusicBrainz.Common;
 
-public record NameCredit([property: GraphQLIgnore] MbNameCredit Model)
+public record MbNameCredit([property: GraphQLIgnore] NameCredit Model)
 {
     public string Name => Model.Name;
     public MbArtist Artist => new(Model.Artist);

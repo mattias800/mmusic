@@ -95,7 +95,8 @@ type Artist {
 
 type ArtistSearchRoot {
   all: [Artist!]!
-  searchByName(name: String!): [Artist!]!
+  byId(id: ID!): Artist
+  searchByName(limit: Int! = 25, name: String!, offset: Int! = 0): [Artist!]!
 }
 
 type ArtistServerAvailability {
@@ -139,11 +140,6 @@ type DownloadsSearchRoot {
 type ExternalRoot {
   id: ID!
   soulSeek: SoulSeekRoot!
-}
-
-type Genre {
-  id: ID!
-  name: String!
 }
 
 type ImportPlaylistSearchRoot {
@@ -253,9 +249,20 @@ type MbArtistImages {
   musicLogo: String
 }
 
+type MbGenre {
+  id: ID!
+  name: String!
+}
+
 type MbMedium {
   trackCount: Int!
   tracks: [MbTrack!]!
+}
+
+type MbNameCredit {
+  artist: MbArtist!
+  joinPhrase: String
+  name: String!
 }
 
 type MbRecording {
@@ -263,12 +270,23 @@ type MbRecording {
   id: ID!
   length: Int
   mainAlbum: MbRelease
-  nameCredits: [NameCredit!]!
-  relations: [Relation!]!
+  nameCredits: [MbNameCredit!]!
+  relations: [MbRelation!]!
   releases: [MbRelease!]!
   statistics: LastFmStatistics
   streamingServiceInfo: RecordingStreamingServiceInfo!
   title: String!
+}
+
+type MbRelation {
+  attributes: [String!]
+  begin: String
+  direction: String
+  end: String
+  targetType: String
+  type: String
+  typeId: String
+  url: Url
 }
 
 type MbRelease {
@@ -276,9 +294,9 @@ type MbRelease {
   barcode: String
   country: String
   coverArtUri: String!
-  credits: [NameCredit!]!
+  credits: [MbNameCredit!]!
   date: String
-  genres: [Genre!]!
+  genres: [MbGenre!]!
   id: ID!
   media: [MbMedium!]!
   quality: String
@@ -291,14 +309,14 @@ type MbRelease {
 
 type MbReleaseGroup {
   coverArtUri: String
-  credits: [NameCredit!]!
+  credits: [MbNameCredit!]!
   firstReleaseDate: String
   firstReleaseYear: String
   id: ID!
   images: MbAlbumImages
   mainRelease: MbRelease
   primaryType: String
-  relations: [Relation!]!
+  relations: [MbRelation!]!
   secondaryTypes: [String!]!
   tags: [String!]!
   title: String!
@@ -351,8 +369,8 @@ type Mutation {
 }
 
 type NameCredit {
-  artist: MbArtist!
-  joinPhrase: String
+  artist: Artist!
+  joinPhrase: String!
   name: String!
 }
 
@@ -406,6 +424,7 @@ type RecommendationsSearchRoot {
 type Recording {
   id: ID!
   length: Int
+  nameCredits: [NameCredit!]!
   statistics: LastFmStatistics
   title: String!
 }
@@ -417,18 +436,9 @@ type RecordingStreamingServiceInfo {
   youtubeVideoId: String
 }
 
-type Relation {
-  attributes: [String!]
-  begin: String
-  direction: String
-  end: String
-  targetType: String
-  type: String
-  typeId: String
-  url: Url
-}
-
 type Release {
+  coverArtUri: String!
+  credits: [NameCredit!]!
   date: String
   id: String!
   recordings: [Recording!]!
@@ -438,6 +448,7 @@ type Release {
 }
 
 type ReleaseGroup {
+  credits: [NameCredit!]!
   firstReleaseDate: String
   firstReleaseYear: String
   id: String!
@@ -450,7 +461,8 @@ type ReleaseGroup {
 
 type ReleaseGroupSearchRoot {
   all: [ReleaseGroup!]!
-  byId: ReleaseGroup
+  byId(id: ID!): ReleaseGroup
+  searchByName(limit: Int! = 25, name: String!, offset: Int! = 0): [ReleaseGroup!]!
 }
 
 type ReleaseSearchRoot {

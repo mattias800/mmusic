@@ -1,28 +1,29 @@
-using MusicGQL.Features.ServerLibrary.ReleaseGroup.Db;
-using Neo4j.Driver;
+using MusicGQL.Integration.Neo4j;
 
 namespace MusicGQL.Features.ServerLibrary.ReleaseGroup;
 
 public record ReleaseGroupSearchRoot
 {
-    public async Task<IEnumerable<ReleaseGroup>> All(IDriver driver)
+    public async Task<IEnumerable<ReleaseGroup>> All(Neo4jService service)
     {
-        await using var session = driver.AsyncSession();
-        var result = await session.RunAsync(
-            "MATCH (a:ReleaseGroup) RETURN a ORDER BY a.name ASC LIMIT 100"
-        );
-
-        var x = (await result.ToListAsync())?.Select(r => r.As<DbReleaseGroup>());
-        return x?.Select(a => new ReleaseGroup(a)) ?? [];
+        var releaseGroups = await service.GetAllReleaseGroupAsync();
+        return releaseGroups.Select(a => new ReleaseGroup(a));
     }
 
-    public async Task<ReleaseGroup?> ById(IDriver driver)
+    public async Task<ReleaseGroup?> ById(Neo4jService service, [ID] string id)
     {
-        await using var session = driver.AsyncSession();
-        var result = await session.RunAsync(
-            "MATCH (a:ReleaseGroup) RETURN a ORDER BY a.name ASC LIMIT 100"
-        );
+        var releaseGroup = await service.GetReleaseGroupByIdAsync(id);
+        return releaseGroup is null ? null : new(releaseGroup);
+    }
 
-        return result.Current is null ? null : result.As<ReleaseGroup>();
+    public async Task<IEnumerable<ReleaseGroup>> SearchByName(
+        Neo4jService service,
+        string name,
+        int limit = 25,
+        int offset = 0
+    )
+    {
+        var releases = await service.SearchReleaseGroupByNameAsync(name, limit, offset);
+        return releases.Select(a => new ReleaseGroup(a));
     }
 }

@@ -10,9 +10,20 @@ public record ArtistSearchRoot
         return allArtists.Select(a => new Artist(a));
     }
 
-    public async Task<IEnumerable<Artist>> SearchByName(Neo4jService service, string name)
+    public async Task<Artist?> ById(Neo4jService service, [ID] string id)
     {
-        var artists = await service.SearchArtistByNameAsync(name, 25, 0);
+        var artist = await service.GetArtistByIdAsync(id);
+        return artist is null ? null : new(artist);
+    }
+
+    public async Task<IEnumerable<Artist>> SearchByName(
+        Neo4jService service,
+        string name,
+        int limit = 25,
+        int offset = 0
+    )
+    {
+        var artists = await service.SearchArtistByNameAsync(name, limit, offset);
         return artists.Select(a => new Artist(a));
     }
 }

@@ -191,6 +191,16 @@ public class Neo4jService(IDriver driver)
         return dbReleaseGroup;
     }
 
+    public async Task<List<DbReleaseGroup>> GetAllReleaseGroupAsync()
+    {
+        var dbReleaseGroups = await ExecuteReadListAsync(
+            "MATCH (rg:ReleaseGroup) RETURN rg",
+            new { },
+            record => record["rg"].As<INode>().ToDbReleaseGroup()
+        );
+        return dbReleaseGroups;
+    }
+
     public async Task<List<DbReleaseGroup>> SearchReleaseGroupByNameAsync(
         string name,
         int limit = 25,
@@ -227,6 +237,34 @@ public class Neo4jService(IDriver driver)
         var artistCredit = await ExecuteReadListAsync(
             "MATCH (a:Artist)-[c:CREDITED_ON_RELEASE_GROUP]->(rg:ReleaseGroup {Id: $releaseGroupId}) RETURN a, c",
             new { releaseGroupId },
+            record => new ArtistCredit(
+                record["c"].As<INode>().ToDbNamedCredit(),
+                record["a"].As<INode>().ToDbArtist()
+            )
+        );
+        return artistCredit;
+    }
+
+    public async Task<List<ArtistCredit>> GetCreditsOnReleaseAsync(string releaseId)
+    {
+        // Assuming (Artist)-[:ARTIST_CREDIT_FOR_RELEASE]->(Release)
+        var artistCredit = await ExecuteReadListAsync(
+            "MATCH (a:Artist)-[c:CREDITED_ON_RELEASE]->(rg:Release {Id: $releaseId}) RETURN a, c",
+            new { releaseId },
+            record => new ArtistCredit(
+                record["c"].As<INode>().ToDbNamedCredit(),
+                record["a"].As<INode>().ToDbArtist()
+            )
+        );
+        return artistCredit;
+    }
+
+    public async Task<List<ArtistCredit>> GetCreditsOnRecordingAsync(string recordingId)
+    {
+        // Assuming (Artist)-[:ARTIST_CREDIT_FOR_RECORDING]->(Recording)
+        var artistCredit = await ExecuteReadListAsync(
+            "MATCH (a:Artist)-[c:CREDITED_ON_RECORDING]->(rg:Recording {Id: $recordingId}) RETURN a, c",
+            new { recordingId },
             record => new ArtistCredit(
                 record["c"].As<INode>().ToDbNamedCredit(),
                 record["a"].As<INode>().ToDbArtist()

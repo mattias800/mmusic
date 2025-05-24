@@ -18,9 +18,11 @@ export const albumHeaderReleaseGroupFragment = graphql(`
       coverArtUri
       year
 
-      artists {
-        id
-        name
+      credits {
+        artist {
+          id
+          name
+        }
       }
       recordings {
         id
@@ -61,9 +63,9 @@ export const AlbumHeader: React.FC<AlbumHeaderProps> = (props) => {
         <div className={"flex gap-2"}>
           <Link
             className={"text-sm font-bold"}
-            to={"/artist/" + release.artists[0].id}
+            to={"/artist/" + release.credits[0].artist.id}
           >
-            {release.artists[0].name}
+            {release.credits[0].artist.name}
           </Link>
           <p className="text-sm text-gray-300">
             • {release.year} • {numSongsText}, {albumTime}

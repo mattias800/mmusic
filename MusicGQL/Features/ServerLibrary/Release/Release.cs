@@ -1,3 +1,4 @@
+using Hqub.MusicBrainz.Entities;
 using MusicGQL.Features.ServerLibrary.Release.Db;
 using MusicGQL.Integration.Neo4j;
 
@@ -22,11 +23,13 @@ public record Release([property: GraphQLIgnore] DbRelease Model)
     // public ReleaseGroup.ReleaseGroup? ReleaseGroup =>
     //     Model.ReleaseGroup is null ? null : new(Model.ReleaseGroup);
 
-    // public string CoverArtUri => CoverArtArchive.GetCoverArtUri(Model.Id).ToString();
+    public string CoverArtUri => CoverArtArchive.GetCoverArtUri(Model.Id).ToString();
 
-    // public IEnumerable<Common.NameCredit> Credits => Model.Credits.Select(c => new NameCredit(c));
-
-    // public IEnumerable<Artist.Artist> Artists() => Model.Credits.Select(a => new Artist(a.Artist));
+    public async Task<IEnumerable<Common.NameCredit>> Credits(Neo4jService service)
+    {
+        var artistCredits = await service.GetCreditsOnReleaseAsync(Model.Id);
+        return artistCredits.Select(c => new Common.NameCredit(c));
+    }
 
     public async Task<IEnumerable<Recording.Recording>> Recordings(Neo4jService service)
     {

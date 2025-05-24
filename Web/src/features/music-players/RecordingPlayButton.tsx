@@ -16,7 +16,7 @@ export interface RecordingPlayButtonProps {
 }
 
 export const recordingPlayButtonRecordingFragment = graphql(`
-  fragment RecordingPlayButton_Recording on MbRecording {
+  fragment RecordingPlayButton_Recording on Recording {
     id
     streamingServiceInfo {
       id

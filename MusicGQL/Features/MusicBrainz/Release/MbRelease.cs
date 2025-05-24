@@ -1,9 +1,8 @@
 using Hqub.MusicBrainz.Entities;
 using MusicGQL.Features.MusicBrainz.Artist;
+using MusicGQL.Features.MusicBrainz.Common;
 using MusicGQL.Features.MusicBrainz.ReleaseGroup;
 using MusicGQL.Integration.MusicBrainz;
-using Genre = MusicGQL.Features.MusicBrainz.Common.Genre;
-using NameCredit = MusicGQL.Features.MusicBrainz.Common.NameCredit;
 
 namespace MusicGQL.Features.MusicBrainz.Release;
 
@@ -20,7 +19,7 @@ public record MbRelease([property: GraphQLIgnore] Hqub.MusicBrainz.Entities.Rele
     public string? Country => Model.Country;
     public string? Status => Model.Status;
     public string? Quality => Model.Quality;
-    public IEnumerable<Genre> Genres => Model.Genres?.Select(g => new Genre(g)) ?? [];
+    public IEnumerable<MbGenre> Genres => Model.Genres?.Select(g => new MbGenre(g)) ?? [];
     public IEnumerable<MbMedium> Media => Model.Media?.Select(m => new MbMedium(m)) ?? [];
 
     public MbReleaseGroup? ReleaseGroup =>
@@ -28,7 +27,8 @@ public record MbRelease([property: GraphQLIgnore] Hqub.MusicBrainz.Entities.Rele
 
     public string CoverArtUri => CoverArtArchive.GetCoverArtUri(Model.Id).ToString();
 
-    public IEnumerable<Common.NameCredit> Credits => Model.Credits.Select(c => new NameCredit(c));
+    public IEnumerable<Common.MbNameCredit> Credits =>
+        Model.Credits.Select(c => new MbNameCredit(c));
 
     public IEnumerable<MbArtist> Artists() => Model.Credits.Select(a => new MbArtist(a.Artist));
 

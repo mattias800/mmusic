@@ -1,6 +1,9 @@
 using Hqub.Lastfm;
 using MusicGQL.Features.LastFm;
+using MusicGQL.Features.MusicBrainz.Recording;
+using MusicGQL.Features.ServerLibrary.Common;
 using MusicGQL.Features.ServerLibrary.Recording.Db;
+using MusicGQL.Integration.Neo4j;
 
 namespace MusicGQL.Features.ServerLibrary.Recording;
 
@@ -12,6 +15,12 @@ public record Recording([property: GraphQLIgnore] DbRecording Model)
     public string Title() => Model.Title;
 
     public int? Length() => Model.Length;
+
+    public async Task<IEnumerable<NameCredit>> NameCredits(Neo4jService service)
+    {
+        var credits = await service.GetCreditsOnRecordingAsync(Model.Id);
+        return credits.Select(c => new NameCredit(c));
+    }
 
     public async Task<LastFmStatistics?> Statistics([Service] LastfmClient lastfmClient)
     {
@@ -25,4 +34,6 @@ public record Recording([property: GraphQLIgnore] DbRecording Model)
             return null;
         }
     }
+
+    public RecordingStreamingServiceInfo StreamingServiceInfo() => new(Model);
 }

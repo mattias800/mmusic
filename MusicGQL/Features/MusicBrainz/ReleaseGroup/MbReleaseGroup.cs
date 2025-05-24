@@ -1,9 +1,8 @@
 using Hqub.MusicBrainz.Entities;
 using MusicGQL.Common;
+using MusicGQL.Features.MusicBrainz.Common;
 using MusicGQL.Integration.MusicBrainz;
 using TrackSeries.FanArtTV.Client;
-using NameCredit = MusicGQL.Features.MusicBrainz.Common.NameCredit;
-using Relation = MusicGQL.Features.MusicBrainz.Common.Relation;
 
 namespace MusicGQL.Features.MusicBrainz.ReleaseGroup;
 
@@ -15,8 +14,8 @@ public record MbReleaseGroup([property: GraphQLIgnore] Hqub.MusicBrainz.Entities
     public string? PrimaryType => Model.PrimaryType;
     public IEnumerable<string> SecondaryTypes => Model.SecondaryTypes;
 
-    public IEnumerable<Common.NameCredit> Credits() =>
-        Model.Credits?.Select(c => new NameCredit(c)) ?? [];
+    public IEnumerable<Common.MbNameCredit> Credits() =>
+        Model.Credits?.Select(c => new MbNameCredit(c)) ?? [];
 
     public string? FirstReleaseDate => Model.FirstReleaseDate;
     public string? FirstReleaseYear => Model.FirstReleaseDate?.Split("-").FirstOrDefault();
@@ -79,8 +78,8 @@ public record MbReleaseGroup([property: GraphQLIgnore] Hqub.MusicBrainz.Entities
         return best is null ? null : new Release.MbRelease(best);
     }
 
-    public IEnumerable<Relation> Relations()
+    public IEnumerable<MbRelation> Relations()
     {
-        return Model.Relations.Select(r => new Relation(r));
+        return Model.Relations.Select(r => new MbRelation(r));
     }
 }

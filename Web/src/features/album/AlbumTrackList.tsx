@@ -13,7 +13,7 @@ interface AlbumTrackListProps {
 }
 
 export const albumTrackListReleaseGroupFragment = graphql(`
-  fragment AlbumTrackList_ReleaseGroup on MbReleaseGroup {
+  fragment AlbumTrackList_ReleaseGroup on ReleaseGroup {
     id
     title
     mainRelease {
