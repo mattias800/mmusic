@@ -22,12 +22,7 @@ public record Artist([property: GraphQLIgnore] DbArtist Model)
         {
             var tracks = await lastfmClient.Artist.GetTopTracksByMbidAsync(Model.Id);
 
-            return tracks
-                .Where(t => t.MBID is not null)
-                .OrderByDescending(t => t.Statistics.PlayCount)
-                .Take(10)
-                .Select(t => new LastFmTrack(t))
-                .ToList();
+            return tracks.Take(20).Select(t => new LastFmTrack(t)).ToList();
         }
         catch
         {

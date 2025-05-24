@@ -21,11 +21,11 @@ public record Recording([property: GraphQLIgnore] DbRecording Model)
         return credits.Select(c => new NameCredit(c));
     }
 
-    public async Task<Release.Release?> MainAlbum(Neo4jService service)
+    public async Task<ReleaseGroup.ReleaseGroup?> MainAlbum(Neo4jService service)
     {
-        var releases = await service.GetReleasesForRecordingAsync(Model.Id);
-        var mainAlbum = releases.FirstOrDefault(); // We only store main albums in Neo4j
-        return mainAlbum is null ? null : new Release.Release(mainAlbum);
+        var releaseGroups = await service.GetReleaseGroupsForRecordingAsync(Model.Id);
+        var mainAlbum = releaseGroups.FirstOrDefault(); // We only store main releases in Neo4j
+        return mainAlbum is null ? null : new ReleaseGroup.ReleaseGroup(mainAlbum);
     }
 
     public async Task<LastFmStatistics?> Statistics(LastfmClient lastfmClient)

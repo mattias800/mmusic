@@ -117,6 +117,53 @@ public class Neo4jService(IDriver driver)
         return dbRecordings;
     }
 
+    public async Task<List<DbRecording>> SearchRecordingForArtistByArtistNameAsync(
+        string recordingName,
+        string artistName,
+        int limit = 25,
+        int offset = 0
+    )
+    {
+        var dbRecordings = await ExecuteReadListAsync(
+            "MATCH (r:Recording)<-[:CREDITED_ON_RECORDING]-(a:Artist) "
+                + "WHERE toLower(r.Title) CONTAINS toLower($recordingName) "
+                + "AND toLower(a.Name) CONTAINS toLower($artistName) "
+                + "RETURN r ORDER BY r.Title SKIP $offset LIMIT $limit",
+            new
+            {
+                recordingName,
+                artistName,
+                offset,
+                limit,
+            },
+            record => record["r"].As<INode>().ToDbRecording()
+        );
+        return dbRecordings;
+    }
+
+    public async Task<List<DbRecording>> SearchRecordingForArtistByArtistIdAsync(
+        string recordingName,
+        string artistId,
+        int limit = 25,
+        int offset = 0
+    )
+    {
+        var dbRecordings = await ExecuteReadListAsync(
+            "MATCH (r:Recording)<-[:CREDITED_ON_RECORDING]-(a:Artist {Id: $artistId}) "
+                + "WHERE toLower(r.Title) CONTAINS toLower($recordingName) "
+                + "RETURN r ORDER BY r.Title SKIP $offset LIMIT $limit",
+            new
+            {
+                recordingName,
+                artistId,
+                offset,
+                limit,
+            },
+            record => record["r"].As<INode>().ToDbRecording()
+        );
+        return dbRecordings;
+    }
+
     // Releases
     public async Task<DbRelease?> GetReleaseByIdAsync(string releaseId)
     {

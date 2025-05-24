@@ -28,6 +28,7 @@ interface TopArtistTrackItemProps {
 export const topArtistTrackItemLastFmTrackFragment = graphql(`
   fragment TopArtistTrackItem_LastFmTrack on LastFmTrack {
     id
+    name
     playCount
     summary
     recording {
@@ -54,9 +55,7 @@ export const TopArtistTrackItem: React.FC<TopArtistTrackItemProps> = (
 
   const navigate = useNavigate();
 
-  if (track.recording == null) {
-    return null;
-  }
+  const trackName = track.recording?.title ?? track.name;
 
   return (
     <ContextMenu>
@@ -68,37 +67,40 @@ export const TopArtistTrackItem: React.FC<TopArtistTrackItemProps> = (
         >
           <span>{props.active ? "▶" : props.index}</span>
 
-          {track.recording?.mainAlbum && (
-            <img
-              src={track.recording?.mainAlbum.coverArtUri}
-              alt={track.recording?.mainAlbum.title}
-              className={
-                "h-12 w-12 object-cover transition-all hover:scale-105 aspect-square rounded-md"
-              }
-            />
-          )}
+          <img
+            src={track.recording?.mainAlbum?.coverArtUri}
+            alt={track.recording?.mainAlbum?.title ?? ""}
+            className={
+              "h-12 w-12 object-cover transition-all hover:scale-105 aspect-square rounded-md"
+            }
+          />
+
           <div className={"flex gap-4 items-center"}>
-            <RecordingPlayButton
-              recording={track.recording}
-              renderButton={(onClick, needsYoutubeSearch) => (
-                <button
-                  className={
-                    "truncate cursor-pointer hover:underline flex items-center gap-4"
-                  }
-                  onClick={onClick}
-                >
-                  <span>{track.recording?.title}</span>
-                  {needsYoutubeSearch ? (
-                    <Search className={"h-4 w-4"} />
-                  ) : (
-                    <Play className={"h-4 w-4"} />
-                  )}
-                </button>
-              )}
-              renderWhenNotPlayable={() => (
-                <span className="truncate">{track.recording?.title}</span>
-              )}
-            />
+            {track.recording ? (
+              <RecordingPlayButton
+                recording={track.recording}
+                renderButton={(onClick, needsYoutubeSearch) => (
+                  <button
+                    className={
+                      "truncate cursor-pointer hover:underline flex items-center gap-4"
+                    }
+                    onClick={onClick}
+                  >
+                    <span>{trackName}</span>
+                    {needsYoutubeSearch ? (
+                      <Search className={"h-4 w-4"} />
+                    ) : (
+                      <Play className={"h-4 w-4"} />
+                    )}
+                  </button>
+                )}
+                renderWhenNotPlayable={() => (
+                  <span className="truncate">{trackName}</span>
+                )}
+              />
+            ) : (
+              <span className="truncate">{trackName}</span>
+            )}
           </div>
 
           <span className="text-sm text-neutral-400 text-right">
@@ -110,7 +112,7 @@ export const TopArtistTrackItem: React.FC<TopArtistTrackItemProps> = (
         </div>
       </ContextMenuTrigger>
       <ContextMenuContent className="w-40">
-        {track.recording.mainAlbum && (
+        {track.recording?.mainAlbum && (
           <ContextMenuItem
             onClick={() =>
               track.recording?.mainAlbum?.releaseGroup &&

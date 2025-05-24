@@ -9,7 +9,8 @@ namespace MusicGQL.Features.LastFm;
 public record LastFmTrack([property: GraphQLIgnore] Track Model)
 {
     [ID]
-    public string Id => Model.MBID;
+    public string Id => Model.Url;
+    public string MBID => Model.MBID;
     public string Name => Model.Name;
     public LastFmArtist Artist => new(Model.Artist);
     public LastFmAlbum Album => new(Model.Album);
@@ -23,7 +24,14 @@ public record LastFmTrack([property: GraphQLIgnore] Track Model)
     {
         if (string.IsNullOrEmpty(Model.MBID))
         {
-            return null;
+            var r = await service.SearchRecordingForArtistByArtistNameAsync(
+                Model.Name,
+                Model.Artist.Name
+            );
+
+            var f = r.FirstOrDefault();
+
+            return f is null ? null : new Recording(f);
         }
 
         var release = await service.GetRecordingByIdAsync(Model.MBID);

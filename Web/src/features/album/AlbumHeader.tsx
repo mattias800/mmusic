@@ -12,6 +12,7 @@ export const albumHeaderReleaseGroupFragment = graphql(`
   fragment AlbumHeader_ReleaseGroup on ReleaseGroup {
     id
     title
+    primaryType
     mainRelease {
       id
       title
@@ -58,7 +59,7 @@ export const AlbumHeader: React.FC<AlbumHeaderProps> = (props) => {
         className="w-48 h-48 rounded shadow-lg"
       />
       <div className={"flex flex-col gap-3"}>
-        <p className="text-sm">Album</p>
+        <p className="text-sm">{getReleaseType(releaseGroup.primaryType)}</p>
         <h1 className="text-4xl sm:text-7xl font-bold">{release.title}</h1>
         <div className={"flex gap-2"}>
           <Link
@@ -74,4 +75,19 @@ export const AlbumHeader: React.FC<AlbumHeaderProps> = (props) => {
       </div>
     </div>
   );
+};
+
+const getReleaseType = (
+  primaryType: string | null | undefined,
+): string | undefined => {
+  switch (primaryType.toLowerCase()) {
+    case "album":
+      return "Album";
+    case "ep":
+      return "EP";
+    case "single":
+      return "Single";
+    default:
+      return undefined;
+  }
 };

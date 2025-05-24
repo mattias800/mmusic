@@ -191,6 +191,7 @@ type LastFmTrack {
   album: LastFmAlbum!
   artist: LastFmArtist!
   id: ID!
+  mbid: String!
   musicBrainzRecording: MbRecording
   name: String!
   playCount: Long
