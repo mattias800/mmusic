@@ -80,7 +80,7 @@ export const AlbumHeader: React.FC<AlbumHeaderProps> = (props) => {
 const getReleaseType = (
   primaryType: string | null | undefined,
 ): string | undefined => {
-  switch (primaryType.toLowerCase()) {
+  switch (primaryType?.toLowerCase()) {
     case "album":
       return "Album";
     case "ep":

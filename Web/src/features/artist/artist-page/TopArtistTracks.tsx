@@ -2,7 +2,6 @@ import * as React from "react";
 import { useState } from "react";
 import { TopArtistTrackItem } from "@/features/artist/artist-page/TopArtistTrackItem.tsx";
 import { FragmentType, graphql, useFragment } from "@/gql";
-import { SectionHeading } from "@/components/headings/SectionHeading.tsx";
 import { SecondaryButton } from "@/components/buttons/SecondaryButton.tsx";
 
 export interface TopArtistTracksProps {
@@ -27,8 +26,7 @@ export const TopArtistTracks: React.FC<TopArtistTracksProps> = (props) => {
   const visibleTracks = artist.topTracks.slice(0, showingMore ? 20 : 10);
 
   return (
-    <div className="px-6 md:px-10 mt-4">
-      <SectionHeading>Popular</SectionHeading>
+    <div>
       <div>
         {visibleTracks.map((track, index) => (
           <TopArtistTrackItem key={track.id} index={index + 1} track={track} />

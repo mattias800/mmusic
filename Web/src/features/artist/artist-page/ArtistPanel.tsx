@@ -36,7 +36,6 @@ export const ArtistPanel: React.FC<ArtistPanelProps> = (props) => {
     <GradientContent>
       <ArtistHeader artist={artist} />
 
-      {/* Controls */}
       <div className="px-6 md:px-10 py-6 flex items-center gap-4">
         <LargePlayButton />
         <ShuffleButton />
@@ -46,7 +45,10 @@ export const ArtistPanel: React.FC<ArtistPanelProps> = (props) => {
       </div>
 
       <SectionList>
-        <TopArtistTracks artist={artist} />
+        <Section>
+          <SectionHeading>Popular</SectionHeading>
+          <TopArtistTracks artist={artist} />
+        </Section>
 
         <Section>
           <SectionHeading>Albums</SectionHeading>
@@ -54,15 +56,14 @@ export const ArtistPanel: React.FC<ArtistPanelProps> = (props) => {
         </Section>
 
         <Section>
-          <h2 className="text-xl font-semibold mb-4">EPs</h2>
+          <SectionHeading>EPs</SectionHeading>
           <ArtistEpList artistId={artist.id} />
         </Section>
 
         <Section>
-          <h2 className="text-xl font-semibold mb-4">Singles</h2>
+          <SectionHeading>Singles</SectionHeading>
           <ArtistSingleList artistId={artist.id} />
         </Section>
-
       </SectionList>
     </GradientContent>
   );
