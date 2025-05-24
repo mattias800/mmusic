@@ -8,7 +8,7 @@ public class Neo4jPersistenceService(IMapper mapper)
 {
     public async Task SaveReleaseGroupNodeAsync(
         IAsyncTransaction tx,
-        Features.ServerLibrary.ReleaseGroup.Db.DbReleaseGroup dbReleaseGroupToSave
+        ReleaseGroup releaseGroupToSave
     )
     {
         await tx.RunAsync(
@@ -17,29 +17,26 @@ public class Neo4jPersistenceService(IMapper mapper)
                 + "ON MATCH SET rg.Title = $title, rg.PrimaryType = $primaryType, rg.SecondaryTypes = $secondaryTypes, rg.FirstReleaseDate = $firstReleaseDate",
             new
             {
-                id = dbReleaseGroupToSave.Id,
-                title = dbReleaseGroupToSave.Title,
-                primaryType = dbReleaseGroupToSave.PrimaryType,
-                secondaryTypes = dbReleaseGroupToSave.SecondaryTypes,
-                firstReleaseDate = dbReleaseGroupToSave.FirstReleaseDate,
+                id = releaseGroupToSave.Id,
+                title = releaseGroupToSave.Title,
+                primaryType = releaseGroupToSave.PrimaryType,
+                secondaryTypes = releaseGroupToSave.SecondaryTypes,
+                firstReleaseDate = releaseGroupToSave.FirstReleaseDate,
             }
         );
     }
 
-    public async Task SaveArtistNodeAsync(
-        IAsyncTransaction tx,
-        Features.ServerLibrary.Artist.Db.DbArtist dbArtistToSave
-    )
+    public async Task SaveArtistNodeAsync(IAsyncTransaction tx, Artist artistToSave)
     {
         await tx.RunAsync(
             "MERGE (a:Artist {Id: $artistId}) ON CREATE SET a.Name = $name, a.SortName = $sortName, a.Gender = $gender "
                 + "ON MATCH SET a.Name = $name, a.SortName = $sortName, a.Gender = $gender",
             new
             {
-                artistId = dbArtistToSave.Id,
-                name = dbArtistToSave.Name,
-                sortName = dbArtistToSave.SortName,
-                gender = dbArtistToSave.Gender,
+                artistId = artistToSave.Id,
+                name = artistToSave.Name,
+                sortName = artistToSave.SortName,
+                gender = artistToSave.Gender,
             }
         );
     }
@@ -47,21 +44,20 @@ public class Neo4jPersistenceService(IMapper mapper)
     public async Task SaveArtistCreditsForParentAsync(
         IAsyncTransaction tx,
         string parentEntityId,
-        IEnumerable<NameCredit> creditDtos,
+        IEnumerable<NameCredit> nameCredits,
         string parentLabel,
         string parentIdQueryKey,
         string relationshipType
     )
     {
-        foreach (var creditDto in creditDtos)
+        foreach (var nameCredit in nameCredits)
         {
-            if (creditDto.Artist == null || string.IsNullOrEmpty(creditDto.Artist.Id))
+            if (nameCredit.Artist == null || string.IsNullOrEmpty(nameCredit.Artist.Id))
+            {
                 continue;
+            }
 
-            var artistToSave = mapper.Map<Features.ServerLibrary.Artist.Db.DbArtist>(
-                creditDto.Artist
-            );
-            await SaveArtistNodeAsync(tx, artistToSave);
+            await SaveArtistNodeAsync(tx, nameCredit.Artist);
 
             string query =
                 $"MATCH (p:{parentLabel} {{Id: ${parentIdQueryKey}}}), (a:Artist {{Id: $ArtistId}}) "
@@ -72,19 +68,16 @@ public class Neo4jPersistenceService(IMapper mapper)
             var parameters = new Dictionary<string, object>
             {
                 { parentIdQueryKey, parentEntityId },
-                { "ArtistId", artistToSave.Id },
-                { "JoinPhrase", creditDto.JoinPhrase ?? string.Empty },
-                { "Name", creditDto.Name ?? string.Empty },
+                { "ArtistId", nameCredit.Artist.Id },
+                { "JoinPhrase", nameCredit.JoinPhrase ?? string.Empty },
+                { "Name", nameCredit.Name ?? string.Empty },
             };
 
             await tx.RunAsync(query, parameters);
         }
     }
 
-    public async Task SaveReleaseNodeAsync(
-        IAsyncTransaction tx,
-        Features.ServerLibrary.Release.Db.DbRelease dbReleaseToSave
-    )
+    public async Task SaveReleaseNodeAsync(IAsyncTransaction tx, Release releaseToSave)
     {
         await tx.RunAsync(
             "MERGE (r:Release {Id: $id}) "
@@ -92,10 +85,10 @@ public class Neo4jPersistenceService(IMapper mapper)
                 + "ON MATCH SET r.Title = $title, r.Date = $date, r.Status = $status",
             new
             {
-                id = dbReleaseToSave.Id,
-                title = dbReleaseToSave.Title,
-                date = dbReleaseToSave.Date,
-                status = dbReleaseToSave.Status,
+                id = releaseToSave.Id,
+                title = releaseToSave.Title,
+                date = releaseToSave.Date,
+                status = releaseToSave.Status,
             }
         );
     }
@@ -117,7 +110,7 @@ public class Neo4jPersistenceService(IMapper mapper)
         IAsyncTransaction tx,
         string mediumNodeId,
         string releaseMbId,
-        Medium mediumDto
+        Medium medium
     )
     {
         await tx.RunAsync(
@@ -127,9 +120,9 @@ public class Neo4jPersistenceService(IMapper mapper)
             new
             {
                 mediumId = mediumNodeId,
-                position = mediumDto.Position,
-                format = mediumDto.Format ?? string.Empty,
-                trackCount = mediumDto.TrackCount,
+                position = medium.Position,
+                format = medium.Format ?? string.Empty,
+                trackCount = medium.TrackCount,
             }
         );
 
@@ -141,7 +134,7 @@ public class Neo4jPersistenceService(IMapper mapper)
         );
     }
 
-    public async Task SaveRecordingNodeAsync(IAsyncTransaction tx, Recording recordingDtoToSave)
+    public async Task SaveRecordingNodeAsync(IAsyncTransaction tx, Recording recordingToSave)
     {
         await tx.RunAsync(
             "MERGE (rec:Recording {Id: $id}) "
@@ -149,18 +142,18 @@ public class Neo4jPersistenceService(IMapper mapper)
                 + "ON MATCH SET rec.Title = $title, rec.Length = $length, rec.Disambiguation = $disambiguation",
             new
             {
-                id = recordingDtoToSave.Id,
-                title = recordingDtoToSave.Title,
-                length = recordingDtoToSave.Length,
-                disambiguation = recordingDtoToSave.Disambiguation ?? string.Empty,
+                id = recordingToSave.Id,
+                title = recordingToSave.Title,
+                length = recordingToSave.Length,
+                disambiguation = recordingToSave.Disambiguation ?? string.Empty,
             }
         );
 
         // Store relations
 
-        if (recordingDtoToSave.Relations != null)
+        if (recordingToSave.Relations != null)
         {
-            foreach (var relation in recordingDtoToSave.Relations)
+            foreach (var relation in recordingToSave.Relations)
             {
                 // Assuming TargetType will be something like "Artist", "ReleaseGroup", "Url" etc.
                 // And TargetId will be the MBID of the target entity or the URL itself for Url relations.
@@ -200,7 +193,7 @@ public class Neo4jPersistenceService(IMapper mapper)
         IAsyncTransaction tx,
         string mediumNodeId,
         string recordingMbId,
-        Track trackDto
+        Track track
     )
     {
         await tx.RunAsync(
@@ -210,9 +203,9 @@ public class Neo4jPersistenceService(IMapper mapper)
             {
                 mediumId = mediumNodeId,
                 recordingId = recordingMbId,
-                trackPos = trackDto.Position,
-                trackNum = trackDto.Number ?? string.Empty,
-                trackTitle = trackDto.Recording?.Title ?? string.Empty,
+                trackPos = track.Position,
+                trackNum = track.Number ?? string.Empty,
+                trackTitle = track.Recording?.Title ?? string.Empty,
             }
         );
     }
