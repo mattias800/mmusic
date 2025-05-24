@@ -76,7 +76,7 @@ builder
             minimumDiagnosticLevel: DiagnosticLevel.Debug
         )
     ))
-    .AddSingleton<ReleaseGroupPersistenceService>()
+    .AddSingleton<Neo4jPersistenceService>()
     .AddSingleton<Neo4jService>()
     .AddSingleton<SoulSeekService>()
     .AddSingleton<MusicBrainzService>()

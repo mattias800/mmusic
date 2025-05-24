@@ -16,7 +16,7 @@ public class AddArtistToServerLibrarySaga(
     ILogger<AddArtistToServerLibrarySaga> logger,
     IMapper mapper,
     MarkReleaseGroupAsAddedToServerLibraryHandler markReleaseGroupAsAddedToServerLibraryHandler,
-    ReleaseGroupPersistenceService releaseGroupPersistenceService
+    Neo4jPersistenceService neo4JPersistenceService
 )
     : Saga<AddArtistToServerLibrarySagaData>,
         IAmInitiatedBy<AddArtistToServerLibrarySagaEvents.StartAddArtist>,
@@ -78,7 +78,7 @@ public class AddArtistToServerLibrarySaga(
             await using var session = driver.AsyncSession();
             await session.ExecuteWriteAsync(async tx =>
             {
-                await releaseGroupPersistenceService.SaveArtistNodeAsync(
+                await neo4JPersistenceService.SaveArtistNodeAsync(
                     (IAsyncTransaction)tx,
                     artistToSave
                 );
