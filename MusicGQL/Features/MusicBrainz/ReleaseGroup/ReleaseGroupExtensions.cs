@@ -1,3 +1,6 @@
+using MusicGQL.Features.ServerLibrary.Release.Db;
+using MusicGQL.Features.ServerLibrary.ReleaseGroup.Db;
+
 namespace MusicGQL.Features.MusicBrainz.ReleaseGroup;
 
 public static class ReleaseGroupExtensions
@@ -12,8 +15,18 @@ public static class ReleaseGroupExtensions
         return releaseGroup.PrimaryType == "Album" && releaseGroup.SecondaryTypes.Count == 0;
     }
 
+    public static bool IsMainAlbum(this DbReleaseGroup releaseGroup)
+    {
+        return releaseGroup is { PrimaryType: "Album", SecondaryTypes.Count: 0 };
+    }
+
     public static bool IsMainSingle(this Hqub.MusicBrainz.Entities.ReleaseGroup releaseGroup)
     {
         return releaseGroup.PrimaryType == "Single" && releaseGroup.SecondaryTypes.Count == 0;
+    }
+
+    public static bool IsMainSingle(this DbReleaseGroup releaseGroup)
+    {
+        return releaseGroup is { PrimaryType: "Single", SecondaryTypes.Count: 0 };
     }
 }

@@ -83,6 +83,7 @@ type AddReleaseGroupToServerLibraryUnknownError {
 }
 
 type Artist {
+  albums: [ReleaseGroup!]!
   gender: String
   id: ID!
   images: MbArtistImages
@@ -91,6 +92,7 @@ type Artist {
   name: String!
   releaseGroups: [ReleaseGroup!]!
   releases: [Release!]!
+  singles: [ReleaseGroup!]!
   sortName: String!
   topTracks: [LastFmTrack!]!
 }
@@ -166,8 +168,9 @@ type LastFmAlbum {
 }
 
 type LastFmArtist {
-  artist: MbArtist
+  artist: Artist
   id: ID!
+  musicBrainzArtist: MbArtist
   name: String!
   statistics: LastFmStatistics!
   summary: String
@@ -419,6 +422,7 @@ type Query {
   musicBrainz: MusicBrainzSearchRoot!
   playlist: PlaylistSearchRoot!
   recommendations: RecommendationsSearchRoot!
+  recording: RecordingSearchRoot!
   release: ReleaseSearchRoot!
   releaseGroup: ReleaseGroupSearchRoot!
   user: UserSearchRoot!
@@ -441,6 +445,11 @@ type Recording {
   title: String!
 }
 
+type RecordingSearchRoot {
+  byId(id: ID!): Recording
+  searchByName(limit: Int! = 25, name: String!, offset: Int! = 0): [Recording!]!
+}
+
 type RecordingStreamingServiceInfo {
   id: ID!
   youtubeMusicUrl: String
@@ -461,6 +470,7 @@ type Release {
 }
 
 type ReleaseGroup {
+  coverArtUri: String
   credits: [NameCredit!]!
   firstReleaseDate: String
   firstReleaseYear: String

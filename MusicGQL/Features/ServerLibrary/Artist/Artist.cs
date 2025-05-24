@@ -1,6 +1,7 @@
 using Hqub.Lastfm;
 using MusicGQL.Features.LastFm;
 using MusicGQL.Features.MusicBrainz.Artist;
+using MusicGQL.Features.MusicBrainz.ReleaseGroup;
 using MusicGQL.Features.ServerLibrary.Artist.Db;
 using MusicGQL.Integration.MusicBrainz;
 using MusicGQL.Integration.Neo4j;
@@ -83,5 +84,21 @@ public record Artist([property: GraphQLIgnore] DbArtist Model)
         {
             return null;
         }
+    }
+
+    public async Task<IEnumerable<ReleaseGroup.ReleaseGroup>> Albums(Neo4jService service)
+    {
+        var releaseGroups = await service.GetReleaseGroupsForArtistAsync(Model.Id);
+        var albumReleaseGroups = releaseGroups.Where(r => r.IsMainAlbum()).ToList();
+
+        return albumReleaseGroups.Select(r => new ReleaseGroup.ReleaseGroup(r));
+    }
+
+    public async Task<IEnumerable<ReleaseGroup.ReleaseGroup>> Singles(Neo4jService service)
+    {
+        var releaseGroups = await service.GetReleaseGroupsForArtistAsync(Model.Id);
+        var albumReleaseGroups = releaseGroups.Where(r => r.IsMainSingle()).ToList();
+
+        return albumReleaseGroups.Select(r => new ReleaseGroup.ReleaseGroup(r));
     }
 }

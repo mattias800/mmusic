@@ -11,16 +11,14 @@ export interface SearchResultReleaseGroupProps {
 
 const albumSearchQuery = graphql(`
   query SearchResultAlbumSearch($text: String!) {
-    musicBrainz {
-      releaseGroup {
-        searchByName(name: $text, limit: 5) {
+    releaseGroup {
+      searchByName(name: $text, limit: 5) {
+        id
+        title
+        mainRelease {
           id
           title
-          mainRelease {
-            id
-            title
-            coverArtUri
-          }
+          coverArtUri
         }
       }
     }
@@ -35,7 +33,7 @@ export const SearchResultReleaseGroup: React.FC<
     variables: { text: searchText },
   });
 
-  const releaseGroups = data?.musicBrainz.releaseGroup.searchByName;
+  const releaseGroups = data?.releaseGroup.searchByName;
 
   return (
     <SearchResultGroup
@@ -44,7 +42,7 @@ export const SearchResultReleaseGroup: React.FC<
       items={releaseGroups}
       renderItem={(releaseGroup) => (
         <Link
-          to={`/album/${releaseGroup.mainRelease?.id || releaseGroup.id}`}
+          to={`/album/${releaseGroup.id}`}
           key={releaseGroup.id}
           className="flex items-center p-2 hover:bg-white/10 rounded-md transition-colors"
           onClick={onClickSearchResult}

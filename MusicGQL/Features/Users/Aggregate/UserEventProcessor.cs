@@ -93,4 +93,4 @@ public class UserEventProcessor(ILogger<UserEventProcessor> logger)
             _userProjectionsCache[userPasswordHashSet.SubjectUserId] = projection;
         }
     }
-} 
+}

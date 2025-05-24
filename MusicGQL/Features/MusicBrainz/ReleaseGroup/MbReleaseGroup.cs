@@ -22,8 +22,8 @@ public record MbReleaseGroup([property: GraphQLIgnore] Hqub.MusicBrainz.Entities
     public IEnumerable<string> Tags => Model.Tags.Select(t => t.Name);
 
     public async Task<string?> CoverArtUri(
-        [Service] IFanArtTVClient fanartClient,
-        [Service] MusicBrainzService mbService
+        IFanArtTVClient fanartClient,
+        MusicBrainzService mbService
     )
     {
         try
@@ -54,7 +54,7 @@ public record MbReleaseGroup([property: GraphQLIgnore] Hqub.MusicBrainz.Entities
         }
     }
 
-    public async Task<MbAlbumImages?> Images([Service] IFanArtTVClient fanartClient)
+    public async Task<MbAlbumImages?> Images(IFanArtTVClient fanartClient)
     {
         try
         {
@@ -71,7 +71,7 @@ public record MbReleaseGroup([property: GraphQLIgnore] Hqub.MusicBrainz.Entities
         }
     }
 
-    public async Task<Release.MbRelease?> MainRelease([Service] MusicBrainzService mbService)
+    public async Task<Release.MbRelease?> MainRelease(MusicBrainzService mbService)
     {
         var all = await mbService.GetReleasesForReleaseGroupAsync(Id);
         var best = MainAlbumFinder.GetMainReleaseInReleaseGroup(all.ToList());

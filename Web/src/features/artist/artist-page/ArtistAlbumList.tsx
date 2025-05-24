@@ -12,15 +12,13 @@ export interface ArtistAlbumListProps {
 
 export const artistAlbumListQuery = graphql(`
   query ArtistAlbumList($artistId: ID!) {
-    musicBrainz {
-      artist {
-        byId(id: $artistId) {
+    artist {
+      byId(id: $artistId) {
+        id
+        albums {
           id
-          albums {
-            id
-            firstReleaseDate
-            ...AlbumCard_ReleaseGroup
-          }
+          firstReleaseDate
+          ...AlbumCard_ReleaseGroup
         }
       }
     }
@@ -41,13 +39,13 @@ export const ArtistAlbumList: React.FC<ArtistAlbumListProps> = (props) => {
     );
   }
 
-  if (!data?.musicBrainz.artist.byId) {
+  if (!data?.artist.byId) {
     return <div>No data..</div>;
   }
 
   return (
     <div className={"flex flex-wrap gap-8"}>
-      {data.musicBrainz.artist.byId.albums
+      {data.artist.byId.albums
         .toSorted(byStringField((a) => a.firstReleaseDate ?? ""))
         .toReversed()
         .map((release) => (

@@ -12,21 +12,21 @@ export interface SearchResultRecordingProps {
 
 const songSearchQuery = graphql(`
   query SearchResultSongSearch($text: String!) {
-    musicBrainz {
-      recording {
-        searchByName(name: $text, limit: 5) {
-          id
-          title
-          length
-          artists {
+    recording {
+      searchByName(name: $text, limit: 5) {
+        id
+        title
+        length
+        nameCredits {
+          artist {
             id
             name
           }
-          mainAlbum {
-            id
-            title
-            coverArtUri
-          }
+        }
+        mainAlbum {
+          id
+          title
+          coverArtUri
         }
       }
     }
@@ -42,7 +42,7 @@ export const SearchResultRecording: React.FC<SearchResultRecordingProps> = ({
     variables: { text: searchText },
   });
 
-  const recordings = data?.musicBrainz.recording.searchByName;
+  const recordings = data?.recording.searchByName;
 
   return (
     <SearchResultGroup
@@ -77,7 +77,7 @@ export const SearchResultRecording: React.FC<SearchResultRecordingProps> = ({
                 overflow: "hidden",
               }}
             >
-              {recording.artists.map((artist, index) => (
+              {recording.nameCredits.map(({ artist }, index) => (
                 <React.Fragment key={artist.id}>
                   {index > 0 && ", "}
                   <Link to={`/artist/${artist.id}`} className="hover:underline">

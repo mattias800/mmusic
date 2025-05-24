@@ -7,6 +7,7 @@ using MusicGQL.Features.MusicBrainz;
 using MusicGQL.Features.Playlists;
 using MusicGQL.Features.Recommendations;
 using MusicGQL.Features.ServerLibrary.Artist;
+using MusicGQL.Features.ServerLibrary.Recording;
 using MusicGQL.Features.ServerLibrary.Release;
 using MusicGQL.Features.ServerLibrary.ReleaseGroup;
 using MusicGQL.Features.Users;
@@ -18,6 +19,7 @@ public class Query
     public ArtistSearchRoot Artist => new();
     public ReleaseGroupSearchRoot ReleaseGroup => new();
     public ReleaseSearchRoot Release => new();
+    public RecordingSearchRoot Recording => new();
 
     public MusicBrainzSearchRoot MusicBrainz => new();
 

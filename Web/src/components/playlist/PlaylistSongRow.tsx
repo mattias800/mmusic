@@ -9,13 +9,15 @@ export interface PlaylistSongRowProps {
 }
 
 export const playlistSongRowFragment = graphql(`
-  fragment LikedSongRow_Recoding on MbRecording {
+  fragment LikedSongRow_Recoding on Recording {
     id
     title
     length
-    artists {
-      id
-      name
+    nameCredits {
+      artist {
+        id
+        name
+      }
     }
     mainAlbum {
       id
@@ -43,7 +45,7 @@ export const PlaylistSongRow: React.FC<PlaylistSongRowProps> = (props) => {
       <div className="min-w-0">
         <p className="text-white truncate">{recording?.title}</p>
         <p className="text-sm text-neutral-400 truncate">
-          {recording?.artists.map((a) => a.name).join(", ")}
+          {recording?.nameCredits.map((a) => a.artist.name).join(", ")}
         </p>
       </div>
 

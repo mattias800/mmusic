@@ -1,7 +1,10 @@
+using Hqub.MusicBrainz.Entities;
+using MusicGQL.Common;
 using MusicGQL.Features.MusicBrainz.ReleaseGroup;
 using MusicGQL.Features.ServerLibrary.ReleaseGroup.Db;
 using MusicGQL.Integration.MusicBrainz;
 using MusicGQL.Integration.Neo4j;
+using TrackSeries.FanArtTV.Client;
 
 namespace MusicGQL.Features.ServerLibrary.ReleaseGroup;
 
@@ -31,8 +34,40 @@ public record ReleaseGroup([property: GraphQLIgnore] DbReleaseGroup Model)
         return best is null ? null : new Release.Release(best);
     }
 
+    public async Task<string?> CoverArtUri(IFanArtTVClient fanartClient, Neo4jService service)
+    {
+        var artistCredits = await service.GetCreditsOnReleaseGroupAsync(Model.Id);
+
+        try
+        {
+            var artistInfo = await fanartClient.Music.GetAlbumAsync(
+                artistCredits.First().Artist.Id
+            );
+
+            var m = artistInfo.Albums.GetValueOrDefault(Guid.Parse(Model.Id));
+
+            if (m is not null)
+            {
+                var coverArt = m.AlbumCover?.FirstOrDefault()?.Url;
+                if (coverArt is not null)
+                {
+                    return coverArt;
+                }
+            }
+
+            var all = await service.GetReleasesForReleaseGroupAsync(Model.Id);
+            var best = all.FirstOrDefault(); // Neo4j only stores main releases.
+
+            return best is null ? null : CoverArtArchive.GetCoverArtUri(best.Id).ToString();
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
     public async Task<MbReleaseGroup?> MusicBrainzReleaseGroup(
-        [Service] MusicBrainzService musicBrainzService
+        MusicBrainzService musicBrainzService
     )
     {
         var releaseGroup = await musicBrainzService.GetReleaseGroupByIdAsync(Model.Id);
