@@ -40,9 +40,6 @@ export const topArtistTrackItemLastFmTrackFragment = graphql(`
         id
         title
         coverArtUri
-        releaseGroup {
-          id
-        }
       }
     }
   }
@@ -68,7 +65,7 @@ export const TopArtistTrackItem: React.FC<TopArtistTrackItemProps> = (
           <span>{props.active ? "▶" : props.index}</span>
 
           <img
-            src={track.recording?.mainAlbum?.coverArtUri}
+            src={track.recording?.mainAlbum?.coverArtUri ?? ""}
             alt={track.recording?.mainAlbum?.title ?? ""}
             className={
               "h-12 w-12 object-cover transition-all hover:scale-105 aspect-square rounded-md"
@@ -99,7 +96,7 @@ export const TopArtistTrackItem: React.FC<TopArtistTrackItemProps> = (
                 )}
               />
             ) : (
-              <span className="truncate">{trackName}</span>
+              <span className="truncate text-red-900">{trackName}</span>
             )}
           </div>
 
@@ -115,8 +112,8 @@ export const TopArtistTrackItem: React.FC<TopArtistTrackItemProps> = (
         {track.recording?.mainAlbum && (
           <ContextMenuItem
             onClick={() =>
-              track.recording?.mainAlbum?.releaseGroup &&
-              navigate(`/album/${track.recording.mainAlbum.releaseGroup.id}`)
+              track.recording?.mainAlbum &&
+              navigate(`/album/${track.recording.mainAlbum.id}`)
             }
           >
             Go to album

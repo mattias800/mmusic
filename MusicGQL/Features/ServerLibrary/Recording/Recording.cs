@@ -24,7 +24,7 @@ public record Recording([property: GraphQLIgnore] DbRecording Model)
     public async Task<ReleaseGroup.ReleaseGroup?> MainAlbum(Neo4jService service)
     {
         var releaseGroups = await service.GetReleaseGroupsForRecordingAsync(Model.Id);
-        var mainAlbum = releaseGroups.FirstOrDefault(); // We only store main releases in Neo4j
+        var mainAlbum = LibraryDecider.FindMainReleaseGroupForRecording(releaseGroups);
         return mainAlbum is null ? null : new ReleaseGroup.ReleaseGroup(mainAlbum);
     }
 

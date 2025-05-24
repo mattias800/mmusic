@@ -13,6 +13,7 @@ import { GradientContent } from "@/components/page-body/GradientContent.tsx";
 import { SectionHeading } from "@/components/headings/SectionHeading.tsx";
 import { Section } from "@/components/page-body/Section.tsx";
 import { SectionList } from "@/components/page-body/SectionList.tsx";
+import { ArtistEpList } from "@/features/artist/artist-page/ArtistEpList.tsx";
 
 interface ArtistPanelProps {
   artist: FragmentType<typeof artistPanelArtistFragment>;
@@ -53,9 +54,15 @@ export const ArtistPanel: React.FC<ArtistPanelProps> = (props) => {
         </Section>
 
         <Section>
+          <h2 className="text-xl font-semibold mb-4">EPs</h2>
+          <ArtistEpList artistId={artist.id} />
+        </Section>
+
+        <Section>
           <h2 className="text-xl font-semibold mb-4">Singles</h2>
           <ArtistSingleList artistId={artist.id} />
         </Section>
+
       </SectionList>
     </GradientContent>
   );

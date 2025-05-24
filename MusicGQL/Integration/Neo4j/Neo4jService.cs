@@ -126,8 +126,10 @@ public class Neo4jService(IDriver driver)
     {
         var dbRecordings = await ExecuteReadListAsync(
             "MATCH (r:Recording)<-[:CREDITED_ON_RECORDING]-(a:Artist) "
-                + "WHERE toLower(r.Title) CONTAINS toLower($recordingName) "
-                + "AND toLower(a.Name) CONTAINS toLower($artistName) "
+                + "WITH apoc.text.replace(toLower(r.Title), '[^a-z0-9]', '') AS normalizedTitle, "
+                + "     apoc.text.replace(toLower(a.Name), '[^a-z0-9]', '') AS normalizedArtist, r "
+                + "WHERE normalizedTitle CONTAINS apoc.text.replace(toLower($recordingName), '[^a-z0-9]', '') "
+                + "AND normalizedArtist CONTAINS apoc.text.replace(toLower($artistName), '[^a-z0-9]', '') "
                 + "RETURN r ORDER BY r.Title SKIP $offset LIMIT $limit",
             new
             {
@@ -246,6 +248,17 @@ public class Neo4jService(IDriver driver)
             record => record["rg"].As<INode>().ToDbReleaseGroup()
         );
         return dbReleaseGroup;
+    }
+
+    public async Task<List<DbReleaseGroup>> GetReleaseGroupsForRecordingAsync(string recordingId)
+    {
+        // (Recording)<-[:INCLUDES_TRACK]-(Medium)<-[:HAS_MEDIUM]-(Release)-[:RELEASE_OF]->(ReleaseGroup)
+        var dbReleaseGroups = await ExecuteReadListAsync(
+            "MATCH (rec:Recording {Id: $recordingId})<-[:INCLUDES_TRACK]-(m:Medium)<-[:HAS_MEDIUM]-(rel:Release)-[:RELEASE_OF]->(rg:ReleaseGroup) RETURN DISTINCT rg",
+            new { recordingId },
+            record => record["rg"].As<INode>().ToDbReleaseGroup()
+        );
+        return dbReleaseGroups;
     }
 
     public async Task<List<DbReleaseGroup>> GetAllReleaseGroupAsync()

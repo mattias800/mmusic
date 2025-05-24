@@ -23,6 +23,7 @@ public record MbRecording([property: GraphQLIgnore] Hqub.MusicBrainz.Entities.Re
         return releases.Select(a => new Release.MbRelease(a));
     }
 
+    // TODO Should return release group.
     public async Task<Release.MbRelease?> MainAlbum(MusicBrainzService mbService)
     {
         var releases = await mbService.GetReleasesForRecordingAsync(Model.Id);

@@ -1,3 +1,4 @@
+using MusicGQL.Features.ServerLibrary.ReleaseGroup.Db;
 using MbRelease = Hqub.MusicBrainz.Entities.Release;
 
 namespace MusicGQL.Features.ServerLibrary;
@@ -62,6 +63,17 @@ public static class LibraryDecider
         }
 
         return releasesAvailable.First();
+    }
+
+    public static DbReleaseGroup? FindMainReleaseGroupForRecording(
+        List<DbReleaseGroup> releaseGroups
+    )
+    {
+        var album = releaseGroups.FirstOrDefault(r => r.IsMainAlbum());
+        var ep = releaseGroups.FirstOrDefault(r => r.IsMainEP());
+        var single = releaseGroups.FirstOrDefault(r => r.IsMainSingle());
+
+        return album ?? ep ?? single ?? releaseGroups.FirstOrDefault();
     }
 
     public static MbRelease? FindPrioritizedRegionalAlbum(List<MbRelease> releases)

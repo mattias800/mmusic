@@ -440,7 +440,7 @@ type RecommendationsSearchRoot {
 type Recording {
   id: ID!
   length: Int
-  mainAlbum: Release
+  mainAlbum: ReleaseGroup
   nameCredits: [NameCredit!]!
   statistics: LastFmStatistics
   streamingServiceInfo: RecordingStreamingServiceInfo!

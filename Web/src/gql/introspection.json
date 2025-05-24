@@ -4637,7 +4637,7 @@
             "args": [],
             "type": {
               "kind": "OBJECT",
-              "name": "Release",
+              "name": "ReleaseGroup",
               "ofType": null
             },
             "isDeprecated": false,

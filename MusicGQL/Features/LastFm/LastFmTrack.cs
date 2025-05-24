@@ -22,20 +22,14 @@ public record LastFmTrack([property: GraphQLIgnore] Track Model)
 
     public async Task<Recording?> Recording(Neo4jService service)
     {
-        if (string.IsNullOrEmpty(Model.MBID))
-        {
-            var r = await service.SearchRecordingForArtistByArtistNameAsync(
-                Model.Name,
-                Model.Artist.Name
-            );
+        var r = await service.SearchRecordingForArtistByArtistNameAsync(
+            Model.Name,
+            Model.Artist.Name
+        );
 
-            var f = r.FirstOrDefault();
+        var f = r.FirstOrDefault();
 
-            return f is null ? null : new Recording(f);
-        }
-
-        var release = await service.GetRecordingByIdAsync(Model.MBID);
-        return release is null ? null : new Recording(release);
+        return f is null ? null : new Recording(f);
     }
 
     public async Task<MbRecording?> MusicBrainzRecording(MusicBrainzService service)
