@@ -11,10 +11,13 @@ export const PageLayout: React.FC<PageLayoutProps> = ({ children }) => {
         <div className="border-t h-full">
           <div className="bg-background h-full">
             <div className="grid lg:grid-cols-5 h-full">
-              <Sidebar />
-              <div className="col-span-3 lg:col-span-4 lg:border-l">
+              <div className="w-64"/>
+              <aside className={"h-screen fixed top-0 left-0 bottom-0 w-64"}>
+                <Sidebar />
+              </aside>
+              <main className="col-span-3 lg:col-span-4 lg:border-l">
                 <div className="h-full px-4 py-6 lg:px-8">{children}</div>
-              </div>
+              </main>
             </div>
           </div>
         </div>
