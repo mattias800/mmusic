@@ -1,15 +1,10 @@
-using System; // For Guid
-using System.Collections.Generic; // For Dictionary
-using System.Linq; // For ToDictionaryAsync
-using System.Threading.Tasks; // For Task
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging; // For ILogger
 using MusicGQL.Db.Postgres;
 using MusicGQL.Db.Postgres.Models;
 using MusicGQL.Db.Postgres.Models.Events.Users;
 using MusicGQL.Db.Postgres.Models.Projections;
 
-namespace MusicGQL.Features.Users.Aggregate; // Changed namespace
+namespace MusicGQL.Features.Users.Aggregate;
 
 public class UserEventProcessor(ILogger<UserEventProcessor> logger)
 {

@@ -1,10 +1,13 @@
-using MusicGQL.Features.ServerLibrary.Release.Db;
 using MbRelease = Hqub.MusicBrainz.Entities.Release;
 
-namespace MusicGQL.Common;
+namespace MusicGQL.Features.ServerLibrary;
 
-public static class MainAlbumFinder
+public static class LibraryDecider
 {
+    public static bool ShouldBeAddedWhenAddingArtistToServerLibrary(
+        Hqub.MusicBrainz.Entities.ReleaseGroup releaseGroup
+    ) => releaseGroup.IsMainAlbum() || releaseGroup.IsMainEP() || releaseGroup.IsMainSingle();
+
     public static MbRelease? GetMainReleaseInReleaseGroup(List<MbRelease> releases)
     {
         var official = releases.Where(r => r.Status == "Official").ToList();
@@ -37,27 +40,21 @@ public static class MainAlbumFinder
 
         var releasesAvailable = official.Count != 0 ? official : releases;
 
-        var allAlbums = releasesAvailable
-            .Where(r =>
-                r.ReleaseGroup?.PrimaryType == "Album" && r.ReleaseGroup.SecondaryTypes.Count == 0
-            )
-            .ToList();
+        var allAlbums = releasesAvailable.Where(r => r.ReleaseGroup.IsMainAlbum()).ToList();
 
         if (allAlbums.Count > 0)
         {
             return FindPrioritizedRegionalAlbum(allAlbums);
         }
 
-        var allEps = releasesAvailable.Where(r => r.ReleaseGroup?.PrimaryType == "EP").ToList();
+        var allEps = releasesAvailable.Where(r => r.ReleaseGroup.IsMainEP()).ToList();
 
         if (allEps.Count > 0)
         {
             return FindPrioritizedRegionalAlbum(allEps);
         }
 
-        var allSingles = releasesAvailable
-            .Where(r => r.ReleaseGroup?.PrimaryType == "Single")
-            .ToList();
+        var allSingles = releasesAvailable.Where(r => r.ReleaseGroup.IsMainSingle()).ToList();
 
         if (allSingles.Count > 0)
         {
@@ -79,4 +76,4 @@ public static class MainAlbumFinder
             ?? releases.LastOrDefault(a => a.Country == "GB")
             ?? releases.LastOrDefault();
     }
-};
+}

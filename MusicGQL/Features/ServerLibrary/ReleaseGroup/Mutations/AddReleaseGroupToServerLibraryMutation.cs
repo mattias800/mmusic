@@ -1,5 +1,4 @@
 using MusicGQL.Features.ServerLibrary.ReleaseGroup.Handlers;
-using MusicGQL.Features.Users;
 using MusicGQL.Types;
 
 namespace MusicGQL.Features.ServerLibrary.ReleaseGroup.Mutations;

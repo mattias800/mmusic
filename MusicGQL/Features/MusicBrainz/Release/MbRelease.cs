@@ -27,8 +27,7 @@ public record MbRelease([property: GraphQLIgnore] Hqub.MusicBrainz.Entities.Rele
 
     public string CoverArtUri => CoverArtArchive.GetCoverArtUri(Model.Id).ToString();
 
-    public IEnumerable<Common.MbNameCredit> Credits =>
-        Model.Credits.Select(c => new MbNameCredit(c));
+    public IEnumerable<MbNameCredit> Credits => Model.Credits.Select(c => new MbNameCredit(c));
 
     public IEnumerable<MbArtist> Artists() => Model.Credits.Select(a => new MbArtist(a.Artist));
 

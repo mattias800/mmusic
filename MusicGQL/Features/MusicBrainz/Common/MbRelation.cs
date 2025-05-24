@@ -2,7 +2,7 @@ using Hqub.MusicBrainz.Entities;
 
 namespace MusicGQL.Features.MusicBrainz.Common;
 
-public record MbRelation([property: GraphQLIgnore] Hqub.MusicBrainz.Entities.Relation Model)
+public record MbRelation([property: GraphQLIgnore] Relation Model)
 {
     public string? Type => Model.Type;
     public string? TargetType => Model.TargetType;

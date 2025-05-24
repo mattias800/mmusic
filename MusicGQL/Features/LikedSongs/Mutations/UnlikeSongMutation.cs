@@ -1,8 +1,4 @@
-using System;
 using System.Security.Claims;
-using System.Threading.Tasks;
-using HotChocolate.Types;
-using Microsoft.AspNetCore.Http;
 using MusicGQL.Features.LikedSongs.Commands;
 using MusicGQL.Types;
 

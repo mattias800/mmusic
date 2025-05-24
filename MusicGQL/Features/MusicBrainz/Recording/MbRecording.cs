@@ -1,9 +1,8 @@
 using Hqub.Lastfm;
-using MusicGQL.Common;
 using MusicGQL.Features.LastFm;
 using MusicGQL.Features.MusicBrainz.Artist;
 using MusicGQL.Features.MusicBrainz.Common;
-using MusicGQL.Features.ServerLibrary.Recording;
+using MusicGQL.Features.ServerLibrary;
 using MusicGQL.Integration.MusicBrainz;
 
 namespace MusicGQL.Features.MusicBrainz.Recording;
@@ -27,7 +26,7 @@ public record MbRecording([property: GraphQLIgnore] Hqub.MusicBrainz.Entities.Re
     public async Task<Release.MbRelease?> MainAlbum(MusicBrainzService mbService)
     {
         var releases = await mbService.GetReleasesForRecordingAsync(Model.Id);
-        var mainAlbum = MainAlbumFinder.FindMainAlbumForSong(releases);
+        var mainAlbum = LibraryDecider.FindMainAlbumForSong(releases);
         return mainAlbum is null ? null : new Release.MbRelease(mainAlbum);
     }
 

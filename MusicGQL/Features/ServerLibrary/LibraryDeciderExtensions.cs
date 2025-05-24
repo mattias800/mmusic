@@ -1,9 +1,8 @@
-using MusicGQL.Features.ServerLibrary.Release.Db;
 using MusicGQL.Features.ServerLibrary.ReleaseGroup.Db;
 
-namespace MusicGQL.Features.MusicBrainz.ReleaseGroup;
+namespace MusicGQL.Features.ServerLibrary;
 
-public static class ReleaseGroupExtensions
+public static class LibraryDeciderExtensions
 {
     public static bool IsAlbum(this Hqub.MusicBrainz.Entities.ReleaseGroup releaseGroup)
     {
@@ -28,5 +27,15 @@ public static class ReleaseGroupExtensions
     public static bool IsMainSingle(this DbReleaseGroup releaseGroup)
     {
         return releaseGroup is { PrimaryType: "Single", SecondaryTypes.Count: 0 };
+    }
+
+    public static bool IsMainEP(this Hqub.MusicBrainz.Entities.ReleaseGroup releaseGroup)
+    {
+        return releaseGroup.PrimaryType == "EP" && releaseGroup.SecondaryTypes.Count == 0;
+    }
+
+    public static bool IsMainEP(this DbReleaseGroup releaseGroup)
+    {
+        return releaseGroup is { PrimaryType: "EP", SecondaryTypes.Count: 0 };
     }
 }

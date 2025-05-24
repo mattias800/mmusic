@@ -84,6 +84,7 @@ type AddReleaseGroupToServerLibraryUnknownError {
 
 type Artist {
   albums: [ReleaseGroup!]!
+  eps: [ReleaseGroup!]!
   gender: String
   id: ID!
   images: MbArtistImages

@@ -1,6 +1,6 @@
 using Hqub.MusicBrainz.Entities;
-using MusicGQL.Common;
 using MusicGQL.Features.MusicBrainz.Common;
+using MusicGQL.Features.ServerLibrary;
 using MusicGQL.Integration.MusicBrainz;
 using TrackSeries.FanArtTV.Client;
 
@@ -14,7 +14,7 @@ public record MbReleaseGroup([property: GraphQLIgnore] Hqub.MusicBrainz.Entities
     public string? PrimaryType => Model.PrimaryType;
     public IEnumerable<string> SecondaryTypes => Model.SecondaryTypes;
 
-    public IEnumerable<Common.MbNameCredit> Credits() =>
+    public IEnumerable<MbNameCredit> Credits() =>
         Model.Credits?.Select(c => new MbNameCredit(c)) ?? [];
 
     public string? FirstReleaseDate => Model.FirstReleaseDate;
@@ -44,7 +44,7 @@ public record MbReleaseGroup([property: GraphQLIgnore] Hqub.MusicBrainz.Entities
             }
 
             var all = await mbService.GetReleasesForReleaseGroupAsync(Id);
-            var best = MainAlbumFinder.GetMainReleaseInReleaseGroup(all.ToList());
+            var best = LibraryDecider.GetMainReleaseInReleaseGroup(all.ToList());
 
             return best is null ? null : CoverArtArchive.GetCoverArtUri(best.Id).ToString();
         }
@@ -74,7 +74,7 @@ public record MbReleaseGroup([property: GraphQLIgnore] Hqub.MusicBrainz.Entities
     public async Task<Release.MbRelease?> MainRelease(MusicBrainzService mbService)
     {
         var all = await mbService.GetReleasesForReleaseGroupAsync(Id);
-        var best = MainAlbumFinder.GetMainReleaseInReleaseGroup(all.ToList());
+        var best = LibraryDecider.GetMainReleaseInReleaseGroup(all.ToList());
         return best is null ? null : new Release.MbRelease(best);
     }
 

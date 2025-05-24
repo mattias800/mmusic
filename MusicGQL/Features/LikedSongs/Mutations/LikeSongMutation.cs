@@ -1,8 +1,4 @@
-using System; // For Guid
 using System.Security.Claims; // For ClaimTypes
-using System.Threading.Tasks; // For Task
-using HotChocolate.Types; // For [ExtendObjectType] and [UnionType]
-using Microsoft.AspNetCore.Http; // For IHttpContextAccessor
 using Microsoft.EntityFrameworkCore; // For FirstOrDefaultAsync
 using MusicGQL.Db.Postgres; // For EventDbContext (to fetch UserProjection for Viewer)
 using MusicGQL.Features.LikedSongs.Commands;

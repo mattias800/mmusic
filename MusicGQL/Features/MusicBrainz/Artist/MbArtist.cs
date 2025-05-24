@@ -1,6 +1,7 @@
 using Hqub.Lastfm;
 using MusicGQL.Features.LastFm;
 using MusicGQL.Features.MusicBrainz.ReleaseGroup;
+using MusicGQL.Features.ServerLibrary;
 using MusicGQL.Features.ServerLibrary.Artist;
 using MusicGQL.Integration.MusicBrainz;
 using TrackSeries.FanArtTV.Client;

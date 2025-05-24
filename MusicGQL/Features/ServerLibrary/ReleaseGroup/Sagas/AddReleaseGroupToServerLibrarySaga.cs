@@ -1,5 +1,4 @@
 using AutoMapper;
-using MusicGQL.Common;
 using MusicGQL.Integration.MusicBrainz;
 using MusicGQL.Integration.Neo4j;
 using Neo4j.Driver;
@@ -95,7 +94,7 @@ public class AddReleaseGroupToServerLibrarySaga(
             releaseGroupDto.Title
         );
 
-        var mainRelease = MainAlbumFinder.GetMainReleaseInReleaseGroup(allReleaseDtos.ToList());
+        var mainRelease = LibraryDecider.GetMainReleaseInReleaseGroup(allReleaseDtos.ToList());
 
         if (mainRelease == null)
         {

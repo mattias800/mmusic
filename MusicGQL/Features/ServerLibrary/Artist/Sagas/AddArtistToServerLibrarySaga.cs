@@ -87,7 +87,7 @@ public class AddArtistToServerLibrarySaga(
             logger.LogInformation("Artist {ArtistMbId} saved/updated in Neo4j", artistToSave.Id);
 
             var releaseGroupIds = message
-                .ReleaseGroups.Where(r => r.PrimaryType == "Album" && r.SecondaryTypes.Count == 0)
+                .ReleaseGroups.Where(LibraryDecider.ShouldBeAddedWhenAddingArtistToServerLibrary)
                 .Select(r => r.Id)
                 .ToList();
 

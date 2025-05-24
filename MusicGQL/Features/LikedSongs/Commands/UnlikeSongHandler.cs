@@ -1,5 +1,3 @@
-using System;
-using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using MusicGQL.Db.Postgres;
 using MusicGQL.Db.Postgres.Models.Events;
@@ -8,7 +6,7 @@ namespace MusicGQL.Features.LikedSongs.Commands;
 
 public class UnlikeSongHandler(
     EventDbContext dbContext,
-    MusicGQL.EventProcessor.EventProcessorWorker eventProcessorWorker
+    EventProcessor.EventProcessorWorker eventProcessorWorker
 )
 {
     public async Task<Result> Handle(Command command)
