@@ -15,6 +15,7 @@ import { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/
  */
 type Documents = {
     "\n  query Bootstrap {\n    areThereAnyUsers\n    viewer {\n      id\n      username\n    }\n  }\n": typeof types.BootstrapDocument,
+    "\n  query AlbumListQuery {\n    releaseGroup {\n      all {\n        id\n        ...AlbumList_ReleaseGroup\n      }\n    }\n  }\n": typeof types.AlbumListQueryDocument,
     "\n  query AlbumQuery($releaseGroupId: ID!) {\n    releaseGroup {\n      byId(id: $releaseGroupId) {\n        id\n        ...AlbumPanel_ReleaseGroup\n      }\n    }\n  }\n": typeof types.AlbumQueryDocument,
     "\n  query ArtistListQuery {\n    artist {\n      all {\n        id\n        ...ArtistList_Artist\n      }\n    }\n  }\n": typeof types.ArtistListQueryDocument,
     "\n  query ArtistQuery($artistId: ID!) {\n    artist {\n      byId(id: $artistId) {\n        id\n        ...ArtistPanel_Artist\n      }\n    }\n  }\n": typeof types.ArtistQueryDocument,
@@ -30,6 +31,7 @@ type Documents = {
     "\n  fragment AlbumHeader_ReleaseGroup on ReleaseGroup {\n    id\n    title\n    primaryType\n    mainRelease {\n      id\n      title\n      coverArtUri\n      year\n\n      credits {\n        artist {\n          id\n          name\n        }\n      }\n      recordings {\n        id\n        length\n      }\n    }\n  }\n": typeof types.AlbumHeader_ReleaseGroupFragmentDoc,
     "\n  fragment AlbumPanel_ReleaseGroup on ReleaseGroup {\n    id\n    ...AlbumHeader_ReleaseGroup\n    ...AlbumTrackList_ReleaseGroup\n    firstReleaseYear\n    mainRelease {\n      labels {\n        id\n        name\n      }\n    }\n  }\n": typeof types.AlbumPanel_ReleaseGroupFragmentDoc,
     "\n  fragment AlbumTrackList_ReleaseGroup on ReleaseGroup {\n    id\n    title\n    mainRelease {\n      id\n      title\n      recordings {\n        id\n        ...RecordingPlayButton_Recording\n        title\n        length\n        statistics {\n          listeners\n        }\n        nameCredits {\n          name\n          artist {\n            id\n            name\n          }\n        }\n      }\n    }\n  }\n": typeof types.AlbumTrackList_ReleaseGroupFragmentDoc,
+    "\n  fragment AlbumList_ReleaseGroup on ReleaseGroup {\n    id\n    ...AlbumCard_ReleaseGroup\n  }\n": typeof types.AlbumList_ReleaseGroupFragmentDoc,
     "\n  fragment ArtistCard_Artist on Artist {\n    id\n    name\n    listeners\n    images {\n      artistThumb\n    }\n  }\n": typeof types.ArtistCard_ArtistFragmentDoc,
     "\n  fragment ArtistList_Artist on Artist {\n    id\n    ...ArtistCard_Artist\n  }\n": typeof types.ArtistList_ArtistFragmentDoc,
     "\n  query ArtistAlbumList($artistId: ID!) {\n    artist {\n      byId(id: $artistId) {\n        id\n        albums {\n          id\n          firstReleaseDate\n          ...AlbumCard_ReleaseGroup\n        }\n      }\n    }\n  }\n": typeof types.ArtistAlbumListDocument,
@@ -65,6 +67,7 @@ type Documents = {
 };
 const documents: Documents = {
     "\n  query Bootstrap {\n    areThereAnyUsers\n    viewer {\n      id\n      username\n    }\n  }\n": types.BootstrapDocument,
+    "\n  query AlbumListQuery {\n    releaseGroup {\n      all {\n        id\n        ...AlbumList_ReleaseGroup\n      }\n    }\n  }\n": types.AlbumListQueryDocument,
     "\n  query AlbumQuery($releaseGroupId: ID!) {\n    releaseGroup {\n      byId(id: $releaseGroupId) {\n        id\n        ...AlbumPanel_ReleaseGroup\n      }\n    }\n  }\n": types.AlbumQueryDocument,
     "\n  query ArtistListQuery {\n    artist {\n      all {\n        id\n        ...ArtistList_Artist\n      }\n    }\n  }\n": types.ArtistListQueryDocument,
     "\n  query ArtistQuery($artistId: ID!) {\n    artist {\n      byId(id: $artistId) {\n        id\n        ...ArtistPanel_Artist\n      }\n    }\n  }\n": types.ArtistQueryDocument,
@@ -80,6 +83,7 @@ const documents: Documents = {
     "\n  fragment AlbumHeader_ReleaseGroup on ReleaseGroup {\n    id\n    title\n    primaryType\n    mainRelease {\n      id\n      title\n      coverArtUri\n      year\n\n      credits {\n        artist {\n          id\n          name\n        }\n      }\n      recordings {\n        id\n        length\n      }\n    }\n  }\n": types.AlbumHeader_ReleaseGroupFragmentDoc,
     "\n  fragment AlbumPanel_ReleaseGroup on ReleaseGroup {\n    id\n    ...AlbumHeader_ReleaseGroup\n    ...AlbumTrackList_ReleaseGroup\n    firstReleaseYear\n    mainRelease {\n      labels {\n        id\n        name\n      }\n    }\n  }\n": types.AlbumPanel_ReleaseGroupFragmentDoc,
     "\n  fragment AlbumTrackList_ReleaseGroup on ReleaseGroup {\n    id\n    title\n    mainRelease {\n      id\n      title\n      recordings {\n        id\n        ...RecordingPlayButton_Recording\n        title\n        length\n        statistics {\n          listeners\n        }\n        nameCredits {\n          name\n          artist {\n            id\n            name\n          }\n        }\n      }\n    }\n  }\n": types.AlbumTrackList_ReleaseGroupFragmentDoc,
+    "\n  fragment AlbumList_ReleaseGroup on ReleaseGroup {\n    id\n    ...AlbumCard_ReleaseGroup\n  }\n": types.AlbumList_ReleaseGroupFragmentDoc,
     "\n  fragment ArtistCard_Artist on Artist {\n    id\n    name\n    listeners\n    images {\n      artistThumb\n    }\n  }\n": types.ArtistCard_ArtistFragmentDoc,
     "\n  fragment ArtistList_Artist on Artist {\n    id\n    ...ArtistCard_Artist\n  }\n": types.ArtistList_ArtistFragmentDoc,
     "\n  query ArtistAlbumList($artistId: ID!) {\n    artist {\n      byId(id: $artistId) {\n        id\n        albums {\n          id\n          firstReleaseDate\n          ...AlbumCard_ReleaseGroup\n        }\n      }\n    }\n  }\n": types.ArtistAlbumListDocument,
@@ -132,6 +136,10 @@ export function graphql(source: string): unknown;
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  query Bootstrap {\n    areThereAnyUsers\n    viewer {\n      id\n      username\n    }\n  }\n"): (typeof documents)["\n  query Bootstrap {\n    areThereAnyUsers\n    viewer {\n      id\n      username\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query AlbumListQuery {\n    releaseGroup {\n      all {\n        id\n        ...AlbumList_ReleaseGroup\n      }\n    }\n  }\n"): (typeof documents)["\n  query AlbumListQuery {\n    releaseGroup {\n      all {\n        id\n        ...AlbumList_ReleaseGroup\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -192,6 +200,10 @@ export function graphql(source: "\n  fragment AlbumPanel_ReleaseGroup on Release
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  fragment AlbumTrackList_ReleaseGroup on ReleaseGroup {\n    id\n    title\n    mainRelease {\n      id\n      title\n      recordings {\n        id\n        ...RecordingPlayButton_Recording\n        title\n        length\n        statistics {\n          listeners\n        }\n        nameCredits {\n          name\n          artist {\n            id\n            name\n          }\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment AlbumTrackList_ReleaseGroup on ReleaseGroup {\n    id\n    title\n    mainRelease {\n      id\n      title\n      recordings {\n        id\n        ...RecordingPlayButton_Recording\n        title\n        length\n        statistics {\n          listeners\n        }\n        nameCredits {\n          name\n          artist {\n            id\n            name\n          }\n        }\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  fragment AlbumList_ReleaseGroup on ReleaseGroup {\n    id\n    ...AlbumCard_ReleaseGroup\n  }\n"): (typeof documents)["\n  fragment AlbumList_ReleaseGroup on ReleaseGroup {\n    id\n    ...AlbumCard_ReleaseGroup\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
