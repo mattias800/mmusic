@@ -13,7 +13,7 @@ export const SidebarSection: React.FC<SidebarSectionProps> = ({
   right,
 }) => {
   return (
-    <div className="px-3 py-2 flex-grow">
+    <div className="px-3 py-2">
       {heading && (
         <SidebarSectionHeading right={right}>{heading}</SidebarSectionHeading>
       )}

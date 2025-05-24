@@ -39,12 +39,12 @@ export const ArtistSingleList: React.FC<ArtistSingleListProps> = (props) => {
     );
   }
 
-  if (!data?.musicBrainz.artist.byId) {
+  if (!data?.artist.byId) {
     return <div>No data..</div>;
   }
   return (
     <div className={"flex flex-wrap gap-8"}>
-      {data.musicBrainz.artist.byId.singles
+      {data.artist.byId.singles
         .toSorted(byStringField((a) => a.firstReleaseDate ?? ""))
         .toReversed()
         .map((release) => (

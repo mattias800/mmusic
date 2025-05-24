@@ -43,12 +43,12 @@ export const Sidebar = ({ className }: SidebarProps) => {
       id="sidebar"
       className={cn("h-full flex flex-col justify-between", className)}
     >
-      <div className={"flex justify-center"}>
-        <MmusicLogo width={"100px"} />
-      </div>
-
       <div className={"flex flex-col gap-4"}>
-        <SidebarSection heading={"Search"}>
+        <div className={"flex justify-center"}>
+          <MmusicLogo width={"100px"} />
+        </div>
+
+        <SidebarSection heading={"Search library"}>
           <SearchInput />
         </SidebarSection>
 
