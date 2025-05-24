@@ -39,4 +39,10 @@ public record Release([property: GraphQLIgnore] DbRelease Model)
         var recordings = await service.GetRecordingsForReleaseAsync(Id);
         return recordings.Select(r => new Recording.Recording(r));
     }
+
+    public async Task<IEnumerable<Label>> Labels(Neo4jService service)
+    {
+        var labels = await service.GetLabelsForReleaseAsync(Id);
+        return labels.Select(r => new Label(r));
+    }
 };
