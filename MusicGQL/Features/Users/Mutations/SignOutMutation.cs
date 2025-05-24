@@ -7,9 +7,7 @@ namespace MusicGQL.Features.Users.Mutations;
 [ExtendObjectType(typeof(Mutation))]
 public class SignOutMutation
 {
-    public async Task<SignOutResult> SignOut(
-        [Service] IHttpContextAccessor httpContextAccessor
-    )
+    public async Task<SignOutResult> SignOut([Service] IHttpContextAccessor httpContextAccessor)
     {
         try
         {
@@ -37,4 +35,4 @@ public abstract record SignOutResult;
 
 public record SignOutSuccess(bool Success) : SignOutResult;
 
-public record SignOutError(string Message) : SignOutResult; 
+public record SignOutError(string Message) : SignOutResult;

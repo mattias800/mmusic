@@ -35,19 +35,6 @@ export const topArtistTrackItemLastFmTrackFragment = graphql(`
       title
       length
       ...RecordingPlayButton_Recording
-      relations {
-        attributes
-        url {
-          id
-          resource
-        }
-        direction
-        end
-        begin
-        typeId
-        targetType
-        type
-      }
       mainAlbum {
         id
         title

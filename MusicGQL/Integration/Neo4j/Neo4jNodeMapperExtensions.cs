@@ -21,12 +21,24 @@ public static class Neo4jNodeMapperExtensions
         };
     }
 
-    public static DbNameCredit ToDbNamedCredit(this INode node)
+    public static DbNameCredit ToDbNamedCredit(this IRelationship r)
     {
         return new DbNameCredit
         {
-            JoinPhrase = node["JoinPhrase"].As<string>() ?? string.Empty,
-            Name = node["Name"].As<string>() ?? string.Empty,
+            JoinPhrase = r["JoinPhrase"].As<string>() ?? string.Empty,
+            Name = r["Name"].As<string>() ?? string.Empty,
+        };
+    }
+
+    public static DbRelation ToDbRelation(this INode node)
+    {
+        return new DbRelation
+        {
+            Begin = node["Begin"].As<string>() ?? string.Empty,
+            End = node["End"].As<string>() ?? string.Empty,
+            Ended = node["Ended"].As<bool>(),
+            Attributes = node["Attributes"].As<string[]>(),
+            Url = node["Url"].As<string>() ?? string.Empty,
         };
     }
 

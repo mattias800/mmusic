@@ -19,23 +19,19 @@ public record MbArtist([property: GraphQLIgnore] Hqub.MusicBrainz.Entities.Artis
     public string? Disambiguation => Model.Disambiguation;
     public string? Type => Model.Type;
 
-    public async Task<IEnumerable<Release.MbRelease>> Releases(
-        [Service] MusicBrainzService mbService
-    )
+    public async Task<IEnumerable<Release.MbRelease>> Releases(MusicBrainzService mbService)
     {
         var releases = await mbService.GetReleasesForArtistAsync(Model.Id);
         return releases.Select(r => new Release.MbRelease(r));
     }
 
-    public async Task<IEnumerable<MbReleaseGroup>> ReleaseGroups(
-        [Service] MusicBrainzService mbService
-    )
+    public async Task<IEnumerable<MbReleaseGroup>> ReleaseGroups(MusicBrainzService mbService)
     {
         var releaseGroups = await mbService.GetReleaseGroupsForArtistAsync(Model.Id);
         return releaseGroups.Select(r => new MbReleaseGroup(r));
     }
 
-    public async Task<IEnumerable<MbReleaseGroup>> Albums([Service] MusicBrainzService mbService)
+    public async Task<IEnumerable<MbReleaseGroup>> Albums(MusicBrainzService mbService)
     {
         var releaseGroups = await mbService.GetReleaseGroupsForArtistAsync(Model.Id);
         var albumReleaseGroups = releaseGroups.Where(r => r.IsMainAlbum()).ToList();
@@ -43,7 +39,7 @@ public record MbArtist([property: GraphQLIgnore] Hqub.MusicBrainz.Entities.Artis
         return albumReleaseGroups.Select(r => new MbReleaseGroup(r));
     }
 
-    public async Task<IEnumerable<MbReleaseGroup>> Singles([Service] MusicBrainzService mbService)
+    public async Task<IEnumerable<MbReleaseGroup>> Singles(MusicBrainzService mbService)
     {
         var releaseGroups = await mbService.GetReleaseGroupsForArtistAsync(Model.Id);
         var albumReleaseGroups = releaseGroups.Where(r => r.IsMainSingle()).ToList();
@@ -51,7 +47,7 @@ public record MbArtist([property: GraphQLIgnore] Hqub.MusicBrainz.Entities.Artis
         return albumReleaseGroups.Select(r => new MbReleaseGroup(r));
     }
 
-    public async Task<IEnumerable<LastFmTrack>> TopTracks([Service] LastfmClient lastfmClient)
+    public async Task<IEnumerable<LastFmTrack>> TopTracks(LastfmClient lastfmClient)
     {
         try
         {
@@ -70,7 +66,7 @@ public record MbArtist([property: GraphQLIgnore] Hqub.MusicBrainz.Entities.Artis
         }
     }
 
-    public async Task<MbArtistImages?> Images([Service] IFanArtTVClient fanartClient)
+    public async Task<MbArtistImages?> Images(IFanArtTVClient fanartClient)
     {
         try
         {
@@ -83,7 +79,7 @@ public record MbArtist([property: GraphQLIgnore] Hqub.MusicBrainz.Entities.Artis
         }
     }
 
-    public async Task<long?> Listeners([Service] LastfmClient lastfmClient)
+    public async Task<long?> Listeners(LastfmClient lastfmClient)
     {
         try
         {

@@ -1,8 +1,8 @@
+using System;
+using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using MusicGQL.Db.Postgres;
 using MusicGQL.Integration.MusicBrainz;
-using System;
-using System.Threading.Tasks;
 
 namespace MusicGQL.Features.LikedSongs.Commands;
 
@@ -14,8 +14,9 @@ public class LikeSongHandler(
 {
     public async Task<Result> Handle(Command command)
     {
-        var existingProjection = await dbContext.LikedSongsProjections
-            .FirstOrDefaultAsync(p => p.UserId == command.UserId);
+        var existingProjection = await dbContext.LikedSongsProjections.FirstOrDefaultAsync(p =>
+            p.UserId == command.UserId
+        );
 
         if (existingProjection?.LikedSongRecordingIds.Contains(command.RecordingId) ?? false)
         {
@@ -37,10 +38,10 @@ public class LikeSongHandler(
         }
 
         dbContext.Events.Add(
-            new Db.Postgres.Models.Events.LikedSong 
-            { 
+            new Db.Postgres.Models.Events.LikedSong
+            {
                 SubjectUserId = command.UserId,
-                RecordingId = command.RecordingId 
+                RecordingId = command.RecordingId,
             }
         );
 

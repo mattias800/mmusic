@@ -1,9 +1,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using HotChocolate.Types;
 using Microsoft.EntityFrameworkCore;
 using MusicGQL.Db.Postgres;
-using HotChocolate.Types;
 
 namespace MusicGQL.Features.Users;
 

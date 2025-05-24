@@ -19,12 +19,12 @@ interface ArtistPanelProps {
 }
 
 export const artistPanelArtistFragment = graphql(`
-  fragment ArtistPanel_MbArtist on MbArtist {
+  fragment ArtistPanel_Artist on Artist {
     id
     name
-    ...ArtistHeader_MbArtist
-    ...TopArtistTracks_MbArtist
-    ...ArtistInLibraryButton_MbArtist
+    ...ArtistHeader_Artist
+    ...TopArtistTracks_Artist
+    ...ArtistInLibraryButton_Artist
   }
 `);
 

@@ -85,6 +85,8 @@ type AddReleaseGroupToServerLibraryUnknownError {
 type Artist {
   gender: String
   id: ID!
+  images: MbArtistImages
+  listeners: Long
   musicBrainzArtist: MbArtist
   name: String!
   releaseGroups: [ReleaseGroup!]!
@@ -185,9 +187,10 @@ type LastFmTrack {
   album: LastFmAlbum!
   artist: LastFmArtist!
   id: ID!
+  musicBrainzRecording: MbRecording
   name: String!
   playCount: Long
-  recording: MbRecording
+  recording: Recording
   statistics: LastFmStatistics!
   summary: String
 }
@@ -274,8 +277,15 @@ type MbRecording {
   relations: [MbRelation!]!
   releases: [MbRelease!]!
   statistics: LastFmStatistics
-  streamingServiceInfo: RecordingStreamingServiceInfo!
+  streamingServiceInfo: MbRecordingStreamingServiceInfo!
   title: String!
+}
+
+type MbRecordingStreamingServiceInfo {
+  id: ID!
+  youtubeMusicUrl: String
+  youtubeSearchVideoId: String
+  youtubeVideoId: String
 }
 
 type MbRelation {
@@ -424,8 +434,10 @@ type RecommendationsSearchRoot {
 type Recording {
   id: ID!
   length: Int
+  mainAlbum: Release
   nameCredits: [NameCredit!]!
   statistics: LastFmStatistics
+  streamingServiceInfo: RecordingStreamingServiceInfo!
   title: String!
 }
 
@@ -442,6 +454,7 @@ type Release {
   date: String
   id: String!
   recordings: [Recording!]!
+  releaseGroup: ReleaseGroup
   status: String
   title: String!
   year: String

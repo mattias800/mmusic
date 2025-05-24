@@ -1,8 +1,8 @@
+using System;
+using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using MusicGQL.Db.Postgres;
 using MusicGQL.Db.Postgres.Models.Events;
-using System;
-using System.Threading.Tasks;
 
 namespace MusicGQL.Features.LikedSongs.Commands;
 
@@ -13,19 +13,18 @@ public class UnlikeSongHandler(
 {
     public async Task<Result> Handle(Command command)
     {
-        var existingProjection = await dbContext.LikedSongsProjections
-            .FirstOrDefaultAsync(p => p.UserId == command.UserId);
+        var existingProjection = await dbContext.LikedSongsProjections.FirstOrDefaultAsync(p =>
+            p.UserId == command.UserId
+        );
 
         if (!(existingProjection?.LikedSongRecordingIds.Contains(command.RecordingId) ?? false))
         {
             return new Result.AlreadyNotLiked();
         }
 
-        dbContext.Events.Add(new UnlikedSong 
-        { 
-            SubjectUserId = command.UserId,
-            RecordingId = command.RecordingId 
-        });
+        dbContext.Events.Add(
+            new UnlikedSong { SubjectUserId = command.UserId, RecordingId = command.RecordingId }
+        );
 
         await dbContext.SaveChangesAsync();
         await eventProcessorWorker.ProcessEvents();

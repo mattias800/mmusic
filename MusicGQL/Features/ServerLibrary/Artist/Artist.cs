@@ -4,6 +4,7 @@ using MusicGQL.Features.MusicBrainz.Artist;
 using MusicGQL.Features.ServerLibrary.Artist.Db;
 using MusicGQL.Integration.MusicBrainz;
 using MusicGQL.Integration.Neo4j;
+using TrackSeries.FanArtTV.Client;
 
 namespace MusicGQL.Features.ServerLibrary.Artist;
 
@@ -15,7 +16,7 @@ public record Artist([property: GraphQLIgnore] DbArtist Model)
     public string SortName => Model.SortName;
     public string? Gender => Model.Gender;
 
-    public async Task<IEnumerable<LastFmTrack>> TopTracks([Service] LastfmClient lastfmClient)
+    public async Task<IEnumerable<LastFmTrack>> TopTracks(LastfmClient lastfmClient)
     {
         try
         {
@@ -34,7 +35,7 @@ public record Artist([property: GraphQLIgnore] DbArtist Model)
         }
     }
 
-    public async Task<MbArtist?> MusicBrainzArtist([Service] MusicBrainzService musicBrainzService)
+    public async Task<MbArtist?> MusicBrainzArtist(MusicBrainzService musicBrainzService)
     {
         var artist = await musicBrainzService.GetArtistByIdAsync(Model.Id);
 
@@ -56,5 +57,31 @@ public record Artist([property: GraphQLIgnore] DbArtist Model)
     {
         var releaseGroups = await service.GetReleaseGroupsForArtistAsync(Model.Id);
         return releaseGroups.Select(r => new ReleaseGroup.ReleaseGroup(r));
+    }
+
+    public async Task<long?> Listeners(LastfmClient lastfmClient)
+    {
+        try
+        {
+            var info = await lastfmClient.Artist.GetInfoByMbidAsync(Model.Id);
+            return info.Statistics.Listeners;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    public async Task<MbArtistImages?> Images(IFanArtTVClient fanartClient)
+    {
+        try
+        {
+            var artist = await fanartClient.Music.GetArtistAsync(Model.Id);
+            return artist is null ? null : new(artist);
+        }
+        catch
+        {
+            return null;
+        }
     }
 }

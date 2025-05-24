@@ -20,8 +20,11 @@ public record Release([property: GraphQLIgnore] DbRelease Model)
     //public IEnumerable<Genre> Genres => Model.Genres?.Select(g => new Genre(g)) ?? [];
     // public IEnumerable<MbMedium> Media => Model.Media?.Select(m => new MbMedium(m)) ?? [];
 
-    // public ReleaseGroup.ReleaseGroup? ReleaseGroup =>
-    //     Model.ReleaseGroup is null ? null : new(Model.ReleaseGroup);
+    public async Task<ReleaseGroup.ReleaseGroup?> ReleaseGroup(Neo4jService service)
+    {
+        var releaseGroup = await service.GetReleaseGroupForReleaseAsync(Model.Id);
+        return releaseGroup is null ? null : new(releaseGroup);
+    }
 
     public string CoverArtUri => CoverArtArchive.GetCoverArtUri(Model.Id).ToString();
 

@@ -191,6 +191,16 @@ public class Neo4jService(IDriver driver)
         return dbReleaseGroup;
     }
 
+    public async Task<DbReleaseGroup?> GetReleaseGroupForReleaseAsync(string releaseId)
+    {
+        var dbReleaseGroup = await ExecuteReadSingleAsync(
+            "MATCH (rg:ReleaseGroup)<-[:RELEASE_OF]-(r:Release {Id: $releaseId}) RETURN rg",
+            new { releaseId },
+            record => record["rg"].As<INode>().ToDbReleaseGroup()
+        );
+        return dbReleaseGroup;
+    }
+
     public async Task<List<DbReleaseGroup>> GetAllReleaseGroupAsync()
     {
         var dbReleaseGroups = await ExecuteReadListAsync(
@@ -238,7 +248,7 @@ public class Neo4jService(IDriver driver)
             "MATCH (a:Artist)-[c:CREDITED_ON_RELEASE_GROUP]->(rg:ReleaseGroup {Id: $releaseGroupId}) RETURN a, c",
             new { releaseGroupId },
             record => new ArtistCredit(
-                record["c"].As<INode>().ToDbNamedCredit(),
+                record["c"].As<IRelationship>().ToDbNamedCredit(),
                 record["a"].As<INode>().ToDbArtist()
             )
         );
@@ -252,7 +262,7 @@ public class Neo4jService(IDriver driver)
             "MATCH (a:Artist)-[c:CREDITED_ON_RELEASE]->(rg:Release {Id: $releaseId}) RETURN a, c",
             new { releaseId },
             record => new ArtistCredit(
-                record["c"].As<INode>().ToDbNamedCredit(),
+                record["c"].As<IRelationship>().ToDbNamedCredit(),
                 record["a"].As<INode>().ToDbArtist()
             )
         );
@@ -266,11 +276,21 @@ public class Neo4jService(IDriver driver)
             "MATCH (a:Artist)-[c:CREDITED_ON_RECORDING]->(rg:Recording {Id: $recordingId}) RETURN a, c",
             new { recordingId },
             record => new ArtistCredit(
-                record["c"].As<INode>().ToDbNamedCredit(),
+                record["c"].As<IRelationship>().ToDbNamedCredit(),
                 record["a"].As<INode>().ToDbArtist()
             )
         );
         return artistCredit;
+    }
+
+    public async Task<List<DbRelation>> GetRelationsOnRecordingAsync(string recordingId)
+    {
+        var relation = await ExecuteReadListAsync(
+            "MATCH (a:Artist)-[c:RELATION_ON_RECORDING]->(rg:Recording {Id: $recordingId}) RETURN a, c",
+            new { recordingId },
+            record => record["c"].As<INode>().ToDbRelation()
+        );
+        return relation;
     }
 
     private async Task<T?> ExecuteReadSingleAsync<T>(
@@ -281,8 +301,15 @@ public class Neo4jService(IDriver driver)
     {
         await using var session = driver.AsyncSession();
         var result = await session.RunAsync(query, parameters);
-        var record = await result.SingleAsync();
-        return record != null ? mapper(record) : default;
+        try
+        {
+            var record = await result.SingleAsync();
+            return record != null ? mapper(record) : default;
+        }
+        catch
+        {
+            return default;
+        }
     }
 
     private async Task<List<T>> ExecuteReadListAsync<T>(

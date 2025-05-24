@@ -219,28 +219,15 @@ public class AddReleaseGroupToServerLibrarySaga(
                                     )
                                         continue;
 
-                                    var recordingToSave = mapper.Map<Recording.Db.DbRecording>(
-                                        trackDto.Recording
-                                    );
-                                    if (recordingToSave == null)
-                                    {
-                                        logger.LogWarning(
-                                            "Mapping Recording DTO for Track {TrackPos} on Medium {MediumPos} resulted in a null object. Skipping track",
-                                            trackDto.Position,
-                                            mediumDto.Position
-                                        );
-                                        continue;
-                                    }
-
                                     await neo4JPersistenceService.SaveRecordingNodeAsync(
                                         (IAsyncTransaction)tx,
-                                        recordingToSave
+                                        trackDto.Recording
                                     );
 
                                     await neo4JPersistenceService.LinkTrackOnMediumToRecordingAsync(
                                         (IAsyncTransaction)tx,
                                         mediumNodeId,
-                                        recordingToSave.Id,
+                                        trackDto.Recording.Id,
                                         trackDto
                                     );
                                     logger.LogInformation(
@@ -249,8 +236,8 @@ public class AddReleaseGroupToServerLibrarySaga(
                                         trackDto.Number,
                                         trackDto.Recording?.Title ?? string.Empty,
                                         mediumNodeId,
-                                        recordingToSave?.Title ?? string.Empty,
-                                        recordingToSave?.Id ?? string.Empty
+                                        trackDto.Recording?.Title ?? string.Empty,
+                                        trackDto.Recording?.Id ?? string.Empty
                                     );
 
                                     // 6. Save Recording Artist Credits
@@ -258,7 +245,7 @@ public class AddReleaseGroupToServerLibrarySaga(
                                     {
                                         await neo4JPersistenceService.SaveArtistCreditsForParentAsync(
                                             (IAsyncTransaction)tx,
-                                            recordingToSave.Id,
+                                            trackDto.Recording.Id,
                                             trackDto.Recording.Credits,
                                             "Recording",
                                             "recordingId",
@@ -266,7 +253,7 @@ public class AddReleaseGroupToServerLibrarySaga(
                                         );
                                         logger.LogInformation(
                                             "Saved artist credits for recording {RecordingTitle}",
-                                            recordingToSave?.Title ?? string.Empty
+                                            trackDto.Recording?.Title ?? string.Empty
                                         );
                                     }
                                 }

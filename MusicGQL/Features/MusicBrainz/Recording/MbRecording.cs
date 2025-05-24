@@ -18,22 +18,20 @@ public record MbRecording([property: GraphQLIgnore] Hqub.MusicBrainz.Entities.Re
     public IEnumerable<MbNameCredit> NameCredits =>
         Model.Credits?.Select(c => new MbNameCredit(c)) ?? [];
 
-    public async Task<IEnumerable<Release.MbRelease>> Releases(
-        [Service] MusicBrainzService mbService
-    )
+    public async Task<IEnumerable<Release.MbRelease>> Releases(MusicBrainzService mbService)
     {
         var releases = await mbService.GetReleasesForRecordingAsync(Model.Id);
         return releases.Select(a => new Release.MbRelease(a));
     }
 
-    public async Task<Release.MbRelease?> MainAlbum([Service] MusicBrainzService mbService)
+    public async Task<Release.MbRelease?> MainAlbum(MusicBrainzService mbService)
     {
         var releases = await mbService.GetReleasesForRecordingAsync(Model.Id);
         var mainAlbum = MainAlbumFinder.FindMainAlbumForSong(releases);
         return mainAlbum is null ? null : new Release.MbRelease(mainAlbum);
     }
 
-    public async Task<IEnumerable<MbArtist>> Artists([Service] MusicBrainzService mbService)
+    public async Task<IEnumerable<MbArtist>> Artists(MusicBrainzService mbService)
     {
         var artists = await mbService.GetArtistsForRecordingAsync(Model.Id);
         return artists.Select(a => new MbArtist(a));
@@ -44,7 +42,7 @@ public record MbRecording([property: GraphQLIgnore] Hqub.MusicBrainz.Entities.Re
         return Model.Relations?.Select(r => new MbRelation(r)) ?? [];
     }
 
-    public async Task<LastFmStatistics?> Statistics([Service] LastfmClient lastfmClient)
+    public async Task<LastFmStatistics?> Statistics(LastfmClient lastfmClient)
     {
         try
         {

@@ -6,12 +6,10 @@ import { ScreenSpinner } from "@/components/spinner/ScreenSpinner.tsx";
 
 export const artistQuery = graphql(`
   query ArtistQuery($artistId: ID!) {
-    musicBrainz {
-      artist {
-        byId(id: $artistId) {
-          id
-          ...ArtistPanel_MbArtist
-        }
+    artist {
+      byId(id: $artistId) {
+        id
+        ...ArtistPanel_Artist
       }
     }
   }
@@ -27,7 +25,7 @@ export const ArtistPage = () => {
 
   if (fetching || stale) return <ScreenSpinner />;
   if (error) return <div>Error: {error.message}</div>;
-  if (!data?.musicBrainz.artist.byId) return <div>No data</div>;
+  if (!data?.artist.byId) return <div>No data</div>;
 
-  return <ArtistPanel artist={data.musicBrainz.artist.byId} />;
+  return <ArtistPanel artist={data.artist.byId} />;
 };

@@ -17,19 +17,26 @@ public class UnlikeSongMutation
         [Service] IHttpContextAccessor httpContextAccessor
     )
     {
-        var userIdString = httpContextAccessor.HttpContext?.User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var userIdString = httpContextAccessor.HttpContext?.User.FindFirstValue(
+            ClaimTypes.NameIdentifier
+        );
         if (!Guid.TryParse(userIdString, out var userId))
         {
             throw new UnauthorizedAccessException("User not authenticated.");
         }
 
-        var handlerResult = await unlikeSongHandler.Handle(new UnlikeSongHandler.Command(userId, input.RecordingId));
+        var handlerResult = await unlikeSongHandler.Handle(
+            new UnlikeSongHandler.Command(userId, input.RecordingId)
+        );
 
         return handlerResult switch
         {
             UnlikeSongHandler.Result.Success => new UnlikedSongPayload(true),
             UnlikeSongHandler.Result.AlreadyNotLiked => new UnlikedSongPayload(true),
-            _ => throw new ArgumentOutOfRangeException(nameof(handlerResult), "Unhandled result from UnlikeSongHandler"),
+            _ => throw new ArgumentOutOfRangeException(
+                nameof(handlerResult),
+                "Unhandled result from UnlikeSongHandler"
+            ),
         };
     }
 }

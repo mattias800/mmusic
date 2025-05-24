@@ -1,6 +1,3 @@
 namespace MusicGQL.Features.ServerLibrary.Common;
 
-public class Relation
-{
-    
-}
+public class Relation { }

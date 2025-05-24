@@ -64,15 +64,19 @@ public class Neo4jPersistenceService(IMapper mapper)
             await SaveArtistNodeAsync(tx, artistToSave);
 
             string query =
-                $"MATCH (p:{parentLabel} {{Id: ${parentIdQueryKey}}}), (a:Artist {{Id: $artistId}}) "
-                + $"MERGE (a)-[r:{relationshipType}]->(p) ON CREATE SET r.joinPhrase = $joinPhrase";
+                $"MATCH (p:{parentLabel} {{Id: ${parentIdQueryKey}}}), (a:Artist {{Id: $ArtistId}}) "
+                + $"MERGE (a)-[r:{relationshipType}]->(p) "
+                + $"ON CREATE SET r.JoinPhrase = $JoinPhrase, r.Name = $Name "
+                + $"ON MATCH SET r.JoinPhrase = $JoinPhrase, r.Name = $Name";
 
             var parameters = new Dictionary<string, object>
             {
                 { parentIdQueryKey, parentEntityId },
-                { "artistId", artistToSave.Id },
-                { "joinPhrase", creditDto.JoinPhrase ?? string.Empty },
+                { "ArtistId", artistToSave.Id },
+                { "JoinPhrase", creditDto.JoinPhrase ?? string.Empty },
+                { "Name", creditDto.Name ?? string.Empty },
             };
+
             await tx.RunAsync(query, parameters);
         }
     }
@@ -137,10 +141,7 @@ public class Neo4jPersistenceService(IMapper mapper)
         );
     }
 
-    public async Task SaveRecordingNodeAsync(
-        IAsyncTransaction tx,
-        Features.ServerLibrary.Recording.Db.DbRecording dbRecordingToSave
-    )
+    public async Task SaveRecordingNodeAsync(IAsyncTransaction tx, Recording recordingDtoToSave)
     {
         await tx.RunAsync(
             "MERGE (rec:Recording {Id: $id}) "
@@ -148,12 +149,51 @@ public class Neo4jPersistenceService(IMapper mapper)
                 + "ON MATCH SET rec.Title = $title, rec.Length = $length, rec.Disambiguation = $disambiguation",
             new
             {
-                id = dbRecordingToSave.Id,
-                title = dbRecordingToSave.Title,
-                length = dbRecordingToSave.Length,
-                disambiguation = dbRecordingToSave.Disambiguation ?? string.Empty,
+                id = recordingDtoToSave.Id,
+                title = recordingDtoToSave.Title,
+                length = recordingDtoToSave.Length,
+                disambiguation = recordingDtoToSave.Disambiguation ?? string.Empty,
             }
         );
+
+        // Store relations
+
+        if (recordingDtoToSave.Relations != null)
+        {
+            foreach (var relation in recordingDtoToSave.Relations)
+            {
+                // Assuming TargetType will be something like "Artist", "ReleaseGroup", "Url" etc.
+                // And TargetId will be the MBID of the target entity or the URL itself for Url relations.
+                // The actual relation type (e.g., "cover of", "remix of") is stored in relation.Type.
+                // For Url relations, we might want to create a Url node and link to it,
+                // or embed the URL directly in the relationship if it's simpler and URLs are not shared.
+                // For now, let's assume we are creating a relationship to an existing node of TargetType.
+
+                // if (relation is DbRelationUrl urlRelation && urlRelation.TargetType == "Url") // Special handling for Url relations
+                // {
+                //     await tx.RunAsync(
+                //         "MATCH (rec:Recording {Id: $recordingId}) "
+                //             + "MERGE (url:Url {Resource: $resourceUrl}) "
+                //             + // Create/match Url node
+                //             "MERGE (rec)-[rel:HAS_URL {Type: $relationType}]->(url)", // Create relationship
+                //         new
+                //         {
+                //             recordingId = recordingDtoToSave.Id,
+                //             resourceUrl = urlRelation.Url.Resource,
+                //             relationType = urlRelation.Type,
+                //         }
+                //     );
+                // }
+                // else
+                // {
+                //     await tx.RunAsync(
+                //         $"MATCH (rec:Recording {{Id: $recordingId}}), (target:{relation.TargetType} {{Id: $targetId}}) "
+                //             + $"MERGE (rec)-[rel:{relation.Type.Replace(" ", "_").ToUpper()}]->(target)",
+                //         new { recordingId = recordingDtoToSave.Id, targetId = relation.TargetId }
+                //     );
+                // }
+            }
+        }
     }
 
     public async Task LinkTrackOnMediumToRecordingAsync(
