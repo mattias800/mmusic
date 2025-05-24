@@ -25,7 +25,7 @@ export const albumTrackListReleaseGroupFragment = graphql(`
         title
         length
         statistics {
-          playCount
+          listeners
         }
         nameCredits {
           name
@@ -95,7 +95,7 @@ export const AlbumTrackList: React.FC<AlbumTrackListProps> = (props) => {
             </div>
           </div>
           <span className="hidden md:block text-right pr-8 text-white/70">
-            {formatLargeNumber(recording.statistics?.playCount ?? 0)}
+            {formatLargeNumber(recording.statistics?.listeners ?? 0)}
           </span>
           <span className="hidden md:block text-right pr-4 text-white/70">
             {recording.length ? formatTrackLength(recording.length) : ""}

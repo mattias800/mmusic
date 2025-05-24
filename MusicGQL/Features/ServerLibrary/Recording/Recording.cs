@@ -28,11 +28,13 @@ public record Recording([property: GraphQLIgnore] DbRecording Model)
         return mainAlbum is null ? null : new ReleaseGroup.ReleaseGroup(mainAlbum);
     }
 
-    public async Task<LastFmStatistics?> Statistics(LastfmClient lastfmClient)
+    public async Task<LastFmStatistics?> Statistics(LastfmClient lastfmClient, Neo4jService service)
     {
+        var artists = await service.GetArtistsForRecordingAsync(Model.Id);
+
         try
         {
-            var track = await lastfmClient.Track.GetInfoByMbidAsync(Model.Id);
+            var track = await lastfmClient.Track.GetInfoAsync(Model.Title, artists.First().Name);
             return track is null ? null : new(track.Statistics);
         }
         catch

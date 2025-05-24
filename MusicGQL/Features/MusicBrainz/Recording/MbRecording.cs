@@ -31,9 +31,9 @@ public record MbRecording([property: GraphQLIgnore] Hqub.MusicBrainz.Entities.Re
         return mainAlbum is null ? null : new Release.MbRelease(mainAlbum);
     }
 
-    public async Task<IEnumerable<MbArtist>> Artists(MusicBrainzService mbService)
+    public async Task<IEnumerable<MbArtist>> Artists(MusicBrainzService service)
     {
-        var artists = await mbService.GetArtistsForRecordingAsync(Model.Id);
+        var artists = await service.GetArtistsForRecordingAsync(Model.Id);
         return artists.Select(a => new MbArtist(a));
     }
 
