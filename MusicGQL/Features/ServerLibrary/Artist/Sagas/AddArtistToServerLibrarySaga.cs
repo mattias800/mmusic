@@ -1,7 +1,7 @@
 using AutoMapper;
 using HotChocolate.Subscriptions;
 using MusicGQL.Features.ServerLibrary.ReleaseGroup.Handlers;
-using MusicGQL.Features.ServerLibrary.ReleaseGroup.Service;
+using MusicGQL.Integration.Neo4j;
 using Neo4j.Driver;
 using Rebus.Bus;
 using Rebus.Handlers;

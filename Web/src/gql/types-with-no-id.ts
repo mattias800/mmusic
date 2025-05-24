@@ -9,13 +9,13 @@
  * This is used to ensure that the cacheKeys object in UrqlCacheKeys.ts
  * includes all types without an id and doesn't include types with an id.
  */
-export type TypesWithNoId = 'ArtistSearchRoot' | 'DownloadsSearchRoot' | 'ImportPlaylistSearchRoot' | 'LastFmStatistics' | 'LastFmTag' | 'MbAlbumImages' | 'MbArtistImages' | 'MbMedium' | 'MusicBrainzArtistSearchRoot' | 'MusicBrainzRecordingSearchRoot' | 'MusicBrainzReleaseGroupSearchRoot' | 'MusicBrainzReleaseSearchRoot' | 'MusicBrainzSearchRoot' | 'NameCredit' | 'PageInfo' | 'PlaylistSearchRoot' | 'RecommendationsSearchRoot' | 'Relation' | 'ReleaseGroup' | 'ReleaseGroupSearchRoot' | 'ReleaseSearchRoot' | 'SpotifyPlaylistSearchRoot' | 'UserProjection' | 'UserSearchRoot' | 'UsersConnection' | 'UsersEdge';
+export type TypesWithNoId = 'ArtistSearchRoot' | 'DownloadsSearchRoot' | 'ImportPlaylistSearchRoot' | 'LastFmStatistics' | 'LastFmTag' | 'MbAlbumImages' | 'MbArtistImages' | 'MbMedium' | 'MusicBrainzArtistSearchRoot' | 'MusicBrainzRecordingSearchRoot' | 'MusicBrainzReleaseGroupSearchRoot' | 'MusicBrainzReleaseSearchRoot' | 'MusicBrainzSearchRoot' | 'NameCredit' | 'PageInfo' | 'PlaylistSearchRoot' | 'RecommendationsSearchRoot' | 'Relation' | 'ReleaseGroupSearchRoot' | 'ReleaseSearchRoot' | 'SpotifyPlaylistSearchRoot' | 'UserProjection' | 'UserSearchRoot' | 'UsersConnection' | 'UsersEdge';
 
 /**
  * Union type of all GraphQL object types that have an id field.
  * This is used for reference and validation.
  */
-export type TypesWithId = 'Artist' | 'ArtistServerAvailability' | 'DownloadStatus' | 'ExternalRoot' | 'Genre' | 'LastFmAlbum' | 'LastFmArtist' | 'LastFmTrack' | 'LikedSong' | 'MbArtist' | 'MbRecording' | 'MbRelease' | 'MbReleaseGroup' | 'MbTrack' | 'Ping' | 'RecordingStreamingServiceInfo' | 'Release' | 'SoulSeekRoot' | 'SoulSeekStatus' | 'SpotifyPlaylist' | 'Url' | 'User';
+export type TypesWithId = 'Artist' | 'ArtistServerAvailability' | 'DownloadStatus' | 'ExternalRoot' | 'Genre' | 'LastFmAlbum' | 'LastFmArtist' | 'LastFmTrack' | 'LikedSong' | 'MbArtist' | 'MbRecording' | 'MbRelease' | 'MbReleaseGroup' | 'MbTrack' | 'Ping' | 'Recording' | 'RecordingStreamingServiceInfo' | 'Release' | 'ReleaseGroup' | 'SoulSeekRoot' | 'SoulSeekStatus' | 'SpotifyPlaylist' | 'Url' | 'User';
 
 /**
  * Type guard to check if a type has an id field.
@@ -23,7 +23,7 @@ export type TypesWithId = 'Artist' | 'ArtistServerAvailability' | 'DownloadStatu
  * @returns True if the type has an id field, false otherwise
  */
 export function hasIdField(type: string): type is TypesWithId {
-  const typesWithId: string[] = ['Artist', 'ArtistServerAvailability', 'DownloadStatus', 'ExternalRoot', 'Genre', 'LastFmAlbum', 'LastFmArtist', 'LastFmTrack', 'LikedSong', 'MbArtist', 'MbRecording', 'MbRelease', 'MbReleaseGroup', 'MbTrack', 'Ping', 'RecordingStreamingServiceInfo', 'Release', 'SoulSeekRoot', 'SoulSeekStatus', 'SpotifyPlaylist', 'Url', 'User'];
+  const typesWithId: string[] = ['Artist', 'ArtistServerAvailability', 'DownloadStatus', 'ExternalRoot', 'Genre', 'LastFmAlbum', 'LastFmArtist', 'LastFmTrack', 'LikedSong', 'MbArtist', 'MbRecording', 'MbRelease', 'MbReleaseGroup', 'MbTrack', 'Ping', 'Recording', 'RecordingStreamingServiceInfo', 'Release', 'ReleaseGroup', 'SoulSeekRoot', 'SoulSeekStatus', 'SpotifyPlaylist', 'Url', 'User'];
   return typesWithId.includes(type);
 }
 
@@ -33,6 +33,6 @@ export function hasIdField(type: string): type is TypesWithId {
  * @returns True if the type doesn't have an id field, false otherwise
  */
 export function hasNoIdField(type: string): type is TypesWithNoId {
-  const typesWithNoId: string[] = ['ArtistSearchRoot', 'DownloadsSearchRoot', 'ImportPlaylistSearchRoot', 'LastFmStatistics', 'LastFmTag', 'MbAlbumImages', 'MbArtistImages', 'MbMedium', 'MusicBrainzArtistSearchRoot', 'MusicBrainzRecordingSearchRoot', 'MusicBrainzReleaseGroupSearchRoot', 'MusicBrainzReleaseSearchRoot', 'MusicBrainzSearchRoot', 'NameCredit', 'PageInfo', 'PlaylistSearchRoot', 'RecommendationsSearchRoot', 'Relation', 'ReleaseGroup', 'ReleaseGroupSearchRoot', 'ReleaseSearchRoot', 'SpotifyPlaylistSearchRoot', 'UserProjection', 'UserSearchRoot', 'UsersConnection', 'UsersEdge'];
+  const typesWithNoId: string[] = ['ArtistSearchRoot', 'DownloadsSearchRoot', 'ImportPlaylistSearchRoot', 'LastFmStatistics', 'LastFmTag', 'MbAlbumImages', 'MbArtistImages', 'MbMedium', 'MusicBrainzArtistSearchRoot', 'MusicBrainzRecordingSearchRoot', 'MusicBrainzReleaseGroupSearchRoot', 'MusicBrainzReleaseSearchRoot', 'MusicBrainzSearchRoot', 'NameCredit', 'PageInfo', 'PlaylistSearchRoot', 'RecommendationsSearchRoot', 'Relation', 'ReleaseGroupSearchRoot', 'ReleaseSearchRoot', 'SpotifyPlaylistSearchRoot', 'UserProjection', 'UserSearchRoot', 'UsersConnection', 'UsersEdge'];
   return typesWithNoId.includes(type);
 }

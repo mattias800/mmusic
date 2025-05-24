@@ -1,4 +1,5 @@
 using MusicGQL.Features.ServerLibrary.Artist.Db;
+using MusicGQL.Features.ServerLibrary.Common.Db;
 using MusicGQL.Features.ServerLibrary.Recording.Db;
 using MusicGQL.Features.ServerLibrary.Release.Db;
 using MusicGQL.Features.ServerLibrary.ReleaseGroup.Db;
@@ -17,6 +18,15 @@ public static class Neo4jNodeMapperExtensions
             Name = node["Name"].As<string>() ?? string.Empty,
             SortName = node["SortName"].As<string>() ?? string.Empty,
             Gender = node.Properties.GetValueOrDefault("Gender") as string,
+        };
+    }
+
+    public static DbNameCredit ToDbNamedCredit(this INode node)
+    {
+        return new DbNameCredit
+        {
+            JoinPhrase = node["JoinPhrase"].As<string>() ?? string.Empty,
+            Name = node["Name"].As<string>() ?? string.Empty,
         };
     }
 

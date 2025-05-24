@@ -87,6 +87,8 @@ type Artist {
   id: ID!
   musicBrainzArtist: MbArtist
   name: String!
+  releaseGroups: [ReleaseGroup!]!
+  releases: [Release!]!
   sortName: String!
   topTracks: [LastFmTrack!]!
 }
@@ -401,6 +403,13 @@ type RecommendationsSearchRoot {
   topTracks: [LastFmTrack!]!
 }
 
+type Recording {
+  id: ID!
+  length: Int
+  statistics: LastFmStatistics
+  title: String!
+}
+
 type RecordingStreamingServiceInfo {
   id: ID!
   youtubeMusicUrl: String
@@ -422,13 +431,21 @@ type Relation {
 type Release {
   date: String
   id: String!
+  recordings: [Recording!]!
   status: String
   title: String!
   year: String
 }
 
 type ReleaseGroup {
+  firstReleaseDate: String
+  firstReleaseYear: String
+  id: String!
+  mainRelease: Release
   musicBrainzReleaseGroup: MbReleaseGroup
+  primaryType: String
+  secondaryTypes: [String!]!
+  title: String!
 }
 
 type ReleaseGroupSearchRoot {

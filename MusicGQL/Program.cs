@@ -31,7 +31,6 @@ using MusicGQL.Features.ServerLibrary.ReleaseGroup.Handlers;
 using MusicGQL.Features.ServerLibrary.ReleaseGroup.Mutations;
 using MusicGQL.Features.ServerLibrary.ReleaseGroup.Sagas;
 using MusicGQL.Features.ServerLibrary.ReleaseGroup.Sagas.Events;
-using MusicGQL.Features.ServerLibrary.ReleaseGroup.Service;
 using MusicGQL.Features.Users.Aggregate;
 using MusicGQL.Features.Users.Handlers;
 using MusicGQL.Features.Users.Mutations;

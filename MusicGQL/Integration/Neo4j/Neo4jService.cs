@@ -1,7 +1,9 @@
 using MusicGQL.Features.ServerLibrary.Artist.Db;
+using MusicGQL.Features.ServerLibrary.Common.Db;
 using MusicGQL.Features.ServerLibrary.Recording.Db;
 using MusicGQL.Features.ServerLibrary.Release.Db;
 using MusicGQL.Features.ServerLibrary.ReleaseGroup.Db;
+using MusicGQL.Integration.Neo4j.Models;
 using Neo4j.Driver;
 using INode = Neo4j.Driver.INode;
 
@@ -217,6 +219,20 @@ public class Neo4jService(IDriver driver)
             record => record["rg"].As<INode>().ToDbReleaseGroup()
         );
         return dbReleaseGroups;
+    }
+
+    public async Task<List<ArtistCredit>> GetCreditsOnReleaseGroupAsync(string releaseGroupId)
+    {
+        // Assuming (Artist)-[:ARTIST_CREDIT_FOR_RELEASE_GROUP]->(ReleaseGroup)
+        var artistCredit = await ExecuteReadListAsync(
+            "MATCH (a:Artist)-[c:CREDITED_ON_RELEASE_GROUP]->(rg:ReleaseGroup {Id: $releaseGroupId}) RETURN a, c",
+            new { releaseGroupId },
+            record => new ArtistCredit(
+                record["c"].As<INode>().ToDbNamedCredit(),
+                record["a"].As<INode>().ToDbArtist()
+            )
+        );
+        return artistCredit;
     }
 
     private async Task<T?> ExecuteReadSingleAsync<T>(

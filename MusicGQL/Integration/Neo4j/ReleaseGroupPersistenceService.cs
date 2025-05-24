@@ -2,13 +2,13 @@ using AutoMapper;
 using Hqub.MusicBrainz.Entities;
 using Neo4j.Driver;
 
-namespace MusicGQL.Features.ServerLibrary.ReleaseGroup.Service;
+namespace MusicGQL.Integration.Neo4j;
 
 public class ReleaseGroupPersistenceService(IMapper mapper)
 {
     public async Task SaveReleaseGroupNodeAsync(
         IAsyncTransaction tx,
-        Db.DbReleaseGroup dbReleaseGroupToSave
+        Features.ServerLibrary.ReleaseGroup.Db.DbReleaseGroup dbReleaseGroupToSave
     )
     {
         await tx.RunAsync(
@@ -26,7 +26,10 @@ public class ReleaseGroupPersistenceService(IMapper mapper)
         );
     }
 
-    public async Task SaveArtistNodeAsync(IAsyncTransaction tx, Artist.Db.DbArtist dbArtistToSave)
+    public async Task SaveArtistNodeAsync(
+        IAsyncTransaction tx,
+        Features.ServerLibrary.Artist.Db.DbArtist dbArtistToSave
+    )
     {
         await tx.RunAsync(
             "MERGE (a:Artist {Id: $artistId}) ON CREATE SET a.Name = $name, a.SortName = $sortName, a.Gender = $gender "
@@ -55,7 +58,9 @@ public class ReleaseGroupPersistenceService(IMapper mapper)
             if (creditDto.Artist == null || string.IsNullOrEmpty(creditDto.Artist.Id))
                 continue;
 
-            var artistToSave = mapper.Map<Artist.Db.DbArtist>(creditDto.Artist);
+            var artistToSave = mapper.Map<Features.ServerLibrary.Artist.Db.DbArtist>(
+                creditDto.Artist
+            );
             await SaveArtistNodeAsync(tx, artistToSave);
 
             string query =
@@ -74,7 +79,7 @@ public class ReleaseGroupPersistenceService(IMapper mapper)
 
     public async Task SaveReleaseNodeAsync(
         IAsyncTransaction tx,
-        Release.Db.DbRelease dbReleaseToSave
+        Features.ServerLibrary.Release.Db.DbRelease dbReleaseToSave
     )
     {
         await tx.RunAsync(
@@ -134,7 +139,7 @@ public class ReleaseGroupPersistenceService(IMapper mapper)
 
     public async Task SaveRecordingNodeAsync(
         IAsyncTransaction tx,
-        Recording.Db.DbRecording dbRecordingToSave
+        Features.ServerLibrary.Recording.Db.DbRecording dbRecordingToSave
     )
     {
         await tx.RunAsync(

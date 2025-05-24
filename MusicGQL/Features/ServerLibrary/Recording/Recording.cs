@@ -7,9 +7,11 @@ namespace MusicGQL.Features.ServerLibrary.Recording;
 public record Recording([property: GraphQLIgnore] DbRecording Model)
 {
     [ID]
-    public string Id => Model.Id;
-    public string Title => Model.Title;
-    public int? Length => Model.Length;
+    public string Id() => Model.Id;
+
+    public string Title() => Model.Title;
+
+    public int? Length() => Model.Length;
 
     public async Task<LastFmStatistics?> Statistics([Service] LastfmClient lastfmClient)
     {
