@@ -319,7 +319,7 @@ using (var scope = app.Services.CreateScope())
     await processor.ProcessEvents();
 
     var soulSeekService = scope.ServiceProvider.GetRequiredService<SoulSeekService>();
-    _ = soulSeekService.Connect();
+    // _ = soulSeekService.Connect();
 }
 
 app.UseWebSockets();

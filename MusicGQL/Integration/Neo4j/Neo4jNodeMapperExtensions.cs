@@ -77,4 +77,14 @@ public static class Neo4jNodeMapperExtensions
             FirstReleaseDate = node["FirstReleaseDate"].As<string>() ?? string.Empty,
         };
     }
+
+    public static DbLabel ToDbLabel(this INode node)
+    {
+        return new DbLabel
+        {
+            Id = node["Id"].As<string>() ?? string.Empty,
+            Disambiguation = node["Disambiguation"].As<string>() ?? string.Empty,
+            Name = node["Name"]?.As<string>() ?? string.Empty,
+        };
+    }
 }

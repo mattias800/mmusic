@@ -120,7 +120,11 @@ public class MusicBrainzService(MusicBrainzClient client, HybridCache cache)
                     "recordings",
                     "genres",
                     "release-groups",
-                    "artist-credits"
+                    "artist-credits",
+                    "annotation",
+                    "tags",
+                    "ratings",
+                    "labels"
                 )
         );
 
@@ -139,7 +143,11 @@ public class MusicBrainzService(MusicBrainzClient client, HybridCache cache)
                         "recordings",
                         "genres",
                         "release-groups",
-                        "artist-credits"
+                        "artist-credits",
+                        "annotation",
+                        "tags",
+                        "ratings",
+                        "labels"
                     )
                 ).Items
         );
@@ -164,7 +172,8 @@ public class MusicBrainzService(MusicBrainzClient client, HybridCache cache)
                         "artist-credits",
                         "annotation",
                         "tags",
-                        "ratings"
+                        "ratings",
+                        "labels"
                     )
                 ).Items
         );
@@ -186,7 +195,11 @@ public class MusicBrainzService(MusicBrainzClient client, HybridCache cache)
                         "recordings",
                         "genres",
                         "release-groups",
-                        "artist-credits"
+                        "artist-credits",
+                        "annotation",
+                        "tags",
+                        "ratings",
+                        "labels"
                     )
                 ).Items
         );

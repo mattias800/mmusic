@@ -161,6 +161,12 @@ type ImportSpotifyPlaylistSuccess {
   success: Boolean!
 }
 
+type Label {
+  disambiguation: String!
+  id: String!
+  name: String!
+}
+
 type LastFmAlbum {
   album: MbReleaseGroup
   id: ID!
@@ -262,6 +268,17 @@ type MbGenre {
   name: String!
 }
 
+type MbLabel {
+  disambiguation: String
+  id: String!
+  name: String!
+}
+
+type MbLabelInfo {
+  catalogNumber: String
+  label: MbLabel!
+}
+
 type MbMedium {
   trackCount: Int!
   tracks: [MbTrack!]!
@@ -313,6 +330,7 @@ type MbRelease {
   date: String
   genres: [MbGenre!]!
   id: ID!
+  labels: [MbLabelInfo!]!
   media: [MbMedium!]!
   quality: String
   recordings: [MbRecording!]!
@@ -464,6 +482,7 @@ type Release {
   credits: [NameCredit!]!
   date: String
   id: String!
+  labels: [Label!]!
   recordings: [Recording!]!
   releaseGroup: ReleaseGroup
   status: String

@@ -1,5 +1,6 @@
 using MusicGQL.Features.ServerLibrary.Artist.Db;
 using MusicGQL.Features.ServerLibrary.Common.Db;
+using MusicGQL.Features.ServerLibrary.Common.Db;
 using MusicGQL.Features.ServerLibrary.Recording.Db;
 using MusicGQL.Features.ServerLibrary.Release.Db;
 using MusicGQL.Features.ServerLibrary.ReleaseGroup.Db;
@@ -227,6 +228,16 @@ public class Neo4jService(IDriver driver)
             record => record["rel"].As<INode>().ToDbRelease()
         );
         return dbReleases;
+    }
+
+    public async Task<List<DbLabel>> GetLabelsForReleaseAsync(string releaseId)
+    {
+        var dbLabels = await ExecuteReadListAsync(
+            "MATCH (:Release {Id: $releaseId})-[:RELEASED_ON_LABEL]->(lbl:Label) RETURN lbl",
+            new { releaseId },
+            record => record["lbl"].As<INode>().ToDbLabel()
+        );
+        return dbLabels;
     }
 
     // Release groups

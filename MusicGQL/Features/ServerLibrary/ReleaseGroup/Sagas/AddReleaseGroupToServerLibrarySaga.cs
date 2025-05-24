@@ -124,20 +124,18 @@ public class AddReleaseGroupToServerLibrarySaga(
         {
             await session.ExecuteWriteAsync(async tx =>
             {
-                // 1. Save release group itself
-                var rgToSave = mapper.Map<Db.DbReleaseGroup>(releaseGroupDto);
                 await neo4JPersistenceService.SaveReleaseGroupNodeAsync(
                     (IAsyncTransaction)tx,
-                    rgToSave
+                    releaseGroupDto
                 );
-                logger.LogInformation("Saved release group {Title}", rgToSave.Title);
+                logger.LogInformation("Saved release group {Title}", releaseGroupDto.Title);
 
                 // 2. Save ReleaseGroup Artist Credits
                 if (releaseGroupDto.Credits != null)
                 {
                     await neo4JPersistenceService.SaveArtistCreditsForParentAsync(
                         (IAsyncTransaction)tx,
-                        rgToSave.Id,
+                        releaseGroupDto.Id,
                         releaseGroupDto.Credits,
                         "ReleaseGroup",
                         "rgId",
@@ -145,28 +143,27 @@ public class AddReleaseGroupToServerLibrarySaga(
                     );
                     logger.LogInformation(
                         "Saved artist credits for release group {Title}",
-                        rgToSave.Title
+                        releaseGroupDto.Title
                     );
                 }
 
                 // 3. Process ONLY the Main Release (if found)
                 if (mainRelease != null)
                 {
-                    var releaseToSave = mapper.Map<Release.Db.DbRelease>(mainRelease);
                     await neo4JPersistenceService.SaveReleaseNodeAsync(
                         (IAsyncTransaction)tx,
-                        releaseToSave
+                        mainRelease
                     );
                     await neo4JPersistenceService.LinkReleaseToReleaseGroupAsync(
                         (IAsyncTransaction)tx,
-                        rgToSave.Id,
-                        releaseToSave.Id
+                        releaseGroupDto.Id,
+                        mainRelease.Id
                     );
                     logger.LogInformation(
                         "Saved Main Release {ReleaseTitle} ({ReleaseId}) and linked to RG {RgTitle}",
-                        releaseToSave.Title,
-                        releaseToSave.Id,
-                        rgToSave.Title
+                        mainRelease.Title,
+                        mainRelease.Id,
+                        releaseGroupDto.Title
                     );
 
                     // 4. Save Main Release Artist Credits
@@ -174,7 +171,7 @@ public class AddReleaseGroupToServerLibrarySaga(
                     {
                         await neo4JPersistenceService.SaveArtistCreditsForParentAsync(
                             (IAsyncTransaction)tx,
-                            releaseToSave.Id,
+                            mainRelease.Id,
                             mainRelease.Credits,
                             "Release",
                             "releaseId",
@@ -182,7 +179,7 @@ public class AddReleaseGroupToServerLibrarySaga(
                         );
                         logger.LogInformation(
                             "Saved artist credits for main release {Title}",
-                            releaseToSave.Title
+                            mainRelease.Title
                         );
                     }
 
@@ -194,18 +191,18 @@ public class AddReleaseGroupToServerLibrarySaga(
                             if (mediumDto == null)
                                 continue;
 
-                            string mediumNodeId = $"{releaseToSave.Id}_m{mediumDto.Position}";
+                            string mediumNodeId = $"{mainRelease.Id}_m{mediumDto.Position}";
                             await neo4JPersistenceService.SaveMediumNodeAsync(
                                 (IAsyncTransaction)tx,
                                 mediumNodeId,
-                                releaseToSave.Id,
+                                mainRelease.Id,
                                 mediumDto
                             );
                             logger.LogInformation(
                                 "Saved Medium {MediumId} (Pos: {MediumPos}) for Main Release {ReleaseTitle}",
                                 mediumNodeId,
                                 mediumDto.Position,
-                                releaseToSave.Title
+                                mainRelease.Title
                             );
 
                             if (mediumDto.Tracks != null)
@@ -240,7 +237,7 @@ public class AddReleaseGroupToServerLibrarySaga(
                                     );
 
                                     // 6. Save Recording Artist Credits
-                                    if (trackDto.Recording.Credits != null)
+                                    if (trackDto.Recording?.Credits != null)
                                     {
                                         await neo4JPersistenceService.SaveArtistCreditsForParentAsync(
                                             (IAsyncTransaction)tx,

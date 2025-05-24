@@ -17,6 +17,13 @@ export const albumPanelReleaseGroupFragment = graphql(`
     id
     ...AlbumHeader_ReleaseGroup
     ...AlbumTrackList_ReleaseGroup
+    firstReleaseYear
+    mainRelease {
+      labels {
+        id
+        name
+      }
+    }
   }
 `);
 
@@ -43,10 +50,16 @@ export const AlbumPanel: React.FC<AlbumPanelProps> = (props) => {
     >
       <AlbumTrackList releaseGroup={releaseGroup} />
 
-      <div className="text-white/40 text-xs mt-12">
-        <p>© 1995 King Size Records</p>
-        <p>℗ 1995 King Size Records</p>
-      </div>
+      {releaseGroup.mainRelease &&
+        releaseGroup.mainRelease.labels.length > 0 && (
+          <div className="text-white/40 text-xs mt-12">
+            {releaseGroup.mainRelease.labels.map((label) => (
+              <p>
+                © {releaseGroup.firstReleaseYear} {label.name}
+              </p>
+            ))}
+          </div>
+        )}
     </PageCard>
   );
 };

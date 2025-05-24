@@ -38,4 +38,7 @@ public record MbRelease([property: GraphQLIgnore] Hqub.MusicBrainz.Entities.Rele
         var recordings = await mbService.GetRecordingsForReleaseAsync(Id);
         return recordings.Select(r => new Recording.MbRecording(r));
     }
+
+    public IEnumerable<MbLabelInfo> Labels() =>
+        Model.Labels?.Select(label => new MbLabelInfo(label)) ?? [];
 }

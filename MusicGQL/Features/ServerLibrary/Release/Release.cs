@@ -40,9 +40,9 @@ public record Release([property: GraphQLIgnore] DbRelease Model)
         return recordings.Select(r => new Recording.Recording(r));
     }
 
-    public async Task<IEnumerable<Label>> Labels(Neo4jService service)
+    public async Task<IEnumerable<Common.Label>> Labels(Neo4jService service)
     {
         var labels = await service.GetLabelsForReleaseAsync(Id);
-        return labels.Select(r => new Label(r));
+        return labels.Select(r => new Common.Label(r));
     }
 };

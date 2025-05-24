@@ -91,6 +91,48 @@ public class Neo4jPersistenceService(IMapper mapper)
                 status = releaseToSave.Status,
             }
         );
+
+        // Persist labels and their relationship to the release
+        if (releaseToSave.Labels != null)
+        {
+            foreach (var labelInfo in releaseToSave.Labels)
+            {
+                if (labelInfo.Label == null || string.IsNullOrEmpty(labelInfo.Label.Id))
+                    continue;
+
+                // Save the Label node itself
+                await SaveLabelNodeAsync(tx, labelInfo.Label);
+
+                // Link Label to Release and set relationship properties
+                await tx.RunAsync(
+                    "MATCH (rel:Release {Id: $releaseId}), (lbl:Label {Id: $labelId}) "
+                        + "MERGE (rel)-[rlbl:RELEASED_ON_LABEL]->(lbl) "
+                        + "ON CREATE SET rlbl.CatalogNumber = $catalogNumber "
+                        + "ON MATCH SET rlbl.CatalogNumber = $catalogNumber",
+                    new
+                    {
+                        releaseId = releaseToSave.Id,
+                        labelId = labelInfo.Label.Id,
+                        catalogNumber = labelInfo.CatalogNumber ?? string.Empty,
+                    }
+                );
+            }
+        }
+    }
+
+    public async Task SaveLabelNodeAsync(IAsyncTransaction tx, Label label)
+    {
+        await tx.RunAsync(
+            "MERGE (lbl:Label {Id: $id}) "
+                + "ON CREATE SET lbl.Name = $name, lbl.Disambiguation = $disambiguation " // Added Disambiguation
+                + "ON MATCH SET lbl.Name = $name, lbl.Disambiguation = $disambiguation",
+            new
+            {
+                id = label.Id,
+                name = label.Name,
+                disambiguation = label.Disambiguation ?? string.Empty,
+            }
+        );
     }
 
     public async Task LinkReleaseToReleaseGroupAsync(

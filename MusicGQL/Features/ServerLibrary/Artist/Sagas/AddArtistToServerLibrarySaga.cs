@@ -73,18 +73,16 @@ public class AddArtistToServerLibrarySaga(
 
         try
         {
-            var artistToSave = mapper.Map<Db.DbArtist>(message.Artist);
-
             await using var session = driver.AsyncSession();
             await session.ExecuteWriteAsync(async tx =>
             {
                 await neo4JPersistenceService.SaveArtistNodeAsync(
                     (IAsyncTransaction)tx,
-                    artistToSave
+                    message.Artist
                 );
             });
 
-            logger.LogInformation("Artist {ArtistMbId} saved/updated in Neo4j", artistToSave.Id);
+            logger.LogInformation("Artist {ArtistMbId} saved/updated in Neo4j", message.Artist.Id);
 
             var releaseGroupIds = message
                 .ReleaseGroups.Where(LibraryDecider.ShouldBeAddedWhenAddingArtistToServerLibrary)
@@ -94,7 +92,7 @@ public class AddArtistToServerLibrarySaga(
             logger.LogInformation(
                 "Found {Count} release groups associated with artist {ArtistMbId}. Marking them...",
                 releaseGroupIds.Count,
-                artistToSave.Id
+                message.Artist.Id
             );
 
             foreach (var releaseGroupId in releaseGroupIds)
