@@ -37,7 +37,12 @@ public record Release([property: GraphQLIgnore] DbRelease Model)
     public async Task<IEnumerable<Recording.Recording>> Recordings(Neo4jService service)
     {
         var recordings = await service.GetRecordingsForReleaseAsync(Id);
-        return recordings.Select(r => new Recording.Recording(r));
+        var sortedByTrackPosition = recordings
+            .OrderBy(r => r.TrackPosition)
+            .Select(r => r.DbRecording)
+            .ToList();
+
+        return sortedByTrackPosition.Select(r => new Recording.Recording(r));
     }
 
     public async Task<IEnumerable<Common.Label>> Labels(Neo4jService service)

@@ -29,7 +29,7 @@ public class Neo4jService(IDriver driver)
         // This query might need adjustment based on the actual relationship name and direction.
         // The ReleaseGroupPersistenceService shows ARTIST_CREDIT_FOR_RECORDING, so let's assume that.
         var dbArtists = await ExecuteReadListAsync(
-            "MATCH (a:Artist)-[:ARTIST_CREDIT_FOR_RECORDING]->(r:Recording {Id: $recordingId}) RETURN a",
+            "MATCH (a:Artist)-[:CREDITED_ON_RECORDING]->(r:Recording {Id: $recordingId}) RETURN a",
             new { recordingId },
             record => record["a"].As<INode>().ToDbArtist()
         );
@@ -87,14 +87,20 @@ public class Neo4jService(IDriver driver)
         return dbRecordings;
     }
 
-    public async Task<List<DbRecording>> GetRecordingsForReleaseAsync(string releaseId)
+    public async Task<List<RecordingWithTrackInfo>> GetRecordingsForReleaseAsync(string releaseId)
     {
-        // Assuming (Release)-[:HAS_TRACK]->(Recording) or (Medium)-[:INCLUDES_TRACK]->(Recording)
-        // and (Release)-[:HAS_MEDIUM]->(Medium)
         var dbRecordings = await ExecuteReadListAsync(
-            "MATCH (rel:Release {Id: $releaseId})-[:HAS_MEDIUM]->(m:Medium)-[:INCLUDES_TRACK]->(r:Recording) RETURN DISTINCT r",
+            """
+            MATCH (rel:Release {Id: $releaseId})-[:HAS_MEDIUM]->(m:Medium)-[track:INCLUDES_TRACK]->(r:Recording)
+                      WITH r, track.Position AS position
+                      ORDER BY position
+                      RETURN r, position
+            """,
             new { releaseId },
-            record => record["r"].As<INode>().ToDbRecording()
+            record => new RecordingWithTrackInfo(
+                record["r"].As<INode>().ToDbRecording(),
+                record["position"].As<int>()
+            )
         );
         return dbRecordings;
     }

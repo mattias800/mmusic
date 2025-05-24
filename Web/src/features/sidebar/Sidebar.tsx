@@ -53,14 +53,16 @@ export const Sidebar = ({ className }: SidebarProps) => {
         </SidebarSection>
 
         <SidebarSection heading={"Discover"}>
+          <SidebarNavButton path={"/"} label={"Popular artists"} icon={Heart} />
+        </SidebarSection>
+
+        <SidebarSection heading={"Library"}>
           <SidebarNavButton
             path={"/liked-songs"}
             label={"Liked songs"}
             icon={Heart}
           />
-        </SidebarSection>
 
-        <SidebarSection heading={"Library"}>
           <SidebarNavButton
             path={"/playlists"}
             label={"Playlists"}

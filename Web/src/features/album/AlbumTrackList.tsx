@@ -49,14 +49,13 @@ export const AlbumTrackList: React.FC<AlbumTrackListProps> = (props) => {
 
   return (
     <div>
-      {/* Song List Header */}
       <div className="grid grid-cols-[60px_1fr_auto_auto] md:grid-cols-[60px_1fr_auto_auto] items-center text-sm text-gray-400 border-b border-white/20 pb-2 mb-2 px-2">
         <span className="text-center text-white/60">#</span>
         <span className="text-left">Title</span>
         <span className="hidden md:block text-right pr-8">Plays</span>
         <span className="hidden md:block text-right pr-4">⏱️</span>
       </div>
-      {/* Songs */}
+
       {release?.recordings.map((recording, idx) => (
         <div
           key={recording.id}
