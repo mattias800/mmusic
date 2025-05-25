@@ -22,6 +22,13 @@ public class ImportArtistToServerLibraryHandler(
         {
             logger.LogInformation("Importing artist, id={Id}", command.ArtistMbId);
 
+            artistServerStatusService.SetImportingArtistStatus(command.ArtistMbId);
+
+            await sender.SendAsync(
+                ArtistServerStatusSubscription.ArtistServerStatusUpdatedTopic(command.ArtistMbId),
+                new ArtistServerStatus.ArtistServerStatus(command.ArtistMbId)
+            );
+
             var artist = await mbService.GetArtistByIdAsync(command.ArtistMbId);
 
             if (artist is null)
@@ -32,13 +39,6 @@ public class ImportArtistToServerLibraryHandler(
                 );
                 return new Result.ArtistNotFound();
             }
-
-            artistServerStatusService.SetImportingArtistStatus(command.ArtistMbId);
-
-            await sender.SendAsync(
-                ArtistServerStatusSubscription.ArtistServerStatusUpdatedTopic(command.ArtistMbId),
-                new ArtistServerStatus.ArtistServerStatus(command.ArtistMbId)
-            );
 
             await using var session = driver.AsyncSession();
             await session.ExecuteWriteAsync(async tx =>
