@@ -616,6 +616,7 @@ type StartDownloadReleaseSuccess {
 }
 
 type Subscription {
+  artistServerStatusUpdated(artistId: ID!): ArtistServerStatus!
   downloadStarted: DownloadStatus!
   downloadStatusUpdated: DownloadStatus!
   ping: Ping!

@@ -185,6 +185,7 @@ builder
     .AddType<ImportSpotifyPlaylistError>()
     .AddTypeExtension<SoulSeekSubscription>()
     .AddTypeExtension<DownloadSubscription>()
+    .AddTypeExtension<ArtistServerStatusSubscription>()
     .AddTypeExtension<StartDownloadReleaseMutation>()
     .AddType<StartDownloadReleaseSuccess>()
     .AddTypeExtension<UnlikeSongMutation>()
@@ -302,6 +303,10 @@ using (var scope = app.Services.CreateScope())
 
     var soulSeekService = scope.ServiceProvider.GetRequiredService<SoulSeekService>();
     // _ = soulSeekService.Connect();
+
+    var missingMetaDataProcessingService =
+        scope.ServiceProvider.GetRequiredService<MissingMetaDataProcessingService>();
+    missingMetaDataProcessingService.ProcessMissingMetaData();
 }
 
 app.UseWebSockets();

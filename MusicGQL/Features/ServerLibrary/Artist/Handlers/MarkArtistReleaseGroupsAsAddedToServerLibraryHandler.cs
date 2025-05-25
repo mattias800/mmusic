@@ -22,6 +22,11 @@ public class MarkArtistReleaseGroupsAsAddedToServerLibraryHandler(
                 return;
             }
 
+            logger.LogInformation(
+                "Marking release groups for artist {Name} as added to server library",
+                artist.Name
+            );
+
             var releaseGroups = await mbService.GetReleaseGroupsForArtistAsync(artist.Id);
 
             var releaseGroupIds = releaseGroups
@@ -30,9 +35,9 @@ public class MarkArtistReleaseGroupsAsAddedToServerLibraryHandler(
                 .ToList();
 
             logger.LogInformation(
-                "Found {Count} release groups associated with artist {ArtistMbId}. Marking them...",
+                "Found {Count} release groups associated with artist {Name}. Marking them...",
                 releaseGroupIds.Count,
-                artist.Id
+                artist.Name
             );
 
             dbContext.Events.Add(
@@ -41,11 +46,14 @@ public class MarkArtistReleaseGroupsAsAddedToServerLibraryHandler(
 
             await dbContext.SaveChangesAsync();
             await eventProcessorWorker.ProcessEvents();
-            return;
         }
-        catch
+        catch (Exception e)
         {
-            return;
+            logger.LogError(
+                e,
+                "Error while marking release groups for artist {ArtistMbId}",
+                command.ArtistId
+            );
         }
     }
 

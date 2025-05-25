@@ -18,60 +18,78 @@ public class ImportReleaseGroupToServerLibraryHandler(
 {
     public async Task Handle(Command command)
     {
-        logger.LogInformation(
-            "Importing release groups, id={ReleaseGroupMbId}",
-            command.ReleaseGroupMbId
-        );
-
-        var releaseGroup = await mbService.GetReleaseGroupByIdAsync(command.ReleaseGroupMbId);
-        if (releaseGroup is null)
+        try
         {
             logger.LogInformation(
-                "Release group {MessageReleaseGroupMbId} not found in MusicBrainz",
+                "Importing release group, id={ReleaseGroupMbId}",
                 command.ReleaseGroupMbId
             );
-            return;
-        }
 
-        var artistId = releaseGroup.Credits?.First().Artist.Id;
+            var releaseGroup = await mbService.GetReleaseGroupByIdAsync(command.ReleaseGroupMbId);
 
-        await PublishStartEvent(artistId);
+            if (releaseGroup is null)
+            {
+                logger.LogError(
+                    "Release group {MessageReleaseGroupMbId} not found in MusicBrainz",
+                    command.ReleaseGroupMbId
+                );
+                return;
+            }
 
-        logger.LogInformation(
-            "Fetching all releases for release group {Title}",
-            releaseGroup.Title
-        );
-
-        var allReleases = await mbService.GetReleasesForReleaseGroupAsync(releaseGroup.Id);
-
-        logger.LogInformation(
-            "Fetched {ReleaseCount} releases for release group {Title}",
-            allReleases.Count,
-            releaseGroup.Title
-        );
-
-        var mainRelease = LibraryDecider.GetMainReleaseInReleaseGroup(allReleases.ToList());
-
-        if (mainRelease == null)
-        {
-            logger.LogWarning(
-                "No main release found for release group {Title} after fetching {Count} releases. Only the release group itself will be persisted",
-                releaseGroup.Title,
-                allReleases.Count
+            logger.LogInformation(
+                "Found release group, id={ReleaseGroupMbId}: {ReleaseGroupTitle}",
+                command.ReleaseGroupMbId,
+                releaseGroup.Title
             );
+
+            var artistId = releaseGroup.Credits?.First().Artist.Id;
+
+            await PublishStartEvent(artistId);
+
+            logger.LogInformation(
+                "Fetching all releases for release group {Title}",
+                releaseGroup.Title
+            );
+
+            var allReleases = await mbService.GetReleasesForReleaseGroupAsync(releaseGroup.Id);
+
+            logger.LogInformation(
+                "Fetched {ReleaseCount} releases for release group {Title}",
+                allReleases.Count,
+                releaseGroup.Title
+            );
+
+            var mainRelease = LibraryDecider.GetMainReleaseInReleaseGroup(allReleases.ToList());
+
+            if (mainRelease == null)
+            {
+                logger.LogWarning(
+                    "No main release found for release group {Title} after fetching {Count} releases. Only the release group itself will be persisted",
+                    releaseGroup.Title,
+                    allReleases.Count
+                );
+                await PublishEndEvent(artistId);
+                return;
+            }
+
+            logger.LogInformation(
+                "Prioritized main release for release group {RgTitle} is {MainReleaseTitle} ({MainReleaseId})",
+                releaseGroup.Title,
+                mainRelease.Title,
+                mainRelease.Id
+            );
+
+            await SaveReleaseGroupInDatabase(releaseGroup, mainRelease);
             await PublishEndEvent(artistId);
-            return;
         }
-
-        logger.LogInformation(
-            "Prioritized main release for release group {RgTitle} is {MainReleaseTitle} ({MainReleaseId})",
-            releaseGroup.Title,
-            mainRelease.Title,
-            mainRelease.Id
-        );
-
-        await SaveReleaseGroupInDatabase(releaseGroup, mainRelease);
-        await PublishEndEvent(artistId);
+        catch (Exception e)
+        {
+            logger.LogError(
+                e,
+                "Error while importing release group {ReleaseGroupMbId}",
+                command.ReleaseGroupMbId
+            );
+        }
     }
 
     private async Task PublishStartEvent(string? artistId)
@@ -81,15 +99,19 @@ public class ImportReleaseGroupToServerLibraryHandler(
             return;
         }
 
+        if (
+            artistServerStatusService.GetStatus(artistId).Status
+            != ArtistServerStatusWorkingStatus.ImportingArtistReleases
+        )
+        {
+            artistServerStatusService.SetImportingArtistReleasesStatus(artistId, 0, 0);
+        }
+
         artistServerStatusService.IncreaseTotalNumReleaseGroupsBeingImported(artistId);
-        var status = artistServerStatusService.GetStatus(artistId);
 
         await sender.SendAsync(
-            nameof(ArtistServerStatusSubscription.ArtistServerStatusUpdated),
-            new ArtistServerStatusImportingArtistReleases(
-                status.NumReleaseGroupsFinishedImporting,
-                status.TotalNumReleaseGroupsBeingImported
-            )
+            ArtistServerStatusSubscription.ArtistServerStatusUpdatedTopic(artistId),
+            new ArtistServerStatus.ArtistServerStatus(artistId)
         );
     }
 
@@ -100,26 +122,13 @@ public class ImportReleaseGroupToServerLibraryHandler(
             return;
         }
 
-        artistServerStatusService.IncreaseTotalNumReleaseGroupsBeingImported(artistId);
-        var status = artistServerStatusService.GetStatus(artistId);
+        artistServerStatusService.IncreaseNumReleaseGroupsFinishedImporting(artistId);
+        artistServerStatusService.SetReadyStatusIfImportDone(artistId);
 
-        if (status.NumReleaseGroupsFinishedImporting == status.TotalNumReleaseGroupsBeingImported)
-        {
-            await sender.SendAsync(
-                nameof(ArtistServerStatusSubscription.ArtistServerStatusUpdated),
-                new ArtistServerStatusReady()
-            );
-        }
-        else
-        {
-            await sender.SendAsync(
-                nameof(ArtistServerStatusSubscription.ArtistServerStatusUpdated),
-                new ArtistServerStatusImportingArtistReleases(
-                    status.NumReleaseGroupsFinishedImporting,
-                    status.TotalNumReleaseGroupsBeingImported
-                )
-            );
-        }
+        await sender.SendAsync(
+            ArtistServerStatusSubscription.ArtistServerStatusUpdatedTopic(artistId),
+            new ArtistServerStatus.ArtistServerStatus(artistId)
+        );
     }
 
     private async Task SaveReleaseGroupInDatabase(

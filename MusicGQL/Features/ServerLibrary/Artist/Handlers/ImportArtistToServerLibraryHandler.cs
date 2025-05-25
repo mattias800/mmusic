@@ -1,5 +1,6 @@
 using HotChocolate.Subscriptions;
 using MusicGQL.Features.ServerLibrary.ArtistServerStatus;
+using MusicGQL.Features.ServerLibrary.ArtistServerStatus.Services;
 using MusicGQL.Integration.MusicBrainz;
 using MusicGQL.Integration.Neo4j;
 using Neo4j.Driver;
@@ -11,6 +12,7 @@ public class ImportArtistToServerLibraryHandler(
     IDriver driver,
     MusicBrainzService mbService,
     ServerLibraryService serverLibraryService,
+    ArtistServerStatusService artistServerStatusService,
     ILogger<ImportArtistToServerLibraryHandler> logger
 )
 {
@@ -31,9 +33,11 @@ public class ImportArtistToServerLibraryHandler(
                 return new Result.ArtistNotFound();
             }
 
+            artistServerStatusService.SetImportingArtistStatus(command.ArtistMbId);
+
             await sender.SendAsync(
-                nameof(ArtistServerStatusSubscription.ArtistServerStatusUpdated),
-                new ArtistServerStatusImportingArtist()
+                ArtistServerStatusSubscription.ArtistServerStatusUpdatedTopic(command.ArtistMbId),
+                new ArtistServerStatus.ArtistServerStatus(command.ArtistMbId)
             );
 
             await using var session = driver.AsyncSession();
@@ -44,9 +48,11 @@ public class ImportArtistToServerLibraryHandler(
 
             logger.LogInformation("Artist {ArtistMbId} saved/updated in Neo4j", artist.Id);
 
+            artistServerStatusService.SetReadyStatus(command.ArtistMbId);
+
             await sender.SendAsync(
-                nameof(ArtistServerStatusSubscription.ArtistServerStatusUpdated),
-                new ArtistServerStatusReady()
+                ArtistServerStatusSubscription.ArtistServerStatusUpdatedTopic(command.ArtistMbId),
+                new ArtistServerStatus.ArtistServerStatus(command.ArtistMbId)
             );
 
             return new Result.Success();

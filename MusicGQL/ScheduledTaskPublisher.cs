@@ -11,7 +11,7 @@ public class ScheduledTaskPublisher(
 
         while (!stoppingToken.IsCancellationRequested)
         {
-            logger.LogInformation("Scheduled task publisher doing work");
+            // logger.LogInformation("Scheduled task publisher doing work");
 
             try
             {

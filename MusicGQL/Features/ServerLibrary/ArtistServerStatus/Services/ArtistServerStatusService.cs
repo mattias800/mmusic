@@ -31,6 +31,57 @@ public class ArtistServerStatusService(EventDbContext dbContext)
         _artistStatus[artistId] = status;
     }
 
+    public void SetImportingArtistStatus(string artistId)
+    {
+        _artistStatus[artistId] = new ArtistServerStatusWorkingState
+        {
+            Status = ArtistServerStatusWorkingStatus.ImportingArtist,
+            TotalNumReleaseGroupsBeingImported = 0,
+            NumReleaseGroupsFinishedImporting = 0,
+        };
+    }
+
+    public void SetImportingArtistReleasesStatus(
+        string artistId,
+        int numReleaseGroupsFinishedImporting,
+        int totalNumReleaseGroupsBeingImported
+    )
+    {
+        _artistStatus[artistId] = new ArtistServerStatusWorkingState
+        {
+            Status = ArtistServerStatusWorkingStatus.ImportingArtistReleases,
+            TotalNumReleaseGroupsBeingImported = totalNumReleaseGroupsBeingImported,
+            NumReleaseGroupsFinishedImporting = numReleaseGroupsFinishedImporting,
+        };
+    }
+
+    public void SetReadyStatus(string artistId)
+    {
+        _artistStatus[artistId] = new ArtistServerStatusWorkingState
+        {
+            Status = ArtistServerStatusWorkingStatus.Ready,
+            TotalNumReleaseGroupsBeingImported = 0,
+            NumReleaseGroupsFinishedImporting = 0,
+        };
+    }
+
+    public void SetReadyStatusIfImportDone(string artistId)
+    {
+        var s = _artistStatus.GetValueOrDefault(artistId);
+        if (s is not null)
+        {
+            if (s.TotalNumReleaseGroupsBeingImported == s.NumReleaseGroupsFinishedImporting)
+            {
+                _artistStatus[artistId] = new ArtistServerStatusWorkingState
+                {
+                    Status = ArtistServerStatusWorkingStatus.Ready,
+                    TotalNumReleaseGroupsBeingImported = 0,
+                    NumReleaseGroupsFinishedImporting = 0,
+                };
+            }
+        }
+    }
+
     public void IncreaseTotalNumReleaseGroupsBeingImported(string artistId)
     {
         if (_artistStatus.TryGetValue(artistId, out var state))

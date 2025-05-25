@@ -57,7 +57,7 @@ public record ArtistServerStatusImportingArtistReleases(
 {
     public override bool TopTracksVisible() => false;
 
-    public override bool ReleasesVisible() => false;
+    public override bool ReleasesVisible() => NumReleaseGroupsFinishedImporting > 0;
 }
 
 public record ArtistServerStatusUpdatingArtistReleases

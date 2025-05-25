@@ -10,7 +10,12 @@ public class MissingMetaDataProcessingService(
 {
     public void ProcessMissingMetaData()
     {
-        _ = processMissingArtistsInServerLibraryHandler.Handle();
-        _ = processMissingReleaseGroupsInServerLibraryHandler.Handle();
+        _ = DoIt();
+    }
+
+    private async Task DoIt()
+    {
+        await processMissingArtistsInServerLibraryHandler.Handle();
+        await processMissingReleaseGroupsInServerLibraryHandler.Handle();
     }
 }
