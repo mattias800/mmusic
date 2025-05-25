@@ -40,9 +40,12 @@ public class MarkArtistReleaseGroupsAsAddedToServerLibraryHandler(
                 artist.Name
             );
 
-            dbContext.Events.Add(
-                new AddReleaseGroupToServerLibrary { ReleaseGroupMbId = command.ArtistId }
-            );
+            foreach (var releaseGroupId in releaseGroupIds)
+            {
+                dbContext.Events.Add(
+                    new AddReleaseGroupToServerLibrary { ReleaseGroupMbId = releaseGroupId }
+                );
+            }
 
             await dbContext.SaveChangesAsync();
             await eventProcessorWorker.ProcessEvents();
