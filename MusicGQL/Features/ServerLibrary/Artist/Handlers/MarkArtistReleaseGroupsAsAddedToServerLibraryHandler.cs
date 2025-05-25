@@ -1,0 +1,53 @@
+using MusicGQL.Db.Postgres;
+using MusicGQL.Db.Postgres.Models.Events.ServerLibrary;
+using MusicGQL.Integration.MusicBrainz;
+
+namespace MusicGQL.Features.ServerLibrary.Artist.Handlers;
+
+public class MarkArtistReleaseGroupsAsAddedToServerLibraryHandler(
+    EventDbContext dbContext,
+    EventProcessor.EventProcessorWorker eventProcessorWorker,
+    MusicBrainzService mbService,
+    ILogger<MarkArtistReleaseGroupsAsAddedToServerLibraryHandler> logger
+)
+{
+    public async Task Handle(Command command)
+    {
+        try
+        {
+            var artist = await mbService.GetArtistByIdAsync(command.ArtistId);
+
+            if (artist is null)
+            {
+                return;
+            }
+
+            var releaseGroups = await mbService.GetReleaseGroupsForArtistAsync(artist.Id);
+
+            var releaseGroupIds = releaseGroups
+                .Where(LibraryDecider.ShouldBeAddedWhenAddingArtistToServerLibrary)
+                .Select(r => r.Id)
+                .ToList();
+
+            logger.LogInformation(
+                "Found {Count} release groups associated with artist {ArtistMbId}. Marking them...",
+                releaseGroupIds.Count,
+                artist.Id
+            );
+
+            dbContext.Events.Add(
+                new AddReleaseGroupToServerLibrary { ReleaseGroupMbId = command.ArtistId }
+            );
+
+            await dbContext.SaveChangesAsync();
+            await eventProcessorWorker.ProcessEvents();
+            return;
+        }
+        catch
+        {
+            return;
+        }
+    }
+
+    public record Command(string ArtistId);
+}

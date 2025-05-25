@@ -136,15 +136,15 @@
         "isOneOf": null,
         "fields": [
           {
-            "name": "serverAvailability",
+            "name": "success",
             "description": null,
             "args": [],
             "type": {
               "kind": "NON_NULL",
               "name": null,
               "ofType": {
-                "kind": "OBJECT",
-                "name": "ArtistServerAvailability",
+                "kind": "SCALAR",
+                "name": "Boolean",
                 "ofType": null
               }
             },
@@ -540,7 +540,7 @@
             "deprecationReason": null
           },
           {
-            "name": "serverAvailability",
+            "name": "serverStatus",
             "description": null,
             "args": [],
             "type": {
@@ -548,7 +548,7 @@
               "name": null,
               "ofType": {
                 "kind": "OBJECT",
-                "name": "ArtistServerAvailability",
+                "name": "ArtistServerStatus",
                 "ofType": null
               }
             },
@@ -765,22 +765,10 @@
       },
       {
         "kind": "OBJECT",
-        "name": "ArtistServerAvailability",
+        "name": "ArtistServerStatus",
         "description": null,
         "isOneOf": null,
         "fields": [
-          {
-            "name": "artist",
-            "description": null,
-            "args": [],
-            "type": {
-              "kind": "OBJECT",
-              "name": "MbArtist",
-              "ofType": null
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
           {
             "name": "id",
             "description": null,
@@ -798,7 +786,325 @@
             "deprecationReason": null
           },
           {
-            "name": "isInServerLibrary",
+            "name": "result",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "UNION",
+                "name": "ArtistServerStatusResult",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "inputFields": null,
+        "interfaces": [],
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "OBJECT",
+        "name": "ArtistServerStatusImportingArtist",
+        "description": null,
+        "isOneOf": null,
+        "fields": [
+          {
+            "name": "releasesVisible",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "Boolean",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "topTracksVisible",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "Boolean",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "inputFields": null,
+        "interfaces": [
+          {
+            "kind": "INTERFACE",
+            "name": "ArtistServerStatusResultBase",
+            "ofType": null
+          }
+        ],
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "OBJECT",
+        "name": "ArtistServerStatusImportingArtistReleases",
+        "description": null,
+        "isOneOf": null,
+        "fields": [
+          {
+            "name": "numReleaseGroupsFinishedImporting",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "Int",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "releasesVisible",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "Boolean",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "topTracksVisible",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "Boolean",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "totalNumReleaseGroupsBeingImported",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "Int",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "inputFields": null,
+        "interfaces": [
+          {
+            "kind": "INTERFACE",
+            "name": "ArtistServerStatusResultBase",
+            "ofType": null
+          }
+        ],
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "OBJECT",
+        "name": "ArtistServerStatusNotInLibrary",
+        "description": null,
+        "isOneOf": null,
+        "fields": [
+          {
+            "name": "releasesVisible",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "Boolean",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "topTracksVisible",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "Boolean",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "inputFields": null,
+        "interfaces": [
+          {
+            "kind": "INTERFACE",
+            "name": "ArtistServerStatusResultBase",
+            "ofType": null
+          }
+        ],
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "OBJECT",
+        "name": "ArtistServerStatusReady",
+        "description": null,
+        "isOneOf": null,
+        "fields": [
+          {
+            "name": "releasesVisible",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "Boolean",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "topTracksVisible",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "Boolean",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "inputFields": null,
+        "interfaces": [
+          {
+            "kind": "INTERFACE",
+            "name": "ArtistServerStatusResultBase",
+            "ofType": null
+          }
+        ],
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "UNION",
+        "name": "ArtistServerStatusResult",
+        "description": null,
+        "isOneOf": null,
+        "fields": null,
+        "inputFields": null,
+        "interfaces": null,
+        "enumValues": null,
+        "possibleTypes": [
+          {
+            "kind": "OBJECT",
+            "name": "ArtistServerStatusImportingArtist",
+            "ofType": null
+          },
+          {
+            "kind": "OBJECT",
+            "name": "ArtistServerStatusImportingArtistReleases",
+            "ofType": null
+          },
+          {
+            "kind": "OBJECT",
+            "name": "ArtistServerStatusNotInLibrary",
+            "ofType": null
+          },
+          {
+            "kind": "OBJECT",
+            "name": "ArtistServerStatusReady",
+            "ofType": null
+          },
+          {
+            "kind": "OBJECT",
+            "name": "ArtistServerStatusUpdatingArtist",
+            "ofType": null
+          },
+          {
+            "kind": "OBJECT",
+            "name": "ArtistServerStatusUpdatingArtistReleases",
+            "ofType": null
+          }
+        ]
+      },
+      {
+        "kind": "INTERFACE",
+        "name": "ArtistServerStatusResultBase",
+        "description": null,
+        "isOneOf": null,
+        "fields": [
+          {
+            "name": "releasesVisible",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "Boolean",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "topTracksVisible",
             "description": null,
             "args": [],
             "type": {
@@ -816,6 +1122,137 @@
         ],
         "inputFields": null,
         "interfaces": [],
+        "enumValues": null,
+        "possibleTypes": [
+          {
+            "kind": "OBJECT",
+            "name": "ArtistServerStatusImportingArtist",
+            "ofType": null
+          },
+          {
+            "kind": "OBJECT",
+            "name": "ArtistServerStatusImportingArtistReleases",
+            "ofType": null
+          },
+          {
+            "kind": "OBJECT",
+            "name": "ArtistServerStatusNotInLibrary",
+            "ofType": null
+          },
+          {
+            "kind": "OBJECT",
+            "name": "ArtistServerStatusReady",
+            "ofType": null
+          },
+          {
+            "kind": "OBJECT",
+            "name": "ArtistServerStatusUpdatingArtist",
+            "ofType": null
+          },
+          {
+            "kind": "OBJECT",
+            "name": "ArtistServerStatusUpdatingArtistReleases",
+            "ofType": null
+          }
+        ]
+      },
+      {
+        "kind": "OBJECT",
+        "name": "ArtistServerStatusUpdatingArtist",
+        "description": null,
+        "isOneOf": null,
+        "fields": [
+          {
+            "name": "releasesVisible",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "Boolean",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "topTracksVisible",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "Boolean",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "inputFields": null,
+        "interfaces": [
+          {
+            "kind": "INTERFACE",
+            "name": "ArtistServerStatusResultBase",
+            "ofType": null
+          }
+        ],
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "OBJECT",
+        "name": "ArtistServerStatusUpdatingArtistReleases",
+        "description": null,
+        "isOneOf": null,
+        "fields": [
+          {
+            "name": "releasesVisible",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "Boolean",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "topTracksVisible",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "Boolean",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "inputFields": null,
+        "interfaces": [
+          {
+            "kind": "INTERFACE",
+            "name": "ArtistServerStatusResultBase",
+            "ofType": null
+          }
+        ],
         "enumValues": null,
         "possibleTypes": null
       },
@@ -2120,15 +2557,15 @@
             "deprecationReason": null
           },
           {
-            "name": "serverAvailability",
+            "name": "serverStatus",
             "description": null,
             "args": [],
             "type": {
               "kind": "NON_NULL",
               "name": null,
               "ofType": {
-                "kind": "OBJECT",
-                "name": "ArtistServerAvailability",
+                "kind": "UNION",
+                "name": "ArtistServerStatusResult",
                 "ofType": null
               }
             },

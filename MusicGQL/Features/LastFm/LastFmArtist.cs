@@ -14,7 +14,7 @@ public record LastFmArtist([property: GraphQLIgnore] Hqub.Lastfm.Entities.Artist
     public LastFmStatistics Statistics => new(Model.Statistics);
     public string? Summary => Model.Biography.Summary;
 
-    public async Task<Artist?> Artist(Neo4jService service)
+    public async Task<Artist?> Artist(ServerLibraryImportService service)
     {
         if (string.IsNullOrEmpty(Model.MBID))
         {

@@ -1,5 +1,4 @@
 using Hqub.Lastfm;
-using MusicGQL.Db.Postgres;
 using MusicGQL.Features.LastFm;
 using MusicGQL.Features.MusicBrainz.Artist;
 using MusicGQL.Features.ServerLibrary.Artist.Db;
@@ -17,7 +16,7 @@ public record Artist([property: GraphQLIgnore] DbArtist Model)
     public string SortName => Model.SortName;
     public string? Gender => Model.Gender;
 
-    public ArtistServerAvailability ServerAvailability() => new(Model.Id);
+    public ArtistServerStatus.ArtistServerStatus ServerStatus() => new(Model.Id);
 
     public async Task<IEnumerable<LastFmTrack>> TopTracks(LastfmClient lastfmClient)
     {
@@ -45,13 +44,15 @@ public record Artist([property: GraphQLIgnore] DbArtist Model)
         return new(artist);
     }
 
-    public async Task<IEnumerable<Release.Release>> Releases(Neo4jService service)
+    public async Task<IEnumerable<Release.Release>> Releases(ServerLibraryImportService service)
     {
         var releases = await service.GetReleasesForArtistAsync(Model.Id);
         return releases.Select(r => new Release.Release(r));
     }
 
-    public async Task<IEnumerable<ReleaseGroup.ReleaseGroup>> ReleaseGroups(Neo4jService service)
+    public async Task<IEnumerable<ReleaseGroup.ReleaseGroup>> ReleaseGroups(
+        ServerLibraryImportService service
+    )
     {
         var releaseGroups = await service.GetReleaseGroupsForArtistAsync(Model.Id);
         return releaseGroups.Select(r => new ReleaseGroup.ReleaseGroup(r));
@@ -83,7 +84,9 @@ public record Artist([property: GraphQLIgnore] DbArtist Model)
         }
     }
 
-    public async Task<IEnumerable<ReleaseGroup.ReleaseGroup>> Albums(Neo4jService service)
+    public async Task<IEnumerable<ReleaseGroup.ReleaseGroup>> Albums(
+        ServerLibraryImportService service
+    )
     {
         var releaseGroups = await service.GetReleaseGroupsForArtistAsync(Model.Id);
         var albumReleaseGroups = releaseGroups.Where(r => r.IsMainAlbum()).ToList();
@@ -91,7 +94,9 @@ public record Artist([property: GraphQLIgnore] DbArtist Model)
         return albumReleaseGroups.Select(r => new ReleaseGroup.ReleaseGroup(r));
     }
 
-    public async Task<IEnumerable<ReleaseGroup.ReleaseGroup>> Singles(Neo4jService service)
+    public async Task<IEnumerable<ReleaseGroup.ReleaseGroup>> Singles(
+        ServerLibraryImportService service
+    )
     {
         var releaseGroups = await service.GetReleaseGroupsForArtistAsync(Model.Id);
         var albumReleaseGroups = releaseGroups.Where(r => r.IsMainSingle()).ToList();
@@ -99,7 +104,9 @@ public record Artist([property: GraphQLIgnore] DbArtist Model)
         return albumReleaseGroups.Select(r => new ReleaseGroup.ReleaseGroup(r));
     }
 
-    public async Task<IEnumerable<ReleaseGroup.ReleaseGroup>> Eps(Neo4jService service)
+    public async Task<IEnumerable<ReleaseGroup.ReleaseGroup>> Eps(
+        ServerLibraryImportService service
+    )
     {
         var releaseGroups = await service.GetReleaseGroupsForArtistAsync(Model.Id);
         var albumReleaseGroups = releaseGroups.Where(r => r.IsMainEP()).ToList();

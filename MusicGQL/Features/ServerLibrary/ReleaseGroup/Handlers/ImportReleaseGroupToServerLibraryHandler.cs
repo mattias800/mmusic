@@ -1,175 +1,183 @@
-using AutoMapper;
+using HotChocolate.Subscriptions;
+using MusicGQL.Features.ServerLibrary.ArtistServerStatus;
+using MusicGQL.Features.ServerLibrary.ArtistServerStatus.Services;
 using MusicGQL.Integration.MusicBrainz;
 using MusicGQL.Integration.Neo4j;
 using Neo4j.Driver;
-using Rebus.Bus;
-using Rebus.Handlers;
-using Rebus.Sagas;
 
-namespace MusicGQL.Features.ServerLibrary.ReleaseGroup.Sagas;
+namespace MusicGQL.Features.ServerLibrary.ReleaseGroup.Handlers;
 
-public class AddReleaseGroupToServerLibrarySaga(
-    IBus bus,
+public class ImportReleaseGroupToServerLibraryHandler(
     IDriver driver,
-    ILogger<AddReleaseGroupToServerLibrarySaga> logger,
-    IMapper mapper,
-    MusicBrainzService musicBrainzService,
-    Neo4jPersistenceService neo4JPersistenceService
+    ITopicEventSender sender,
+    MusicBrainzService mbService,
+    ServerLibraryService serverLibraryService,
+    ArtistServerStatusService artistServerStatusService,
+    ILogger<ImportReleaseGroupToServerLibraryHandler> logger
 )
-    : Saga<AddReleaseGroupToServerLibrarySagaData>,
-        IAmInitiatedBy<AddReleaseGroupToServerLibrarySagaEvents.StartAddReleaseGroup>,
-        IHandleMessages<AddReleaseGroupToServerLibrarySagaEvents.FoundReleaseGroupInMusicBrainz>,
-        IHandleMessages<AddReleaseGroupToServerLibrarySagaEvents.DidNotFindReleaseGroupInMusicBrainz>
 {
-    protected override void CorrelateMessages(
-        ICorrelationConfig<AddReleaseGroupToServerLibrarySagaData> config
-    )
+    public async Task Handle(Command command)
     {
-        config.Correlate<AddReleaseGroupToServerLibrarySagaEvents.StartAddReleaseGroup>(
-            m => m.ReleaseGroupMbId,
-            s => s.ReleaseGroupMbId
-        );
-        config.Correlate<AddReleaseGroupToServerLibrarySagaEvents.FindReleaseGroupInMusicBrainz>(
-            m => m.ReleaseGroupMbId,
-            s => s.ReleaseGroupMbId
-        );
-        config.Correlate<AddReleaseGroupToServerLibrarySagaEvents.FoundReleaseGroupInMusicBrainz>(
-            m => m.ReleaseGroupMbId,
-            s => s.ReleaseGroupMbId
-        );
-        config.Correlate<AddReleaseGroupToServerLibrarySagaEvents.DidNotFindReleaseGroupInMusicBrainz>(
-            m => m.ReleaseGroupMbId,
-            s => s.ReleaseGroupMbId
-        );
-    }
-
-    public async Task Handle(AddReleaseGroupToServerLibrarySagaEvents.StartAddReleaseGroup message)
-    {
-        if (!IsNew)
-        {
-            return;
-        }
-
         logger.LogInformation(
-            "Starting AddReleaseGroupToServerLibrarySaga for {ReleaseGroupMbId}",
-            message.ReleaseGroupMbId
+            "Importing release groups, id={ReleaseGroupMbId}",
+            command.ReleaseGroupMbId
         );
 
-        Data.StatusDescription = "Looking up release group in MusicBrainz";
-        await bus.Send(
-            new AddReleaseGroupToServerLibrarySagaEvents.FindReleaseGroupInMusicBrainz(
-                message.ReleaseGroupMbId
-            )
-        );
-    }
-
-    public async Task Handle(
-        AddReleaseGroupToServerLibrarySagaEvents.FoundReleaseGroupInMusicBrainz message
-    )
-    {
-        var releaseGroupDto = message.ReleaseGroup;
-
-        if (releaseGroupDto == null)
+        var releaseGroup = await mbService.GetReleaseGroupByIdAsync(command.ReleaseGroupMbId);
+        if (releaseGroup is null)
         {
-            logger.LogWarning(
-                "Received null ReleaseGroup DTO for MbId {MbId}. Saga will not proceed with persistence",
-                message.ReleaseGroupMbId
+            logger.LogInformation(
+                "Release group {MessageReleaseGroupMbId} not found in MusicBrainz",
+                command.ReleaseGroupMbId
             );
-            MarkAsComplete();
             return;
         }
+
+        var artistId = releaseGroup.Credits?.First().Artist.Id;
+
+        await PublishStartEvent(artistId);
 
         logger.LogInformation(
             "Fetching all releases for release group {Title}",
-            releaseGroupDto.Title
+            releaseGroup.Title
         );
 
-        var allReleaseDtos = await musicBrainzService.GetReleasesForReleaseGroupAsync(
-            releaseGroupDto.Id
-        );
+        var allReleases = await mbService.GetReleasesForReleaseGroupAsync(releaseGroup.Id);
 
         logger.LogInformation(
             "Fetched {ReleaseCount} releases for release group {Title}",
-            allReleaseDtos.Count,
-            releaseGroupDto.Title
+            allReleases.Count,
+            releaseGroup.Title
         );
 
-        var mainRelease = LibraryDecider.GetMainReleaseInReleaseGroup(allReleaseDtos.ToList());
+        var mainRelease = LibraryDecider.GetMainReleaseInReleaseGroup(allReleases.ToList());
 
         if (mainRelease == null)
         {
             logger.LogWarning(
                 "No main release found for release group {Title} after fetching {Count} releases. Only the release group itself will be persisted",
-                releaseGroupDto.Title,
-                allReleaseDtos.Count
+                releaseGroup.Title,
+                allReleases.Count
+            );
+            await PublishEndEvent(artistId);
+            return;
+        }
+
+        logger.LogInformation(
+            "Prioritized main release for release group {RgTitle} is {MainReleaseTitle} ({MainReleaseId})",
+            releaseGroup.Title,
+            mainRelease.Title,
+            mainRelease.Id
+        );
+
+        await SaveReleaseGroupInDatabase(releaseGroup, mainRelease);
+        await PublishEndEvent(artistId);
+    }
+
+    private async Task PublishStartEvent(string? artistId)
+    {
+        if (artistId == null)
+        {
+            return;
+        }
+
+        artistServerStatusService.IncreaseTotalNumReleaseGroupsBeingImported(artistId);
+        var status = artistServerStatusService.GetStatus(artistId);
+
+        await sender.SendAsync(
+            nameof(ArtistServerStatusSubscription.ArtistServerStatusUpdated),
+            new ArtistServerStatusImportingArtistReleases(
+                status.NumReleaseGroupsFinishedImporting,
+                status.TotalNumReleaseGroupsBeingImported
+            )
+        );
+    }
+
+    private async Task PublishEndEvent(string? artistId)
+    {
+        if (artistId == null)
+        {
+            return;
+        }
+
+        artistServerStatusService.IncreaseTotalNumReleaseGroupsBeingImported(artistId);
+        var status = artistServerStatusService.GetStatus(artistId);
+
+        if (status.NumReleaseGroupsFinishedImporting == status.TotalNumReleaseGroupsBeingImported)
+        {
+            await sender.SendAsync(
+                nameof(ArtistServerStatusSubscription.ArtistServerStatusUpdated),
+                new ArtistServerStatusReady()
             );
         }
         else
         {
-            logger.LogInformation(
-                "Prioritized main release for release group {RgTitle} is {MainReleaseTitle} ({MainReleaseId})",
-                releaseGroupDto.Title,
-                mainRelease.Title,
-                mainRelease.Id
+            await sender.SendAsync(
+                nameof(ArtistServerStatusSubscription.ArtistServerStatusUpdated),
+                new ArtistServerStatusImportingArtistReleases(
+                    status.NumReleaseGroupsFinishedImporting,
+                    status.TotalNumReleaseGroupsBeingImported
+                )
             );
         }
+    }
 
-        logger.LogInformation(
-            "Persisting data for release group {MbId} (and its main release if found)",
-            releaseGroupDto.Id
-        );
-
+    private async Task SaveReleaseGroupInDatabase(
+        Hqub.MusicBrainz.Entities.ReleaseGroup releaseGroup,
+        Hqub.MusicBrainz.Entities.Release mainRelease
+    )
+    {
         await using var session = driver.AsyncSession();
         try
         {
             await session.ExecuteWriteAsync(async tx =>
             {
-                await neo4JPersistenceService.SaveReleaseGroupNodeAsync(
+                await serverLibraryService.SaveReleaseGroupNodeAsync(
                     (IAsyncTransaction)tx,
-                    releaseGroupDto
+                    releaseGroup
                 );
-                logger.LogInformation("Saved release group {Title}", releaseGroupDto.Title);
+                logger.LogInformation("Saved release group {Title}", releaseGroup.Title);
 
                 // 2. Save ReleaseGroup Artist Credits
-                if (releaseGroupDto.Credits != null)
+                if (releaseGroup.Credits != null)
                 {
-                    await neo4JPersistenceService.SaveArtistCreditsForParentAsync(
+                    await serverLibraryService.SaveArtistCreditsForParentAsync(
                         (IAsyncTransaction)tx,
-                        releaseGroupDto.Id,
-                        releaseGroupDto.Credits,
+                        releaseGroup.Id,
+                        releaseGroup.Credits,
                         "ReleaseGroup",
                         "rgId",
                         "CREDITED_ON_RELEASE_GROUP"
                     );
                     logger.LogInformation(
                         "Saved artist credits for release group {Title}",
-                        releaseGroupDto.Title
+                        releaseGroup.Title
                     );
                 }
 
                 // 3. Process ONLY the Main Release (if found)
                 if (mainRelease != null)
                 {
-                    await neo4JPersistenceService.SaveReleaseNodeAsync(
+                    await serverLibraryService.SaveReleaseNodeAsync(
                         (IAsyncTransaction)tx,
                         mainRelease
                     );
-                    await neo4JPersistenceService.LinkReleaseToReleaseGroupAsync(
+                    await serverLibraryService.LinkReleaseToReleaseGroupAsync(
                         (IAsyncTransaction)tx,
-                        releaseGroupDto.Id,
+                        releaseGroup.Id,
                         mainRelease.Id
                     );
                     logger.LogInformation(
                         "Saved Main Release {ReleaseTitle} ({ReleaseId}) and linked to RG {RgTitle}",
                         mainRelease.Title,
                         mainRelease.Id,
-                        releaseGroupDto.Title
+                        releaseGroup.Title
                     );
 
                     // 4. Save Main Release Artist Credits
                     if (mainRelease.Credits != null)
                     {
-                        await neo4JPersistenceService.SaveArtistCreditsForParentAsync(
+                        await serverLibraryService.SaveArtistCreditsForParentAsync(
                             (IAsyncTransaction)tx,
                             mainRelease.Id,
                             mainRelease.Credits,
@@ -192,7 +200,7 @@ public class AddReleaseGroupToServerLibrarySaga(
                                 continue;
 
                             string mediumNodeId = $"{mainRelease.Id}_m{mediumDto.Position}";
-                            await neo4JPersistenceService.SaveMediumNodeAsync(
+                            await serverLibraryService.SaveMediumNodeAsync(
                                 (IAsyncTransaction)tx,
                                 mediumNodeId,
                                 mainRelease.Id,
@@ -215,12 +223,12 @@ public class AddReleaseGroupToServerLibrarySaga(
                                     )
                                         continue;
 
-                                    await neo4JPersistenceService.SaveRecordingNodeAsync(
+                                    await serverLibraryService.SaveRecordingNodeAsync(
                                         (IAsyncTransaction)tx,
                                         trackDto.Recording
                                     );
 
-                                    await neo4JPersistenceService.LinkTrackOnMediumToRecordingAsync(
+                                    await serverLibraryService.LinkTrackOnMediumToRecordingAsync(
                                         (IAsyncTransaction)tx,
                                         mediumNodeId,
                                         trackDto.Recording.Id,
@@ -239,7 +247,7 @@ public class AddReleaseGroupToServerLibrarySaga(
                                     // 6. Save Recording Artist Credits
                                     if (trackDto.Recording?.Credits != null)
                                     {
-                                        await neo4JPersistenceService.SaveArtistCreditsForParentAsync(
+                                        await serverLibraryService.SaveArtistCreditsForParentAsync(
                                             (IAsyncTransaction)tx,
                                             trackDto.Recording.Id,
                                             trackDto.Recording.Credits,
@@ -261,31 +269,19 @@ public class AddReleaseGroupToServerLibrarySaga(
 
             logger.LogInformation(
                 "Successfully persisted data for release group {Title}",
-                releaseGroupDto.Title
+                releaseGroup.Title
             );
-            MarkAsComplete();
         }
         catch (Exception ex)
         {
             logger.LogError(
                 ex,
                 "Error persisting data for release group {Title}: {ExMessage}",
-                releaseGroupDto.Title,
+                releaseGroup.Title,
                 ex.Message
             );
-            MarkAsComplete();
         }
     }
 
-    public Task Handle(
-        AddReleaseGroupToServerLibrarySagaEvents.DidNotFindReleaseGroupInMusicBrainz message
-    )
-    {
-        logger.LogInformation(
-            "Release group {MessageReleaseGroupMbId} not found in MusicBrainz, completing saga",
-            message.ReleaseGroupMbId
-        );
-        MarkAsComplete();
-        return Task.CompletedTask;
-    }
+    public record Command(string ReleaseGroupMbId);
 }

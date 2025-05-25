@@ -4,20 +4,20 @@ namespace MusicGQL.Features.ServerLibrary.ReleaseGroup;
 
 public record ReleaseGroupSearchRoot
 {
-    public async Task<IEnumerable<ReleaseGroup>> All(Neo4jService service)
+    public async Task<IEnumerable<ReleaseGroup>> All(ServerLibraryImportService service)
     {
         var releaseGroups = await service.GetAllReleaseGroupAsync();
         return releaseGroups.Select(a => new ReleaseGroup(a));
     }
 
-    public async Task<ReleaseGroup?> ById(Neo4jService service, [ID] string id)
+    public async Task<ReleaseGroup?> ById(ServerLibraryImportService service, [ID] string id)
     {
         var releaseGroup = await service.GetReleaseGroupByIdAsync(id);
         return releaseGroup is null ? null : new(releaseGroup);
     }
 
     public async Task<IEnumerable<ReleaseGroup>> SearchByName(
-        Neo4jService service,
+        ServerLibraryImportService service,
         string name,
         int limit = 25,
         int offset = 0

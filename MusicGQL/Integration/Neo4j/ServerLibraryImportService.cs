@@ -1,6 +1,5 @@
 using MusicGQL.Features.ServerLibrary.Artist.Db;
 using MusicGQL.Features.ServerLibrary.Common.Db;
-using MusicGQL.Features.ServerLibrary.Common.Db;
 using MusicGQL.Features.ServerLibrary.Recording.Db;
 using MusicGQL.Features.ServerLibrary.Release.Db;
 using MusicGQL.Features.ServerLibrary.ReleaseGroup.Db;
@@ -10,7 +9,7 @@ using INode = Neo4j.Driver.INode;
 
 namespace MusicGQL.Integration.Neo4j;
 
-public class Neo4jService(IDriver driver)
+public class ServerLibraryImportService(IDriver driver)
 {
     // Artists
 

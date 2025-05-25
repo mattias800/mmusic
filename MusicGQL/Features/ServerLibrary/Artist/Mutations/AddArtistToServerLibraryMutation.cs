@@ -1,7 +1,5 @@
 using MusicGQL.Features.ServerLibrary.Artist.Handlers;
-using MusicGQL.Features.ServerLibrary.Artist.Sagas;
 using MusicGQL.Types;
-using Rebus.Bus;
 
 namespace MusicGQL.Features.ServerLibrary.Artist.Mutations;
 
@@ -9,22 +7,23 @@ namespace MusicGQL.Features.ServerLibrary.Artist.Mutations;
 public class AddArtistToServerLibraryMutation
 {
     public async Task<AddArtistToServerLibraryResult> AddArtistToServerLibrary(
-        [Service] MarkArtistAsAddedToServerLibraryHandler handler,
-        [Service] IBus bus,
+        MarkArtistAsAddedToServerLibraryHandler markArtistAsAddedToServerLibraryHandler,
+        MarkArtistReleaseGroupsAsAddedToServerLibraryHandler markArtistReleaseGroupsAsAddedToServerLibraryHandler,
+        MissingMetaDataProcessingService missingMetaDataProcessingService,
         AddArtistToServerLibraryInput input
     )
     {
-        return await handler.Handle(new(input.ArtistId)) switch
+        return await markArtistAsAddedToServerLibraryHandler.Handle(new(input.ArtistId)) switch
         {
-            MarkArtistAsAddedToServerLibraryHandler.Result.Success => await StartAddArtistSaga(
-                bus,
+            MarkArtistAsAddedToServerLibraryHandler.Result.Success => await HandleSuccess(
+                markArtistReleaseGroupsAsAddedToServerLibraryHandler,
+                missingMetaDataProcessingService,
                 input.ArtistId,
-                new AddArtistToServerLibraryResult.AddArtistToServerLibrarySuccess(
-                    new ArtistServerAvailability(input.ArtistId)
-                )
+                new AddArtistToServerLibraryResult.AddArtistToServerLibrarySuccess(true)
             ),
-            MarkArtistAsAddedToServerLibraryHandler.Result.AlreadyAdded => await StartAddArtistSaga(
-                bus,
+            MarkArtistAsAddedToServerLibraryHandler.Result.AlreadyAdded => await HandleSuccess(
+                markArtistReleaseGroupsAsAddedToServerLibraryHandler,
+                missingMetaDataProcessingService,
                 input.ArtistId,
                 new AddArtistToServerLibraryResult.AddArtistToServerLibraryArtistAlreadyAdded(
                     "Artist already added!"
@@ -40,13 +39,15 @@ public class AddArtistToServerLibraryMutation
         };
     }
 
-    private async Task<AddArtistToServerLibraryResult> StartAddArtistSaga(
-        IBus bus,
+    private async Task<AddArtistToServerLibraryResult> HandleSuccess(
+        MarkArtistReleaseGroupsAsAddedToServerLibraryHandler markArtistReleaseGroupsAsAddedToServerLibraryHandler,
+        MissingMetaDataProcessingService missingMetaDataProcessingService,
         string artistId,
         AddArtistToServerLibraryResult success
     )
     {
-        await bus.Send(new AddArtistToServerLibrarySagaEvents.StartAddArtist(artistId));
+        await markArtistReleaseGroupsAsAddedToServerLibraryHandler.Handle(new(artistId));
+        missingMetaDataProcessingService.ProcessMissingMetaData();
         return success;
     }
 };
@@ -56,8 +57,7 @@ public record AddArtistToServerLibraryInput([property: ID] string ArtistId);
 [UnionType("AddArtistToServerLibraryResult")]
 public abstract record AddArtistToServerLibraryResult
 {
-    public record AddArtistToServerLibrarySuccess(ArtistServerAvailability ServerAvailability)
-        : AddArtistToServerLibraryResult;
+    public record AddArtistToServerLibrarySuccess(bool Success) : AddArtistToServerLibraryResult;
 
     public record AddArtistToServerLibraryArtistAlreadyAdded(string Message)
         : AddArtistToServerLibraryResult;

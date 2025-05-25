@@ -5,7 +5,10 @@ namespace MusicGQL.Features.ServerLibrary.Artist;
 
 public record ArtistSearchRoot
 {
-    public async Task<IEnumerable<Artist>> All(Neo4jService service, EventDbContext dbContext)
+    public async Task<IEnumerable<Artist>> All(
+        ServerLibraryImportService service,
+        EventDbContext dbContext
+    )
     {
         var addedArtists = await dbContext.ArtistsAddedToServerLibraryProjection.FindAsync(1);
 
@@ -19,14 +22,14 @@ public record ArtistSearchRoot
         return allArtists.Select(a => new Artist(a));
     }
 
-    public async Task<Artist?> ById(Neo4jService service, [ID] string id)
+    public async Task<Artist?> ById(ServerLibraryImportService service, [ID] string id)
     {
         var artist = await service.GetArtistByIdAsync(id);
         return artist is null ? null : new(artist);
     }
 
     public async Task<IEnumerable<Artist>> SearchByName(
-        Neo4jService service,
+        ServerLibraryImportService service,
         string name,
         int limit = 25,
         int offset = 0

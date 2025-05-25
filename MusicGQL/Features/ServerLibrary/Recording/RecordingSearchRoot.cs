@@ -5,7 +5,7 @@ namespace MusicGQL.Features.ServerLibrary.Recording;
 public record RecordingSearchRoot
 {
     public async Task<IEnumerable<Recording>> SearchByName(
-        Neo4jService service,
+        ServerLibraryImportService service,
         string name,
         int limit = 25,
         int offset = 0
@@ -15,7 +15,7 @@ public record RecordingSearchRoot
         return releases.Select(a => new Recording(a));
     }
 
-    public async Task<Recording?> ById(Neo4jService service, [ID] string id)
+    public async Task<Recording?> ById(ServerLibraryImportService service, [ID] string id)
     {
         try
         {

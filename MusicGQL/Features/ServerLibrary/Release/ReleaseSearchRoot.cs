@@ -5,7 +5,7 @@ namespace MusicGQL.Features.ServerLibrary.Release;
 public record ReleaseSearchRoot
 {
     public async Task<IEnumerable<Release>> SearchByName(
-        Neo4jService service,
+        ServerLibraryImportService service,
         string name,
         int limit = 25,
         int offset = 0
@@ -15,7 +15,7 @@ public record ReleaseSearchRoot
         return releases.Select(a => new Release(a));
     }
 
-    public async Task<Release?> ById(Neo4jService service, [ID] string id)
+    public async Task<Release?> ById(ServerLibraryImportService service, [ID] string id)
     {
         try
         {

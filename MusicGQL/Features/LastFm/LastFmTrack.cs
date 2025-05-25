@@ -20,7 +20,7 @@ public record LastFmTrack([property: GraphQLIgnore] Track Model)
 
     public LastFmStatistics Statistics => new(Model.Statistics);
 
-    public async Task<Recording?> Recording(Neo4jService service)
+    public async Task<Recording?> Recording(ServerLibraryImportService service)
     {
         var r = await service.SearchRecordingForArtistByArtistNameAsync(
             Model.Name,

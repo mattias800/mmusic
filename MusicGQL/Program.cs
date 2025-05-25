@@ -23,13 +23,11 @@ using MusicGQL.Features.Playlists.Import.Spotify.Mutations;
 using MusicGQL.Features.ServerLibrary.Artist.Aggregate;
 using MusicGQL.Features.ServerLibrary.Artist.Handlers;
 using MusicGQL.Features.ServerLibrary.Artist.Mutations;
-using MusicGQL.Features.ServerLibrary.Artist.Sagas;
-using MusicGQL.Features.ServerLibrary.Artist.Sagas.Events;
+using MusicGQL.Features.ServerLibrary.ArtistServerStatus;
+using MusicGQL.Features.ServerLibrary.ArtistServerStatus.Services;
 using MusicGQL.Features.ServerLibrary.ReleaseGroup.Aggregate;
 using MusicGQL.Features.ServerLibrary.ReleaseGroup.Handlers;
 using MusicGQL.Features.ServerLibrary.ReleaseGroup.Mutations;
-using MusicGQL.Features.ServerLibrary.ReleaseGroup.Sagas;
-using MusicGQL.Features.ServerLibrary.ReleaseGroup.Sagas.Events;
 using MusicGQL.Features.Users.Aggregate;
 using MusicGQL.Features.Users.Handlers;
 using MusicGQL.Features.Users.Mutations;
@@ -75,18 +73,23 @@ builder
             minimumDiagnosticLevel: DiagnosticLevel.Debug
         )
     ))
-    .AddSingleton<Neo4jPersistenceService>()
-    .AddSingleton<Neo4jService>()
+    .AddSingleton<ServerLibraryService>()
+    .AddSingleton<ServerLibraryImportService>()
     .AddSingleton<SoulSeekService>()
     .AddSingleton<MusicBrainzService>()
     .AddSingleton<YouTubeService>()
     .AddSingleton<SpotifyService>()
+    .AddScoped<ArtistServerStatusService>()
     .AddScoped<LikeSongHandler>()
     .AddScoped<UnlikeSongHandler>()
+    .AddScoped<ImportArtistToServerLibraryHandler>()
+    .AddScoped<ImportReleaseGroupToServerLibraryHandler>()
     .AddScoped<MarkReleaseGroupAsAddedToServerLibraryHandler>()
     .AddScoped<MarkArtistAsAddedToServerLibraryHandler>()
+    .AddScoped<MarkArtistReleaseGroupsAsAddedToServerLibraryHandler>()
     .AddScoped<ProcessMissingArtistsInServerLibraryHandler>()
     .AddScoped<ProcessMissingReleaseGroupsInServerLibraryHandler>()
+    .AddScoped<MissingMetaDataProcessingService>()
     // Event processors
     .AddScoped<LikedSongsEventProcessor>()
     .AddScoped<ReleaseGroupsAddedToServerLibraryProcessor>()
@@ -208,7 +211,14 @@ builder
     .AddType<SignInError>()
     .AddTypeExtension<SignOutMutation>()
     .AddType<SignOutSuccess>()
-    .AddType<SignOutError>();
+    .AddType<SignOutError>()
+    .AddType<ArtistServerStatusReady>()
+    .AddType<ArtistServerStatusImportingArtist>()
+    .AddType<ArtistServerStatusUpdatingArtist>()
+    .AddType<ArtistServerStatusImportingArtistReleases>()
+    .AddType<ArtistServerStatusUpdatingArtistReleases>()
+    .AddType<ArtistServerStatusNotInLibrary>()
+    .AddType<IArtistServerStatusResult>();
 
 builder.Services.Configure<LastfmOptions>(builder.Configuration.GetSection("Lastfm"));
 
@@ -240,26 +250,6 @@ builder.Services.AddRebus(
         rebus
             .Routing(r =>
                 r.TypeBased()
-                    .Map<AddArtistToServerLibrarySagaEvents.StartAddArtist>("mmusic-queue")
-                    .Map<AddArtistToServerLibrarySagaEvents.FindArtistInMusicBrainz>("mmusic-queue")
-                    .Map<AddArtistToServerLibrarySagaEvents.FoundArtistInMusicBrainz>(
-                        "mmusic-queue"
-                    )
-                    .Map<AddArtistToServerLibrarySagaEvents.DidNotFindArtistInMusicBrainz>(
-                        "mmusic-queue"
-                    )
-                    .Map<AddReleaseGroupToServerLibrarySagaEvents.StartAddReleaseGroup>(
-                        "mmusic-queue"
-                    )
-                    .Map<AddReleaseGroupToServerLibrarySagaEvents.FindReleaseGroupInMusicBrainz>(
-                        "mmusic-queue"
-                    )
-                    .Map<AddReleaseGroupToServerLibrarySagaEvents.FoundReleaseGroupInMusicBrainz>(
-                        "mmusic-queue"
-                    )
-                    .Map<AddReleaseGroupToServerLibrarySagaEvents.DidNotFindReleaseGroupInMusicBrainz>(
-                        "mmusic-queue"
-                    )
                     .Map<DownloadReleaseQueuedEvent>("mmusic-queue")
                     .Map<LookupReleaseInMusicBrainz>("mmusic-queue")
                     .Map<LookupRecordingsForReleaseInMusicBrainz>("mmusic-queue")
@@ -287,14 +277,6 @@ builder.Services.AddRebus(
         await bus.Subscribe<FoundReleaseInMusicBrainz>();
     }
 );
-
-// Add artist saga
-builder.Services.AddRebusHandler<AddArtistToServerLibrarySaga>();
-builder.Services.AddRebusHandler<FindArtistInMusicBrainzHandler>();
-
-// Add release group saga
-builder.Services.AddRebusHandler<AddReleaseGroupToServerLibrarySaga>();
-builder.Services.AddRebusHandler<FindReleaseGroupInMusicBrainzHandler>();
 
 builder.Services.AddRebusHandler<DownloadReleaseSaga>();
 builder.Services.AddRebusHandler<LookupReleaseInMusicBrainzHandler>();

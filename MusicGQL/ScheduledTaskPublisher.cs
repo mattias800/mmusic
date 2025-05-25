@@ -1,12 +1,7 @@
-using MusicGQL.Features.ServerLibrary.Artist.Handlers;
-using MusicGQL.Features.ServerLibrary.ReleaseGroup.Handlers;
-using Rebus.Bus;
-
 namespace MusicGQL;
 
 public class ScheduledTaskPublisher(
     IServiceScopeFactory scopeFactory,
-    IBus bus,
     ILogger<ScheduledTaskPublisher> logger
 ) : BackgroundService
 {
@@ -21,13 +16,6 @@ public class ScheduledTaskPublisher(
             try
             {
                 using var scope = scopeFactory.CreateScope();
-                var processMissingArtistsInServerLibraryHandler =
-                    scope.ServiceProvider.GetRequiredService<ProcessMissingArtistsInServerLibraryHandler>();
-                var processMissingReleaseGroupsInServerLibraryHandler =
-                    scope.ServiceProvider.GetRequiredService<ProcessMissingReleaseGroupsInServerLibraryHandler>();
-
-                await processMissingArtistsInServerLibraryHandler.Handle(new());
-                await processMissingReleaseGroupsInServerLibraryHandler.Handle(new());
             }
             catch (Exception ex)
             {

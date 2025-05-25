@@ -11,9 +11,11 @@ export interface ArtistInLibraryButtonProps {
 export const artistInLibraryButtonArtistFragment = graphql(`
   fragment ArtistInLibraryButton_Artist on Artist {
     id
-    serverAvailability {
+    serverStatus {
       id
-      isInServerLibrary
+      result {
+        __typename
+      }
     }
   }
 `);
@@ -27,7 +29,8 @@ export const ArtistInLibraryButton: React.FC<ArtistInLibraryButtonProps> = (
 
   const artist = useFragment(artistInLibraryButtonArtistFragment, props.artist);
 
-  const inLibrary = artist.serverAvailability.isInServerLibrary;
+  const inLibrary =
+    artist.serverStatus.result.__typename !== "ArtistServerStatusNotInLibrary";
 
   if (inLibrary) {
     return (

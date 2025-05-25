@@ -4,7 +4,7 @@ using Neo4j.Driver;
 
 namespace MusicGQL.Integration.Neo4j;
 
-public class Neo4jPersistenceService(IMapper mapper)
+public class ServerLibraryService(IMapper mapper)
 {
     public async Task SaveReleaseGroupNodeAsync(
         IAsyncTransaction tx,

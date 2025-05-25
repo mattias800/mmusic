@@ -14,6 +14,8 @@ import { SectionHeading } from "@/components/headings/SectionHeading.tsx";
 import { Section } from "@/components/page-body/Section.tsx";
 import { SectionList } from "@/components/page-body/SectionList.tsx";
 import { ArtistEpList } from "@/features/artist/artist-page/ArtistEpList.tsx";
+import { whenTypename } from "@/common/utils/TypenameMatcher.ts";
+import { ArtistNotInLibrarySectionList } from "@/features/artist/artist-not-in-library/ArtistNotInLibrarySectionList.tsx";
 
 interface ArtistPanelProps {
   artist: FragmentType<typeof artistPanelArtistFragment>;
@@ -23,48 +25,88 @@ export const artistPanelArtistFragment = graphql(`
   fragment ArtistPanel_Artist on Artist {
     id
     name
+    serverStatus {
+      id
+      result {
+        __typename
+        ... on ArtistServerStatusResultBase {
+          topTracksVisible
+          releasesVisible
+        }
+        ... on ArtistServerStatusImportingArtistReleases {
+          numReleaseGroupsFinishedImporting
+          totalNumReleaseGroupsBeingImported
+        }
+      }
+    }
     ...ArtistHeader_Artist
     ...TopArtistTracks_Artist
     ...ArtistInLibraryButton_Artist
+    ...ArtistNotInLibraryPanel_Artist
   }
 `);
 
 export const ArtistPanel: React.FC<ArtistPanelProps> = (props) => {
   const artist = useFragment(artistPanelArtistFragment, props.artist);
 
+  const { releasesVisible, topTracksVisible } = artist.serverStatus.result;
+
+  const importInProgress = whenTypename(artist.serverStatus.result)
+    .is("ArtistServerStatusImportingArtist", () => true)
+    .is(
+      "ArtistServerStatusImportingArtistReleases",
+      (p) => p.numReleaseGroupsFinishedImporting < 1,
+    )
+    .default(() => false);
+
+  const notInLibrary =
+    artist.serverStatus.result.__typename === "ArtistServerStatusNotInLibrary";
+
   return (
     <GradientContent>
       <ArtistHeader artist={artist} />
 
-      <div className="px-6 md:px-10 py-6 flex items-center gap-4">
-        <LargePlayButton />
-        <ShuffleButton />
-        <FollowButton />
-        <DotsButton />
-        <ArtistInLibraryButton artist={artist} />
-      </div>
+      {notInLibrary || importInProgress ? (
+        <ArtistNotInLibrarySectionList artist={artist} />
+      ) : (
+        <>
+          <div className="px-6 md:px-10 py-6 flex items-center gap-4">
+            <LargePlayButton />
+            <ShuffleButton />
+            <FollowButton />
+            <DotsButton />
+            <ArtistInLibraryButton artist={artist} />
+          </div>
 
-      <SectionList>
-        <Section>
-          <SectionHeading>Popular</SectionHeading>
-          <TopArtistTracks artist={artist} />
-        </Section>
+          <SectionList>
+            {topTracksVisible && (
+              <Section>
+                <SectionHeading>Popular</SectionHeading>
+                <TopArtistTracks artist={artist} />
+              </Section>
+            )}
 
-        <Section>
-          <SectionHeading>Albums</SectionHeading>
-          <ArtistAlbumList artistId={artist.id} />
-        </Section>
+            {releasesVisible && (
+              <>
+                <Section>
+                  <SectionHeading>Albums</SectionHeading>
+                  <ArtistAlbumList artistId={artist.id} />
+                </Section>
 
-        <Section>
-          <SectionHeading>EPs</SectionHeading>
-          <ArtistEpList artistId={artist.id} />
-        </Section>
+                <Section>
+                  <SectionHeading>EPs</SectionHeading>
+                  <ArtistEpList artistId={artist.id} />
+                </Section>
 
-        <Section>
-          <SectionHeading>Singles</SectionHeading>
-          <ArtistSingleList artistId={artist.id} />
-        </Section>
-      </SectionList>
+                <Section>
+                  <SectionHeading>Singles</SectionHeading>
+                  <ArtistSingleList artistId={artist.id} />
+                </Section>
+              </>
+            )}
+          </SectionList>
+        </>
+      )}
     </GradientContent>
   );
 };

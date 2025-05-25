@@ -41,7 +41,6 @@
     <PackageReference Include="TrackSeries.FanArtTV.Client" Version="1.2.4" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Features\ServerLibrary\ReleaseGroup\MusicBrainz\" />
     <Folder Include="Features\Users\Handlers\" />
     <Folder Include="Features\Users\Queries\" />
     <Folder Include="Features\YouTube\" />

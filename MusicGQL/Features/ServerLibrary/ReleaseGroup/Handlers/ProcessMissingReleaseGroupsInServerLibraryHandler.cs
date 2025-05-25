@@ -1,18 +1,16 @@
 using MusicGQL.Db.Postgres;
-using MusicGQL.Features.ServerLibrary.ReleaseGroup.Sagas;
 using Neo4j.Driver;
-using Rebus.Bus;
 
 namespace MusicGQL.Features.ServerLibrary.ReleaseGroup.Handlers;
 
 public class ProcessMissingReleaseGroupsInServerLibraryHandler(
     EventDbContext dbContext,
-    IBus bus,
     IDriver neo4jDriver,
+    ImportReleaseGroupToServerLibraryHandler importReleaseGroupToServerLibraryHandler,
     ILogger<ProcessMissingReleaseGroupsInServerLibraryHandler> logger
 )
 {
-    public async Task<Result> Handle(Command command)
+    public async Task Handle()
     {
         logger.LogInformation("Processing missing release groups in server library");
 
@@ -22,7 +20,7 @@ public class ProcessMissingReleaseGroupsInServerLibraryHandler(
         if (releaseGroupsMarked is null || releaseGroupsMarked.ReleaseGroupMbIds.Count == 0)
         {
             logger.LogInformation("No release groups marked as added to server library");
-            return new Result.Success();
+            return;
         }
 
         var releaseGroupIdsInLibrary = new List<string>();
@@ -49,25 +47,10 @@ public class ProcessMissingReleaseGroupsInServerLibraryHandler(
             releaseGroupIdsToAdd.Count
         );
 
-        foreach (var releaseGroupId in releaseGroupIdsToAdd)
-        {
-            logger.LogInformation("Adding release group {Id} to server library", releaseGroupId);
-            await bus.Send(
-                new AddReleaseGroupToServerLibrarySagaEvents.StartAddReleaseGroup(releaseGroupId)
-            );
-        }
-
-        return new Result.Success();
-    }
-
-    public record Command;
-
-    public abstract record Result
-    {
-        public record Success : Result;
-
-        public record AlreadyAdded : Result;
-
-        public record ReleaseGroupDoesNotExist : Result;
+        await Task.WhenAll(
+            releaseGroupIdsToAdd.Select(async releaseGroupId =>
+                await importReleaseGroupToServerLibraryHandler.Handle(new(releaseGroupId))
+            )
+        );
     }
 }

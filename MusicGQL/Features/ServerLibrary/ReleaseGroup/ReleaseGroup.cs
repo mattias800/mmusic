@@ -17,7 +17,7 @@ public record ReleaseGroup([property: GraphQLIgnore] DbReleaseGroup Model)
 
     public IEnumerable<string> SecondaryTypes() => Model.SecondaryTypes;
 
-    public async Task<IEnumerable<Common.NameCredit>> Credits(Neo4jService service)
+    public async Task<IEnumerable<Common.NameCredit>> Credits(ServerLibraryImportService service)
     {
         var artistCredits = await service.GetCreditsOnReleaseGroupAsync(Model.Id);
         return artistCredits.Select(c => new Common.NameCredit(c));
@@ -26,14 +26,17 @@ public record ReleaseGroup([property: GraphQLIgnore] DbReleaseGroup Model)
     public string? FirstReleaseDate => Model.FirstReleaseDate;
     public string? FirstReleaseYear => Model.FirstReleaseDate?.Split("-").FirstOrDefault();
 
-    public async Task<Release.Release?> MainRelease(Neo4jService service)
+    public async Task<Release.Release?> MainRelease(ServerLibraryImportService service)
     {
         var all = await service.GetReleasesForReleaseGroupAsync(Model.Id);
         var best = all.FirstOrDefault();
         return best is null ? null : new Release.Release(best);
     }
 
-    public async Task<string?> CoverArtUri(IFanArtTVClient fanartClient, Neo4jService service)
+    public async Task<string?> CoverArtUri(
+        IFanArtTVClient fanartClient,
+        ServerLibraryImportService service
+    )
     {
         var artistCredits = await service.GetCreditsOnReleaseGroupAsync(Model.Id);
 

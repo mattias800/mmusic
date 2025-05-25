@@ -53,7 +53,7 @@ input AddArtistToServerLibraryInput {
 union AddArtistToServerLibraryResult = AddArtistToServerLibraryArtistAlreadyAdded | AddArtistToServerLibraryArtistDoesNotExist | AddArtistToServerLibrarySuccess | AddArtistToServerLibraryUnknownError
 
 type AddArtistToServerLibrarySuccess {
-  serverAvailability: ArtistServerAvailability!
+  success: Boolean!
 }
 
 type AddArtistToServerLibraryUnknownError {
@@ -93,7 +93,7 @@ type Artist {
   name: String!
   releaseGroups: [ReleaseGroup!]!
   releases: [Release!]!
-  serverAvailability: ArtistServerAvailability!
+  serverStatus: ArtistServerStatus!
   singles: [ReleaseGroup!]!
   sortName: String!
   topTracks: [LastFmTrack!]!
@@ -105,10 +105,48 @@ type ArtistSearchRoot {
   searchByName(limit: Int! = 25, name: String!, offset: Int! = 0): [Artist!]!
 }
 
-type ArtistServerAvailability {
-  artist: MbArtist
+type ArtistServerStatus {
   id: ID!
-  isInServerLibrary: Boolean!
+  result: ArtistServerStatusResult!
+}
+
+type ArtistServerStatusImportingArtist implements ArtistServerStatusResultBase {
+  releasesVisible: Boolean!
+  topTracksVisible: Boolean!
+}
+
+type ArtistServerStatusImportingArtistReleases implements ArtistServerStatusResultBase {
+  numReleaseGroupsFinishedImporting: Int!
+  releasesVisible: Boolean!
+  topTracksVisible: Boolean!
+  totalNumReleaseGroupsBeingImported: Int!
+}
+
+type ArtistServerStatusNotInLibrary implements ArtistServerStatusResultBase {
+  releasesVisible: Boolean!
+  topTracksVisible: Boolean!
+}
+
+type ArtistServerStatusReady implements ArtistServerStatusResultBase {
+  releasesVisible: Boolean!
+  topTracksVisible: Boolean!
+}
+
+union ArtistServerStatusResult = ArtistServerStatusImportingArtist | ArtistServerStatusImportingArtistReleases | ArtistServerStatusNotInLibrary | ArtistServerStatusReady | ArtistServerStatusUpdatingArtist | ArtistServerStatusUpdatingArtistReleases
+
+interface ArtistServerStatusResultBase {
+  releasesVisible: Boolean!
+  topTracksVisible: Boolean!
+}
+
+type ArtistServerStatusUpdatingArtist implements ArtistServerStatusResultBase {
+  releasesVisible: Boolean!
+  topTracksVisible: Boolean!
+}
+
+type ArtistServerStatusUpdatingArtistReleases implements ArtistServerStatusResultBase {
+  releasesVisible: Boolean!
+  topTracksVisible: Boolean!
 }
 
 type CreateUserError {
@@ -249,7 +287,7 @@ type MbArtist {
   name: String!
   releaseGroups: [MbReleaseGroup!]!
   releases: [MbRelease!]!
-  serverAvailability: ArtistServerAvailability!
+  serverStatus: ArtistServerStatusResult!
   singles: [MbReleaseGroup!]!
   sortName: String!
   topTracks: [LastFmTrack!]!

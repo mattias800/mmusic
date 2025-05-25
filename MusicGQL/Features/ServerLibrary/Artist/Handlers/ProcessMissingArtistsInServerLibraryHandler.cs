@@ -1,18 +1,16 @@
 using MusicGQL.Db.Postgres;
-using MusicGQL.Features.ServerLibrary.Artist.Sagas;
 using Neo4j.Driver;
-using Rebus.Bus;
 
 namespace MusicGQL.Features.ServerLibrary.Artist.Handlers;
 
 public class ProcessMissingArtistsInServerLibraryHandler(
     EventDbContext dbContext,
-    IBus bus,
     IDriver neo4jDriver,
+    ImportArtistToServerLibraryHandler importArtistToServerLibraryHandler,
     ILogger<ProcessMissingArtistsInServerLibraryHandler> logger
 )
 {
-    public async Task<Result> Handle(Command command)
+    public async Task Handle()
     {
         logger.LogInformation("Processing missing artists in server library");
 
@@ -21,7 +19,7 @@ public class ProcessMissingArtistsInServerLibraryHandler(
         if (artistsMarked is null || artistsMarked.ArtistMbIds.Count == 0)
         {
             logger.LogInformation("No artists marked as added to server library");
-            return new Result.Success();
+            return;
         }
 
         var artistIdsInLibrary = new List<string>();
@@ -50,21 +48,7 @@ public class ProcessMissingArtistsInServerLibraryHandler(
 
         foreach (var artistId in artistIdsToAdd)
         {
-            logger.LogInformation("Adding artist {Id} to server library", artistId);
-            await bus.Send(new AddArtistToServerLibrarySagaEvents.StartAddArtist(artistId));
+            await importArtistToServerLibraryHandler.Handle(new(artistId));
         }
-
-        return new Result.Success();
-    }
-
-    public record Command;
-
-    public abstract record Result
-    {
-        public record Success : Result;
-
-        public record AlreadyAdded : Result;
-
-        public record ArtistDoesNotExist : Result;
     }
 }

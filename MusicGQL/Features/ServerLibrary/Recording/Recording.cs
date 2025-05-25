@@ -15,20 +15,23 @@ public record Recording([property: GraphQLIgnore] DbRecording Model)
 
     public int? Length() => Model.Length;
 
-    public async Task<IEnumerable<NameCredit>> NameCredits(Neo4jService service)
+    public async Task<IEnumerable<NameCredit>> NameCredits(ServerLibraryImportService service)
     {
         var credits = await service.GetCreditsOnRecordingAsync(Model.Id);
         return credits.Select(c => new NameCredit(c));
     }
 
-    public async Task<ReleaseGroup.ReleaseGroup?> MainAlbum(Neo4jService service)
+    public async Task<ReleaseGroup.ReleaseGroup?> MainAlbum(ServerLibraryImportService service)
     {
         var releaseGroups = await service.GetReleaseGroupsForRecordingAsync(Model.Id);
         var mainAlbum = LibraryDecider.FindMainReleaseGroupForRecording(releaseGroups);
         return mainAlbum is null ? null : new ReleaseGroup.ReleaseGroup(mainAlbum);
     }
 
-    public async Task<LastFmStatistics?> Statistics(LastfmClient lastfmClient, Neo4jService service)
+    public async Task<LastFmStatistics?> Statistics(
+        LastfmClient lastfmClient,
+        ServerLibraryImportService service
+    )
     {
         var artists = await service.GetArtistsForRecordingAsync(Model.Id);
 
@@ -43,7 +46,9 @@ public record Recording([property: GraphQLIgnore] DbRecording Model)
         }
     }
 
-    public async Task<RecordingStreamingServiceInfo> StreamingServiceInfo(Neo4jService service)
+    public async Task<RecordingStreamingServiceInfo> StreamingServiceInfo(
+        ServerLibraryImportService service
+    )
     {
         var relations = await service.GetRelationsOnRecordingAsync(Model.Id);
         var credits = await service.GetCreditsOnRecordingAsync(Model.Id);
