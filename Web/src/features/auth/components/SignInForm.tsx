@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { TextInput } from "@/components/inputs/TextInput";
 import { PrimaryButton } from "@/components/buttons/PrimaryButton.tsx";
-import { ErrorBox } from "@/components/errors/ErrorBox.tsx";
+import { MessageBox } from "@/components/errors/MessageBox.tsx";
 
 export interface SignInFormValues {
   username: string;
@@ -57,7 +57,7 @@ export function SignInForm({
         />
       </div>
 
-      {errorMessage && <ErrorBox message={errorMessage} />}
+      {errorMessage && <MessageBox message={errorMessage} variant={"error"} />}
 
       <PrimaryButton
         label={"Sign in"}

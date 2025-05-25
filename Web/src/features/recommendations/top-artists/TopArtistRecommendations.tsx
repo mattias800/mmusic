@@ -4,7 +4,7 @@ import { useQuery } from "urql";
 import { SpinnerSpacing } from "@/components/spinner/SpinnerSpacing.tsx";
 import { Spinner } from "@/components/spinner/Spinner.tsx";
 import { CardFlexList } from "@/components/page-body/CardFlexList.tsx";
-import { ErrorBox } from "@/components/errors/ErrorBox.tsx";
+import { MessageBox } from "@/components/errors/MessageBox.tsx";
 import { ArtistCard } from "@/features/artist/artist-card/ArtistCard.tsx";
 
 export interface TopArtistRecommendationsProps {}
@@ -47,7 +47,9 @@ export const TopArtistRecommendations: React.FC<
     );
 
   if (error || !data) {
-    return <ErrorBox message={error?.message ?? "No data"} />;
+    return (
+      <MessageBox message={error?.message ?? "No data"} variant={"error"} />
+    );
   }
 
   return (

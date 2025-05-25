@@ -18,7 +18,7 @@ type Documents = {
     "\n  query AlbumListQuery {\n    releaseGroup {\n      all {\n        id\n        ...AlbumList_ReleaseGroup\n      }\n    }\n  }\n": typeof types.AlbumListQueryDocument,
     "\n  query AlbumQuery($releaseGroupId: ID!) {\n    releaseGroup {\n      byId(id: $releaseGroupId) {\n        id\n        ...AlbumPanel_ReleaseGroup\n      }\n    }\n  }\n": typeof types.AlbumQueryDocument,
     "\n  query ArtistListQuery {\n    artist {\n      all {\n        id\n        ...ArtistList_Artist\n      }\n    }\n  }\n": typeof types.ArtistListQueryDocument,
-    "\n  query ArtistQuery($artistId: ID!) {\n    artist {\n      byId(id: $artistId) {\n        id\n        ...ArtistPanel_Artist\n      }\n    }\n  }\n": typeof types.ArtistQueryDocument,
+    "\n  query ArtistQuery($artistId: ID!) {\n    artist {\n      byId(id: $artistId) {\n        id\n        serverAvailability {\n          id\n          isInServerLibrary\n        }\n        ...ArtistPanel_Artist\n        ...ArtistNotInLibraryPanel_Artist\n      }\n    }\n  }\n": typeof types.ArtistQueryDocument,
     "\n  query LikedSongsQuery {\n    viewer {\n      id\n      ...LikedSongsList_User\n    }\n  }\n": typeof types.LikedSongsQueryDocument,
     "\n  mutation CreateUser($username: String!, $password: String!) {\n    createUser(input: { username: $username, password: $password }) {\n      __typename\n      ... on CreateUserSuccess {\n        # Assuming a similar success payload\n        user {\n          id\n          username\n        }\n      }\n      ... on CreateUserError {\n        # Assuming a similar error payload\n        message\n      }\n    }\n  }\n": typeof types.CreateUserDocument,
     "\n  mutation SignIn($username: String!, $password: String!) {\n    signIn(input: { username: $username, password: $password }) {\n      __typename\n      ... on SignInSuccess {\n        user {\n          id\n          username\n        }\n      }\n      ... on SignInError {\n        message\n      }\n    }\n  }\n": typeof types.SignInDocument,
@@ -26,7 +26,7 @@ type Documents = {
     "\n  fragment Playlist_User on User {\n    id\n    likedSongs {\n      id\n      ...LikedSongRow_LikedSong\n    }\n  }\n": typeof types.Playlist_UserFragmentDoc,
     "\n  fragment LikedSongRow_Recoding on Recording {\n    id\n    title\n    length\n    nameCredits {\n      artist {\n        id\n        name\n      }\n    }\n    mainAlbum {\n      id\n      title\n      coverArtUri\n    }\n  }\n": typeof types.LikedSongRow_RecodingFragmentDoc,
     "\n  mutation AddArtistToServerLibrary($artistId: ID!) {\n    addArtistToServerLibrary(input: { artistId: $artistId }) {\n      __typename\n      ... on AddArtistToServerLibrarySuccess {\n        serverAvailability {\n          id\n          isInServerLibrary\n        }\n      }\n    }\n  }\n": typeof types.AddArtistToServerLibraryDocument,
-    "\n  fragment ArtistInLibraryButton_Artist on Artist {\n    id\n  }\n": typeof types.ArtistInLibraryButton_ArtistFragmentDoc,
+    "\n  fragment ArtistInLibraryButton_Artist on Artist {\n    id\n    serverAvailability {\n      id\n      isInServerLibrary\n    }\n  }\n": typeof types.ArtistInLibraryButton_ArtistFragmentDoc,
     "\n  fragment AlbumCard_ReleaseGroup on ReleaseGroup {\n    id\n    title\n    firstReleaseYear\n    coverArtUri\n    credits {\n      name\n      artist {\n        id\n        name\n      }\n    }\n  }\n": typeof types.AlbumCard_ReleaseGroupFragmentDoc,
     "\n  fragment AlbumHeader_ReleaseGroup on ReleaseGroup {\n    id\n    title\n    primaryType\n    mainRelease {\n      id\n      title\n      coverArtUri\n      year\n\n      credits {\n        artist {\n          id\n          name\n        }\n      }\n      recordings {\n        id\n        length\n      }\n    }\n  }\n": typeof types.AlbumHeader_ReleaseGroupFragmentDoc,
     "\n  fragment AlbumPanel_ReleaseGroup on ReleaseGroup {\n    id\n    ...AlbumHeader_ReleaseGroup\n    ...AlbumTrackList_ReleaseGroup\n    firstReleaseYear\n    mainRelease {\n      labels {\n        id\n        name\n      }\n    }\n  }\n": typeof types.AlbumPanel_ReleaseGroupFragmentDoc,
@@ -34,6 +34,8 @@ type Documents = {
     "\n  fragment AlbumList_ReleaseGroup on ReleaseGroup {\n    id\n    ...AlbumCard_ReleaseGroup\n  }\n": typeof types.AlbumList_ReleaseGroupFragmentDoc,
     "\n  fragment ArtistCard_Artist on Artist {\n    id\n    name\n    listeners\n    images {\n      artistThumb\n    }\n  }\n": typeof types.ArtistCard_ArtistFragmentDoc,
     "\n  fragment ArtistList_Artist on Artist {\n    id\n    ...ArtistCard_Artist\n  }\n": typeof types.ArtistList_ArtistFragmentDoc,
+    "\n  fragment ArtistNotInLibraryPanel_Artist on Artist {\n    id\n    name\n    ...ArtistHeader_Artist\n    ...ArtistInLibraryButton_Artist\n    ...ArtistNotInLibraryTopTracks_Artist\n  }\n": typeof types.ArtistNotInLibraryPanel_ArtistFragmentDoc,
+    "\n  fragment ArtistNotInLibraryTopTracks_Artist on Artist {\n    id\n    topTracks {\n      id\n      name\n      statistics {\n        listeners\n      }\n    }\n  }\n": typeof types.ArtistNotInLibraryTopTracks_ArtistFragmentDoc,
     "\n  query ArtistAlbumList($artistId: ID!) {\n    artist {\n      byId(id: $artistId) {\n        id\n        albums {\n          id\n          firstReleaseDate\n          ...AlbumCard_ReleaseGroup\n        }\n      }\n    }\n  }\n": typeof types.ArtistAlbumListDocument,
     "\n  query ArtistEpList($artistId: ID!) {\n    artist {\n      byId(id: $artistId) {\n        id\n        eps {\n          id\n          firstReleaseDate\n          ...AlbumCard_ReleaseGroup\n        }\n      }\n    }\n  }\n": typeof types.ArtistEpListDocument,
     "\n  fragment ArtistHeader_Artist on Artist {\n    id\n    name\n    listeners\n    images {\n      artistBackground\n    }\n  }\n": typeof types.ArtistHeader_ArtistFragmentDoc,
@@ -70,7 +72,7 @@ const documents: Documents = {
     "\n  query AlbumListQuery {\n    releaseGroup {\n      all {\n        id\n        ...AlbumList_ReleaseGroup\n      }\n    }\n  }\n": types.AlbumListQueryDocument,
     "\n  query AlbumQuery($releaseGroupId: ID!) {\n    releaseGroup {\n      byId(id: $releaseGroupId) {\n        id\n        ...AlbumPanel_ReleaseGroup\n      }\n    }\n  }\n": types.AlbumQueryDocument,
     "\n  query ArtistListQuery {\n    artist {\n      all {\n        id\n        ...ArtistList_Artist\n      }\n    }\n  }\n": types.ArtistListQueryDocument,
-    "\n  query ArtistQuery($artistId: ID!) {\n    artist {\n      byId(id: $artistId) {\n        id\n        ...ArtistPanel_Artist\n      }\n    }\n  }\n": types.ArtistQueryDocument,
+    "\n  query ArtistQuery($artistId: ID!) {\n    artist {\n      byId(id: $artistId) {\n        id\n        serverAvailability {\n          id\n          isInServerLibrary\n        }\n        ...ArtistPanel_Artist\n        ...ArtistNotInLibraryPanel_Artist\n      }\n    }\n  }\n": types.ArtistQueryDocument,
     "\n  query LikedSongsQuery {\n    viewer {\n      id\n      ...LikedSongsList_User\n    }\n  }\n": types.LikedSongsQueryDocument,
     "\n  mutation CreateUser($username: String!, $password: String!) {\n    createUser(input: { username: $username, password: $password }) {\n      __typename\n      ... on CreateUserSuccess {\n        # Assuming a similar success payload\n        user {\n          id\n          username\n        }\n      }\n      ... on CreateUserError {\n        # Assuming a similar error payload\n        message\n      }\n    }\n  }\n": types.CreateUserDocument,
     "\n  mutation SignIn($username: String!, $password: String!) {\n    signIn(input: { username: $username, password: $password }) {\n      __typename\n      ... on SignInSuccess {\n        user {\n          id\n          username\n        }\n      }\n      ... on SignInError {\n        message\n      }\n    }\n  }\n": types.SignInDocument,
@@ -78,7 +80,7 @@ const documents: Documents = {
     "\n  fragment Playlist_User on User {\n    id\n    likedSongs {\n      id\n      ...LikedSongRow_LikedSong\n    }\n  }\n": types.Playlist_UserFragmentDoc,
     "\n  fragment LikedSongRow_Recoding on Recording {\n    id\n    title\n    length\n    nameCredits {\n      artist {\n        id\n        name\n      }\n    }\n    mainAlbum {\n      id\n      title\n      coverArtUri\n    }\n  }\n": types.LikedSongRow_RecodingFragmentDoc,
     "\n  mutation AddArtistToServerLibrary($artistId: ID!) {\n    addArtistToServerLibrary(input: { artistId: $artistId }) {\n      __typename\n      ... on AddArtistToServerLibrarySuccess {\n        serverAvailability {\n          id\n          isInServerLibrary\n        }\n      }\n    }\n  }\n": types.AddArtistToServerLibraryDocument,
-    "\n  fragment ArtistInLibraryButton_Artist on Artist {\n    id\n  }\n": types.ArtistInLibraryButton_ArtistFragmentDoc,
+    "\n  fragment ArtistInLibraryButton_Artist on Artist {\n    id\n    serverAvailability {\n      id\n      isInServerLibrary\n    }\n  }\n": types.ArtistInLibraryButton_ArtistFragmentDoc,
     "\n  fragment AlbumCard_ReleaseGroup on ReleaseGroup {\n    id\n    title\n    firstReleaseYear\n    coverArtUri\n    credits {\n      name\n      artist {\n        id\n        name\n      }\n    }\n  }\n": types.AlbumCard_ReleaseGroupFragmentDoc,
     "\n  fragment AlbumHeader_ReleaseGroup on ReleaseGroup {\n    id\n    title\n    primaryType\n    mainRelease {\n      id\n      title\n      coverArtUri\n      year\n\n      credits {\n        artist {\n          id\n          name\n        }\n      }\n      recordings {\n        id\n        length\n      }\n    }\n  }\n": types.AlbumHeader_ReleaseGroupFragmentDoc,
     "\n  fragment AlbumPanel_ReleaseGroup on ReleaseGroup {\n    id\n    ...AlbumHeader_ReleaseGroup\n    ...AlbumTrackList_ReleaseGroup\n    firstReleaseYear\n    mainRelease {\n      labels {\n        id\n        name\n      }\n    }\n  }\n": types.AlbumPanel_ReleaseGroupFragmentDoc,
@@ -86,6 +88,8 @@ const documents: Documents = {
     "\n  fragment AlbumList_ReleaseGroup on ReleaseGroup {\n    id\n    ...AlbumCard_ReleaseGroup\n  }\n": types.AlbumList_ReleaseGroupFragmentDoc,
     "\n  fragment ArtistCard_Artist on Artist {\n    id\n    name\n    listeners\n    images {\n      artistThumb\n    }\n  }\n": types.ArtistCard_ArtistFragmentDoc,
     "\n  fragment ArtistList_Artist on Artist {\n    id\n    ...ArtistCard_Artist\n  }\n": types.ArtistList_ArtistFragmentDoc,
+    "\n  fragment ArtistNotInLibraryPanel_Artist on Artist {\n    id\n    name\n    ...ArtistHeader_Artist\n    ...ArtistInLibraryButton_Artist\n    ...ArtistNotInLibraryTopTracks_Artist\n  }\n": types.ArtistNotInLibraryPanel_ArtistFragmentDoc,
+    "\n  fragment ArtistNotInLibraryTopTracks_Artist on Artist {\n    id\n    topTracks {\n      id\n      name\n      statistics {\n        listeners\n      }\n    }\n  }\n": types.ArtistNotInLibraryTopTracks_ArtistFragmentDoc,
     "\n  query ArtistAlbumList($artistId: ID!) {\n    artist {\n      byId(id: $artistId) {\n        id\n        albums {\n          id\n          firstReleaseDate\n          ...AlbumCard_ReleaseGroup\n        }\n      }\n    }\n  }\n": types.ArtistAlbumListDocument,
     "\n  query ArtistEpList($artistId: ID!) {\n    artist {\n      byId(id: $artistId) {\n        id\n        eps {\n          id\n          firstReleaseDate\n          ...AlbumCard_ReleaseGroup\n        }\n      }\n    }\n  }\n": types.ArtistEpListDocument,
     "\n  fragment ArtistHeader_Artist on Artist {\n    id\n    name\n    listeners\n    images {\n      artistBackground\n    }\n  }\n": types.ArtistHeader_ArtistFragmentDoc,
@@ -151,7 +155,7 @@ export function graphql(source: "\n  query ArtistListQuery {\n    artist {\n    
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query ArtistQuery($artistId: ID!) {\n    artist {\n      byId(id: $artistId) {\n        id\n        ...ArtistPanel_Artist\n      }\n    }\n  }\n"): (typeof documents)["\n  query ArtistQuery($artistId: ID!) {\n    artist {\n      byId(id: $artistId) {\n        id\n        ...ArtistPanel_Artist\n      }\n    }\n  }\n"];
+export function graphql(source: "\n  query ArtistQuery($artistId: ID!) {\n    artist {\n      byId(id: $artistId) {\n        id\n        serverAvailability {\n          id\n          isInServerLibrary\n        }\n        ...ArtistPanel_Artist\n        ...ArtistNotInLibraryPanel_Artist\n      }\n    }\n  }\n"): (typeof documents)["\n  query ArtistQuery($artistId: ID!) {\n    artist {\n      byId(id: $artistId) {\n        id\n        serverAvailability {\n          id\n          isInServerLibrary\n        }\n        ...ArtistPanel_Artist\n        ...ArtistNotInLibraryPanel_Artist\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -183,7 +187,7 @@ export function graphql(source: "\n  mutation AddArtistToServerLibrary($artistId
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment ArtistInLibraryButton_Artist on Artist {\n    id\n  }\n"): (typeof documents)["\n  fragment ArtistInLibraryButton_Artist on Artist {\n    id\n  }\n"];
+export function graphql(source: "\n  fragment ArtistInLibraryButton_Artist on Artist {\n    id\n    serverAvailability {\n      id\n      isInServerLibrary\n    }\n  }\n"): (typeof documents)["\n  fragment ArtistInLibraryButton_Artist on Artist {\n    id\n    serverAvailability {\n      id\n      isInServerLibrary\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -212,6 +216,14 @@ export function graphql(source: "\n  fragment ArtistCard_Artist on Artist {\n   
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  fragment ArtistList_Artist on Artist {\n    id\n    ...ArtistCard_Artist\n  }\n"): (typeof documents)["\n  fragment ArtistList_Artist on Artist {\n    id\n    ...ArtistCard_Artist\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  fragment ArtistNotInLibraryPanel_Artist on Artist {\n    id\n    name\n    ...ArtistHeader_Artist\n    ...ArtistInLibraryButton_Artist\n    ...ArtistNotInLibraryTopTracks_Artist\n  }\n"): (typeof documents)["\n  fragment ArtistNotInLibraryPanel_Artist on Artist {\n    id\n    name\n    ...ArtistHeader_Artist\n    ...ArtistInLibraryButton_Artist\n    ...ArtistNotInLibraryTopTracks_Artist\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  fragment ArtistNotInLibraryTopTracks_Artist on Artist {\n    id\n    topTracks {\n      id\n      name\n      statistics {\n        listeners\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment ArtistNotInLibraryTopTracks_Artist on Artist {\n    id\n    topTracks {\n      id\n      name\n      statistics {\n        listeners\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

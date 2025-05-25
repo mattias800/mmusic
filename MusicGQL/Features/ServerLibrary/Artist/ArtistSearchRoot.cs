@@ -1,12 +1,21 @@
+using MusicGQL.Db.Postgres;
 using MusicGQL.Integration.Neo4j;
 
 namespace MusicGQL.Features.ServerLibrary.Artist;
 
 public record ArtistSearchRoot
 {
-    public async Task<IEnumerable<Artist>> All(Neo4jService service)
+    public async Task<IEnumerable<Artist>> All(Neo4jService service, EventDbContext dbContext)
     {
-        var allArtists = await service.AllArtists(25, 0);
+        var addedArtists = await dbContext.ArtistsAddedToServerLibraryProjection.FindAsync(1);
+
+        if (addedArtists is null)
+        {
+            return [];
+        }
+
+        var allArtists = await service.GetArtistsByIdsAsync(addedArtists.ArtistMbIds);
+
         return allArtists.Select(a => new Artist(a));
     }
 

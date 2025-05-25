@@ -93,6 +93,7 @@ type Artist {
   name: String!
   releaseGroups: [ReleaseGroup!]!
   releases: [Release!]!
+  serverAvailability: ArtistServerAvailability!
   singles: [ReleaseGroup!]!
   sortName: String!
   topTracks: [LastFmTrack!]!

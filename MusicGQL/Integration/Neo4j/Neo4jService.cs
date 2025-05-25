@@ -13,6 +13,17 @@ namespace MusicGQL.Integration.Neo4j;
 public class Neo4jService(IDriver driver)
 {
     // Artists
+
+    public async Task<List<DbArtist>> AllArtists(int limit = 25, int offset = 0)
+    {
+        var dbArtists = await ExecuteReadListAsync(
+            "MATCH (a:Artist) RETURN a ORDER BY a.Name SKIP $offset LIMIT $limit",
+            new { offset, limit },
+            record => record["a"].As<INode>().ToDbArtist()
+        );
+        return dbArtists;
+    }
+
     public async Task<DbArtist?> GetArtistByIdAsync(string id)
     {
         var dbArtist = await ExecuteReadSingleAsync(
@@ -21,6 +32,16 @@ public class Neo4jService(IDriver driver)
             record => record["a"].As<INode>().ToDbArtist()
         );
         return dbArtist;
+    }
+
+    public async Task<List<DbArtist>> GetArtistsByIdsAsync(IEnumerable<string> ids)
+    {
+        var dbArtists = await ExecuteReadListAsync(
+            "MATCH (a:Artist) WHERE a.Id IN $ids RETURN a",
+            new { ids },
+            record => record["a"].As<INode>().ToDbArtist()
+        );
+        return dbArtists;
     }
 
     public async Task<List<DbArtist>> GetArtistsForRecordingAsync(string recordingId)
@@ -50,16 +71,6 @@ public class Neo4jService(IDriver driver)
                 offset,
                 limit,
             },
-            record => record["a"].As<INode>().ToDbArtist()
-        );
-        return dbArtists;
-    }
-
-    public async Task<List<DbArtist>> AllArtists(int limit = 25, int offset = 0)
-    {
-        var dbArtists = await ExecuteReadListAsync(
-            "MATCH (a:Artist) RETURN a ORDER BY a.Name SKIP $offset LIMIT $limit",
-            new { offset, limit },
             record => record["a"].As<INode>().ToDbArtist()
         );
         return dbArtists;

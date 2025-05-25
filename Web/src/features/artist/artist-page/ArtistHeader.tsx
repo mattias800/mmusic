@@ -47,7 +47,7 @@ export const ArtistHeader: React.FC<ArtistHeaderProps> = (props) => {
           />
         )}
         {/* Gradient overlay to ensure text visibility */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/70 to-transparent"></div>
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/70"></div>
       </div>
     </div>
   );

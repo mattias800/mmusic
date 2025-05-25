@@ -1,7 +1,7 @@
 import * as React from "react";
 
 export interface SectionHeadingProps {
-  children: string;
+  children: string | string[];
 }
 
 export const SectionHeading: React.FC<SectionHeadingProps> = ({ children }) => {

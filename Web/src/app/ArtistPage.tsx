@@ -3,13 +3,19 @@ import { useQuery } from "urql";
 import { useParams } from "react-router";
 import { ArtistPanel } from "@/features/artist/artist-page/ArtistPanel.tsx";
 import { ScreenSpinner } from "@/components/spinner/ScreenSpinner.tsx";
+import { ArtistNotInLibraryPanel } from "@/features/artist/artist-not-in-library/ArtistNotInLibraryPanel.tsx";
 
 export const artistQuery = graphql(`
   query ArtistQuery($artistId: ID!) {
     artist {
       byId(id: $artistId) {
         id
+        serverAvailability {
+          id
+          isInServerLibrary
+        }
         ...ArtistPanel_Artist
+        ...ArtistNotInLibraryPanel_Artist
       }
     }
   }
@@ -27,5 +33,9 @@ export const ArtistPage = () => {
   if (error) return <div>Error: {error.message}</div>;
   if (!data?.artist.byId) return <div>No data</div>;
 
-  return <ArtistPanel artist={data.artist.byId} />;
+  if (data.artist.byId.serverAvailability.isInServerLibrary) {
+    return <ArtistPanel artist={data.artist.byId} />;
+  } else {
+    return <ArtistNotInLibraryPanel artist={data.artist.byId} />;
+  }
 };

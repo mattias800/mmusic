@@ -1,4 +1,5 @@
 using Hqub.Lastfm;
+using MusicGQL.Db.Postgres;
 using MusicGQL.Features.LastFm;
 using MusicGQL.Features.MusicBrainz.Artist;
 using MusicGQL.Features.ServerLibrary.Artist.Db;
@@ -15,6 +16,8 @@ public record Artist([property: GraphQLIgnore] DbArtist Model)
     public string Name => Model.Name;
     public string SortName => Model.SortName;
     public string? Gender => Model.Gender;
+
+    public ArtistServerAvailability ServerAvailability() => new(Model.Id);
 
     public async Task<IEnumerable<LastFmTrack>> TopTracks(LastfmClient lastfmClient)
     {
