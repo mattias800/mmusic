@@ -96,12 +96,7 @@ export const ArtistPanel: React.FC<ArtistPanelProps> = (props) => {
           </div>
 
           <SectionList>
-            {topTracksVisible && (
-              <Section>
-                <SectionHeading>Popular</SectionHeading>
-                <TopArtistTracks artist={artist} />
-              </Section>
-            )}
+            {topTracksVisible && <TopArtistTracks artist={artist} />}
 
             {releasesVisible && (
               <>

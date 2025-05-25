@@ -13,18 +13,16 @@ export const albumHeaderReleaseGroupFragment = graphql(`
     id
     title
     primaryType
+    coverArtUri
+    firstReleaseYear
+    credits {
+      artist {
+        id
+        name
+      }
+    }
     mainRelease {
       id
-      title
-      coverArtUri
-      year
-
-      credits {
-        artist {
-          id
-          name
-        }
-      }
       recordings {
         id
         length
@@ -54,22 +52,22 @@ export const AlbumHeader: React.FC<AlbumHeaderProps> = (props) => {
   return (
     <div className="flex flex-col sm:flex-row gap-6 items-center sm:items-end mb-8">
       <img
-        src={release.coverArtUri}
-        alt={release.title + " album cover"}
+        src={releaseGroup.coverArtUri ?? ""}
+        alt={releaseGroup.title + " album cover"}
         className="w-48 h-48 rounded shadow-lg"
       />
       <div className={"flex flex-col gap-3"}>
         <p className="text-sm">{getReleaseType(releaseGroup.primaryType)}</p>
-        <h1 className="text-4xl sm:text-7xl font-bold">{release.title}</h1>
+        <h1 className="text-4xl sm:text-7xl font-bold">{releaseGroup.title}</h1>
         <div className={"flex gap-2"}>
           <Link
             className={"text-sm font-bold"}
-            to={"/artist/" + release.credits[0].artist.id}
+            to={"/artist/" + releaseGroup.credits[0].artist.id}
           >
-            {release.credits[0].artist.name}
+            {releaseGroup.credits[0].artist.name}
           </Link>
           <p className="text-sm text-gray-300">
-            • {release.year} • {numSongsText}, {albumTime}
+            • {releaseGroup.firstReleaseYear} • {numSongsText}, {albumTime}
           </p>
         </div>
       </div>

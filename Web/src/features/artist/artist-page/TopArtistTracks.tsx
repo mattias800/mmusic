@@ -3,6 +3,8 @@ import { useState } from "react";
 import { TopArtistTrackItem } from "@/features/artist/artist-page/TopArtistTrackItem.tsx";
 import { FragmentType, graphql, useFragment } from "@/gql";
 import { SecondaryButton } from "@/components/buttons/SecondaryButton.tsx";
+import { SectionHeading } from "@/components/headings/SectionHeading.tsx";
+import { Section } from "@/components/page-body/Section.tsx";
 
 export interface TopArtistTracksProps {
   artist: FragmentType<typeof topArtistTracksArtistFragment>;
@@ -25,8 +27,14 @@ export const TopArtistTracks: React.FC<TopArtistTracksProps> = (props) => {
 
   const visibleTracks = artist.topTracks.slice(0, showingMore ? 20 : 10);
 
+  if (visibleTracks.length === 0) {
+    return null;
+  }
+
   return (
-    <div>
+    <Section>
+      <SectionHeading>Popular</SectionHeading>
+
       <div>
         {visibleTracks.map((track, index) => (
           <TopArtistTrackItem key={track.id} index={index + 1} track={track} />
@@ -40,6 +48,6 @@ export const TopArtistTracks: React.FC<TopArtistTracksProps> = (props) => {
           />
         </div>
       )}
-    </div>
+    </Section>
   );
 };
