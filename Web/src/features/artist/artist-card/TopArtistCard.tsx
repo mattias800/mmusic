@@ -14,9 +14,12 @@ const topArtistCardArtistFragment = graphql(`
   fragment TopArtistCard_Artist on LastFmArtist {
     id
     name
-    mbid
-    images {
-      artistThumb
+    musicBrainzArtist {
+      id
+      name
+      images {
+        artistThumb
+      }
     }
     statistics {
       listeners
@@ -26,7 +29,7 @@ const topArtistCardArtistFragment = graphql(`
 
 export const TopArtistCard: React.FC<TopArtistCardProps> = (props) => {
   const artist = useFragment(topArtistCardArtistFragment, props.artist);
-  const imageUrl = artist.images?.artistThumb;
+  const imageUrl = artist.musicBrainzArtist?.images?.artistThumb;
 
   const navigate = useNavigate();
 
@@ -34,7 +37,10 @@ export const TopArtistCard: React.FC<TopArtistCardProps> = (props) => {
     <PhotoCard
       imageUrl={imageUrl ?? ""}
       imageAlt={artist.name + " cover"}
-      onClick={() => navigate(`/artist/${artist.mbid}`)}
+      onClick={() =>
+        artist?.musicBrainzArtist?.id &&
+        navigate(`/artist/${artist.musicBrainzArtist?.id}`)
+      }
     >
       <PhotoCardCenterHeading>{artist.name}</PhotoCardCenterHeading>
       <PhotoCardBottomText>

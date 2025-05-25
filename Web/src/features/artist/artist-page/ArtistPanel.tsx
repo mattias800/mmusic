@@ -16,6 +16,8 @@ import { SectionList } from "@/components/page-body/SectionList.tsx";
 import { ArtistEpList } from "@/features/artist/artist-page/ArtistEpList.tsx";
 import { whenTypename } from "@/common/utils/TypenameMatcher.ts";
 import { ArtistNotInLibrarySectionList } from "@/features/artist/artist-not-in-library/ArtistNotInLibrarySectionList.tsx";
+import { ArtistServerStatus } from "@/features/artist/artist-server-status/ArtistServerStatus.tsx";
+import { ArtistNotInLibraryTopTracks } from "@/features/artist/artist-not-in-library/ArtistNotInLibraryTopTracks.tsx";
 
 interface ArtistPanelProps {
   artist: FragmentType<typeof artistPanelArtistFragment>;
@@ -25,6 +27,10 @@ export const artistPanelArtistFragment = graphql(`
   fragment ArtistPanel_Artist on Artist {
     id
     name
+    listeners
+    images {
+      artistBackground
+    }
     serverStatus {
       id
       result {
@@ -39,10 +45,9 @@ export const artistPanelArtistFragment = graphql(`
         }
       }
     }
-    ...ArtistHeader_Artist
     ...TopArtistTracks_Artist
-    ...ArtistInLibraryButton_Artist
-    ...ArtistNotInLibraryPanel_Artist
+    ...ArtistNotInLibraryTopTracks_Artist
+    ...ArtistServerStatus_Artist
   }
 `);
 
@@ -64,10 +69,22 @@ export const ArtistPanel: React.FC<ArtistPanelProps> = (props) => {
 
   return (
     <GradientContent>
-      <ArtistHeader artist={artist} />
+      <ArtistHeader
+        artistName={artist.name}
+        artistBackgroundUrl={artist.images?.artistBackground ?? ""}
+        listeners={artist.listeners}
+        renderServerStatus={() => <ArtistServerStatus artist={artist} />}
+      />
 
       {notInLibrary || importInProgress ? (
-        <ArtistNotInLibrarySectionList artist={artist} />
+        <ArtistNotInLibrarySectionList
+          artistId={artist.id}
+          artistName={artist.name}
+          isInLibrary={!notInLibrary}
+          renderTopTracks={() => (
+            <ArtistNotInLibraryTopTracks artist={artist} />
+          )}
+        />
       ) : (
         <>
           <div className="px-6 md:px-10 py-6 flex items-center gap-4">
@@ -75,7 +92,7 @@ export const ArtistPanel: React.FC<ArtistPanelProps> = (props) => {
             <ShuffleButton />
             <FollowButton />
             <DotsButton />
-            <ArtistInLibraryButton artist={artist} />
+            <ArtistInLibraryButton artistId={artist.id} isInLibrary={true} />
           </div>
 
           <SectionList>

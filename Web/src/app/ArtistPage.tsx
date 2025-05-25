@@ -3,6 +3,7 @@ import { useQuery } from "urql";
 import { useParams } from "react-router";
 import { ArtistPanel } from "@/features/artist/artist-page/ArtistPanel.tsx";
 import { ScreenSpinner } from "@/components/spinner/ScreenSpinner.tsx";
+import { ArtistNotInLibraryFetcher } from "@/features/artist/artist-not-in-library/ArtistNotInLibraryFetcher.tsx";
 
 export const artistQuery = graphql(`
   query ArtistQuery($artistId: ID!) {
@@ -10,7 +11,6 @@ export const artistQuery = graphql(`
       byId(id: $artistId) {
         id
         ...ArtistPanel_Artist
-        ...ArtistNotInLibraryPanel_Artist
       }
     }
   }
@@ -24,9 +24,19 @@ export const ArtistPage = () => {
     pause: !artistId,
   });
 
-  if (fetching || stale) return <ScreenSpinner />;
-  if (error) return <div>Error: {error.message}</div>;
-  if (!data?.artist.byId) return <div>No data</div>;
+  if (!artistId) {
+    return "Invalid artist ID";
+  }
+
+  if (fetching || stale) {
+    return <ScreenSpinner />;
+  }
+  if (error) {
+    return <div>Error: {error.message}</div>;
+  }
+  if (!data?.artist.byId) {
+    return <ArtistNotInLibraryFetcher artistId={artistId} />;
+  }
 
   return <ArtistPanel artist={data.artist.byId} />;
 };

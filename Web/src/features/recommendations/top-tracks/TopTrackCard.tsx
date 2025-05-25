@@ -15,10 +15,12 @@ const topTrackCardLastFmTrackFragment = graphql(`
     name
     artist {
       id
-      mbid
-      name
-      images {
-        artistThumb
+      musicBrainzArtist {
+        id
+        name
+        images {
+          artistThumb
+        }
       }
     }
     album {
@@ -40,14 +42,17 @@ export const TopTrackCard: React.FC<TopTrackCardProps> = (props) => {
       imageUrl={
         track.images?.artistThumb ??
         track.album?.imageUrl ??
-        track.artist.images?.artistThumb ??
+        track.artist.musicBrainzArtist?.images?.artistThumb ??
         ""
       }
-      onClick={() => navigate(`/artist/${track.artist.mbid}`)}
+      onClick={() =>
+        track.artist.musicBrainzArtist?.id &&
+        navigate(`/artist/${track.artist.musicBrainzArtist?.id}`)
+      }
     >
       <PhotoCardTrackTitle
         trackName={track.name}
-        artistName={track.artist.name}
+        artistName={track.artist.musicBrainzArtist?.name ?? ""}
       />
     </PhotoCard>
   );

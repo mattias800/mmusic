@@ -1,28 +1,21 @@
-import { FragmentType, graphql, useFragment } from "@/gql";
 import * as React from "react";
+import { ReactNode } from "react";
 import { CheckCircle } from "lucide-react";
 import { formatLargeNumber } from "@/common/TrackLengthFormatter.ts";
-import { ArtistServerStatus } from "@/features/artist/artist-server-status/ArtistServerStatus.tsx";
 
 export interface ArtistHeaderProps {
-  artist: FragmentType<typeof artistHeaderArtistFragment>;
+  artistName: string;
+  listeners: number;
+  artistBackgroundUrl: string | undefined;
+  renderServerStatus?: () => ReactNode;
 }
 
-export const artistHeaderArtistFragment = graphql(`
-  fragment ArtistHeader_Artist on Artist {
-    id
-    ...ArtistServerStatus_Artist
-    name
-    listeners
-    images {
-      artistBackground
-    }
-  }
-`);
-
-export const ArtistHeader: React.FC<ArtistHeaderProps> = (props) => {
-  const artist = useFragment(artistHeaderArtistFragment, props.artist);
-
+export const ArtistHeader: React.FC<ArtistHeaderProps> = ({
+  renderServerStatus,
+  artistName,
+  artistBackgroundUrl,
+  listeners,
+}) => {
   return (
     <div className="relative">
       {/* Artist info positioned above the image */}
@@ -34,24 +27,22 @@ export const ArtistHeader: React.FC<ArtistHeaderProps> = (props) => {
               Verified Artist
             </div>
             <h1 className="text-4xl md:text-7xl font-bold  text-white drop-shadow-lg">
-              {artist.name}
+              {artistName}
             </h1>
             <p className="text-white text-sm">
-              {formatLargeNumber(artist.listeners)} monthly listeners
+              {formatLargeNumber(listeners)} monthly listeners
             </p>
           </div>
-          <div className={"flex items-end"}>
-            <ArtistServerStatus artist={artist} />
-          </div>
+          <div className={"flex items-end"}>{renderServerStatus?.()}</div>
         </div>
       </div>
 
       {/* Full-width artist image as background */}
       <div className="w-full h-[300px] md:h-[400px] overflow-hidden relative">
-        {artist.images?.artistBackground && (
+        {artistBackgroundUrl && (
           <img
-            src={artist.images.artistBackground}
-            alt={artist.name + " background image"}
+            src={artistBackgroundUrl}
+            alt={artistName + " background image"}
             className="w-full h-full object-cover"
           />
         )}

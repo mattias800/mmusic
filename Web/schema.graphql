@@ -227,7 +227,6 @@ type LastFmArtist {
   artist: Artist
   id: ID!
   images: ArtistImages
-  mbid: String!
   musicBrainzArtist: MbArtist
   name: String!
   statistics: LastFmStatistics!
@@ -249,7 +248,7 @@ type LastFmTrack {
   artist: LastFmArtist!
   id: ID!
   images: ArtistImages
-  mbid: String!
+  mbid: String
   musicBrainzRecording: MbRecording
   name: String!
   playCount: Long
