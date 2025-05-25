@@ -44,14 +44,14 @@ public record Artist([property: GraphQLIgnore] DbArtist Model)
         return new(artist);
     }
 
-    public async Task<IEnumerable<Release.Release>> Releases(ServerLibraryImportService service)
+    public async Task<IEnumerable<Release.Release>> Releases(ServerLibraryService service)
     {
         var releases = await service.GetReleasesForArtistAsync(Model.Id);
         return releases.Select(r => new Release.Release(r));
     }
 
     public async Task<IEnumerable<ReleaseGroup.ReleaseGroup>> ReleaseGroups(
-        ServerLibraryImportService service
+        ServerLibraryService service
     )
     {
         var releaseGroups = await service.GetReleaseGroupsForArtistAsync(Model.Id);
@@ -71,7 +71,7 @@ public record Artist([property: GraphQLIgnore] DbArtist Model)
         }
     }
 
-    public async Task<MbArtistImages?> Images(IFanArtTVClient fanartClient)
+    public async Task<ArtistImages?> Images(IFanArtTVClient fanartClient)
     {
         try
         {
@@ -84,9 +84,7 @@ public record Artist([property: GraphQLIgnore] DbArtist Model)
         }
     }
 
-    public async Task<IEnumerable<ReleaseGroup.ReleaseGroup>> Albums(
-        ServerLibraryImportService service
-    )
+    public async Task<IEnumerable<ReleaseGroup.ReleaseGroup>> Albums(ServerLibraryService service)
     {
         var releaseGroups = await service.GetReleaseGroupsForArtistAsync(Model.Id);
         var albumReleaseGroups = releaseGroups.Where(r => r.IsMainAlbum()).ToList();
@@ -94,9 +92,7 @@ public record Artist([property: GraphQLIgnore] DbArtist Model)
         return albumReleaseGroups.Select(r => new ReleaseGroup.ReleaseGroup(r));
     }
 
-    public async Task<IEnumerable<ReleaseGroup.ReleaseGroup>> Singles(
-        ServerLibraryImportService service
-    )
+    public async Task<IEnumerable<ReleaseGroup.ReleaseGroup>> Singles(ServerLibraryService service)
     {
         var releaseGroups = await service.GetReleaseGroupsForArtistAsync(Model.Id);
         var albumReleaseGroups = releaseGroups.Where(r => r.IsMainSingle()).ToList();
@@ -104,9 +100,7 @@ public record Artist([property: GraphQLIgnore] DbArtist Model)
         return albumReleaseGroups.Select(r => new ReleaseGroup.ReleaseGroup(r));
     }
 
-    public async Task<IEnumerable<ReleaseGroup.ReleaseGroup>> Eps(
-        ServerLibraryImportService service
-    )
+    public async Task<IEnumerable<ReleaseGroup.ReleaseGroup>> Eps(ServerLibraryService service)
     {
         var releaseGroups = await service.GetReleaseGroupsForArtistAsync(Model.Id);
         var albumReleaseGroups = releaseGroups.Where(r => r.IsMainEP()).ToList();

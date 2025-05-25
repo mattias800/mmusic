@@ -5,7 +5,7 @@ import { SpinnerSpacing } from "@/components/spinner/SpinnerSpacing.tsx";
 import { Spinner } from "@/components/spinner/Spinner.tsx";
 import { CardFlexList } from "@/components/page-body/CardFlexList.tsx";
 import { MessageBox } from "@/components/errors/MessageBox.tsx";
-import { ArtistCard } from "@/features/artist/artist-card/ArtistCard.tsx";
+import { TopArtistCard } from "@/features/artist/artist-card/TopArtistCard.tsx";
 
 export interface TopArtistRecommendationsProps {}
 
@@ -14,20 +14,7 @@ const topArtistRecommendationsQuery = graphql(`
     recommendations {
       topArtists {
         id
-        artist {
-          id
-          ...ArtistCard_Artist
-        }
-      }
-      topTracks {
-        id
-        name
-        summary
-        playCount
-      }
-      topTags {
-        name
-        url
+        ...TopArtistCard_Artist
       }
     }
   }
@@ -54,12 +41,9 @@ export const TopArtistRecommendations: React.FC<
 
   return (
     <CardFlexList>
-      {data.recommendations.topArtists.map(
-        (lastFmArtist) =>
-          lastFmArtist.artist && (
-            <ArtistCard artist={lastFmArtist.artist} key={lastFmArtist.id} />
-          ),
-      )}
+      {data.recommendations.topArtists.map((lastFmArtist) => (
+        <TopArtistCard artist={lastFmArtist} key={lastFmArtist.id} />
+      ))}
     </CardFlexList>
   );
 };

@@ -11,7 +11,7 @@ public class ImportReleaseGroupToServerLibraryHandler(
     IDriver driver,
     ITopicEventSender sender,
     MusicBrainzService mbService,
-    ServerLibraryService serverLibraryService,
+    ServerLibraryImporterService serverLibraryImporterService,
     ArtistServerStatusService artistServerStatusService,
     ILogger<ImportReleaseGroupToServerLibraryHandler> logger
 )
@@ -141,7 +141,7 @@ public class ImportReleaseGroupToServerLibraryHandler(
         {
             await session.ExecuteWriteAsync(async tx =>
             {
-                await serverLibraryService.SaveReleaseGroupNodeAsync(
+                await serverLibraryImporterService.SaveReleaseGroupNodeAsync(
                     (IAsyncTransaction)tx,
                     releaseGroup
                 );
@@ -150,7 +150,7 @@ public class ImportReleaseGroupToServerLibraryHandler(
                 // 2. Save ReleaseGroup Artist Credits
                 if (releaseGroup.Credits != null)
                 {
-                    await serverLibraryService.SaveArtistCreditsForParentAsync(
+                    await serverLibraryImporterService.SaveArtistCreditsForParentAsync(
                         (IAsyncTransaction)tx,
                         releaseGroup.Id,
                         releaseGroup.Credits,
@@ -167,11 +167,11 @@ public class ImportReleaseGroupToServerLibraryHandler(
                 // 3. Process ONLY the Main Release (if found)
                 if (mainRelease != null)
                 {
-                    await serverLibraryService.SaveReleaseNodeAsync(
+                    await serverLibraryImporterService.SaveReleaseNodeAsync(
                         (IAsyncTransaction)tx,
                         mainRelease
                     );
-                    await serverLibraryService.LinkReleaseToReleaseGroupAsync(
+                    await serverLibraryImporterService.LinkReleaseToReleaseGroupAsync(
                         (IAsyncTransaction)tx,
                         releaseGroup.Id,
                         mainRelease.Id
@@ -186,7 +186,7 @@ public class ImportReleaseGroupToServerLibraryHandler(
                     // 4. Save Main Release Artist Credits
                     if (mainRelease.Credits != null)
                     {
-                        await serverLibraryService.SaveArtistCreditsForParentAsync(
+                        await serverLibraryImporterService.SaveArtistCreditsForParentAsync(
                             (IAsyncTransaction)tx,
                             mainRelease.Id,
                             mainRelease.Credits,
@@ -209,7 +209,7 @@ public class ImportReleaseGroupToServerLibraryHandler(
                                 continue;
 
                             string mediumNodeId = $"{mainRelease.Id}_m{mediumDto.Position}";
-                            await serverLibraryService.SaveMediumNodeAsync(
+                            await serverLibraryImporterService.SaveMediumNodeAsync(
                                 (IAsyncTransaction)tx,
                                 mediumNodeId,
                                 mainRelease.Id,
@@ -232,12 +232,12 @@ public class ImportReleaseGroupToServerLibraryHandler(
                                     )
                                         continue;
 
-                                    await serverLibraryService.SaveRecordingNodeAsync(
+                                    await serverLibraryImporterService.SaveRecordingNodeAsync(
                                         (IAsyncTransaction)tx,
                                         trackDto.Recording
                                     );
 
-                                    await serverLibraryService.LinkTrackOnMediumToRecordingAsync(
+                                    await serverLibraryImporterService.LinkTrackOnMediumToRecordingAsync(
                                         (IAsyncTransaction)tx,
                                         mediumNodeId,
                                         trackDto.Recording.Id,
@@ -256,7 +256,7 @@ public class ImportReleaseGroupToServerLibraryHandler(
                                     // 6. Save Recording Artist Credits
                                     if (trackDto.Recording?.Credits != null)
                                     {
-                                        await serverLibraryService.SaveArtistCreditsForParentAsync(
+                                        await serverLibraryImporterService.SaveArtistCreditsForParentAsync(
                                             (IAsyncTransaction)tx,
                                             trackDto.Recording.Id,
                                             trackDto.Recording.Credits,

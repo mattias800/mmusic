@@ -69,7 +69,7 @@ public record MbArtist([property: GraphQLIgnore] Hqub.MusicBrainz.Entities.Artis
         }
     }
 
-    public async Task<MbArtistImages?> Images(IFanArtTVClient fanartClient)
+    public async Task<ArtistImages?> Images(IFanArtTVClient fanartClient)
     {
         try
         {

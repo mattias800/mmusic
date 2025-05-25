@@ -1,8 +1,8 @@
 using FanartArtistImages = TrackSeries.FanArtTV.Client.Music.ArtistImages;
 
-namespace MusicGQL.Features.MusicBrainz.Artist;
+namespace MusicGQL.Features.ServerLibrary.Artist;
 
-public record MbArtistImages([property: GraphQLIgnore] FanartArtistImages Model)
+public record ArtistImages([property: GraphQLIgnore] FanartArtistImages Model)
 {
     public string? ArtistBackground => Model.ArtistBackground?.FirstOrDefault()?.Url;
     public string? ArtistThumb => Model.ArtistThumb?.FirstOrDefault()?.Url;

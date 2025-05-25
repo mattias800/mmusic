@@ -20,7 +20,7 @@ public record Release([property: GraphQLIgnore] DbRelease Model)
     //public IEnumerable<Genre> Genres => Model.Genres?.Select(g => new Genre(g)) ?? [];
     // public IEnumerable<MbMedium> Media => Model.Media?.Select(m => new MbMedium(m)) ?? [];
 
-    public async Task<ReleaseGroup.ReleaseGroup?> ReleaseGroup(ServerLibraryImportService service)
+    public async Task<ReleaseGroup.ReleaseGroup?> ReleaseGroup(ServerLibraryService service)
     {
         var releaseGroup = await service.GetReleaseGroupForReleaseAsync(Model.Id);
         return releaseGroup is null ? null : new(releaseGroup);
@@ -28,15 +28,13 @@ public record Release([property: GraphQLIgnore] DbRelease Model)
 
     public string CoverArtUri => CoverArtArchive.GetCoverArtUri(Model.Id).ToString();
 
-    public async Task<IEnumerable<Common.NameCredit>> Credits(ServerLibraryImportService service)
+    public async Task<IEnumerable<Common.NameCredit>> Credits(ServerLibraryService service)
     {
         var artistCredits = await service.GetCreditsOnReleaseAsync(Model.Id);
         return artistCredits.Select(c => new Common.NameCredit(c));
     }
 
-    public async Task<IEnumerable<Recording.Recording>> Recordings(
-        ServerLibraryImportService service
-    )
+    public async Task<IEnumerable<Recording.Recording>> Recordings(ServerLibraryService service)
     {
         var recordings = await service.GetRecordingsForReleaseAsync(Id);
         var sortedByTrackPosition = recordings
@@ -47,7 +45,7 @@ public record Release([property: GraphQLIgnore] DbRelease Model)
         return sortedByTrackPosition.Select(r => new Recording.Recording(r));
     }
 
-    public async Task<IEnumerable<Common.Label>> Labels(ServerLibraryImportService service)
+    public async Task<IEnumerable<Common.Label>> Labels(ServerLibraryService service)
     {
         var labels = await service.GetLabelsForReleaseAsync(Id);
         return labels.Select(r => new Common.Label(r));

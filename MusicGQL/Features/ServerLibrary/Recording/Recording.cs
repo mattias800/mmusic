@@ -15,13 +15,13 @@ public record Recording([property: GraphQLIgnore] DbRecording Model)
 
     public int? Length() => Model.Length;
 
-    public async Task<IEnumerable<NameCredit>> NameCredits(ServerLibraryImportService service)
+    public async Task<IEnumerable<NameCredit>> NameCredits(ServerLibraryService service)
     {
         var credits = await service.GetCreditsOnRecordingAsync(Model.Id);
         return credits.Select(c => new NameCredit(c));
     }
 
-    public async Task<ReleaseGroup.ReleaseGroup?> MainAlbum(ServerLibraryImportService service)
+    public async Task<ReleaseGroup.ReleaseGroup?> MainAlbum(ServerLibraryService service)
     {
         var releaseGroups = await service.GetReleaseGroupsForRecordingAsync(Model.Id);
         var mainAlbum = LibraryDecider.FindMainReleaseGroupForRecording(releaseGroups);
@@ -30,7 +30,7 @@ public record Recording([property: GraphQLIgnore] DbRecording Model)
 
     public async Task<LastFmStatistics?> Statistics(
         LastfmClient lastfmClient,
-        ServerLibraryImportService service
+        ServerLibraryService service
     )
     {
         var artists = await service.GetArtistsForRecordingAsync(Model.Id);
@@ -47,7 +47,7 @@ public record Recording([property: GraphQLIgnore] DbRecording Model)
     }
 
     public async Task<RecordingStreamingServiceInfo> StreamingServiceInfo(
-        ServerLibraryImportService service
+        ServerLibraryService service
     )
     {
         var relations = await service.GetRelationsOnRecordingAsync(Model.Id);

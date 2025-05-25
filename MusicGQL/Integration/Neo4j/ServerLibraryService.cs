@@ -1,254 +1,412 @@
-using AutoMapper;
-using Hqub.MusicBrainz.Entities;
+using MusicGQL.Features.ServerLibrary.Artist.Db;
+using MusicGQL.Features.ServerLibrary.Common.Db;
+using MusicGQL.Features.ServerLibrary.Recording.Db;
+using MusicGQL.Features.ServerLibrary.Release.Db;
+using MusicGQL.Features.ServerLibrary.ReleaseGroup.Db;
+using MusicGQL.Integration.Neo4j.Models;
 using Neo4j.Driver;
+using INode = Neo4j.Driver.INode;
 
 namespace MusicGQL.Integration.Neo4j;
 
-public class ServerLibraryService(IMapper mapper)
+public class ServerLibraryService(IDriver driver)
 {
-    public async Task SaveReleaseGroupNodeAsync(
-        IAsyncTransaction tx,
-        ReleaseGroup releaseGroupToSave
-    )
+    // Artists
+
+    public async Task<List<DbArtist>> AllArtists(int limit = 25, int offset = 0)
     {
-        await tx.RunAsync(
-            "MERGE (rg:ReleaseGroup {Id: $id}) "
-                + "ON CREATE SET rg.Title = $title, rg.PrimaryType = $primaryType, rg.SecondaryTypes = $secondaryTypes, rg.FirstReleaseDate = $firstReleaseDate "
-                + "ON MATCH SET rg.Title = $title, rg.PrimaryType = $primaryType, rg.SecondaryTypes = $secondaryTypes, rg.FirstReleaseDate = $firstReleaseDate",
-            new
-            {
-                id = releaseGroupToSave.Id,
-                title = releaseGroupToSave.Title,
-                primaryType = releaseGroupToSave.PrimaryType,
-                secondaryTypes = releaseGroupToSave.SecondaryTypes,
-                firstReleaseDate = releaseGroupToSave.FirstReleaseDate,
-            }
+        var dbArtists = await ExecuteReadListAsync(
+            "MATCH (a:Artist) RETURN a ORDER BY a.Name SKIP $offset LIMIT $limit",
+            new { offset, limit },
+            record => record["a"].As<INode>().ToDbArtist()
         );
+        return dbArtists;
     }
 
-    public async Task SaveArtistNodeAsync(IAsyncTransaction tx, Artist artistToSave)
+    public async Task<DbArtist?> GetArtistByIdAsync(string id)
     {
-        await tx.RunAsync(
-            "MERGE (a:Artist {Id: $artistId}) ON CREATE SET a.Name = $name, a.SortName = $sortName, a.Gender = $gender "
-                + "ON MATCH SET a.Name = $name, a.SortName = $sortName, a.Gender = $gender",
-            new
-            {
-                artistId = artistToSave.Id,
-                name = artistToSave.Name,
-                sortName = artistToSave.SortName,
-                gender = artistToSave.Gender,
-            }
+        var dbArtist = await ExecuteReadSingleAsync(
+            "MATCH (a:Artist {Id: $id}) RETURN a",
+            new { id },
+            record => record["a"].As<INode>().ToDbArtist()
         );
+        return dbArtist;
     }
 
-    public async Task SaveArtistCreditsForParentAsync(
-        IAsyncTransaction tx,
-        string parentEntityId,
-        IEnumerable<NameCredit> nameCredits,
-        string parentLabel,
-        string parentIdQueryKey,
-        string relationshipType
+    public async Task<List<DbArtist>> GetArtistsByIdsAsync(IEnumerable<string> ids)
+    {
+        var dbArtists = await ExecuteReadListAsync(
+            "MATCH (a:Artist) WHERE a.Id IN $ids RETURN a",
+            new { ids },
+            record => record["a"].As<INode>().ToDbArtist()
+        );
+        return dbArtists;
+    }
+
+    public async Task<List<DbArtist>> GetArtistsForRecordingAsync(string recordingId)
+    {
+        // Assuming a relationship like (Artist)-[:PERFORMED_ON]->(Recording) or similar
+        // This query might need adjustment based on the actual relationship name and direction.
+        // The ReleaseGroupPersistenceService shows ARTIST_CREDIT_FOR_RECORDING, so let's assume that.
+        var dbArtists = await ExecuteReadListAsync(
+            "MATCH (a:Artist)-[:CREDITED_ON_RECORDING]->(r:Recording {Id: $recordingId}) RETURN a",
+            new { recordingId },
+            record => record["a"].As<INode>().ToDbArtist()
+        );
+        return dbArtists;
+    }
+
+    public async Task<List<DbArtist>> SearchArtistByNameAsync(
+        string name,
+        int limit = 25,
+        int offset = 0
     )
     {
-        foreach (var nameCredit in nameCredits)
+        var dbArtists = await ExecuteReadListAsync(
+            "MATCH (a:Artist) WHERE toLower(a.Name) CONTAINS toLower($name) RETURN a ORDER BY a.Name SKIP $offset LIMIT $limit",
+            new
+            {
+                name,
+                offset,
+                limit,
+            },
+            record => record["a"].As<INode>().ToDbArtist()
+        );
+        return dbArtists;
+    }
+
+    // Recordings
+    public async Task<DbRecording?> GetRecordingByIdAsync(string id)
+    {
+        var dbRecording = await ExecuteReadSingleAsync(
+            "MATCH (r:Recording {Id: $id}) RETURN r",
+            new { id },
+            record => record["r"].As<INode>().ToDbRecording()
+        );
+        return dbRecording;
+    }
+
+    public async Task<List<DbRecording>> GetRecordingsForArtistAsync(string artistId)
+    {
+        // Assuming (Artist)-[:PERFORMED_ON]->(Recording) or similar
+        var dbRecordings = await ExecuteReadListAsync(
+            "MATCH (a:Artist {Id: $artistId})<-[:ARTIST_CREDIT_FOR_RECORDING]-(r:Recording) RETURN r",
+            new { artistId },
+            record => record["r"].As<INode>().ToDbRecording()
+        );
+        return dbRecordings;
+    }
+
+    public async Task<List<RecordingWithTrackInfo>> GetRecordingsForReleaseAsync(string releaseId)
+    {
+        var dbRecordings = await ExecuteReadListAsync(
+            """
+            MATCH (rel:Release {Id: $releaseId})-[:HAS_MEDIUM]->(m:Medium)-[track:INCLUDES_TRACK]->(r:Recording)
+                      WITH r, track.Position AS position
+                      ORDER BY position
+                      RETURN r, position
+            """,
+            new { releaseId },
+            record => new RecordingWithTrackInfo(
+                record["r"].As<INode>().ToDbRecording(),
+                record["position"].As<int>()
+            )
+        );
+        return dbRecordings;
+    }
+
+    public async Task<List<DbRecording>> SearchRecordingByNameAsync(
+        string name,
+        int limit = 25,
+        int offset = 0
+    )
+    {
+        var dbRecordings = await ExecuteReadListAsync(
+            "MATCH (r:Recording) WHERE toLower(r.Title) CONTAINS toLower($name) RETURN r ORDER BY r.Title SKIP $offset LIMIT $limit",
+            new
+            {
+                name,
+                offset,
+                limit,
+            },
+            record => record["r"].As<INode>().ToDbRecording()
+        );
+        return dbRecordings;
+    }
+
+    public async Task<List<DbRecording>> SearchRecordingForArtistByArtistNameAsync(
+        string recordingName,
+        string artistName,
+        int limit = 25,
+        int offset = 0
+    )
+    {
+        var dbRecordings = await ExecuteReadListAsync(
+            "MATCH (r:Recording)<-[:CREDITED_ON_RECORDING]-(a:Artist) "
+                + "WITH apoc.text.replace(toLower(r.Title), '[^a-z0-9]', '') AS normalizedTitle, "
+                + "     apoc.text.replace(toLower(a.Name), '[^a-z0-9]', '') AS normalizedArtist, r "
+                + "WHERE normalizedTitle CONTAINS apoc.text.replace(toLower($recordingName), '[^a-z0-9]', '') "
+                + "AND normalizedArtist CONTAINS apoc.text.replace(toLower($artistName), '[^a-z0-9]', '') "
+                + "RETURN r ORDER BY r.Title SKIP $offset LIMIT $limit",
+            new
+            {
+                recordingName,
+                artistName,
+                offset,
+                limit,
+            },
+            record => record["r"].As<INode>().ToDbRecording()
+        );
+        return dbRecordings;
+    }
+
+    public async Task<List<DbRecording>> SearchRecordingForArtistByArtistIdAsync(
+        string recordingName,
+        string artistId,
+        int limit = 25,
+        int offset = 0
+    )
+    {
+        var dbRecordings = await ExecuteReadListAsync(
+            "MATCH (r:Recording)<-[:CREDITED_ON_RECORDING]-(a:Artist {Id: $artistId}) "
+                + "WHERE toLower(r.Title) CONTAINS toLower($recordingName) "
+                + "RETURN r ORDER BY r.Title SKIP $offset LIMIT $limit",
+            new
+            {
+                recordingName,
+                artistId,
+                offset,
+                limit,
+            },
+            record => record["r"].As<INode>().ToDbRecording()
+        );
+        return dbRecordings;
+    }
+
+    // Releases
+    public async Task<DbRelease?> GetReleaseByIdAsync(string releaseId)
+    {
+        var dbRelease = await ExecuteReadSingleAsync(
+            "MATCH (rel:Release {Id: $releaseId}) RETURN rel",
+            new { releaseId },
+            record => record["rel"].As<INode>().ToDbRelease()
+        );
+        return dbRelease;
+    }
+
+    public async Task<List<DbRelease>> GetReleasesForArtistAsync(string artistId)
+    {
+        // This is a bit more complex as an artist can be credited on a release or its release group.
+        // Focusing on direct credits to Release first. The relationship is likely (Artist)-[:ARTIST_CREDIT_FOR_RELEASE]->(Release)
+        var dbReleases = await ExecuteReadListAsync(
+            "MATCH (a:Artist {Id: $artistId})<-[:ARTIST_CREDIT_FOR_RELEASE]-(rel:Release) RETURN rel",
+            new { artistId },
+            record => record["rel"].As<INode>().ToDbRelease()
+        );
+        return dbReleases;
+    }
+
+    public async Task<List<DbRelease>> GetReleasesForRecordingAsync(string recordingId)
+    {
+        // (Recording)<-[:INCLUDES_TRACK]-(Medium)<-[:HAS_MEDIUM]-(Release)
+        var dbReleases = await ExecuteReadListAsync(
+            "MATCH (rec:Recording {Id: $recordingId})<-[:INCLUDES_TRACK]-(m:Medium)<-[:HAS_MEDIUM]-(rel:Release) RETURN DISTINCT rel",
+            new { recordingId },
+            record => record["rel"].As<INode>().ToDbRelease()
+        );
+        return dbReleases;
+    }
+
+    public async Task<List<DbRelease>> GetReleasesForReleaseGroupAsync(string releaseGroupId)
+    {
+        var dbReleases = await ExecuteReadListAsync(
+            "MATCH (rg:ReleaseGroup {Id: $releaseGroupId})<-[:RELEASE_OF]-(rel:Release) RETURN rel",
+            new { releaseGroupId },
+            record => record["rel"].As<INode>().ToDbRelease()
+        );
+        return dbReleases;
+    }
+
+    public async Task<List<DbRelease>> SearchReleaseByNameAsync(
+        string name,
+        int limit = 25,
+        int offset = 0
+    )
+    {
+        var dbReleases = await ExecuteReadListAsync(
+            "MATCH (rel:Release) WHERE toLower(rel.Title) CONTAINS toLower($name) RETURN rel ORDER BY rel.Title SKIP $offset LIMIT $limit",
+            new
+            {
+                name,
+                offset,
+                limit,
+            },
+            record => record["rel"].As<INode>().ToDbRelease()
+        );
+        return dbReleases;
+    }
+
+    public async Task<List<DbLabel>> GetLabelsForReleaseAsync(string releaseId)
+    {
+        var dbLabels = await ExecuteReadListAsync(
+            "MATCH (:Release {Id: $releaseId})-[:RELEASED_ON_LABEL]->(lbl:Label) RETURN lbl",
+            new { releaseId },
+            record => record["lbl"].As<INode>().ToDbLabel()
+        );
+        return dbLabels;
+    }
+
+    // Release groups
+    public async Task<DbReleaseGroup?> GetReleaseGroupByIdAsync(string releaseGroupId)
+    {
+        var dbReleaseGroup = await ExecuteReadSingleAsync(
+            "MATCH (rg:ReleaseGroup {Id: $releaseGroupId}) RETURN rg",
+            new { releaseGroupId },
+            record => record["rg"].As<INode>().ToDbReleaseGroup()
+        );
+        return dbReleaseGroup;
+    }
+
+    public async Task<DbReleaseGroup?> GetReleaseGroupForReleaseAsync(string releaseId)
+    {
+        var dbReleaseGroup = await ExecuteReadSingleAsync(
+            "MATCH (rg:ReleaseGroup)<-[:RELEASE_OF]-(r:Release {Id: $releaseId}) RETURN rg",
+            new { releaseId },
+            record => record["rg"].As<INode>().ToDbReleaseGroup()
+        );
+        return dbReleaseGroup;
+    }
+
+    public async Task<List<DbReleaseGroup>> GetReleaseGroupsForRecordingAsync(string recordingId)
+    {
+        // (Recording)<-[:INCLUDES_TRACK]-(Medium)<-[:HAS_MEDIUM]-(Release)-[:RELEASE_OF]->(ReleaseGroup)
+        var dbReleaseGroups = await ExecuteReadListAsync(
+            "MATCH (rec:Recording {Id: $recordingId})<-[:INCLUDES_TRACK]-(m:Medium)<-[:HAS_MEDIUM]-(rel:Release)-[:RELEASE_OF]->(rg:ReleaseGroup) RETURN DISTINCT rg",
+            new { recordingId },
+            record => record["rg"].As<INode>().ToDbReleaseGroup()
+        );
+        return dbReleaseGroups;
+    }
+
+    public async Task<List<DbReleaseGroup>> GetAllReleaseGroupAsync()
+    {
+        var dbReleaseGroups = await ExecuteReadListAsync(
+            "MATCH (rg:ReleaseGroup) RETURN rg",
+            new { },
+            record => record["rg"].As<INode>().ToDbReleaseGroup()
+        );
+        return dbReleaseGroups;
+    }
+
+    public async Task<List<DbReleaseGroup>> SearchReleaseGroupByNameAsync(
+        string name,
+        int limit = 25,
+        int offset = 0
+    )
+    {
+        var dbReleaseGroups = await ExecuteReadListAsync(
+            "MATCH (rg:ReleaseGroup) WHERE toLower(rg.Title) CONTAINS toLower($name) RETURN rg ORDER BY rg.Title SKIP $offset LIMIT $limit",
+            new
+            {
+                name,
+                offset,
+                limit,
+            },
+            record => record["rg"].As<INode>().ToDbReleaseGroup()
+        );
+        return dbReleaseGroups;
+    }
+
+    public async Task<List<DbReleaseGroup>> GetReleaseGroupsForArtistAsync(string artistId)
+    {
+        // Assuming (Artist)-[:ARTIST_CREDIT_FOR_RELEASE_GROUP]->(ReleaseGroup)
+        var dbReleaseGroups = await ExecuteReadListAsync(
+            "MATCH (a:Artist {Id: $artistId})-[:CREDITED_ON_RELEASE_GROUP]->(rg:ReleaseGroup) RETURN rg",
+            new { artistId },
+            record => record["rg"].As<INode>().ToDbReleaseGroup()
+        );
+        return dbReleaseGroups;
+    }
+
+    public async Task<List<ArtistCredit>> GetCreditsOnReleaseGroupAsync(string releaseGroupId)
+    {
+        // Assuming (Artist)-[:ARTIST_CREDIT_FOR_RELEASE_GROUP]->(ReleaseGroup)
+        var artistCredit = await ExecuteReadListAsync(
+            "MATCH (a:Artist)-[c:CREDITED_ON_RELEASE_GROUP]->(rg:ReleaseGroup {Id: $releaseGroupId}) RETURN a, c",
+            new { releaseGroupId },
+            record => new ArtistCredit(
+                record["c"].As<IRelationship>().ToDbNamedCredit(),
+                record["a"].As<INode>().ToDbArtist()
+            )
+        );
+        return artistCredit;
+    }
+
+    public async Task<List<ArtistCredit>> GetCreditsOnReleaseAsync(string releaseId)
+    {
+        // Assuming (Artist)-[:ARTIST_CREDIT_FOR_RELEASE]->(Release)
+        var artistCredit = await ExecuteReadListAsync(
+            "MATCH (a:Artist)-[c:CREDITED_ON_RELEASE]->(rg:Release {Id: $releaseId}) RETURN a, c",
+            new { releaseId },
+            record => new ArtistCredit(
+                record["c"].As<IRelationship>().ToDbNamedCredit(),
+                record["a"].As<INode>().ToDbArtist()
+            )
+        );
+        return artistCredit;
+    }
+
+    public async Task<List<ArtistCredit>> GetCreditsOnRecordingAsync(string recordingId)
+    {
+        // Assuming (Artist)-[:ARTIST_CREDIT_FOR_RECORDING]->(Recording)
+        var artistCredit = await ExecuteReadListAsync(
+            "MATCH (a:Artist)-[c:CREDITED_ON_RECORDING]->(rg:Recording {Id: $recordingId}) RETURN a, c",
+            new { recordingId },
+            record => new ArtistCredit(
+                record["c"].As<IRelationship>().ToDbNamedCredit(),
+                record["a"].As<INode>().ToDbArtist()
+            )
+        );
+        return artistCredit;
+    }
+
+    public async Task<List<DbRelation>> GetRelationsOnRecordingAsync(string recordingId)
+    {
+        var relation = await ExecuteReadListAsync(
+            "MATCH (a:Artist)-[c:RELATION_ON_RECORDING]->(rg:Recording {Id: $recordingId}) RETURN a, c",
+            new { recordingId },
+            record => record["c"].As<INode>().ToDbRelation()
+        );
+        return relation;
+    }
+
+    private async Task<T?> ExecuteReadSingleAsync<T>(
+        string query,
+        object parameters,
+        Func<IRecord, T> mapper
+    )
+    {
+        await using var session = driver.AsyncSession();
+        var result = await session.RunAsync(query, parameters);
+        try
         {
-            if (nameCredit.Artist == null || string.IsNullOrEmpty(nameCredit.Artist.Id))
-            {
-                continue;
-            }
-
-            await SaveArtistNodeAsync(tx, nameCredit.Artist);
-
-            string query =
-                $"MATCH (p:{parentLabel} {{Id: ${parentIdQueryKey}}}), (a:Artist {{Id: $ArtistId}}) "
-                + $"MERGE (a)-[r:{relationshipType}]->(p) "
-                + $"ON CREATE SET r.JoinPhrase = $JoinPhrase, r.Name = $Name "
-                + $"ON MATCH SET r.JoinPhrase = $JoinPhrase, r.Name = $Name";
-
-            var parameters = new Dictionary<string, object>
-            {
-                { parentIdQueryKey, parentEntityId },
-                { "ArtistId", nameCredit.Artist.Id },
-                { "JoinPhrase", nameCredit.JoinPhrase ?? string.Empty },
-                { "Name", nameCredit.Name ?? string.Empty },
-            };
-
-            await tx.RunAsync(query, parameters);
+            var record = await result.SingleAsync();
+            return record != null ? mapper(record) : default;
+        }
+        catch
+        {
+            return default;
         }
     }
 
-    public async Task SaveReleaseNodeAsync(IAsyncTransaction tx, Release releaseToSave)
-    {
-        await tx.RunAsync(
-            "MERGE (r:Release {Id: $id}) "
-                + "ON CREATE SET r.Title = $title, r.Date = $date, r.Status = $status "
-                + "ON MATCH SET r.Title = $title, r.Date = $date, r.Status = $status",
-            new
-            {
-                id = releaseToSave.Id,
-                title = releaseToSave.Title,
-                date = releaseToSave.Date,
-                status = releaseToSave.Status,
-            }
-        );
-
-        // Persist labels and their relationship to the release
-        if (releaseToSave.Labels != null)
-        {
-            foreach (var labelInfo in releaseToSave.Labels)
-            {
-                if (labelInfo.Label == null || string.IsNullOrEmpty(labelInfo.Label.Id))
-                    continue;
-
-                // Save the Label node itself
-                await SaveLabelNodeAsync(tx, labelInfo.Label);
-
-                // Link Label to Release and set relationship properties
-                await tx.RunAsync(
-                    "MATCH (rel:Release {Id: $releaseId}), (lbl:Label {Id: $labelId}) "
-                        + "MERGE (rel)-[rlbl:RELEASED_ON_LABEL]->(lbl) "
-                        + "ON CREATE SET rlbl.CatalogNumber = $catalogNumber "
-                        + "ON MATCH SET rlbl.CatalogNumber = $catalogNumber",
-                    new
-                    {
-                        releaseId = releaseToSave.Id,
-                        labelId = labelInfo.Label.Id,
-                        catalogNumber = labelInfo.CatalogNumber ?? string.Empty,
-                    }
-                );
-            }
-        }
-    }
-
-    public async Task SaveLabelNodeAsync(IAsyncTransaction tx, Label label)
-    {
-        await tx.RunAsync(
-            "MERGE (lbl:Label {Id: $id}) "
-                + "ON CREATE SET lbl.Name = $name, lbl.Disambiguation = $disambiguation " // Added Disambiguation
-                + "ON MATCH SET lbl.Name = $name, lbl.Disambiguation = $disambiguation",
-            new
-            {
-                id = label.Id,
-                name = label.Name,
-                disambiguation = label.Disambiguation ?? string.Empty,
-            }
-        );
-    }
-
-    public async Task LinkReleaseToReleaseGroupAsync(
-        IAsyncTransaction tx,
-        string rgId,
-        string releaseId
+    private async Task<List<T>> ExecuteReadListAsync<T>(
+        string query,
+        object parameters,
+        Func<IRecord, T> mapper
     )
     {
-        await tx.RunAsync(
-            "MATCH (rg:ReleaseGroup {Id: $rgId}), (r:Release {Id: $releaseId}) "
-                + "MERGE (r)-[:RELEASE_OF]->(rg)",
-            new { rgId, releaseId }
-        );
-    }
-
-    public async Task SaveMediumNodeAsync(
-        IAsyncTransaction tx,
-        string mediumNodeId,
-        string releaseMbId,
-        Medium medium
-    )
-    {
-        await tx.RunAsync(
-            "MERGE (m:Medium {Id: $mediumId}) "
-                + "ON CREATE SET m.Position = $position, m.Format = $format, m.TrackCount = $trackCount "
-                + "ON MATCH SET m.Position = $position, m.Format = $format, m.TrackCount = $trackCount",
-            new
-            {
-                mediumId = mediumNodeId,
-                position = medium.Position,
-                format = medium.Format ?? string.Empty,
-                trackCount = medium.TrackCount,
-            }
-        );
-
-        // Link Medium to its Release
-        await tx.RunAsync(
-            "MATCH (rel:Release {Id: $releaseId}), (m:Medium {Id: $mediumId}) "
-                + "MERGE (rel)-[:HAS_MEDIUM]->(m)",
-            new { releaseId = releaseMbId, mediumId = mediumNodeId }
-        );
-    }
-
-    public async Task SaveRecordingNodeAsync(IAsyncTransaction tx, Recording recordingToSave)
-    {
-        await tx.RunAsync(
-            "MERGE (rec:Recording {Id: $id}) "
-                + "ON CREATE SET rec.Title = $title, rec.Length = $length, rec.Disambiguation = $disambiguation "
-                + "ON MATCH SET rec.Title = $title, rec.Length = $length, rec.Disambiguation = $disambiguation",
-            new
-            {
-                id = recordingToSave.Id,
-                title = recordingToSave.Title,
-                length = recordingToSave.Length,
-                disambiguation = recordingToSave.Disambiguation ?? string.Empty,
-            }
-        );
-
-        // Store relations
-
-        if (recordingToSave.Relations != null)
-        {
-            foreach (var relation in recordingToSave.Relations)
-            {
-                // Assuming TargetType will be something like "Artist", "ReleaseGroup", "Url" etc.
-                // And TargetId will be the MBID of the target entity or the URL itself for Url relations.
-                // The actual relation type (e.g., "cover of", "remix of") is stored in relation.Type.
-                // For Url relations, we might want to create a Url node and link to it,
-                // or embed the URL directly in the relationship if it's simpler and URLs are not shared.
-                // For now, let's assume we are creating a relationship to an existing node of TargetType.
-
-                // if (relation is DbRelationUrl urlRelation && urlRelation.TargetType == "Url") // Special handling for Url relations
-                // {
-                //     await tx.RunAsync(
-                //         "MATCH (rec:Recording {Id: $recordingId}) "
-                //             + "MERGE (url:Url {Resource: $resourceUrl}) "
-                //             + // Create/match Url node
-                //             "MERGE (rec)-[rel:HAS_URL {Type: $relationType}]->(url)", // Create relationship
-                //         new
-                //         {
-                //             recordingId = recordingDtoToSave.Id,
-                //             resourceUrl = urlRelation.Url.Resource,
-                //             relationType = urlRelation.Type,
-                //         }
-                //     );
-                // }
-                // else
-                // {
-                //     await tx.RunAsync(
-                //         $"MATCH (rec:Recording {{Id: $recordingId}}), (target:{relation.TargetType} {{Id: $targetId}}) "
-                //             + $"MERGE (rec)-[rel:{relation.Type.Replace(" ", "_").ToUpper()}]->(target)",
-                //         new { recordingId = recordingDtoToSave.Id, targetId = relation.TargetId }
-                //     );
-                // }
-            }
-        }
-    }
-
-    public async Task LinkTrackOnMediumToRecordingAsync(
-        IAsyncTransaction tx,
-        string mediumNodeId,
-        string recordingMbId,
-        Track track
-    )
-    {
-        await tx.RunAsync(
-            "MATCH (m:Medium {Id: $mediumId}), (rec:Recording {Id: $recordingId}) "
-                + "MERGE (m)-[r:INCLUDES_TRACK {Position: $trackPos, Number: $trackNum, Title: $trackTitle}]->(rec)",
-            new
-            {
-                mediumId = mediumNodeId,
-                recordingId = recordingMbId,
-                trackPos = track.Position,
-                trackNum = track.Number ?? string.Empty,
-                trackTitle = track.Recording?.Title ?? string.Empty,
-            }
-        );
+        await using var session = driver.AsyncSession();
+        var result = await session.RunAsync(query, parameters);
+        return await result.ToListAsync(mapper);
     }
 }

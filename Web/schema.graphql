@@ -87,7 +87,7 @@ type Artist {
   eps: [ReleaseGroup!]!
   gender: String
   id: ID!
-  images: MbArtistImages
+  images: ArtistImages
   listeners: Long
   musicBrainzArtist: MbArtist
   name: String!
@@ -97,6 +97,14 @@ type Artist {
   singles: [ReleaseGroup!]!
   sortName: String!
   topTracks: [LastFmTrack!]!
+}
+
+type ArtistImages {
+  artistBackground: String
+  artistThumb: String
+  hdMusicLogo: String
+  musicBanner: String
+  musicLogo: String
 }
 
 type ArtistSearchRoot {
@@ -209,6 +217,8 @@ type Label {
 type LastFmAlbum {
   album: MbReleaseGroup
   id: ID!
+  imageUrl: String
+  mbid: String!
   name: String!
   statistics: LastFmStatistics!
 }
@@ -216,6 +226,8 @@ type LastFmAlbum {
 type LastFmArtist {
   artist: Artist
   id: ID!
+  images: ArtistImages
+  mbid: String!
   musicBrainzArtist: MbArtist
   name: String!
   statistics: LastFmStatistics!
@@ -233,9 +245,10 @@ type LastFmTag {
 }
 
 type LastFmTrack {
-  album: LastFmAlbum!
+  album: LastFmAlbum
   artist: LastFmArtist!
   id: ID!
+  images: ArtistImages
   mbid: String!
   musicBrainzRecording: MbRecording
   name: String!
@@ -282,7 +295,7 @@ type MbArtist {
   albums: [MbReleaseGroup!]!
   disambiguation: String
   id: ID!
-  images: MbArtistImages
+  images: ArtistImages
   listeners: Long
   name: String!
   releaseGroups: [MbReleaseGroup!]!
@@ -292,14 +305,6 @@ type MbArtist {
   sortName: String!
   topTracks: [LastFmTrack!]!
   type: String
-}
-
-type MbArtistImages {
-  artistBackground: String
-  artistThumb: String
-  hdMusicLogo: String
-  musicBanner: String
-  musicLogo: String
 }
 
 type MbGenre {

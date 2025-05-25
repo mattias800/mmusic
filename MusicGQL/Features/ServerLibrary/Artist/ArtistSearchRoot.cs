@@ -6,7 +6,7 @@ namespace MusicGQL.Features.ServerLibrary.Artist;
 public record ArtistSearchRoot
 {
     public async Task<IEnumerable<Artist>> All(
-        ServerLibraryImportService service,
+        ServerLibraryService service,
         EventDbContext dbContext
     )
     {
@@ -22,14 +22,14 @@ public record ArtistSearchRoot
         return allArtists.Select(a => new Artist(a));
     }
 
-    public async Task<Artist?> ById(ServerLibraryImportService service, [ID] string id)
+    public async Task<Artist?> ById(ServerLibraryService service, [ID] string id)
     {
         var artist = await service.GetArtistByIdAsync(id);
         return artist is null ? null : new(artist);
     }
 
     public async Task<IEnumerable<Artist>> SearchByName(
-        ServerLibraryImportService service,
+        ServerLibraryService service,
         string name,
         int limit = 25,
         int offset = 0

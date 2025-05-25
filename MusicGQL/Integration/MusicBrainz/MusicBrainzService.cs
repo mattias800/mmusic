@@ -39,7 +39,8 @@ public class MusicBrainzService(MusicBrainzClient client, HybridCache cache)
             TimeSpan.FromHours(1),
             async () => (await client.Artists.SearchAsync(name, limit, offset)).Items
         );
-        return result ?? [];
+
+        return result?.OrderByDescending(r => r.Score).ToList() ?? [];
     }
 
     // Recordings
@@ -105,7 +106,7 @@ public class MusicBrainzService(MusicBrainzClient client, HybridCache cache)
             TimeSpan.FromHours(1),
             async () => (await client.Recordings.SearchAsync(name, limit, offset)).Items
         );
-        return result ?? [];
+        return result?.OrderByDescending(r => r.Score).ToList() ?? [];
     }
 
     // Releases
@@ -218,7 +219,7 @@ public class MusicBrainzService(MusicBrainzClient client, HybridCache cache)
             async () => (await client.Releases.SearchAsync(name, limit, offset)).Items
         );
 
-        return result ?? [];
+        return result?.OrderByDescending(r => r.Score).ToList() ?? [];
     }
 
     // Release groups

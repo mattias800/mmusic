@@ -11,7 +11,7 @@ public class ImportArtistToServerLibraryHandler(
     ITopicEventSender sender,
     IDriver driver,
     MusicBrainzService mbService,
-    ServerLibraryService serverLibraryService,
+    ServerLibraryImporterService serverLibraryImporterService,
     ArtistServerStatusService artistServerStatusService,
     ILogger<ImportArtistToServerLibraryHandler> logger
 )
@@ -43,7 +43,10 @@ public class ImportArtistToServerLibraryHandler(
             await using var session = driver.AsyncSession();
             await session.ExecuteWriteAsync(async tx =>
             {
-                await serverLibraryService.SaveArtistNodeAsync((IAsyncTransaction)tx, artist);
+                await serverLibraryImporterService.SaveArtistNodeAsync(
+                    (IAsyncTransaction)tx,
+                    artist
+                );
             });
 
             logger.LogInformation("Artist {ArtistMbId} saved/updated in Neo4j", artist.Id);

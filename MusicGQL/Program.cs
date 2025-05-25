@@ -73,8 +73,8 @@ builder
             minimumDiagnosticLevel: DiagnosticLevel.Debug
         )
     ))
+    .AddSingleton<ServerLibraryImporterService>()
     .AddSingleton<ServerLibraryService>()
-    .AddSingleton<ServerLibraryImportService>()
     .AddSingleton<SoulSeekService>()
     .AddSingleton<MusicBrainzService>()
     .AddSingleton<YouTubeService>()

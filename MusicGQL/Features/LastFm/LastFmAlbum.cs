@@ -6,11 +6,15 @@ namespace MusicGQL.Features.LastFm;
 public record LastFmAlbum([property: GraphQLIgnore] Hqub.Lastfm.Entities.Album Model)
 {
     [ID]
-    public string Id => Model.MBID;
+    public string Id() => Model.Url;
 
-    public string Name => Model.Name;
+    public string MBID() => Model.MBID;
 
-    public LastFmStatistics Statistics => new(Model.Statistics);
+    public string Name() => Model.Name;
+
+    public string? ImageUrl() => Model.Images?.FirstOrDefault()?.Url;
+
+    public LastFmStatistics Statistics() => new(Model.Statistics);
 
     public async Task<MbReleaseGroup?> Album([Service] MusicBrainzService mbService)
     {
