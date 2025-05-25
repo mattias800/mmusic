@@ -1,5 +1,6 @@
 import { FragmentType, graphql, useFragment } from "@/gql";
 import * as React from "react";
+import { ProgressIndicator } from "@/components/progress/ProgressIndicator.tsx";
 
 export interface DownloadStatusProps {
   downloadStatus: FragmentType<typeof downloadStatusDownloadStatusFragment>;
@@ -53,12 +54,7 @@ export const DownloadStatus: React.FC<DownloadStatusProps> = (props) => {
         </div>
       )}
 
-      <div className="w-full bg-zinc-700 rounded-full h-2.5 overflow-hidden">
-        <div
-          className="bg-green-500 h-full transition-all duration-300"
-          style={{ width: `${progressPercent}%` }}
-        ></div>
-      </div>
+      <ProgressIndicator progressPercent={progressPercent} />
 
       <p className="text-sm text-zinc-300">
         {downloadStatus?.statusDescription}
