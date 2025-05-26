@@ -79,7 +79,7 @@ builder
     .AddSingleton<MusicBrainzService>()
     .AddSingleton<YouTubeService>()
     .AddSingleton<SpotifyService>()
-    .AddScoped<ArtistServerStatusService>()
+    .AddSingleton<ArtistServerStatusService>()
     .AddScoped<LikeSongHandler>()
     .AddScoped<UnlikeSongHandler>()
     .AddScoped<ImportArtistToServerLibraryHandler>()

@@ -3,7 +3,7 @@ using MusicGQL.Db.Postgres;
 
 namespace MusicGQL.Features.ServerLibrary.ArtistServerStatus.Services;
 
-public class ArtistServerStatusService(EventDbContext dbContext)
+public class ArtistServerStatusService(IServiceScopeFactory scopeFactory)
 {
     private readonly ConcurrentDictionary<string, ArtistServerStatusWorkingState> _artistStatus =
         new();
@@ -143,6 +143,9 @@ public class ArtistServerStatusService(EventDbContext dbContext)
 
     private async Task<ArtistServerStatusResult> CreateForNoState(string artistId)
     {
+        using var scope = scopeFactory.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<EventDbContext>();
+
         var artist = await dbContext.ArtistsAddedToServerLibraryProjection.FindAsync(1);
         var isInLibrary = artist?.ArtistMbIds.Contains(artistId) ?? false;
         return isInLibrary ? new ArtistServerStatusReady() : new ArtistServerStatusNotInLibrary();

@@ -18,12 +18,12 @@ export const ArtistNotInLibrarySectionList: React.FC<
   return (
     <SectionList>
       <Section>
-        <div className={"flex gap-32"}>
+        <div className={"flex gap-32 justify-between"}>
           {renderTopTracks && (
-            <>
+            <div className={"flex flex-col"}>
               <SectionHeading>Popular tracks by {artistName}</SectionHeading>
               {renderTopTracks?.()}
-            </>
+            </div>
           )}
 
           <div
