@@ -72,7 +72,6 @@ public class Query
     public PlaylistSearchRoot Playlist => new();
     public RecommendationsSearchRoot Recommendations => new();
     public UserSearchRoot User => new(); // This is for general user queries via UserSearchRoot
-    public ArtistServerStatusSearchRoot ArtistServerStatus => new();
 
     // New query to check if any users exist
     public async Task<bool> GetAreThereAnyUsers([Service] EventDbContext dbContext)

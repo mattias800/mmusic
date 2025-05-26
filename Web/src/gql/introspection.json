@@ -1230,51 +1230,6 @@
       },
       {
         "kind": "OBJECT",
-        "name": "ArtistServerStatusSearchRoot",
-        "description": null,
-        "isOneOf": null,
-        "fields": [
-          {
-            "name": "byArtistId",
-            "description": null,
-            "args": [
-              {
-                "name": "artistId",
-                "description": null,
-                "type": {
-                  "kind": "NON_NULL",
-                  "name": null,
-                  "ofType": {
-                    "kind": "SCALAR",
-                    "name": "ID",
-                    "ofType": null
-                  }
-                },
-                "defaultValue": null,
-                "isDeprecated": false,
-                "deprecationReason": null
-              }
-            ],
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "kind": "OBJECT",
-                "name": "ArtistServerStatus",
-                "ofType": null
-              }
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          }
-        ],
-        "inputFields": null,
-        "interfaces": [],
-        "enumValues": null,
-        "possibleTypes": null
-      },
-      {
-        "kind": "OBJECT",
         "name": "ArtistServerStatusUpdatingArtist",
         "description": null,
         "isOneOf": null,
@@ -5067,22 +5022,6 @@
               "ofType": {
                 "kind": "OBJECT",
                 "name": "ArtistSearchRoot",
-                "ofType": null
-              }
-            },
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "artistServerStatus",
-            "description": null,
-            "args": [],
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "kind": "OBJECT",
-                "name": "ArtistServerStatusSearchRoot",
                 "ofType": null
               }
             },
