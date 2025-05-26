@@ -936,6 +936,22 @@
         "isOneOf": null,
         "fields": [
           {
+            "name": "artist",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "OBJECT",
+                "name": "Artist",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "numReleaseGroupsFinishedImporting",
             "description": null,
             "args": [],

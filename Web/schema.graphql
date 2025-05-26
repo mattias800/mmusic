@@ -124,6 +124,7 @@ type ArtistServerStatusImportingArtist implements ArtistServerStatusResultBase {
 }
 
 type ArtistServerStatusImportingArtistReleases implements ArtistServerStatusResultBase {
+  artist: Artist!
   numReleaseGroupsFinishedImporting: Int!
   releasesVisible: Boolean!
   topTracksVisible: Boolean!
@@ -145,10 +146,6 @@ union ArtistServerStatusResult = ArtistServerStatusImportingArtist | ArtistServe
 interface ArtistServerStatusResultBase {
   releasesVisible: Boolean!
   topTracksVisible: Boolean!
-}
-
-type ArtistServerStatusSearchRoot {
-  byArtistId(artistId: ID!): ArtistServerStatus!
 }
 
 type ArtistServerStatusUpdatingArtist implements ArtistServerStatusResultBase {
@@ -484,7 +481,6 @@ type PlaylistSearchRoot {
 type Query {
   areThereAnyUsers: Boolean!
   artist: ArtistSearchRoot!
-  artistServerStatus: ArtistServerStatusSearchRoot!
   download: DownloadsSearchRoot!
   external: ExternalRoot!
   musicBrainz: MusicBrainzSearchRoot!

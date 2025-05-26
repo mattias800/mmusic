@@ -1,31 +1,45 @@
 import * as React from "react";
 import { useState } from "react";
 import { TopArtistTrackItem } from "@/features/artist/artist-page/TopArtistTrackItem.tsx";
-import { FragmentType, graphql, useFragment } from "@/gql";
+import { graphql } from "@/gql";
 import { SecondaryButton } from "@/components/buttons/SecondaryButton.tsx";
 import { SectionHeading } from "@/components/headings/SectionHeading.tsx";
 import { Section } from "@/components/page-body/Section.tsx";
+import { useQuery } from "urql";
+import { TopTrackShimmer } from "@/features/artist/artist-page/TopTrackShimmer.tsx";
 
 export interface TopArtistTracksProps {
-  artist: FragmentType<typeof topArtistTracksArtistFragment>;
+  artistId: string;
 }
 
-export const topArtistTracksArtistFragment = graphql(`
-  fragment TopArtistTracks_Artist on Artist {
-    id
-    topTracks {
-      id
-      ...TopArtistTrackItem_LastFmTrack
+const topArtistTracksArtistQuery = graphql(`
+  query TopArtistTracks($artistId: ID!) {
+    artist {
+      byId(id: $artistId) {
+        id
+        topTracks {
+          id
+          ...TopArtistTrackItem_LastFmTrack
+        }
+      }
     }
   }
 `);
 
-export const TopArtistTracks: React.FC<TopArtistTracksProps> = (props) => {
-  const artist = useFragment(topArtistTracksArtistFragment, props.artist);
+export const TopArtistTracks: React.FC<TopArtistTracksProps> = ({
+  artistId,
+}) => {
+  const [{ data, fetching }] = useQuery({
+    query: topArtistTracksArtistQuery,
+    variables: { artistId },
+  });
 
   const [showingMore, setShowingMore] = useState(false);
 
-  const visibleTracks = artist.topTracks.slice(0, showingMore ? 20 : 10);
+  const visibleTracks = (data?.artist.byId?.topTracks ?? []).slice(
+    0,
+    showingMore ? 20 : 10,
+  );
 
   if (visibleTracks.length === 0) {
     return null;
@@ -35,18 +49,39 @@ export const TopArtistTracks: React.FC<TopArtistTracksProps> = (props) => {
     <Section>
       <SectionHeading>Popular</SectionHeading>
 
-      <div>
-        {visibleTracks.map((track, index) => (
-          <TopArtistTrackItem key={track.id} index={index + 1} track={track} />
-        ))}
-      </div>
-      {!showingMore && (
-        <div className={"pl-14 pt-8"}>
-          <SecondaryButton
-            label={"Show more"}
-            onClick={() => setShowingMore(true)}
-          />
-        </div>
+      {fetching ? (
+        <>
+          <TopTrackShimmer trackNumber={1} />
+          <TopTrackShimmer trackNumber={2} />
+          <TopTrackShimmer trackNumber={3} />
+          <TopTrackShimmer trackNumber={4} />
+          <TopTrackShimmer trackNumber={5} />
+          <TopTrackShimmer trackNumber={6} />
+          <TopTrackShimmer trackNumber={7} />
+          <TopTrackShimmer trackNumber={8} />
+          <TopTrackShimmer trackNumber={9} />
+          <TopTrackShimmer trackNumber={10} />
+        </>
+      ) : (
+        <>
+          <div>
+            {visibleTracks.map((track, index) => (
+              <TopArtistTrackItem
+                key={track.id}
+                index={index + 1}
+                track={track}
+              />
+            ))}
+          </div>
+          {!showingMore && (
+            <div className={"pl-14 pt-8"}>
+              <SecondaryButton
+                label={"Show more"}
+                onClick={() => setShowingMore(true)}
+              />
+            </div>
+          )}
+        </>
       )}
     </Section>
   );

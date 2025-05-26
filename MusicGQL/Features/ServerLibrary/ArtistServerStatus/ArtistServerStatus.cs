@@ -1,4 +1,5 @@
 using MusicGQL.Features.ServerLibrary.ArtistServerStatus.Services;
+using MusicGQL.Integration.Neo4j;
 
 namespace MusicGQL.Features.ServerLibrary.ArtistServerStatus;
 
@@ -12,7 +13,7 @@ public record ArtistServerStatus([property: GraphQLIgnore] string ArtistMbId)
 }
 
 [UnionType("ArtistServerStatusResult")]
-public abstract record ArtistServerStatusResult
+public abstract record ArtistServerStatusResult([property: GraphQLIgnore] string ArtistMbId)
 {
     public abstract bool TopTracksVisible();
 
@@ -22,20 +23,22 @@ public abstract record ArtistServerStatusResult
 [InterfaceType("ArtistServerStatusResultBase")]
 public interface IArtistServerStatusResult
 {
-    public abstract bool TopTracksVisible();
+    public bool TopTracksVisible();
 
-    public abstract bool ReleasesVisible();
+    public bool ReleasesVisible();
 }
 
-public record ArtistServerStatusReady : ArtistServerStatusResult, IArtistServerStatusResult
+public record ArtistServerStatusReady(string ArtistMbId)
+    : ArtistServerStatusResult(ArtistMbId),
+        IArtistServerStatusResult
 {
     public override bool TopTracksVisible() => true;
 
     public override bool ReleasesVisible() => true;
 }
 
-public record ArtistServerStatusImportingArtist
-    : ArtistServerStatusResult,
+public record ArtistServerStatusImportingArtist(string ArtistMbId)
+    : ArtistServerStatusResult(ArtistMbId),
         IArtistServerStatusResult
 {
     public override bool TopTracksVisible() => false;
@@ -43,25 +46,8 @@ public record ArtistServerStatusImportingArtist
     public override bool ReleasesVisible() => false;
 }
 
-public record ArtistServerStatusUpdatingArtist : ArtistServerStatusResult, IArtistServerStatusResult
-{
-    public override bool TopTracksVisible() => true;
-
-    public override bool ReleasesVisible() => true;
-}
-
-public record ArtistServerStatusImportingArtistReleases(
-    int NumReleaseGroupsFinishedImporting,
-    int TotalNumReleaseGroupsBeingImported
-) : ArtistServerStatusResult, IArtistServerStatusResult
-{
-    public override bool TopTracksVisible() => false;
-
-    public override bool ReleasesVisible() => NumReleaseGroupsFinishedImporting > 0;
-}
-
-public record ArtistServerStatusUpdatingArtistReleases
-    : ArtistServerStatusResult,
+public record ArtistServerStatusUpdatingArtist(string ArtistMbId)
+    : ArtistServerStatusResult(ArtistMbId),
         IArtistServerStatusResult
 {
     public override bool TopTracksVisible() => true;
@@ -69,7 +55,40 @@ public record ArtistServerStatusUpdatingArtistReleases
     public override bool ReleasesVisible() => true;
 }
 
-public record ArtistServerStatusNotInLibrary : ArtistServerStatusResult, IArtistServerStatusResult
+public record ArtistServerStatusImportingArtistReleases(
+    string ArtistMbId,
+    int NumReleaseGroupsFinishedImporting,
+    int TotalNumReleaseGroupsBeingImported
+) : ArtistServerStatusResult(ArtistMbId), IArtistServerStatusResult
+{
+    public override bool TopTracksVisible() => false;
+
+    public override bool ReleasesVisible() => NumReleaseGroupsFinishedImporting > 0;
+
+    public async Task<Artist.Artist> Artist(ServerLibraryService service)
+    {
+        var artist = await service.GetArtistByIdAsync(ArtistMbId);
+        if (artist is null)
+        {
+            throw new Exception("Artist not found");
+        }
+
+        return new Artist.Artist(artist);
+    }
+}
+
+public record ArtistServerStatusUpdatingArtistReleases(string ArtistMbId)
+    : ArtistServerStatusResult(ArtistMbId),
+        IArtistServerStatusResult
+{
+    public override bool TopTracksVisible() => true;
+
+    public override bool ReleasesVisible() => true;
+}
+
+public record ArtistServerStatusNotInLibrary(string ArtistMbId)
+    : ArtistServerStatusResult(ArtistMbId),
+        IArtistServerStatusResult
 {
     public override bool TopTracksVisible() => false;
 

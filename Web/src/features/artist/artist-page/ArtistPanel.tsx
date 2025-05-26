@@ -45,7 +45,6 @@ export const artistPanelArtistFragment = graphql(`
         }
       }
     }
-    ...TopArtistTracks_Artist
     ...ArtistNotInLibraryTopTracks_Artist
   }
 `);
@@ -95,7 +94,7 @@ export const ArtistPanel: React.FC<ArtistPanelProps> = (props) => {
           </div>
 
           <SectionList>
-            {topTracksVisible && <TopArtistTracks artist={artist} />}
+            {topTracksVisible && <TopArtistTracks artistId={artist.id} />}
 
             {releasesVisible && (
               <>

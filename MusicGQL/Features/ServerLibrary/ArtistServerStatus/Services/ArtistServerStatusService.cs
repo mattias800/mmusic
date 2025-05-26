@@ -141,25 +141,32 @@ public class ArtistServerStatusService(ITopicEventSender sender, IServiceScopeFa
     public async Task<ArtistServerStatusResult> GetArtistServerStatus(string artistId)
     {
         var state = _artistStatus.GetValueOrDefault(artistId);
-        return state is null ? await CreateForNoState(artistId) : CreateForState(state);
+        return state is null ? await CreateForNoState(artistId) : CreateForState(state, artistId);
     }
 
-    private ArtistServerStatusResult CreateForState(ArtistServerStatusWorkingState state)
+    private ArtistServerStatusResult CreateForState(
+        ArtistServerStatusWorkingState state,
+        string artistId
+    )
     {
         return state.Status switch
         {
             ArtistServerStatusWorkingStatus.ImportingArtist =>
-                new ArtistServerStatusImportingArtist(),
+                new ArtistServerStatusImportingArtist(artistId),
             ArtistServerStatusWorkingStatus.ImportingArtistReleases =>
                 new ArtistServerStatusImportingArtistReleases(
+                    artistId,
                     state.NumReleaseGroupsFinishedImporting,
                     state.TotalNumReleaseGroupsBeingImported
                 ),
-            ArtistServerStatusWorkingStatus.NotInLibrary => new ArtistServerStatusNotInLibrary(),
-            ArtistServerStatusWorkingStatus.Ready => new ArtistServerStatusReady(),
-            ArtistServerStatusWorkingStatus.UpdatingArtist =>
-                new ArtistServerStatusUpdatingArtist(),
-            _ => new ArtistServerStatusReady(),
+            ArtistServerStatusWorkingStatus.NotInLibrary => new ArtistServerStatusNotInLibrary(
+                artistId
+            ),
+            ArtistServerStatusWorkingStatus.Ready => new ArtistServerStatusReady(artistId),
+            ArtistServerStatusWorkingStatus.UpdatingArtist => new ArtistServerStatusUpdatingArtist(
+                artistId
+            ),
+            _ => new ArtistServerStatusReady(artistId),
         };
     }
 
@@ -170,7 +177,9 @@ public class ArtistServerStatusService(ITopicEventSender sender, IServiceScopeFa
 
         var artist = await dbContext.ArtistsAddedToServerLibraryProjection.FindAsync(1);
         var isInLibrary = artist?.ArtistMbIds.Contains(artistId) ?? false;
-        return isInLibrary ? new ArtistServerStatusReady() : new ArtistServerStatusNotInLibrary();
+        return isInLibrary
+            ? new ArtistServerStatusReady(artistId)
+            : new ArtistServerStatusNotInLibrary(artistId);
     }
 
     private void Publish(string artistId)

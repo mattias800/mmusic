@@ -3,6 +3,7 @@ import { graphql } from "@/gql";
 import { useQuery, useSubscription } from "urql";
 import { whenTypename } from "@/common/utils/TypenameMatcher.ts";
 import { ProgressIndicator } from "@/components/progress/ProgressIndicator.tsx";
+import { Spinner } from "@/components/spinner/Spinner.tsx";
 
 export interface ArtistServerStatusProps {
   artistId: string;
@@ -45,6 +46,24 @@ const subscription = graphql(`
         ... on ArtistServerStatusImportingArtistReleases {
           totalNumReleaseGroupsBeingImported
           numReleaseGroupsFinishedImporting
+          artist {
+            id
+            albums {
+              id
+              firstReleaseDate
+              ...AlbumCard_ReleaseGroup
+            }
+            eps {
+              id
+              firstReleaseDate
+              ...AlbumCard_ReleaseGroup
+            }
+            singles {
+              id
+              firstReleaseDate
+              ...AlbumCard_ReleaseGroup
+            }
+          }
         }
       }
     }
@@ -89,8 +108,10 @@ export const ArtistServerStatus: React.FC<ArtistServerStatusProps> = ({
       className={`flex flex-col gap-4 rounded-md bg-black/70 p-4 w-64 transition-all duration-300 ${visible ? "opacity-100" : "opacity-0"}`}
     >
       <span className={"font-medium"}>{label}</span>
-      {progressPercent && (
+      {progressPercent ? (
         <ProgressIndicator progressPercent={progressPercent} />
+      ) : (
+        <Spinner />
       )}
     </div>
   );
