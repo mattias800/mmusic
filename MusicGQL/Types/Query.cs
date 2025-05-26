@@ -7,7 +7,6 @@ using MusicGQL.Features.MusicBrainz;
 using MusicGQL.Features.Playlists;
 using MusicGQL.Features.Recommendations;
 using MusicGQL.Features.ServerLibrary.Artist;
-using MusicGQL.Features.ServerLibrary.ArtistServerStatus;
 using MusicGQL.Features.ServerLibrary.Recording;
 using MusicGQL.Features.ServerLibrary.Release;
 using MusicGQL.Features.ServerLibrary.ReleaseGroup;

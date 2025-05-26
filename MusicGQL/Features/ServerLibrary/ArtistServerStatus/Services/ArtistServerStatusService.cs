@@ -1,9 +1,10 @@
 using System.Collections.Concurrent;
+using HotChocolate.Subscriptions;
 using MusicGQL.Db.Postgres;
 
 namespace MusicGQL.Features.ServerLibrary.ArtistServerStatus.Services;
 
-public class ArtistServerStatusService(IServiceScopeFactory scopeFactory)
+public class ArtistServerStatusService(ITopicEventSender sender, IServiceScopeFactory scopeFactory)
 {
     private readonly ConcurrentDictionary<string, ArtistServerStatusWorkingState> _artistStatus =
         new();
@@ -29,16 +30,20 @@ public class ArtistServerStatusService(IServiceScopeFactory scopeFactory)
     public void SetStatus(string artistId, ArtistServerStatusWorkingState status)
     {
         _artistStatus[artistId] = status;
+        Publish(artistId);
     }
 
     public void SetImportingArtistStatus(string artistId)
     {
-        _artistStatus[artistId] = new ArtistServerStatusWorkingState
-        {
-            Status = ArtistServerStatusWorkingStatus.ImportingArtist,
-            TotalNumReleaseGroupsBeingImported = 0,
-            NumReleaseGroupsFinishedImporting = 0,
-        };
+        SetStatus(
+            artistId,
+            new ArtistServerStatusWorkingState
+            {
+                Status = ArtistServerStatusWorkingStatus.ImportingArtist,
+                TotalNumReleaseGroupsBeingImported = 0,
+                NumReleaseGroupsFinishedImporting = 0,
+            }
+        );
     }
 
     public void SetImportingArtistReleasesStatus(
@@ -47,22 +52,28 @@ public class ArtistServerStatusService(IServiceScopeFactory scopeFactory)
         int totalNumReleaseGroupsBeingImported
     )
     {
-        _artistStatus[artistId] = new ArtistServerStatusWorkingState
-        {
-            Status = ArtistServerStatusWorkingStatus.ImportingArtistReleases,
-            TotalNumReleaseGroupsBeingImported = totalNumReleaseGroupsBeingImported,
-            NumReleaseGroupsFinishedImporting = numReleaseGroupsFinishedImporting,
-        };
+        SetStatus(
+            artistId,
+            new ArtistServerStatusWorkingState
+            {
+                Status = ArtistServerStatusWorkingStatus.ImportingArtistReleases,
+                TotalNumReleaseGroupsBeingImported = totalNumReleaseGroupsBeingImported,
+                NumReleaseGroupsFinishedImporting = numReleaseGroupsFinishedImporting,
+            }
+        );
     }
 
     public void SetReadyStatus(string artistId)
     {
-        _artistStatus[artistId] = new ArtistServerStatusWorkingState
-        {
-            Status = ArtistServerStatusWorkingStatus.Ready,
-            TotalNumReleaseGroupsBeingImported = 0,
-            NumReleaseGroupsFinishedImporting = 0,
-        };
+        SetStatus(
+            artistId,
+            new ArtistServerStatusWorkingState
+            {
+                Status = ArtistServerStatusWorkingStatus.Ready,
+                TotalNumReleaseGroupsBeingImported = 0,
+                NumReleaseGroupsFinishedImporting = 0,
+            }
+        );
     }
 
     public void SetReadyStatusIfImportDone(string artistId)
@@ -72,12 +83,15 @@ public class ArtistServerStatusService(IServiceScopeFactory scopeFactory)
         {
             if (s.TotalNumReleaseGroupsBeingImported == s.NumReleaseGroupsFinishedImporting)
             {
-                _artistStatus[artistId] = new ArtistServerStatusWorkingState
-                {
-                    Status = ArtistServerStatusWorkingStatus.Ready,
-                    TotalNumReleaseGroupsBeingImported = 0,
-                    NumReleaseGroupsFinishedImporting = 0,
-                };
+                SetStatus(
+                    artistId,
+                    new ArtistServerStatusWorkingState
+                    {
+                        Status = ArtistServerStatusWorkingStatus.Ready,
+                        TotalNumReleaseGroupsBeingImported = 0,
+                        NumReleaseGroupsFinishedImporting = 0,
+                    }
+                );
             }
         }
     }
@@ -87,15 +101,19 @@ public class ArtistServerStatusService(IServiceScopeFactory scopeFactory)
         if (_artistStatus.TryGetValue(artistId, out var state))
         {
             state.TotalNumReleaseGroupsBeingImported++;
+            Publish(artistId);
         }
         else
         {
-            _artistStatus[artistId] = new ArtistServerStatusWorkingState
-            {
-                Status = ArtistServerStatusWorkingStatus.ImportingArtistReleases,
-                TotalNumReleaseGroupsBeingImported = 1,
-                NumReleaseGroupsFinishedImporting = 0,
-            };
+            SetStatus(
+                artistId,
+                new ArtistServerStatusWorkingState
+                {
+                    Status = ArtistServerStatusWorkingStatus.ImportingArtistReleases,
+                    TotalNumReleaseGroupsBeingImported = 1,
+                    NumReleaseGroupsFinishedImporting = 0,
+                }
+            );
         }
     }
 
@@ -104,15 +122,19 @@ public class ArtistServerStatusService(IServiceScopeFactory scopeFactory)
         if (_artistStatus.TryGetValue(artistId, out var state))
         {
             state.NumReleaseGroupsFinishedImporting++;
+            Publish(artistId);
         }
         else
         {
-            _artistStatus[artistId] = new ArtistServerStatusWorkingState
-            {
-                Status = ArtistServerStatusWorkingStatus.ImportingArtistReleases,
-                TotalNumReleaseGroupsBeingImported = 0,
-                NumReleaseGroupsFinishedImporting = 1,
-            };
+            SetStatus(
+                artistId,
+                new ArtistServerStatusWorkingState
+                {
+                    Status = ArtistServerStatusWorkingStatus.ImportingArtistReleases,
+                    TotalNumReleaseGroupsBeingImported = 0,
+                    NumReleaseGroupsFinishedImporting = 1,
+                }
+            );
         }
     }
 
@@ -149,6 +171,14 @@ public class ArtistServerStatusService(IServiceScopeFactory scopeFactory)
         var artist = await dbContext.ArtistsAddedToServerLibraryProjection.FindAsync(1);
         var isInLibrary = artist?.ArtistMbIds.Contains(artistId) ?? false;
         return isInLibrary ? new ArtistServerStatusReady() : new ArtistServerStatusNotInLibrary();
+    }
+
+    private void Publish(string artistId)
+    {
+        _ = sender.SendAsync(
+            ArtistServerStatusSubscription.ArtistServerStatusUpdatedTopic(artistId),
+            new ArtistServerStatus(artistId)
+        );
     }
 }
 

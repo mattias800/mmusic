@@ -1,4 +1,3 @@
-using Hqub.MusicBrainz.Entities;
 using MusicGQL.Features.MusicBrainz.Recording;
 using MusicGQL.Features.ServerLibrary.Artist;
 using MusicGQL.Integration.MusicBrainz;

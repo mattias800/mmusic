@@ -25,6 +25,7 @@ using MusicGQL.Features.ServerLibrary.Artist.Handlers;
 using MusicGQL.Features.ServerLibrary.Artist.Mutations;
 using MusicGQL.Features.ServerLibrary.ArtistServerStatus;
 using MusicGQL.Features.ServerLibrary.ArtistServerStatus.Services;
+using MusicGQL.Features.ServerLibrary.Import.Handlers;
 using MusicGQL.Features.ServerLibrary.ReleaseGroup.Aggregate;
 using MusicGQL.Features.ServerLibrary.ReleaseGroup.Handlers;
 using MusicGQL.Features.ServerLibrary.ReleaseGroup.Mutations;
@@ -87,8 +88,7 @@ builder
     .AddScoped<MarkReleaseGroupAsAddedToServerLibraryHandler>()
     .AddScoped<MarkArtistAsAddedToServerLibraryHandler>()
     .AddScoped<MarkArtistReleaseGroupsAsAddedToServerLibraryHandler>()
-    .AddScoped<ProcessMissingArtistsInServerLibraryHandler>()
-    .AddScoped<ProcessMissingReleaseGroupsInServerLibraryHandler>()
+    .AddScoped<ProcessMissingMetaDataHandler>()
     .AddScoped<MissingMetaDataProcessingService>()
     // Event processors
     .AddScoped<LikedSongsEventProcessor>()

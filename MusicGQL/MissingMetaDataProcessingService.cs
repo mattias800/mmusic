@@ -1,11 +1,9 @@
-using MusicGQL.Features.ServerLibrary.Artist.Handlers;
-using MusicGQL.Features.ServerLibrary.ReleaseGroup.Handlers;
+using MusicGQL.Features.ServerLibrary.Import.Handlers;
 
 namespace MusicGQL;
 
 public class MissingMetaDataProcessingService(
-    ProcessMissingArtistsInServerLibraryHandler processMissingArtistsInServerLibraryHandler,
-    ProcessMissingReleaseGroupsInServerLibraryHandler processMissingReleaseGroupsInServerLibraryHandler
+    ProcessMissingMetaDataHandler processMissingMetaDataHandler
 )
 {
     public void ProcessMissingMetaData()
@@ -15,7 +13,6 @@ public class MissingMetaDataProcessingService(
 
     private async Task DoIt()
     {
-        await processMissingArtistsInServerLibraryHandler.Handle();
-        await processMissingReleaseGroupsInServerLibraryHandler.Handle();
+        await processMissingMetaDataHandler.Handle();
     }
 }

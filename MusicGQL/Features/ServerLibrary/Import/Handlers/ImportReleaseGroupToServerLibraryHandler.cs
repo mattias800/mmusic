@@ -1,15 +1,12 @@
-using HotChocolate.Subscriptions;
-using MusicGQL.Features.ServerLibrary.ArtistServerStatus;
 using MusicGQL.Features.ServerLibrary.ArtistServerStatus.Services;
 using MusicGQL.Integration.MusicBrainz;
 using MusicGQL.Integration.Neo4j;
 using Neo4j.Driver;
 
-namespace MusicGQL.Features.ServerLibrary.ReleaseGroup.Handlers;
+namespace MusicGQL.Features.ServerLibrary.Import.Handlers;
 
 public class ImportReleaseGroupToServerLibraryHandler(
     IDriver driver,
-    ITopicEventSender sender,
     MusicBrainzService mbService,
     ServerLibraryImporterService serverLibraryImporterService,
     ArtistServerStatusService artistServerStatusService,
@@ -44,7 +41,7 @@ public class ImportReleaseGroupToServerLibraryHandler(
 
             var artistId = releaseGroup.Credits?.First().Artist.Id;
 
-            await PublishStartEvent(artistId);
+            PublishStartEvent(artistId);
 
             logger.LogInformation(
                 "Fetching all releases for release group {Title}",
@@ -68,7 +65,7 @@ public class ImportReleaseGroupToServerLibraryHandler(
                     releaseGroup.Title,
                     allReleases.Count
                 );
-                await PublishEndEvent(artistId);
+                PublishEndEvent(artistId);
                 return;
             }
 
@@ -80,7 +77,7 @@ public class ImportReleaseGroupToServerLibraryHandler(
             );
 
             await SaveReleaseGroupInDatabase(releaseGroup, mainRelease);
-            await PublishEndEvent(artistId);
+            PublishEndEvent(artistId);
         }
         catch (Exception e)
         {
@@ -92,7 +89,7 @@ public class ImportReleaseGroupToServerLibraryHandler(
         }
     }
 
-    private async Task PublishStartEvent(string? artistId)
+    private void PublishStartEvent(string? artistId)
     {
         if (artistId == null)
         {
@@ -108,14 +105,9 @@ public class ImportReleaseGroupToServerLibraryHandler(
         }
 
         artistServerStatusService.IncreaseTotalNumReleaseGroupsBeingImported(artistId);
-
-        await sender.SendAsync(
-            ArtistServerStatusSubscription.ArtistServerStatusUpdatedTopic(artistId),
-            new ArtistServerStatus.ArtistServerStatus(artistId)
-        );
     }
 
-    private async Task PublishEndEvent(string? artistId)
+    private void PublishEndEvent(string? artistId)
     {
         if (artistId == null)
         {
@@ -124,11 +116,6 @@ public class ImportReleaseGroupToServerLibraryHandler(
 
         artistServerStatusService.IncreaseNumReleaseGroupsFinishedImporting(artistId);
         artistServerStatusService.SetReadyStatusIfImportDone(artistId);
-
-        await sender.SendAsync(
-            ArtistServerStatusSubscription.ArtistServerStatusUpdatedTopic(artistId),
-            new ArtistServerStatus.ArtistServerStatus(artistId)
-        );
     }
 
     private async Task SaveReleaseGroupInDatabase(
