@@ -7,7 +7,6 @@ import { FollowButton } from "@/components/buttons/FollowButton.tsx";
 import { FragmentType, graphql, useFragment } from "@/gql";
 import { ArtistAlbumList } from "@/features/artist/artist-page/ArtistAlbumList.tsx";
 import { ArtistHeader } from "@/features/artist/artist-page/ArtistHeader.tsx";
-import { ArtistInLibraryButton } from "@/features/add-artist-to-server-library/ArtistInLibraryButton.tsx";
 import { ArtistSingleList } from "@/features/artist/artist-page/ArtistSingleList.tsx";
 import { GradientContent } from "@/components/page-body/GradientContent.tsx";
 import { SectionHeading } from "@/components/headings/SectionHeading.tsx";
@@ -18,6 +17,7 @@ import { whenTypename } from "@/common/utils/TypenameMatcher.ts";
 import { ArtistNotInLibrarySectionList } from "@/features/artist/artist-not-in-library/ArtistNotInLibrarySectionList.tsx";
 import { ArtistServerStatus } from "@/features/artist/artist-server-status/ArtistServerStatus.tsx";
 import { ArtistNotInLibraryTopTracks } from "@/features/artist/artist-not-in-library/ArtistNotInLibraryTopTracks.tsx";
+import { AddArtistToLibraryBox } from "@/features/artist/artist-not-in-library/AddArtistToLibraryBox.tsx";
 
 interface ArtistPanelProps {
   artist: FragmentType<typeof artistPanelArtistFragment>;
@@ -54,7 +54,7 @@ export const ArtistPanel: React.FC<ArtistPanelProps> = (props) => {
 
   const { releasesVisible, topTracksVisible } = artist.serverStatus.result;
 
-  const importInProgress = whenTypename(artist.serverStatus.result)
+  const importIsStarting = whenTypename(artist.serverStatus.result)
     .is("ArtistServerStatusImportingArtist", () => true)
     .is(
       "ArtistServerStatusImportingArtistReleases",
@@ -62,8 +62,8 @@ export const ArtistPanel: React.FC<ArtistPanelProps> = (props) => {
     )
     .default(() => false);
 
-  const notInLibrary =
-    artist.serverStatus.result.__typename === "ArtistServerStatusNotInLibrary";
+  const isInLibrary =
+    artist.serverStatus.result.__typename !== "ArtistServerStatusNotInLibrary";
 
   return (
     <GradientContent>
@@ -74,13 +74,18 @@ export const ArtistPanel: React.FC<ArtistPanelProps> = (props) => {
         renderServerStatus={() => <ArtistServerStatus artistId={artist.id} />}
       />
 
-      {notInLibrary || importInProgress ? (
+      {!isInLibrary || importIsStarting ? (
         <ArtistNotInLibrarySectionList
-          artistId={artist.id}
           artistName={artist.name}
-          isInLibrary={!notInLibrary}
           renderTopTracks={() => (
             <ArtistNotInLibraryTopTracks artist={artist} />
+          )}
+          renderImportBox={() => (
+            <AddArtistToLibraryBox
+              artistId={artist.id}
+              artistName={artist.name}
+              isInLibrary={isInLibrary}
+            />
           )}
         />
       ) : (
@@ -90,7 +95,6 @@ export const ArtistPanel: React.FC<ArtistPanelProps> = (props) => {
             <ShuffleButton />
             <FollowButton />
             <DotsButton />
-            <ArtistInLibraryButton artistId={artist.id} isInLibrary={true} />
           </div>
 
           <SectionList>
