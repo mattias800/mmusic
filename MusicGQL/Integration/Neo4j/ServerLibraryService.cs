@@ -134,6 +134,37 @@ public class ServerLibraryService(IDriver driver)
         return dbRecordings;
     }
 
+    public async Task<List<DbRecording>> SearchRecordingForArtistByArtistNameExactNameMatchAsync(
+        string recordingName,
+        string artistName,
+        int limit = 25,
+        int offset = 0
+    )
+    {
+        var dbRecordings = await ExecuteReadListAsync(
+            """
+            MATCH (r:Recording)<-[:CREDITED_ON_RECORDING]-(a:Artist) 
+            WITH apoc.text.replace(toLower(r.Title), '[^a-z0-9]', '') AS normalizedTitle,      
+                 apoc.text.replace(toLower(a.Name), '[^a-z0-9]', '') AS normalizedArtist, r 
+            WHERE normalizedTitle = apoc.text.replace(toLower($recordingName), '[^a-z0-9]', '') 
+            AND normalizedArtist = apoc.text.replace(toLower($artistName), '[^a-z0-9]', '') 
+            RETURN r 
+            ORDER BY r.Title 
+            SKIP $offset 
+            LIMIT $limit
+            """,
+            new
+            {
+                recordingName,
+                artistName,
+                offset,
+                limit,
+            },
+            record => record["r"].As<INode>().ToDbRecording()
+        );
+        return dbRecordings;
+    }
+
     public async Task<List<DbRecording>> SearchRecordingForArtistByArtistNameAsync(
         string recordingName,
         string artistName,
@@ -142,12 +173,17 @@ public class ServerLibraryService(IDriver driver)
     )
     {
         var dbRecordings = await ExecuteReadListAsync(
-            "MATCH (r:Recording)<-[:CREDITED_ON_RECORDING]-(a:Artist) "
-                + "WITH apoc.text.replace(toLower(r.Title), '[^a-z0-9]', '') AS normalizedTitle, "
-                + "     apoc.text.replace(toLower(a.Name), '[^a-z0-9]', '') AS normalizedArtist, r "
-                + "WHERE normalizedTitle CONTAINS apoc.text.replace(toLower($recordingName), '[^a-z0-9]', '') "
-                + "AND normalizedArtist CONTAINS apoc.text.replace(toLower($artistName), '[^a-z0-9]', '') "
-                + "RETURN r ORDER BY r.Title SKIP $offset LIMIT $limit",
+            """
+            MATCH (r:Recording)<-[:CREDITED_ON_RECORDING]-(a:Artist) 
+            WITH apoc.text.replace(toLower(r.Title), '[^a-z0-9]', '') AS normalizedTitle,      
+                 apoc.text.replace(toLower(a.Name), '[^a-z0-9]', '') AS normalizedArtist, r 
+            WHERE normalizedTitle CONTAINS apoc.text.replace(toLower($recordingName), '[^a-z0-9]', '') 
+            AND normalizedArtist CONTAINS apoc.text.replace(toLower($artistName), '[^a-z0-9]', '') 
+            RETURN r 
+            ORDER BY r.Title 
+            SKIP $offset 
+            LIMIT $limit
+            """,
             new
             {
                 recordingName,

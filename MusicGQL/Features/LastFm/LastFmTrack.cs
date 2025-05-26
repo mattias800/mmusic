@@ -58,7 +58,7 @@ public record LastFmTrack([property: GraphQLIgnore] Track Model)
 
     public async Task<Recording?> Recording(ServerLibraryService service)
     {
-        var r = await service.SearchRecordingForArtistByArtistNameAsync(
+        var r = await service.SearchRecordingForArtistByArtistNameExactNameMatchAsync(
             Model.Name,
             Model.Artist.Name
         );
