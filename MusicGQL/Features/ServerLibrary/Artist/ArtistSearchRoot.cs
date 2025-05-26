@@ -1,4 +1,6 @@
 using MusicGQL.Db.Postgres;
+using MusicGQL.Features.ServerLibrary.Artist.Db;
+using MusicGQL.Integration.MusicBrainz;
 using MusicGQL.Integration.Neo4j;
 
 namespace MusicGQL.Features.ServerLibrary.Artist;
@@ -22,10 +24,33 @@ public record ArtistSearchRoot
         return allArtists.Select(a => new Artist(a));
     }
 
-    public async Task<Artist?> ById(ServerLibraryService service, [ID] string id)
+    public async Task<Artist?> ById(
+        ServerLibraryService service,
+        MusicBrainzService mbService,
+        [ID] string id
+    )
     {
         var artist = await service.GetArtistByIdAsync(id);
-        return artist is null ? null : new(artist);
+        if (artist is null)
+        {
+            var a = await mbService.GetArtistByIdAsync(id);
+            if (a is null)
+            {
+                return null;
+            }
+
+            return new(
+                new DbArtist
+                {
+                    Id = a.Id,
+                    Name = a.Name,
+                    SortName = a.SortName,
+                    Gender = a.Gender,
+                }
+            );
+        }
+
+        return new(artist);
     }
 
     public async Task<IEnumerable<Artist>> SearchByName(

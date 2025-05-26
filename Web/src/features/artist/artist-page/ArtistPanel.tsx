@@ -47,7 +47,6 @@ export const artistPanelArtistFragment = graphql(`
     }
     ...TopArtistTracks_Artist
     ...ArtistNotInLibraryTopTracks_Artist
-    ...ArtistServerStatus_Artist
   }
 `);
 
@@ -73,7 +72,7 @@ export const ArtistPanel: React.FC<ArtistPanelProps> = (props) => {
         artistName={artist.name}
         artistBackgroundUrl={artist.images?.artistBackground ?? ""}
         listeners={artist.listeners}
-        renderServerStatus={() => <ArtistServerStatus artist={artist} />}
+        renderServerStatus={() => <ArtistServerStatus artistId={artist.id} />}
       />
 
       {notInLibrary || importInProgress ? (

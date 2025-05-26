@@ -3,7 +3,7 @@ import { useQuery } from "urql";
 import { useParams } from "react-router";
 import { ArtistPanel } from "@/features/artist/artist-page/ArtistPanel.tsx";
 import { ScreenSpinner } from "@/components/spinner/ScreenSpinner.tsx";
-import { ArtistNotInLibraryFetcher } from "@/features/artist/artist-not-in-library/ArtistNotInLibraryFetcher.tsx";
+import { ArtistNotFound } from "@/app/ArtistNotFound.tsx";
 
 export const artistQuery = graphql(`
   query ArtistQuery($artistId: ID!) {
@@ -35,7 +35,7 @@ export const ArtistPage = () => {
     return <div>Error: {error.message}</div>;
   }
   if (!data?.artist.byId) {
-    return <ArtistNotInLibraryFetcher artistId={artistId} />;
+    return <ArtistNotFound />;
   }
 
   return <ArtistPanel artist={data.artist.byId} />;

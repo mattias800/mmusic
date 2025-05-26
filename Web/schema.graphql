@@ -147,6 +147,10 @@ interface ArtistServerStatusResultBase {
   topTracksVisible: Boolean!
 }
 
+type ArtistServerStatusSearchRoot {
+  byArtistId(artistId: ID!): ArtistServerStatus!
+}
+
 type ArtistServerStatusUpdatingArtist implements ArtistServerStatusResultBase {
   releasesVisible: Boolean!
   topTracksVisible: Boolean!
@@ -480,6 +484,7 @@ type PlaylistSearchRoot {
 type Query {
   areThereAnyUsers: Boolean!
   artist: ArtistSearchRoot!
+  artistServerStatus: ArtistServerStatusSearchRoot!
   download: DownloadsSearchRoot!
   external: ExternalRoot!
   musicBrainz: MusicBrainzSearchRoot!

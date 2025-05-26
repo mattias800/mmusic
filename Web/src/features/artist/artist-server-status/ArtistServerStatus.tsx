@@ -1,27 +1,28 @@
 import * as React from "react";
-import { FragmentType, graphql, useFragment } from "@/gql";
-import { useSubscription } from "urql";
+import { graphql } from "@/gql";
+import { useQuery, useSubscription } from "urql";
 import { whenTypename } from "@/common/utils/TypenameMatcher.ts";
 import { ProgressIndicator } from "@/components/progress/ProgressIndicator.tsx";
 
 export interface ArtistServerStatusProps {
-  artist: FragmentType<typeof artistServerStatusArtistFragment>;
+  artistId: string;
 }
 
-const artistServerStatusArtistFragment = graphql(`
-  fragment ArtistServerStatus_Artist on Artist {
-    id
-    serverStatus {
-      id
-      result {
-        __typename
-        ... on ArtistServerStatusResultBase {
-          releasesVisible
-          topTracksVisible
-        }
-        ... on ArtistServerStatusImportingArtistReleases {
-          totalNumReleaseGroupsBeingImported
-          numReleaseGroupsFinishedImporting
+const query = graphql(`
+  query ArtistServerStatus($artistId: ID!) {
+    artistServerStatus {
+      byArtistId(artistId: $artistId) {
+        id
+        result {
+          __typename
+          ... on ArtistServerStatusResultBase {
+            releasesVisible
+            topTracksVisible
+          }
+          ... on ArtistServerStatusImportingArtistReleases {
+            totalNumReleaseGroupsBeingImported
+            numReleaseGroupsFinishedImporting
+          }
         }
       }
     }
@@ -29,7 +30,7 @@ const artistServerStatusArtistFragment = graphql(`
 `);
 
 const subscription = graphql(`
-  subscription ArtistServerStatus($artistId: ID!) {
+  subscription ArtistServerStatusSub($artistId: ID!) {
     artistServerStatusUpdated(artistId: $artistId) {
       id
       result {
@@ -47,24 +48,30 @@ const subscription = graphql(`
   }
 `);
 
-export const ArtistServerStatus: React.FC<ArtistServerStatusProps> = (
-  props,
-) => {
-  const artist = useFragment(artistServerStatusArtistFragment, props.artist);
+export const ArtistServerStatus: React.FC<ArtistServerStatusProps> = ({
+  artistId,
+}) => {
+  const [{ data }] = useQuery({
+    query,
+    variables: { artistId },
+    requestPolicy: "cache-and-network",
+  });
 
-  useSubscription({ query: subscription, variables: { artistId: artist.id } });
+  useSubscription({ query: subscription, variables: { artistId } });
 
-  const label = whenTypename(artist.serverStatus.result)
+  const serverStatus = data?.artistServerStatus.byArtistId;
+
+  const label = whenTypename(serverStatus?.result)
     .is("ArtistServerStatusImportingArtist", () => "Importing artist")
     .is("ArtistServerStatusImportingArtistReleases", () => "Importing releases")
     .default(() => "Finished");
 
-  const visible = whenTypename(artist.serverStatus.result)
+  const visible = whenTypename(serverStatus?.result)
     .is("ArtistServerStatusImportingArtist", () => true)
     .is("ArtistServerStatusImportingArtistReleases", () => true)
     .default(() => false);
 
-  const progressPercent = whenTypename(artist.serverStatus.result)
+  const progressPercent = whenTypename(serverStatus?.result)
     .is(
       "ArtistServerStatusImportingArtistReleases",
       (p) =>
