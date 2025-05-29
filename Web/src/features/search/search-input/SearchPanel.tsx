@@ -1,7 +1,7 @@
 import * as React from "react";
 import { useEffect, useState } from "react";
 import { debounce } from "lodash-es";
-import { SearchResult } from "@/features/search/SearchResult.tsx";
+import { SearchResult } from "@/features/search/search-result-popover/SearchResult.tsx";
 
 export interface SearchPanelProps {
   searchText: string;

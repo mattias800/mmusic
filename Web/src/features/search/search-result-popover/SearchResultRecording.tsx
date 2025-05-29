@@ -3,7 +3,7 @@ import * as React from "react";
 import { Link } from "react-router";
 import { formatTrackLength } from "@/common/TrackLengthFormatter.ts";
 import { useQuery } from "urql";
-import { SearchResultGroup } from "@/features/search/components/SearchResultGroup.tsx";
+import { SearchResultGroup } from "@/features/search/search-result-popover/components/SearchResultGroup.tsx";
 
 export interface SearchResultRecordingProps {
   searchText: string;

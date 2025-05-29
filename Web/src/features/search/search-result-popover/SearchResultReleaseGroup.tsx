@@ -2,7 +2,7 @@ import { graphql } from "@/gql";
 import * as React from "react";
 import { Link } from "react-router";
 import { useQuery } from "urql";
-import { SearchResultGroup } from "@/features/search/components/SearchResultGroup.tsx";
+import { SearchResultGroup } from "@/features/search/search-result-popover/components/SearchResultGroup.tsx";
 
 export interface SearchResultReleaseGroupProps {
   searchText: string;

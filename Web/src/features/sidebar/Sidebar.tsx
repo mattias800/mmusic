@@ -8,7 +8,7 @@ import {
   Music2,
   User,
 } from "lucide-react"; // Added User icon
-import { SearchInput } from "../search/SearchInput";
+import { SearchInput } from "../search/search-input/SearchInput.tsx";
 import { DownloadOverviewFetcher } from "@/features/downloads/download-overview/DownloadOverviewFetcher.tsx";
 import { useQuery } from "urql"; // Import useQuery
 import { graphql } from "@/gql";

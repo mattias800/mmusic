@@ -1,7 +1,7 @@
 import * as React from "react";
-import { SearchResultArtist } from "./SearchResultArtist";
-import { SearchResultReleaseGroup } from "./SearchResultReleaseGroup";
-import { SearchResultRecording } from "./SearchResultRecording";
+import { SearchResultArtist } from "./SearchResultArtist.tsx";
+import { SearchResultReleaseGroup } from "./SearchResultReleaseGroup.tsx";
+import { SearchResultRecording } from "./SearchResultRecording.tsx";
 
 export interface SearchResultProps {
   searchText: string;

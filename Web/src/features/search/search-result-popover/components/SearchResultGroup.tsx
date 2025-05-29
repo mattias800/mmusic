@@ -1,7 +1,7 @@
 import * as React from "react";
 import { Spinner } from "@/components/spinner/Spinner.tsx";
 import { SpinnerSpacing } from "@/components/spinner/SpinnerSpacing.tsx";
-import { NoResultsFound } from "@/features/search/components/NoResultsFound.tsx";
+import { NoResultsFound } from "@/features/search/search-result-popover/components/NoResultsFound.tsx";
 
 export interface SearchResultGroupProps<T extends { id: string }> {
   heading: string;
