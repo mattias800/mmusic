@@ -9,6 +9,7 @@ import { UserProfilePage } from "@/app/UserProfilePage.tsx";
 import { SettingsPage } from "@/app/SettingsPage.tsx";
 import { ArtistListPage } from "@/app/ArtistListPage.tsx";
 import { AlbumListPage } from "@/app/AlbumListPage.tsx";
+import { SearchResultPage } from "@/pages/SearchResultPage";
 
 export interface AppRouterProps {}
 
@@ -27,6 +28,7 @@ export const AppRouter: React.FC<AppRouterProps> = () => {
       />
       <Route path="/profile" element={<UserProfilePage />} />
       <Route path="/settings" element={<SettingsPage />} />
+      <Route path="/search" element={<SearchResultPage />} />
     </Routes>
   );
 };
