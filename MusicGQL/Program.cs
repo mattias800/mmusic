@@ -20,6 +20,7 @@ using MusicGQL.Features.LikedSongs.Commands;
 using MusicGQL.Features.LikedSongs.Mutations;
 using MusicGQL.Features.Playlists.Import.Spotify;
 using MusicGQL.Features.Playlists.Import.Spotify.Mutations;
+using MusicGQL.Features.ServerLibrary.Artist;
 using MusicGQL.Features.ServerLibrary.Artist.Aggregate;
 using MusicGQL.Features.ServerLibrary.Artist.Handlers;
 using MusicGQL.Features.ServerLibrary.Artist.Mutations;
@@ -219,7 +220,8 @@ builder
     .AddType<ArtistServerStatusImportingArtistReleases>()
     .AddType<ArtistServerStatusUpdatingArtistReleases>()
     .AddType<ArtistServerStatusNotInLibrary>()
-    .AddType<IArtistServerStatusResult>();
+    .AddType<IArtistServerStatusResult>()
+    .AddType<IArtistBase>();
 
 builder.Services.Configure<LastfmOptions>(builder.Configuration.GetSection("Lastfm"));
 

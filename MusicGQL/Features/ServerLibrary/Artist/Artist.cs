@@ -2,19 +2,24 @@ using Hqub.Lastfm;
 using MusicGQL.Features.LastFm;
 using MusicGQL.Features.MusicBrainz.Artist;
 using MusicGQL.Features.ServerLibrary.Artist.Db;
+using MusicGQL.Features.ServerLibrary.ArtistServerStatus;
+using MusicGQL.Features.ServerLibrary.ArtistServerStatus.Services;
 using MusicGQL.Integration.MusicBrainz;
 using MusicGQL.Integration.Neo4j;
 using TrackSeries.FanArtTV.Client;
 
 namespace MusicGQL.Features.ServerLibrary.Artist;
 
-public record Artist([property: GraphQLIgnore] DbArtist Model)
+public record Artist([property: GraphQLIgnore] DbArtist Model) : IArtistBase
 {
     [ID]
-    public string Id => Model.Id;
-    public string Name => Model.Name;
-    public string SortName => Model.SortName;
-    public string? Gender => Model.Gender;
+    public string Id() => Model.Id;
+
+    public string Name() => Model.Name;
+
+    public string SortName() => Model.SortName;
+
+    public string? Gender() => Model.Gender;
 
     public ArtistServerStatus.ArtistServerStatus ServerStatus() => new(Model.Id);
 
@@ -70,6 +75,9 @@ public record Artist([property: GraphQLIgnore] DbArtist Model)
             return null;
         }
     }
+
+    public Task<ArtistServerStatusResult> ServerStatus(ArtistServerStatusService service) =>
+        service.GetArtistServerStatus(Model.Id);
 
     public async Task<ArtistImages?> Images(IFanArtTVClient fanartClient)
     {

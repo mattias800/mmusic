@@ -1,9 +1,18 @@
 import * as React from "react";
+import { Spinner } from "@/components/spinner/Spinner.tsx";
 
 export interface SectionHeadingProps {
   children: string | string[];
+  loading?: boolean;
 }
 
-export const SectionHeading: React.FC<SectionHeadingProps> = ({ children }) => {
-  return <h2 className="text-xl font-semibold mb-4">{children}</h2>;
+export const SectionHeading: React.FC<SectionHeadingProps> = ({
+  children,
+  loading,
+}) => {
+  return (
+    <h2 className="text-xl font-semibold mb-4 flex gap-2 items-center">
+      {children} {loading && <Spinner size={"sm"} />}
+    </h2>
+  );
 };

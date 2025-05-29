@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { TextInput } from "@/components/inputs/TextInput";
-import { PrimaryButton } from "@/components/buttons/PrimaryButton.tsx";
+import { PrimaryButton } from "@/components/buttons/core-buttons/PrimaryButton.tsx";
 import { MessageBox } from "@/components/errors/MessageBox.tsx";
 
 export interface SignInFormValues {

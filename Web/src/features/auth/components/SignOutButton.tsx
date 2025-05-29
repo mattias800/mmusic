@@ -1,5 +1,5 @@
 import * as React from "react";
-import { SecondaryButton } from "@/components/buttons/SecondaryButton.tsx";
+import { SecondaryButton } from "@/components/buttons/core-buttons/SecondaryButton.tsx";
 import { graphql } from "@/gql";
 import { useMutation } from "urql";
 import { useNavigate } from "react-router";

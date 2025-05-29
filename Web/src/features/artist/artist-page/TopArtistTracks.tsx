@@ -2,7 +2,7 @@ import * as React from "react";
 import { useState } from "react";
 import { TopArtistTrackItem } from "@/features/artist/artist-page/TopArtistTrackItem.tsx";
 import { graphql } from "@/gql";
-import { SecondaryButton } from "@/components/buttons/SecondaryButton.tsx";
+import { SecondaryButton } from "@/components/buttons/core-buttons/SecondaryButton.tsx";
 import { SectionHeading } from "@/components/headings/SectionHeading.tsx";
 import { Section } from "@/components/page-body/Section.tsx";
 import { useQuery } from "urql";

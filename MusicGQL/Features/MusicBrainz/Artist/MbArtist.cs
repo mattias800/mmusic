@@ -10,7 +10,8 @@ using TrackSeries.FanArtTV.Client;
 
 namespace MusicGQL.Features.MusicBrainz.Artist;
 
-public record MbArtist([property: GraphQLIgnore] Hqub.MusicBrainz.Entities.Artist Model) : IArtist
+public record MbArtist([property: GraphQLIgnore] Hqub.MusicBrainz.Entities.Artist Model)
+    : IArtistBase
 {
     [ID]
     public string Id() => Model.Id;
