@@ -4,7 +4,6 @@ using MusicGQL.Features.MusicBrainz.ReleaseGroup;
 using MusicGQL.Features.ServerLibrary;
 using MusicGQL.Features.ServerLibrary.Artist;
 using MusicGQL.Features.ServerLibrary.ArtistServerStatus;
-using MusicGQL.Features.ServerLibrary.ArtistServerStatus.Services;
 using MusicGQL.Integration.MusicBrainz;
 using TrackSeries.FanArtTV.Client;
 
@@ -23,10 +22,10 @@ public record MbArtist([property: GraphQLIgnore] Hqub.MusicBrainz.Entities.Artis
     public string? Disambiguation => Model.Disambiguation;
     public string? Type => Model.Type;
 
-    public async Task<IEnumerable<Release.MbRelease>> Releases(MusicBrainzService mbService)
+    public async Task<IEnumerable<Release.Release>> Releases(MusicBrainzService mbService)
     {
         var releases = await mbService.GetReleasesForArtistAsync(Model.Id);
-        return releases.Select(r => new Release.MbRelease(r));
+        return releases.Select(r => new Release.Release(r));
     }
 
     public async Task<IEnumerable<MbReleaseGroup>> ReleaseGroups(MusicBrainzService mbService)
@@ -96,6 +95,5 @@ public record MbArtist([property: GraphQLIgnore] Hqub.MusicBrainz.Entities.Artis
         }
     }
 
-    public Task<ArtistServerStatusResult> ServerStatus(ArtistServerStatusService service) =>
-        service.GetArtistServerStatus(Model.Id);
+    public ArtistServerStatus ServerStatus() => new(Model.Id);
 }

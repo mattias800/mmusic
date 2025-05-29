@@ -1,24 +1,31 @@
 using Hqub.MusicBrainz.Entities;
 using MusicGQL.Features.MusicBrainz.Common;
 using MusicGQL.Features.ServerLibrary;
+using MusicGQL.Features.ServerLibrary.ReleaseGroup;
 using MusicGQL.Integration.MusicBrainz;
 using TrackSeries.FanArtTV.Client;
 
 namespace MusicGQL.Features.MusicBrainz.ReleaseGroup;
 
 public record MbReleaseGroup([property: GraphQLIgnore] Hqub.MusicBrainz.Entities.ReleaseGroup Model)
+    : IReleaseGroupBase
 {
     [ID]
-    public string Id => Model.Id;
-    public string Title => Model.Title;
-    public string? PrimaryType => Model.PrimaryType;
-    public IEnumerable<string> SecondaryTypes => Model.SecondaryTypes;
+    public string Id() => Model.Id;
+
+    public string Title() => Model.Title;
+
+    public string? PrimaryType() => Model.PrimaryType;
+
+    public IEnumerable<string> SecondaryTypes() => Model.SecondaryTypes;
 
     public IEnumerable<MbNameCredit> Credits() =>
         Model.Credits?.Select(c => new MbNameCredit(c)) ?? [];
 
-    public string? FirstReleaseDate => Model.FirstReleaseDate;
-    public string? FirstReleaseYear => Model.FirstReleaseDate?.Split("-").FirstOrDefault();
+    public string? FirstReleaseDate() => Model.FirstReleaseDate;
+
+    public string? FirstReleaseYear() => Model.FirstReleaseDate?.Split("-").FirstOrDefault();
+
     public IEnumerable<string> Tags => Model.Tags.Select(t => t.Name);
 
     public async Task<string?> CoverArtUri(
@@ -71,11 +78,11 @@ public record MbReleaseGroup([property: GraphQLIgnore] Hqub.MusicBrainz.Entities
         }
     }
 
-    public async Task<Release.MbRelease?> MainRelease(MusicBrainzService mbService)
+    public async Task<Release.Release?> MainRelease(MusicBrainzService mbService)
     {
         var all = await mbService.GetReleasesForReleaseGroupAsync(Id);
         var best = LibraryDecider.GetMainReleaseInReleaseGroup(all.ToList());
-        return best is null ? null : new Release.MbRelease(best);
+        return best is null ? null : new Release.Release(best);
     }
 
     public IEnumerable<MbRelation> Relations()

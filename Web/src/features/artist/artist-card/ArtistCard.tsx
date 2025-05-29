@@ -11,7 +11,7 @@ export interface ArtistCardProps {
 }
 
 export const artistCardArtistFragment = graphql(`
-  fragment ArtistCard_Artist on Artist {
+  fragment ArtistCard_Artist on ArtistBase {
     id
     name
     listeners

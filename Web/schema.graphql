@@ -82,7 +82,7 @@ type AddReleaseGroupToServerLibraryUnknownError {
   message: String!
 }
 
-type Artist {
+type Artist implements ArtistBase {
   albums: [ReleaseGroup!]!
   eps: [ReleaseGroup!]!
   gender: String
@@ -97,6 +97,15 @@ type Artist {
   singles: [ReleaseGroup!]!
   sortName: String!
   topTracks: [LastFmTrack!]!
+}
+
+interface ArtistBase {
+  id: ID!
+  images: ArtistImages
+  listeners: Long
+  name: String!
+  serverStatus: ArtistServerStatus!
+  sortName: String!
 }
 
 type ArtistImages {
@@ -291,7 +300,7 @@ type MbAlbumImages {
   cdArt: String
 }
 
-type MbArtist {
+type MbArtist implements ArtistBase {
   albums: [MbReleaseGroup!]!
   disambiguation: String
   id: ID!
@@ -300,7 +309,7 @@ type MbArtist {
   name: String!
   releaseGroups: [MbReleaseGroup!]!
   releases: [MbRelease!]!
-  serverStatus: ArtistServerStatusResult!
+  serverStatus: ArtistServerStatus!
   singles: [MbReleaseGroup!]!
   sortName: String!
   topTracks: [LastFmTrack!]!

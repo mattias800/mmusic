@@ -16,6 +16,7 @@ const artistSearchQueryDocument = graphql(`
         searchByName(name: $text, limit: 5) {
           id
           name
+          ...ArtistCard_Artist
           images {
             artistThumb
           }

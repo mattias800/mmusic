@@ -4,17 +4,20 @@ using MusicGQL.Integration.Neo4j;
 
 namespace MusicGQL.Features.ServerLibrary.Release;
 
-public record Release([property: GraphQLIgnore] DbRelease Model)
+public record Release([property: GraphQLIgnore] DbRelease Model) : IReleaseBase
 {
-    public string Id => Model.Id;
-    public string Title => Model.Title;
-    public string? Date => Model.Date;
+    public string Id() => Model.Id;
 
-    public string? Year => Model.Date?.Split("-").FirstOrDefault();
+    public string Title() => Model.Title;
 
-    //public string? Barcode => Model.Barcode;
-    //public string? Country => Model.Country;
-    public string? Status => Model.Status;
+    public string? Date() => Model.Date;
+
+    public string? Year() => Model.Date?.Split("-").FirstOrDefault();
+
+    //public string? Barcode() => Model.Barcode;
+    public string? Country() => Model.Country;
+
+    public string? Status() => Model.Status;
 
     //public string? Quality => Model.Quality;
     //public IEnumerable<Genre> Genres => Model.Genres?.Select(g => new Genre(g)) ?? [];
@@ -26,7 +29,7 @@ public record Release([property: GraphQLIgnore] DbRelease Model)
         return releaseGroup is null ? null : new(releaseGroup);
     }
 
-    public string CoverArtUri => CoverArtArchive.GetCoverArtUri(Model.Id).ToString();
+    public string CoverArtUri() => CoverArtArchive.GetCoverArtUri(Model.Id).ToString();
 
     public async Task<IEnumerable<Common.NameCredit>> Credits(ServerLibraryService service)
     {

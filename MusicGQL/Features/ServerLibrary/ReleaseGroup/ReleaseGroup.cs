@@ -7,7 +7,7 @@ using TrackSeries.FanArtTV.Client;
 
 namespace MusicGQL.Features.ServerLibrary.ReleaseGroup;
 
-public record ReleaseGroup([property: GraphQLIgnore] DbReleaseGroup Model)
+public record ReleaseGroup([property: GraphQLIgnore] DbReleaseGroup Model) : IReleaseGroupBase
 {
     public string Id() => Model.Id;
 

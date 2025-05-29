@@ -36,7 +36,12 @@ export function SearchResultGroup<T extends { id: string }>({
 
         {items?.map((item) => <div key={item.id}>{renderItem(item)}</div>)}
       </div>
-      {children}
+      {children ? (
+        <>
+          <div className={"pt-8"} />
+          {children}
+        </>
+      ) : null}
     </Section>
   );
 }
