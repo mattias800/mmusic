@@ -9,6 +9,7 @@ namespace MusicGQL.Features.ServerLibrary.ReleaseGroup;
 
 public record ReleaseGroup([property: GraphQLIgnore] DbReleaseGroup Model) : IReleaseGroupBase
 {
+    [ID]
     public string Id() => Model.Id;
 
     public string Title() => Model.Title;

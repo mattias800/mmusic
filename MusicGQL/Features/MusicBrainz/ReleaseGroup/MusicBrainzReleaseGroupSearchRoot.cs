@@ -1,7 +1,6 @@
-using MusicGQL.Features.MusicBrainz.ReleaseGroup;
 using MusicGQL.Integration.MusicBrainz;
 
-namespace MusicGQL.Features.ServerLibrary.ReleaseGroup;
+namespace MusicGQL.Features.MusicBrainz.ReleaseGroup;
 
 public record MusicBrainzReleaseGroupSearchRoot
 {

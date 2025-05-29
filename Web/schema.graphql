@@ -204,6 +204,15 @@ type ExternalRoot {
   soulSeek: SoulSeekRoot!
 }
 
+interface IReleaseBase {
+  country: String
+  coverArtUri: String!
+  date: String
+  id: ID!
+  title: String!
+  year: String
+}
+
 type ImportPlaylistSearchRoot {
   spotify: SpotifyPlaylistSearchRoot!
 }
@@ -374,7 +383,7 @@ type MbRelation {
   url: Url
 }
 
-type MbRelease {
+type MbRelease implements IReleaseBase {
   artists: [MbArtist!]!
   barcode: String
   country: String
@@ -393,7 +402,7 @@ type MbRelease {
   year: String
 }
 
-type MbReleaseGroup {
+type MbReleaseGroup implements ReleaseGroupBase {
   coverArtUri: String
   credits: [MbNameCredit!]!
   firstReleaseDate: String
@@ -530,12 +539,12 @@ type RecordingStreamingServiceInfo {
   youtubeVideoId: String
 }
 
-type Release {
+type Release implements IReleaseBase {
   country: String
   coverArtUri: String!
   credits: [NameCredit!]!
   date: String
-  id: String!
+  id: ID!
   labels: [Label!]!
   recordings: [Recording!]!
   releaseGroup: ReleaseGroup
@@ -544,14 +553,23 @@ type Release {
   year: String
 }
 
-type ReleaseGroup {
+type ReleaseGroup implements ReleaseGroupBase {
   coverArtUri: String
   credits: [NameCredit!]!
   firstReleaseDate: String
   firstReleaseYear: String
-  id: String!
+  id: ID!
   mainRelease: Release
   musicBrainzReleaseGroup: MbReleaseGroup
+  primaryType: String
+  secondaryTypes: [String!]!
+  title: String!
+}
+
+interface ReleaseGroupBase {
+  firstReleaseDate: String
+  firstReleaseYear: String
+  id: ID!
   primaryType: String
   secondaryTypes: [String!]!
   title: String!

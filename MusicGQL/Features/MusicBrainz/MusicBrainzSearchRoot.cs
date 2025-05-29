@@ -1,7 +1,7 @@
 using MusicGQL.Features.MusicBrainz.Artist;
 using MusicGQL.Features.MusicBrainz.Recording;
 using MusicGQL.Features.MusicBrainz.Release;
-using MusicGQL.Features.ServerLibrary.ReleaseGroup;
+using MusicGQL.Features.MusicBrainz.ReleaseGroup;
 
 namespace MusicGQL.Features.MusicBrainz;
 

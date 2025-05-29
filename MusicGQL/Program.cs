@@ -27,6 +27,8 @@ using MusicGQL.Features.ServerLibrary.Artist.Mutations;
 using MusicGQL.Features.ServerLibrary.ArtistServerStatus;
 using MusicGQL.Features.ServerLibrary.ArtistServerStatus.Services;
 using MusicGQL.Features.ServerLibrary.Import.Handlers;
+using MusicGQL.Features.ServerLibrary.Release;
+using MusicGQL.Features.ServerLibrary.ReleaseGroup;
 using MusicGQL.Features.ServerLibrary.ReleaseGroup.Aggregate;
 using MusicGQL.Features.ServerLibrary.ReleaseGroup.Handlers;
 using MusicGQL.Features.ServerLibrary.ReleaseGroup.Mutations;
@@ -221,7 +223,9 @@ builder
     .AddType<ArtistServerStatusUpdatingArtistReleases>()
     .AddType<ArtistServerStatusNotInLibrary>()
     .AddType<IArtistServerStatusResult>()
-    .AddType<IArtistBase>();
+    .AddType<IArtistBase>()
+    .AddType<IReleaseGroupBase>()
+    .AddType<IReleaseBase>();
 
 builder.Services.Configure<LastfmOptions>(builder.Configuration.GetSection("Lastfm"));
 

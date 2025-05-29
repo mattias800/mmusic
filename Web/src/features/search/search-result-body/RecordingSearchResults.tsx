@@ -50,9 +50,9 @@ export const RecordingSearchResults: React.FC<RecordingSearchResultsProps> = ({
     <SearchResultGroup
       heading={"Songs"}
       fetching={fetching}
-      items={recordings} // Cast to any[] for now
+      items={recordings}
       renderItem={(recording) => (
-        <div // Changed Link to div to avoid nested interactive elements if we add play button later
+        <div
           key={recording.id}
           className="flex items-center p-2 hover:bg-white/10 rounded-md transition-colors"
         >

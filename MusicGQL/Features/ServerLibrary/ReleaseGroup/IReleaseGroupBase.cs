@@ -3,6 +3,7 @@ namespace MusicGQL.Features.ServerLibrary.ReleaseGroup;
 [InterfaceType("ReleaseGroupBase")]
 public interface IReleaseGroupBase
 {
+    [ID]
     string Id();
     string Title();
     string? PrimaryType();

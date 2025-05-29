@@ -6,6 +6,7 @@ namespace MusicGQL.Features.ServerLibrary.Release;
 
 public record Release([property: GraphQLIgnore] DbRelease Model) : IReleaseBase
 {
+    [ID]
     public string Id() => Model.Id;
 
     public string Title() => Model.Title;
