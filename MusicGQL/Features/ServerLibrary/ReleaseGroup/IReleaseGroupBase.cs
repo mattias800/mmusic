@@ -1,6 +1,3 @@
-using MusicGQL.Integration.Neo4j;
-using TrackSeries.FanArtTV.Client;
-
 namespace MusicGQL.Features.ServerLibrary.ReleaseGroup;
 
 [InterfaceType("ReleaseGroupBase")]
@@ -15,7 +12,4 @@ public interface IReleaseGroupBase
     //Task<IEnumerable<Common.NameCredit>> Credits(ServerLibraryService service);
     string? FirstReleaseDate();
     string? FirstReleaseYear();
-    Task<Release.Release?> MainRelease(ServerLibraryService service);
-
-    Task<string?> CoverArtUri(IFanArtTVClient fanartClient, ServerLibraryService service);
 }

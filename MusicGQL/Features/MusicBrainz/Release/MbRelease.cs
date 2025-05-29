@@ -3,12 +3,11 @@ using MusicGQL.Features.MusicBrainz.Artist;
 using MusicGQL.Features.MusicBrainz.Common;
 using MusicGQL.Features.MusicBrainz.ReleaseGroup;
 using MusicGQL.Features.ServerLibrary.Release;
-using MusicGQL.Features.ServerLibrary.ReleaseGroup;
 using MusicGQL.Integration.MusicBrainz;
 
 namespace MusicGQL.Features.MusicBrainz.Release;
 
-public record Release([property: GraphQLIgnore] Hqub.MusicBrainz.Entities.Release Model)
+public record MbRelease([property: GraphQLIgnore] Hqub.MusicBrainz.Entities.Release Model)
     : IReleaseBase
 {
     [ID]
@@ -32,7 +31,7 @@ public record Release([property: GraphQLIgnore] Hqub.MusicBrainz.Entities.Releas
 
     public IEnumerable<MbMedium> Media() => Model.Media?.Select(m => new MbMedium(m)) ?? [];
 
-    public MbReleaseGroup? ReleaseGroup =>
+    public MbReleaseGroup? ReleaseGroup() =>
         Model.ReleaseGroup is null ? null : new(Model.ReleaseGroup);
 
     public string CoverArtUri() => CoverArtArchive.GetCoverArtUri(Model.Id).ToString();
@@ -45,7 +44,7 @@ public record Release([property: GraphQLIgnore] Hqub.MusicBrainz.Entities.Releas
         [Service] MusicBrainzService mbService
     )
     {
-        var recordings = await mbService.GetRecordingsForReleaseAsync(Id);
+        var recordings = await mbService.GetRecordingsForReleaseAsync(Model.Id);
         return recordings.Select(r => new Recording.MbRecording(r));
     }
 

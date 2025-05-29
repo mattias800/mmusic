@@ -6,7 +6,7 @@ public class DbRelease
     public string Title { get; set; } = string.Empty;
     public string? Date { get; set; }
     public string? Status { get; set; }
-    // Add other relevant properties from Hqub.MusicBrainz.Entities.Release as needed
-    // For example: Barcode, Country, Quality, Disambiguation
-    // Relationships like ArtistCredits, Media, ReleaseGroup will be handled via Neo4j relationships
+    public string? Barcode { get; set; }
+    public string? Country { get; set; }
+    public string? Quality { get; set; }
 }

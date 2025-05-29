@@ -23,8 +23,9 @@ public record ReleaseGroup([property: GraphQLIgnore] DbReleaseGroup Model) : IRe
         return artistCredits.Select(c => new Common.NameCredit(c));
     }
 
-    public string? FirstReleaseDate => Model.FirstReleaseDate;
-    public string? FirstReleaseYear => Model.FirstReleaseDate?.Split("-").FirstOrDefault();
+    public string? FirstReleaseDate() => Model.FirstReleaseDate;
+
+    public string? FirstReleaseYear() => Model.FirstReleaseDate?.Split("-").FirstOrDefault();
 
     public async Task<Release.Release?> MainRelease(ServerLibraryService service)
     {

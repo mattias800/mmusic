@@ -81,14 +81,17 @@ public class ServerLibraryImporterService(IMapper mapper)
     {
         await tx.RunAsync(
             "MERGE (r:Release {Id: $id}) "
-                + "ON CREATE SET r.Title = $title, r.Date = $date, r.Status = $status "
-                + "ON MATCH SET r.Title = $title, r.Date = $date, r.Status = $status",
+                + "ON CREATE SET r.Title = $title, r.Date = $date, r.Status = $status, r.Barcode = $barcode, r.Country = $country, r.Quality = $quality "
+                + "ON MATCH SET r.Title = $title, r.Date = $date, r.Status = $status, r.Barcode = $barcode, r.Country = $country, r.Quality = $quality",
             new
             {
                 id = releaseToSave.Id,
                 title = releaseToSave.Title,
                 date = releaseToSave.Date,
                 status = releaseToSave.Status,
+                barcode = releaseToSave.Barcode,
+                country = releaseToSave.Country,
+                quality = releaseToSave.Quality
             }
         );
 

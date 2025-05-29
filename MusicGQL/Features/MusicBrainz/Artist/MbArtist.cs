@@ -22,10 +22,10 @@ public record MbArtist([property: GraphQLIgnore] Hqub.MusicBrainz.Entities.Artis
     public string? Disambiguation => Model.Disambiguation;
     public string? Type => Model.Type;
 
-    public async Task<IEnumerable<Release.Release>> Releases(MusicBrainzService mbService)
+    public async Task<IEnumerable<Release.MbRelease>> Releases(MusicBrainzService mbService)
     {
         var releases = await mbService.GetReleasesForArtistAsync(Model.Id);
-        return releases.Select(r => new Release.Release(r));
+        return releases.Select(r => new Release.MbRelease(r));
     }
 
     public async Task<IEnumerable<MbReleaseGroup>> ReleaseGroups(MusicBrainzService mbService)

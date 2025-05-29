@@ -50,7 +50,7 @@ public record MbReleaseGroup([property: GraphQLIgnore] Hqub.MusicBrainz.Entities
                 }
             }
 
-            var all = await mbService.GetReleasesForReleaseGroupAsync(Id);
+            var all = await mbService.GetReleasesForReleaseGroupAsync(Model.Id);
             var best = LibraryDecider.GetMainReleaseInReleaseGroup(all.ToList());
 
             return best is null ? null : CoverArtArchive.GetCoverArtUri(best.Id).ToString();
@@ -78,11 +78,11 @@ public record MbReleaseGroup([property: GraphQLIgnore] Hqub.MusicBrainz.Entities
         }
     }
 
-    public async Task<Release.Release?> MainRelease(MusicBrainzService mbService)
+    public async Task<Release.MbRelease?> MainRelease(MusicBrainzService mbService)
     {
-        var all = await mbService.GetReleasesForReleaseGroupAsync(Id);
+        var all = await mbService.GetReleasesForReleaseGroupAsync(Model.Id);
         var best = LibraryDecider.GetMainReleaseInReleaseGroup(all.ToList());
-        return best is null ? null : new Release.Release(best);
+        return best is null ? null : new Release.MbRelease(best);
     }
 
     public IEnumerable<MbRelation> Relations()

@@ -39,7 +39,7 @@ public record Release([property: GraphQLIgnore] DbRelease Model) : IReleaseBase
 
     public async Task<IEnumerable<Recording.Recording>> Recordings(ServerLibraryService service)
     {
-        var recordings = await service.GetRecordingsForReleaseAsync(Id);
+        var recordings = await service.GetRecordingsForReleaseAsync(Model.Id);
         var sortedByTrackPosition = recordings
             .OrderBy(r => r.TrackPosition)
             .Select(r => r.DbRecording)
@@ -50,7 +50,7 @@ public record Release([property: GraphQLIgnore] DbRelease Model) : IReleaseBase
 
     public async Task<IEnumerable<Common.Label>> Labels(ServerLibraryService service)
     {
-        var labels = await service.GetLabelsForReleaseAsync(Id);
+        var labels = await service.GetLabelsForReleaseAsync(Model.Id);
         return labels.Select(r => new Common.Label(r));
     }
 };

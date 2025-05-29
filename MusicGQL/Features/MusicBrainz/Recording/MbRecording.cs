@@ -17,18 +17,18 @@ public record MbRecording([property: GraphQLIgnore] Hqub.MusicBrainz.Entities.Re
     public IEnumerable<MbNameCredit> NameCredits =>
         Model.Credits?.Select(c => new MbNameCredit(c)) ?? [];
 
-    public async Task<IEnumerable<Release.Release>> Releases(MusicBrainzService mbService)
+    public async Task<IEnumerable<Release.MbRelease>> Releases(MusicBrainzService mbService)
     {
         var releases = await mbService.GetReleasesForRecordingAsync(Model.Id);
-        return releases.Select(a => new Release.Release(a));
+        return releases.Select(a => new Release.MbRelease(a));
     }
 
     // TODO Should return release group.
-    public async Task<Release.Release?> MainAlbum(MusicBrainzService mbService)
+    public async Task<Release.MbRelease?> MainAlbum(MusicBrainzService mbService)
     {
         var releases = await mbService.GetReleasesForRecordingAsync(Model.Id);
         var mainAlbum = LibraryDecider.FindMainAlbumForSong(releases);
-        return mainAlbum is null ? null : new Release.Release(mainAlbum);
+        return mainAlbum is null ? null : new Release.MbRelease(mainAlbum);
     }
 
     public async Task<IEnumerable<MbArtist>> Artists(MusicBrainzService service)

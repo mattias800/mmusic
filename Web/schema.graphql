@@ -531,6 +531,7 @@ type RecordingStreamingServiceInfo {
 }
 
 type Release {
+  country: String
   coverArtUri: String!
   credits: [NameCredit!]!
   date: String

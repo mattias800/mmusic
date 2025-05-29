@@ -677,6 +677,7 @@ export type RecordingStreamingServiceInfo = {
 
 export type Release = {
   __typename?: 'Release';
+  country?: Maybe<Scalars['String']['output']>;
   coverArtUri: Scalars['String']['output'];
   credits: Array<NameCredit>;
   date?: Maybe<Scalars['String']['output']>;

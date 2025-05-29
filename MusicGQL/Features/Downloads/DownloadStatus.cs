@@ -18,5 +18,5 @@ public record DownloadStatus([property: GraphQLIgnore] DownloadReleaseSagaData M
 
     public int? TracksDownloaded() => Model.TracksDownloaded;
 
-    public Release? Release => Model.Release is null ? null : new Release(Model.Release);
+    public MbRelease? Release => Model.Release is null ? null : new MbRelease(Model.Release);
 }
