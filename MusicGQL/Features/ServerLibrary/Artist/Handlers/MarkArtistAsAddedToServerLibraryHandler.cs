@@ -12,7 +12,7 @@ public class MarkArtistAsAddedToServerLibraryHandler(
 {
     public async Task<Result> Handle(Command command)
     {
-        var exising = await dbContext.ArtistsAddedToServerLibraryProjection.FindAsync(1);
+        var exising = await dbContext.ArtistsAddedToServerLibraryProjections.FindAsync(1);
 
         if (exising?.ArtistMbIds.Contains(command.ArtistId) ?? false)
         {

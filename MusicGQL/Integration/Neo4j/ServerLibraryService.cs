@@ -86,6 +86,16 @@ public class ServerLibraryService(IDriver driver)
         return dbRecording;
     }
 
+    public async Task<List<DbRecording>> GetRecordingsByIdsAsync(IEnumerable<string> ids)
+    {
+        var dbRecordings = await ExecuteReadListAsync(
+            "MATCH (r:Recording) WHERE r.Id IN $ids RETURN r",
+            new { ids },
+            record => record["r"].As<INode>().ToDbRecording()
+        );
+        return dbRecordings;
+    }
+
     public async Task<List<DbRecording>> GetRecordingsForArtistAsync(string artistId)
     {
         // Assuming (Artist)-[:PERFORMED_ON]->(Recording) or similar

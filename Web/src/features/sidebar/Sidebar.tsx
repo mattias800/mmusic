@@ -1,22 +1,14 @@
 import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  Cog,
-  Heart,
-  Library,
-  ListMusic,
-  MicVocal,
-  Music2,
-  User,
-} from "lucide-react"; // Added User icon
+import { Cog, Heart, Library, MicVocal, Music2, User } from "lucide-react";
 import { SearchInput } from "../search/search-input/SearchInput.tsx";
 import { DownloadOverviewFetcher } from "@/features/downloads/download-overview/DownloadOverviewFetcher.tsx";
-import { useQuery } from "urql"; // Import useQuery
+import { useQuery } from "urql";
 import { graphql } from "@/gql";
 import { cn } from "@/lib/utils.ts";
 import { SidebarNavButton } from "@/features/sidebar/SidebarNavButton.tsx";
 import { SidebarSection } from "@/features/sidebar/SidebarSection.tsx";
 import { SoulSeekNetworkStatusFetcher } from "@/features/soul-seek-network-status/SoulSeekNetworkStatusFetcher.tsx";
-import { MmusicLogo } from "@/components/logo/MmusicLogo.tsx"; // Import generated types
+import { MmusicLogo } from "@/components/logo/MmusicLogo.tsx";
 
 export interface SidebarProps {
   className?: string;
@@ -63,11 +55,6 @@ export const Sidebar = ({ className }: SidebarProps) => {
             icon={Heart}
           />
 
-          <SidebarNavButton
-            path={"/playlists"}
-            label={"Playlists"}
-            icon={ListMusic}
-          />
           <SidebarNavButton path={"/songs"} label={"Songs"} icon={Music2} />
           <SidebarNavButton
             path={"/artists"}
@@ -75,6 +62,10 @@ export const Sidebar = ({ className }: SidebarProps) => {
             icon={MicVocal}
           />
           <SidebarNavButton path={"/albums"} label={"Albums"} icon={Library} />
+        </SidebarSection>
+
+        <SidebarSection heading={"Playlists"}>
+          <SidebarNavButton path={"/"} label={"Popular artists"} icon={Heart} />
         </SidebarSection>
 
         <SidebarSection

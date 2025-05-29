@@ -175,7 +175,7 @@ public class ArtistServerStatusService(ITopicEventSender sender, IServiceScopeFa
         using var scope = scopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<EventDbContext>();
 
-        var artist = await dbContext.ArtistsAddedToServerLibraryProjection.FindAsync(1);
+        var artist = await dbContext.ArtistsAddedToServerLibraryProjections.FindAsync(1);
         var isInLibrary = artist?.ArtistMbIds.Contains(artistId) ?? false;
         return isInLibrary
             ? new ArtistServerStatusReady(artistId)

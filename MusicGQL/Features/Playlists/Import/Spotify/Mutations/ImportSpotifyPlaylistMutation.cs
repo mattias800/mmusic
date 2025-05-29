@@ -28,15 +28,14 @@ public class ImportSpotifyPlaylistMutation
             PlaylistId = playlistGuid,
             ActorUserId = userId,
             Name = spotifyPlaylist.Name ?? string.Empty,
-            SpotifyPlaylistId = spotifyPlaylist.Id,
             Description = spotifyPlaylist.Description,
             CoverImageUrl = spotifyPlaylist.Images?.FirstOrDefault()?.Url,
         };
+
         db.Events.Add(createdPlaylistEvent);
 
         // 2. Fetch tracks from Spotify
         var tracks = await spotifyService.GetTracksFromPlaylist(playlistId) ?? [];
-        int position = 0;
 
         foreach (var track in tracks)
         {
@@ -48,10 +47,8 @@ public class ImportSpotifyPlaylistMutation
                 {
                     PlaylistId = playlistGuid,
                     RecordingId = track.Id, // Spotify Track ID
-                    TrackName = track.Name ?? string.Empty,
-                    ArtistName = track.Artists?.FirstOrDefault()?.Name ?? string.Empty,
                     ActorUserId = userId,
-                    Position = position++,
+                    Position = null, // Null means append to the end
                 }
             );
         }

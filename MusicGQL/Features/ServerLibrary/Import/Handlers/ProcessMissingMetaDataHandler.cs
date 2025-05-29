@@ -17,7 +17,7 @@ public class ProcessMissingMetaDataHandler(
     {
         logger.LogInformation("Processing missing artists in server library");
 
-        var artistsMarked = await dbContext.ArtistsAddedToServerLibraryProjection.FindAsync(1);
+        var artistsMarked = await dbContext.ArtistsAddedToServerLibraryProjections.FindAsync(1);
 
         if (artistsMarked is null || artistsMarked.ArtistMbIds.Count == 0)
         {
@@ -72,7 +72,7 @@ public class ProcessMissingMetaDataHandler(
         logger.LogInformation("Processing missing release groups in server library");
 
         var releaseGroupsMarked =
-            await dbContext.ReleaseGroupsAddedToServerLibraryProjection.FindAsync(1);
+            await dbContext.ReleaseGroupsAddedToServerLibraryProjections.FindAsync(1);
 
         if (releaseGroupsMarked is null || releaseGroupsMarked.ReleaseGroupMbIds.Count == 0)
         {

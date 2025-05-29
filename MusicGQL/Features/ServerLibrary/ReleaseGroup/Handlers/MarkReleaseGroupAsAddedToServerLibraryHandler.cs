@@ -12,7 +12,7 @@ public class MarkReleaseGroupAsAddedToServerLibraryHandler(
 {
     public async Task<Result> Handle(Command command)
     {
-        var exising = await dbContext.ReleaseGroupsAddedToServerLibraryProjection.FindAsync(1);
+        var exising = await dbContext.ReleaseGroupsAddedToServerLibraryProjections.FindAsync(1);
 
         if (exising?.ReleaseGroupMbIds.Contains(command.ReleaseGroupId) ?? false)
         {

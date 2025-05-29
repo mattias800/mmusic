@@ -16,8 +16,10 @@ public class EventDbContext(DbContextOptions<EventDbContext> options) : DbContex
 
     // Projections
     public DbSet<LikedSongsProjection> LikedSongsProjections { get; set; }
-    public DbSet<ArtistsAddedToServerLibraryProjection> ArtistsAddedToServerLibraryProjection { get; set; }
-    public DbSet<ReleaseGroupsAddedToServerLibraryProjection> ReleaseGroupsAddedToServerLibraryProjection { get; set; }
+    public DbSet<ArtistsAddedToServerLibraryProjection> ArtistsAddedToServerLibraryProjections { get; set; }
+    public DbSet<ReleaseGroupsAddedToServerLibraryProjection> ReleaseGroupsAddedToServerLibraryProjections { get; set; }
+
+    public DbSet<PlaylistsProjection> PlaylistsProjections { get; set; }
     public DbSet<UserProjection> UserProjections { get; set; }
 
     // Sagas
@@ -84,6 +86,34 @@ public class EventDbContext(DbContextOptions<EventDbContext> options) : DbContex
                     c => c.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())),
                     c => c.ToList()
                 )
+            );
+
+        modelBuilder
+            .Entity<PlaylistsProjection>()
+            .OwnsMany(
+                p => p.Playlists,
+                b =>
+                {
+                    b.WithOwner(); // Optional if EF can infer the owner
+                    b.Property(p => p.Name);
+                    b.Property(p => p.CreatedAt);
+                    b.Property(p => p.ModifiedAt);
+
+                    b.Property(p => p.RecordingIds)
+                        .HasConversion(
+                            v => string.Join(',', v),
+                            v => v.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList()
+                        )
+                        .Metadata.SetValueComparer(
+                            new ValueComparer<List<string>>(
+                                (c1, c2) => c1 != null && c2 != null && c1.SequenceEqual(c2),
+                                c => c.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())),
+                                c => c.ToList()
+                            )
+                        );
+
+                    b.HasKey(p => p.Id);
+                }
             );
     }
 }

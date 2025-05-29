@@ -12,7 +12,7 @@ public record ArtistSearchRoot
         EventDbContext dbContext
     )
     {
-        var addedArtists = await dbContext.ArtistsAddedToServerLibraryProjection.FindAsync(1);
+        var addedArtists = await dbContext.ArtistsAddedToServerLibraryProjections.FindAsync(1);
 
         if (addedArtists is null)
         {

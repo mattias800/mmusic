@@ -56,6 +56,20 @@ public class MusicBrainzService(MusicBrainzClient client, HybridCache cache)
         return result;
     }
 
+    public async Task<List<Recording>> SearchRecordingByIsrcAsync(string isrc) =>
+        await ExecuteThrottledAsync(
+            $"{cacheKeyPrefix}:recording:isrc:{isrc}",
+            TimeSpan.FromDays(1),
+            async () =>
+            {
+                var q = new QueryParameters<Recording>();
+                q.Add("isrc", isrc);
+
+                var searchAsync = await client.Recordings.SearchAsync(q);
+                return searchAsync.Items;
+            }
+        ) ?? [];
+
     public async Task<List<Recording>> GetRecordingsForArtistAsync(string artistId)
     {
         var result = await ExecuteThrottledAsync(

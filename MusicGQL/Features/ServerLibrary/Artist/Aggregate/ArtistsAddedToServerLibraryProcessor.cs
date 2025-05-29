@@ -12,12 +12,12 @@ public class ArtistsAddedToServerLibraryProcessor
 
     public override async Task PrepareProcessing(EventDbContext dbContext)
     {
-        _projection = await dbContext.ArtistsAddedToServerLibraryProjection.FindAsync(1);
+        _projection = await dbContext.ArtistsAddedToServerLibraryProjections.FindAsync(1);
 
         if (_projection == null)
         {
             _projection = new ArtistsAddedToServerLibraryProjection { Id = 1 };
-            dbContext.ArtistsAddedToServerLibraryProjection.Add(_projection);
+            dbContext.ArtistsAddedToServerLibraryProjections.Add(_projection);
         }
     }
 

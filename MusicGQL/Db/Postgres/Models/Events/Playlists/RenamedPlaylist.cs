@@ -2,6 +2,6 @@ namespace MusicGQL.Db.Postgres.Models.Events.Playlists;
 
 public class RenamedPlaylist : Event
 {
-    public Guid PlaylistId { get; set; }
-    public string NewPlaylistName { get; set; }
+    public required Guid PlaylistId { get; set; }
+    public required string NewPlaylistName { get; set; }
 }

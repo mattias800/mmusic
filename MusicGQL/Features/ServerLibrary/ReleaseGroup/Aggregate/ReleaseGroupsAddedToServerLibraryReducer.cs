@@ -12,12 +12,12 @@ public class ReleaseGroupsAddedToServerLibraryProcessor
 
     public override async Task PrepareProcessing(EventDbContext dbContext)
     {
-        _projection = await dbContext.ReleaseGroupsAddedToServerLibraryProjection.FindAsync(1);
+        _projection = await dbContext.ReleaseGroupsAddedToServerLibraryProjections.FindAsync(1);
 
         if (_projection == null)
         {
             _projection = new ReleaseGroupsAddedToServerLibraryProjection { Id = 1 };
-            dbContext.ReleaseGroupsAddedToServerLibraryProjection.Add(_projection);
+            dbContext.ReleaseGroupsAddedToServerLibraryProjections.Add(_projection);
         }
     }
 
