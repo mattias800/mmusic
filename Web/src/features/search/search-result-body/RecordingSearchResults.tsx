@@ -2,18 +2,19 @@ import { graphql } from "@/gql";
 import * as React from "react";
 import { Link } from "react-router";
 import { formatTrackLength } from "@/common/TrackLengthFormatter.ts";
-import { useQuery } from "urql";
 import { SearchResultGroup } from "./components/SearchResultGroup";
+import { ShowMoreButton } from "@/components/buttons/ShowMoreButton.tsx";
+import { useLimitQuery } from "@/common/LimitQuery.ts";
 
 export interface RecordingSearchResultsProps {
   searchText: string;
 }
 
 const recordingSearchQueryDocument = graphql(`
-  query RecordingSearchResultsSearch($text: String!) {
+  query RecordingSearchResultsSearch($text: String!, $limit: Int!) {
     musicBrainz {
       recording {
-        searchByName(name: $text, limit: 5) {
+        searchByName(name: $text, limit: $limit) {
           id
           title
           length
@@ -37,10 +38,11 @@ const recordingSearchQueryDocument = graphql(`
 export const RecordingSearchResults: React.FC<RecordingSearchResultsProps> = ({
   searchText,
 }) => {
-  const [{ fetching, data }] = useQuery({
-    query: recordingSearchQueryDocument,
-    variables: { text: searchText },
-  });
+  const [{ fetching, data, showMoreButtonVisible, onClickMore }] =
+    useLimitQuery({
+      query: recordingSearchQueryDocument,
+      variables: { text: searchText },
+    });
 
   const recordings = data?.musicBrainz.recording.searchByName;
 
@@ -111,6 +113,10 @@ export const RecordingSearchResults: React.FC<RecordingSearchResultsProps> = ({
           </div>
         </div>
       )}
-    />
+    >
+      {showMoreButtonVisible && (
+        <ShowMoreButton loading={fetching} onClick={onClickMore} />
+      )}
+    </SearchResultGroup>
   );
 };

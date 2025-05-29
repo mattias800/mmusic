@@ -1,18 +1,19 @@
 import { graphql } from "@/gql";
 import * as React from "react";
 import { Link } from "react-router";
-import { useQuery } from "urql";
 import { SearchResultGroup } from "./components/SearchResultGroup";
+import { useLimitQuery } from "@/common/LimitQuery.ts";
+import { ShowMoreButton } from "@/components/buttons/ShowMoreButton.tsx";
 
 export interface AlbumSearchResultsProps {
   searchText: string;
 }
 
 const albumSearchQueryDocument = graphql(`
-  query AlbumSearchResultsSearch($text: String!) {
+  query AlbumSearchResultsSearch($text: String!, $limit: Int!) {
     musicBrainz {
       releaseGroup {
-        searchByName(name: $text, limit: 5) {
+        searchByName(name: $text, limit: $limit) {
           id
           title
           mainRelease {
@@ -29,10 +30,11 @@ const albumSearchQueryDocument = graphql(`
 export const AlbumSearchResults: React.FC<AlbumSearchResultsProps> = ({
   searchText,
 }) => {
-  const [{ fetching, data }] = useQuery({
-    query: albumSearchQueryDocument,
-    variables: { text: searchText },
-  });
+  const [{ fetching, data, showMoreButtonVisible, onClickMore }] =
+    useLimitQuery({
+      query: albumSearchQueryDocument,
+      variables: { text: searchText },
+    });
 
   const releaseGroups = data?.musicBrainz.releaseGroup.searchByName;
 
@@ -66,6 +68,10 @@ export const AlbumSearchResults: React.FC<AlbumSearchResultsProps> = ({
           </div>
         </Link>
       )}
-    />
+    >
+      {showMoreButtonVisible && (
+        <ShowMoreButton loading={fetching} onClick={onClickMore} />
+      )}
+    </SearchResultGroup>
   );
 };

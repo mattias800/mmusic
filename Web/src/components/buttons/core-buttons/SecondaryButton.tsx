@@ -10,11 +10,20 @@ export interface SecondaryButtonProps
 export const SecondaryButton: React.FC<SecondaryButtonProps> = ({
   label,
   loading,
+  disabled,
   ...props
 }) => {
+  const isDisabled = disabled || loading;
+
   return (
     <button
-      className="border border-white rounded-full px-4 py-1 text-sm hover:bg-white hover:text-black transition flex items-center gap-2 cursor-pointer"
+      className={`border rounded-full px-4 py-1 text-sm transition flex items-center gap-2 
+        ${
+          isDisabled
+            ? "border-gray-400 text-gray-400 cursor-not-allowed bg-transparent"
+            : "border-white text-white hover:bg-white hover:text-black cursor-pointer"
+        }`}
+      disabled={isDisabled}
       {...props}
     >
       {loading && <LoaderCircle className={"animate-spin size-4"} />}
