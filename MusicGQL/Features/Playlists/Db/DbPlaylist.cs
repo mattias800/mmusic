@@ -1,13 +1,13 @@
-using System.ComponentModel.DataAnnotations;
+using MusicGQL.Features.Users.Db;
 
 namespace MusicGQL.Features.Playlists.Db;
 
 public class DbPlaylist
 {
-    [Key]
     public Guid Id { get; set; }
 
-    public Guid UserId { get; set; } // FK to PlaylistsForUser
+    public Guid UserId { get; set; }
+    public DbUser User { get; set; } = null!; // optional, but useful for navigation
 
     public string? Name { get; set; }
     public string? Description { get; set; }
@@ -15,5 +15,6 @@ public class DbPlaylist
 
     public DateTime CreatedAt { get; set; }
     public DateTime? ModifiedAt { get; set; }
+
     public List<DbPlaylistItem> Items { get; set; } = new();
 }

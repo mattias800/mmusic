@@ -1,5 +1,8 @@
+using System.Security.Claims;
 using MusicGQL.Features.ServerLibrary.Artist.Handlers;
 using MusicGQL.Types;
+
+// Required for IHttpContextAccessor
 
 namespace MusicGQL.Features.ServerLibrary.Artist.Mutations;
 
@@ -10,10 +13,24 @@ public class AddArtistToServerLibraryMutation
         MarkArtistAsAddedToServerLibraryHandler markArtistAsAddedToServerLibraryHandler,
         MarkArtistReleaseGroupsAsAddedToServerLibraryHandler markArtistReleaseGroupsAsAddedToServerLibraryHandler,
         MissingMetaDataProcessingService missingMetaDataProcessingService,
-        AddArtistToServerLibraryInput input
+        AddArtistToServerLibraryInput input,
+        [Service] IHttpContextAccessor httpContextAccessor // Inject IHttpContextAccessor
     )
     {
-        return await markArtistAsAddedToServerLibraryHandler.Handle(new(input.ArtistId)) switch
+        var userIdString = httpContextAccessor.HttpContext?.User.FindFirstValue(
+            ClaimTypes.NameIdentifier
+        );
+        if (!Guid.TryParse(userIdString, out var userId))
+        {
+            // Handle error: User not found or not authenticated
+            return new AddArtistToServerLibraryResult.AddArtistToServerLibraryUnknownError(
+                "User not authenticated or invalid user ID."
+            );
+        }
+
+        return await markArtistAsAddedToServerLibraryHandler.Handle(
+            new(userId, input.ArtistId)
+        ) switch
         {
             MarkArtistAsAddedToServerLibraryHandler.Result.Success => await HandleSuccess(
                 markArtistReleaseGroupsAsAddedToServerLibraryHandler,

@@ -5,40 +5,48 @@ using MusicGQL.Features.ServerLibrary.Events;
 
 namespace MusicGQL.Features.ServerLibrary.Artist.Aggregate;
 
-public class ArtistsAddedToServerLibraryProcessor
-    : EventProcessor.EventProcessor<ArtistsAddedToServerLibraryProjection>
+public class ArtistsAddedToServerLibraryProcessor(
+    ILogger<ArtistsAddedToServerLibraryProcessor> logger
+)
 {
-    ArtistsAddedToServerLibraryProjection? _projection;
-
-    public override async Task PrepareProcessing(EventDbContext dbContext)
-    {
-        _projection = await dbContext.ArtistsAddedToServerLibraryProjections.FindAsync(1);
-
-        if (_projection == null)
-        {
-            _projection = new ArtistsAddedToServerLibraryProjection { Id = 1 };
-            dbContext.ArtistsAddedToServerLibraryProjections.Add(_projection);
-        }
-    }
-
-    public override ArtistsAddedToServerLibraryProjection? GetAggregate() => _projection;
-
-    protected override void ProcessEvent(
-        Event ev,
-        EventDbContext dbContext,
-        ArtistsAddedToServerLibraryProjection aggregate
-    )
+    public async Task ProcessEvent(Event ev, EventDbContext dbContext)
     {
         switch (ev)
         {
-            case AddArtistToServerLibrary e:
-                if (!aggregate.ArtistMbIds.Contains(e.ArtistMbId))
+            // Ensure UserId is present in the event
+            case AddArtistToServerLibrary { ActorUserId: null } addEvent:
+                logger.LogWarning(
+                    "AddArtistToServerLibrary event is missing ActorUserId. ArtistMbId: {ArtistMbId}",
+                    addEvent.ArtistId
+                );
+                return;
+
+            case AddArtistToServerLibrary addEvent:
+            {
+                var existing = dbContext.ServerArtists.FirstOrDefault(sa =>
+                    sa.AddedByUserId == addEvent.ActorUserId.Value
+                    && sa.ArtistId == addEvent.ArtistId
+                );
+
+                if (existing == null)
                 {
-                    aggregate.ArtistMbIds.Add(e.ArtistMbId);
-                    aggregate.LastUpdatedAt = DateTime.UtcNow;
+                    var newServerArtist = new DbServerArtist
+                    {
+                        AddedByUserId = addEvent.ActorUserId.Value,
+                        ArtistId = addEvent.ArtistId,
+                        AddedAt = addEvent.CreatedAt,
+                    };
+                    dbContext.ServerArtists.Add(newServerArtist);
+                    logger.LogInformation(
+                        "ArtistMbId {ArtistMbId} added to server library by UserId: {UserId}",
+                        addEvent.ArtistId,
+                        addEvent.ActorUserId.Value
+                    );
+                    await dbContext.SaveChangesAsync();
                 }
 
-                break;
+                return;
+            }
         }
     }
 }

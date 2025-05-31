@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using MusicGQL.Db.Postgres;
 using MusicGQL.Features.ServerLibrary.Events;
 using MusicGQL.Integration.MusicBrainz;
@@ -12,9 +13,11 @@ public class MarkReleaseGroupAsAddedToServerLibraryHandler(
 {
     public async Task<Result> Handle(Command command)
     {
-        var exising = await dbContext.ReleaseGroupsAddedToServerLibraryProjections.FindAsync(1);
+        var alreadyAdded = await dbContext.ServerReleaseGroups.AnyAsync(srg =>
+            srg.AddedByUserId == command.UserId && srg.ReleaseGroupId == command.ReleaseGroupId
+        );
 
-        if (exising?.ReleaseGroupMbIds.Contains(command.ReleaseGroupId) ?? false)
+        if (alreadyAdded)
         {
             return new Result.AlreadyAdded();
         }
@@ -34,7 +37,11 @@ public class MarkReleaseGroupAsAddedToServerLibraryHandler(
         }
 
         dbContext.Events.Add(
-            new AddReleaseGroupToServerLibrary { ReleaseGroupMbId = command.ReleaseGroupId }
+            new AddReleaseGroupToServerLibrary
+            {
+                ActorUserId = command.UserId,
+                ReleaseGroupId = command.ReleaseGroupId,
+            }
         );
 
         await dbContext.SaveChangesAsync();
@@ -42,7 +49,7 @@ public class MarkReleaseGroupAsAddedToServerLibraryHandler(
         return new Result.Success();
     }
 
-    public record Command(string ReleaseGroupId);
+    public record Command(Guid UserId, string ReleaseGroupId);
 
     public abstract record Result
     {

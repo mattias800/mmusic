@@ -37,15 +37,11 @@ public class EventProcessorWorker(
 
         logger.LogInformation("Processing {Count} unhandled events..", events.Count);
 
-        await releaseGroupsAddedToServerLibraryProcessor.PrepareProcessing(dbContext);
-        await artistsAddedToServerLibraryProcessor.PrepareProcessing(dbContext);
-        await likedSongsEventProcessor.PrepareProcessing(dbContext);
-
         foreach (var ev in events)
         {
-            releaseGroupsAddedToServerLibraryProcessor.ProcessEvent(ev, dbContext);
-            artistsAddedToServerLibraryProcessor.ProcessEvent(ev, dbContext);
-            likedSongsEventProcessor.ProcessEvent(ev, dbContext);
+            await releaseGroupsAddedToServerLibraryProcessor.ProcessEvent(ev, dbContext);
+            await artistsAddedToServerLibraryProcessor.ProcessEvent(ev, dbContext);
+            await likedSongsEventProcessor.ProcessEvent(ev, dbContext);
             await userEventProcessor.ProcessEvent(ev, dbContext);
             await playlistsEventProcessor.ProcessEvent(ev, dbContext);
         }

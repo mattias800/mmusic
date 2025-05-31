@@ -1,3 +1,5 @@
+using System.Security.Claims;
+// Required for IHttpContextAccessor
 using MusicGQL.Features.ServerLibrary.ReleaseGroup.Handlers;
 using MusicGQL.Types;
 
@@ -8,10 +10,22 @@ public class AddReleaseGroupToServerLibraryMutation
 {
     public async Task<AddReleaseGroupToServerLibraryResult> AddReleaseGroupToServerLibrary(
         [Service] MarkReleaseGroupAsAddedToServerLibraryHandler handler,
-        AddReleaseGroupToServerLibraryInput input
+        AddReleaseGroupToServerLibraryInput input,
+        [Service] IHttpContextAccessor httpContextAccessor // Inject IHttpContextAccessor
     )
     {
-        return await handler.Handle(new(input.ReleaseGroupId)) switch
+        var userIdString = httpContextAccessor.HttpContext?.User.FindFirstValue(
+            ClaimTypes.NameIdentifier
+        );
+        if (!Guid.TryParse(userIdString, out var userId))
+        {
+            // Handle error: User not found or not authenticated
+            return new AddReleaseGroupToServerLibraryResult.AddReleaseGroupToServerLibraryUnknownError(
+                "User not authenticated or invalid user ID."
+            );
+        }
+
+        return await handler.Handle(new(userId, input.ReleaseGroupId)) switch
         {
             // TODO Correct user
             MarkReleaseGroupAsAddedToServerLibraryHandler.Result.Success =>

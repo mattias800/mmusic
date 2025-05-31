@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using MusicGQL.Db.Postgres;
 using MusicGQL.Features.ServerLibrary.ArtistServerStatus.Services;
 using Neo4j.Driver;
@@ -17,9 +18,12 @@ public class ProcessMissingMetaDataHandler(
     {
         logger.LogInformation("Processing missing artists in server library");
 
-        var artistsMarked = await dbContext.ArtistsAddedToServerLibraryProjections.FindAsync(1);
+        var artistsMarkedMbIds = await dbContext
+            .ServerArtists.Select(sa => sa.ArtistId)
+            .Distinct()
+            .ToListAsync();
 
-        if (artistsMarked is null || artistsMarked.ArtistMbIds.Count == 0)
+        if (!artistsMarkedMbIds.Any())
         {
             logger.LogInformation("No artists marked as added to server library");
             return;
@@ -40,14 +44,11 @@ public class ProcessMissingMetaDataHandler(
             await session.CloseAsync();
         }
 
-        var artistIdsToAdd = artistsMarked
-            .ArtistMbIds.Where(a => !artistIdsInLibrary.Contains(a))
+        var artistIdsToAdd = artistsMarkedMbIds
+            .Where(a => !artistIdsInLibrary.Contains(a))
             .ToList();
 
-        logger.LogInformation(
-            "Found {Num} artists missing in server library",
-            artistIdsToAdd.Count
-        );
+        logger.LogInformation($"Found {artistIdsToAdd.Count} artists missing in server library");
 
         foreach (var artistId in artistIdsToAdd)
         {
@@ -71,10 +72,12 @@ public class ProcessMissingMetaDataHandler(
     {
         logger.LogInformation("Processing missing release groups in server library");
 
-        var releaseGroupsMarked =
-            await dbContext.ReleaseGroupsAddedToServerLibraryProjections.FindAsync(1);
+        var releaseGroupsMarkedMbIds = await dbContext
+            .ServerReleaseGroups.Select(srg => srg.ReleaseGroupId)
+            .Distinct()
+            .ToListAsync();
 
-        if (releaseGroupsMarked is null || releaseGroupsMarked.ReleaseGroupMbIds.Count == 0)
+        if (!releaseGroupsMarkedMbIds.Any())
         {
             logger.LogInformation("No release groups marked as added to server library");
             return;
@@ -95,13 +98,12 @@ public class ProcessMissingMetaDataHandler(
             await session.CloseAsync();
         }
 
-        var releaseGroupIdsToAdd = releaseGroupsMarked
-            .ReleaseGroupMbIds.Where(id => !releaseGroupIdsInLibrary.Contains(id))
+        var releaseGroupIdsToAdd = releaseGroupsMarkedMbIds
+            .Where(id => !releaseGroupIdsInLibrary.Contains(id))
             .ToList();
 
         logger.LogInformation(
-            "Found {Num} release groups missing in server library",
-            releaseGroupIdsToAdd.Count
+            $"Found {releaseGroupIdsToAdd.Count} release groups missing in server library"
         );
 
         await Task.WhenAll(

@@ -12,11 +12,11 @@ public class LikeSongHandler(
 {
     public async Task<Result> Handle(Command command)
     {
-        var existingProjection = await dbContext.LikedSongsProjections.FirstOrDefaultAsync(p =>
-            p.UserId == command.UserId
+        var alreadyLiked = await dbContext.LikedSongs.AnyAsync(ls =>
+            ls.LikedByUserId == command.UserId && ls.RecordingId == command.RecordingId
         );
 
-        if (existingProjection?.LikedSongRecordingIds.Contains(command.RecordingId) ?? false)
+        if (alreadyLiked)
         {
             return new Result.AlreadyLiked();
         }

@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using MusicGQL.Db.Postgres;
 using MusicGQL.Features.ServerLibrary.Events;
 using MusicGQL.Integration.MusicBrainz;
@@ -12,9 +13,11 @@ public class MarkArtistAsAddedToServerLibraryHandler(
 {
     public async Task<Result> Handle(Command command)
     {
-        var exising = await dbContext.ArtistsAddedToServerLibraryProjections.FindAsync(1);
+        var alreadyAdded = await dbContext.ServerArtists.AnyAsync(sa =>
+            sa.ArtistId == command.ArtistId
+        );
 
-        if (exising?.ArtistMbIds.Contains(command.ArtistId) ?? false)
+        if (alreadyAdded)
         {
             return new Result.AlreadyAdded();
         }
@@ -33,14 +36,20 @@ public class MarkArtistAsAddedToServerLibraryHandler(
             return new Result.ArtistDoesNotExist();
         }
 
-        dbContext.Events.Add(new AddArtistToServerLibrary { ArtistMbId = command.ArtistId });
+        dbContext.Events.Add(
+            new AddArtistToServerLibrary
+            {
+                ArtistId = command.ArtistId,
+                ActorUserId = command.UserId,
+            }
+        );
 
         await dbContext.SaveChangesAsync();
         await eventProcessorWorker.ProcessEvents();
         return new Result.Success();
     }
 
-    public record Command(string ArtistId);
+    public record Command(Guid UserId, string ArtistId);
 
     public abstract record Result
     {

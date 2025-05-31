@@ -4,5 +4,5 @@ namespace MusicGQL.Features.ServerLibrary.Events;
 
 public class AddReleaseGroupToServerLibrary : Event
 {
-    public string ReleaseGroupMbId { get; set; }
+    public required string ReleaseGroupId { get; set; }
 }

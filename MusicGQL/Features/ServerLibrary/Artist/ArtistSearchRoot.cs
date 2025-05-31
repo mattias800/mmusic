@@ -1,3 +1,5 @@
+using System.Security.Claims;
+using Microsoft.EntityFrameworkCore;
 using MusicGQL.Db.Postgres;
 using MusicGQL.Features.ServerLibrary.Artist.Db;
 using MusicGQL.Integration.MusicBrainz;
@@ -9,17 +11,31 @@ public record ArtistSearchRoot
 {
     public async Task<IEnumerable<Artist>> All(
         ServerLibraryService service,
-        EventDbContext dbContext
+        EventDbContext dbContext,
+        [Service] IHttpContextAccessor httpContextAccessor
     )
     {
-        var addedArtists = await dbContext.ArtistsAddedToServerLibraryProjections.FindAsync(1);
+        var userIdString = httpContextAccessor.HttpContext?.User.FindFirstValue(
+            ClaimTypes.NameIdentifier
+        );
+        if (!Guid.TryParse(userIdString, out var userId))
+        {
+            // Handle error: User not found or not authenticated
+            return []; // Or throw an exception
+        }
 
-        if (addedArtists is null)
+        var addedArtistMbIds = await dbContext
+            .ServerArtists.Where(sa => sa.AddedByUserId == userId)
+            .Select(sa => sa.ArtistId)
+            .Distinct()
+            .ToListAsync();
+
+        if (!addedArtistMbIds.Any())
         {
             return [];
         }
 
-        var allArtists = await service.GetArtistsByIdsAsync(addedArtists.ArtistMbIds);
+        var allArtists = await service.GetArtistsByIdsAsync(addedArtistMbIds);
 
         return allArtists.Select(a => new Artist(a));
     }

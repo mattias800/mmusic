@@ -16,17 +16,12 @@ public record User([property: GraphQLIgnore] Db.DbUser Model)
 
     public async Task<IEnumerable<LikedSong>> LikedSongs([Service] EventDbContext dbContext)
     {
-        var likedSongsProjection = await dbContext.LikedSongsProjections.FirstOrDefaultAsync(p =>
-            p.UserId == Model.UserId
-        );
-        if (likedSongsProjection == null)
-        {
-            return [];
-        }
+        var likedSongs = await dbContext
+            .LikedSongs.Where(ls => ls.LikedByUserId == Model.UserId)
+            .Select(ls => new LikedSong(ls.RecordingId))
+            .ToListAsync();
 
-        return likedSongsProjection.LikedSongRecordingIds.Select(recordingId => new LikedSong(
-            recordingId
-        ));
+        return likedSongs;
     }
 
     public async Task<IEnumerable<Playlist>> Playlists([Service] EventDbContext dbContext)

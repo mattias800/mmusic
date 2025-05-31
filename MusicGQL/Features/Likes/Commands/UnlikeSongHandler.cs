@@ -11,11 +11,11 @@ public class UnlikeSongHandler(
 {
     public async Task<Result> Handle(Command command)
     {
-        var existingProjection = await dbContext.LikedSongsProjections.FirstOrDefaultAsync(p =>
-            p.UserId == command.UserId
+        var isLiked = await dbContext.LikedSongs.AnyAsync(ls =>
+            ls.LikedByUserId == command.UserId && ls.RecordingId == command.RecordingId
         );
 
-        if (!(existingProjection?.LikedSongRecordingIds.Contains(command.RecordingId) ?? false))
+        if (!isLiked)
         {
             return new Result.AlreadyNotLiked();
         }
