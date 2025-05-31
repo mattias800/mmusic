@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using MusicGQL.Db.Postgres;
 using MusicGQL.Db.Postgres.Models;
-using MusicGQL.Features.LikedSongs.Aggregate;
+using MusicGQL.Features.Likes.Events;
 using MusicGQL.Features.Playlists.Aggregate;
 using MusicGQL.Features.ServerLibrary.Artist.Aggregate;
 using MusicGQL.Features.ServerLibrary.ReleaseGroup.Aggregate;

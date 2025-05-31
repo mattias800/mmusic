@@ -1,11 +1,15 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using MusicGQL.Db.Postgres.Models;
-using MusicGQL.Db.Postgres.Models.Events;
-using MusicGQL.Db.Postgres.Models.Events.Playlists;
-using MusicGQL.Db.Postgres.Models.Events.ServerLibrary;
-using MusicGQL.Db.Postgres.Models.Events.Users;
-using MusicGQL.Db.Postgres.Models.Projections;
+using MusicGQL.Features.Likes.Db;
+using MusicGQL.Features.Likes.Events;
+using MusicGQL.Features.Playlists.Db;
+using MusicGQL.Features.Playlists.Events;
+using MusicGQL.Features.ServerLibrary.Artist.Db;
+using MusicGQL.Features.ServerLibrary.Events;
+using MusicGQL.Features.ServerLibrary.ReleaseGroup.Db;
+using MusicGQL.Features.Users.Db;
+using MusicGQL.Features.Users.Events;
 
 namespace MusicGQL.Db.Postgres;
 

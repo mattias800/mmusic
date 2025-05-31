@@ -1,10 +1,10 @@
 using Microsoft.EntityFrameworkCore;
 using MusicGQL.Db.Postgres;
-using MusicGQL.Db.Postgres.Models.Events.Users;
-using MusicGQL.Db.Postgres.Models.Projections;
 using MusicGQL.EventProcessor;
 using MusicGQL.Features.Authentication.Commands;
-using MusicGQL.Features.Authentication.Handlers; // Changed from Services to Handlers
+using MusicGQL.Features.Authentication.Handlers;
+using MusicGQL.Features.Users.Db;
+using MusicGQL.Features.Users.Events; // Changed from Services to Handlers
 
 namespace MusicGQL.Features.Users.Handlers;
 

@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using MusicGQL.Db.Postgres;
-using MusicGQL.Db.Postgres.Models.Projections;
-using MusicGQL.Features.LikedSongs;
+using MusicGQL.Features.Likes;
 using MusicGQL.Features.Playlists;
+using MusicGQL.Features.Users.Db;
 
 namespace MusicGQL.Features.Users;
 

@@ -1,5 +1,5 @@
 using MusicGQL.Db.Postgres;
-using MusicGQL.Db.Postgres.Models.Events.Playlists;
+using MusicGQL.Features.Playlists.Events;
 
 namespace MusicGQL.Features.Playlists.Commands;
 

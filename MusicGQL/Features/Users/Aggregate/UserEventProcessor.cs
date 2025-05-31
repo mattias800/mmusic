@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using MusicGQL.Db.Postgres;
 using MusicGQL.Db.Postgres.Models;
-using MusicGQL.Db.Postgres.Models.Events.Users;
-using MusicGQL.Db.Postgres.Models.Projections;
+using MusicGQL.Features.Users.Db;
+using MusicGQL.Features.Users.Events;
 
 namespace MusicGQL.Features.Users.Aggregate;
 

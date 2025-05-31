@@ -1,4 +1,4 @@
-using MusicGQL.Db.Postgres.Models.Projections;
+using MusicGQL.Features.Playlists.Db;
 using MusicGQL.Features.ServerLibrary.Recording;
 using MusicGQL.Integration.Neo4j;
 

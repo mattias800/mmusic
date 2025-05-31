@@ -1,5 +1,5 @@
 using MusicGQL.Db.Postgres;
-using MusicGQL.Db.Postgres.Models.Events.ServerLibrary;
+using MusicGQL.Features.ServerLibrary.Events;
 using MusicGQL.Integration.MusicBrainz;
 
 namespace MusicGQL.Features.ServerLibrary.Artist.Handlers;
