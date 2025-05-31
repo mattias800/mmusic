@@ -11,11 +11,15 @@ import {
 export interface PlaylistNavButtonProps {
   playlistName: string | undefined | null;
   playlistId: string;
+  onClickRenamePlaylist: () => void;
+  onClickDeletePlaylist: () => void;
 }
 
 export const PlaylistNavButton: React.FC<PlaylistNavButtonProps> = ({
   playlistId,
   playlistName,
+  onClickDeletePlaylist,
+  onClickRenamePlaylist,
 }) => {
   return (
     <ContextMenu>
@@ -27,8 +31,12 @@ export const PlaylistNavButton: React.FC<PlaylistNavButtonProps> = ({
         />
       </ContextMenuTrigger>
       <ContextMenuContent className="w-40">
-        <ContextMenuItem>Rename playlist</ContextMenuItem>
-        <ContextMenuItem>Delete playlist</ContextMenuItem>
+        <ContextMenuItem onClick={onClickRenamePlaylist}>
+          Rename playlist
+        </ContextMenuItem>
+        <ContextMenuItem onClick={onClickDeletePlaylist}>
+          Delete playlist
+        </ContextMenuItem>
       </ContextMenuContent>
     </ContextMenu>
   );

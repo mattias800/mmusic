@@ -21,6 +21,10 @@ const playlistListQuery = graphql(`
   }
 `);
 
+const renamePlaylistMutation = graphql(`
+mutation RenamePlaylist($playlistId: ID!, $name: String!) {
+  
+}`)
 export const PlaylistList: React.FC<PlaylistListProps> = () => {
   const [{ data, fetching, error }] = useQuery({ query: playlistListQuery });
 
@@ -42,6 +46,8 @@ export const PlaylistList: React.FC<PlaylistListProps> = () => {
         <PlaylistNavButton
           playlistId={playlist.id}
           playlistName={playlist.name}
+          onClickRenamePlaylist={() => {}}
+          onClickDeletePlaylist={() => {}}
         />
       ))}
     </>

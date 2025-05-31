@@ -32,16 +32,16 @@ public class CreatePlaylistMutation
 
         var userId = Guid.Parse(userIdClaim.Value);
 
-        var userProjection = await dbContext.Users.FirstOrDefaultAsync(up => up.UserId == userId);
+        var user = await dbContext.Users.FirstOrDefaultAsync(up => up.UserId == userId);
 
-        if (userProjection is null)
+        if (user is null)
         {
             return new CreatePlaylistNotAuthenticated("User is not authenticated.");
         }
 
         await createPlaylistHandler.Handle(new CreatePlaylistHandler.Command(userId));
 
-        return new CreatePlaylistSuccess(new User(userProjection));
+        return new CreatePlaylistSuccess(new User(user));
     }
 }
 
