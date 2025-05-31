@@ -4,7 +4,6 @@ import { PropsWithChildren } from "react";
 export interface PhotoCardProps extends PropsWithChildren {
   imageUrl: string;
   imageAlt?: string;
-  title?: string;
   onClick?: () => void;
 }
 

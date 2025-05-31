@@ -11,7 +11,7 @@ export const SectionHeading: React.FC<SectionHeadingProps> = ({
   loading,
 }) => {
   return (
-    <h2 className="text-xl font-semibold mb-4 flex gap-2 items-center">
+    <h2 className="text-xl font-semibold flex gap-2 items-center">
       {children} {loading && <Spinner size={"sm"} />}
     </h2>
   );

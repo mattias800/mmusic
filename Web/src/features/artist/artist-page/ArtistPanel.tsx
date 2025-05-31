@@ -18,6 +18,7 @@ import { ArtistNotInLibrarySectionList } from "@/features/artist/artist-not-in-l
 import { ArtistServerStatus } from "@/features/artist/artist-server-status/ArtistServerStatus.tsx";
 import { ArtistNotInLibraryTopTracks } from "@/features/artist/artist-not-in-library/ArtistNotInLibraryTopTracks.tsx";
 import { AddArtistToLibraryBox } from "@/features/artist/artist-not-in-library/AddArtistToLibraryBox.tsx";
+import { MainPadding } from "@/components/layout/MainPadding.tsx";
 
 interface ArtistPanelProps {
   artist: FragmentType<typeof artistPanelArtistFragment>;
@@ -75,19 +76,21 @@ export const ArtistPanel: React.FC<ArtistPanelProps> = (props) => {
       />
 
       {!isInLibrary || importIsStarting ? (
-        <ArtistNotInLibrarySectionList
-          artistName={artist.name}
-          renderTopTracks={() => (
-            <ArtistNotInLibraryTopTracks artist={artist} />
-          )}
-          renderImportBox={() => (
-            <AddArtistToLibraryBox
-              artistId={artist.id}
-              artistName={artist.name}
-              isInLibrary={isInLibrary}
-            />
-          )}
-        />
+        <MainPadding>
+          <ArtistNotInLibrarySectionList
+            artistName={artist.name}
+            renderTopTracks={() => (
+              <ArtistNotInLibraryTopTracks artist={artist} />
+            )}
+            renderImportBox={() => (
+              <AddArtistToLibraryBox
+                artistId={artist.id}
+                artistName={artist.name}
+                isInLibrary={isInLibrary}
+              />
+            )}
+          />
+        </MainPadding>
       ) : (
         <>
           <div className="px-6 md:px-10 py-6 flex items-center gap-4">
@@ -97,28 +100,30 @@ export const ArtistPanel: React.FC<ArtistPanelProps> = (props) => {
             <DotsButton />
           </div>
 
-          <SectionList>
-            {topTracksVisible && <TopArtistTracks artistId={artist.id} />}
+          <MainPadding>
+            <SectionList>
+              {topTracksVisible && <TopArtistTracks artistId={artist.id} />}
 
-            {releasesVisible && (
-              <>
-                <Section>
-                  <SectionHeading>Albums</SectionHeading>
-                  <ArtistAlbumList artistId={artist.id} />
-                </Section>
+              {releasesVisible && (
+                <>
+                  <Section>
+                    <SectionHeading>Albums</SectionHeading>
+                    <ArtistAlbumList artistId={artist.id} />
+                  </Section>
 
-                <Section>
-                  <SectionHeading>EPs</SectionHeading>
-                  <ArtistEpList artistId={artist.id} />
-                </Section>
+                  <Section>
+                    <SectionHeading>EPs</SectionHeading>
+                    <ArtistEpList artistId={artist.id} />
+                  </Section>
 
-                <Section>
-                  <SectionHeading>Singles</SectionHeading>
-                  <ArtistSingleList artistId={artist.id} />
-                </Section>
-              </>
-            )}
-          </SectionList>
+                  <Section>
+                    <SectionHeading>Singles</SectionHeading>
+                    <ArtistSingleList artistId={artist.id} />
+                  </Section>
+                </>
+              )}
+            </SectionList>
+          </MainPadding>
         </>
       )}
     </GradientContent>

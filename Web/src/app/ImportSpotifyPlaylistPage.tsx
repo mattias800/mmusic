@@ -1,5 +1,5 @@
-import { SpotifyPlaylistImporter } from "@/features/spotify-import/SpotifyPlaylistImporter.tsx";
+import { SpotifyPlaylistImportPanel } from "@/features/spotify-import/SpotifyPlaylistImportPanel.tsx";
 
 export const ImportSpotifyPlaylistPage = () => {
-  return <SpotifyPlaylistImporter />;
+  return <SpotifyPlaylistImportPanel />;
 };

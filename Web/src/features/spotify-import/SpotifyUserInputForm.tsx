@@ -1,37 +1,36 @@
-import React, { useState } from "react";
+import React from "react";
+import { TextInput } from "@/components/inputs/TextInput.tsx";
 
 interface SpotifyUserInputFormProps {
-  onUsernameSubmit: (username: string) => void;
+  value: SpotifyUserInputFormModel;
+  onValueChange: (value: SpotifyUserInputFormModel) => void;
+}
+
+export interface SpotifyUserInputFormModel {
+  username: string;
 }
 
 export const SpotifyUserInputForm: React.FC<SpotifyUserInputFormProps> = ({
-  onUsernameSubmit,
+  value,
+  onValueChange,
 }) => {
-  const [usernameInput, setUsernameInput] = useState("");
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!usernameInput.trim()) {
-      // Basic validation, can be enhanced
-      alert("Please enter a Spotify username or ID.");
-      return;
-    }
-    onUsernameSubmit(usernameInput);
-  };
+  const inputId = "spotify-username-input";
 
   return (
-    <form onSubmit={handleSubmit} style={{ marginBottom: "20px" }}>
-      <h2>Get User's Playlists</h2>
-      <input
+    <>
+      <label
+        htmlFor={inputId}
+        className="block text-sm font-medium text-gray-300 mb-1"
+      >
+        Enter Spotify username
+      </label>
+      <TextInput
         type="text"
-        value={usernameInput}
-        onChange={(e) => setUsernameInput(e.target.value)}
-        placeholder="Spotify Username or ID"
-        style={{ marginRight: "10px", padding: "8px" }}
+        id={inputId}
+        value={value.username}
+        onChange={(e) => onValueChange({ username: e.target.value })}
+        placeholder="Spotify username"
       />
-      <button type="submit" style={{ padding: "8px 15px" }}>
-        Get Playlists
-      </button>
-    </form>
+    </>
   );
 };
