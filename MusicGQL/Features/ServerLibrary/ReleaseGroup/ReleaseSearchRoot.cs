@@ -6,6 +6,7 @@ public record ReleaseGroupSearchRoot
 {
     public async Task<IEnumerable<ReleaseGroup>> All(ServerLibraryService service)
     {
+        // TODO Only fetch all release groups marked as added to the server library
         var releaseGroups = await service.GetAllReleaseGroupAsync();
         return releaseGroups.Select(a => new ReleaseGroup(a));
     }
