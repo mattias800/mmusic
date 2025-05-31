@@ -33,34 +33,37 @@ public class PlaylistsEventProcessor(ILogger<PlaylistsEventProcessor> logger)
     private async Task HandleEvent(CreatedPlaylist createdPlaylist, EventDbContext dbContext)
     {
         if (!createdPlaylist.ActorUserId.HasValue)
+            return;
+
+        var userId = createdPlaylist.ActorUserId.Value;
+
+        var playlistsForUser = await dbContext.PlaylistsForUser.FindAsync(userId);
+
+        if (playlistsForUser is null)
         {
+            playlistsForUser = new PlaylistsForUser { UserId = userId };
+
+            dbContext.PlaylistsForUser.Add(playlistsForUser);
+        }
+
+        if (playlistsForUser.Playlists.Any(p => p.Id == createdPlaylist.PlaylistId))
+        {
+            logger.LogWarning(
+                "Playlist {PlaylistId} already exists for user {UserId}",
+                createdPlaylist.PlaylistId,
+                userId
+            );
             return;
         }
 
-        var projection = await dbContext.PlaylistsProjections.FindAsync(
-            createdPlaylist.ActorUserId.Value
-        );
-
-        if (projection is null)
-        {
-            projection = new PlaylistsProjection
-            {
-                UserId = createdPlaylist.ActorUserId.Value,
-                Playlists = [],
-            };
-            dbContext.PlaylistsProjections.Add(projection);
-        }
-
-        projection.Playlists.Add(
-            new PlaylistProjection
+        playlistsForUser.Playlists.Add(
+            new DbPlaylist
             {
                 Id = createdPlaylist.PlaylistId,
                 Name = createdPlaylist.Name,
                 Description = createdPlaylist.Description,
                 CoverImageUrl = createdPlaylist.CoverImageUrl,
                 CreatedAt = createdPlaylist.CreatedAt,
-                ModifiedAt = null,
-                RecordingIds = [],
             }
         );
     }
@@ -68,32 +71,28 @@ public class PlaylistsEventProcessor(ILogger<PlaylistsEventProcessor> logger)
     private async Task HandleEvent(RenamedPlaylist renamePlaylistEvent, EventDbContext dbContext)
     {
         if (!renamePlaylistEvent.ActorUserId.HasValue)
-        {
             return;
-        }
 
         var projection = await dbContext
-            .PlaylistsProjections.Include(p => p.Playlists)
+            .PlaylistsForUser.Include(p => p.Playlists)
             .FirstOrDefaultAsync(p =>
-                p.Playlists.Any(pl => pl.Id == renamePlaylistEvent.PlaylistId)
+                p.UserId == renamePlaylistEvent.ActorUserId.Value
+                && p.Playlists.Any(pl => pl.Id == renamePlaylistEvent.PlaylistId)
             );
 
         if (projection is null)
-        {
             return;
-        }
 
-        var index = projection.Playlists.FindIndex(pl => pl.Id == renamePlaylistEvent.PlaylistId);
-        if (index < 0)
-        {
+        var playlist = projection.Playlists.FirstOrDefault(pl =>
+            pl.Id == renamePlaylistEvent.PlaylistId
+        );
+        if (playlist is null)
             return;
-        }
 
-        var updated = projection.Playlists[index] with
-        {
-            Name = renamePlaylistEvent.NewPlaylistName,
-        };
-        projection.Playlists[index] = updated;
+        playlist.Name = renamePlaylistEvent.NewPlaylistName;
+        playlist.ModifiedAt = DateTime.UtcNow;
+
+        await dbContext.SaveChangesAsync();
 
         logger.LogInformation(
             "Renamed Playlist {PlaylistId} to '{NewPlaylistName}' for UserId: {UserId}",
@@ -106,51 +105,41 @@ public class PlaylistsEventProcessor(ILogger<PlaylistsEventProcessor> logger)
     private async Task HandleEvent(SongAddedToPlaylist songAddedEvent, EventDbContext dbContext)
     {
         if (!songAddedEvent.ActorUserId.HasValue)
+            return;
+
+        var userPlaylists = await dbContext
+            .PlaylistsForUser.Include(p => p.Playlists)
+            .ThenInclude(p => p.Items)
+            .FirstOrDefaultAsync(p => p.UserId == songAddedEvent.ActorUserId.Value);
+
+        if (userPlaylists is null)
         {
+            logger.LogWarning("User {UserId} not found", songAddedEvent.ActorUserId.Value);
             return;
         }
 
-        var projection = await dbContext
-            .PlaylistsProjections.Include(p => p.Playlists)
-            .FirstOrDefaultAsync(p => p.Playlists.Any(pl => pl.Id == songAddedEvent.PlaylistId));
-
-        if (projection is null)
+        var playlist = userPlaylists.Playlists.FirstOrDefault(p =>
+            p.Id == songAddedEvent.PlaylistId
+        );
+        if (playlist is null)
         {
+            logger.LogWarning(
+                "Playlist {PlaylistId} not found for User {UserId}",
+                songAddedEvent.PlaylistId,
+                songAddedEvent.ActorUserId.Value
+            );
             return;
         }
 
-        var index = projection.Playlists.FindIndex(pl => pl.Id == songAddedEvent.PlaylistId);
-        if (index < 0)
-        {
-            return;
-        }
+        playlist.Items.Add(
+            new DbPlaylistItem
+            {
+                RecordingId = songAddedEvent.RecordingId,
+                AddedAt = DateTime.UtcNow,
+            }
+        );
 
-        var existing = projection.Playlists[index];
-
-        // Avoid adding duplicate songs
-        if (existing.RecordingIds.Contains(songAddedEvent.RecordingId))
-        {
-            return;
-        }
-
-        var newRecordingIds = existing.RecordingIds.ToList();
-
-        if (songAddedEvent.Position is { } pos && pos >= 0 && pos <= newRecordingIds.Count)
-        {
-            newRecordingIds.Insert(pos, songAddedEvent.RecordingId);
-        }
-        else
-        {
-            newRecordingIds.Add(songAddedEvent.RecordingId);
-        }
-
-        var updated = existing with
-        {
-            RecordingIds = newRecordingIds,
-            ModifiedAt = DateTime.UtcNow,
-        };
-
-        projection.Playlists[index] = updated;
+        await dbContext.SaveChangesAsync();
 
         logger.LogInformation(
             "Added recording {RecordingId} to Playlist {PlaylistId} at position {Position} for UserId: {UserId}",

@@ -32,7 +32,7 @@ public record User([property: GraphQLIgnore] UserProjection Model)
 
     public async Task<IEnumerable<Playlist>> Playlists([Service] EventDbContext dbContext)
     {
-        var playlistsProjection = await dbContext.PlaylistsProjections.FirstOrDefaultAsync(p =>
+        var playlistsProjection = await dbContext.PlaylistsForUser.FirstOrDefaultAsync(p =>
             p.UserId == Model.UserId
         );
         if (playlistsProjection == null)

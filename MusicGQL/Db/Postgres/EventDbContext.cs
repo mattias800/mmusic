@@ -23,7 +23,7 @@ public class EventDbContext(DbContextOptions<EventDbContext> options) : DbContex
     public DbSet<ArtistsAddedToServerLibraryProjection> ArtistsAddedToServerLibraryProjections { get; set; }
     public DbSet<ReleaseGroupsAddedToServerLibraryProjection> ReleaseGroupsAddedToServerLibraryProjections { get; set; }
 
-    public DbSet<PlaylistsProjection> PlaylistsProjections { get; set; }
+    public DbSet<PlaylistsForUser> PlaylistsForUser { get; set; }
     public DbSet<UserProjection> UserProjections { get; set; }
 
     // Sagas
@@ -92,32 +92,24 @@ public class EventDbContext(DbContextOptions<EventDbContext> options) : DbContex
                 )
             );
 
+        modelBuilder.Entity<PlaylistsForUser>().HasKey(p => p.UserId);
+
         modelBuilder
-            .Entity<PlaylistsProjection>()
-            .OwnsMany(
-                p => p.Playlists,
-                b =>
-                {
-                    b.WithOwner(); // Optional if EF can infer the owner
-                    b.Property(p => p.Name);
-                    b.Property(p => p.CreatedAt);
-                    b.Property(p => p.ModifiedAt);
+            .Entity<PlaylistsForUser>()
+            .HasMany(p => p.Playlists)
+            .WithOne(p => p.User)
+            .HasForeignKey(p => p.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
 
-                    b.Property(p => p.RecordingIds)
-                        .HasConversion(
-                            v => string.Join(',', v),
-                            v => v.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList()
-                        )
-                        .Metadata.SetValueComparer(
-                            new ValueComparer<List<string>>(
-                                (c1, c2) => c1 != null && c2 != null && c1.SequenceEqual(c2),
-                                c => c.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())),
-                                c => c.ToList()
-                            )
-                        );
+        modelBuilder.Entity<DbPlaylist>().HasKey(p => p.Id);
 
-                    b.HasKey(p => p.Id);
-                }
-            );
+        modelBuilder
+            .Entity<DbPlaylist>()
+            .HasMany(p => p.Items)
+            .WithOne(i => i.Playlist)
+            .HasForeignKey(i => i.PlaylistId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<DbPlaylistItem>().HasKey(i => i.Id);
     }
 }
