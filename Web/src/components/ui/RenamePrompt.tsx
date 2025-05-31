@@ -4,17 +4,16 @@ import { Button } from "./button"; // Assuming you have a Button component
 import { Input } from "./input"; // Assuming you have an Input component
 import {
   Dialog,
+  DialogClose,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
-  DialogClose,
 } from "./dialog"; // Assuming you have a Dialog component
 
 export interface RenamePromptProps {
-  isOpen: boolean;
   currentName: string;
-  onClose: () => void;
+  onRequestClose: () => void;
   onRename: (newName: string) => void;
   promptTitle?: string;
   inputLabel?: string;
@@ -23,9 +22,8 @@ export interface RenamePromptProps {
 }
 
 export const RenamePrompt: React.FC<RenamePromptProps> = ({
-  isOpen,
   currentName,
-  onClose,
+  onRequestClose,
   onRename,
   promptTitle = "Rename Item",
   inputLabel = "New name",
@@ -34,17 +32,11 @@ export const RenamePrompt: React.FC<RenamePromptProps> = ({
 }) => {
   const [newName, setNewName] = useState(currentName);
 
-  React.useEffect(() => {
-    if (isOpen) {
-      setNewName(currentName);
-    }
-  }, [isOpen, currentName]);
-
   const handleRename = () => {
     if (newName.trim() && newName.trim() !== currentName) {
       onRename(newName.trim());
     }
-    onClose();
+    onRequestClose();
   };
 
   const handleKeyPress = (event: React.KeyboardEvent<HTMLInputElement>) => {
@@ -53,12 +45,8 @@ export const RenamePrompt: React.FC<RenamePromptProps> = ({
     }
   };
 
-  if (!isOpen) {
-    return null;
-  }
-
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+    <Dialog open={true} onOpenChange={(open) => !open && onRequestClose()}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{promptTitle}</DialogTitle>
@@ -78,7 +66,7 @@ export const RenamePrompt: React.FC<RenamePromptProps> = ({
         </div>
         <DialogFooter>
           <DialogClose asChild>
-            <Button variant="outline" onClick={onClose}>
+            <Button variant="outline" onClick={onRequestClose}>
               {cancelText}
             </Button>
           </DialogClose>
@@ -87,4 +75,4 @@ export const RenamePrompt: React.FC<RenamePromptProps> = ({
       </DialogContent>
     </Dialog>
   );
-}; 
+};

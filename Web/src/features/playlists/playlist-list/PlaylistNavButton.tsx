@@ -1,4 +1,5 @@
 import * as React from "react";
+import { useState } from "react";
 import { ListMusic } from "lucide-react";
 import { SidebarNavButton } from "@/features/sidebar/SidebarNavButton.tsx";
 import {
@@ -8,7 +9,6 @@ import {
   ContextMenuTrigger,
 } from "@/components/ui/context-menu.tsx";
 import { RenamePrompt } from "@/components/ui/RenamePrompt.tsx";
-import { useState } from "react";
 
 export interface PlaylistNavButtonProps {
   playlistName: string | undefined | null;
@@ -49,14 +49,15 @@ export const PlaylistNavButton: React.FC<PlaylistNavButtonProps> = ({
           </ContextMenuItem>
         </ContextMenuContent>
       </ContextMenu>
-      <RenamePrompt
-        isOpen={isRenamePromptOpen}
-        currentName={playlistName ?? ""}
-        onClose={() => setIsRenamePromptOpen(false)}
-        onRename={handleRename}
-        promptTitle="Rename Playlist"
-        inputLabel="New playlist name"
-      />
+      {isRenamePromptOpen && (
+        <RenamePrompt
+          currentName={playlistName ?? ""}
+          onRequestClose={() => setIsRenamePromptOpen(false)}
+          onRename={handleRename}
+          promptTitle="Rename Playlist"
+          inputLabel="New playlist name"
+        />
+      )}
     </>
   );
 };
