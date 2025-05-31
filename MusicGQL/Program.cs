@@ -18,8 +18,11 @@ using MusicGQL.Features.External.SoulSeek.Integration;
 using MusicGQL.Features.LikedSongs.Aggregate;
 using MusicGQL.Features.LikedSongs.Commands;
 using MusicGQL.Features.LikedSongs.Mutations;
+using MusicGQL.Features.Playlists.Aggregate;
+using MusicGQL.Features.Playlists.Commands;
 using MusicGQL.Features.Playlists.Import.Spotify;
 using MusicGQL.Features.Playlists.Import.Spotify.Mutations;
+using MusicGQL.Features.Playlists.Mutations;
 using MusicGQL.Features.ServerLibrary.Artist;
 using MusicGQL.Features.ServerLibrary.Artist.Aggregate;
 using MusicGQL.Features.ServerLibrary.Artist.Handlers;
@@ -98,11 +101,13 @@ builder
     .AddScoped<ReleaseGroupsAddedToServerLibraryProcessor>()
     .AddScoped<ArtistsAddedToServerLibraryProcessor>()
     .AddScoped<UserEventProcessor>()
+    .AddScoped<PlaylistsEventProcessor>()
     .AddScoped<EventProcessorWorker>()
     // Register new Handlers
     .AddScoped<HashPasswordHandler>()
     .AddScoped<VerifyPasswordHandler>()
     .AddScoped<CreateUserHandler>()
+    .AddScoped<CreatePlaylistHandler>()
     // Register YouTubeService
     .AddSingleton<Google.Apis.YouTube.v3.YouTubeService>(sp =>
     {
@@ -216,6 +221,9 @@ builder
     .AddTypeExtension<SignOutMutation>()
     .AddType<SignOutSuccess>()
     .AddType<SignOutError>()
+    .AddTypeExtension<CreatePlaylistMutation>()
+    .AddType<CreatePlaylistSuccess>()
+    .AddType<CreatePlaylistNotAuthenticated>()
     .AddType<ArtistServerStatusReady>()
     .AddType<ArtistServerStatusImportingArtist>()
     .AddType<ArtistServerStatusUpdatingArtist>()

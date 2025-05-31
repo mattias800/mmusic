@@ -14,7 +14,6 @@ const bootstrapQuery = gql`
     areThereAnyUsers
     viewer {
       id
-      username
     }
   }
 `;

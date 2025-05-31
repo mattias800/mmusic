@@ -15,7 +15,7 @@ export type TypesWithNoId = 'ArtistImages' | 'ArtistSearchRoot' | 'ArtistServerS
  * Union type of all GraphQL object types that have an id field.
  * This is used for reference and validation.
  */
-export type TypesWithId = 'Artist' | 'ArtistServerStatus' | 'DownloadStatus' | 'ExternalRoot' | 'Label' | 'LastFmAlbum' | 'LastFmArtist' | 'LastFmTrack' | 'LikedSong' | 'MbArtist' | 'MbGenre' | 'MbLabel' | 'MbRecording' | 'MbRecordingStreamingServiceInfo' | 'MbRelease' | 'MbReleaseGroup' | 'MbTrack' | 'Ping' | 'Recording' | 'RecordingStreamingServiceInfo' | 'Release' | 'ReleaseGroup' | 'SoulSeekRoot' | 'SoulSeekStatus' | 'SpotifyPlaylist' | 'Url' | 'User';
+export type TypesWithId = 'Artist' | 'ArtistServerStatus' | 'DownloadStatus' | 'ExternalRoot' | 'Label' | 'LastFmAlbum' | 'LastFmArtist' | 'LastFmTrack' | 'LikedSong' | 'MbArtist' | 'MbGenre' | 'MbLabel' | 'MbRecording' | 'MbRecordingStreamingServiceInfo' | 'MbRelease' | 'MbReleaseGroup' | 'MbTrack' | 'Ping' | 'Playlist' | 'Recording' | 'RecordingStreamingServiceInfo' | 'Release' | 'ReleaseGroup' | 'SoulSeekRoot' | 'SoulSeekStatus' | 'SpotifyPlaylist' | 'Url' | 'User';
 
 /**
  * Type guard to check if a type has an id field.
@@ -23,7 +23,7 @@ export type TypesWithId = 'Artist' | 'ArtistServerStatus' | 'DownloadStatus' | '
  * @returns True if the type has an id field, false otherwise
  */
 export function hasIdField(type: string): type is TypesWithId {
-  const typesWithId: string[] = ['Artist', 'ArtistServerStatus', 'DownloadStatus', 'ExternalRoot', 'Label', 'LastFmAlbum', 'LastFmArtist', 'LastFmTrack', 'LikedSong', 'MbArtist', 'MbGenre', 'MbLabel', 'MbRecording', 'MbRecordingStreamingServiceInfo', 'MbRelease', 'MbReleaseGroup', 'MbTrack', 'Ping', 'Recording', 'RecordingStreamingServiceInfo', 'Release', 'ReleaseGroup', 'SoulSeekRoot', 'SoulSeekStatus', 'SpotifyPlaylist', 'Url', 'User'];
+  const typesWithId: string[] = ['Artist', 'ArtistServerStatus', 'DownloadStatus', 'ExternalRoot', 'Label', 'LastFmAlbum', 'LastFmArtist', 'LastFmTrack', 'LikedSong', 'MbArtist', 'MbGenre', 'MbLabel', 'MbRecording', 'MbRecordingStreamingServiceInfo', 'MbRelease', 'MbReleaseGroup', 'MbTrack', 'Ping', 'Playlist', 'Recording', 'RecordingStreamingServiceInfo', 'Release', 'ReleaseGroup', 'SoulSeekRoot', 'SoulSeekStatus', 'SpotifyPlaylist', 'Url', 'User'];
   return typesWithId.includes(type);
 }
 

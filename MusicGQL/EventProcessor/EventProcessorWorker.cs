@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using MusicGQL.Db.Postgres;
 using MusicGQL.Db.Postgres.Models;
 using MusicGQL.Features.LikedSongs.Aggregate;
+using MusicGQL.Features.Playlists.Aggregate;
 using MusicGQL.Features.ServerLibrary.Artist.Aggregate;
 using MusicGQL.Features.ServerLibrary.ReleaseGroup.Aggregate;
 using MusicGQL.Features.Users.Aggregate;
@@ -14,7 +15,8 @@ public class EventProcessorWorker(
     ReleaseGroupsAddedToServerLibraryProcessor releaseGroupsAddedToServerLibraryProcessor,
     ArtistsAddedToServerLibraryProcessor artistsAddedToServerLibraryProcessor,
     LikedSongsEventProcessor likedSongsEventProcessor,
-    UserEventProcessor userEventProcessor
+    UserEventProcessor userEventProcessor,
+    PlaylistsEventProcessor playlistsEventProcessor
 )
 {
     public async Task ProcessEvents()
@@ -39,6 +41,7 @@ public class EventProcessorWorker(
         await artistsAddedToServerLibraryProcessor.PrepareProcessing(dbContext);
         await likedSongsEventProcessor.PrepareProcessing(dbContext);
         await userEventProcessor.PrepareProcessing(dbContext);
+        await playlistsEventProcessor.PrepareProcessing(dbContext);
 
         foreach (var ev in events)
         {
@@ -46,6 +49,7 @@ public class EventProcessorWorker(
             artistsAddedToServerLibraryProcessor.ProcessEvent(ev, dbContext);
             likedSongsEventProcessor.ProcessEvent(ev, dbContext);
             userEventProcessor.ProcessEvent(ev, dbContext);
+            await playlistsEventProcessor.ProcessEvent(ev, dbContext);
         }
 
         if (events.Count > 0)

@@ -1,5 +1,13 @@
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Cog, Heart, Library, MicVocal, Music2, User } from "lucide-react";
+import {
+  Cog,
+  Heart,
+  Import,
+  Library,
+  MicVocal,
+  Music2,
+  User,
+} from "lucide-react";
 import { SearchInput } from "../search/search-input/SearchInput.tsx";
 import { DownloadOverviewFetcher } from "@/features/downloads/download-overview/DownloadOverviewFetcher.tsx";
 import { useQuery } from "urql";
@@ -9,6 +17,7 @@ import { SidebarNavButton } from "@/features/sidebar/SidebarNavButton.tsx";
 import { SidebarSection } from "@/features/sidebar/SidebarSection.tsx";
 import { SoulSeekNetworkStatusFetcher } from "@/features/soul-seek-network-status/SoulSeekNetworkStatusFetcher.tsx";
 import { MmusicLogo } from "@/components/logo/MmusicLogo.tsx";
+import { PlaylistList } from "@/features/playlists/playlist-list/PlaylistList.tsx";
 
 export interface SidebarProps {
   className?: string;
@@ -65,7 +74,12 @@ export const Sidebar = ({ className }: SidebarProps) => {
         </SidebarSection>
 
         <SidebarSection heading={"Playlists"}>
-          <SidebarNavButton path={"/"} label={"Popular artists"} icon={Heart} />
+          <SidebarNavButton
+            path={"/playlists/import/spotify"}
+            label={"Import from Spotify"}
+            icon={Import}
+          />
+          <PlaylistList />
         </SidebarSection>
 
         <SidebarSection

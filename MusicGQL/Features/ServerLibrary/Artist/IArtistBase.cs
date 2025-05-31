@@ -1,5 +1,4 @@
 using Hqub.Lastfm;
-using MusicGQL.Features.ServerLibrary.ArtistServerStatus.Services;
 using TrackSeries.FanArtTV.Client;
 
 namespace MusicGQL.Features.ServerLibrary.Artist;

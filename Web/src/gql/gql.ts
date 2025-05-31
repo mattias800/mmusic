@@ -14,7 +14,7 @@ import { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/
  * Learn more about it here: https://the-guild.dev/graphql/codegen/plugins/presets/preset-client#reducing-bundle-size
  */
 type Documents = {
-    "\n  query Bootstrap {\n    areThereAnyUsers\n    viewer {\n      id\n      username\n    }\n  }\n": typeof types.BootstrapDocument,
+    "\n  query Bootstrap {\n    areThereAnyUsers\n    viewer {\n      id\n    }\n  }\n": typeof types.BootstrapDocument,
     "\n  query AlbumListQuery {\n    releaseGroup {\n      all {\n        id\n        ...AlbumList_ReleaseGroup\n      }\n    }\n  }\n": typeof types.AlbumListQueryDocument,
     "\n  query AlbumQuery($releaseGroupId: ID!) {\n    releaseGroup {\n      byId(id: $releaseGroupId) {\n        id\n        ...AlbumPanel_ReleaseGroup\n      }\n    }\n  }\n": typeof types.AlbumQueryDocument,
     "\n  query ArtistListQuery {\n    artist {\n      all {\n        id\n        ...ArtistList_Artist\n      }\n    }\n  }\n": typeof types.ArtistListQueryDocument,
@@ -52,6 +52,8 @@ type Documents = {
     "\n  fragment LikedSongsList_User on User {\n    id\n    likedSongs {\n      id\n      ...LikedSongRow_LikedSong\n    }\n  }\n": typeof types.LikedSongsList_UserFragmentDoc,
     "\n  fragment RecordingPlayButton_Recording on Recording {\n    id\n    streamingServiceInfo {\n      id\n      youtubeVideoId\n    }\n  }\n": typeof types.RecordingPlayButton_RecordingFragmentDoc,
     "\n  query YoutubeVideoSearch($recordingId: ID!) {\n    musicBrainz {\n      recording {\n        byId(id: $recordingId) {\n          id\n          streamingServiceInfo {\n            id\n            youtubeSearchVideoId\n          }\n        }\n      }\n    }\n  }\n": typeof types.YoutubeVideoSearchDocument,
+    "\n  mutation CreatePlaylist {\n    createPlaylist {\n      ... on CreatePlaylistSuccess {\n        viewer {\n          id\n          playlists {\n            id\n            name\n            createdAt\n          }\n        }\n      }\n      ... on CreatePlaylistNotAuthenticated {\n        message\n      }\n    }\n  }\n": typeof types.CreatePlaylistDocument,
+    "\n  query PlaylistList {\n    viewer {\n      id\n      playlists {\n        id\n        name\n        createdAt\n      }\n    }\n  }\n": typeof types.PlaylistListDocument,
     "\n  query TopArtistRecommendations {\n    recommendations {\n      topArtists {\n        id\n        ...TopArtistCard_Artist\n      }\n    }\n  }\n": typeof types.TopArtistRecommendationsDocument,
     "\n  fragment TopTrackCard_LastFmTrack on LastFmTrack {\n    id\n    playCount\n    name\n    artist {\n      id\n      musicBrainzArtist {\n        id\n        name\n        images {\n          artistThumb\n        }\n      }\n    }\n    album {\n      id\n      imageUrl\n    }\n    images {\n      artistThumb\n    }\n  }\n": typeof types.TopTrackCard_LastFmTrackFragmentDoc,
     "\n  query TopTrackRecommendations {\n    recommendations {\n      topTracks {\n        id\n        ...TopTrackCard_LastFmTrack\n      }\n    }\n  }\n": typeof types.TopTrackRecommendationsDocument,
@@ -71,7 +73,7 @@ type Documents = {
     "\n  fragment UserProfilePanel_User on User {\n    id\n    username\n    createdAt\n    updatedAt\n    likedSongs {\n      id\n    }\n  }\n": typeof types.UserProfilePanel_UserFragmentDoc,
 };
 const documents: Documents = {
-    "\n  query Bootstrap {\n    areThereAnyUsers\n    viewer {\n      id\n      username\n    }\n  }\n": types.BootstrapDocument,
+    "\n  query Bootstrap {\n    areThereAnyUsers\n    viewer {\n      id\n    }\n  }\n": types.BootstrapDocument,
     "\n  query AlbumListQuery {\n    releaseGroup {\n      all {\n        id\n        ...AlbumList_ReleaseGroup\n      }\n    }\n  }\n": types.AlbumListQueryDocument,
     "\n  query AlbumQuery($releaseGroupId: ID!) {\n    releaseGroup {\n      byId(id: $releaseGroupId) {\n        id\n        ...AlbumPanel_ReleaseGroup\n      }\n    }\n  }\n": types.AlbumQueryDocument,
     "\n  query ArtistListQuery {\n    artist {\n      all {\n        id\n        ...ArtistList_Artist\n      }\n    }\n  }\n": types.ArtistListQueryDocument,
@@ -109,6 +111,8 @@ const documents: Documents = {
     "\n  fragment LikedSongsList_User on User {\n    id\n    likedSongs {\n      id\n      ...LikedSongRow_LikedSong\n    }\n  }\n": types.LikedSongsList_UserFragmentDoc,
     "\n  fragment RecordingPlayButton_Recording on Recording {\n    id\n    streamingServiceInfo {\n      id\n      youtubeVideoId\n    }\n  }\n": types.RecordingPlayButton_RecordingFragmentDoc,
     "\n  query YoutubeVideoSearch($recordingId: ID!) {\n    musicBrainz {\n      recording {\n        byId(id: $recordingId) {\n          id\n          streamingServiceInfo {\n            id\n            youtubeSearchVideoId\n          }\n        }\n      }\n    }\n  }\n": types.YoutubeVideoSearchDocument,
+    "\n  mutation CreatePlaylist {\n    createPlaylist {\n      ... on CreatePlaylistSuccess {\n        viewer {\n          id\n          playlists {\n            id\n            name\n            createdAt\n          }\n        }\n      }\n      ... on CreatePlaylistNotAuthenticated {\n        message\n      }\n    }\n  }\n": types.CreatePlaylistDocument,
+    "\n  query PlaylistList {\n    viewer {\n      id\n      playlists {\n        id\n        name\n        createdAt\n      }\n    }\n  }\n": types.PlaylistListDocument,
     "\n  query TopArtistRecommendations {\n    recommendations {\n      topArtists {\n        id\n        ...TopArtistCard_Artist\n      }\n    }\n  }\n": types.TopArtistRecommendationsDocument,
     "\n  fragment TopTrackCard_LastFmTrack on LastFmTrack {\n    id\n    playCount\n    name\n    artist {\n      id\n      musicBrainzArtist {\n        id\n        name\n        images {\n          artistThumb\n        }\n      }\n    }\n    album {\n      id\n      imageUrl\n    }\n    images {\n      artistThumb\n    }\n  }\n": types.TopTrackCard_LastFmTrackFragmentDoc,
     "\n  query TopTrackRecommendations {\n    recommendations {\n      topTracks {\n        id\n        ...TopTrackCard_LastFmTrack\n      }\n    }\n  }\n": types.TopTrackRecommendationsDocument,
@@ -145,7 +149,7 @@ export function graphql(source: string): unknown;
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query Bootstrap {\n    areThereAnyUsers\n    viewer {\n      id\n      username\n    }\n  }\n"): (typeof documents)["\n  query Bootstrap {\n    areThereAnyUsers\n    viewer {\n      id\n      username\n    }\n  }\n"];
+export function graphql(source: "\n  query Bootstrap {\n    areThereAnyUsers\n    viewer {\n      id\n    }\n  }\n"): (typeof documents)["\n  query Bootstrap {\n    areThereAnyUsers\n    viewer {\n      id\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -294,6 +298,14 @@ export function graphql(source: "\n  fragment RecordingPlayButton_Recording on R
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  query YoutubeVideoSearch($recordingId: ID!) {\n    musicBrainz {\n      recording {\n        byId(id: $recordingId) {\n          id\n          streamingServiceInfo {\n            id\n            youtubeSearchVideoId\n          }\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  query YoutubeVideoSearch($recordingId: ID!) {\n    musicBrainz {\n      recording {\n        byId(id: $recordingId) {\n          id\n          streamingServiceInfo {\n            id\n            youtubeSearchVideoId\n          }\n        }\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  mutation CreatePlaylist {\n    createPlaylist {\n      ... on CreatePlaylistSuccess {\n        viewer {\n          id\n          playlists {\n            id\n            name\n            createdAt\n          }\n        }\n      }\n      ... on CreatePlaylistNotAuthenticated {\n        message\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation CreatePlaylist {\n    createPlaylist {\n      ... on CreatePlaylistSuccess {\n        viewer {\n          id\n          playlists {\n            id\n            name\n            createdAt\n          }\n        }\n      }\n      ... on CreatePlaylistNotAuthenticated {\n        message\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query PlaylistList {\n    viewer {\n      id\n      playlists {\n        id\n        name\n        createdAt\n      }\n    }\n  }\n"): (typeof documents)["\n  query PlaylistList {\n    viewer {\n      id\n      playlists {\n        id\n        name\n        createdAt\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

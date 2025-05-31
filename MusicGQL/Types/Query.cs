@@ -26,8 +26,8 @@ public class Query
     // Implemented Viewer field
     // This method will be resolved by HotChocolate as the 'viewer' field in the GraphQL schema.
     public async Task<User?> GetViewer(
-        [Service] IHttpContextAccessor httpContextAccessor,
-        [Service] EventDbContext dbContext
+        IHttpContextAccessor httpContextAccessor,
+        EventDbContext dbContext
     )
     {
         var httpContext = httpContextAccessor.HttpContext;

@@ -167,6 +167,16 @@ type ArtistServerStatusUpdatingArtistReleases implements ArtistServerStatusResul
   topTracksVisible: Boolean!
 }
 
+type CreatePlaylistNotAuthenticated {
+  message: String!
+}
+
+union CreatePlaylistResult = CreatePlaylistNotAuthenticated | CreatePlaylistSuccess
+
+type CreatePlaylistSuccess {
+  viewer: User!
+}
+
 type CreateUserError {
   message: String!
 }
@@ -453,6 +463,7 @@ type MusicBrainzSearchRoot {
 type Mutation {
   addArtistToServerLibrary(input: AddArtistToServerLibraryInput!): AddArtistToServerLibraryResult!
   addReleaseGroupToServerLibrary(input: AddReleaseGroupToServerLibraryInput!): AddReleaseGroupToServerLibraryResult!
+  createPlaylist: CreatePlaylistResult!
   createUser(input: CreateUserInput!): CreateUserResult!
   importSpotifyPlaylistById(playlistId: String!, userId: UUID!): ImportSpotifyPlaylistResult!
   likeSong(input: LikeSongInput!): LikeSongResult!
@@ -490,6 +501,14 @@ type PageInfo {
 
 type Ping {
   id: ID!
+}
+
+type Playlist {
+  createdAt: DateTime!
+  id: ID!
+  modifiedAt: DateTime
+  name: String
+  recordings: [Recording!]!
 }
 
 type PlaylistSearchRoot {
@@ -675,6 +694,7 @@ type User {
   createdAt: DateTime!
   id: ID!
   likedSongs: [LikedSong!]!
+  playlists: [Playlist!]!
   updatedAt: DateTime!
   username: String!
 }
