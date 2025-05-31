@@ -1,8 +1,4 @@
-using System.Text;
-using Microsoft.EntityFrameworkCore;
 using MusicGQL.Db.Postgres;
-using MusicGQL.Features.Downloads.Sagas;
-using Newtonsoft.Json;
 
 namespace MusicGQL.Features.Downloads;
 
@@ -13,15 +9,6 @@ public record DownloadsSearchRoot
         ILogger<DownloadsSearchRoot> logger
     )
     {
-        var sagas = await dbContext.Sagas.AsNoTracking().ToListAsync();
-
-        return sagas
-            .Select(s =>
-                JsonConvert.DeserializeObject<DownloadReleaseSagaData>(
-                    Encoding.UTF8.GetString(s.Data)
-                )
-            )
-            .OfType<DownloadReleaseSagaData>()
-            .Select(sagaData => new DownloadStatus(sagaData));
+        return [];
     }
 };
