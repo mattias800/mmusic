@@ -82,6 +82,18 @@ type AddReleaseGroupToServerLibraryUnknownError {
   message: String!
 }
 
+"""Defines when a policy shall be executed."""
+enum ApplyPolicy {
+  """After the resolver was executed."""
+  AFTER_RESOLVER
+
+  """Before the resolver was executed."""
+  BEFORE_RESOLVER
+
+  """The policy is applied in the validation step before the execution."""
+  VALIDATION
+}
+
 type Artist implements ArtistBase {
   albums: [ReleaseGroup!]!
   eps: [ReleaseGroup!]!
@@ -167,11 +179,7 @@ type ArtistServerStatusUpdatingArtistReleases implements ArtistServerStatusResul
   topTracksVisible: Boolean!
 }
 
-type CreatePlaylistNotAuthenticated {
-  message: String!
-}
-
-union CreatePlaylistResult = CreatePlaylistNotAuthenticated | CreatePlaylistSuccess
+union CreatePlaylistResult = CreatePlaylistSuccess
 
 type CreatePlaylistSuccess {
   viewer: User!
@@ -194,6 +202,14 @@ type CreateUserSuccess {
 
 """The `DateTime` scalar represents an ISO-8601 compliant date time type."""
 scalar DateTime
+
+type DbUser {
+  createdAt: DateTime!
+  passwordHash: String
+  updatedAt: DateTime!
+  userId: UUID!
+  username: String!
+}
 
 type DownloadStatus {
   artistName: String
@@ -468,6 +484,7 @@ type Mutation {
   importSpotifyPlaylistById(playlistId: String!, userId: UUID!): ImportSpotifyPlaylistResult!
   likeSong(input: LikeSongInput!): LikeSongResult!
   ping: Boolean!
+  renamePlaylist(input: RenamePlaylistInput!): RenamePlaylistResult!
   signIn(input: SignInInput!): SignInResult!
   signOut: SignOutResult!
   startDownloadRelease(input: StartDownloadReleaseInput!): StartDownloadReleaseResult!
@@ -504,6 +521,7 @@ type Ping {
 }
 
 type Playlist {
+  coverImageUrl: String
   createdAt: DateTime!
   id: ID!
   modifiedAt: DateTime
@@ -605,6 +623,21 @@ type ReleaseSearchRoot {
   searchByName(limit: Int! = 25, name: String!, offset: Int! = 0): [Release!]!
 }
 
+input RenamePlaylistInput {
+  newPlaylistName: String!
+  playlistId: String!
+}
+
+type RenamePlaylistNoWriteAccess {
+  message: String!
+}
+
+union RenamePlaylistResult = RenamePlaylistNoWriteAccess | RenamePlaylistSuccess
+
+type RenamePlaylistSuccess {
+  viewer: User!
+}
+
 type SignInError {
   message: String!
 }
@@ -696,14 +729,6 @@ type User {
   likedSongs: [LikedSong!]!
   playlists: [Playlist!]!
   updatedAt: DateTime!
-  username: String!
-}
-
-type UserProjection {
-  createdAt: DateTime!
-  passwordHash: String
-  updatedAt: DateTime!
-  userId: UUID!
   username: String!
 }
 

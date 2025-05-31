@@ -22,9 +22,23 @@ const playlistListQuery = graphql(`
 `);
 
 const renamePlaylistMutation = graphql(`
-mutation RenamePlaylist($playlistId: ID!, $name: String!) {
-  
-}`)
+mutation RenamePlaylist($playlistId: String!, $newPlaylistName: String!) {
+  renamePlaylist(input: {playlistId: $playlistId, newPlaylistName: $newPlaylistName}) {
+    __typename
+    ... on RenamePlaylistSuccess {
+      viewer {
+        id
+        playlists {
+          id
+          name
+          createdAt
+        }
+      }
+    }
+  }
+}`);
+
+
 export const PlaylistList: React.FC<PlaylistListProps> = () => {
   const [{ data, fetching, error }] = useQuery({ query: playlistListQuery });
 

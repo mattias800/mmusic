@@ -34,23 +34,28 @@ public class RenamePlaylistMutation
             );
         }
 
-        await renamePlaylistHandler.Handle(
+        return await renamePlaylistHandler.Handle(
             new RenamePlaylistHandler.Command(
                 userId,
                 Guid.Parse(input.PlaylistId),
                 input.NewPlaylistName
             )
-        );
-
-        return new RenamePlaylistSuccess(new User(user));
+        ) switch
+        {
+            RenamePlaylistHandler.Result.NotAllowed => new RenamePlaylistNoWriteAccess(
+                "You do not have write access to this playlist."
+            ),
+            RenamePlaylistHandler.Result.Success => new RenamePlaylistSuccess(new User(user)),
+            _ => throw new ArgumentOutOfRangeException(),
+        };
     }
 }
 
-public record RenamePlaylistInput(string PlaylistId, string NewPlaylistName);
+public record RenamePlaylistInput([ID] string PlaylistId, string NewPlaylistName);
 
 [UnionType("RenamePlaylistResult")]
 public abstract record RenamePlaylistResult;
 
 public record RenamePlaylistSuccess(User Viewer) : RenamePlaylistResult;
 
-public record RenamePlaylistNoWriteAccess() : RenamePlaylistResult;
+public record RenamePlaylistNoWriteAccess(string Message) : RenamePlaylistResult;

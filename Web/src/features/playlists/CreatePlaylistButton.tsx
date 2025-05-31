@@ -9,6 +9,7 @@ export interface CreatePlaylistButtonProps {}
 const mutation = graphql(`
   mutation CreatePlaylist {
     createPlaylist {
+      __typename
       ... on CreatePlaylistSuccess {
         viewer {
           id
@@ -18,9 +19,6 @@ const mutation = graphql(`
             createdAt
           }
         }
-      }
-      ... on CreatePlaylistNotAuthenticated {
-        message
       }
     }
   }

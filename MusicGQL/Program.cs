@@ -151,7 +151,7 @@ builder.Services.AddSingleton<SpotifyClient>(serviceProvider =>
 
 builder.Services.AddSingleton(GraphDatabase.Driver("bolt://localhost:7687", AuthTokens.None));
 
-builder.Services.AddDbContext<EventDbContext>(options =>
+builder.Services.AddDbContextFactory<EventDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Postgres"))
 );
 
