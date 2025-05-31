@@ -1,11 +1,8 @@
 using MusicGQL.Features.ServerLibrary.Import.Handlers;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace MusicGQL;
 
-public class MissingMetaDataProcessingService(
-    IServiceScopeFactory scopeFactory
-)
+public class MissingMetaDataProcessingService(IServiceScopeFactory scopeFactory)
 {
     public void ProcessMissingMetaData()
     {

@@ -9,13 +9,14 @@ using MusicGQL.Types;
 namespace MusicGQL.Features.Playlists.Mutations;
 
 [ExtendObjectType(typeof(Mutation))]
-public class CreatePlaylistMutation
+public class RenamePlaylistMutation
 {
     [Authorize(Policy = "IsAuthenticatedUser")]
-    public async Task<CreatePlaylistResult> CreatePlaylist(
+    public async Task<RenamePlaylistResult> RenamePlaylist(
         ClaimsPrincipal claimsPrincipal,
-        CreatePlaylistHandler createPlaylistHandler,
-        EventDbContext dbContext
+        RenamePlaylistHandler renamePlaylistHandler,
+        EventDbContext dbContext,
+        RenamePlaylistInput input
     )
     {
         var userIdClaim = claimsPrincipal.FindFirst(ClaimTypes.NameIdentifier);
@@ -33,15 +34,23 @@ public class CreatePlaylistMutation
             );
         }
 
-        await createPlaylistHandler.Handle(new CreatePlaylistHandler.Command(userId));
+        await renamePlaylistHandler.Handle(
+            new RenamePlaylistHandler.Command(
+                userId,
+                Guid.Parse(input.PlaylistId),
+                input.NewPlaylistName
+            )
+        );
 
-        return new CreatePlaylistSuccess(new User(user));
+        return new RenamePlaylistSuccess(new User(user));
     }
 }
 
-[UnionType("CreatePlaylistResult")]
-public abstract record CreatePlaylistResult;
+public record RenamePlaylistInput(string PlaylistId, string NewPlaylistName);
 
-public record CreatePlaylistSuccess(User Viewer) : CreatePlaylistResult;
+[UnionType("RenamePlaylistResult")]
+public abstract record RenamePlaylistResult;
 
-public record CreatePlaylistNoWriteAccess() : CreatePlaylistResult;
+public record RenamePlaylistSuccess(User Viewer) : RenamePlaylistResult;
+
+public record RenamePlaylistNoWriteAccess() : RenamePlaylistResult;

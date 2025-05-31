@@ -8,6 +8,7 @@ using Microsoft.Extensions.Options;
 using MusicGQL.Db.Postgres;
 using MusicGQL.EventProcessor;
 using MusicGQL.Features.Authentication.Handlers;
+using MusicGQL.Features.Authorization;
 using MusicGQL.Features.Downloads;
 using MusicGQL.Features.Downloads.Mutations;
 using MusicGQL.Features.Downloads.Sagas;
@@ -108,6 +109,8 @@ builder
     .AddScoped<VerifyPasswordHandler>()
     .AddScoped<CreateUserHandler>()
     .AddScoped<CreatePlaylistHandler>()
+    .AddScoped<RenamePlaylistHandler>()
+    .AddScoped<VerifyPlaylistWriteAccessHandler>()
     // Register YouTubeService
     .AddSingleton<Google.Apis.YouTube.v3.YouTubeService>(sp =>
     {
@@ -161,7 +164,19 @@ builder
         options.LogoutPath = "/logout";
         // Further options can be configured here, like cookie expiration.
     });
-builder.Services.AddAuthorization();
+
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy(
+        "IsAuthenticatedUser",
+        policy => policy.Requirements.Add(new UserExistsRequirement())
+    );
+});
+
+builder.Services.AddSingleton<
+    Microsoft.AspNetCore.Authorization.IAuthorizationHandler,
+    UserExistsHandler
+>();
 
 builder.Services.AddAutoMapper(typeof(Program));
 builder.Services.AddHttpContextAccessor();
@@ -173,15 +188,15 @@ builder.Services.AddStackExchangeRedisCache(options =>
 
 builder
     .AddGraphQL()
+    .AddAuthorization()
     .ModifyRequestOptions(o =>
     {
         o.ExecutionTimeout = TimeSpan.FromSeconds(60);
     })
-    .AddRedisSubscriptions(
-        (_) =>
-            ConnectionMultiplexer.Connect(
-                builder.Configuration.GetConnectionString("Redis") ?? string.Empty
-            )
+    .AddRedisSubscriptions(_ =>
+        ConnectionMultiplexer.Connect(
+            builder.Configuration.GetConnectionString("Redis") ?? string.Empty
+        )
     )
     .AddDiagnosticEventListener<MyExecutionEventListener>()
     .AddQueryType<MusicGQL.Types.Query>()
@@ -223,7 +238,9 @@ builder
     .AddType<SignOutError>()
     .AddTypeExtension<CreatePlaylistMutation>()
     .AddType<CreatePlaylistSuccess>()
-    .AddType<CreatePlaylistNotAuthenticated>()
+    .AddTypeExtension<RenamePlaylistMutation>()
+    .AddType<RenamePlaylistSuccess>()
+    .AddType<RenamePlaylistNoWriteAccess>()
     .AddType<ArtistServerStatusReady>()
     .AddType<ArtistServerStatusImportingArtist>()
     .AddType<ArtistServerStatusUpdatingArtist>()
