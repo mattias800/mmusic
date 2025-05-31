@@ -8,7 +8,6 @@ public class DbPlaylist
     public Guid Id { get; set; }
 
     public Guid UserId { get; set; } // FK to PlaylistsForUser
-    public PlaylistsForUser User { get; set; } = null!;
 
     public string? Name { get; set; }
     public string? Description { get; set; }

@@ -10,6 +10,7 @@ import { MusicPlayer } from "@/features/music-players/MusicPlayer.tsx";
 import { Bootstrap } from "@/Bootstrap.tsx";
 import { SetupPage } from "@/app/SetupPage.tsx";
 import { SignInPage } from "@/app/SignInPage.tsx";
+import { Sidebar } from "@/features/sidebar/Sidebar.tsx";
 
 function App() {
   return (
@@ -17,12 +18,16 @@ function App() {
       <ReduxProvider store={store}>
         <UrqlProvider value={urqlClient}>
           <Bootstrap
-            renderNoUsers={() => <SetupPage />}
+            renderNoUsers={() => (
+              <PageLayout>
+                <SetupPage />
+              </PageLayout>
+            )}
             renderAuthenticated={() => (
               <>
                 <MusicPlayer />
                 <BrowserRouter>
-                  <PageLayout>
+                  <PageLayout renderSidebar={() => <Sidebar />}>
                     <AppRouter />
                   </PageLayout>
                 </BrowserRouter>

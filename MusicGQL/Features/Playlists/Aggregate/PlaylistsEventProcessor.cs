@@ -37,16 +37,11 @@ public class PlaylistsEventProcessor(ILogger<PlaylistsEventProcessor> logger)
 
         var userId = createdPlaylist.ActorUserId.Value;
 
-        var playlistsForUser = await dbContext.PlaylistsForUser.FindAsync(userId);
+        var exists = await dbContext.Playlists.AnyAsync(p =>
+            p.Id == createdPlaylist.PlaylistId && p.UserId == userId
+        );
 
-        if (playlistsForUser is null)
-        {
-            playlistsForUser = new PlaylistsForUser { UserId = userId };
-
-            dbContext.PlaylistsForUser.Add(playlistsForUser);
-        }
-
-        if (playlistsForUser.Playlists.Any(p => p.Id == createdPlaylist.PlaylistId))
+        if (exists)
         {
             logger.LogWarning(
                 "Playlist {PlaylistId} already exists for user {UserId}",
@@ -56,15 +51,24 @@ public class PlaylistsEventProcessor(ILogger<PlaylistsEventProcessor> logger)
             return;
         }
 
-        playlistsForUser.Playlists.Add(
-            new DbPlaylist
-            {
-                Id = createdPlaylist.PlaylistId,
-                Name = createdPlaylist.Name,
-                Description = createdPlaylist.Description,
-                CoverImageUrl = createdPlaylist.CoverImageUrl,
-                CreatedAt = createdPlaylist.CreatedAt,
-            }
+        var playlist = new DbPlaylist
+        {
+            Id = createdPlaylist.PlaylistId,
+            Name = createdPlaylist.Name,
+            Description = createdPlaylist.Description,
+            CoverImageUrl = createdPlaylist.CoverImageUrl,
+            CreatedAt = createdPlaylist.CreatedAt,
+            ModifiedAt = null,
+            UserId = userId,
+        };
+
+        dbContext.Playlists.Add(playlist);
+        await dbContext.SaveChangesAsync();
+
+        logger.LogInformation(
+            "Created playlist {PlaylistId} for user {UserId}",
+            createdPlaylist.PlaylistId,
+            userId
         );
     }
 
@@ -73,21 +77,21 @@ public class PlaylistsEventProcessor(ILogger<PlaylistsEventProcessor> logger)
         if (!renamePlaylistEvent.ActorUserId.HasValue)
             return;
 
-        var projection = await dbContext
-            .PlaylistsForUser.Include(p => p.Playlists)
-            .FirstOrDefaultAsync(p =>
-                p.UserId == renamePlaylistEvent.ActorUserId.Value
-                && p.Playlists.Any(pl => pl.Id == renamePlaylistEvent.PlaylistId)
-            );
+        var userId = renamePlaylistEvent.ActorUserId.Value;
 
-        if (projection is null)
-            return;
-
-        var playlist = projection.Playlists.FirstOrDefault(pl =>
-            pl.Id == renamePlaylistEvent.PlaylistId
+        var playlist = await dbContext.Playlists.FirstOrDefaultAsync(p =>
+            p.Id == renamePlaylistEvent.PlaylistId && p.UserId == userId
         );
+
         if (playlist is null)
+        {
+            logger.LogWarning(
+                "Playlist {PlaylistId} not found for User {UserId}",
+                renamePlaylistEvent.PlaylistId,
+                userId
+            );
             return;
+        }
 
         playlist.Name = renamePlaylistEvent.NewPlaylistName;
         playlist.ModifiedAt = DateTime.UtcNow;
@@ -98,7 +102,7 @@ public class PlaylistsEventProcessor(ILogger<PlaylistsEventProcessor> logger)
             "Renamed Playlist {PlaylistId} to '{NewPlaylistName}' for UserId: {UserId}",
             renamePlaylistEvent.PlaylistId,
             renamePlaylistEvent.NewPlaylistName,
-            renamePlaylistEvent.ActorUserId.Value
+            userId
         );
     }
 
@@ -107,26 +111,18 @@ public class PlaylistsEventProcessor(ILogger<PlaylistsEventProcessor> logger)
         if (!songAddedEvent.ActorUserId.HasValue)
             return;
 
-        var userPlaylists = await dbContext
-            .PlaylistsForUser.Include(p => p.Playlists)
-            .ThenInclude(p => p.Items)
-            .FirstOrDefaultAsync(p => p.UserId == songAddedEvent.ActorUserId.Value);
+        var userId = songAddedEvent.ActorUserId.Value;
 
-        if (userPlaylists is null)
-        {
-            logger.LogWarning("User {UserId} not found", songAddedEvent.ActorUserId.Value);
-            return;
-        }
+        var playlist = await dbContext
+            .Playlists.Include(p => p.Items)
+            .FirstOrDefaultAsync(p => p.Id == songAddedEvent.PlaylistId && p.UserId == userId);
 
-        var playlist = userPlaylists.Playlists.FirstOrDefault(p =>
-            p.Id == songAddedEvent.PlaylistId
-        );
         if (playlist is null)
         {
             logger.LogWarning(
                 "Playlist {PlaylistId} not found for User {UserId}",
                 songAddedEvent.PlaylistId,
-                songAddedEvent.ActorUserId.Value
+                userId
             );
             return;
         }
@@ -146,7 +142,7 @@ public class PlaylistsEventProcessor(ILogger<PlaylistsEventProcessor> logger)
             songAddedEvent.RecordingId,
             songAddedEvent.PlaylistId,
             songAddedEvent.Position,
-            songAddedEvent.ActorUserId.Value
+            userId
         );
     }
 }

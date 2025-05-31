@@ -27,11 +27,12 @@ const mutation = graphql(`
 `);
 
 export const CreatePlaylistButton: React.FC<CreatePlaylistButtonProps> = () => {
-  const [, createPlaylist] = useMutation(mutation);
+  const [{ fetching }, createPlaylist] = useMutation(mutation);
   return (
     <SidebarActionButton
       label={"Create new playlist"}
       icon={PlusCircleIcon}
+      loading={fetching}
       onClick={() => createPlaylist({})}
     />
   );

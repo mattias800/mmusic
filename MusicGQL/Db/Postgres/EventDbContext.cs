@@ -23,7 +23,7 @@ public class EventDbContext(DbContextOptions<EventDbContext> options) : DbContex
     public DbSet<ArtistsAddedToServerLibraryProjection> ArtistsAddedToServerLibraryProjections { get; set; }
     public DbSet<ReleaseGroupsAddedToServerLibraryProjection> ReleaseGroupsAddedToServerLibraryProjections { get; set; }
 
-    public DbSet<PlaylistsForUser> PlaylistsForUser { get; set; }
+    public DbSet<DbPlaylist> Playlists { get; set; }
     public DbSet<UserProjection> UserProjections { get; set; }
 
     // Sagas
@@ -91,15 +91,6 @@ public class EventDbContext(DbContextOptions<EventDbContext> options) : DbContex
                     c => c.ToList()
                 )
             );
-
-        modelBuilder.Entity<PlaylistsForUser>().HasKey(p => p.UserId);
-
-        modelBuilder
-            .Entity<PlaylistsForUser>()
-            .HasMany(p => p.Playlists)
-            .WithOne(p => p.User)
-            .HasForeignKey(p => p.UserId)
-            .OnDelete(DeleteBehavior.Cascade);
 
         modelBuilder.Entity<DbPlaylist>().HasKey(p => p.Id);
 
