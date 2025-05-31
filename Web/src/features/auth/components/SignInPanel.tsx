@@ -3,6 +3,8 @@ import { useMutation } from "urql";
 import { SignInForm, SignInFormValues } from "./SignInForm";
 import { graphql } from "@/gql";
 import { MmusicLogo } from "@/components/logo/MmusicLogo.tsx";
+import { Cardy } from "@/components/cards/Cardy.tsx";
+import { CenterContent } from "@/components/layout/CenterContent.tsx";
 
 const signInMutation = graphql(`
   mutation SignIn($username: String!, $password: String!) {
@@ -48,7 +50,7 @@ export function SignInPanel() {
   };
 
   return (
-    <div className="flex min-h-full flex-col justify-center px-6 py-12 lg:px-8  text-white">
+    <CenterContent>
       <div className="sm:mx-auto sm:w-full sm:max-w-md flex flex-col items-center">
         <MmusicLogo width={"250px"} />
         <h2 className="mt-6 text-center text-2xl font-bold leading-9 tracking-tight text-gray-100">
@@ -57,14 +59,14 @@ export function SignInPanel() {
       </div>
 
       <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-gray-900 px-6 py-8 shadow sm:rounded-lg sm:px-10">
+        <Cardy>
           <SignInForm
             onSubmit={onSubmit}
             isLoading={signInState.fetching}
             errorMessage={errorMessage}
           />
-        </div>
+        </Cardy>
       </div>
-    </div>
+    </CenterContent>
   );
 }

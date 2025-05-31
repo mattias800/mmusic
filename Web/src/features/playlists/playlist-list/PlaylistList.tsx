@@ -4,8 +4,7 @@ import { useQuery } from "urql";
 import { Spinner } from "@/components/spinner/Spinner.tsx";
 import { MessageBox } from "@/components/errors/MessageBox.tsx";
 import { CreatePlaylistButton } from "@/features/playlists/CreatePlaylistButton.tsx";
-import { SidebarNavButton } from "@/features/sidebar/SidebarNavButton.tsx";
-import { ListMusic } from "lucide-react";
+import { PlaylistNavButton } from "@/features/playlists/playlist-list/PlaylistNavButton.tsx";
 
 export interface PlaylistListProps {}
 
@@ -40,10 +39,9 @@ export const PlaylistList: React.FC<PlaylistListProps> = () => {
       <CreatePlaylistButton />
 
       {data.viewer?.playlists.map((playlist) => (
-        <SidebarNavButton
-          path={"/playlist/" + playlist.id}
-          label={playlist.name ?? "New playlist"}
-          icon={ListMusic}
+        <PlaylistNavButton
+          playlistId={playlist.id}
+          playlistName={playlist.name}
         />
       ))}
     </>

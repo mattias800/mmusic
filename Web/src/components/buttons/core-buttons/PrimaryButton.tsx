@@ -1,7 +1,8 @@
 import * as React from "react";
 import { cn } from "@/lib/utils.ts";
 
-export interface PrimaryButtonProps {
+export interface PrimaryButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   label: string;
   loading?: boolean;
   loadingLabel?: string;
@@ -11,11 +12,15 @@ export const PrimaryButton: React.FC<PrimaryButtonProps> = ({
   label,
   loading,
   loadingLabel,
+  className,
+  ...props
 }) => {
   return (
     <button
+      {...props}
       type="submit"
       className={cn(
+        className,
         "w-full flex justify-center rounded-md px-3 py-2.5 text-sm font-semibold leading-6 shadow-sm",
         loading
           ? "bg-gray-500 hover:bg-gray-500 cursor-not-allowed"

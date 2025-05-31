@@ -18,4 +18,6 @@ public record Playlist([property: GraphQLIgnore] Db.DbPlaylist Model)
     public DateTime CreatedAt() => Model.CreatedAt;
 
     public DateTime? ModifiedAt() => Model.ModifiedAt;
+
+    public string? CoverImageUrl() => Model.CoverImageUrl;
 }
