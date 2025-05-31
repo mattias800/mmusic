@@ -19,6 +19,7 @@ public class PlaylistsEventProcessor(ILogger<PlaylistsEventProcessor> logger)
             case RenamedPlaylist e:
                 await HandleEvent(e, dbContext);
                 break;
+
             case SongAddedToPlaylist e:
                 await HandleEvent(e, dbContext);
                 break;
@@ -75,16 +76,12 @@ public class PlaylistsEventProcessor(ILogger<PlaylistsEventProcessor> logger)
         var userId = renamePlaylistEvent.ActorUserId.Value;
 
         var playlist = await dbContext.Playlists.FirstOrDefaultAsync(p =>
-            p.Id == renamePlaylistEvent.PlaylistId && p.UserId == userId
+            p.Id == renamePlaylistEvent.PlaylistId
         );
 
         if (playlist is null)
         {
-            logger.LogWarning(
-                "Playlist {PlaylistId} not found for User {UserId}",
-                renamePlaylistEvent.PlaylistId,
-                userId
-            );
+            logger.LogWarning("Playlist {PlaylistId} not found", renamePlaylistEvent.PlaylistId);
             return;
         }
 

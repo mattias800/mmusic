@@ -28,6 +28,7 @@ public class RenamePlaylistHandler(
         dbContext.Events.Add(
             new RenamedPlaylist
             {
+                ActorUserId = command.UserId,
                 PlaylistId = command.PlaylistId,
                 NewPlaylistName = command.NewPlaylistName,
             }

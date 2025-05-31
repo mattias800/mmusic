@@ -44,6 +44,7 @@ public class EventDbContext(DbContextOptions<EventDbContext> options) : DbContex
 
         modelBuilder.Entity<DbPlaylist>(b =>
         {
+            b.ToTable("Playlists");
             b.HasKey(p => p.Id);
 
             b.Property(p => p.Name).HasMaxLength(255);
@@ -60,15 +61,9 @@ public class EventDbContext(DbContextOptions<EventDbContext> options) : DbContex
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
-        modelBuilder
-            .Entity<DbPlaylist>()
-            .HasMany(p => p.Items)
-            .WithOne(i => i.Playlist)
-            .HasForeignKey(i => i.PlaylistId)
-            .OnDelete(DeleteBehavior.Cascade);
-
         modelBuilder.Entity<DbPlaylistItem>(b =>
         {
+            b.ToTable("PlaylistItems");
             b.HasKey(i => i.Id);
 
             b.Property(i => i.RecordingId).IsRequired();

@@ -1,6 +1,6 @@
 import { graphql } from "@/gql";
 import * as React from "react";
-import { useQuery } from "urql";
+import { useQuery, useMutation } from "urql";
 import { Spinner } from "@/components/spinner/Spinner.tsx";
 import { MessageBox } from "@/components/errors/MessageBox.tsx";
 import { CreatePlaylistButton } from "@/features/playlists/CreatePlaylistButton.tsx";
@@ -21,7 +21,7 @@ const playlistListQuery = graphql(`
   }
 `);
 
-const renamePlaylistMutation = graphql(`
+const renamePlaylistMutationDoc = graphql(`
 mutation RenamePlaylist($playlistId: String!, $newPlaylistName: String!) {
   renamePlaylist(input: {playlistId: $playlistId, newPlaylistName: $newPlaylistName}) {
     __typename
@@ -41,6 +41,7 @@ mutation RenamePlaylist($playlistId: String!, $newPlaylistName: String!) {
 
 export const PlaylistList: React.FC<PlaylistListProps> = () => {
   const [{ data, fetching, error }] = useQuery({ query: playlistListQuery });
+  const [, renamePlaylist] = useMutation(renamePlaylistMutationDoc);
 
   if (fetching) {
     return <Spinner />;
@@ -52,16 +53,23 @@ export const PlaylistList: React.FC<PlaylistListProps> = () => {
     );
   }
 
+  const handleRenamePlaylist = async (playlistId: string, newPlaylistName: string) => {
+    await renamePlaylist({ playlistId, newPlaylistName });
+  };
+
   return (
     <>
       <CreatePlaylistButton />
 
       {data.viewer?.playlists.map((playlist) => (
         <PlaylistNavButton
+          key={playlist.id}
           playlistId={playlist.id}
           playlistName={playlist.name}
-          onClickRenamePlaylist={() => {}}
-          onClickDeletePlaylist={() => {}}
+          onRenamePlaylist={handleRenamePlaylist}
+          onClickDeletePlaylist={() => {
+            console.log("Delete playlist", playlist.id);
+          }}
         />
       ))}
     </>
