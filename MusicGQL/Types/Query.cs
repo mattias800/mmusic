@@ -51,9 +51,7 @@ public class Query
             return null;
         }
 
-        var userProjection = await dbContext.UserProjections.FirstOrDefaultAsync(up =>
-            up.UserId == userId
-        );
+        var userProjection = await dbContext.Users.FirstOrDefaultAsync(up => up.UserId == userId);
 
         if (userProjection == null)
         {
@@ -75,6 +73,6 @@ public class Query
     // New query to check if any users exist
     public async Task<bool> GetAreThereAnyUsers([Service] EventDbContext dbContext)
     {
-        return await dbContext.UserProjections.AnyAsync();
+        return await dbContext.Users.AnyAsync();
     }
 }

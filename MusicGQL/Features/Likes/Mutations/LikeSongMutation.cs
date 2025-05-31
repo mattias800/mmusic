@@ -42,7 +42,7 @@ public class LikeSongMutation // Changed to class as it now has dependencies
         switch (handlerResult)
         {
             case LikeSongHandler.Result.Success:
-                var userProjection = await dbContext.UserProjections.FirstOrDefaultAsync(u =>
+                var userProjection = await dbContext.Users.FirstOrDefaultAsync(u =>
                     u.UserId == userId
                 );
                 if (userProjection == null)

@@ -19,9 +19,7 @@ public class SignInMutation
         [Service] IHttpContextAccessor httpContextAccessor
     )
     {
-        var user = await dbContext.UserProjections.FirstOrDefaultAsync(u =>
-            u.Username == input.Username
-        );
+        var user = await dbContext.Users.FirstOrDefaultAsync(u => u.Username == input.Username);
 
         if (user == null || string.IsNullOrEmpty(user.PasswordHash))
         {

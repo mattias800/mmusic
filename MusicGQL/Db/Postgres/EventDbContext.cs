@@ -24,10 +24,7 @@ public class EventDbContext(DbContextOptions<EventDbContext> options) : DbContex
     public DbSet<ReleaseGroupsAddedToServerLibraryProjection> ReleaseGroupsAddedToServerLibraryProjections { get; set; }
 
     public DbSet<DbPlaylist> Playlists { get; set; }
-    public DbSet<UserProjection> UserProjections { get; set; }
-
-    // Sagas
-    public DbSet<Saga> Sagas { get; set; }
+    public DbSet<DbUser> Users { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -43,9 +40,6 @@ public class EventDbContext(DbContextOptions<EventDbContext> options) : DbContex
             .HasValue<SongAddedToPlaylist>("SongAddedToPlaylist")
             .HasValue<UserCreated>("UserCreated")
             .HasValue<UserPasswordHashSet>("UserPasswordHashSet");
-
-        // Do not include in migrations
-        modelBuilder.Entity<Saga>().ToTable("sagas", t => t.ExcludeFromMigrations());
 
         modelBuilder
             .Entity<LikedSongsProjection>()
@@ -92,7 +86,9 @@ public class EventDbContext(DbContextOptions<EventDbContext> options) : DbContex
                 )
             );
 
-        modelBuilder.Entity<DbPlaylist>().HasKey(p => p.Id);
+        modelBuilder.Entity<DbUser>().ToTable("Users").HasKey(u => u.UserId);
+
+        modelBuilder.Entity<DbPlaylist>().ToTable("Playlists").HasKey(p => p.Id);
 
         modelBuilder
             .Entity<DbPlaylist>()
@@ -101,6 +97,6 @@ public class EventDbContext(DbContextOptions<EventDbContext> options) : DbContex
             .HasForeignKey(i => i.PlaylistId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        modelBuilder.Entity<DbPlaylistItem>().HasKey(i => i.Id);
+        modelBuilder.Entity<DbPlaylistItem>().ToTable("PlaylistItems").HasKey(i => i.Id);
     }
 }

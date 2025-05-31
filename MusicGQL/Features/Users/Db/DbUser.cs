@@ -1,10 +1,7 @@
-using System.ComponentModel.DataAnnotations;
-
 namespace MusicGQL.Features.Users.Db;
 
-public class UserProjection
+public class DbUser
 {
-    [Key]
     public Guid UserId { get; set; }
     public string Username { get; set; } = string.Empty;
     public string? PasswordHash { get; set; }

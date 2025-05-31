@@ -214,7 +214,7 @@ builder
     .AddTypeExtension<CreateUserMutation>()
     .AddType<CreateUserSuccess>()
     .AddType<CreateUserError>()
-    .AddType<UserProjection>()
+    .AddType<DbUser>()
     .AddTypeExtension<SignInMutation>()
     .AddType<SignInSuccess>()
     .AddType<SignInError>()

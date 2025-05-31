@@ -3,7 +3,6 @@ using MusicGQL.Db.Postgres;
 using MusicGQL.EventProcessor;
 using MusicGQL.Features.Authentication.Commands;
 using MusicGQL.Features.Authentication.Handlers;
-using MusicGQL.Features.Users.Db;
 using MusicGQL.Features.Users.Events; // Changed from Services to Handlers
 
 namespace MusicGQL.Features.Users.Handlers;
@@ -16,7 +15,7 @@ public class CreateUserHandler(
 {
     public async Task<Result> Handle(Command command)
     {
-        var existingUser = await dbContext.UserProjections.FirstOrDefaultAsync(u =>
+        var existingUser = await dbContext.Users.FirstOrDefaultAsync(u =>
             u.Username == command.Username
         );
 
@@ -43,7 +42,7 @@ public class CreateUserHandler(
         await dbContext.SaveChangesAsync();
         await eventProcessor.ProcessEvents();
 
-        var newUserProjection = await dbContext.UserProjections.FindAsync(userId);
+        var newUserProjection = await dbContext.Users.FindAsync(userId);
         if (newUserProjection == null)
         {
             return new Result.Error(
@@ -58,7 +57,7 @@ public class CreateUserHandler(
 
     public abstract record Result
     {
-        public record Success(UserProjection User) : Result;
+        public record Success(Db.DbUser DbUser) : Result;
 
         public record Error(string Message) : Result;
     }

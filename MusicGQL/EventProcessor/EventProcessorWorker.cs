@@ -40,15 +40,13 @@ public class EventProcessorWorker(
         await releaseGroupsAddedToServerLibraryProcessor.PrepareProcessing(dbContext);
         await artistsAddedToServerLibraryProcessor.PrepareProcessing(dbContext);
         await likedSongsEventProcessor.PrepareProcessing(dbContext);
-        await userEventProcessor.PrepareProcessing(dbContext);
-        await playlistsEventProcessor.PrepareProcessing(dbContext);
 
         foreach (var ev in events)
         {
             releaseGroupsAddedToServerLibraryProcessor.ProcessEvent(ev, dbContext);
             artistsAddedToServerLibraryProcessor.ProcessEvent(ev, dbContext);
             likedSongsEventProcessor.ProcessEvent(ev, dbContext);
-            userEventProcessor.ProcessEvent(ev, dbContext);
+            await userEventProcessor.ProcessEvent(ev, dbContext);
             await playlistsEventProcessor.ProcessEvent(ev, dbContext);
         }
 

@@ -15,7 +15,7 @@ public class CreateUserMutation
 
         return result switch
         {
-            CreateUserHandler.Result.Success success => new CreateUserSuccess(new(success.User)),
+            CreateUserHandler.Result.Success success => new CreateUserSuccess(new(success.DbUser)),
             CreateUserHandler.Result.Error failure => new CreateUserError(failure.Message),
             _ => new CreateUserError("An unexpected error occurred."),
         };

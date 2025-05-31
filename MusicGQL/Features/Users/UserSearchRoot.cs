@@ -8,7 +8,7 @@ public record UserSearchRoot
     [UsePaging]
     public async Task<IEnumerable<User>> GetUsers([Service] EventDbContext dbContext)
     {
-        var projections = await dbContext.UserProjections.ToListAsync();
+        var projections = await dbContext.Users.ToListAsync();
         return projections.Select(p => new User(p));
     }
 }

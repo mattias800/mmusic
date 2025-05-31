@@ -8,11 +8,6 @@ namespace MusicGQL.Features.Playlists.Aggregate;
 
 public class PlaylistsEventProcessor(ILogger<PlaylistsEventProcessor> logger)
 {
-    public Task PrepareProcessing(EventDbContext dbContext)
-    {
-        return Task.CompletedTask;
-    }
-
     public async Task ProcessEvent(Event ev, EventDbContext dbContext)
     {
         switch (ev)

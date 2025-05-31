@@ -2,11 +2,10 @@ using Microsoft.EntityFrameworkCore;
 using MusicGQL.Db.Postgres;
 using MusicGQL.Features.Likes;
 using MusicGQL.Features.Playlists;
-using MusicGQL.Features.Users.Db;
 
 namespace MusicGQL.Features.Users;
 
-public record User([property: GraphQLIgnore] UserProjection Model)
+public record User([property: GraphQLIgnore] Db.DbUser Model)
 {
     [ID]
     public string Id => Model.UserId.ToString();

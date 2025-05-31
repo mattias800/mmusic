@@ -32,9 +32,7 @@ public class CreatePlaylistMutation
 
         var userId = Guid.Parse(userIdClaim.Value);
 
-        var userProjection = await dbContext.UserProjections.FirstOrDefaultAsync(up =>
-            up.UserId == userId
-        );
+        var userProjection = await dbContext.Users.FirstOrDefaultAsync(up => up.UserId == userId);
 
         if (userProjection is null)
         {
