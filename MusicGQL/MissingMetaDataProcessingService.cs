@@ -1,18 +1,23 @@
 using MusicGQL.Features.ServerLibrary.Import.Handlers;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace MusicGQL;
 
 public class MissingMetaDataProcessingService(
-    ProcessMissingMetaDataHandler processMissingMetaDataHandler
+    IServiceScopeFactory scopeFactory
 )
 {
     public void ProcessMissingMetaData()
     {
-        _ = DoIt();
+        _ = Task.Run(async () => await DoItAsync());
     }
 
-    private async Task DoIt()
+    private async Task DoItAsync()
     {
-        await processMissingMetaDataHandler.Handle();
+        using (var scope = scopeFactory.CreateScope())
+        {
+            var handler = scope.ServiceProvider.GetRequiredService<ProcessMissingMetaDataHandler>();
+            await handler.Handle();
+        }
     }
 }
