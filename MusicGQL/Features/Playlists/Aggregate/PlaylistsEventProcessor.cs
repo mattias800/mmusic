@@ -23,25 +23,29 @@ public class PlaylistsEventProcessor(ILogger<PlaylistsEventProcessor> logger)
             case SongAddedToPlaylist e:
                 await HandleEvent(e, dbContext);
                 break;
+
+            case DeletedPlaylist e:
+                await HandleEvent(e, dbContext);
+                break;
         }
     }
 
-    private async Task HandleEvent(CreatedPlaylist createdPlaylist, EventDbContext dbContext)
+    private async Task HandleEvent(CreatedPlaylist ev, EventDbContext dbContext)
     {
-        if (!createdPlaylist.ActorUserId.HasValue)
+        if (!ev.ActorUserId.HasValue)
             return;
 
-        var userId = createdPlaylist.ActorUserId.Value;
+        var userId = ev.ActorUserId.Value;
 
         var exists = await dbContext.Playlists.AnyAsync(p =>
-            p.Id == createdPlaylist.PlaylistId && p.UserId == userId
+            p.Id == ev.PlaylistId && p.UserId == userId
         );
 
         if (exists)
         {
             logger.LogWarning(
                 "Playlist {PlaylistId} already exists for user {UserId}",
-                createdPlaylist.PlaylistId,
+                ev.PlaylistId,
                 userId
             );
             return;
@@ -49,11 +53,11 @@ public class PlaylistsEventProcessor(ILogger<PlaylistsEventProcessor> logger)
 
         var playlist = new DbPlaylist
         {
-            Id = createdPlaylist.PlaylistId,
-            Name = createdPlaylist.Name,
-            Description = createdPlaylist.Description,
-            CoverImageUrl = createdPlaylist.CoverImageUrl,
-            CreatedAt = createdPlaylist.CreatedAt,
+            Id = ev.PlaylistId,
+            Name = ev.Name,
+            Description = ev.Description,
+            CoverImageUrl = ev.CoverImageUrl,
+            CreatedAt = ev.CreatedAt,
             ModifiedAt = null,
             UserId = userId,
         };
@@ -63,77 +67,97 @@ public class PlaylistsEventProcessor(ILogger<PlaylistsEventProcessor> logger)
 
         logger.LogInformation(
             "Created playlist {PlaylistId} for user {UserId}",
-            createdPlaylist.PlaylistId,
+            ev.PlaylistId,
             userId
         );
     }
 
-    private async Task HandleEvent(RenamedPlaylist renamePlaylistEvent, EventDbContext dbContext)
+    private async Task HandleEvent(RenamedPlaylist ev, EventDbContext dbContext)
     {
-        if (!renamePlaylistEvent.ActorUserId.HasValue)
+        if (!ev.ActorUserId.HasValue)
             return;
 
-        var userId = renamePlaylistEvent.ActorUserId.Value;
+        var userId = ev.ActorUserId.Value;
 
-        var playlist = await dbContext.Playlists.FirstOrDefaultAsync(p =>
-            p.Id == renamePlaylistEvent.PlaylistId
-        );
+        var playlist = await dbContext.Playlists.FirstOrDefaultAsync(p => p.Id == ev.PlaylistId);
 
         if (playlist is null)
         {
-            logger.LogWarning("Playlist {PlaylistId} not found", renamePlaylistEvent.PlaylistId);
+            logger.LogWarning("Playlist {PlaylistId} not found", ev.PlaylistId);
             return;
         }
 
-        playlist.Name = renamePlaylistEvent.NewPlaylistName;
+        playlist.Name = ev.NewPlaylistName;
         playlist.ModifiedAt = DateTime.UtcNow;
 
         await dbContext.SaveChangesAsync();
 
         logger.LogInformation(
             "Renamed Playlist {PlaylistId} to '{NewPlaylistName}' for UserId: {UserId}",
-            renamePlaylistEvent.PlaylistId,
-            renamePlaylistEvent.NewPlaylistName,
+            ev.PlaylistId,
+            ev.NewPlaylistName,
             userId
         );
     }
 
-    private async Task HandleEvent(SongAddedToPlaylist songAddedEvent, EventDbContext dbContext)
+    private async Task HandleEvent(DeletedPlaylist ev, EventDbContext dbContext)
     {
-        if (!songAddedEvent.ActorUserId.HasValue)
+        if (!ev.ActorUserId.HasValue)
             return;
 
-        var userId = songAddedEvent.ActorUserId.Value;
+        var userId = ev.ActorUserId.Value;
+
+        var playlist = await dbContext.Playlists.FirstOrDefaultAsync(p => p.Id == ev.PlaylistId);
+
+        if (playlist is null)
+        {
+            logger.LogWarning("Playlist {PlaylistId} not found", ev.PlaylistId);
+            return;
+        }
+
+        dbContext.Playlists.Remove(playlist);
+
+        await dbContext.SaveChangesAsync();
+
+        logger.LogInformation(
+            "Deleted Playlist {PlaylistId} for UserId: {UserId}",
+            ev.PlaylistId,
+            userId
+        );
+    }
+
+    private async Task HandleEvent(SongAddedToPlaylist ev, EventDbContext dbContext)
+    {
+        if (!ev.ActorUserId.HasValue)
+            return;
+
+        var userId = ev.ActorUserId.Value;
 
         var playlist = await dbContext
             .Playlists.Include(p => p.Items)
-            .FirstOrDefaultAsync(p => p.Id == songAddedEvent.PlaylistId && p.UserId == userId);
+            .FirstOrDefaultAsync(p => p.Id == ev.PlaylistId && p.UserId == userId);
 
         if (playlist is null)
         {
             logger.LogWarning(
                 "Playlist {PlaylistId} not found for User {UserId}",
-                songAddedEvent.PlaylistId,
+                ev.PlaylistId,
                 userId
             );
             return;
         }
 
         playlist.Items.Add(
-            new DbPlaylistItem
-            {
-                RecordingId = songAddedEvent.RecordingId,
-                AddedAt = DateTime.UtcNow,
-            }
+            new DbPlaylistItem { RecordingId = ev.RecordingId, AddedAt = DateTime.UtcNow }
         );
 
         await dbContext.SaveChangesAsync();
 
         logger.LogInformation(
             "Added recording {RecordingId} to Playlist {PlaylistId} at position {Position} for UserId: {UserId}",
-            songAddedEvent.RecordingId,
-            songAddedEvent.PlaylistId,
-            songAddedEvent.Position,
+            ev.RecordingId,
+            ev.PlaylistId,
+            ev.Position,
             userId
         );
     }

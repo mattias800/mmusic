@@ -110,6 +110,7 @@ builder
     .AddScoped<CreateUserHandler>()
     .AddScoped<CreatePlaylistHandler>()
     .AddScoped<RenamePlaylistHandler>()
+    .AddScoped<DeletePlaylistHandler>()
     .AddScoped<VerifyPlaylistWriteAccessHandler>()
     // Register YouTubeService
     .AddSingleton<Google.Apis.YouTube.v3.YouTubeService>(sp =>
@@ -241,6 +242,9 @@ builder
     .AddTypeExtension<RenamePlaylistMutation>()
     .AddType<RenamePlaylistSuccess>()
     .AddType<RenamePlaylistNoWriteAccess>()
+    .AddTypeExtension<DeletePlaylistMutation>()
+    .AddType<DeletePlaylistSuccess>()
+    .AddType<DeletePlaylistNoWriteAccess>()
     .AddType<ArtistServerStatusReady>()
     .AddType<ArtistServerStatusImportingArtist>()
     .AddType<ArtistServerStatusUpdatingArtist>()
