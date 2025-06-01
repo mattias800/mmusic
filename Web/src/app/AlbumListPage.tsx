@@ -26,5 +26,10 @@ export const AlbumListPage: React.FC<AlbumListPageProps> = () => {
   if (error) return <div>Error: {error.message}</div>;
   if (!data?.releaseGroup.all) return <div>No data</div>;
 
-  return <AlbumList releaseGroups={data.releaseGroup.all} />;
+  return (
+    <>
+      <title>Albums</title>
+      <AlbumList releaseGroups={data.releaseGroup.all} />
+    </>
+  );
 };

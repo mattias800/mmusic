@@ -8,6 +8,7 @@ import { MainPadding } from "@/components/layout/MainPadding.tsx";
 export const IndexPage = () => {
   return (
     <MainPadding>
+      <title>Popular artists</title>
       <SectionList>
         <Section>
           <SectionHeading>Top artists</SectionHeading>

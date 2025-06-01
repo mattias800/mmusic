@@ -313,6 +313,16 @@ public class ServerLibraryService(IDriver driver)
         return dbReleaseGroup;
     }
 
+    public async Task<List<DbReleaseGroup>> GetReleaseGroupByIdAsync(IEnumerable<string> ids)
+    {
+        var dbReleaseGroups = await ExecuteReadListAsync(
+            "MATCH (rg:ReleaseGroup) WHERE rg.Id in $ids RETURN rg",
+            new { ids },
+            record => record["rg"].As<INode>().ToDbReleaseGroup()
+        );
+        return dbReleaseGroups;
+    }
+
     public async Task<DbReleaseGroup?> GetReleaseGroupForReleaseAsync(string releaseId)
     {
         var dbReleaseGroup = await ExecuteReadSingleAsync(

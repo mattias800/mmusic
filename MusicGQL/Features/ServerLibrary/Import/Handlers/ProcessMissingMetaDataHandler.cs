@@ -103,7 +103,8 @@ public class ProcessMissingMetaDataHandler(
             .ToList();
 
         logger.LogInformation(
-            $"Found {releaseGroupIdsToAdd.Count} release groups missing in server library"
+            "Found {Count} release groups missing in server library",
+            releaseGroupIdsToAdd.Count
         );
 
         await Task.WhenAll(

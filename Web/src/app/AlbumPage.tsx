@@ -9,6 +9,10 @@ export const albumQuery = graphql(`
     releaseGroup {
       byId(id: $releaseGroupId) {
         id
+        title
+        credits {
+          name
+        }
         ...AlbumPanel_ReleaseGroup
       }
     }
@@ -23,10 +27,20 @@ export const AlbumPage = () => {
     pause: !releaseGroupId,
   });
 
-  console.log({ releaseGroupId });
   if (fetching || stale) return <ScreenSpinner />;
   if (error) return <div>Error: {error.message}</div>;
   if (!data?.releaseGroup.byId) return <div>No data</div>;
 
-  return <AlbumPanel releaseGroup={data.releaseGroup.byId} />;
+  const title =
+    data.releaseGroup.byId.title +
+    (data.releaseGroup.byId.credits.length
+      ? " by " + data.releaseGroup.byId.credits[0].name
+      : "");
+
+  return (
+    <>
+      <title>{title}</title>
+      <AlbumPanel releaseGroup={data.releaseGroup.byId} />
+    </>
+  );
 };

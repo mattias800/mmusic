@@ -7,6 +7,7 @@ export const profilePageQuery = graphql(`
   query ProfilePage {
     viewer {
       id
+      username
       ...UserProfilePanel_User
     }
   }
@@ -19,5 +20,11 @@ export const UserProfilePage = () => {
   if (fetching || stale) return <ScreenSpinner />;
   if (error) return <div>Error: {error.message}</div>;
   if (!data?.viewer) return <div>No data</div>;
-  return <UserProfilePanel user={data.viewer} />;
+
+  return (
+    <>
+      <title>{data.viewer.username}'s profile</title>
+      <UserProfilePanel user={data.viewer} />
+    </>
+  );
 };

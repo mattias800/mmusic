@@ -1,9 +1,5 @@
 import * as React from "react";
-import { LargePlayButton } from "@/components/buttons/LargePlayButton.tsx";
 import { TopArtistTracks } from "@/features/artist/artist-page/TopArtistTracks.tsx";
-import { ShuffleButton } from "@/components/buttons/ShuffleButton.tsx";
-import { DotsButton } from "@/components/buttons/DotsButton.tsx";
-import { FollowButton } from "@/components/buttons/FollowButton.tsx";
 import { FragmentType, graphql, useFragment } from "@/gql";
 import { ArtistAlbumList } from "@/features/artist/artist-page/ArtistAlbumList.tsx";
 import { ArtistHeader } from "@/features/artist/artist-page/ArtistHeader.tsx";
@@ -19,6 +15,7 @@ import { ArtistServerStatus } from "@/features/artist/artist-server-status/Artis
 import { ArtistNotInLibraryTopTracks } from "@/features/artist/artist-not-in-library/ArtistNotInLibraryTopTracks.tsx";
 import { AddArtistToLibraryBox } from "@/features/artist/artist-not-in-library/AddArtistToLibraryBox.tsx";
 import { MainPadding } from "@/components/layout/MainPadding.tsx";
+import { ArtistActionButtons } from "@/features/artist/artist-page/ArtistActionButtons.tsx";
 
 interface ArtistPanelProps {
   artist: FragmentType<typeof artistPanelArtistFragment>;
@@ -93,12 +90,7 @@ export const ArtistPanel: React.FC<ArtistPanelProps> = (props) => {
         </MainPadding>
       ) : (
         <>
-          <div className="px-6 md:px-10 py-6 flex items-center gap-4">
-            <LargePlayButton />
-            <ShuffleButton />
-            <FollowButton />
-            <DotsButton />
-          </div>
+          <ArtistActionButtons artistId={artist.id} />
 
           <MainPadding>
             <SectionList>

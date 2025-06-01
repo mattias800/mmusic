@@ -10,6 +10,7 @@ export const artistQuery = graphql(`
     artist {
       byId(id: $artistId) {
         id
+        name
         ...ArtistPanel_Artist
       }
     }
@@ -38,5 +39,10 @@ export const ArtistPage = () => {
     return <ArtistNotFound />;
   }
 
-  return <ArtistPanel artist={data.artist.byId} />;
+  return (
+    <>
+      <title>{data.artist.byId.name}</title>
+      <ArtistPanel artist={data.artist.byId} />
+    </>
+  );
 };

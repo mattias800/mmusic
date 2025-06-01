@@ -84,8 +84,8 @@ export const ArtistServerStatus: React.FC<ArtistServerStatusProps> = ({
   const serverStatus = data?.artist.byId?.serverStatus;
 
   const label = whenTypename(serverStatus?.result)
-    .is("ArtistServerStatusImportingArtist", () => "Importing artist")
-    .is("ArtistServerStatusImportingArtistReleases", () => "Importing releases")
+    .is("ArtistServerStatusImportingArtist", () => "Importing artist...")
+    .is("ArtistServerStatusImportingArtistReleases", () => "Importing releases...")
     .default(() => "Finished");
 
   const visible = whenTypename(serverStatus?.result)
@@ -111,7 +111,9 @@ export const ArtistServerStatus: React.FC<ArtistServerStatusProps> = ({
       {progressPercent ? (
         <ProgressIndicator progressPercent={progressPercent} />
       ) : (
-        <Spinner />
+        <div className={"flex justify-center"}>
+          <Spinner />
+        </div>
       )}
     </div>
   );

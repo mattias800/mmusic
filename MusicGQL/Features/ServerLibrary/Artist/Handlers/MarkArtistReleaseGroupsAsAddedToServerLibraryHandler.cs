@@ -43,7 +43,11 @@ public class MarkArtistReleaseGroupsAsAddedToServerLibraryHandler(
             foreach (var releaseGroupId in releaseGroupIds)
             {
                 dbContext.Events.Add(
-                    new AddReleaseGroupToServerLibrary { ReleaseGroupId = releaseGroupId }
+                    new AddReleaseGroupToServerLibrary
+                    {
+                        ActorUserId = command.UserId,
+                        ReleaseGroupId = releaseGroupId,
+                    }
                 );
             }
 
@@ -60,5 +64,5 @@ public class MarkArtistReleaseGroupsAsAddedToServerLibraryHandler(
         }
     }
 
-    public record Command(string ArtistId);
+    public record Command(Guid UserId, string ArtistId);
 }

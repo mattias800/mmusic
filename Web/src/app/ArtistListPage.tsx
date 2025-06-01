@@ -26,5 +26,10 @@ export const ArtistListPage: React.FC<ArtistListPageProps> = () => {
   if (error) return <div>Error: {error.message}</div>;
   if (!data?.artist.all) return <div>No data</div>;
 
-  return <ArtistList artists={data.artist.all} />;
+  return (
+    <>
+      <title>Artists</title>
+      <ArtistList artists={data.artist.all} />
+    </>
+  );
 };

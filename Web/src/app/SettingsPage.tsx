@@ -4,5 +4,10 @@ import { ServerSettingsPanel } from "@/features/settings/ServerSettingsPanel.tsx
 export interface SettingsPageProps {}
 
 export const SettingsPage: React.FC<SettingsPageProps> = () => {
-  return <ServerSettingsPanel />;
+  return (
+    <>
+      <title>Settings</title>
+      <ServerSettingsPanel />
+    </>
+  );
 };

@@ -35,12 +35,14 @@ public class AddArtistToServerLibraryMutation
             MarkArtistAsAddedToServerLibraryHandler.Result.Success => await HandleSuccess(
                 markArtistReleaseGroupsAsAddedToServerLibraryHandler,
                 missingMetaDataProcessingService,
+                userId,
                 input.ArtistId,
                 new AddArtistToServerLibraryResult.AddArtistToServerLibrarySuccess(true)
             ),
             MarkArtistAsAddedToServerLibraryHandler.Result.AlreadyAdded => await HandleSuccess(
                 markArtistReleaseGroupsAsAddedToServerLibraryHandler,
                 missingMetaDataProcessingService,
+                userId,
                 input.ArtistId,
                 new AddArtistToServerLibraryResult.AddArtistToServerLibraryArtistAlreadyAdded(
                     "Artist already added!"
@@ -59,11 +61,12 @@ public class AddArtistToServerLibraryMutation
     private async Task<AddArtistToServerLibraryResult> HandleSuccess(
         MarkArtistReleaseGroupsAsAddedToServerLibraryHandler markArtistReleaseGroupsAsAddedToServerLibraryHandler,
         MissingMetaDataProcessingService missingMetaDataProcessingService,
+        Guid userId,
         string artistId,
         AddArtistToServerLibraryResult success
     )
     {
-        await markArtistReleaseGroupsAsAddedToServerLibraryHandler.Handle(new(artistId));
+        await markArtistReleaseGroupsAsAddedToServerLibraryHandler.Handle(new(userId, artistId));
         missingMetaDataProcessingService.ProcessMissingMetaData();
         return success;
     }

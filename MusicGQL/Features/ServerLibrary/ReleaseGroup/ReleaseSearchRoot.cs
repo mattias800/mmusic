@@ -1,13 +1,21 @@
+using Microsoft.EntityFrameworkCore;
+using MusicGQL.Db.Postgres;
 using MusicGQL.Integration.Neo4j;
 
 namespace MusicGQL.Features.ServerLibrary.ReleaseGroup;
 
 public record ReleaseGroupSearchRoot
 {
-    public async Task<IEnumerable<ReleaseGroup>> All(ServerLibraryService service)
+    public async Task<IEnumerable<ReleaseGroup>> All(
+        ServerLibraryService service,
+        EventDbContext dbContext
+    )
     {
-        // TODO Only fetch all release groups marked as added to the server library
-        var releaseGroups = await service.GetAllReleaseGroupAsync();
+        var releaseGroupIds = await dbContext
+            .ServerReleaseGroups.Select(r => r.ReleaseGroupId)
+            .ToListAsync();
+
+        var releaseGroups = await service.GetReleaseGroupByIdAsync(releaseGroupIds);
         return releaseGroups.Select(a => new ReleaseGroup(a));
     }
 

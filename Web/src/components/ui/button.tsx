@@ -79,11 +79,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         ref={ref}
         {...props}
       >
-        {asChild ? (
-          <span className="inline-flex items-center gap-2">{content}</span>
-        ) : (
-          content
-        )}
+        {asChild ? <div className={"flex"}>{content}</div> : content}
       </Comp>
     );
   },
