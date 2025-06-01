@@ -105,7 +105,7 @@ export const ArtistPanel: React.FC<ArtistPanelProps> = (props) => {
         </MainPadding>
       ) : (
         <>
-          <ArtistActionButtons artistId={artist.id} />
+          <ArtistActionButtons artistId={artist.id} isImporting={isImporting} />
 
           <MainPadding>
             <SectionList>

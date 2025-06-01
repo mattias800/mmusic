@@ -1,7 +1,6 @@
 using MusicGQL.Features.ServerLibrary.ArtistServerStatus.Services;
 using MusicGQL.Integration.MusicBrainz;
 using MusicGQL.Integration.Neo4j;
-using Neo4j.Driver;
 
 namespace MusicGQL.Features.ServerLibrary.Import.Handlers;
 

@@ -20,15 +20,21 @@ public class ImportArtistReleaseGroupsToServerLibraryHandler(
                 command.ArtistMbId
             );
 
-            var releaseGroups = await mbService.GetReleaseGroupsForArtistAsync(command.ArtistMbId);
+            var allReleaseGroup = await mbService.GetReleaseGroupsForArtistAsync(
+                command.ArtistMbId
+            );
+
+            var releaseGroupsToImport = allReleaseGroup
+                .Where(LibraryDecider.ShouldBeAddedWhenAddingArtistToServerLibrary)
+                .ToList();
 
             artistServerStatusService.SetImportingArtistReleasesStatus(
                 command.ArtistMbId,
                 0,
-                releaseGroups.Count
+                releaseGroupsToImport.Count
             );
 
-            foreach (var releaseGroup in releaseGroups)
+            foreach (var releaseGroup in releaseGroupsToImport)
             {
                 var allReleases = await mbService.GetReleasesForReleaseGroupAsync(releaseGroup.Id);
                 var mainRelease = LibraryDecider.GetMainReleaseInReleaseGroup(allReleases.ToList());

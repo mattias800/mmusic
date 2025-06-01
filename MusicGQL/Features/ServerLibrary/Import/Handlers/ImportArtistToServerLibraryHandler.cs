@@ -1,4 +1,3 @@
-using HotChocolate.Subscriptions;
 using MusicGQL.Integration.MusicBrainz;
 using MusicGQL.Integration.Neo4j;
 using Neo4j.Driver;

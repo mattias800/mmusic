@@ -10,6 +10,7 @@ import { useMutation } from "urql";
 
 export interface ArtistActionButtonsProps {
   artistId: string;
+  isImporting: boolean;
 }
 
 const refreshArtistMutation = graphql(`
@@ -21,6 +22,7 @@ const refreshArtistMutation = graphql(`
 `);
 export const ArtistActionButtons: React.FC<ArtistActionButtonsProps> = ({
   artistId,
+  isImporting,
 }) => {
   const [{ fetching }, refreshArtist] = useMutation(refreshArtistMutation);
 
@@ -33,7 +35,7 @@ export const ArtistActionButtons: React.FC<ArtistActionButtonsProps> = ({
       <Button
         variant={"secondary"}
         size={"icon"}
-        loading={fetching}
+        loading={fetching || isImporting}
         iconLeft={RefreshCcw}
         onClick={() => !fetching && refreshArtist({ artistId })}
       />

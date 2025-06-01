@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using MusicGQL.Db.Postgres;
 using MusicGQL.Features.ServerLibrary.ArtistServerStatus.Services;
-using MusicGQL.Integration.MusicBrainz;
 using Neo4j.Driver;
 
 namespace MusicGQL.Features.ServerLibrary.Import.Handlers;
