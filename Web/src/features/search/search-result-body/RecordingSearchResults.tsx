@@ -115,7 +115,9 @@ export const RecordingSearchResults: React.FC<RecordingSearchResultsProps> = ({
       )}
     >
       {showMoreButtonVisible && (
-        <ShowMoreButton loading={fetching} onClick={onClickMore} />
+        <div>
+          <ShowMoreButton loading={fetching} onClick={onClickMore} />
+        </div>
       )}
     </SearchResultGroup>
   );

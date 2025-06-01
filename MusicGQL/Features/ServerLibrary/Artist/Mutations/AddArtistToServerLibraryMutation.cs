@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using MusicGQL.Features.ServerLibrary.Artist.Handlers;
+using MusicGQL.Features.ServerLibrary.Import.Handlers;
 using MusicGQL.Types;
 
 // Required for IHttpContextAccessor
@@ -12,7 +13,8 @@ public class AddArtistToServerLibraryMutation
     public async Task<AddArtistToServerLibraryResult> AddArtistToServerLibrary(
         MarkArtistAsAddedToServerLibraryHandler markArtistAsAddedToServerLibraryHandler,
         MarkArtistReleaseGroupsAsAddedToServerLibraryHandler markArtistReleaseGroupsAsAddedToServerLibraryHandler,
-        MissingMetaDataProcessingService missingMetaDataProcessingService,
+        ImportArtistToServerLibraryHandler importArtistToServerLibraryHandler,
+        ImportArtistReleaseGroupsToServerLibraryHandler importArtistReleaseGroupsToServerLibraryHandler,
         AddArtistToServerLibraryInput input,
         [Service] IHttpContextAccessor httpContextAccessor // Inject IHttpContextAccessor
     )
@@ -34,14 +36,16 @@ public class AddArtistToServerLibraryMutation
         {
             MarkArtistAsAddedToServerLibraryHandler.Result.Success => await HandleSuccess(
                 markArtistReleaseGroupsAsAddedToServerLibraryHandler,
-                missingMetaDataProcessingService,
+                importArtistToServerLibraryHandler,
+                importArtistReleaseGroupsToServerLibraryHandler,
                 userId,
                 input.ArtistId,
                 new AddArtistToServerLibraryResult.AddArtistToServerLibrarySuccess(true)
             ),
             MarkArtistAsAddedToServerLibraryHandler.Result.AlreadyAdded => await HandleSuccess(
                 markArtistReleaseGroupsAsAddedToServerLibraryHandler,
-                missingMetaDataProcessingService,
+                importArtistToServerLibraryHandler,
+                importArtistReleaseGroupsToServerLibraryHandler,
                 userId,
                 input.ArtistId,
                 new AddArtistToServerLibraryResult.AddArtistToServerLibraryArtistAlreadyAdded(
@@ -60,14 +64,16 @@ public class AddArtistToServerLibraryMutation
 
     private async Task<AddArtistToServerLibraryResult> HandleSuccess(
         MarkArtistReleaseGroupsAsAddedToServerLibraryHandler markArtistReleaseGroupsAsAddedToServerLibraryHandler,
-        MissingMetaDataProcessingService missingMetaDataProcessingService,
+        ImportArtistToServerLibraryHandler importArtistToServerLibraryHandler,
+        ImportArtistReleaseGroupsToServerLibraryHandler importArtistReleaseGroupsToServerLibraryHandler,
         Guid userId,
         string artistId,
         AddArtistToServerLibraryResult success
     )
     {
         await markArtistReleaseGroupsAsAddedToServerLibraryHandler.Handle(new(userId, artistId));
-        missingMetaDataProcessingService.ProcessMissingMetaData();
+        await importArtistToServerLibraryHandler.Handle(new(artistId));
+        _ = importArtistReleaseGroupsToServerLibraryHandler.Handle(new(artistId));
         return success;
     }
 };

@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using MusicGQL.Db.Postgres;
 using MusicGQL.Features.ServerLibrary.ArtistServerStatus.Services;
+using MusicGQL.Integration.MusicBrainz;
 using Neo4j.Driver;
 
 namespace MusicGQL.Features.ServerLibrary.Import.Handlers;
@@ -11,10 +12,11 @@ public class ProcessMissingMetaDataHandler(
     IDriver driver,
     ArtistServerStatusService artistServerStatusService,
     ImportArtistToServerLibraryHandler importArtistToServerLibraryHandler,
+    ImportArtistReleaseGroupsToServerLibraryHandler importArtistReleaseGroupsToServerLibraryHandler,
     ILogger<ProcessMissingMetaDataHandler> logger
 )
 {
-    public async Task Handle()
+    public async Task ProcessMissingArtists()
     {
         logger.LogInformation("Processing missing artists in server library");
 
@@ -48,7 +50,10 @@ public class ProcessMissingMetaDataHandler(
             .Where(a => !artistIdsInLibrary.Contains(a))
             .ToList();
 
-        logger.LogInformation($"Found {artistIdsToAdd.Count} artists missing in server library");
+        logger.LogInformation(
+            "Found {Count} artists missing in server library",
+            artistIdsToAdd.Count
+        );
 
         foreach (var artistId in artistIdsToAdd)
         {
@@ -60,7 +65,10 @@ public class ProcessMissingMetaDataHandler(
             await importArtistToServerLibraryHandler.Handle(new(artistId));
         }
 
-        await ProcessReleaseGroups();
+        foreach (var artistId in artistIdsToAdd)
+        {
+            await importArtistReleaseGroupsToServerLibraryHandler.Handle(new(artistId));
+        }
 
         foreach (var artistId in artistIdsToAdd)
         {
@@ -68,7 +76,7 @@ public class ProcessMissingMetaDataHandler(
         }
     }
 
-    public async Task ProcessReleaseGroups()
+    public async Task ProcessMissingReleaseGroups()
     {
         logger.LogInformation("Processing missing release groups in server library");
 

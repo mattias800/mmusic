@@ -44,7 +44,9 @@ export const AlbumSearchResults: React.FC<AlbumSearchResultsProps> = ({
       )}
     >
       {showMoreButtonVisible && (
-        <ShowMoreButton loading={fetching} onClick={onClickMore} />
+        <div>
+          <ShowMoreButton loading={fetching} onClick={onClickMore} />
+        </div>
       )}
     </SearchResultGroup>
   );

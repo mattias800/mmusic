@@ -9,7 +9,7 @@ import { UserProfilePage } from "@/app/UserProfilePage.tsx";
 import { SettingsPage } from "@/app/SettingsPage.tsx";
 import { ArtistListPage } from "@/app/ArtistListPage.tsx";
 import { AlbumListPage } from "@/app/AlbumListPage.tsx";
-import { SearchResultPage } from "@/pages/SearchResultPage";
+import { SearchResultPage } from "@/app/SearchResultPage.tsx";
 
 export interface AppRouterProps {}
 

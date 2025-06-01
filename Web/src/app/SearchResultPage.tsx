@@ -1,16 +1,18 @@
 import * as React from "react";
-import { useParams } from "react-router";
+import { useSearchParams } from "react-router-dom";
 import { SearchResultBody } from "@/features/search/search-result-body/SearchResultBody.tsx";
-import { InvalidSearchText } from "@/features/search/search-result-body/InvalidSearchText.tsx";
+import { MainPadding } from "@/components/layout/MainPadding.tsx";
 
-export interface SearchResultPageProps {}
+export const SearchResultPage: React.FC = () => {
+  const [searchParams] = useSearchParams();
+  const searchText = searchParams.get("q") ?? "";
 
-export const SearchResultPage: React.FC<SearchResultPageProps> = () => {
-  const { searchText } = useParams<{ searchText: string }>();
-
-  if (!searchText) {
-    return <InvalidSearchText />;
-  }
-
-  return <SearchResultBody searchText={searchText} />;
+  return (
+    <MainPadding>
+      <h1 className="text-2xl font-bold mb-4">
+        Search Results for "{searchText}"
+      </h1>
+      <SearchResultBody searchText={searchText} />
+    </MainPadding>
+  );
 };

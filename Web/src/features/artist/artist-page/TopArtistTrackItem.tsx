@@ -64,13 +64,17 @@ export const TopArtistTrackItem: React.FC<TopArtistTrackItemProps> = (
         >
           <span>{props.active ? "▶" : props.index}</span>
 
-          <img
-            src={track.recording?.mainAlbum?.coverArtUri ?? ""}
-            alt={track.recording?.mainAlbum?.title ?? ""}
-            className={
-              "h-12 w-12 object-cover transition-all hover:scale-105 aspect-square rounded-md"
-            }
-          />
+          {track.recording?.mainAlbum?.coverArtUri ? (
+            <img
+              src={track.recording?.mainAlbum?.coverArtUri}
+              alt={track.recording?.mainAlbum?.title ?? ""}
+              className={
+                "h-12 w-12 object-cover transition-all hover:scale-105 aspect-square rounded-md"
+              }
+            />
+          ) : (
+            <div className={"h-12 w-12"} />
+          )}
 
           <div className={"flex gap-4 items-center"}>
             {track.recording ? (

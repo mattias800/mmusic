@@ -45,7 +45,9 @@ export const ArtistSearchResults: React.FC<ArtistSearchResultsProps> = ({
       renderItem={(artist) => <ArtistCard artist={artist} key={artist.id} />}
     >
       {showMoreButtonVisible && (
-        <ShowMoreButton loading={fetching} onClick={onClickMore} />
+        <div>
+          <ShowMoreButton loading={fetching} onClick={onClickMore} />
+        </div>
       )}
     </SearchResultGroup>
   );

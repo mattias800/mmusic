@@ -14,7 +14,8 @@ public class MissingMetaDataProcessingService(IServiceScopeFactory scopeFactory)
         using (var scope = scopeFactory.CreateScope())
         {
             var handler = scope.ServiceProvider.GetRequiredService<ProcessMissingMetaDataHandler>();
-            await handler.Handle();
+            await handler.ProcessMissingArtists();
+            await handler.ProcessMissingReleaseGroups();
         }
     }
 }

@@ -6,7 +6,6 @@ using Neo4j.Driver;
 namespace MusicGQL.Features.ServerLibrary.Import.Handlers;
 
 public class ImportArtistToServerLibraryHandler(
-    ITopicEventSender sender,
     IDriver driver,
     MusicBrainzService mbService,
     ServerLibraryImporterService serverLibraryImporterService,

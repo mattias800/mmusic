@@ -72,8 +72,8 @@ public static class Neo4jNodeMapperExtensions
             Title = node["Title"].As<string>() ?? string.Empty,
             PrimaryType = node["PrimaryType"].As<string>() ?? string.Empty,
             SecondaryTypes =
-                node["SecondaryTypes"]?.As<List<object>>()?.Select(s => s.ToString()).ToList()
-                ?? new List<string>(),
+                node["SecondaryTypes"]?.As<List<string>>()?.Select(s => s.ToString()).ToList()
+                ?? [],
             FirstReleaseDate = node["FirstReleaseDate"].As<string>() ?? string.Empty,
         };
     }

@@ -44,7 +44,6 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Features\Users\Handlers\" />
-    <Folder Include="Features\Users\Queries\" />
     <Folder Include="Features\YouTube\" />
     <Folder Include="Migrations\" />
   </ItemGroup>

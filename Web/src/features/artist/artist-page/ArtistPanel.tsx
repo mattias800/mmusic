@@ -1,14 +1,11 @@
 import * as React from "react";
 import { TopArtistTracks } from "@/features/artist/artist-page/TopArtistTracks.tsx";
 import { FragmentType, graphql, useFragment } from "@/gql";
-import { ArtistAlbumList } from "@/features/artist/artist-page/ArtistAlbumList.tsx";
 import { ArtistHeader } from "@/features/artist/artist-page/ArtistHeader.tsx";
-import { ArtistSingleList } from "@/features/artist/artist-page/ArtistSingleList.tsx";
 import { GradientContent } from "@/components/page-body/GradientContent.tsx";
 import { SectionHeading } from "@/components/headings/SectionHeading.tsx";
 import { Section } from "@/components/page-body/Section.tsx";
 import { SectionList } from "@/components/page-body/SectionList.tsx";
-import { ArtistEpList } from "@/features/artist/artist-page/ArtistEpList.tsx";
 import { whenTypename } from "@/common/utils/TypenameMatcher.ts";
 import { ArtistNotInLibrarySectionList } from "@/features/artist/artist-not-in-library/ArtistNotInLibrarySectionList.tsx";
 import { ArtistServerStatus } from "@/features/artist/artist-server-status/ArtistServerStatus.tsx";
@@ -16,6 +13,9 @@ import { ArtistNotInLibraryTopTracks } from "@/features/artist/artist-not-in-lib
 import { AddArtistToLibraryBox } from "@/features/artist/artist-not-in-library/AddArtistToLibraryBox.tsx";
 import { MainPadding } from "@/components/layout/MainPadding.tsx";
 import { ArtistActionButtons } from "@/features/artist/artist-page/ArtistActionButtons.tsx";
+import { CardFlexList } from "@/components/page-body/CardFlexList.tsx";
+import { byStringField } from "@/common/sorting/Comparators.ts";
+import { AlbumCard } from "@/features/album/AlbumCard.tsx";
 
 interface ArtistPanelProps {
   artist: FragmentType<typeof artistPanelArtistFragment>;
@@ -26,6 +26,21 @@ export const artistPanelArtistFragment = graphql(`
     id
     name
     listeners
+    albums {
+      id
+      firstReleaseDate
+      ...AlbumCard_ReleaseGroup
+    }
+    eps {
+      id
+      firstReleaseDate
+      ...AlbumCard_ReleaseGroup
+    }
+    singles {
+      id
+      firstReleaseDate
+      ...AlbumCard_ReleaseGroup
+    }
     images {
       artistBackground
     }
@@ -52,16 +67,16 @@ export const ArtistPanel: React.FC<ArtistPanelProps> = (props) => {
 
   const { releasesVisible, topTracksVisible } = artist.serverStatus.result;
 
-  const importIsStarting = whenTypename(artist.serverStatus.result)
+  const isImporting = whenTypename(artist.serverStatus.result)
     .is("ArtistServerStatusImportingArtist", () => true)
-    .is(
-      "ArtistServerStatusImportingArtistReleases",
-      (p) => p.numReleaseGroupsFinishedImporting < 1,
-    )
+    .is("ArtistServerStatusImportingArtistReleases", () => true)
     .default(() => false);
 
   const isInLibrary =
     artist.serverStatus.result.__typename !== "ArtistServerStatusNotInLibrary";
+
+  const totalNumReleaseGroups =
+    artist.albums.length + artist.eps.length + artist.singles.length;
 
   return (
     <GradientContent>
@@ -72,7 +87,7 @@ export const ArtistPanel: React.FC<ArtistPanelProps> = (props) => {
         renderServerStatus={() => <ArtistServerStatus artistId={artist.id} />}
       />
 
-      {!isInLibrary || importIsStarting ? (
+      {!isInLibrary || (isImporting && totalNumReleaseGroups < 1) ? (
         <MainPadding>
           <ArtistNotInLibrarySectionList
             artistName={artist.name}
@@ -100,17 +115,44 @@ export const ArtistPanel: React.FC<ArtistPanelProps> = (props) => {
                 <>
                   <Section>
                     <SectionHeading>Albums</SectionHeading>
-                    <ArtistAlbumList artistId={artist.id} />
+                    <CardFlexList>
+                      {artist.albums
+                        .toSorted(
+                          byStringField((a) => a.firstReleaseDate ?? ""),
+                        )
+                        .toReversed()
+                        .map((release) => (
+                          <AlbumCard releaseGroup={release} key={release.id} />
+                        ))}
+                    </CardFlexList>
                   </Section>
 
                   <Section>
                     <SectionHeading>EPs</SectionHeading>
-                    <ArtistEpList artistId={artist.id} />
+                    <CardFlexList>
+                      {artist.eps
+                        .toSorted(
+                          byStringField((a) => a.firstReleaseDate ?? ""),
+                        )
+                        .toReversed()
+                        .map((release) => (
+                          <AlbumCard releaseGroup={release} key={release.id} />
+                        ))}
+                    </CardFlexList>
                   </Section>
 
                   <Section>
                     <SectionHeading>Singles</SectionHeading>
-                    <ArtistSingleList artistId={artist.id} />
+                    <CardFlexList>
+                      {artist.singles
+                        .toSorted(
+                          byStringField((a) => a.firstReleaseDate ?? ""),
+                        )
+                        .toReversed()
+                        .map((release) => (
+                          <AlbumCard releaseGroup={release} key={release.id} />
+                        ))}
+                    </CardFlexList>
                   </Section>
                 </>
               )}

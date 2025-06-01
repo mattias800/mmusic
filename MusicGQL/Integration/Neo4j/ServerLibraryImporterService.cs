@@ -1,11 +1,165 @@
-using AutoMapper;
 using Hqub.MusicBrainz.Entities;
 using Neo4j.Driver;
 
 namespace MusicGQL.Integration.Neo4j;
 
-public class ServerLibraryImporterService(IMapper mapper)
+public class ServerLibraryImporterService(
+    IDriver driver,
+    ILogger<ServerLibraryImporterService> logger
+)
 {
+    public async Task SaveReleaseGroupInDatabase(ReleaseGroup releaseGroup, Release mainRelease)
+    {
+        await using var session = driver.AsyncSession();
+        try
+        {
+            await session.ExecuteWriteAsync(async tx =>
+            {
+                await SaveReleaseGroupNodeAsync((IAsyncTransaction)tx, releaseGroup);
+                logger.LogInformation("Saved release group {Title}", releaseGroup.Title);
+
+                // 2. Save ReleaseGroup Artist Credits
+                if (releaseGroup.Credits != null)
+                {
+                    await SaveArtistCreditsForParentAsync(
+                        (IAsyncTransaction)tx,
+                        releaseGroup.Id,
+                        releaseGroup.Credits,
+                        "ReleaseGroup",
+                        "rgId",
+                        "CREDITED_ON_RELEASE_GROUP"
+                    );
+                    logger.LogInformation(
+                        "Saved artist credits for release group {Title}",
+                        releaseGroup.Title
+                    );
+                }
+
+                // 3. Process ONLY the Main Release (if found)
+                if (mainRelease != null)
+                {
+                    await SaveReleaseNodeAsync((IAsyncTransaction)tx, mainRelease);
+                    await LinkReleaseToReleaseGroupAsync(
+                        (IAsyncTransaction)tx,
+                        releaseGroup.Id,
+                        mainRelease.Id
+                    );
+                    logger.LogInformation(
+                        "Saved Main Release {ReleaseTitle} ({ReleaseId}) and linked to RG {RgTitle}",
+                        mainRelease.Title,
+                        mainRelease.Id,
+                        releaseGroup.Title
+                    );
+
+                    // 4. Save Main Release Artist Credits
+                    if (mainRelease.Credits != null)
+                    {
+                        await SaveArtistCreditsForParentAsync(
+                            (IAsyncTransaction)tx,
+                            mainRelease.Id,
+                            mainRelease.Credits,
+                            "Release",
+                            "releaseId",
+                            "CREDITED_ON_RELEASE"
+                        );
+                        logger.LogInformation(
+                            "Saved artist credits for main release {Title}",
+                            mainRelease.Title
+                        );
+                    }
+
+                    // 5. Process Media and Tracks for the Main Release
+                    if (mainRelease.Media != null)
+                    {
+                        foreach (var mediumDto in mainRelease.Media)
+                        {
+                            if (mediumDto == null)
+                                continue;
+
+                            string mediumNodeId = $"{mainRelease.Id}_m{mediumDto.Position}";
+                            await SaveMediumNodeAsync(
+                                (IAsyncTransaction)tx,
+                                mediumNodeId,
+                                mainRelease.Id,
+                                mediumDto
+                            );
+                            logger.LogInformation(
+                                "Saved Medium {MediumId} (Pos: {MediumPos}) for Main Release {ReleaseTitle}",
+                                mediumNodeId,
+                                mediumDto.Position,
+                                mainRelease.Title
+                            );
+
+                            if (mediumDto.Tracks != null)
+                            {
+                                foreach (var trackDto in mediumDto.Tracks)
+                                {
+                                    if (
+                                        trackDto?.Recording == null
+                                        || string.IsNullOrEmpty(trackDto.Recording.Id)
+                                    )
+                                        continue;
+
+                                    await SaveRecordingNodeAsync(
+                                        (IAsyncTransaction)tx,
+                                        trackDto.Recording
+                                    );
+
+                                    await LinkTrackOnMediumToRecordingAsync(
+                                        (IAsyncTransaction)tx,
+                                        mediumNodeId,
+                                        trackDto.Recording.Id,
+                                        trackDto
+                                    );
+                                    logger.LogInformation(
+                                        "Linked Track (Pos:{TrackPos}, Num:{TrackNum}, Title:'{TrackTitle}') on Medium {MediumId} to Recording {RecordingTitle} ({RecordingId})",
+                                        trackDto.Position,
+                                        trackDto.Number,
+                                        trackDto.Recording?.Title ?? string.Empty,
+                                        mediumNodeId,
+                                        trackDto.Recording?.Title ?? string.Empty,
+                                        trackDto.Recording?.Id ?? string.Empty
+                                    );
+
+                                    // 6. Save Recording Artist Credits
+                                    if (trackDto.Recording?.Credits != null)
+                                    {
+                                        await SaveArtistCreditsForParentAsync(
+                                            (IAsyncTransaction)tx,
+                                            trackDto.Recording.Id,
+                                            trackDto.Recording.Credits,
+                                            "Recording",
+                                            "recordingId",
+                                            "CREDITED_ON_RECORDING"
+                                        );
+                                        logger.LogInformation(
+                                            "Saved artist credits for recording {RecordingTitle}",
+                                            trackDto.Recording?.Title ?? string.Empty
+                                        );
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            logger.LogInformation(
+                "Successfully persisted data for release group {Title}",
+                releaseGroup.Title
+            );
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(
+                ex,
+                "Error persisting data for release group {Title}: {ExMessage}",
+                releaseGroup.Title,
+                ex.Message
+            );
+        }
+    }
+
     public async Task SaveReleaseGroupNodeAsync(
         IAsyncTransaction tx,
         ReleaseGroup releaseGroupToSave
@@ -91,7 +245,7 @@ public class ServerLibraryImporterService(IMapper mapper)
                 status = releaseToSave.Status,
                 barcode = releaseToSave.Barcode,
                 country = releaseToSave.Country,
-                quality = releaseToSave.Quality
+                quality = releaseToSave.Quality,
             }
         );
 

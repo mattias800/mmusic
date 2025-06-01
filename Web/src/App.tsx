@@ -18,11 +18,7 @@ function App() {
       <ReduxProvider store={store}>
         <UrqlProvider value={urqlClient}>
           <Bootstrap
-            renderNoUsers={() => (
-              <PageLayout>
-                <SetupPage />
-              </PageLayout>
-            )}
+            renderNoUsers={() => <SetupPage />}
             renderAuthenticated={() => (
               <>
                 <MusicPlayer />

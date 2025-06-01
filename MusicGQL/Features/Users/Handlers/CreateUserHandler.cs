@@ -3,6 +3,7 @@ using MusicGQL.Db.Postgres;
 using MusicGQL.EventProcessor;
 using MusicGQL.Features.Authentication.Commands;
 using MusicGQL.Features.Authentication.Handlers;
+using MusicGQL.Features.Users.Db;
 using MusicGQL.Features.Users.Events; // Changed from Services to Handlers
 
 namespace MusicGQL.Features.Users.Handlers;
@@ -57,7 +58,7 @@ public class CreateUserHandler(
 
     public abstract record Result
     {
-        public record Success(Db.DbUser DbUser) : Result;
+        public record Success(DbUser DbUser) : Result;
 
         public record Error(string Message) : Result;
     }

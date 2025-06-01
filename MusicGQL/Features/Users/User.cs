@@ -2,17 +2,20 @@ using Microsoft.EntityFrameworkCore;
 using MusicGQL.Db.Postgres;
 using MusicGQL.Features.Likes;
 using MusicGQL.Features.Playlists;
+using MusicGQL.Features.Users.Db;
 
 namespace MusicGQL.Features.Users;
 
-public record User([property: GraphQLIgnore] Db.DbUser Model)
+public record User([property: GraphQLIgnore] DbUser Model)
 {
     [ID]
-    public string Id => Model.UserId.ToString();
-    public string Username => Model.Username;
+    public string Id() => Model.UserId.ToString();
 
-    public DateTime CreatedAt => Model.CreatedAt;
-    public DateTime UpdatedAt => Model.UpdatedAt;
+    public string Username() => Model.Username;
+
+    public DateTime CreatedAt() => Model.CreatedAt;
+
+    public DateTime UpdatedAt() => Model.UpdatedAt;
 
     public async Task<IEnumerable<LikedSong>> LikedSongs([Service] EventDbContext dbContext)
     {
