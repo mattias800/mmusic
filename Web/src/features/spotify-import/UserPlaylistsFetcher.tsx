@@ -1,13 +1,13 @@
 import React from "react";
 import { useQuery } from "urql";
-import { UserPlaylistsList } from "./UserPlaylistsList.tsx";
+import { SpotifyPlaylistsList } from "./SpotifyPlaylistsList.tsx";
 import { graphql } from "@/gql";
 import { SpinnerSpacing } from "@/components/spinner/SpinnerSpacing.tsx";
 import { Spinner } from "@/components/spinner/Spinner.tsx";
 import { MessageBox } from "@/components/errors/MessageBox.tsx";
-import { SecondaryButton } from "@/components/buttons/core-buttons/SecondaryButton.tsx";
 import { SectionHeading } from "@/components/headings/SectionHeading.tsx";
 import { Section } from "@/components/page-body/Section.tsx";
+import { Button } from "@/components/ui/button.tsx";
 
 interface UserPlaylistsFetcherProps {
   spotifyUsername: string;
@@ -20,7 +20,7 @@ export const userPlaylistsFetcherQuery = graphql(`
         spotify {
           spotifyPlaylistsForUser(username: $spotifyUsername) {
             id
-            ...UserPlaylistsList_SpotifyPlaylist
+            ...SpotifyPlaylistsList_SpotifyPlaylist
           }
         }
       }
@@ -48,12 +48,14 @@ export const UserPlaylistsFetcher: React.FC<UserPlaylistsFetcherProps> = ({
   if (error) {
     return (
       <MessageBox message={error.message}>
-        <SecondaryButton
+        <Button
+          variant={"secondary"}
           onClick={() =>
             executeFetchUserPlaylists({ requestPolicy: "network-only" })
           }
-          label={"Retry"}
-        />
+        >
+          Retry
+        </Button>
       </MessageBox>
     );
   }
@@ -64,12 +66,14 @@ export const UserPlaylistsFetcher: React.FC<UserPlaylistsFetcherProps> = ({
   if (!playlists) {
     return (
       <MessageBox message={"Something went wrong."}>
-        <SecondaryButton
+        <Button
+          variant={"secondary"}
           onClick={() =>
             executeFetchUserPlaylists({ requestPolicy: "network-only" })
           }
-          label={"Retry"}
-        />
+        >
+          Retry
+        </Button>{" "}
       </MessageBox>
     );
   }
@@ -85,7 +89,7 @@ export const UserPlaylistsFetcher: React.FC<UserPlaylistsFetcherProps> = ({
   return (
     <Section>
       <SectionHeading>{spotifyUsername}'s playlists</SectionHeading>
-      <UserPlaylistsList
+      <SpotifyPlaylistsList
         playlists={playlists}
         spotifyUsername={spotifyUsername}
       />

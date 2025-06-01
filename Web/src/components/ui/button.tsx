@@ -1,14 +1,19 @@
-import React from "react";
+import React, { ComponentType } from "react";
 import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
+import { LoaderCircle } from "lucide-react";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+  "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm gap-2 " +
+    "font-semibold ring-offset-background transition-colors " +
+    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 " +
+    "disabled:pointer-events-none disabled:opacity-50 cursor-pointer",
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90",
+        default:
+          "bg-indigo-600 text-white hover:bg-indigo-500 focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-indigo-600",
         destructive:
           "bg-destructive text-destructive-foreground hover:bg-destructive/90",
         outline:
@@ -31,22 +36,55 @@ const buttonVariants = cva(
     },
   },
 );
-
 export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof buttonVariants> {
   asChild?: boolean;
+  loading?: boolean;
+  iconLeft?: ComponentType<{ className: string }>;
+  iconRight?: ComponentType<{ className: string }>;
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, ...props }, ref) => {
+  (
+    {
+      iconLeft,
+      iconRight,
+      loading,
+      className,
+      variant,
+      size,
+      asChild = false,
+      children,
+      ...props
+    },
+    ref,
+  ) => {
     const Comp = asChild ? Slot : "button";
+    const IconLeft = iconLeft;
+    const IconRight = iconRight;
+
+    const content = (
+      <>
+        {IconLeft && !loading ? <IconLeft className="h-4" /> : null}
+        {loading && <LoaderCircle className="animate-spin size-4" />}
+        {children}
+        {IconRight && !loading ? <IconRight className="h-4" /> : null}
+      </>
+    );
+
     return (
       <Comp
         className={cn(buttonVariants({ variant, size, className }))}
         ref={ref}
         {...props}
-      />
+      >
+        {asChild ? (
+          <span className="inline-flex items-center gap-2">{content}</span>
+        ) : (
+          content
+        )}
+      </Comp>
     );
   },
 );

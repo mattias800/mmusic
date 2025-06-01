@@ -9,25 +9,32 @@ import {
   ContextMenuTrigger,
 } from "@/components/ui/context-menu.tsx";
 import { RenamePrompt } from "@/components/ui/RenamePrompt.tsx";
+import { ConfirmDeletePrompt } from "@/components/ui/ConfirmDeletePrompt.tsx";
 
 export interface PlaylistNavButtonProps {
   playlistName: string | undefined | null;
   playlistId: string;
   onRenamePlaylist: (playlistId: string, newName: string) => void;
-  onClickDeletePlaylist: () => void;
+  onDeletePlaylist: (playlistId: string) => void;
 }
 
 export const PlaylistNavButton: React.FC<PlaylistNavButtonProps> = ({
   playlistId,
   playlistName,
-  onClickDeletePlaylist,
+  onDeletePlaylist,
   onRenamePlaylist,
 }) => {
   const [isRenamePromptOpen, setIsRenamePromptOpen] = useState(false);
+  const [isDeletePromptOpen, setIsDeletePromptOpen] = useState(false);
 
   const handleRename = (newName: string) => {
     onRenamePlaylist(playlistId, newName);
     setIsRenamePromptOpen(false);
+  };
+
+  const handleDeleteConfirm = () => {
+    onDeletePlaylist(playlistId);
+    setIsDeletePromptOpen(false);
   };
 
   return (
@@ -44,7 +51,7 @@ export const PlaylistNavButton: React.FC<PlaylistNavButtonProps> = ({
           <ContextMenuItem onClick={() => setIsRenamePromptOpen(true)}>
             Rename playlist
           </ContextMenuItem>
-          <ContextMenuItem onClick={onClickDeletePlaylist}>
+          <ContextMenuItem onClick={() => setIsDeletePromptOpen(true)}>
             Delete playlist
           </ContextMenuItem>
         </ContextMenuContent>
@@ -56,6 +63,14 @@ export const PlaylistNavButton: React.FC<PlaylistNavButtonProps> = ({
           onRename={handleRename}
           promptTitle="Rename Playlist"
           inputLabel="New playlist name"
+        />
+      )}
+      {isDeletePromptOpen && (
+        <ConfirmDeletePrompt
+          itemName={playlistName ?? "this playlist"}
+          onClose={() => setIsDeletePromptOpen(false)}
+          onConfirmDelete={handleDeleteConfirm}
+          promptTitle="Delete Playlist"
         />
       )}
     </>

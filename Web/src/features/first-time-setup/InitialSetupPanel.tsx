@@ -8,8 +8,8 @@ import { Heading } from "@/components/text/Heading.tsx";
 import { Txt } from "@/components/text/Txt.tsx";
 import { Label } from "@/components/ui/label.tsx";
 import { Input } from "@/components/ui/input.tsx";
-import { PrimaryButton } from "@/components/buttons/core-buttons/PrimaryButton.tsx";
 import { graphql } from "@/gql";
+import { Button } from "@/components/ui/button.tsx";
 
 export interface InitialSetupPanelProps {}
 
@@ -189,12 +189,9 @@ export const InitialSetupPanel: React.FC<InitialSetupPanelProps> = () => {
             </div>
           )}
           <div />
-          <PrimaryButton
-            label={"Create admin user"}
-            type="submit"
-            loadingLabel={"Creating User..."}
-            loading={isLoading}
-          />
+          <Button type="submit" loading={isLoading}>
+            {isLoading ? "Creating User..." : "Create admin user"}
+          </Button>
         </form>
       </Cardy>
     </CenterContent>

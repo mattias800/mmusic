@@ -2,6 +2,7 @@ import type { ComponentType } from "react";
 import * as React from "react";
 import { NavLink, useLocation } from "react-router";
 import { Button } from "@/components/ui/button.tsx";
+import { cn } from "@/lib/utils.ts";
 
 export interface SidebarNavButtonProps {
   path: string;
@@ -16,15 +17,23 @@ export const SidebarNavButton: React.FC<SidebarNavButtonProps> = ({
 }) => {
   const { pathname } = useLocation();
 
-  const IconComponent = icon;
   return (
     <Button
       variant={pathname === path ? "secondary" : "ghost"}
       className="w-full justify-start"
+      iconLeft={icon}
       asChild
     >
-      <NavLink to={path}>
-        <IconComponent className="mr-2 h-4 w-4" />
+      <NavLink
+        to={path}
+        role="button" // optional for a11y
+        className={({ isActive }) =>
+          cn(
+            "flex items-center w-full",
+            isActive ? "bg-secondary text-secondary-foreground" : "",
+          )
+        }
+      >
         {label}
       </NavLink>
     </Button>

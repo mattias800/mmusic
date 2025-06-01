@@ -2,11 +2,11 @@ import * as React from "react";
 import { useState } from "react";
 import { TopArtistTrackItem } from "@/features/artist/artist-page/TopArtistTrackItem.tsx";
 import { graphql } from "@/gql";
-import { SecondaryButton } from "@/components/buttons/core-buttons/SecondaryButton.tsx";
 import { SectionHeading } from "@/components/headings/SectionHeading.tsx";
 import { Section } from "@/components/page-body/Section.tsx";
 import { useQuery } from "urql";
 import { TopTrackShimmer } from "@/features/artist/artist-page/TopTrackShimmer.tsx";
+import { ShowMoreButton } from "@/components/buttons/ShowMoreButton.tsx";
 
 export interface TopArtistTracksProps {
   artistId: string;
@@ -75,10 +75,7 @@ export const TopArtistTracks: React.FC<TopArtistTracksProps> = ({
           </div>
           {!showingMore && (
             <div className={"pl-14 pt-8"}>
-              <SecondaryButton
-                label={"Show more"}
-                onClick={() => setShowingMore(true)}
-              />
+              <ShowMoreButton onClick={() => setShowingMore(true)} />
             </div>
           )}
         </>

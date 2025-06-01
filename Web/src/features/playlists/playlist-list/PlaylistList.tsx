@@ -1,6 +1,6 @@
 import { graphql } from "@/gql";
 import * as React from "react";
-import { useQuery, useMutation } from "urql";
+import { useMutation, useQuery } from "urql";
 import { Spinner } from "@/components/spinner/Spinner.tsx";
 import { MessageBox } from "@/components/errors/MessageBox.tsx";
 import { CreatePlaylistButton } from "@/features/playlists/CreatePlaylistButton.tsx";
@@ -21,27 +21,48 @@ const playlistListQuery = graphql(`
   }
 `);
 
-const renamePlaylistMutationDoc = graphql(`
-mutation RenamePlaylist($playlistId: String!, $newPlaylistName: String!) {
-  renamePlaylist(input: {playlistId: $playlistId, newPlaylistName: $newPlaylistName}) {
-    __typename
-    ... on RenamePlaylistSuccess {
-      viewer {
-        id
-        playlists {
+const renamePlaylistMutation = graphql(`
+  mutation RenamePlaylist($playlistId: String!, $newPlaylistName: String!) {
+    renamePlaylist(
+      input: { playlistId: $playlistId, newPlaylistName: $newPlaylistName }
+    ) {
+      __typename
+      ... on RenamePlaylistSuccess {
+        viewer {
           id
-          name
-          createdAt
+          playlists {
+            id
+            name
+            createdAt
+          }
         }
       }
     }
   }
-}`);
+`);
 
+const deletePlaylistMutation = graphql(`
+  mutation DeletePlaylist($playlistId: String!) {
+    deletePlaylist(input: { playlistId: $playlistId }) {
+      __typename
+      ... on DeletePlaylistSuccess {
+        viewer {
+          id
+          playlists {
+            id
+            name
+            createdAt
+          }
+        }
+      }
+    }
+  }
+`);
 
 export const PlaylistList: React.FC<PlaylistListProps> = () => {
   const [{ data, fetching, error }] = useQuery({ query: playlistListQuery });
-  const [, renamePlaylist] = useMutation(renamePlaylistMutationDoc);
+  const [, renamePlaylist] = useMutation(renamePlaylistMutation);
+  const [, deletePlaylist] = useMutation(deletePlaylistMutation);
 
   if (fetching) {
     return <Spinner />;
@@ -53,8 +74,15 @@ export const PlaylistList: React.FC<PlaylistListProps> = () => {
     );
   }
 
-  const handleRenamePlaylist = async (playlistId: string, newPlaylistName: string) => {
+  const handleRenamePlaylist = async (
+    playlistId: string,
+    newPlaylistName: string,
+  ) => {
     await renamePlaylist({ playlistId, newPlaylistName });
+  };
+
+  const handleDeletePlaylist = async (playlistId: string) => {
+    await deletePlaylist({ playlistId });
   };
 
   return (
@@ -67,9 +95,7 @@ export const PlaylistList: React.FC<PlaylistListProps> = () => {
           playlistId={playlist.id}
           playlistName={playlist.name}
           onRenamePlaylist={handleRenamePlaylist}
-          onClickDeletePlaylist={() => {
-            console.log("Delete playlist", playlist.id);
-          }}
+          onDeletePlaylist={handleDeletePlaylist}
         />
       ))}
     </>

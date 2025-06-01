@@ -1,12 +1,8 @@
 import * as React from "react";
-import {
-  SecondaryButton,
-  SecondaryButtonProps,
-} from "@/components/buttons/core-buttons/SecondaryButton.tsx";
+import { Button, ButtonProps } from "../ui/button";
 
-export interface ShowMoreButtonProps
-  extends Omit<SecondaryButtonProps, "label"> {}
+export interface ShowMoreButtonProps extends ButtonProps {}
 
 export const ShowMoreButton: React.FC<ShowMoreButtonProps> = (props) => {
-  return <SecondaryButton {...props} label={"Show more"} />;
+  return <Button variant={"secondary"} {...props}>Show more</Button>;
 };

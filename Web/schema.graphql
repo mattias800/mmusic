@@ -211,6 +211,20 @@ type DbUser {
   username: String!
 }
 
+input DeletePlaylistInput {
+  playlistId: String!
+}
+
+type DeletePlaylistNoWriteAccess {
+  message: String!
+}
+
+union DeletePlaylistResult = DeletePlaylistNoWriteAccess | DeletePlaylistSuccess
+
+type DeletePlaylistSuccess {
+  viewer: User!
+}
+
 type DownloadStatus {
   artistName: String
   id: ID!
@@ -481,6 +495,7 @@ type Mutation {
   addReleaseGroupToServerLibrary(input: AddReleaseGroupToServerLibraryInput!): AddReleaseGroupToServerLibraryResult!
   createPlaylist: CreatePlaylistResult!
   createUser(input: CreateUserInput!): CreateUserResult!
+  deletePlaylist(input: DeletePlaylistInput!): DeletePlaylistResult!
   importSpotifyPlaylistById(playlistId: String!, userId: UUID!): ImportSpotifyPlaylistResult!
   likeSong(input: LikeSongInput!): LikeSongResult!
   ping: Boolean!

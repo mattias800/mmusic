@@ -17,7 +17,7 @@ export const SidebarSection: React.FC<SidebarSectionProps> = ({
       {heading && (
         <SidebarSectionHeading right={right}>{heading}</SidebarSectionHeading>
       )}
-      <div className="space-y-1">{children}</div>
+      <div className="flex flex-col gap-1">{children}</div>
     </div>
   );
 };

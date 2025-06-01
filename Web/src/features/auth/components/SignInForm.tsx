@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import { TextInput } from "@/components/inputs/TextInput";
-import { PrimaryButton } from "@/components/buttons/core-buttons/PrimaryButton.tsx";
 import { MessageBox } from "@/components/errors/MessageBox.tsx";
+import { Button } from "@/components/ui/button.tsx";
+import { LogIn } from "lucide-react";
 
 export interface SignInFormValues {
   username: string;
@@ -28,17 +29,17 @@ export function SignInForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="flex flex-col gap-6">
       <div>
         <TextInput
-          label="Username or Email"
+          label="Username"
           id="username"
           type="text"
           autoComplete="username"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
           required
-          placeholder="Enter your username or email"
+          placeholder="Enter your username"
           disabled={isLoading}
         />
       </div>
@@ -59,11 +60,9 @@ export function SignInForm({
 
       {errorMessage && <MessageBox message={errorMessage} variant={"error"} />}
 
-      <PrimaryButton
-        label={"Sign in"}
-        loading={isLoading}
-        loadingLabel={"Signing in..."}
-      />
+      <Button loading={isLoading} iconLeft={LogIn}>
+        {isLoading ? "Signing in..." : "Sign in"}
+      </Button>
     </form>
   );
 }

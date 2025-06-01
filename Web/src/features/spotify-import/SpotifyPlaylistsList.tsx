@@ -4,7 +4,7 @@ import { useMutation } from "urql";
 import { SpotifyPlaylistCard } from "@/features/spotify-import/SpotifyPlaylistCard.tsx";
 import { CardFlexList } from "@/components/page-body/CardFlexList.tsx";
 
-interface UserPlaylistsListProps {
+interface SpotifyPlaylistsListProps {
   playlists: Array<
     FragmentType<typeof userPlaylistsListSpotifyPlaylistFragment>
   >;
@@ -26,7 +26,7 @@ const importSpotifyPlaylistByIdMutation = graphql(`
 `);
 
 export const userPlaylistsListSpotifyPlaylistFragment = graphql(`
-  fragment UserPlaylistsList_SpotifyPlaylist on SpotifyPlaylist {
+  fragment SpotifyPlaylistsList_SpotifyPlaylist on SpotifyPlaylist {
     id
     description
     name
@@ -34,7 +34,7 @@ export const userPlaylistsListSpotifyPlaylistFragment = graphql(`
   }
 `);
 
-export const UserPlaylistsList: React.FC<UserPlaylistsListProps> = ({
+export const SpotifyPlaylistsList: React.FC<SpotifyPlaylistsListProps> = ({
   ...props
 }) => {
   const playlists = useFragment(

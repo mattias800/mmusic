@@ -6,9 +6,10 @@ import {
 import { UserPlaylistsFetcher } from "./UserPlaylistsFetcher.tsx";
 import { Section } from "@/components/page-body/Section.tsx";
 import { SectionHeading } from "@/components/headings/SectionHeading.tsx";
-import { PrimaryButton } from "@/components/buttons/core-buttons/PrimaryButton.tsx";
 import { MainPadding } from "@/components/layout/MainPadding.tsx";
 import { SectionList } from "@/components/page-body/SectionList.tsx";
+import { Button } from "@/components/ui/button.tsx";
+import { Search } from "lucide-react";
 
 export const SpotifyPlaylistImportPanel: React.FC = () => {
   const [spotifyUsername, setSpotifyUsername] = useState<string>("");
@@ -42,7 +43,9 @@ export const SpotifyPlaylistImportPanel: React.FC = () => {
             />
 
             <div className={"flex justify-start"}>
-              <PrimaryButton type="submit" label={"Get playlists"} />
+              <Button type="submit" iconLeft={Search}>
+                Get playlists
+              </Button>
             </div>
           </form>
         </Section>
