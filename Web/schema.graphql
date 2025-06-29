@@ -496,6 +496,7 @@ type Mutation {
   signOut: SignOutResult!
   startDownloadRelease(input: StartDownloadReleaseInput!): StartDownloadReleaseResult!
   unlikeSong(input: UnlikedSongInput!): UnlikedSongPayload!
+  updateLibraryPath(input: UpdateLibraryPathInput!): UpdateLibraryPathResult!
 }
 
 type NameCredit {
@@ -551,6 +552,7 @@ type Query {
   recording: RecordingSearchRoot!
   release: ReleaseSearchRoot!
   releaseGroup: ReleaseGroupSearchRoot!
+  serverSettings: ServerSettings!
   user: UserSearchRoot!
   viewer: User
 }
@@ -645,6 +647,11 @@ type RenamePlaylistSuccess {
   viewer: User!
 }
 
+type ServerSettings {
+  id: ID!
+  libraryPath: String!
+}
+
 type SignInError {
   message: String!
 }
@@ -723,6 +730,16 @@ input UnlikedSongInput {
 
 type UnlikedSongPayload {
   success: Boolean!
+}
+
+input UpdateLibraryPathInput {
+  newLibraryPath: String!
+}
+
+union UpdateLibraryPathResult = UpdateLibraryPathSuccess
+
+type UpdateLibraryPathSuccess {
+  serverSettings: ServerSettings!
 }
 
 type Url {

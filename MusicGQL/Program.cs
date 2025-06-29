@@ -35,6 +35,9 @@ using MusicGQL.Features.ServerLibrary.ReleaseGroup;
 using MusicGQL.Features.ServerLibrary.ReleaseGroup.Aggregate;
 using MusicGQL.Features.ServerLibrary.ReleaseGroup.Handlers;
 using MusicGQL.Features.ServerLibrary.ReleaseGroup.Mutations;
+using MusicGQL.Features.ServerSettings.Commands;
+using MusicGQL.Features.ServerSettings.Events;
+using MusicGQL.Features.ServerSettings.Mutations;
 using MusicGQL.Features.Users.Aggregate;
 using MusicGQL.Features.Users.Handlers;
 using MusicGQL.Features.Users.Mutations;
@@ -89,6 +92,7 @@ builder
     .AddSingleton<ArtistServerStatusService>()
     .AddScoped<LikeSongHandler>()
     .AddScoped<UnlikeSongHandler>()
+    .AddScoped<UpdateLibraryPathHandler>()
     .AddScoped<ImportArtistToServerLibraryHandler>()
     .AddScoped<ImportArtistReleaseGroupsToServerLibraryHandler>()
     .AddScoped<ImportReleaseGroupToServerLibraryHandler>()
@@ -103,6 +107,7 @@ builder
     .AddScoped<ArtistsAddedToServerLibraryProcessor>()
     .AddScoped<UserEventProcessor>()
     .AddScoped<PlaylistsEventProcessor>()
+    .AddScoped<ServerSettingsEventProcessor>()
     .AddScoped<EventProcessorWorker>()
     // Register new Handlers
     .AddScoped<HashPasswordHandler>()
@@ -217,6 +222,8 @@ builder
     .AddType<LikeSongResult.LikeSongSuccess>()
     .AddType<LikeSongResult.LikeSongAlreadyLiked>()
     .AddType<LikeSongResult.LikeSongSongDoesNotExist>()
+    .AddTypeExtension<UpdateLibraryPathMutation>()
+    .AddType<UpdateLibraryPathResult.UpdateLibraryPathSuccess>()
     .AddTypeExtension<AddReleaseGroupToServerLibraryMutation>()
     .AddType<AddReleaseGroupToServerLibraryResult.AddReleaseGroupToServerLibrarySuccess>()
     .AddType<AddReleaseGroupToServerLibraryResult.AddReleaseGroupToServerLibraryReleaseGroupAlreadyAdded>()

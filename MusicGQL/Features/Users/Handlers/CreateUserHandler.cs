@@ -37,7 +37,10 @@ public class CreateUserHandler(
         var hashPasswordResult = await hashPasswordHandler.Handle(
             new HashPasswordCommand(command.Password)
         );
-        var passwordSetEvent = new UserPasswordHashSet(userId, hashPasswordResult.HashedPassword);
+        var passwordSetEvent = new UserPasswordHashUpdated(
+            userId,
+            hashPasswordResult.HashedPassword
+        );
         dbContext.Events.Add(passwordSetEvent);
 
         await dbContext.SaveChangesAsync();

@@ -14,7 +14,7 @@ public class UserEventProcessor(ILogger<UserEventProcessor> logger)
             case UserCreated userCreated:
                 await HandleUserCreated(userCreated, dbContext);
                 break;
-            case UserPasswordHashSet userPasswordHashSet:
+            case UserPasswordHashUpdated userPasswordHashSet:
                 await HandleUserPasswordHashSet(userPasswordHashSet, dbContext);
                 break;
         }
@@ -45,7 +45,10 @@ public class UserEventProcessor(ILogger<UserEventProcessor> logger)
         await dbContext.SaveChangesAsync();
     }
 
-    private async Task HandleUserPasswordHashSet(UserPasswordHashSet ev, EventDbContext dbContext)
+    private async Task HandleUserPasswordHashSet(
+        UserPasswordHashUpdated ev,
+        EventDbContext dbContext
+    )
     {
         var user = dbContext.Users.FirstOrDefault(u => u.UserId == ev.SubjectUserId);
 

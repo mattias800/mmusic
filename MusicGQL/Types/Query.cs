@@ -10,18 +10,23 @@ using MusicGQL.Features.ServerLibrary.Artist;
 using MusicGQL.Features.ServerLibrary.Recording;
 using MusicGQL.Features.ServerLibrary.Release;
 using MusicGQL.Features.ServerLibrary.ReleaseGroup;
+using MusicGQL.Features.ServerSettings;
+using MusicGQL.Features.ServerSettings.Db;
 using MusicGQL.Features.Users;
 
 namespace MusicGQL.Types;
 
 public class Query
 {
-    public ArtistSearchRoot Artist => new();
-    public ReleaseGroupSearchRoot ReleaseGroup => new();
-    public ReleaseSearchRoot Release => new();
-    public RecordingSearchRoot Recording => new();
+    public ArtistSearchRoot Artist() => new();
 
-    public MusicBrainzSearchRoot MusicBrainz => new();
+    public ReleaseGroupSearchRoot ReleaseGroup() => new();
+
+    public ReleaseSearchRoot Release() => new();
+
+    public RecordingSearchRoot Recording() => new();
+
+    public MusicBrainzSearchRoot MusicBrainz() => new();
 
     // Implemented Viewer field
     // This method will be resolved by HotChocolate as the 'viewer' field in the GraphQL schema.
@@ -64,15 +69,26 @@ public class Query
         return new User(userProjection);
     }
 
-    public DownloadsSearchRoot Download => new();
-    public ExternalRoot External => new();
-    public PlaylistSearchRoot Playlist => new();
-    public RecommendationsSearchRoot Recommendations => new();
-    public UserSearchRoot User => new(); // This is for general user queries via UserSearchRoot
+    public DownloadsSearchRoot Download() => new();
+
+    public ExternalRoot External() => new();
+
+    public PlaylistSearchRoot Playlist() => new();
+
+    public RecommendationsSearchRoot Recommendations() => new();
+
+    public UserSearchRoot User() => new(); // This is for general user queries via UserSearchRoot
 
     // New query to check if any users exist
-    public async Task<bool> GetAreThereAnyUsers([Service] EventDbContext dbContext)
+    public async Task<bool> AreThereAnyUsers(EventDbContext dbContext)
     {
         return await dbContext.Users.AnyAsync();
     }
+
+    public async Task<ServerSettings> ServerSettings(EventDbContext dbContext) =>
+        new(
+            await dbContext.ServerSettings.FirstOrDefaultAsync(s =>
+                s.Id == DefaultDbServerSettingsProvider.ServerSettingsSingletonId
+            ) ?? DefaultDbServerSettingsProvider.GetDefault()
+        );
 }

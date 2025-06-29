@@ -5,6 +5,7 @@ using MusicGQL.Features.Likes.Events;
 using MusicGQL.Features.Playlists.Aggregate;
 using MusicGQL.Features.ServerLibrary.Artist.Aggregate;
 using MusicGQL.Features.ServerLibrary.ReleaseGroup.Aggregate;
+using MusicGQL.Features.ServerSettings.Events;
 using MusicGQL.Features.Users.Aggregate;
 
 namespace MusicGQL.EventProcessor;
@@ -16,7 +17,8 @@ public class EventProcessorWorker(
     ArtistsAddedToServerLibraryProcessor artistsAddedToServerLibraryProcessor,
     LikedSongsEventProcessor likedSongsEventProcessor,
     UserEventProcessor userEventProcessor,
-    PlaylistsEventProcessor playlistsEventProcessor
+    PlaylistsEventProcessor playlistsEventProcessor,
+    ServerSettingsEventProcessor serverSettingsEventProcessor
 )
 {
     public async Task ProcessEvents()
@@ -44,6 +46,7 @@ public class EventProcessorWorker(
             await likedSongsEventProcessor.ProcessEvent(ev, dbContext);
             await userEventProcessor.ProcessEvent(ev, dbContext);
             await playlistsEventProcessor.ProcessEvent(ev, dbContext);
+            await serverSettingsEventProcessor.ProcessEvent(ev, dbContext);
         }
 
         if (events.Count > 0)

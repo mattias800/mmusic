@@ -7,6 +7,8 @@ using MusicGQL.Features.Playlists.Events;
 using MusicGQL.Features.ServerLibrary.Artist.Db;
 using MusicGQL.Features.ServerLibrary.Events;
 using MusicGQL.Features.ServerLibrary.ReleaseGroup.Db;
+using MusicGQL.Features.ServerSettings.Db;
+using MusicGQL.Features.ServerSettings.Events;
 using MusicGQL.Features.Users.Db;
 using MusicGQL.Features.Users.Events;
 
@@ -25,6 +27,8 @@ public class EventDbContext(DbContextOptions<EventDbContext> options) : DbContex
     public DbSet<DbPlaylist> Playlists { get; set; }
     public DbSet<DbUser> Users { get; set; }
 
+    public DbSet<DbServerSettings> ServerSettings { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder
@@ -38,7 +42,8 @@ public class EventDbContext(DbContextOptions<EventDbContext> options) : DbContex
             .HasValue<RenamedPlaylist>("RenamedPlaylist")
             .HasValue<SongAddedToPlaylist>("SongAddedToPlaylist")
             .HasValue<UserCreated>("UserCreated")
-            .HasValue<UserPasswordHashSet>("UserPasswordHashSet");
+            .HasValue<UserPasswordHashUpdated>("UserPasswordHashUpdated")
+            .HasValue<LibraryPathUpdated>("LibraryPathUpdated");
 
         modelBuilder.Entity<DbUser>().ToTable("Users").HasKey(u => u.UserId);
 
@@ -120,6 +125,12 @@ public class EventDbContext(DbContextOptions<EventDbContext> options) : DbContex
                 .WithMany()
                 .HasForeignKey(srg => srg.AddedByUserId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<DbServerSettings>(b =>
+        {
+            b.ToTable("ServerSettings");
+            b.HasKey(srg => srg.Id);
         });
     }
 }
