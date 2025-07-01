@@ -15,7 +15,7 @@ export interface RecordingPlayButtonProps {
   renderWhenNotPlayable?: () => React.ReactNode;
 }
 
-export const recordingPlayButtonRecordingFragment = graphql(`
+const recordingPlayButtonRecordingFragment = graphql(`
   fragment RecordingPlayButton_Recording on Recording {
     id
     streamingServiceInfo {

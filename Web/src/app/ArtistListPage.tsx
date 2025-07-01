@@ -6,7 +6,7 @@ import { ArtistList } from "@/features/artist/artist-list/ArtistList.tsx";
 
 export interface ArtistListPageProps {}
 
-export const artistListQuery = graphql(`
+const artistListQuery = graphql(`
   query ArtistListQuery {
     artist {
       all {

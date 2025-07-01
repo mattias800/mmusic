@@ -6,7 +6,7 @@ import { AlbumList } from "@/features/album/album-list/AlbumList.tsx";
 
 export interface AlbumListPageProps {}
 
-export const albumListQuery = graphql(`
+const albumListQuery = graphql(`
   query AlbumListQuery {
     releaseGroup {
       all {

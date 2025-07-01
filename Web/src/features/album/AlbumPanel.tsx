@@ -13,7 +13,7 @@ export interface AlbumPanelProps {
   releaseGroup: FragmentType<typeof albumPanelReleaseGroupFragment>;
 }
 
-export const albumPanelReleaseGroupFragment = graphql(`
+const albumPanelReleaseGroupFragment = graphql(`
   fragment AlbumPanel_ReleaseGroup on ReleaseGroup {
     id
     ...AlbumHeader_ReleaseGroup

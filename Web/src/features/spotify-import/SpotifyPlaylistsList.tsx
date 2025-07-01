@@ -25,7 +25,7 @@ const importSpotifyPlaylistByIdMutation = graphql(`
   }
 `);
 
-export const userPlaylistsListSpotifyPlaylistFragment = graphql(`
+const userPlaylistsListSpotifyPlaylistFragment = graphql(`
   fragment SpotifyPlaylistsList_SpotifyPlaylist on SpotifyPlaylist {
     id
     description
@@ -42,7 +42,7 @@ export const SpotifyPlaylistsList: React.FC<SpotifyPlaylistsListProps> = ({
     props.playlists,
   );
 
-  const [{ fetching }] = useMutation(importSpotifyPlaylistByIdMutation);
+  useMutation(importSpotifyPlaylistByIdMutation);
 
   return (
     <CardFlexList>

@@ -10,7 +10,7 @@ export interface ArtistAlbumListProps {
   artistId: string;
 }
 
-export const artistAlbumListQuery = graphql(`
+const artistAlbumListQuery = graphql(`
   query ArtistAlbumList($artistId: ID!) {
     artist {
       byId(id: $artistId) {

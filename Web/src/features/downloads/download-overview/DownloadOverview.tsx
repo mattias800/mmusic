@@ -8,7 +8,7 @@ export interface DownloadOverviewProps {
   >;
 }
 
-export const downloadOverviewDownloadStatusFragment = graphql(`
+const downloadOverviewDownloadStatusFragment = graphql(`
   fragment DownloadOverview_DownloadStatus on DownloadStatus {
     id
     ...DownloadStatus_DownloadStatus

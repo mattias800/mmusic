@@ -11,7 +11,7 @@ export interface AlbumListProps {
   releaseGroups: Array<FragmentType<typeof albumListAlbumFragment>>;
 }
 
-export const albumListAlbumFragment = graphql(`
+const albumListAlbumFragment = graphql(`
   fragment AlbumList_ReleaseGroup on ReleaseGroup {
     id
     ...AlbumCard_ReleaseGroup

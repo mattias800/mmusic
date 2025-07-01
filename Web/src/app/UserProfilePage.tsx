@@ -3,7 +3,7 @@ import { useQuery } from "urql";
 import { ScreenSpinner } from "@/components/spinner/ScreenSpinner.tsx";
 import { UserProfilePanel } from "@/features/user-profile/UserProfilePanel.tsx";
 
-export const profilePageQuery = graphql(`
+const profilePageQuery = graphql(`
   query ProfilePage {
     viewer {
       id

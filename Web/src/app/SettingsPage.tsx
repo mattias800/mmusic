@@ -8,7 +8,7 @@ import { MainPadding } from "@/components/layout/MainPadding.tsx";
 
 export interface SettingsPageProps {}
 
-export const settingsPageQuery = graphql(`
+const settingsPageQuery = graphql(`
   query SettingsPage {
     serverSettings {
       ...ServerSettingsFormContainer_ServerSettings

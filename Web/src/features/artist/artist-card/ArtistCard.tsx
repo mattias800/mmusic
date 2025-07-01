@@ -10,7 +10,7 @@ export interface ArtistCardProps {
   artist: FragmentType<typeof artistCardArtistFragment>;
 }
 
-export const artistCardArtistFragment = graphql(`
+const artistCardArtistFragment = graphql(`
   fragment ArtistCard_Artist on ArtistBase {
     id
     name

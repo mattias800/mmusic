@@ -3,7 +3,7 @@ import { graphql } from "@/gql";
 import { useQuery } from "urql";
 import { ScreenSpinner } from "@/components/spinner/ScreenSpinner.tsx";
 
-export const likedSongsQuery = graphql(`
+const likedSongsQuery = graphql(`
   query LikedSongsQuery {
     viewer {
       id

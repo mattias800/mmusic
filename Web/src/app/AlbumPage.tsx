@@ -4,7 +4,7 @@ import { useParams } from "react-router";
 import { AlbumPanel } from "@/features/album/AlbumPanel.tsx";
 import { ScreenSpinner } from "@/components/spinner/ScreenSpinner.tsx";
 
-export const albumQuery = graphql(`
+const albumQuery = graphql(`
   query AlbumQuery($releaseGroupId: ID!) {
     releaseGroup {
       byId(id: $releaseGroupId) {

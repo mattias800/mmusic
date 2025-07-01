@@ -13,7 +13,7 @@ interface UserPlaylistsFetcherProps {
   spotifyUsername: string;
 }
 
-export const userPlaylistsFetcherQuery = graphql(`
+const userPlaylistsFetcherQuery = graphql(`
   query UserPlaylistsLoader_Query($spotifyUsername: String!) {
     playlist {
       importPlaylists {

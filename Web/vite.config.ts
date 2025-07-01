@@ -3,6 +3,7 @@ import tailwindcss from "@tailwindcss/vite";
 import { defineConfig, ProxyOptions } from "vite";
 import react from "@vitejs/plugin-react";
 import federation from "@originjs/vite-plugin-federation";
+import checker from "vite-plugin-checker";
 
 const proxyOptions: ProxyOptions = {
   target: "http://[::1]:5095",
@@ -23,6 +24,13 @@ export default defineConfig({
       },
       shared: ["react"],
     }),
+    checker({
+      typescript: true,
+      eslint: {
+        lintCommand: 'eslint "./src/**/*.{ts,tsx}"',
+        useFlatConfig: true,
+      },
+    })
   ],
   resolve: {
     alias: {

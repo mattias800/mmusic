@@ -7,7 +7,7 @@ export interface LikedSongsListProps {
   user: FragmentType<typeof likedSongsListUserFragment>;
 }
 
-export const likedSongsListUserFragment = graphql(`
+const likedSongsListUserFragment = graphql(`
   fragment LikedSongsList_User on User {
     id
     likedSongs {

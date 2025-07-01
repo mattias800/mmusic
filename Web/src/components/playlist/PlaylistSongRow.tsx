@@ -8,7 +8,7 @@ export interface PlaylistSongRowProps {
   index: number;
 }
 
-export const playlistSongRowFragment = graphql(`
+const playlistSongRowFragment = graphql(`
   fragment LikedSongRow_Recoding on Recording {
     id
     title
@@ -36,7 +36,7 @@ export const PlaylistSongRow: React.FC<PlaylistSongRowProps> = (props) => {
 
       {recording?.mainAlbum && (
         <img
-          src={recording.mainAlbum.coverArtUri}
+          src={recording.mainAlbum.coverArtUri ?? undefined}
           alt="Cover"
           className="w-12 h-12 rounded"
         />

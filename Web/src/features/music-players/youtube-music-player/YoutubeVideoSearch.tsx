@@ -9,7 +9,7 @@ export interface YoutubeVideoSearchProps {
   recordingId: string;
 }
 
-export const youtubeVideoSearchQuery = graphql(`
+const youtubeVideoSearchQuery = graphql(`
   query YoutubeVideoSearch($recordingId: ID!) {
     musicBrainz {
       recording {

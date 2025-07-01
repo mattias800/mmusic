@@ -5,7 +5,7 @@ import { ArtistPanel } from "@/features/artist/artist-page/ArtistPanel.tsx";
 import { ScreenSpinner } from "@/components/spinner/ScreenSpinner.tsx";
 import { ArtistNotFound } from "@/app/ArtistNotFound.tsx";
 
-export const artistQuery = graphql(`
+const artistQuery = graphql(`
   query ArtistQuery($artistId: ID!) {
     artist {
       byId(id: $artistId) {

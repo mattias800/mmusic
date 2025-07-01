@@ -12,7 +12,7 @@ interface AlbumTrackListProps {
   releaseGroup: FragmentType<typeof albumTrackListReleaseGroupFragment>;
 }
 
-export const albumTrackListReleaseGroupFragment = graphql(`
+const albumTrackListReleaseGroupFragment = graphql(`
   fragment AlbumTrackList_ReleaseGroup on ReleaseGroup {
     id
     title

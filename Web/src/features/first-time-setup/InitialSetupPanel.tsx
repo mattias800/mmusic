@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button.tsx";
 
 export interface InitialSetupPanelProps {}
 
-export const createUserMutation = graphql(`
+const createUserMutation = graphql(`
   mutation CreateUser($username: String!, $password: String!) {
     createUser(input: { username: $username, password: $password }) {
       __typename
@@ -32,7 +32,7 @@ export const createUserMutation = graphql(`
   }
 `);
 
-export const signInMutation = graphql(`
+const signInMutation = graphql(`
   mutation SignIn($username: String!, $password: String!) {
     signIn(input: { username: $username, password: $password }) {
       __typename

@@ -11,7 +11,7 @@ export interface ArtistListProps {
   artists: Array<FragmentType<typeof artistListArtistFragment>>;
 }
 
-export const artistListArtistFragment = graphql(`
+const artistListArtistFragment = graphql(`
   fragment ArtistList_Artist on Artist {
     id
     ...ArtistCard_Artist

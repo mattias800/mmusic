@@ -6,7 +6,7 @@ export interface ArtistNotInLibraryTopTracksProps {
   artist: FragmentType<typeof artistNotInLibraryTopTracksArtistFragment>;
 }
 
-export const artistNotInLibraryTopTracksArtistFragment = graphql(`
+const artistNotInLibraryTopTracksArtistFragment = graphql(`
   fragment ArtistNotInLibraryTopTracks_Artist on Artist {
     id
     topTracks {

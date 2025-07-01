@@ -8,7 +8,7 @@ export interface AlbumHeaderProps {
   releaseGroup: FragmentType<typeof albumHeaderReleaseGroupFragment>;
 }
 
-export const albumHeaderReleaseGroupFragment = graphql(`
+const albumHeaderReleaseGroupFragment = graphql(`
   fragment AlbumHeader_ReleaseGroup on ReleaseGroup {
     id
     title

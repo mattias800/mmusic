@@ -36,6 +36,7 @@ const buttonVariants = cva(
     },
   },
 );
+
 export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof buttonVariants> {
@@ -48,8 +49,8 @@ export interface ButtonProps
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   (
     {
-      iconLeft,
-      iconRight,
+      iconLeft: IconLeft,
+      iconRight: IconRight,
       loading,
       className,
       variant,
@@ -61,8 +62,6 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     ref,
   ) => {
     const Comp = asChild ? Slot : "button";
-    const IconLeft = iconLeft;
-    const IconRight = iconRight;
 
     const content = (
       <>
@@ -84,6 +83,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     );
   },
 );
+
 Button.displayName = "Button";
 
-export { Button, buttonVariants };
+export { Button };

@@ -6,7 +6,7 @@ export interface AlbumCardProps {
   releaseGroup: FragmentType<typeof albumCardReleaseGroupFragment>;
 }
 
-export const albumCardReleaseGroupFragment = graphql(`
+const albumCardReleaseGroupFragment = graphql(`
   fragment AlbumCard_ReleaseGroup on ReleaseGroupBase {
     id
     title

@@ -1,4 +1,3 @@
-import { ThemeProvider } from "./components/theme-provider.tsx";
 import { BrowserRouter } from "react-router";
 import { AppRouter } from "@/AppRouter.tsx";
 import { PageLayout } from "@/PageLayout.tsx";
@@ -11,6 +10,7 @@ import { Bootstrap } from "@/Bootstrap.tsx";
 import { SetupPage } from "@/app/SetupPage.tsx";
 import { SignInPage } from "@/app/SignInPage.tsx";
 import { Sidebar } from "@/features/sidebar/Sidebar.tsx";
+import { ThemeProvider } from "@/components/theme-provider.tsx";
 
 function App() {
   return (

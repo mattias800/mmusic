@@ -7,7 +7,7 @@ import { LogOut } from "lucide-react";
 
 export interface SignOutButtonProps {}
 
-export const signOutMutation = graphql(`
+const signOutMutation = graphql(`
   mutation SignOut {
     signOut {
       __typename

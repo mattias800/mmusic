@@ -6,7 +6,7 @@ export interface DownloadStatusProps {
   downloadStatus: FragmentType<typeof downloadStatusDownloadStatusFragment>;
 }
 
-export const downloadStatusDownloadStatusFragment = graphql(`
+const downloadStatusDownloadStatusFragment = graphql(`
   fragment DownloadStatus_DownloadStatus on DownloadStatus {
     id
     numberOfTracks

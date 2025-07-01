@@ -21,7 +21,7 @@ interface ArtistPanelProps {
   artist: FragmentType<typeof artistPanelArtistFragment>;
 }
 
-export const artistPanelArtistFragment = graphql(`
+const artistPanelArtistFragment = graphql(`
   fragment ArtistPanel_Artist on Artist {
     id
     name

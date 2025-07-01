@@ -9,7 +9,7 @@ export interface SoulSeekNetworkStatusProps {
   >;
 }
 
-export const soulSeekNetworkStatusSoulSeekStatusFragment = graphql(`
+const soulSeekNetworkStatusSoulSeekStatusFragment = graphql(`
   fragment SoulSeekNetworkStatus_SoulSeekStatus on SoulSeekStatus {
     id
     status

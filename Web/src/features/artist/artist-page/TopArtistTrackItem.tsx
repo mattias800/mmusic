@@ -25,7 +25,7 @@ interface TopArtistTrackItemProps {
   active?: boolean;
 }
 
-export const topArtistTrackItemLastFmTrackFragment = graphql(`
+const topArtistTrackItemLastFmTrackFragment = graphql(`
   fragment TopArtistTrackItem_LastFmTrack on LastFmTrack {
     id
     name

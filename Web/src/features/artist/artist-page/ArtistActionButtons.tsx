@@ -20,6 +20,7 @@ const refreshArtistMutation = graphql(`
     }
   }
 `);
+
 export const ArtistActionButtons: React.FC<ArtistActionButtonsProps> = ({
   artistId,
   isImporting,

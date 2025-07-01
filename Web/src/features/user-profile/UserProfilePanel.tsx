@@ -7,7 +7,7 @@ export interface UserProfilePanelProps {
   user: FragmentType<typeof userProfilePanelUserFragment>;
 }
 
-export const userProfilePanelUserFragment = graphql(`
+const userProfilePanelUserFragment = graphql(`
   fragment UserProfilePanel_User on User {
     id
     username

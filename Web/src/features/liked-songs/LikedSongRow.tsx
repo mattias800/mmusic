@@ -8,7 +8,7 @@ export interface LikedSongRowProps {
   index: number;
 }
 
-export const likedSongRowFragment = graphql(`
+const likedSongRowFragment = graphql(`
   fragment LikedSongRow_LikedSong on LikedSong {
     id
     recording {

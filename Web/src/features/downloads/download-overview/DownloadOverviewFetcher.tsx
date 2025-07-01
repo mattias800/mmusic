@@ -5,7 +5,7 @@ import { DownloadOverview } from "@/features/downloads/download-overview/Downloa
 
 export interface DownloadOverviewFetcherProps {}
 
-export const downloadOverviewFetcherQuery = graphql(`
+const downloadOverviewFetcherQuery = graphql(`
   query DownloadOverviewQuery {
     download {
       all {
@@ -16,7 +16,7 @@ export const downloadOverviewFetcherQuery = graphql(`
   }
 `);
 
-export const downloadOverviewFetcherSubscription = graphql(`
+const downloadOverviewFetcherSubscription = graphql(`
   subscription DownloadOverviewSubscription {
     downloadStatusUpdated {
       id
