@@ -1,4 +1,4 @@
-const apiBasePath = "/graphql";
+const apiBasePath = "http://localhost:4173/graphql";
 
 export const getApiUrl = () => {
   return apiBasePath;

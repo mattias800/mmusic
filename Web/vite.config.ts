@@ -18,14 +18,14 @@ export default defineConfig({
     react(),
     tailwindcss(),
     federation({
-      name: "remote-app",
+      name: "mmusic",
       filename: "remoteEntry.js",
       // Modules to expose
       exposes: {
         "./UserProfileWidget":
           "./src/widgets/user-profile-widget/UserProfileWidget.tsx",
       },
-      shared: ["react"],
+      shared: ["react", "react-dom"],
     }),
     checker({
       typescript: true,
@@ -33,7 +33,7 @@ export default defineConfig({
         lintCommand: 'eslint "./src/**/*.{ts,tsx}"',
         useFlatConfig: true,
       },
-    })
+    }),
   ],
   resolve: {
     alias: {
