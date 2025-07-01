@@ -11,6 +11,9 @@ const proxyOptions: ProxyOptions = {
 };
 
 export default defineConfig({
+  build: {
+    target: ["chrome89", "edge89", "es2022", "firefox89", "safari15"],
+  },
   plugins: [
     react(),
     tailwindcss(),
