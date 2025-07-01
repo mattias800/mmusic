@@ -2,7 +2,7 @@ import * as React from "react";
 import { SearchResultArtist } from "./SearchResultArtist.tsx";
 import { SearchResultReleaseGroup } from "./SearchResultReleaseGroup.tsx";
 import { SearchResultRecording } from "./SearchResultRecording.tsx";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 
 export interface SearchResultProps {
   searchText: string;

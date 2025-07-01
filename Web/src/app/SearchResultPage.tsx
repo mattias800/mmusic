@@ -1,5 +1,5 @@
 import * as React from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router";
 import { SearchResultBody } from "@/features/search/search-result-body/SearchResultBody.tsx";
 import { MainPadding } from "@/components/layout/MainPadding.tsx";
 
