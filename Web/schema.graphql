@@ -236,6 +236,14 @@ type ExternalRoot {
   soulSeek: SoulSeekRoot!
 }
 
+type FileSystemEntry {
+  hasChildren: Boolean!
+  isAccessible: Boolean!
+  isDirectory: Boolean!
+  name: String!
+  path: String!
+}
+
 interface IReleaseBase {
   country: String
   coverArtUri: String!
@@ -485,6 +493,7 @@ type MusicBrainzSearchRoot {
 type Mutation {
   addArtistToServerLibrary(input: AddArtistToServerLibraryInput!): AddArtistToServerLibraryResult!
   addReleaseGroupToServerLibrary(input: AddReleaseGroupToServerLibraryInput!): AddReleaseGroupToServerLibraryResult!
+  createDirectory(path: String!): FileSystemEntry!
   createPlaylist: CreatePlaylistResult!
   createUser(input: CreateUserInput!): CreateUserResult!
   deletePlaylist(input: DeletePlaylistInput!): DeletePlaylistResult!
@@ -544,6 +553,7 @@ type PlaylistSearchRoot {
 type Query {
   areThereAnyUsers: Boolean!
   artist: ArtistSearchRoot!
+  browseFileSystem(path: String): [FileSystemEntry!]!
   download: DownloadsSearchRoot!
   external: ExternalRoot!
   musicBrainz: MusicBrainzSearchRoot!

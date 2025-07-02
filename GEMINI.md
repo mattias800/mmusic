@@ -1,4 +1,3 @@
-
 # Gemini Code Assistant Documentation
 
 This document provides a comprehensive overview of the mmusic project, designed to assist the Gemini code assistant in understanding the project's structure, architecture, and functionality.
@@ -135,3 +134,11 @@ Event sourcing is a core architectural pattern in the `MusicGQL` backend, implem
 - **Events:** Domain events are defined in the `Features` directory (e.g., `UserCreated`, `LikedSong`, `AddArtistToServerLibrary`). These events represent state changes in the application.
 - **Event Handlers:** Event processors (e.g., `UserEventProcessor`, `LikedSongsEventProcessor`) consume these events to update read models, trigger notifications, and perform other side effects.
 - **Sagas:** Long-running processes, such as downloading a release, are managed using Rebus sagas. The `DownloadReleaseSaga` coordinates the steps involved in looking up a release on MusicBrainz, finding it on Soulseek, and downloading the tracks.
+
+## GraphQL Conventions (Frontend)
+
+When working with GraphQL in the frontend, please adhere to the following conventions:
+
+- **Inline `graphql` function:** Define your GraphQL queries, mutations, and fragments directly within the TypeScript/TSX files using the `graphql` tag function from `@/gql`. Do not create separate `.graphql` files for individual queries or mutations.
+- **Fragments for data fetching:** For components that display data fetched via GraphQL, always define a GraphQL fragment for that component. This promotes reusability and ensures that components declare their data dependencies explicitly.
+- **Colocation:** Place GraphQL queries, mutations, and fragments as close as possible to the components that use them.

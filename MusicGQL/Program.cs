@@ -38,6 +38,8 @@ using MusicGQL.Features.ServerLibrary.ReleaseGroup.Mutations;
 using MusicGQL.Features.ServerSettings.Commands;
 using MusicGQL.Features.ServerSettings.Events;
 using MusicGQL.Features.ServerSettings.Mutations;
+using MusicGQL.Features.FileSystem;
+using MusicGQL.Features.FileSystem.Mutations;
 using MusicGQL.Features.Users.Aggregate;
 using MusicGQL.Features.Users.Handlers;
 using MusicGQL.Features.Users.Mutations;
@@ -260,7 +262,9 @@ builder
     .AddType<IArtistServerStatusResult>()
     .AddType<IArtistBase>()
     .AddType<IReleaseGroupBase>()
-    .AddType<IReleaseBase>();
+    .AddType<IReleaseBase>()
+    .AddTypeExtension<FileSystemSearchRoot>()
+    .AddTypeExtension<CreateDirectoryMutation>();
 
 builder.Services.Configure<LastfmOptions>(builder.Configuration.GetSection("Lastfm"));
 

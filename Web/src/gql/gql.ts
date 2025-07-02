@@ -69,6 +69,9 @@ type Documents = {
     "\n  query SearchResultAlbumSearch($text: String!) {\n    releaseGroup {\n      searchByName(name: $text, limit: 5) {\n        id\n        title\n        mainRelease {\n          id\n          title\n          coverArtUri\n        }\n      }\n    }\n  }\n": typeof types.SearchResultAlbumSearchDocument,
     "\n  fragment ServerSettingsFormContainer_ServerSettings on ServerSettings {\n    id\n    libraryPath\n  }\n": typeof types.ServerSettingsFormContainer_ServerSettingsFragmentDoc,
     "\n  mutation UpdateServerSettings($newLibraryPath: String!) {\n    updateLibraryPath(input: { newLibraryPath: $newLibraryPath }) {\n      ... on UpdateLibraryPathSuccess {\n        serverSettings {\n          id\n          libraryPath\n        }\n      }\n    }\n  }\n": typeof types.UpdateServerSettingsDocument,
+    "\n  fragment DirectoryTreeItem_FileSystemEntry on FileSystemEntry {\n    name\n    path\n    isDirectory\n    hasChildren\n    isAccessible\n  }\n": typeof types.DirectoryTreeItem_FileSystemEntryFragmentDoc,
+    "\n  query DirectoryTreeItem($path: String) {\n    browseFileSystem(path: $path) {\n      ...DirectoryTreeItem_FileSystemEntry\n    }\n  }\n": typeof types.DirectoryTreeItemDocument,
+    "\n  query BrowseFileSystem($path: String) {\n    browseFileSystem(path: $path) {\n      path\n      ...DirectoryTreeItem_FileSystemEntry\n    }\n  }\n": typeof types.BrowseFileSystemDocument,
     "\n  query Sidebar {\n    viewer {\n      id\n      username\n    }\n  }\n": typeof types.SidebarDocument,
     "\n  fragment SoulSeekNetworkStatus_SoulSeekStatus on SoulSeekStatus {\n    id\n    status\n  }\n": typeof types.SoulSeekNetworkStatus_SoulSeekStatusFragmentDoc,
     "\n  subscription SoulSeekNetworkStatusSubscription {\n    soulSeekStatusUpdated {\n      ...SoulSeekNetworkStatus_SoulSeekStatus\n    }\n  }\n": typeof types.SoulSeekNetworkStatusSubscriptionDocument,
@@ -135,6 +138,9 @@ const documents: Documents = {
     "\n  query SearchResultAlbumSearch($text: String!) {\n    releaseGroup {\n      searchByName(name: $text, limit: 5) {\n        id\n        title\n        mainRelease {\n          id\n          title\n          coverArtUri\n        }\n      }\n    }\n  }\n": types.SearchResultAlbumSearchDocument,
     "\n  fragment ServerSettingsFormContainer_ServerSettings on ServerSettings {\n    id\n    libraryPath\n  }\n": types.ServerSettingsFormContainer_ServerSettingsFragmentDoc,
     "\n  mutation UpdateServerSettings($newLibraryPath: String!) {\n    updateLibraryPath(input: { newLibraryPath: $newLibraryPath }) {\n      ... on UpdateLibraryPathSuccess {\n        serverSettings {\n          id\n          libraryPath\n        }\n      }\n    }\n  }\n": types.UpdateServerSettingsDocument,
+    "\n  fragment DirectoryTreeItem_FileSystemEntry on FileSystemEntry {\n    name\n    path\n    isDirectory\n    hasChildren\n    isAccessible\n  }\n": types.DirectoryTreeItem_FileSystemEntryFragmentDoc,
+    "\n  query DirectoryTreeItem($path: String) {\n    browseFileSystem(path: $path) {\n      ...DirectoryTreeItem_FileSystemEntry\n    }\n  }\n": types.DirectoryTreeItemDocument,
+    "\n  query BrowseFileSystem($path: String) {\n    browseFileSystem(path: $path) {\n      path\n      ...DirectoryTreeItem_FileSystemEntry\n    }\n  }\n": types.BrowseFileSystemDocument,
     "\n  query Sidebar {\n    viewer {\n      id\n      username\n    }\n  }\n": types.SidebarDocument,
     "\n  fragment SoulSeekNetworkStatus_SoulSeekStatus on SoulSeekStatus {\n    id\n    status\n  }\n": types.SoulSeekNetworkStatus_SoulSeekStatusFragmentDoc,
     "\n  subscription SoulSeekNetworkStatusSubscription {\n    soulSeekStatusUpdated {\n      ...SoulSeekNetworkStatus_SoulSeekStatus\n    }\n  }\n": types.SoulSeekNetworkStatusSubscriptionDocument,
@@ -380,6 +386,18 @@ export function graphql(source: "\n  fragment ServerSettingsFormContainer_Server
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  mutation UpdateServerSettings($newLibraryPath: String!) {\n    updateLibraryPath(input: { newLibraryPath: $newLibraryPath }) {\n      ... on UpdateLibraryPathSuccess {\n        serverSettings {\n          id\n          libraryPath\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation UpdateServerSettings($newLibraryPath: String!) {\n    updateLibraryPath(input: { newLibraryPath: $newLibraryPath }) {\n      ... on UpdateLibraryPathSuccess {\n        serverSettings {\n          id\n          libraryPath\n        }\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  fragment DirectoryTreeItem_FileSystemEntry on FileSystemEntry {\n    name\n    path\n    isDirectory\n    hasChildren\n    isAccessible\n  }\n"): (typeof documents)["\n  fragment DirectoryTreeItem_FileSystemEntry on FileSystemEntry {\n    name\n    path\n    isDirectory\n    hasChildren\n    isAccessible\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query DirectoryTreeItem($path: String) {\n    browseFileSystem(path: $path) {\n      ...DirectoryTreeItem_FileSystemEntry\n    }\n  }\n"): (typeof documents)["\n  query DirectoryTreeItem($path: String) {\n    browseFileSystem(path: $path) {\n      ...DirectoryTreeItem_FileSystemEntry\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query BrowseFileSystem($path: String) {\n    browseFileSystem(path: $path) {\n      path\n      ...DirectoryTreeItem_FileSystemEntry\n    }\n  }\n"): (typeof documents)["\n  query BrowseFileSystem($path: String) {\n    browseFileSystem(path: $path) {\n      path\n      ...DirectoryTreeItem_FileSystemEntry\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
