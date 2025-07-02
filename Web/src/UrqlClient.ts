@@ -12,9 +12,10 @@ const fetchWithRedirect = async (
   url: URL | RequestInfo,
   options: RequestInit | undefined,
 ) => {
-  if (options) {
-    options.redirect = "follow";
-  }
+  const o = options || {};
+  o.redirect = "follow";
+  o.credentials = "include";
+
   const response = await fetch(url, options);
   if (response.redirected && response.url !== window.location.href) {
     window.location.href = response.url;

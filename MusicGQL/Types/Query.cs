@@ -32,19 +32,21 @@ public class Query
     // This method will be resolved by HotChocolate as the 'viewer' field in the GraphQL schema.
     public async Task<User?> GetViewer(
         IHttpContextAccessor httpContextAccessor,
-        EventDbContext dbContext
+        EventDbContext dbContext,
+        ILogger<Query> logger
     )
     {
         var httpContext = httpContextAccessor.HttpContext;
         if (httpContext == null)
         {
             // This state is unexpected in a typical request pipeline.
-            // Log.Error("HttpContext is null in GetViewer resolver.");
+            logger.LogError("HttpContext is null in GetViewer resolver");
             return null;
         }
 
         if (httpContext.User.Identity == null || !httpContext.User.Identity.IsAuthenticated)
         {
+            logger.LogError("User is not authenticated");
             return null; // User is not authenticated
         }
 
@@ -52,7 +54,7 @@ public class Query
         if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
         {
             // User is authenticated, but the NameIdentifier claim is missing or invalid.
-            // Log.Warning("Authenticated user has missing or invalid NameIdentifier claim.");
+            logger.LogWarning("Authenticated user has missing or invalid NameIdentifier claim");
             return null;
         }
 
@@ -62,7 +64,10 @@ public class Query
         {
             // A user claim was present, but no corresponding user projection was found in the database.
             // This could happen if the user was deleted after the cookie was issued.
-            // Log.Warning($"User projection not found for authenticated user ID: {userId}");
+            logger.LogWarning(
+                "User projection not found for authenticated user ID: {UserId}",
+                userId
+            );
             return null;
         }
 

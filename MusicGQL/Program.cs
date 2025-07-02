@@ -15,6 +15,8 @@ using MusicGQL.Features.Downloads.Sagas;
 using MusicGQL.Features.Downloads.Sagas.Handlers;
 using MusicGQL.Features.External.SoulSeek;
 using MusicGQL.Features.External.SoulSeek.Integration;
+using MusicGQL.Features.FileSystem;
+using MusicGQL.Features.FileSystem.Mutations;
 using MusicGQL.Features.Likes.Commands;
 using MusicGQL.Features.Likes.Events;
 using MusicGQL.Features.Likes.Mutations;
@@ -38,8 +40,6 @@ using MusicGQL.Features.ServerLibrary.ReleaseGroup.Mutations;
 using MusicGQL.Features.ServerSettings.Commands;
 using MusicGQL.Features.ServerSettings.Events;
 using MusicGQL.Features.ServerSettings.Mutations;
-using MusicGQL.Features.FileSystem;
-using MusicGQL.Features.FileSystem.Mutations;
 using MusicGQL.Features.Users.Aggregate;
 using MusicGQL.Features.Users.Handlers;
 using MusicGQL.Features.Users.Mutations;
@@ -59,6 +59,15 @@ using StackExchange.Redis;
 using YouTubeService = MusicGQL.Integration.Youtube.YouTubeService;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Cookie settings for module federation.
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.Cookie.Name = "MusicGQL.AspNetCore.Session";
+    options.Cookie.SameSite = SameSiteMode.None;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+    options.Cookie.HttpOnly = true;
+});
 
 // Configure YouTubeServiceOptions
 builder.Services.Configure<YouTubeServiceOptions>(
@@ -168,10 +177,25 @@ builder
     .Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {
+        options.Cookie.Name = "MusicGQL.Authentication";
         options.LoginPath = "/login"; // Path to the login page UI (to be created)
         options.LogoutPath = "/logout";
         // Further options can be configured here, like cookie expiration.
     });
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(
+        "AllowFrontend",
+        b =>
+        {
+            b.WithOrigins("http://localhost:3000")
+                .AllowCredentials()
+                .AllowAnyHeader()
+                .AllowAnyMethod();
+        }
+    );
+});
 
 builder.Services.AddAuthorization(options =>
 {
@@ -331,14 +355,13 @@ builder.Services.AddRebusHandler<LookupRecordingsForReleaseInMusicBrainzHandler>
 builder.Services.AddHostedService<ScheduledTaskPublisher>();
 
 var app = builder.Build();
+app.UseCors("AllowFrontend");
+app.UseRouting(); // Ensure UseRouting is called before UseAuthentication and UseAuthorization
+app.UseAuthentication();
+app.UseAuthorization();
 
 // Ensure Neo4j constraints are created/verified on startup
 await Neo4JSchemaSetup.EnsureConstraintsAsync(app.Services, app.Logger);
-
-app.UseRouting(); // Ensure UseRouting is called before UseAuthentication and UseAuthorization
-
-app.UseAuthentication();
-app.UseAuthorization();
 
 // 🟢 Run event processor once on startup
 using (var scope = app.Services.CreateScope())
@@ -357,6 +380,8 @@ using (var scope = app.Services.CreateScope())
 app.UseWebSockets();
 
 app.MapGraphQL();
+
+app.MapPost("/test-cors", () => Results.Ok("ok"));
 
 app.Run();
 //app.RunWithGraphQLCommands(args);
