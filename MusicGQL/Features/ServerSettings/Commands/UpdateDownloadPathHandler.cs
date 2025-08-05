@@ -2,7 +2,7 @@ using MusicGQL.Db.Postgres;
 
 namespace MusicGQL.Features.ServerSettings.Commands;
 
-public class UpdateLibraryPathHandler(
+public class UpdateDownloadPathHandler(
     EventDbContext dbContext,
     EventProcessor.EventProcessorWorker eventProcessorWorker
 )
@@ -10,7 +10,7 @@ public class UpdateLibraryPathHandler(
     public async Task<Result> Handle(Command command)
     {
         dbContext.Events.Add(
-            new Events.LibraryPathUpdated
+            new Events.DownloadPathUpdated
             {
                 ActorUserId = command.UserId,
                 NewPath = command.NewPath,

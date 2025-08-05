@@ -104,6 +104,7 @@ builder
     .AddScoped<LikeSongHandler>()
     .AddScoped<UnlikeSongHandler>()
     .AddScoped<UpdateLibraryPathHandler>()
+    .AddScoped<UpdateDownloadPathHandler>()
     .AddScoped<ImportArtistToServerLibraryHandler>()
     .AddScoped<ImportArtistReleaseGroupsToServerLibraryHandler>()
     .AddScoped<ImportReleaseGroupToServerLibraryHandler>()
@@ -189,7 +190,7 @@ builder.Services.AddCors(options =>
         "AllowFrontend",
         b =>
         {
-            b.WithOrigins("http://localhost:3000")
+            b.WithOrigins("http://localhost:3000", "localhost:3100")
                 .AllowCredentials()
                 .AllowAnyHeader()
                 .AllowAnyMethod();
@@ -249,7 +250,9 @@ builder
     .AddType<LikeSongResult.LikeSongAlreadyLiked>()
     .AddType<LikeSongResult.LikeSongSongDoesNotExist>()
     .AddTypeExtension<UpdateLibraryPathMutation>()
+    .AddTypeExtension<UpdateDownloadPathMutation>()
     .AddType<UpdateLibraryPathResult.UpdateLibraryPathSuccess>()
+    .AddType<UpdateDownloadPathResult.UpdateDownloadPathSuccess>()
     .AddTypeExtension<AddReleaseGroupToServerLibraryMutation>()
     .AddType<AddReleaseGroupToServerLibraryResult.AddReleaseGroupToServerLibrarySuccess>()
     .AddType<AddReleaseGroupToServerLibraryResult.AddReleaseGroupToServerLibraryReleaseGroupAlreadyAdded>()

@@ -5,6 +5,7 @@ public class DbServerSettings
     public int Id { get; set; }
 
     public string LibraryPath { get; set; } = string.Empty;
+    public string DownloadPath { get; set; } = string.Empty;
 }
 
 public static class DefaultDbServerSettingsProvider
@@ -13,6 +14,11 @@ public static class DefaultDbServerSettingsProvider
 
     public static DbServerSettings GetDefault()
     {
-        return new() { Id = ServerSettingsSingletonId, LibraryPath = "" };
+        return new()
+        {
+            Id = ServerSettingsSingletonId,
+            LibraryPath = "",
+            DownloadPath = "",
+        };
     }
 }

@@ -3,15 +3,17 @@ import { ServerSettingsPanel } from "@/features/settings/ServerSettingsPanel.tsx
 import { useQuery } from "urql";
 import { ScreenSpinner } from "@/components/spinner/ScreenSpinner.tsx";
 import { graphql } from "@/gql";
-import { ServerSettingsFormContainer } from "@/features/settings/ServerSettingsFormContainer.tsx";
 import { MainPadding } from "@/components/layout/MainPadding.tsx";
+import { LibraryPathForm } from "@/features/settings/LibraryPathForm.tsx";
+import { DownloadPathForm } from "@/features/settings/DownloadPathForm.tsx";
 
 export interface SettingsPageProps {}
 
 const settingsPageQuery = graphql(`
   query SettingsPage {
     serverSettings {
-      ...ServerSettingsFormContainer_ServerSettings
+      ...LibraryPathForm_ServerSettings
+      ...DownloadPathForm_ServerSettings
     }
   }
 `);
@@ -28,7 +30,8 @@ export const SettingsPage: React.FC<SettingsPageProps> = () => {
     <MainPadding>
       <title>Settings</title>
       <ServerSettingsPanel>
-        <ServerSettingsFormContainer serverSettings={data.serverSettings} />
+        <LibraryPathForm serverSettings={data.serverSettings} />
+        <DownloadPathForm serverSettings={data.serverSettings} />
       </ServerSettingsPanel>
     </MainPadding>
   );

@@ -14,7 +14,7 @@ export const ServerSettingsPanel: React.FC<ServerSettingsPanelProps> = ({
     <SectionList>
       <Section>
         <SectionHeading>Download settings</SectionHeading>
-        {children}
+        <div className={"flex flex-col gap-4"}>{children}</div>
       </Section>
     </SectionList>
   );

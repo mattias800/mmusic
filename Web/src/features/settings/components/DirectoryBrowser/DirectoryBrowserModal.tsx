@@ -1,5 +1,11 @@
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useState } from "react";
 import { DirectoryTreeView } from "./DirectoryTreeView";
 import { Input } from "@/components/ui/input";
@@ -8,9 +14,15 @@ interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSelect: (path: string) => void;
+  heading: string;
 }
 
-export function DirectoryBrowserModal({ open, onOpenChange, onSelect }: Props) {
+export function DirectoryBrowserModal({
+  open,
+  onOpenChange,
+  onSelect,
+  heading,
+}: Props) {
   const [selectedPath, setSelectedPath] = useState<string | null>(null);
   const [newFolderName, setNewFolderName] = useState("");
   const [showNewFolderInput, setShowNewFolderInput] = useState(false);
@@ -37,7 +49,7 @@ export function DirectoryBrowserModal({ open, onOpenChange, onSelect }: Props) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[625px]">
         <DialogHeader>
-          <DialogTitle>Select Library Folder</DialogTitle>
+          <DialogTitle>{heading}</DialogTitle>
         </DialogHeader>
         <div className="max-h-[60vh] overflow-y-auto">
           <DirectoryTreeView onSelect={setSelectedPath} />
@@ -51,14 +63,28 @@ export function DirectoryBrowserModal({ open, onOpenChange, onSelect }: Props) {
                 onChange={(e) => setNewFolderName(e.target.value)}
               />
               <Button onClick={handleCreateFolder}>Create</Button>
-              <Button variant="outline" onClick={() => setShowNewFolderInput(false)}>Cancel</Button>
+              <Button
+                variant="outline"
+                onClick={() => setShowNewFolderInput(false)}
+              >
+                Cancel
+              </Button>
             </div>
           ) : (
             <div className="flex w-full justify-between">
-              <Button variant="outline" onClick={() => setShowNewFolderInput(true)}>New Folder</Button>
+              <Button
+                variant="outline"
+                onClick={() => setShowNewFolderInput(true)}
+              >
+                New Folder
+              </Button>
               <div className="space-x-2">
-                <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-                <Button onClick={handleSelect} disabled={!selectedPath}>Select</Button>
+                <Button variant="outline" onClick={() => onOpenChange(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={handleSelect} disabled={!selectedPath}>
+                  Select
+                </Button>
               </div>
             </div>
           )}
@@ -67,4 +93,3 @@ export function DirectoryBrowserModal({ open, onOpenChange, onSelect }: Props) {
     </Dialog>
   );
 }
-

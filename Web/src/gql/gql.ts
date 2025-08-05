@@ -20,7 +20,7 @@ type Documents = {
     "\n  query ArtistListQuery {\n    artist {\n      all {\n        id\n        ...ArtistList_Artist\n      }\n    }\n  }\n": typeof types.ArtistListQueryDocument,
     "\n  query ArtistQuery($artistId: ID!) {\n    artist {\n      byId(id: $artistId) {\n        id\n        name\n        ...ArtistPanel_Artist\n      }\n    }\n  }\n": typeof types.ArtistQueryDocument,
     "\n  query LikedSongsQuery {\n    viewer {\n      id\n      ...LikedSongsList_User\n    }\n  }\n": typeof types.LikedSongsQueryDocument,
-    "\n  query SettingsPage {\n    serverSettings {\n      ...ServerSettingsFormContainer_ServerSettings\n    }\n  }\n": typeof types.SettingsPageDocument,
+    "\n  query SettingsPage {\n    serverSettings {\n      ...LibraryPathForm_ServerSettings\n      ...DownloadPathForm_ServerSettings\n    }\n  }\n": typeof types.SettingsPageDocument,
     "\n  query ProfilePage {\n    viewer {\n      id\n      username\n      ...UserProfilePanel_User\n    }\n  }\n": typeof types.ProfilePageDocument,
     "\n  fragment Playlist_User on User {\n    id\n    likedSongs {\n      id\n      ...LikedSongRow_LikedSong\n    }\n  }\n": typeof types.Playlist_UserFragmentDoc,
     "\n  fragment LikedSongRow_Recoding on Recording {\n    id\n    title\n    length\n    nameCredits {\n      artist {\n        id\n        name\n      }\n    }\n    mainAlbum {\n      id\n      title\n      coverArtUri\n    }\n  }\n": typeof types.LikedSongRow_RecodingFragmentDoc,
@@ -67,8 +67,10 @@ type Documents = {
     "\n  query SearchResultArtistSearch($text: String!) {\n    artist {\n      searchByName(name: $text, limit: 5) {\n        id\n        name\n        images {\n          artistThumb\n        }\n      }\n    }\n  }\n": typeof types.SearchResultArtistSearchDocument,
     "\n  query SearchResultSongSearch($text: String!) {\n    recording {\n      searchByName(name: $text, limit: 5) {\n        id\n        title\n        length\n        nameCredits {\n          artist {\n            id\n            name\n          }\n        }\n        mainAlbum {\n          id\n          title\n          coverArtUri\n        }\n      }\n    }\n  }\n": typeof types.SearchResultSongSearchDocument,
     "\n  query SearchResultAlbumSearch($text: String!) {\n    releaseGroup {\n      searchByName(name: $text, limit: 5) {\n        id\n        title\n        mainRelease {\n          id\n          title\n          coverArtUri\n        }\n      }\n    }\n  }\n": typeof types.SearchResultAlbumSearchDocument,
-    "\n  fragment ServerSettingsFormContainer_ServerSettings on ServerSettings {\n    id\n    libraryPath\n  }\n": typeof types.ServerSettingsFormContainer_ServerSettingsFragmentDoc,
-    "\n  mutation UpdateServerSettings($newLibraryPath: String!) {\n    updateLibraryPath(input: { newLibraryPath: $newLibraryPath }) {\n      ... on UpdateLibraryPathSuccess {\n        serverSettings {\n          id\n          libraryPath\n        }\n      }\n    }\n  }\n": typeof types.UpdateServerSettingsDocument,
+    "\n  fragment DownloadPathForm_ServerSettings on ServerSettings {\n    id\n    downloadPath\n  }\n": typeof types.DownloadPathForm_ServerSettingsFragmentDoc,
+    "\n  mutation UpdateDownloadPath($newDownloadPath: String!) {\n    updateDownloadPath(input: { newDownloadPath: $newDownloadPath }) {\n      ... on UpdateDownloadPathSuccess {\n        serverSettings {\n          id\n          downloadPath\n        }\n      }\n    }\n  }\n": typeof types.UpdateDownloadPathDocument,
+    "\n  fragment LibraryPathForm_ServerSettings on ServerSettings {\n    id\n    libraryPath\n  }\n": typeof types.LibraryPathForm_ServerSettingsFragmentDoc,
+    "\n  mutation UpdateLibraryPath($newLibraryPath: String!) {\n    updateLibraryPath(input: { newLibraryPath: $newLibraryPath }) {\n      ... on UpdateLibraryPathSuccess {\n        serverSettings {\n          id\n          libraryPath\n        }\n      }\n    }\n  }\n": typeof types.UpdateLibraryPathDocument,
     "\n  fragment DirectoryTreeItem_FileSystemEntry on FileSystemEntry {\n    name\n    path\n    isDirectory\n    hasChildren\n    isAccessible\n  }\n": typeof types.DirectoryTreeItem_FileSystemEntryFragmentDoc,
     "\n  query DirectoryTreeItem($path: String) {\n    browseFileSystem(path: $path) {\n      ...DirectoryTreeItem_FileSystemEntry\n    }\n  }\n": typeof types.DirectoryTreeItemDocument,
     "\n  query BrowseFileSystem($path: String) {\n    browseFileSystem(path: $path) {\n      path\n      ...DirectoryTreeItem_FileSystemEntry\n    }\n  }\n": typeof types.BrowseFileSystemDocument,
@@ -89,7 +91,7 @@ const documents: Documents = {
     "\n  query ArtistListQuery {\n    artist {\n      all {\n        id\n        ...ArtistList_Artist\n      }\n    }\n  }\n": types.ArtistListQueryDocument,
     "\n  query ArtistQuery($artistId: ID!) {\n    artist {\n      byId(id: $artistId) {\n        id\n        name\n        ...ArtistPanel_Artist\n      }\n    }\n  }\n": types.ArtistQueryDocument,
     "\n  query LikedSongsQuery {\n    viewer {\n      id\n      ...LikedSongsList_User\n    }\n  }\n": types.LikedSongsQueryDocument,
-    "\n  query SettingsPage {\n    serverSettings {\n      ...ServerSettingsFormContainer_ServerSettings\n    }\n  }\n": types.SettingsPageDocument,
+    "\n  query SettingsPage {\n    serverSettings {\n      ...LibraryPathForm_ServerSettings\n      ...DownloadPathForm_ServerSettings\n    }\n  }\n": types.SettingsPageDocument,
     "\n  query ProfilePage {\n    viewer {\n      id\n      username\n      ...UserProfilePanel_User\n    }\n  }\n": types.ProfilePageDocument,
     "\n  fragment Playlist_User on User {\n    id\n    likedSongs {\n      id\n      ...LikedSongRow_LikedSong\n    }\n  }\n": types.Playlist_UserFragmentDoc,
     "\n  fragment LikedSongRow_Recoding on Recording {\n    id\n    title\n    length\n    nameCredits {\n      artist {\n        id\n        name\n      }\n    }\n    mainAlbum {\n      id\n      title\n      coverArtUri\n    }\n  }\n": types.LikedSongRow_RecodingFragmentDoc,
@@ -136,8 +138,10 @@ const documents: Documents = {
     "\n  query SearchResultArtistSearch($text: String!) {\n    artist {\n      searchByName(name: $text, limit: 5) {\n        id\n        name\n        images {\n          artistThumb\n        }\n      }\n    }\n  }\n": types.SearchResultArtistSearchDocument,
     "\n  query SearchResultSongSearch($text: String!) {\n    recording {\n      searchByName(name: $text, limit: 5) {\n        id\n        title\n        length\n        nameCredits {\n          artist {\n            id\n            name\n          }\n        }\n        mainAlbum {\n          id\n          title\n          coverArtUri\n        }\n      }\n    }\n  }\n": types.SearchResultSongSearchDocument,
     "\n  query SearchResultAlbumSearch($text: String!) {\n    releaseGroup {\n      searchByName(name: $text, limit: 5) {\n        id\n        title\n        mainRelease {\n          id\n          title\n          coverArtUri\n        }\n      }\n    }\n  }\n": types.SearchResultAlbumSearchDocument,
-    "\n  fragment ServerSettingsFormContainer_ServerSettings on ServerSettings {\n    id\n    libraryPath\n  }\n": types.ServerSettingsFormContainer_ServerSettingsFragmentDoc,
-    "\n  mutation UpdateServerSettings($newLibraryPath: String!) {\n    updateLibraryPath(input: { newLibraryPath: $newLibraryPath }) {\n      ... on UpdateLibraryPathSuccess {\n        serverSettings {\n          id\n          libraryPath\n        }\n      }\n    }\n  }\n": types.UpdateServerSettingsDocument,
+    "\n  fragment DownloadPathForm_ServerSettings on ServerSettings {\n    id\n    downloadPath\n  }\n": types.DownloadPathForm_ServerSettingsFragmentDoc,
+    "\n  mutation UpdateDownloadPath($newDownloadPath: String!) {\n    updateDownloadPath(input: { newDownloadPath: $newDownloadPath }) {\n      ... on UpdateDownloadPathSuccess {\n        serverSettings {\n          id\n          downloadPath\n        }\n      }\n    }\n  }\n": types.UpdateDownloadPathDocument,
+    "\n  fragment LibraryPathForm_ServerSettings on ServerSettings {\n    id\n    libraryPath\n  }\n": types.LibraryPathForm_ServerSettingsFragmentDoc,
+    "\n  mutation UpdateLibraryPath($newLibraryPath: String!) {\n    updateLibraryPath(input: { newLibraryPath: $newLibraryPath }) {\n      ... on UpdateLibraryPathSuccess {\n        serverSettings {\n          id\n          libraryPath\n        }\n      }\n    }\n  }\n": types.UpdateLibraryPathDocument,
     "\n  fragment DirectoryTreeItem_FileSystemEntry on FileSystemEntry {\n    name\n    path\n    isDirectory\n    hasChildren\n    isAccessible\n  }\n": types.DirectoryTreeItem_FileSystemEntryFragmentDoc,
     "\n  query DirectoryTreeItem($path: String) {\n    browseFileSystem(path: $path) {\n      ...DirectoryTreeItem_FileSystemEntry\n    }\n  }\n": types.DirectoryTreeItemDocument,
     "\n  query BrowseFileSystem($path: String) {\n    browseFileSystem(path: $path) {\n      path\n      ...DirectoryTreeItem_FileSystemEntry\n    }\n  }\n": types.BrowseFileSystemDocument,
@@ -193,7 +197,7 @@ export function graphql(source: "\n  query LikedSongsQuery {\n    viewer {\n    
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query SettingsPage {\n    serverSettings {\n      ...ServerSettingsFormContainer_ServerSettings\n    }\n  }\n"): (typeof documents)["\n  query SettingsPage {\n    serverSettings {\n      ...ServerSettingsFormContainer_ServerSettings\n    }\n  }\n"];
+export function graphql(source: "\n  query SettingsPage {\n    serverSettings {\n      ...LibraryPathForm_ServerSettings\n      ...DownloadPathForm_ServerSettings\n    }\n  }\n"): (typeof documents)["\n  query SettingsPage {\n    serverSettings {\n      ...LibraryPathForm_ServerSettings\n      ...DownloadPathForm_ServerSettings\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -381,11 +385,19 @@ export function graphql(source: "\n  query SearchResultAlbumSearch($text: String
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment ServerSettingsFormContainer_ServerSettings on ServerSettings {\n    id\n    libraryPath\n  }\n"): (typeof documents)["\n  fragment ServerSettingsFormContainer_ServerSettings on ServerSettings {\n    id\n    libraryPath\n  }\n"];
+export function graphql(source: "\n  fragment DownloadPathForm_ServerSettings on ServerSettings {\n    id\n    downloadPath\n  }\n"): (typeof documents)["\n  fragment DownloadPathForm_ServerSettings on ServerSettings {\n    id\n    downloadPath\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  mutation UpdateServerSettings($newLibraryPath: String!) {\n    updateLibraryPath(input: { newLibraryPath: $newLibraryPath }) {\n      ... on UpdateLibraryPathSuccess {\n        serverSettings {\n          id\n          libraryPath\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation UpdateServerSettings($newLibraryPath: String!) {\n    updateLibraryPath(input: { newLibraryPath: $newLibraryPath }) {\n      ... on UpdateLibraryPathSuccess {\n        serverSettings {\n          id\n          libraryPath\n        }\n      }\n    }\n  }\n"];
+export function graphql(source: "\n  mutation UpdateDownloadPath($newDownloadPath: String!) {\n    updateDownloadPath(input: { newDownloadPath: $newDownloadPath }) {\n      ... on UpdateDownloadPathSuccess {\n        serverSettings {\n          id\n          downloadPath\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation UpdateDownloadPath($newDownloadPath: String!) {\n    updateDownloadPath(input: { newDownloadPath: $newDownloadPath }) {\n      ... on UpdateDownloadPathSuccess {\n        serverSettings {\n          id\n          downloadPath\n        }\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  fragment LibraryPathForm_ServerSettings on ServerSettings {\n    id\n    libraryPath\n  }\n"): (typeof documents)["\n  fragment LibraryPathForm_ServerSettings on ServerSettings {\n    id\n    libraryPath\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  mutation UpdateLibraryPath($newLibraryPath: String!) {\n    updateLibraryPath(input: { newLibraryPath: $newLibraryPath }) {\n      ... on UpdateLibraryPathSuccess {\n        serverSettings {\n          id\n          libraryPath\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation UpdateLibraryPath($newLibraryPath: String!) {\n    updateLibraryPath(input: { newLibraryPath: $newLibraryPath }) {\n      ... on UpdateLibraryPathSuccess {\n        serverSettings {\n          id\n          libraryPath\n        }\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

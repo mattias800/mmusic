@@ -505,6 +505,7 @@ type Mutation {
   signOut: SignOutResult!
   startDownloadRelease(input: StartDownloadReleaseInput!): StartDownloadReleaseResult!
   unlikeSong(input: UnlikedSongInput!): UnlikedSongPayload!
+  updateDownloadPath(input: UpdateDownloadPathInput!): UpdateDownloadPathResult!
   updateLibraryPath(input: UpdateLibraryPathInput!): UpdateLibraryPathResult!
 }
 
@@ -658,6 +659,7 @@ type RenamePlaylistSuccess {
 }
 
 type ServerSettings {
+  downloadPath: String!
   id: ID!
   libraryPath: String!
 }
@@ -740,6 +742,16 @@ input UnlikedSongInput {
 
 type UnlikedSongPayload {
   success: Boolean!
+}
+
+input UpdateDownloadPathInput {
+  newDownloadPath: String!
+}
+
+union UpdateDownloadPathResult = UpdateDownloadPathSuccess
+
+type UpdateDownloadPathSuccess {
+  serverSettings: ServerSettings!
 }
 
 input UpdateLibraryPathInput {
