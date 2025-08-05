@@ -54,7 +54,7 @@ export const AlbumHeader: React.FC<AlbumHeaderProps> = (props) => {
       <img
         src={releaseGroup.coverArtUri ?? ""}
         alt={releaseGroup.title + " album cover"}
-        className="w-48 h-48 rounded shadow-lg"
+        className="w-64 h-64 rounded shadow-lg"
       />
       <div className={"flex flex-col gap-3"}>
         <p className="text-sm">{getReleaseType(releaseGroup.primaryType)}</p>

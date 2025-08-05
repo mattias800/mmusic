@@ -37,27 +37,33 @@ export const AlbumPanel: React.FC<AlbumPanelProps> = (props) => {
   return (
     <GradientContent>
       <MainPadding>
-        <AlbumHeader releaseGroup={releaseGroup} />
+        <div>
+          <div>
+            <AlbumHeader releaseGroup={releaseGroup} />
 
-        <div className="flex items-center gap-6 mb-6">
-          <LargePlayButton />
-          <ShuffleButton />
-          <LargeLikeButton />
-          <DotsButton />
-        </div>
-
-        <AlbumTrackList releaseGroup={releaseGroup} />
-
-        {releaseGroup.mainRelease &&
-          releaseGroup.mainRelease.labels.length > 0 && (
-            <div className="text-white/40 text-xs mt-12">
-              {releaseGroup.mainRelease.labels.map((label) => (
-                <p>
-                  © {releaseGroup.firstReleaseYear} {label.name}
-                </p>
-              ))}
+            <div className="flex items-center gap-6 mb-6">
+              <LargePlayButton />
+              <ShuffleButton />
+              <LargeLikeButton />
+              <DotsButton />
             </div>
-          )}
+          </div>
+
+          <div>
+            <AlbumTrackList releaseGroup={releaseGroup} />
+
+            {releaseGroup.mainRelease &&
+              releaseGroup.mainRelease.labels.length > 0 && (
+                <div className="text-white/40 text-xs mt-12">
+                  {releaseGroup.mainRelease.labels.map((label) => (
+                    <p>
+                      © {releaseGroup.firstReleaseYear} {label.name}
+                    </p>
+                  ))}
+                </div>
+              )}
+          </div>
+        </div>
       </MainPadding>
     </GradientContent>
   );
