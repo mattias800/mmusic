@@ -238,6 +238,7 @@ type ExternalRoot {
 
 type FileSystemEntry {
   hasChildren: Boolean!
+  id: ID!
   isAccessible: Boolean!
   isDirectory: Boolean!
   name: String!

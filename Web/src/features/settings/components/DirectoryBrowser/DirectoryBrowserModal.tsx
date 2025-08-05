@@ -23,7 +23,9 @@ export function DirectoryBrowserModal({
   onSelect,
   heading,
 }: Props) {
-  const [selectedPath, setSelectedPath] = useState<string | null>(null);
+  const [selectedPath, setSelectedPath] = useState<string | undefined>(
+    undefined,
+  );
   const [newFolderName, setNewFolderName] = useState("");
   const [showNewFolderInput, setShowNewFolderInput] = useState(false);
   // const [, createDirectory] = useMutation(CreateDirectoryDocument);
@@ -52,7 +54,10 @@ export function DirectoryBrowserModal({
           <DialogTitle>{heading}</DialogTitle>
         </DialogHeader>
         <div className="max-h-[60vh] overflow-y-auto">
-          <DirectoryTreeView onSelect={setSelectedPath} />
+          <DirectoryTreeView
+            onSelect={setSelectedPath}
+            selectedPath={selectedPath}
+          />
         </div>
         <DialogFooter>
           {showNewFolderInput ? (

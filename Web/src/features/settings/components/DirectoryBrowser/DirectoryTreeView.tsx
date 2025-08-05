@@ -6,16 +6,23 @@ const browseFileSystemQuery = graphql(`
   query BrowseFileSystem($path: String) {
     browseFileSystem(path: $path) {
       path
+      isDirectory
       ...DirectoryTreeItem_FileSystemEntry
     }
   }
 `);
 
-export interface Props {
+export interface DirectoryTreeViewProps {
   onSelect: (path: string) => void;
+  selectedPath: string | undefined;
+  showFiles?: boolean;
 }
 
-export function DirectoryTreeView({ onSelect }: Props) {
+export function DirectoryTreeView({
+  onSelect,
+  selectedPath,
+  showFiles,
+}: DirectoryTreeViewProps) {
   const [result] = useQuery({
     query: browseFileSystemQuery,
     variables: { path: null },
@@ -28,15 +35,19 @@ export function DirectoryTreeView({ onSelect }: Props) {
 
   return (
     <div className="flex flex-col space-y-1">
-      {data?.browseFileSystem?.map((entry) => {
-        return (
-          <DirectoryTreeItem
-            key={entry.path}
-            entry={entry}
-            onSelect={onSelect}
-          />
-        );
-      })}
+      {data?.browseFileSystem
+        ?.filter((f) => f.isDirectory || showFiles)
+        .map((entry) => {
+          return (
+            <DirectoryTreeItem
+              key={entry.path}
+              entry={entry}
+              onSelect={onSelect}
+              selectedPath={selectedPath}
+              showFiles={showFiles}
+            />
+          );
+        })}
     </div>
   );
 }

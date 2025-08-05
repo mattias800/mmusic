@@ -71,9 +71,9 @@ type Documents = {
     "\n  mutation UpdateDownloadPath($newDownloadPath: String!) {\n    updateDownloadPath(input: { newDownloadPath: $newDownloadPath }) {\n      ... on UpdateDownloadPathSuccess {\n        serverSettings {\n          id\n          downloadPath\n        }\n      }\n    }\n  }\n": typeof types.UpdateDownloadPathDocument,
     "\n  fragment LibraryPathForm_ServerSettings on ServerSettings {\n    id\n    libraryPath\n  }\n": typeof types.LibraryPathForm_ServerSettingsFragmentDoc,
     "\n  mutation UpdateLibraryPath($newLibraryPath: String!) {\n    updateLibraryPath(input: { newLibraryPath: $newLibraryPath }) {\n      ... on UpdateLibraryPathSuccess {\n        serverSettings {\n          id\n          libraryPath\n        }\n      }\n    }\n  }\n": typeof types.UpdateLibraryPathDocument,
-    "\n  fragment DirectoryTreeItem_FileSystemEntry on FileSystemEntry {\n    name\n    path\n    isDirectory\n    hasChildren\n    isAccessible\n  }\n": typeof types.DirectoryTreeItem_FileSystemEntryFragmentDoc,
-    "\n  query DirectoryTreeItem($path: String) {\n    browseFileSystem(path: $path) {\n      ...DirectoryTreeItem_FileSystemEntry\n    }\n  }\n": typeof types.DirectoryTreeItemDocument,
-    "\n  query BrowseFileSystem($path: String) {\n    browseFileSystem(path: $path) {\n      path\n      ...DirectoryTreeItem_FileSystemEntry\n    }\n  }\n": typeof types.BrowseFileSystemDocument,
+    "\n  fragment DirectoryTreeItem_FileSystemEntry on FileSystemEntry {\n    id\n    name\n    path\n    isDirectory\n    hasChildren\n    isAccessible\n  }\n": typeof types.DirectoryTreeItem_FileSystemEntryFragmentDoc,
+    "\n  query DirectoryTreeItem($path: String) {\n    browseFileSystem(path: $path) {\n      id\n      isDirectory\n      path\n      ...DirectoryTreeItem_FileSystemEntry\n    }\n  }\n": typeof types.DirectoryTreeItemDocument,
+    "\n  query BrowseFileSystem($path: String) {\n    browseFileSystem(path: $path) {\n      path\n      isDirectory\n      ...DirectoryTreeItem_FileSystemEntry\n    }\n  }\n": typeof types.BrowseFileSystemDocument,
     "\n  query Sidebar {\n    viewer {\n      id\n      username\n    }\n  }\n": typeof types.SidebarDocument,
     "\n  fragment SoulSeekNetworkStatus_SoulSeekStatus on SoulSeekStatus {\n    id\n    status\n  }\n": typeof types.SoulSeekNetworkStatus_SoulSeekStatusFragmentDoc,
     "\n  subscription SoulSeekNetworkStatusSubscription {\n    soulSeekStatusUpdated {\n      ...SoulSeekNetworkStatus_SoulSeekStatus\n    }\n  }\n": typeof types.SoulSeekNetworkStatusSubscriptionDocument,
@@ -142,9 +142,9 @@ const documents: Documents = {
     "\n  mutation UpdateDownloadPath($newDownloadPath: String!) {\n    updateDownloadPath(input: { newDownloadPath: $newDownloadPath }) {\n      ... on UpdateDownloadPathSuccess {\n        serverSettings {\n          id\n          downloadPath\n        }\n      }\n    }\n  }\n": types.UpdateDownloadPathDocument,
     "\n  fragment LibraryPathForm_ServerSettings on ServerSettings {\n    id\n    libraryPath\n  }\n": types.LibraryPathForm_ServerSettingsFragmentDoc,
     "\n  mutation UpdateLibraryPath($newLibraryPath: String!) {\n    updateLibraryPath(input: { newLibraryPath: $newLibraryPath }) {\n      ... on UpdateLibraryPathSuccess {\n        serverSettings {\n          id\n          libraryPath\n        }\n      }\n    }\n  }\n": types.UpdateLibraryPathDocument,
-    "\n  fragment DirectoryTreeItem_FileSystemEntry on FileSystemEntry {\n    name\n    path\n    isDirectory\n    hasChildren\n    isAccessible\n  }\n": types.DirectoryTreeItem_FileSystemEntryFragmentDoc,
-    "\n  query DirectoryTreeItem($path: String) {\n    browseFileSystem(path: $path) {\n      ...DirectoryTreeItem_FileSystemEntry\n    }\n  }\n": types.DirectoryTreeItemDocument,
-    "\n  query BrowseFileSystem($path: String) {\n    browseFileSystem(path: $path) {\n      path\n      ...DirectoryTreeItem_FileSystemEntry\n    }\n  }\n": types.BrowseFileSystemDocument,
+    "\n  fragment DirectoryTreeItem_FileSystemEntry on FileSystemEntry {\n    id\n    name\n    path\n    isDirectory\n    hasChildren\n    isAccessible\n  }\n": types.DirectoryTreeItem_FileSystemEntryFragmentDoc,
+    "\n  query DirectoryTreeItem($path: String) {\n    browseFileSystem(path: $path) {\n      id\n      isDirectory\n      path\n      ...DirectoryTreeItem_FileSystemEntry\n    }\n  }\n": types.DirectoryTreeItemDocument,
+    "\n  query BrowseFileSystem($path: String) {\n    browseFileSystem(path: $path) {\n      path\n      isDirectory\n      ...DirectoryTreeItem_FileSystemEntry\n    }\n  }\n": types.BrowseFileSystemDocument,
     "\n  query Sidebar {\n    viewer {\n      id\n      username\n    }\n  }\n": types.SidebarDocument,
     "\n  fragment SoulSeekNetworkStatus_SoulSeekStatus on SoulSeekStatus {\n    id\n    status\n  }\n": types.SoulSeekNetworkStatus_SoulSeekStatusFragmentDoc,
     "\n  subscription SoulSeekNetworkStatusSubscription {\n    soulSeekStatusUpdated {\n      ...SoulSeekNetworkStatus_SoulSeekStatus\n    }\n  }\n": types.SoulSeekNetworkStatusSubscriptionDocument,
@@ -401,15 +401,15 @@ export function graphql(source: "\n  mutation UpdateLibraryPath($newLibraryPath:
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment DirectoryTreeItem_FileSystemEntry on FileSystemEntry {\n    name\n    path\n    isDirectory\n    hasChildren\n    isAccessible\n  }\n"): (typeof documents)["\n  fragment DirectoryTreeItem_FileSystemEntry on FileSystemEntry {\n    name\n    path\n    isDirectory\n    hasChildren\n    isAccessible\n  }\n"];
+export function graphql(source: "\n  fragment DirectoryTreeItem_FileSystemEntry on FileSystemEntry {\n    id\n    name\n    path\n    isDirectory\n    hasChildren\n    isAccessible\n  }\n"): (typeof documents)["\n  fragment DirectoryTreeItem_FileSystemEntry on FileSystemEntry {\n    id\n    name\n    path\n    isDirectory\n    hasChildren\n    isAccessible\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query DirectoryTreeItem($path: String) {\n    browseFileSystem(path: $path) {\n      ...DirectoryTreeItem_FileSystemEntry\n    }\n  }\n"): (typeof documents)["\n  query DirectoryTreeItem($path: String) {\n    browseFileSystem(path: $path) {\n      ...DirectoryTreeItem_FileSystemEntry\n    }\n  }\n"];
+export function graphql(source: "\n  query DirectoryTreeItem($path: String) {\n    browseFileSystem(path: $path) {\n      id\n      isDirectory\n      path\n      ...DirectoryTreeItem_FileSystemEntry\n    }\n  }\n"): (typeof documents)["\n  query DirectoryTreeItem($path: String) {\n    browseFileSystem(path: $path) {\n      id\n      isDirectory\n      path\n      ...DirectoryTreeItem_FileSystemEntry\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query BrowseFileSystem($path: String) {\n    browseFileSystem(path: $path) {\n      path\n      ...DirectoryTreeItem_FileSystemEntry\n    }\n  }\n"): (typeof documents)["\n  query BrowseFileSystem($path: String) {\n    browseFileSystem(path: $path) {\n      path\n      ...DirectoryTreeItem_FileSystemEntry\n    }\n  }\n"];
+export function graphql(source: "\n  query BrowseFileSystem($path: String) {\n    browseFileSystem(path: $path) {\n      path\n      isDirectory\n      ...DirectoryTreeItem_FileSystemEntry\n    }\n  }\n"): (typeof documents)["\n  query BrowseFileSystem($path: String) {\n    browseFileSystem(path: $path) {\n      path\n      isDirectory\n      ...DirectoryTreeItem_FileSystemEntry\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
