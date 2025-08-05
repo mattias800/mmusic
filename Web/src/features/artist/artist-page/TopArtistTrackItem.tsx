@@ -46,6 +46,7 @@ export const TopArtistTrackItem: React.FC<TopArtistTrackItemProps> = (
       trackLength={track.recording?.length ?? 0}
       playCount={track.playCount}
       playing={props.active}
+      showCoverArt
       coverArtUri={track.recording?.mainAlbum?.coverArtUri}
       contextMenuItems={
         <>

@@ -4,9 +4,9 @@ import { ShuffleButton } from "@/components/buttons/ShuffleButton.tsx";
 import { DotsButton } from "@/components/buttons/DotsButton.tsx";
 import { LargeLikeButton } from "@/components/buttons/LargeLikeButton.tsx";
 import { AlbumHeader } from "@/features/album/AlbumHeader.tsx";
-import { PageCard } from "@/components/PageCard.tsx";
 import { AlbumTrackList } from "@/features/album/AlbumTrackList.tsx";
 import { FragmentType, graphql, useFragment } from "@/gql";
+import { GradientContent } from "@/components/page-body/GradientContent";
 import { MainPadding } from "@/components/layout/MainPadding.tsx";
 
 export interface AlbumPanelProps {
@@ -35,21 +35,17 @@ export const AlbumPanel: React.FC<AlbumPanelProps> = (props) => {
   );
 
   return (
-    <MainPadding>
-      <PageCard
-        header={
-          <>
-            <AlbumHeader releaseGroup={releaseGroup} />
+    <GradientContent>
+      <MainPadding>
+        <AlbumHeader releaseGroup={releaseGroup} />
 
-            <div className="flex items-center gap-6 mb-6">
-              <LargePlayButton />
-              <ShuffleButton />
-              <LargeLikeButton />
-              <DotsButton />
-            </div>
-          </>
-        }
-      >
+        <div className="flex items-center gap-6 mb-6">
+          <LargePlayButton />
+          <ShuffleButton />
+          <LargeLikeButton />
+          <DotsButton />
+        </div>
+
         <AlbumTrackList releaseGroup={releaseGroup} />
 
         {releaseGroup.mainRelease &&
@@ -62,7 +58,7 @@ export const AlbumPanel: React.FC<AlbumPanelProps> = (props) => {
               ))}
             </div>
           )}
-      </PageCard>
-    </MainPadding>
+      </MainPadding>
+    </GradientContent>
   );
 };

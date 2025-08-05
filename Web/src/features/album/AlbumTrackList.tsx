@@ -1,12 +1,8 @@
 import { FragmentType, graphql, useFragment } from "@/gql";
 import * as React from "react";
-import {
-  formatLargeNumber,
-  formatTrackLength,
-} from "@/common/TrackLengthFormatter.ts";
 import { Link } from "react-router";
-import { RecordingPlayButton } from "@/features/music-players/RecordingPlayButton.tsx";
-import { Play, Search } from "lucide-react";
+import { TrackItem } from "@/components/track-item/TrackItem.tsx";
+import { TrackListHeading } from "@/components/track-item/TrackListHeading.tsx";
 
 interface AlbumTrackListProps {
   releaseGroup: FragmentType<typeof albumTrackListReleaseGroupFragment>;
@@ -49,40 +45,16 @@ export const AlbumTrackList: React.FC<AlbumTrackListProps> = (props) => {
 
   return (
     <div>
-      <div className="grid grid-cols-[60px_1fr_auto_auto] md:grid-cols-[60px_1fr_auto_auto] items-center text-sm text-gray-400 border-b border-white/20 pb-2 mb-2 px-2">
-        <span className="text-center text-white/60">#</span>
-        <span className="text-left">Title</span>
-        <span className="hidden md:block text-right pr-8">Plays</span>
-        <span className="hidden md:block text-right pr-4">⏱️</span>
-      </div>
+      <TrackListHeading />
 
       {release?.recordings.map((recording, idx) => (
-        <div
-          key={recording.id}
-          className="grid grid-cols-[60px_1fr_auto_auto] md:grid-cols-[60px_1fr_auto_auto] items-center text-sm hover:bg-white/10 py-2 px-2 rounded"
-        >
-          <span className="text-center text-white/60">{idx + 1}</span>
-          <div className="text-left">
-            <RecordingPlayButton
-              recording={recording}
-              renderButton={(onClick, needsYoutubeSearch) => (
-                <button
-                  className="font-medium hover:underline cursor-pointer flex items-center gap-4"
-                  onClick={onClick}
-                >
-                  {recording.title}
-                  {needsYoutubeSearch ? (
-                    <Search className={"h-4 w-4"} />
-                  ) : (
-                    <Play className={"h-4 w-4"} />
-                  )}
-                </button>
-              )}
-              renderWhenNotPlayable={() => (
-                <span className="font-medium">{recording.title}</span>
-              )}
-            />
-            <div className="text-white/50 text-xs">
+        <TrackItem
+          trackNumber={idx + 1}
+          title={recording.title}
+          trackLength={recording.length}
+          playCount={recording.statistics?.listeners ?? 0}
+          renderSubtitle={() => (
+            <>
               {recording.nameCredits.map(({ artist }, index) => (
                 <React.Fragment key={artist.id}>
                   {index > 0 && ", "}
@@ -91,15 +63,10 @@ export const AlbumTrackList: React.FC<AlbumTrackListProps> = (props) => {
                   </Link>
                 </React.Fragment>
               ))}
-            </div>
-          </div>
-          <span className="hidden md:block text-right pr-8 text-white/70">
-            {formatLargeNumber(recording.statistics?.listeners ?? 0)}
-          </span>
-          <span className="hidden md:block text-right pr-4 text-white/70">
-            {recording.length ? formatTrackLength(recording.length) : ""}
-          </span>
-        </div>
+            </>
+          )}
+          playing={false}
+        />
       ))}
     </div>
   );
