@@ -1,10 +1,9 @@
-
 using System.Security;
 using MusicGQL.Types;
 
 namespace MusicGQL.Features.FileSystem.Mutations;
 
-[ExtendObjectType<Mutation>]
+[ExtendObjectType(typeof(Mutation))]
 public class CreateDirectoryMutation
 {
     public FileSystemEntry CreateDirectory(string path)

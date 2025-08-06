@@ -1,10 +1,8 @@
-
 using System.Security;
 using MusicGQL.Types;
 
 namespace MusicGQL.Features.FileSystem;
 
-[ExtendObjectType<Query>]
 public class FileSystemSearchRoot
 {
     public IEnumerable<FileSystemEntry> BrowseFileSystem(string? path)
@@ -40,7 +38,16 @@ public class FileSystemSearchRoot
                 isAccessible = false;
                 hasChildren = false;
             }
-            entries.Add(new FileSystemEntry(directory.Name, directory.FullName, true, hasChildren, isAccessible));
+
+            entries.Add(
+                new FileSystemEntry(
+                    directory.Name,
+                    directory.FullName,
+                    true,
+                    hasChildren,
+                    isAccessible
+                )
+            );
         }
 
         foreach (var file in directoryInfo.EnumerateFiles())
