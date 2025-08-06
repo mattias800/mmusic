@@ -111,7 +111,7 @@ public class ServerLibraryCache(ServerLibraryJsonReader reader)
                                 AudioFilePath = trackJson.AudioFilePath,
                                 ArtistId = artistJson.Id,
                                 ArtistName = artistJson.Name,
-                                AlbumFolderName = folderName,
+                                ReleaseFolderName = folderName,
                                 ReleaseTitle = releaseJson.Title,
                                 ReleaseType = releaseJson.Type,
                                 TrackJson = trackJson,
@@ -212,14 +212,14 @@ public class ServerLibraryCache(ServerLibraryJsonReader reader)
     }
 
     /// <summary>
-    /// Gets a release/album by artist ID and album folder name
+    /// Gets a release by artist ID and release folder name
     /// </summary>
     /// <param name="artistId">Artist ID</param>
-    /// <param name="albumFolderName">Album folder name</param>
+    /// <param name="releaseFolderName">Release folder name</param>
     /// <returns>Cached release or null if not found</returns>
     public async Task<CachedRelease?> GetReleaseByArtistAndFolderAsync(
         string artistId,
-        string albumFolderName
+        string releaseFolderName
     )
     {
         await EnsureCacheInitializedAsync();
@@ -232,17 +232,17 @@ public class ServerLibraryCache(ServerLibraryJsonReader reader)
             if (artistReleases == null)
                 return null;
 
-            artistReleases.TryGetValue(albumFolderName.ToLowerInvariant(), out var release);
+            artistReleases.TryGetValue(releaseFolderName.ToLowerInvariant(), out var release);
             return release;
         }
     }
 
     /// <summary>
-    /// Gets all albums/releases for a specific artist by artist ID
+    /// Gets all releases for an artist by artist ID
     /// </summary>
     /// <param name="artistId">Artist ID</param>
-    /// <returns>List of releases for the artist</returns>
-    public async Task<List<CachedRelease>> GetAlbumsByArtistIdAsync(string artistId)
+    /// <returns>List of all releases for the artist</returns>
+    public async Task<List<CachedRelease>> GetAllReleasesForArtistAsync(string artistId)
     {
         await EnsureCacheInitializedAsync();
 
@@ -254,14 +254,14 @@ public class ServerLibraryCache(ServerLibraryJsonReader reader)
     }
 
     /// <summary>
-    /// Gets all tracks for a specific album by artist ID and album folder name
+    /// Gets all tracks for a specific release by artist ID and release folder name
     /// </summary>
     /// <param name="artistId">Artist ID</param>
-    /// <param name="albumFolderName">Album folder name</param>
-    /// <returns>List of tracks for the album</returns>
-    public async Task<List<CachedTrack>> GetTracksByAlbumAsync(
+    /// <param name="releaseFolderName">Release folder name</param>
+    /// <returns>List of tracks for the release</returns>
+    public async Task<List<CachedTrack>> GetAllTracksForReleaseAsync(
         string artistId,
-        string albumFolderName
+        string releaseFolderName
     )
     {
         await EnsureCacheInitializedAsync();
@@ -274,21 +274,21 @@ public class ServerLibraryCache(ServerLibraryJsonReader reader)
             if (artistReleases == null)
                 return new List<CachedTrack>();
 
-            artistReleases.TryGetValue(albumFolderName.ToLowerInvariant(), out var release);
+            artistReleases.TryGetValue(releaseFolderName.ToLowerInvariant(), out var release);
             return release?.Tracks ?? new List<CachedTrack>();
         }
     }
 
     /// <summary>
-    /// Gets a specific track by artist ID, album folder name, and track number
+    /// Gets a specific track by artist ID, release folder name, and track number
     /// </summary>
     /// <param name="artistId">Artist ID</param>
-    /// <param name="albumFolderName">Album folder name</param>
+    /// <param name="releaseFolderName">Release folder name</param>
     /// <param name="trackNumber">Track number</param>
     /// <returns>Cached track or null if not found</returns>
-    public async Task<CachedTrack?> GetTrackByArtistAlbumAndNumberAsync(
+    public async Task<CachedTrack?> GetTrackByArtistReleaseAndNumberAsync(
         string artistId,
-        string albumFolderName,
+        string releaseFolderName,
         int trackNumber
     )
     {
@@ -302,7 +302,7 @@ public class ServerLibraryCache(ServerLibraryJsonReader reader)
             if (artistReleases == null)
                 return null;
 
-            artistReleases.TryGetValue(albumFolderName.ToLowerInvariant(), out var release);
+            artistReleases.TryGetValue(releaseFolderName.ToLowerInvariant(), out var release);
             return release?.Tracks.FirstOrDefault(t => t.TrackNumber == trackNumber);
         }
     }

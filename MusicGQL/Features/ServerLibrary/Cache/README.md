@@ -16,8 +16,8 @@ This caching system provides fast in-memory access to music library data read fr
 
 The cache uses the actual file system folder structure for lookups instead of generated IDs:
 
-- **Albums**: Identified by `artistId` + `albumFolderName` (e.g., "Matt & Dyle" + "Demo EP")
-- **Tracks**: Identified by `artistId` + `albumFolderName` + `trackNumber`
+- **Releases**: Identified by `artistId` + `releaseFolderName` (e.g., "Matt & Dyle" + "Demo EP")
+- **Tracks**: Identified by `artistId` + `releaseFolderName` + `trackNumber`
 - **Natural Structure**: Mirrors the actual Library/{Artist}/{Album}/ folder organization
 
 ## Usage Examples
@@ -31,17 +31,17 @@ var cache = serviceProvider.GetRequiredService<ServerLibraryCache>();
 // Get an artist by ID
 var artist = await cache.GetArtistByIdAsync("artist-id");
 
-// Get all albums for an artist
-var albums = await cache.GetAlbumsByArtistIdAsync("artist-id");
+// Get all releases for an artist
+var releases = await cache.GetAllReleasesForArtistAsync("artist-id");
 
-// Get a specific album by artist ID + folder name
-var album = await cache.GetReleaseByArtistAndFolderAsync("artist-id", "album-folder");
+// Get a specific release by artist ID + folder name
+var release = await cache.GetReleaseByArtistAndFolderAsync("artist-id", "release-folder");
 
-// Get all tracks for an album
-var tracks = await cache.GetTracksByAlbumAsync("artist-id", "album-folder");
+// Get all tracks for a release
+var tracks = await cache.GetAllTracksForReleaseAsync("artist-id", "release-folder");
 
-// Get a specific track by artist + album + track number
-var track = await cache.GetTrackByArtistAlbumAndNumberAsync("artist-id", "album-folder", 3);
+// Get a specific track by artist + release + track number
+var track = await cache.GetTrackByArtistReleaseAndNumberAsync("artist-id", "release-folder", 3);
 
 // Get all tracks for an artist
 var allTracks = await cache.GetTracksByArtistIdAsync("artist-id");
@@ -50,11 +50,11 @@ var allTracks = await cache.GetTracksByArtistIdAsync("artist-id");
 ### Real-World Example
 
 ```csharp
-// Working with "Matt & Dyle" artist and "Demo EP" album
+// Working with "Matt & Dyle" artist and "Demo EP" release
 var artist = await cache.GetArtistByIdAsync("Matt & Dyle");
 var demoEP = await cache.GetReleaseByArtistAndFolderAsync("Matt & Dyle", "Demo EP");
-var tracks = await cache.GetTracksByAlbumAsync("Matt & Dyle", "Demo EP");
-var track2 = await cache.GetTrackByArtistAlbumAndNumberAsync("Matt & Dyle", "Demo EP", 2);
+var tracks = await cache.GetAllTracksForReleaseAsync("Matt & Dyle", "Demo EP");
+var track2 = await cache.GetTrackByArtistReleaseAndNumberAsync("Matt & Dyle", "Demo EP", 2);
 ```
 
 ### Search Operations
@@ -88,14 +88,14 @@ Console.WriteLine($"Cache contains {stats.ArtistCount} artists, {stats.ReleaseCo
 - Indexed by ID and name for fast lookups
 
 ### CachedRelease  
-- Contains album metadata and list of tracks
+- Contains release metadata and list of tracks
 - Includes `FolderName` property matching the actual folder name
 - Linked to artist via `ArtistId`
 
 ### CachedTrack
 - Contains track metadata
-- Includes `AlbumFolderName` for linking to album
-- Linked to both artist and album via natural identifiers
+- Includes `ReleaseFolderName` for linking to release
+- Linked to both artist and release via natural identifiers
 
 ## Available Methods
 
@@ -105,15 +105,15 @@ Console.WriteLine($"Cache contains {stats.ArtistCount} artists, {stats.ReleaseCo
 - `SearchArtistsByNameAsync(searchTerm, limit)` - Search artists by partial name
 - `GetAllArtistsAsync()` - Get all artists
 
-### Album Methods  
-- `GetReleaseByArtistAndFolderAsync(artistId, albumFolderName)` - Get album by artist + folder name
-- `GetAlbumsByArtistIdAsync(artistId)` - Get all albums for an artist
-- `SearchReleasesByTitleAsync(searchTerm, limit)` - Search albums by title
-- `GetAllReleasesAsync()` - Get all albums
+### Release Methods  
+- `GetReleaseByArtistAndFolderAsync(artistId, releaseFolderName)` - Get release by artist + folder name
+- `GetAllReleasesForArtistAsync(artistId)` - Get all releases for an artist
+- `SearchReleasesByTitleAsync(searchTerm, limit)` - Search releases by title
+- `GetAllReleasesAsync()` - Get all releases
 
 ### Track Methods
-- `GetTracksByAlbumAsync(artistId, albumFolderName)` - Get all tracks for an album
-- `GetTrackByArtistAlbumAndNumberAsync(artistId, albumFolderName, trackNumber)` - Get specific track
+- `GetAllTracksForReleaseAsync(artistId, releaseFolderName)` - Get all tracks for a release
+- `GetTrackByArtistReleaseAndNumberAsync(artistId, releaseFolderName, trackNumber)` - Get specific track
 - `GetTracksByArtistIdAsync(artistId)` - Get all tracks for an artist  
 - `SearchTracksByTitleAsync(searchTerm, limit)` - Search tracks by title
 - `GetAllTracksAsync()` - Get all tracks
@@ -142,8 +142,8 @@ Library/
 
 Cache lookup examples:
 - `GetReleaseByArtistAndFolderAsync("Matt & Dyle", "Demo EP")`
-- `GetTracksByAlbumAsync("Matt & Dyle", "Example Album")`
-- `GetTrackByArtistAlbumAndNumberAsync("Another Artist", "Their Album", 1)`
+- `GetAllTracksForReleaseAsync("Matt & Dyle", "Example Album")`
+- `GetTrackByArtistReleaseAndNumberAsync("Another Artist", "Their Album", 1)`
 
 ## Benefits
 

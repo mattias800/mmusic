@@ -7,7 +7,7 @@ namespace MusicGQL.Features.ServerLibrary;
 public record Track([property: GraphQLIgnore] CachedTrack Model)
 {
     [ID]
-    public string Id() => Model.ArtistId + "/" + Model.AlbumFolderName + "/" + Model.Title;
+    public string Id() => Model.ArtistId + "/" + Model.ReleaseFolderName + "/" + Model.Title;
 
     public string Title() => Model.Title;
 

@@ -61,7 +61,7 @@ public record Artist([property: GraphQLIgnore] CachedArtist Model)
 
     public async Task<IEnumerable<Release>> Releases(ServerLibraryCache cache)
     {
-        var releases = await cache.GetAllReleasesAsync();
+        var releases = await cache.GetAllReleasesForArtistAsync(Model.Id);
         return releases.Select(r => new Release(r));
     }
 

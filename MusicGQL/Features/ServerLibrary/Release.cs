@@ -35,7 +35,7 @@ public record Release([property: GraphQLIgnore] CachedRelease Model)
 
     public async Task<IEnumerable<Track>> Tracks(ServerLibraryCache cache)
     {
-        var tracks = await cache.GetAllTracksAsync();
+        var tracks = await cache.GetAllTracksForReleaseAsync(Model.ArtistId, Model.FolderName);
         var sortedByTrackPosition = tracks.OrderBy(r => r.TrackJson.TrackNumber).ToList();
 
         return sortedByTrackPosition.Select(r => new Track(r));

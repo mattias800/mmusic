@@ -10,7 +10,7 @@ public class CachedTrack
     public string? AudioFilePath { get; set; }
     public string ArtistId { get; set; } = string.Empty;
     public string ArtistName { get; set; } = string.Empty;
-    public string AlbumFolderName { get; set; } = string.Empty;
+    public string ReleaseFolderName { get; set; } = string.Empty;
     public string ReleaseTitle { get; set; } = string.Empty;
     public Json.ReleaseType ReleaseType { get; set; }
     public TrackJson TrackJson { get; set; } = new();
@@ -20,5 +20,5 @@ public class CachedTrack
     public string? SearchSortTitle => SortTitle?.ToLowerInvariant();
     public string SearchArtistName => ArtistName.ToLowerInvariant();
     public string SearchReleaseTitle => ReleaseTitle.ToLowerInvariant();
-    public string SearchAlbumFolderName => AlbumFolderName.ToLowerInvariant();
+    public string SearchReleaseFolderName => ReleaseFolderName.ToLowerInvariant();
 }
