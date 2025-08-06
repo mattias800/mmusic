@@ -1,4 +1,4 @@
-namespace MusicGQL.ServerLibrary.Json;
+namespace MusicGQL.Features.ServerLibrary2.Json;
 
 public class ArtistJson
 {

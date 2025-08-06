@@ -1,3 +1,4 @@
+using System.IO;
 using Google.Apis.Services;
 using Hqub.Lastfm;
 using Hqub.MusicBrainz;
@@ -48,6 +49,9 @@ using MusicGQL.Integration.Neo4j;
 using MusicGQL.Integration.Spotify;
 using MusicGQL.Integration.Spotify.Configuration;
 using MusicGQL.Integration.Youtube.Configuration;
+using MusicGQL.Features.ServerLibrary2.Reader;
+using MusicGQL.Features.ServerLibrary2.Cache;
+using MusicGQL.Features.ServerLibrary2.Json;
 using MusicGQL.Types;
 using Neo4j.Driver;
 using Rebus.Config;
@@ -101,6 +105,8 @@ builder
     .AddSingleton<YouTubeService>()
     .AddSingleton<SpotifyService>()
     .AddSingleton<ArtistServerStatusService>()
+    .AddSingleton<ServerLibraryJsonReader>()
+    .AddSingleton<ServerLibraryCache>()
     .AddScoped<LikeSongHandler>()
     .AddScoped<UnlikeSongHandler>()
     .AddScoped<UpdateLibraryPathHandler>()
@@ -378,6 +384,87 @@ using (var scope = app.Services.CreateScope())
     var missingMetaDataProcessingService =
         scope.ServiceProvider.GetRequiredService<MissingMetaDataProcessingService>();
     missingMetaDataProcessingService.ProcessMissingMetaData();
+
+    // 🎵 Initialize and populate the music library cache
+    Console.WriteLine();
+    Console.WriteLine("═══════════════════════════════════════════════");
+    Console.WriteLine("🎵 INITIALIZING MUSIC LIBRARY CACHE");
+    Console.WriteLine("═══════════════════════════════════════════════");
+    
+    var cache = scope.ServiceProvider.GetRequiredService<ServerLibraryCache>();
+    
+    try
+    {
+        Console.WriteLine("📀 Loading music library from disk...");
+        Console.WriteLine($"   🔍 Looking for library at: {System.IO.Path.GetFullPath("./Library/")}");
+        await cache.UpdateCacheAsync();
+        
+        var stats = await cache.GetCacheStatisticsAsync();
+        Console.WriteLine($"✅ Cache loaded successfully!");
+        Console.WriteLine($"   📊 Statistics: {stats.ArtistCount} artists, {stats.ReleaseCount} releases, {stats.TrackCount} tracks");
+        Console.WriteLine($"   🕒 Last updated: {stats.LastUpdated:yyyy-MM-dd HH:mm:ss} UTC");
+        Console.WriteLine();
+
+        // Display all artists and their albums
+        var artists = await cache.GetAllArtistsAsync();
+        
+        if (artists.Count > 0)
+        {
+            Console.WriteLine("🎤 ARTISTS & ALBUMS IN LIBRARY:");
+            Console.WriteLine("───────────────────────────────────────────────");
+            
+            foreach (var artist in artists.OrderBy(a => a.Name))
+            {
+                Console.WriteLine($"🎸 {artist.Name}");
+                if (!string.IsNullOrEmpty(artist.SortName) && artist.SortName != artist.Name)
+                {
+                    Console.WriteLine($"   (Sort: {artist.SortName})");
+                }
+                
+                if (artist.Releases.Count > 0)
+                {
+                    foreach (var release in artist.Releases.OrderBy(r => r.Title))
+                    {
+                        var typeIcon = release.Type switch
+                        {
+                            ReleaseType.Album => "💿",
+                            ReleaseType.Ep => "💽",
+                            ReleaseType.Single => "🎵",
+                            _ => "📀"
+                        };
+                        
+                        var trackCountText = release.Tracks.Count > 0 ? $" ({release.Tracks.Count} tracks)" : "";
+                        Console.WriteLine($"   {typeIcon} {release.Title}{trackCountText}");
+                        
+                        if (!string.IsNullOrEmpty(release.ReleaseJson.FirstReleaseYear))
+                        {
+                            Console.WriteLine($"      📅 Released: {release.ReleaseJson.FirstReleaseYear}");
+                        }
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("   📭 No releases found");
+                }
+                Console.WriteLine();
+            }
+        }
+        else
+        {
+            Console.WriteLine("📭 No artists found in library");
+            Console.WriteLine("   💡 Make sure your library folder contains artist.json files");
+        }
+        
+        Console.WriteLine("═══════════════════════════════════════════════");
+        Console.WriteLine("🚀 MUSIC LIBRARY CACHE READY");
+        Console.WriteLine("═══════════════════════════════════════════════");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"❌ Failed to initialize music library cache: {ex.Message}");
+        Console.WriteLine("   ⚠️  Application will continue, but cache will be empty");
+        Console.WriteLine("═══════════════════════════════════════════════");
+    }
 }
 
 app.UseWebSockets();

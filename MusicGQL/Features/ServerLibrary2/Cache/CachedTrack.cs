@@ -1,0 +1,22 @@
+using MusicGQL.Features.ServerLibrary2.Json;
+
+namespace MusicGQL.Features.ServerLibrary2.Cache;
+
+public class CachedTrack
+{
+    public string Title { get; set; } = string.Empty;
+    public string? SortTitle { get; set; }
+    public int TrackNumber { get; set; }
+    public string? AudioFilePath { get; set; }
+    public string ArtistId { get; set; } = string.Empty;
+    public string ArtistName { get; set; } = string.Empty;
+    public string ReleaseTitle { get; set; } = string.Empty;
+    public ReleaseType ReleaseType { get; set; }
+    public TrackJson TrackJson { get; set; } = new();
+    
+    // Searchable properties
+    public string SearchTitle => Title.ToLowerInvariant();
+    public string? SearchSortTitle => SortTitle?.ToLowerInvariant();
+    public string SearchArtistName => ArtistName.ToLowerInvariant();
+    public string SearchReleaseTitle => ReleaseTitle.ToLowerInvariant();
+} 
