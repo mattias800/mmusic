@@ -1,128 +1,164 @@
 # ServerLibrary2 Cache System
 
-This cache system provides fast, in-memory access to music library metadata without requiring disk I/O for searches.
+This caching system provides fast in-memory access to music library data read from JSON files.
 
-## Overview
+## Features
 
-The cache loads all artist, release, and track metadata from the JSON files on disk into memory for fast searching and retrieval.
+- **Fast Lookups**: All data is stored in memory for instant access
+- **Artist Management**: Get artists by ID or name, search by partial name matches
+- **Album Management**: Get albums by artist ID + folder name (using actual folder structure)
+- **Track Management**: Get tracks by artist ID + album folder name + track number
+- **Search Functionality**: Search artists, albums, and tracks by name/title
+- **Thread Safe**: All operations are thread-safe using lock mechanisms
+- **Auto-Initialization**: Cache automatically initializes on first use
 
-## Key Components
+## Folder-Based Lookup System
 
-- **`ServerLibraryCache`** - Main cache service with search and retrieval methods
-- **`CachedArtist`** - In-memory representation of an artist with releases
-- **`CachedRelease`** - In-memory representation of a release/album with tracks  
-- **`CachedTrack`** - In-memory representation of a track
-- **`CacheStatistics`** - Cache statistics and status information
+The cache uses the actual file system folder structure for lookups instead of generated IDs:
 
-## Usage
+- **Albums**: Identified by `artistId` + `albumFolderName` (e.g., "Matt & Dyle" + "Demo EP")
+- **Tracks**: Identified by `artistId` + `albumFolderName` + `trackNumber`
+- **Natural Structure**: Mirrors the actual Library/{Artist}/{Album}/ folder organization
 
-### Setup
+## Usage Examples
+
+### Basic Usage
 
 ```csharp
-// Create the reader and cache
-var reader = new ServerLibraryJsonReader();
-var cache = new ServerLibraryCache(reader);
+// Get the cache from DI
+var cache = serviceProvider.GetRequiredService<ServerLibraryCache>();
 
-// Initialize cache (loads all data from disk)
-await cache.UpdateCacheAsync();
+// Get an artist by ID
+var artist = await cache.GetArtistByIdAsync("artist-id");
+
+// Get all albums for an artist
+var albums = await cache.GetAlbumsByArtistIdAsync("artist-id");
+
+// Get a specific album by artist ID + folder name
+var album = await cache.GetReleaseByArtistAndFolderAsync("artist-id", "album-folder");
+
+// Get all tracks for an album
+var tracks = await cache.GetTracksByAlbumAsync("artist-id", "album-folder");
+
+// Get a specific track by artist + album + track number
+var track = await cache.GetTrackByArtistAlbumAndNumberAsync("artist-id", "album-folder", 3);
+
+// Get all tracks for an artist
+var allTracks = await cache.GetTracksByArtistIdAsync("artist-id");
 ```
 
-### Artist Operations
+### Real-World Example
 
 ```csharp
-// Get artist by exact ID
+// Working with "Matt & Dyle" artist and "Demo EP" album
 var artist = await cache.GetArtistByIdAsync("Matt & Dyle");
-
-// Get artist by exact name (case-insensitive)
-var artist = await cache.GetArtistByNameAsync("Matt & Dyle");
-
-// Search artists by partial name match
-var artists = await cache.SearchArtistsByNameAsync("Matt", limit: 10);
-
-// Get all artists
-var allArtists = await cache.GetAllArtistsAsync();
+var demoEP = await cache.GetReleaseByArtistAndFolderAsync("Matt & Dyle", "Demo EP");
+var tracks = await cache.GetTracksByAlbumAsync("Matt & Dyle", "Demo EP");
+var track2 = await cache.GetTrackByArtistAlbumAndNumberAsync("Matt & Dyle", "Demo EP", 2);
 ```
 
-### Release/Album Operations
+### Search Operations
 
 ```csharp
-// Search releases by title
-var releases = await cache.SearchReleasesByTitleAsync("album title", limit: 20);
+// Search for artists
+var artists = await cache.SearchArtistsByNameAsync("Beatles", limit: 10);
 
-// Get all releases
-var allReleases = await cache.GetAllReleasesAsync();
+// Search for albums
+var albums = await cache.SearchReleasesByTitleAsync("Abbey Road", limit: 10);
 
-// Access releases through artist
-var artist = await cache.GetArtistByNameAsync("Artist Name");
-var artistReleases = artist?.Releases ?? new List<CachedRelease>();
-```
-
-### Track Operations
-
-```csharp
-// Search tracks by title
-var tracks = await cache.SearchTracksByTitleAsync("song title", limit: 30);
-
-// Get all tracks
-var allTracks = await cache.GetAllTracksAsync();
-
-// Access tracks through release
-var releases = await cache.SearchReleasesByTitleAsync("album");
-var tracks = releases.FirstOrDefault()?.Tracks ?? new List<CachedTrack>();
+// Search for tracks
+var tracks = await cache.SearchTracksByTitleAsync("Yesterday", limit: 10);
 ```
 
 ### Cache Management
 
 ```csharp
-// Update cache (re-read from disk)
+// Update cache from disk
 await cache.UpdateCacheAsync();
 
 // Get cache statistics
 var stats = await cache.GetCacheStatisticsAsync();
-Console.WriteLine($"Artists: {stats.ArtistCount}, Releases: {stats.ReleaseCount}, Tracks: {stats.TrackCount}");
-Console.WriteLine($"Last updated: {stats.LastUpdated}");
-
-// Check if cache is initialized
-if (cache.IsInitialized)
-{
-    // Cache is ready to use
-}
+Console.WriteLine($"Cache contains {stats.ArtistCount} artists, {stats.ReleaseCount} releases, {stats.TrackCount} tracks");
 ```
 
-## Features
+## Data Models
 
-### Thread-Safe
-All operations are thread-safe and can be called from multiple threads simultaneously.
+### CachedArtist
+- Contains artist metadata and list of releases
+- Indexed by ID and name for fast lookups
 
-### Auto-Initialization
-The cache automatically initializes itself on first use. You can also manually trigger updates.
+### CachedRelease  
+- Contains album metadata and list of tracks
+- Includes `FolderName` property matching the actual folder name
+- Linked to artist via `ArtistId`
 
-### Case-Insensitive Search
-All searches are case-insensitive and support partial matching.
+### CachedTrack
+- Contains track metadata
+- Includes `AlbumFolderName` for linking to album
+- Linked to both artist and album via natural identifiers
 
-### Smart Ordering
-Search results prioritize exact matches and "starts with" matches over partial matches.
+## Available Methods
 
-### Error Handling
-Cache updates handle errors gracefully and don't clear existing cache data on failure.
+### Artist Methods
+- `GetArtistByIdAsync(id)` - Get artist by ID
+- `GetArtistByNameAsync(name)` - Get artist by exact name match
+- `SearchArtistsByNameAsync(searchTerm, limit)` - Search artists by partial name
+- `GetAllArtistsAsync()` - Get all artists
 
-### Performance
-- In-memory operations provide fast search and retrieval
-- No disk I/O required for searches once cache is loaded
-- Efficient indexing by ID and name for O(1) lookups
+### Album Methods  
+- `GetReleaseByArtistAndFolderAsync(artistId, albumFolderName)` - Get album by artist + folder name
+- `GetAlbumsByArtistIdAsync(artistId)` - Get all albums for an artist
+- `SearchReleasesByTitleAsync(searchTerm, limit)` - Search albums by title
+- `GetAllReleasesAsync()` - Get all albums
 
-## Data Structure
+### Track Methods
+- `GetTracksByAlbumAsync(artistId, albumFolderName)` - Get all tracks for an album
+- `GetTrackByArtistAlbumAndNumberAsync(artistId, albumFolderName, trackNumber)` - Get specific track
+- `GetTracksByArtistIdAsync(artistId)` - Get all tracks for an artist  
+- `SearchTracksByTitleAsync(searchTerm, limit)` - Search tracks by title
+- `GetAllTracksAsync()` - Get all tracks
 
-Each cached item contains:
-- Original JSON data for full metadata access
-- Flattened properties for easy access
-- Pre-computed lowercase search terms for fast searching
-- Hierarchical relationships (Artist → Releases → Tracks)
+### Utility Methods
+- `UpdateCacheAsync()` - Refresh cache from disk
+- `GetCacheStatisticsAsync()` - Get cache statistics
 
-## Best Practices
+## Folder Structure Mapping
 
-1. **Initialize Early**: Call `UpdateCacheAsync()` at application startup
-2. **Periodic Updates**: Refresh cache when library changes on disk
-3. **Monitor Performance**: Use `GetCacheStatisticsAsync()` to monitor cache status
-4. **Handle Nulls**: Always check for null results from lookup methods
-5. **Use Limits**: Specify reasonable limits for search operations to avoid performance issues 
+The cache directly maps to your file system structure:
+
+```
+Library/
+├── Matt & Dyle/                    (Artist ID: "Matt & Dyle")
+│   ├── artist.json
+│   ├── Demo EP/                    (Album Folder: "Demo EP")
+│   │   └── release.json
+│   └── Example Album/              (Album Folder: "Example Album")
+│       └── release.json
+└── Another Artist/                 (Artist ID: "Another Artist")
+    ├── artist.json
+    └── Their Album/                (Album Folder: "Their Album")
+        └── release.json
+```
+
+Cache lookup examples:
+- `GetReleaseByArtistAndFolderAsync("Matt & Dyle", "Demo EP")`
+- `GetTracksByAlbumAsync("Matt & Dyle", "Example Album")`
+- `GetTrackByArtistAlbumAndNumberAsync("Another Artist", "Their Album", 1)`
+
+## Benefits
+
+- **Natural Navigation**: Uses actual folder names that users can see
+- **No ID Generation**: No need to generate or remember artificial IDs
+- **Intuitive**: Lookup parameters match the real file system structure
+- **Efficient**: O(1) lookups using nested dictionaries
+- **File System Aligned**: Cache structure mirrors disk organization
+
+## Thread Safety
+
+All cache operations are thread-safe and can be called concurrently from multiple threads. The cache uses internal locking to ensure data consistency.
+
+## Performance
+
+- **Memory Usage**: All data is kept in memory for fast access
+- **Lookup Speed**: O(1) for folder-based lookups, O(log n) for searches
+- **Thread Safety**: Minimal locking overhead for read operations 

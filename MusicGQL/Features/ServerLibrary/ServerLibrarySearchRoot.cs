@@ -10,7 +10,7 @@ public class ServerLibrarySearchRoot
     public async Task<IEnumerable<Artist>> AllArtists([Service] ServerLibraryCache cache)
     {
         var cachedArtists = await cache.GetAllArtistsAsync();
-        return cachedArtists.Select(a => new Artist(a.ArtistJson));
+        return cachedArtists.Select(a => new Artist(a));
     }
 
     /// <summary>
@@ -19,7 +19,7 @@ public class ServerLibrarySearchRoot
     public async Task<Artist?> ArtistById([Service] ServerLibraryCache cache, [ID] string id)
     {
         var cachedArtist = await cache.GetArtistByIdAsync(id);
-        return cachedArtist != null ? new Artist(cachedArtist.ArtistJson) : null;
+        return cachedArtist != null ? new Artist(cachedArtist) : null;
     }
 
     /// <summary>
@@ -32,7 +32,7 @@ public class ServerLibrarySearchRoot
     )
     {
         var cachedArtists = await cache.SearchArtistsByNameAsync(searchTerm, limit);
-        return cachedArtists.Select(a => new Artist(a.ArtistJson));
+        return cachedArtists.Select(a => new Artist(a));
     }
 
     /// <summary>
@@ -41,7 +41,7 @@ public class ServerLibrarySearchRoot
     public async Task<IEnumerable<Release>> AllReleases([Service] ServerLibraryCache cache)
     {
         var cachedReleases = await cache.GetAllReleasesAsync();
-        return cachedReleases.Select(r => new Release(r.ReleaseJson));
+        return cachedReleases.Select(r => new Release(r));
     }
 
     /// <summary>

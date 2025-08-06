@@ -2,26 +2,25 @@ using Hqub.Lastfm;
 using MusicGQL.Features.LastFm;
 using MusicGQL.Features.MusicBrainz.Artist;
 using MusicGQL.Features.ServerLibrary.Cache;
-using MusicGQL.Features.ServerLibrary.Json;
 using MusicGQL.Integration.MusicBrainz;
 using TrackSeries.FanArtTV.Client;
 
 namespace MusicGQL.Features.ServerLibrary;
 
-public record Artist([property: GraphQLIgnore] ArtistJson Model)
+public record Artist([property: GraphQLIgnore] CachedArtist Model)
 {
     [ID]
     public string Id() => Model.Id;
 
     public string Name() => Model.Name;
 
-    public string SortName() => Model.SortName;
+    public string SortName() => Model.SortName ?? Model.Name;
 
     public ArtistServerStatus.ArtistServerStatus ServerStatus() => new(Model.Id);
 
     public async Task<IEnumerable<LastFmTrack>> TopTracks(LastfmClient lastfmClient)
     {
-        var mbId = Model.Connections?.MusicBrainzArtistId;
+        var mbId = Model.ArtistJson.Connections?.MusicBrainzArtistId;
 
         if (mbId is null)
         {
@@ -43,7 +42,7 @@ public record Artist([property: GraphQLIgnore] ArtistJson Model)
     public async Task<MbArtist?> MusicBrainzArtist(MusicBrainzService musicBrainzService)
     {
         // TODO Remove this, we should only use MB for imports.
-        var mbId = Model.Connections?.MusicBrainzArtistId;
+        var mbId = Model.ArtistJson.Connections?.MusicBrainzArtistId;
 
         if (mbId is null)
         {
@@ -63,12 +62,12 @@ public record Artist([property: GraphQLIgnore] ArtistJson Model)
     public async Task<IEnumerable<Release>> Releases(ServerLibraryCache cache)
     {
         var releases = await cache.GetAllReleasesAsync();
-        return releases.Select(r => new Release(Model, r.ReleaseJson));
+        return releases.Select(r => new Release(r));
     }
 
     public async Task<long?> Listeners(LastfmClient lastfmClient)
     {
-        var mbId = Model.Connections?.MusicBrainzArtistId;
+        var mbId = Model.ArtistJson.Connections?.MusicBrainzArtistId;
 
         if (mbId is null)
         {
@@ -88,7 +87,7 @@ public record Artist([property: GraphQLIgnore] ArtistJson Model)
 
     public async Task<ArtistImages?> Images(IFanArtTVClient fanartClient)
     {
-        var mbId = Model.Connections?.MusicBrainzArtistId;
+        var mbId = Model.ArtistJson.Connections?.MusicBrainzArtistId;
 
         if (mbId is null)
         {

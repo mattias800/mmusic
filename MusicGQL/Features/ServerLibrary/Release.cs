@@ -1,5 +1,4 @@
 using MusicGQL.Features.ServerLibrary.Cache;
-using MusicGQL.Features.ServerLibrary.Json;
 
 namespace MusicGQL.Features.ServerLibrary;
 
@@ -10,13 +9,10 @@ public enum ReleaseType
     Single,
 }
 
-public record Release(
-    [property: GraphQLIgnore] ArtistJson ArtistJson,
-    [property: GraphQLIgnore] ReleaseJson Model
-)
+public record Release([property: GraphQLIgnore] CachedRelease Model)
 {
     [ID]
-    public string Id() => ArtistJson.Id + Model.Title;
+    public string Id() => Model.ArtistId + "/" + Model.SearchFolderName;
 
     public string Title() => Model.Title;
 
@@ -29,20 +25,18 @@ public record Release(
             _ => null,
         };
 
-    public string? FirstReleaseDate() => Model.FirstReleaseDate;
+    public string? FirstReleaseDate() => Model.ReleaseJson.FirstReleaseDate;
 
-    public string? FirstReleaseYear() => Model.FirstReleaseDate?.Split("-").FirstOrDefault();
+    public string? FirstReleaseYear() =>
+        Model.ReleaseJson.FirstReleaseDate?.Split("-").FirstOrDefault();
 
     // TODO: Return correct URL that the server can serve.
-    public string? CoverArtUri() => Model.CoverArt;
+    public string? CoverArtUri() => Model.ReleaseJson.CoverArt;
 
-    public async Task<IEnumerable<Track>> Recordings(ServerLibraryCache cache)
+    public async Task<IEnumerable<Track>> Tracks(ServerLibraryCache cache)
     {
-        var recordings = await cache.GetAllTracksAsync();
-        var sortedByTrackPosition = recordings
-            .Select(r => r.TrackJson)
-            .OrderBy(r => r.TrackNumber)
-            .ToList();
+        var tracks = await cache.GetAllTracksAsync();
+        var sortedByTrackPosition = tracks.OrderBy(r => r.TrackJson.TrackNumber).ToList();
 
         return sortedByTrackPosition.Select(r => new Track(r));
     }

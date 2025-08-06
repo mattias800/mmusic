@@ -1,4 +1,5 @@
 using MusicGQL.Features.ServerLibrary.Reader;
+using Path = System.IO.Path;
 
 namespace MusicGQL.Features.ServerLibrary.Cache;
 
@@ -6,6 +7,10 @@ public class ServerLibraryCache(ServerLibraryJsonReader reader)
 {
     private readonly Dictionary<string, CachedArtist> _artistsById = new();
     private readonly Dictionary<string, CachedArtist> _artistsByName = new();
+    private readonly Dictionary<
+        string,
+        Dictionary<string, CachedRelease>
+    > _releasesByArtistAndFolder = new();
     private readonly List<CachedArtist> _allArtists = new();
     private readonly List<CachedRelease> _allReleases = new();
     private readonly List<CachedTrack> _allTracks = new();
@@ -49,6 +54,8 @@ public class ServerLibraryCache(ServerLibraryJsonReader reader)
     {
         var newArtistsById = new Dictionary<string, CachedArtist>();
         var newArtistsByName = new Dictionary<string, CachedArtist>();
+        var newReleasesByArtistAndFolder =
+            new Dictionary<string, Dictionary<string, CachedRelease>>();
         var newAllArtists = new List<CachedArtist>();
         var newAllReleases = new List<CachedRelease>();
         var newAllTracks = new List<CachedTrack>();
@@ -69,17 +76,22 @@ public class ServerLibraryCache(ServerLibraryJsonReader reader)
                     Releases = new List<CachedRelease>(),
                 };
 
+                var artistReleases = new Dictionary<string, CachedRelease>();
+
                 // Read releases for this artist
                 var releasesData = await reader.ReadArtistAlbumsAsync(artistPath);
 
                 foreach (var (releasePath, releaseJson) in releasesData)
                 {
+                    var folderName = Path.GetFileName(releasePath) ?? "";
+
                     var cachedRelease = new CachedRelease
                     {
                         Title = releaseJson.Title,
                         SortTitle = releaseJson.SortTitle,
                         Type = releaseJson.Type,
                         ReleasePath = releasePath,
+                        FolderName = folderName,
                         ArtistId = artistJson.Id,
                         ArtistName = artistJson.Name,
                         ReleaseJson = releaseJson,
@@ -99,6 +111,7 @@ public class ServerLibraryCache(ServerLibraryJsonReader reader)
                                 AudioFilePath = trackJson.AudioFilePath,
                                 ArtistId = artistJson.Id,
                                 ArtistName = artistJson.Name,
+                                AlbumFolderName = folderName,
                                 ReleaseTitle = releaseJson.Title,
                                 ReleaseType = releaseJson.Type,
                                 TrackJson = trackJson,
@@ -111,10 +124,12 @@ public class ServerLibraryCache(ServerLibraryJsonReader reader)
 
                     cachedArtist.Releases.Add(cachedRelease);
                     newAllReleases.Add(cachedRelease);
+                    artistReleases[folderName.ToLowerInvariant()] = cachedRelease;
                 }
 
                 newArtistsById[artistJson.Id.ToLowerInvariant()] = cachedArtist;
                 newArtistsByName[artistJson.Name.ToLowerInvariant()] = cachedArtist;
+                newReleasesByArtistAndFolder[artistJson.Id.ToLowerInvariant()] = artistReleases;
                 newAllArtists.Add(cachedArtist);
             }
 
@@ -123,6 +138,7 @@ public class ServerLibraryCache(ServerLibraryJsonReader reader)
             {
                 _artistsById.Clear();
                 _artistsByName.Clear();
+                _releasesByArtistAndFolder.Clear();
                 _allArtists.Clear();
                 _allReleases.Clear();
                 _allTracks.Clear();
@@ -132,6 +148,9 @@ public class ServerLibraryCache(ServerLibraryJsonReader reader)
 
                 foreach (var kvp in newArtistsByName)
                     _artistsByName[kvp.Key] = kvp.Value;
+
+                foreach (var kvp in newReleasesByArtistAndFolder)
+                    _releasesByArtistAndFolder[kvp.Key] = kvp.Value;
 
                 _allArtists.AddRange(newAllArtists);
                 _allReleases.AddRange(newAllReleases);
@@ -189,6 +208,121 @@ public class ServerLibraryCache(ServerLibraryJsonReader reader)
         {
             _artistsByName.TryGetValue(name.ToLowerInvariant(), out var artist);
             return artist;
+        }
+    }
+
+    /// <summary>
+    /// Gets a release/album by artist ID and album folder name
+    /// </summary>
+    /// <param name="artistId">Artist ID</param>
+    /// <param name="albumFolderName">Album folder name</param>
+    /// <returns>Cached release or null if not found</returns>
+    public async Task<CachedRelease?> GetReleaseByArtistAndFolderAsync(
+        string artistId,
+        string albumFolderName
+    )
+    {
+        await EnsureCacheInitializedAsync();
+
+        lock (_lockObject)
+        {
+            var artistReleases = _releasesByArtistAndFolder.GetValueOrDefault(
+                artistId.ToLowerInvariant()
+            );
+            if (artistReleases == null)
+                return null;
+
+            artistReleases.TryGetValue(albumFolderName.ToLowerInvariant(), out var release);
+            return release;
+        }
+    }
+
+    /// <summary>
+    /// Gets all albums/releases for a specific artist by artist ID
+    /// </summary>
+    /// <param name="artistId">Artist ID</param>
+    /// <returns>List of releases for the artist</returns>
+    public async Task<List<CachedRelease>> GetAlbumsByArtistIdAsync(string artistId)
+    {
+        await EnsureCacheInitializedAsync();
+
+        lock (_lockObject)
+        {
+            var artist = _artistsById.GetValueOrDefault(artistId.ToLowerInvariant());
+            return artist?.Releases ?? new List<CachedRelease>();
+        }
+    }
+
+    /// <summary>
+    /// Gets all tracks for a specific album by artist ID and album folder name
+    /// </summary>
+    /// <param name="artistId">Artist ID</param>
+    /// <param name="albumFolderName">Album folder name</param>
+    /// <returns>List of tracks for the album</returns>
+    public async Task<List<CachedTrack>> GetTracksByAlbumAsync(
+        string artistId,
+        string albumFolderName
+    )
+    {
+        await EnsureCacheInitializedAsync();
+
+        lock (_lockObject)
+        {
+            var artistReleases = _releasesByArtistAndFolder.GetValueOrDefault(
+                artistId.ToLowerInvariant()
+            );
+            if (artistReleases == null)
+                return new List<CachedTrack>();
+
+            artistReleases.TryGetValue(albumFolderName.ToLowerInvariant(), out var release);
+            return release?.Tracks ?? new List<CachedTrack>();
+        }
+    }
+
+    /// <summary>
+    /// Gets a specific track by artist ID, album folder name, and track number
+    /// </summary>
+    /// <param name="artistId">Artist ID</param>
+    /// <param name="albumFolderName">Album folder name</param>
+    /// <param name="trackNumber">Track number</param>
+    /// <returns>Cached track or null if not found</returns>
+    public async Task<CachedTrack?> GetTrackByArtistAlbumAndNumberAsync(
+        string artistId,
+        string albumFolderName,
+        int trackNumber
+    )
+    {
+        await EnsureCacheInitializedAsync();
+
+        lock (_lockObject)
+        {
+            var artistReleases = _releasesByArtistAndFolder.GetValueOrDefault(
+                artistId.ToLowerInvariant()
+            );
+            if (artistReleases == null)
+                return null;
+
+            artistReleases.TryGetValue(albumFolderName.ToLowerInvariant(), out var release);
+            return release?.Tracks.FirstOrDefault(t => t.TrackNumber == trackNumber);
+        }
+    }
+
+    /// <summary>
+    /// Gets all tracks for a specific artist by artist ID
+    /// </summary>
+    /// <param name="artistId">Artist ID</param>
+    /// <returns>List of all tracks for the artist</returns>
+    public async Task<List<CachedTrack>> GetTracksByArtistIdAsync(string artistId)
+    {
+        await EnsureCacheInitializedAsync();
+
+        lock (_lockObject)
+        {
+            return _allTracks
+                .Where(t => t.ArtistId.Equals(artistId, StringComparison.OrdinalIgnoreCase))
+                .OrderBy(t => t.ReleaseTitle)
+                .ThenBy(t => t.TrackNumber)
+                .ToList();
         }
     }
 

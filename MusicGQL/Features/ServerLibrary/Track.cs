@@ -1,23 +1,19 @@
 using Hqub.Lastfm;
 using MusicGQL.Features.LastFm;
-using MusicGQL.Features.ServerLibrary.Json;
-using MusicGQL.Integration.Neo4j;
+using MusicGQL.Features.ServerLibrary.Cache;
 
 namespace MusicGQL.Features.ServerLibrary;
 
-public record Track([property: GraphQLIgnore] TrackJson Model)
+public record Track([property: GraphQLIgnore] CachedTrack Model)
 {
     [ID]
-    public string Id() => "Model.Id";
+    public string Id() => Model.ArtistId + "/" + Model.AlbumFolderName + "/" + Model.Title;
 
     public string Title() => Model.Title;
 
-    public int? Length() => Model.TrackLength;
+    public int? Length() => Model.TrackJson.TrackLength;
 
-    public async Task<LastFmStatistics?> Statistics(
-        LastfmClient lastfmClient,
-        ServerLibraryService service
-    )
+    public async Task<LastFmStatistics?> Statistics(LastfmClient lastfmClient)
     {
         return null;
         // var artists = await service.GetArtistsForRecordingAsync(Model.Id);
