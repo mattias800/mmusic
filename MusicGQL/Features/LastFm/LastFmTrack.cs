@@ -1,9 +1,8 @@
 using MusicGQL.Features.MusicBrainz.Recording;
-using MusicGQL.Features.ServerLibrary.Artist;
+using MusicGQL.Features.ServerLibrary;
 using MusicGQL.Integration.MusicBrainz;
 using MusicGQL.Integration.Neo4j;
 using TrackSeries.FanArtTV.Client;
-using Recording = MusicGQL.Features.ServerLibrary.Recording.Recording;
 using Track = Hqub.Lastfm.Entities.Track;
 
 namespace MusicGQL.Features.LastFm;
@@ -56,7 +55,7 @@ public record LastFmTrack([property: GraphQLIgnore] Track Model)
 
     public LastFmStatistics Statistics() => new(Model.Statistics);
 
-    public async Task<Recording?> Recording(ServerLibraryService service)
+    public async Task<ServerLibrary.Track?> Recording(ServerLibraryService service)
     {
         var r = await service.SearchRecordingForArtistByArtistNameExactNameMatchAsync(
             Model.Name,
@@ -65,7 +64,7 @@ public record LastFmTrack([property: GraphQLIgnore] Track Model)
 
         var f = r.FirstOrDefault();
 
-        return f is null ? null : new Recording(f);
+        return f is null ? null : new ServerLibrary.Track(f);
     }
 
     public async Task<MbRecording?> MusicBrainzRecording(MusicBrainzService service)

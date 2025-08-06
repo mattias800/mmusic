@@ -2,8 +2,6 @@ using Hqub.Lastfm;
 using MusicGQL.Features.LastFm;
 using MusicGQL.Features.MusicBrainz.ReleaseGroup;
 using MusicGQL.Features.ServerLibrary;
-using MusicGQL.Features.ServerLibrary.Artist;
-using MusicGQL.Features.ServerLibrary.ArtistServerStatus;
 using MusicGQL.Integration.MusicBrainz;
 using TrackSeries.FanArtTV.Client;
 
@@ -95,5 +93,5 @@ public record MbArtist([property: GraphQLIgnore] Hqub.MusicBrainz.Entities.Artis
         }
     }
 
-    public ArtistServerStatus ServerStatus() => new(Model.Id);
+    public ArtistServerStatus.ArtistServerStatus ServerStatus() => new(Model.Id);
 }

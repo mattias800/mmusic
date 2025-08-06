@@ -43,10 +43,6 @@
     <PackageReference Include="TrackSeries.FanArtTV.Client" Version="1.2.4" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Features\ServerLibrary\Artist\Json\" />
-    <Folder Include="Features\ServerLibrary\Recording\Json\" />
-    <Folder Include="Features\ServerLibrary\ReleaseGroup\Json\" />
-    <Folder Include="Features\ServerLibrary\ServerLibraryCache\" />
     <Folder Include="Features\Users\Handlers\" />
     <Folder Include="Features\YouTube\" />
     <Folder Include="Migrations\" />

@@ -1,4 +1,3 @@
-using System.IO;
 using Google.Apis.Services;
 using Hqub.Lastfm;
 using Hqub.MusicBrainz;
@@ -8,6 +7,8 @@ using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using MusicGQL.Db.Postgres;
 using MusicGQL.EventProcessor;
+using MusicGQL.Features.ArtistServerStatus;
+using MusicGQL.Features.ArtistServerStatus.Services;
 using MusicGQL.Features.Authentication.Handlers;
 using MusicGQL.Features.Authorization;
 using MusicGQL.Features.Downloads;
@@ -18,6 +19,7 @@ using MusicGQL.Features.External.SoulSeek;
 using MusicGQL.Features.External.SoulSeek.Integration;
 using MusicGQL.Features.FileSystem;
 using MusicGQL.Features.FileSystem.Mutations;
+using MusicGQL.Features.Import.Handlers;
 using MusicGQL.Features.Likes.Commands;
 using MusicGQL.Features.Likes.Events;
 using MusicGQL.Features.Likes.Mutations;
@@ -26,18 +28,10 @@ using MusicGQL.Features.Playlists.Commands;
 using MusicGQL.Features.Playlists.Import.Spotify;
 using MusicGQL.Features.Playlists.Import.Spotify.Mutations;
 using MusicGQL.Features.Playlists.Mutations;
-using MusicGQL.Features.ServerLibrary.Artist;
-using MusicGQL.Features.ServerLibrary.Artist.Aggregate;
-using MusicGQL.Features.ServerLibrary.Artist.Handlers;
-using MusicGQL.Features.ServerLibrary.Artist.Mutations;
-using MusicGQL.Features.ServerLibrary.ArtistServerStatus;
-using MusicGQL.Features.ServerLibrary.ArtistServerStatus.Services;
-using MusicGQL.Features.ServerLibrary.Import.Handlers;
-using MusicGQL.Features.ServerLibrary.Release;
-using MusicGQL.Features.ServerLibrary.ReleaseGroup;
-using MusicGQL.Features.ServerLibrary.ReleaseGroup.Aggregate;
-using MusicGQL.Features.ServerLibrary.ReleaseGroup.Handlers;
-using MusicGQL.Features.ServerLibrary.ReleaseGroup.Mutations;
+using MusicGQL.Features.ServerLibrary.Cache;
+using MusicGQL.Features.ServerLibrary.Json;
+using MusicGQL.Features.ServerLibrary.Mutations;
+using MusicGQL.Features.ServerLibrary.Reader;
 using MusicGQL.Features.ServerSettings.Commands;
 using MusicGQL.Features.ServerSettings.Events;
 using MusicGQL.Features.ServerSettings.Mutations;
@@ -45,13 +39,9 @@ using MusicGQL.Features.Users.Aggregate;
 using MusicGQL.Features.Users.Handlers;
 using MusicGQL.Features.Users.Mutations;
 using MusicGQL.Integration.MusicBrainz;
-using MusicGQL.Integration.Neo4j;
 using MusicGQL.Integration.Spotify;
 using MusicGQL.Integration.Spotify.Configuration;
 using MusicGQL.Integration.Youtube.Configuration;
-using MusicGQL.Features.ServerLibrary2.Reader;
-using MusicGQL.Features.ServerLibrary2.Cache;
-using MusicGQL.Features.ServerLibrary2.Json;
 using MusicGQL.Types;
 using Neo4j.Driver;
 using Rebus.Config;
@@ -98,8 +88,6 @@ builder
             minimumDiagnosticLevel: DiagnosticLevel.Debug
         )
     ))
-    .AddSingleton<ServerLibraryImporterService>()
-    .AddSingleton<ServerLibraryService>()
     .AddSingleton<SoulSeekService>()
     .AddSingleton<MusicBrainzService>()
     .AddSingleton<YouTubeService>()
@@ -114,15 +102,10 @@ builder
     .AddScoped<ImportArtistToServerLibraryHandler>()
     .AddScoped<ImportArtistReleaseGroupsToServerLibraryHandler>()
     .AddScoped<ImportReleaseGroupToServerLibraryHandler>()
-    .AddScoped<MarkReleaseGroupAsAddedToServerLibraryHandler>()
-    .AddScoped<MarkArtistAsAddedToServerLibraryHandler>()
-    .AddScoped<MarkArtistReleaseGroupsAsAddedToServerLibraryHandler>()
     .AddScoped<ProcessMissingMetaDataHandler>()
     .AddScoped<MissingMetaDataProcessingService>()
     // Event processors
     .AddScoped<LikedSongsEventProcessor>()
-    .AddScoped<ReleaseGroupsAddedToServerLibraryProcessor>()
-    .AddScoped<ArtistsAddedToServerLibraryProcessor>()
     .AddScoped<UserEventProcessor>()
     .AddScoped<PlaylistsEventProcessor>()
     .AddScoped<ServerSettingsEventProcessor>()
@@ -259,11 +242,6 @@ builder
     .AddTypeExtension<UpdateDownloadPathMutation>()
     .AddType<UpdateLibraryPathResult.UpdateLibraryPathSuccess>()
     .AddType<UpdateDownloadPathResult.UpdateDownloadPathSuccess>()
-    .AddTypeExtension<AddReleaseGroupToServerLibraryMutation>()
-    .AddType<AddReleaseGroupToServerLibraryResult.AddReleaseGroupToServerLibrarySuccess>()
-    .AddType<AddReleaseGroupToServerLibraryResult.AddReleaseGroupToServerLibraryReleaseGroupAlreadyAdded>()
-    .AddType<AddReleaseGroupToServerLibraryResult.AddReleaseGroupToServerLibraryReleaseGroupDoesNotExist>()
-    .AddType<AddReleaseGroupToServerLibraryResult.AddReleaseGroupToServerLibraryUnknownError>()
     .AddTypeExtension<AddArtistToServerLibraryMutation>()
     .AddType<AddArtistToServerLibraryResult.AddArtistToServerLibrarySuccess>()
     .AddType<AddArtistToServerLibraryResult.AddArtistToServerLibraryArtistAlreadyAdded>()
@@ -293,9 +271,6 @@ builder
     .AddType<ArtistServerStatusUpdatingArtistReleases>()
     .AddType<ArtistServerStatusNotInLibrary>()
     .AddType<IArtistServerStatusResult>()
-    .AddType<IArtistBase>()
-    .AddType<IReleaseGroupBase>()
-    .AddType<IReleaseBase>()
     .AddTypeExtension<FileSystemSearchRoot>()
     .AddTypeExtension<CreateDirectoryMutation>();
 
@@ -390,29 +365,33 @@ using (var scope = app.Services.CreateScope())
     Console.WriteLine("═══════════════════════════════════════════════");
     Console.WriteLine("🎵 INITIALIZING MUSIC LIBRARY CACHE");
     Console.WriteLine("═══════════════════════════════════════════════");
-    
+
     var cache = scope.ServiceProvider.GetRequiredService<ServerLibraryCache>();
-    
+
     try
     {
         Console.WriteLine("📀 Loading music library from disk...");
-        Console.WriteLine($"   🔍 Looking for library at: {System.IO.Path.GetFullPath("./Library/")}");
+        Console.WriteLine(
+            $"   🔍 Looking for library at: {System.IO.Path.GetFullPath("./Library/")}"
+        );
         await cache.UpdateCacheAsync();
-        
+
         var stats = await cache.GetCacheStatisticsAsync();
         Console.WriteLine($"✅ Cache loaded successfully!");
-        Console.WriteLine($"   📊 Statistics: {stats.ArtistCount} artists, {stats.ReleaseCount} releases, {stats.TrackCount} tracks");
+        Console.WriteLine(
+            $"   📊 Statistics: {stats.ArtistCount} artists, {stats.ReleaseCount} releases, {stats.TrackCount} tracks"
+        );
         Console.WriteLine($"   🕒 Last updated: {stats.LastUpdated:yyyy-MM-dd HH:mm:ss} UTC");
         Console.WriteLine();
 
         // Display all artists and their albums
         var artists = await cache.GetAllArtistsAsync();
-        
+
         if (artists.Count > 0)
         {
             Console.WriteLine("🎤 ARTISTS & ALBUMS IN LIBRARY:");
             Console.WriteLine("───────────────────────────────────────────────");
-            
+
             foreach (var artist in artists.OrderBy(a => a.Name))
             {
                 Console.WriteLine($"🎸 {artist.Name}");
@@ -420,7 +399,7 @@ using (var scope = app.Services.CreateScope())
                 {
                     Console.WriteLine($"   (Sort: {artist.SortName})");
                 }
-                
+
                 if (artist.Releases.Count > 0)
                 {
                     foreach (var release in artist.Releases.OrderBy(r => r.Title))
@@ -430,15 +409,18 @@ using (var scope = app.Services.CreateScope())
                             ReleaseType.Album => "💿",
                             ReleaseType.Ep => "💽",
                             ReleaseType.Single => "🎵",
-                            _ => "📀"
+                            _ => "📀",
                         };
-                        
-                        var trackCountText = release.Tracks.Count > 0 ? $" ({release.Tracks.Count} tracks)" : "";
+
+                        var trackCountText =
+                            release.Tracks.Count > 0 ? $" ({release.Tracks.Count} tracks)" : "";
                         Console.WriteLine($"   {typeIcon} {release.Title}{trackCountText}");
-                        
+
                         if (!string.IsNullOrEmpty(release.ReleaseJson.FirstReleaseYear))
                         {
-                            Console.WriteLine($"      📅 Released: {release.ReleaseJson.FirstReleaseYear}");
+                            Console.WriteLine(
+                                $"      📅 Released: {release.ReleaseJson.FirstReleaseYear}"
+                            );
                         }
                     }
                 }
@@ -446,6 +428,7 @@ using (var scope = app.Services.CreateScope())
                 {
                     Console.WriteLine("   📭 No releases found");
                 }
+
                 Console.WriteLine();
             }
         }
@@ -454,7 +437,7 @@ using (var scope = app.Services.CreateScope())
             Console.WriteLine("📭 No artists found in library");
             Console.WriteLine("   💡 Make sure your library folder contains artist.json files");
         }
-        
+
         Console.WriteLine("═══════════════════════════════════════════════");
         Console.WriteLine("🚀 MUSIC LIBRARY CACHE READY");
         Console.WriteLine("═══════════════════════════════════════════════");

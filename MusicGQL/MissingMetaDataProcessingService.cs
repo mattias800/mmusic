@@ -1,4 +1,4 @@
-using MusicGQL.Features.ServerLibrary.Import.Handlers;
+using MusicGQL.Features.Import.Handlers;
 
 namespace MusicGQL;
 

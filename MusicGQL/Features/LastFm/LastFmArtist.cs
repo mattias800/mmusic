@@ -1,5 +1,5 @@
 using MusicGQL.Features.MusicBrainz.Artist;
-using MusicGQL.Features.ServerLibrary.Artist;
+using MusicGQL.Features.ServerLibrary;
 using MusicGQL.Integration.MusicBrainz;
 using MusicGQL.Integration.Neo4j;
 using TrackSeries.FanArtTV.Client;

@@ -6,9 +6,6 @@ using MusicGQL.Features.External;
 using MusicGQL.Features.MusicBrainz;
 using MusicGQL.Features.Playlists;
 using MusicGQL.Features.Recommendations;
-using MusicGQL.Features.ServerLibrary.Artist;
-using MusicGQL.Features.ServerLibrary.Recording;
-using MusicGQL.Features.ServerLibrary.Release;
 using MusicGQL.Features.ServerLibrary.ReleaseGroup;
 using MusicGQL.Features.ServerSettings;
 using MusicGQL.Features.ServerSettings.Db;
@@ -18,8 +15,6 @@ namespace MusicGQL.Types;
 
 public class Query
 {
-    public ArtistSearchRoot Artist() => new();
-
     public ReleaseGroupSearchRoot ReleaseGroup() => new();
 
     public ReleaseSearchRoot Release() => new();

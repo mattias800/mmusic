@@ -2,7 +2,6 @@ using Hqub.MusicBrainz.Entities;
 using MusicGQL.Features.MusicBrainz.Artist;
 using MusicGQL.Features.MusicBrainz.Common;
 using MusicGQL.Features.MusicBrainz.ReleaseGroup;
-using MusicGQL.Features.ServerLibrary.Release;
 using MusicGQL.Integration.MusicBrainz;
 
 namespace MusicGQL.Features.MusicBrainz.Release;
