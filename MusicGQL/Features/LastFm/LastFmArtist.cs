@@ -1,7 +1,7 @@
 using MusicGQL.Features.MusicBrainz.Artist;
 using MusicGQL.Features.ServerLibrary;
+using MusicGQL.Features.ServerLibrary.Cache;
 using MusicGQL.Integration.MusicBrainz;
-using MusicGQL.Integration.Neo4j;
 using TrackSeries.FanArtTV.Client;
 
 namespace MusicGQL.Features.LastFm;
@@ -15,17 +15,10 @@ public record LastFmArtist([property: GraphQLIgnore] Hqub.Lastfm.Entities.Artist
     public LastFmStatistics Statistics => new(Model.Statistics);
     public string? Summary => Model.Biography.Summary;
 
-    public async Task<Artist?> Artist(ServerLibraryService service)
+    public async Task<Artist?> Artist(ServerLibraryCache cache)
     {
-        var a = await service.SearchArtistByNameAsync(Model.Name);
-        var id = a.FirstOrDefault()?.Id;
-        if (id is null)
-        {
-            return null;
-        }
-
-        var release = await service.GetArtistByIdAsync(id);
-        return release is null ? null : new(release);
+        var a = await cache.GetArtistByNameAsync(Model.Name);
+        return a is null ? null : new(a);
     }
 
     public async Task<ArtistImages?> Images(

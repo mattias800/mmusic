@@ -1,5 +1,6 @@
 using MusicGQL.Features.MusicBrainz.Recording;
 using MusicGQL.Features.ServerLibrary;
+using MusicGQL.Features.ServerLibrary.Cache;
 using MusicGQL.Integration.MusicBrainz;
 using MusicGQL.Integration.Neo4j;
 using TrackSeries.FanArtTV.Client;
@@ -20,21 +21,18 @@ public record LastFmTrack([property: GraphQLIgnore] Track Model)
 
     public LastFmAlbum? Album() => Model.Album is null ? null : new(Model.Album);
 
-    public async Task<ArtistImages?> Images(
-        IFanArtTVClient fanartClient,
-        ServerLibraryService service
-    )
+    public async Task<ArtistImages?> Images(IFanArtTVClient fanartClient, ServerLibraryCache cache)
     {
         if (string.IsNullOrEmpty(Model.MBID))
         {
-            var a = await service.SearchArtistByNameAsync(Model.Artist.Name);
-            var id = a.FirstOrDefault()?.Id;
-            if (id is null)
+            var a = await cache.GetArtistByNameAsync(Model.Artist.Name);
+            var mbId = a?.ArtistJson.Connections?.MusicBrainzArtistId;
+            if (mbId is null)
             {
                 return null;
             }
 
-            var artist = await fanartClient.Music.GetArtistAsync(id);
+            var artist = await fanartClient.Music.GetArtistAsync(mbId);
             return artist is null ? null : new(artist);
         }
 
@@ -55,7 +53,7 @@ public record LastFmTrack([property: GraphQLIgnore] Track Model)
 
     public LastFmStatistics Statistics() => new(Model.Statistics);
 
-    public async Task<ServerLibrary.Track?> Recording(ServerLibraryService service)
+    public async Task<ServerLibrary.Track?> Recording(ServerLibraryCache cache)
     {
         var r = await service.SearchRecordingForArtistByArtistNameExactNameMatchAsync(
             Model.Name,
