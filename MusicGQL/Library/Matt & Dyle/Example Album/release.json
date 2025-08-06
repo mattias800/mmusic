@@ -1,0 +1,22 @@
+{
+  "title": "Example Album",
+  "type": "Album",
+  "firstReleaseYear": "2024",
+  "tracks": [
+    {
+      "title": "Song One",
+      "trackNumber": 1,
+      "audioFilePath": "/path/to/song1.mp3"
+    },
+    {
+      "title": "Song Two", 
+      "trackNumber": 2,
+      "audioFilePath": "/path/to/song2.mp3"
+    },
+    {
+      "title": "Song Three",
+      "trackNumber": 3,
+      "audioFilePath": "/path/to/song3.mp3"
+    }
+  ]
+} 
