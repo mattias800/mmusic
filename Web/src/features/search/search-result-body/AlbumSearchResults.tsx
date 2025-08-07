@@ -4,6 +4,7 @@ import { SearchResultGroup } from "./components/SearchResultGroup";
 import { useLimitQuery } from "@/common/LimitQuery.ts";
 import { ShowMoreButton } from "@/components/buttons/ShowMoreButton.tsx";
 import { AlbumCard } from "@/features/album/AlbumCard.tsx";
+import { MbReleaseGroupCard } from "@/features/album/MbReleaseGroupCard.tsx";
 
 export interface AlbumSearchResultsProps {
   searchText: string;
@@ -16,7 +17,7 @@ const albumSearchQueryDocument = graphql(`
         searchByName(name: $text, limit: $limit) {
           id
           title
-          ...AlbumCard_ReleaseGroup
+          ...MbReleaseGroupCard_MbReleaseGroup
         }
       }
     }
@@ -40,7 +41,7 @@ export const AlbumSearchResults: React.FC<AlbumSearchResultsProps> = ({
       fetching={fetching}
       items={releaseGroups}
       renderItem={(releaseGroup) => (
-        <AlbumCard releaseGroup={releaseGroup} key={releaseGroup.id} />
+        <MbReleaseGroupCard releaseGroup={releaseGroup} key={releaseGroup.id} />
       )}
     >
       {showMoreButtonVisible && (

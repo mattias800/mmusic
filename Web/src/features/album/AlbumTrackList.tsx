@@ -9,7 +9,7 @@ interface AlbumTrackListProps {
 }
 
 const albumTrackListReleaseGroupFragment = graphql(`
-  fragment AlbumTrackList_ReleaseGroup on ReleaseGroup {
+  fragment AlbumTrackList_Release on Release {
     id
     title
     mainRelease {
@@ -17,7 +17,7 @@ const albumTrackListReleaseGroupFragment = graphql(`
       title
       recordings {
         id
-        ...RecordingPlayButton_Recording
+        ...RecordingPlayButton_Track
         title
         length
         statistics {

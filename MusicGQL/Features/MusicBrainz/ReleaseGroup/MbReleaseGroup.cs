@@ -1,6 +1,5 @@
 using Hqub.MusicBrainz.Entities;
 using MusicGQL.Features.MusicBrainz.Common;
-using MusicGQL.Features.ServerLibrary;
 using MusicGQL.Features.ServerLibrary.Utils;
 using MusicGQL.Integration.MusicBrainz;
 using TrackSeries.FanArtTV.Client;

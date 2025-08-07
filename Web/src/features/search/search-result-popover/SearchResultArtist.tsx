@@ -11,12 +11,12 @@ export interface SearchResultArtistProps {
 
 const artistSearchQuery = graphql(`
   query SearchResultArtistSearch($text: String!) {
-    artist {
-      searchByName(name: $text, limit: 5) {
+    serverLibrary {
+      searchArtists(searchTerm: $text, limit: 5) {
         id
         name
         images {
-          artistThumb
+          thumbs
         }
       }
     }

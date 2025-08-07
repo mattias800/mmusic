@@ -5,26 +5,30 @@ import { AlbumPanel } from "@/features/album/AlbumPanel.tsx";
 import { ScreenSpinner } from "@/components/spinner/ScreenSpinner.tsx";
 
 const albumQuery = graphql(`
-  query AlbumQuery($releaseGroupId: ID!) {
-    releaseGroup {
-      byId(id: $releaseGroupId) {
+  query AlbumQuery($artistId: ID!, $releaseFolderName: String!) {
+    serverLibrary {
+      artistById(id: $artistId) {
         id
-        title
-        credits {
-          name
+        name
+        releaseByFolderName(releaseFolderName: $releaseFolderName) {
+          id
+          title
+          ...AlbumPanel_Release
         }
-        ...AlbumPanel_ReleaseGroup
       }
     }
   }
 `);
 
 export const AlbumPage = () => {
-  const { releaseGroupId } = useParams<{ releaseGroupId: string }>();
+  const { artistId, releaseFolderName } = useParams<{
+    artistId: string;
+    releaseFolderName: string;
+  }>();
   const [{ error, data, fetching, stale }] = useQuery({
     query: albumQuery,
-    variables: { releaseGroupId: releaseGroupId! },
-    pause: !releaseGroupId,
+    variables: { artistId: artistId!, releaseFolderName: releaseFolderName! },
+    pause: !artistId || !releaseFolderName,
   });
 
   if (fetching || stale) return <ScreenSpinner />;

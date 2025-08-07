@@ -18,7 +18,7 @@ const topArtistCardArtistFragment = graphql(`
       id
       name
       images {
-        artistThumb
+        thumbs
       }
     }
     statistics {

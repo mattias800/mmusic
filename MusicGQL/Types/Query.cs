@@ -6,6 +6,7 @@ using MusicGQL.Features.External;
 using MusicGQL.Features.MusicBrainz;
 using MusicGQL.Features.Playlists;
 using MusicGQL.Features.Recommendations;
+using MusicGQL.Features.ServerLibrary;
 using MusicGQL.Features.ServerSettings;
 using MusicGQL.Features.ServerSettings.Db;
 using MusicGQL.Features.Users;
@@ -14,6 +15,8 @@ namespace MusicGQL.Types;
 
 public class Query
 {
+    public ServerLibrarySearchRoot ServerLibrary() => new();
+
     public MusicBrainzSearchRoot MusicBrainz() => new();
 
     // Implemented Viewer field

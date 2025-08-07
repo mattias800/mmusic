@@ -6,12 +6,12 @@ import { useNavigate } from "react-router";
 import { PhotoCardCenterHeading } from "@/components/cards/PhotoCardCenterHeading.tsx";
 import { PhotoCardBottomText } from "@/components/cards/PhotoCardBottomText.tsx";
 
-export interface ArtistCardProps {
-  artist: FragmentType<typeof artistCardArtistFragment>;
+export interface MbArtistCardProps {
+  mbArtist: FragmentType<typeof mbArtistCardArtistFragment>;
 }
 
-const artistCardArtistFragment = graphql(`
-  fragment ArtistCard_Artist on Artist {
+const mbArtistCardArtistFragment = graphql(`
+  fragment MbArtistCard_MbArtist on MbArtist {
     id
     name
     listeners
@@ -21,21 +21,21 @@ const artistCardArtistFragment = graphql(`
   }
 `);
 
-export const ArtistCard: React.FC<ArtistCardProps> = (props) => {
-  const artist = useFragment(artistCardArtistFragment, props.artist);
-  const imageUrl = artist.images?.artistThumb;
+export const MbArtistCard: React.FC<MbArtistCardProps> = (props) => {
+  const mbArtist = useFragment(mbArtistCardArtistFragment, props.mbArtist);
+  const imageUrl = mbArtist.images?.artistThumb;
 
   const navigate = useNavigate();
 
   return (
     <PhotoCard
       imageUrl={imageUrl ?? ""}
-      imageAlt={artist.name + " cover"}
-      onClick={() => navigate(`/artist/${artist.id}`)}
+      imageAlt={mbArtist.name + " cover"}
+      onClick={() => navigate(`/artist/${mbArtist.id}`)}
     >
-      <PhotoCardCenterHeading>{artist.name}</PhotoCardCenterHeading>
+      <PhotoCardCenterHeading>{mbArtist.name}</PhotoCardCenterHeading>
       <PhotoCardBottomText>
-        {`${formatLargeNumber(artist.listeners)} listeners`}
+        {`${formatLargeNumber(mbArtist.listeners)} listeners`}
       </PhotoCardBottomText>
     </PhotoCard>
   );

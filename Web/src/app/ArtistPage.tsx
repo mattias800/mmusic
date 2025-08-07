@@ -7,8 +7,8 @@ import { ArtistNotFound } from "@/app/ArtistNotFound.tsx";
 
 const artistQuery = graphql(`
   query ArtistQuery($artistId: ID!) {
-    artist {
-      byId(id: $artistId) {
+    serverLibrary {
+      artistById(id: $artistId) {
         id
         name
         ...ArtistPanel_Artist

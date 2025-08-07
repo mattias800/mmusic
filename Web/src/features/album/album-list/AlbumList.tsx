@@ -12,9 +12,9 @@ export interface AlbumListProps {
 }
 
 const albumListAlbumFragment = graphql(`
-  fragment AlbumList_ReleaseGroup on ReleaseGroup {
+  fragment AlbumList_Release on Release {
     id
-    ...AlbumCard_ReleaseGroup
+    ...AlbumCard_Release
   }
 `);
 

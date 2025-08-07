@@ -14,8 +14,8 @@ export interface TopArtistTracksProps {
 
 const topArtistTracksArtistQuery = graphql(`
   query TopArtistTracks($artistId: ID!) {
-    artist {
-      byId(id: $artistId) {
+    serverLibrary {
+      artistById(id: $artistId) {
         id
         topTracks {
           id

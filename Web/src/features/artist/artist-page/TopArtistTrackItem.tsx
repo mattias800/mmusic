@@ -20,12 +20,7 @@ const topArtistTrackItemLastFmTrackFragment = graphql(`
       id
       title
       length
-      ...RecordingPlayButton_Recording
-      mainAlbum {
-        id
-        title
-        coverArtUri
-      }
+      ...RecordingPlayButton_Track
     }
   }
 `);

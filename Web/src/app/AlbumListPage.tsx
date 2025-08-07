@@ -8,10 +8,10 @@ export interface AlbumListPageProps {}
 
 const albumListQuery = graphql(`
   query AlbumListQuery {
-    releaseGroup {
-      all {
+    serverLibrary {
+      allReleases {
         id
-        ...AlbumList_ReleaseGroup
+        ...AlbumList_Release
       }
     }
   }

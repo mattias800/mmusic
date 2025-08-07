@@ -16,12 +16,8 @@ export interface RecordingPlayButtonProps {
 }
 
 const recordingPlayButtonRecordingFragment = graphql(`
-  fragment RecordingPlayButton_Recording on Recording {
+  fragment RecordingPlayButton_Track on Track {
     id
-    streamingServiceInfo {
-      id
-      youtubeVideoId
-    }
   }
 `);
 

@@ -12,13 +12,13 @@ export interface ArtistSingleListProps {
 
 const artistSingleListArtistQuery = graphql(`
   query ArtistSingleList($artistId: ID!) {
-    artist {
-      byId(id: $artistId) {
+    serverLibrary {
+      artistById(id: $artistId) {
         id
         singles {
           id
           firstReleaseDate
-          ...AlbumCard_ReleaseGroup
+          ...AlbumCard_Release
         }
       }
     }

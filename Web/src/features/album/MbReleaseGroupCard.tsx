@@ -2,22 +2,24 @@ import * as React from "react";
 import { FragmentType, graphql, useFragment } from "@/gql";
 import { useNavigate } from "react-router";
 
-export interface AlbumCardProps {
-  releaseGroup: FragmentType<typeof albumCardReleaseGroupFragment>;
+export interface MbReleaseGroupCardProps {
+  releaseGroup: FragmentType<typeof mbReleaseGroupCardReleaseGroupFragment>;
 }
 
-const albumCardReleaseGroupFragment = graphql(`
-  fragment AlbumCard_Release on Release {
+const mbReleaseGroupCardReleaseGroupFragment = graphql(`
+  fragment MbReleaseGroupCard_MbReleaseGroup on MbReleaseGroup {
     id
     title
     firstReleaseYear
-    coverArtUrl
+    coverArtUri
   }
 `);
 
-export const AlbumCard: React.FC<AlbumCardProps> = (props) => {
+export const MbReleaseGroupCard: React.FC<MbReleaseGroupCardProps> = (
+  props,
+) => {
   const releaseGroup = useFragment(
-    albumCardReleaseGroupFragment,
+    mbReleaseGroupCardReleaseGroupFragment,
     props.releaseGroup,
   );
 

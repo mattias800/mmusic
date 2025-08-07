@@ -60,28 +60,6 @@ type AddArtistToServerLibraryUnknownError {
   message: String!
 }
 
-input AddReleaseGroupToServerLibraryInput {
-  releaseGroupId: ID!
-}
-
-type AddReleaseGroupToServerLibraryReleaseGroupAlreadyAdded {
-  message: String!
-}
-
-type AddReleaseGroupToServerLibraryReleaseGroupDoesNotExist {
-  message: String!
-}
-
-union AddReleaseGroupToServerLibraryResult = AddReleaseGroupToServerLibraryReleaseGroupAlreadyAdded | AddReleaseGroupToServerLibraryReleaseGroupDoesNotExist | AddReleaseGroupToServerLibrarySuccess | AddReleaseGroupToServerLibraryUnknownError
-
-type AddReleaseGroupToServerLibrarySuccess {
-  success: Boolean!
-}
-
-type AddReleaseGroupToServerLibraryUnknownError {
-  message: String!
-}
-
 """Defines when a policy shall be executed."""
 enum ApplyPolicy {
   """After the resolver was executed."""
@@ -94,44 +72,26 @@ enum ApplyPolicy {
   VALIDATION
 }
 
-type Artist implements ArtistBase {
-  albums: [ReleaseGroup!]!
-  eps: [ReleaseGroup!]!
-  gender: String
+type Artist {
+  albums: [Release!]!
+  eps: [Release!]!
   id: ID!
   images: ArtistImages
   listeners: Long
-  musicBrainzArtist: MbArtist
   name: String!
-  releaseGroups: [ReleaseGroup!]!
+  releaseByFolderName(releaseFolderName: String!): Release
   releases: [Release!]!
   serverStatus: ArtistServerStatus!
-  singles: [ReleaseGroup!]!
+  singles: [Release!]!
   sortName: String!
   topTracks: [LastFmTrack!]!
 }
 
-interface ArtistBase {
-  id: ID!
-  images: ArtistImages
-  listeners: Long
-  name: String!
-  serverStatus: ArtistServerStatus!
-  sortName: String!
-}
-
 type ArtistImages {
-  artistBackground: String
-  artistThumb: String
-  hdMusicLogo: String
-  musicBanner: String
-  musicLogo: String
-}
-
-type ArtistSearchRoot {
-  all: [Artist!]!
-  byId(id: ID!): Artist
-  searchByName(limit: Int! = 25, name: String!, offset: Int! = 0): [Artist!]!
+  backgrounds: [String!]!
+  banners: [String!]!
+  logos: [String!]!
+  thumbs: [String!]!
 }
 
 type ArtistServerStatus {
@@ -140,6 +100,7 @@ type ArtistServerStatus {
 }
 
 type ArtistServerStatusImportingArtist implements ArtistServerStatusResultBase {
+  artistMbId: String!
   releasesVisible: Boolean!
   topTracksVisible: Boolean!
 }
@@ -153,11 +114,13 @@ type ArtistServerStatusImportingArtistReleases implements ArtistServerStatusResu
 }
 
 type ArtistServerStatusNotInLibrary implements ArtistServerStatusResultBase {
+  artistMbId: String!
   releasesVisible: Boolean!
   topTracksVisible: Boolean!
 }
 
 type ArtistServerStatusReady implements ArtistServerStatusResultBase {
+  artistMbId: String!
   releasesVisible: Boolean!
   topTracksVisible: Boolean!
 }
@@ -170,13 +133,23 @@ interface ArtistServerStatusResultBase {
 }
 
 type ArtistServerStatusUpdatingArtist implements ArtistServerStatusResultBase {
+  artistMbId: String!
   releasesVisible: Boolean!
   topTracksVisible: Boolean!
 }
 
 type ArtistServerStatusUpdatingArtistReleases implements ArtistServerStatusResultBase {
+  artistMbId: String!
   releasesVisible: Boolean!
   topTracksVisible: Boolean!
+}
+
+type CacheStatistics {
+  artistCount: Int!
+  isInitialized: Boolean!
+  lastUpdated: DateTime!
+  releaseCount: Int!
+  trackCount: Int!
 }
 
 union CreatePlaylistResult = CreatePlaylistSuccess
@@ -245,17 +218,32 @@ type FileSystemEntry {
   path: String!
 }
 
-interface IReleaseBase {
-  country: String
-  coverArtUri: String!
-  date: String
-  id: ID!
-  title: String!
-  year: String
+type FileSystemSearchRoot {
+  browseFileSystem(path: String): [FileSystemEntry!]!
+}
+
+type ImportArtistResult {
+  artistId: String
+  artistName: String!
+  errorMessage: String
+  musicBrainzId: String
+  photosDownloaded: PhotosDownloaded!
+  spotifyId: String
+  success: Boolean!
 }
 
 type ImportPlaylistSearchRoot {
   spotify: SpotifyPlaylistSearchRoot!
+}
+
+type ImportReleasesResult {
+  artistId: String!
+  errorMessage: String
+  failedReleases: Int!
+  importedReleases: [ImportedRelease!]!
+  success: Boolean!
+  successfulReleases: Int!
+  totalReleases: Int!
 }
 
 type ImportSpotifyPlaylistError {
@@ -268,10 +256,11 @@ type ImportSpotifyPlaylistSuccess {
   success: Boolean!
 }
 
-type Label {
-  disambiguation: String!
-  id: String!
-  name: String!
+type ImportedRelease {
+  errorMessage: String
+  releaseGroupId: String!
+  success: Boolean!
+  title: String!
 }
 
 type LastFmAlbum {
@@ -312,7 +301,7 @@ type LastFmTrack {
   musicBrainzRecording: MbRecording
   name: String!
   playCount: Long
-  recording: Recording
+  recording: Track
   statistics: LastFmStatistics!
   summary: String
 }
@@ -350,7 +339,7 @@ type MbAlbumImages {
   cdArt: String
 }
 
-type MbArtist implements ArtistBase {
+type MbArtist {
   albums: [MbReleaseGroup!]!
   disambiguation: String
   id: ID!
@@ -424,7 +413,7 @@ type MbRelation {
   url: Url
 }
 
-type MbRelease implements IReleaseBase {
+type MbRelease {
   artists: [MbArtist!]!
   barcode: String
   country: String
@@ -443,7 +432,7 @@ type MbRelease implements IReleaseBase {
   year: String
 }
 
-type MbReleaseGroup implements ReleaseGroupBase {
+type MbReleaseGroup {
   coverArtUri: String
   credits: [MbNameCredit!]!
   firstReleaseDate: String
@@ -493,11 +482,12 @@ type MusicBrainzSearchRoot {
 
 type Mutation {
   addArtistToServerLibrary(input: AddArtistToServerLibraryInput!): AddArtistToServerLibraryResult!
-  addReleaseGroupToServerLibrary(input: AddReleaseGroupToServerLibraryInput!): AddReleaseGroupToServerLibraryResult!
   createDirectory(path: String!): FileSystemEntry!
   createPlaylist: CreatePlaylistResult!
   createUser(input: CreateUserInput!): CreateUserResult!
   deletePlaylist(input: DeletePlaylistInput!): DeletePlaylistResult!
+  importArtist(artistName: String!): ImportArtistResult!
+  importArtistReleases(artistId: String!): ImportReleasesResult!
   importSpotifyPlaylistById(playlistId: String!, userId: UUID!): ImportSpotifyPlaylistResult!
   likeSong(input: LikeSongInput!): LikeSongResult!
   ping: Boolean!
@@ -508,12 +498,6 @@ type Mutation {
   unlikeSong(input: UnlikedSongInput!): UnlikedSongPayload!
   updateDownloadPath(input: UpdateDownloadPathInput!): UpdateDownloadPathResult!
   updateLibraryPath(input: UpdateLibraryPathInput!): UpdateLibraryPathResult!
-}
-
-type NameCredit {
-  artist: Artist!
-  joinPhrase: String!
-  name: String!
 }
 
 """Information about pagination in a connection."""
@@ -535,6 +519,13 @@ type PageInfo {
   startCursor: String
 }
 
+type PhotosDownloaded {
+  backgrounds: Int!
+  banners: Int!
+  logos: Int!
+  thumbs: Int!
+}
+
 type Ping {
   id: ID!
 }
@@ -545,7 +536,7 @@ type Playlist {
   id: ID!
   modifiedAt: DateTime
   name: String
-  recordings: [Recording!]!
+  tracks: [Track!]!
 }
 
 type PlaylistSearchRoot {
@@ -554,16 +545,12 @@ type PlaylistSearchRoot {
 
 type Query {
   areThereAnyUsers: Boolean!
-  artist: ArtistSearchRoot!
-  browseFileSystem(path: String): [FileSystemEntry!]!
   download: DownloadsSearchRoot!
   external: ExternalRoot!
   musicBrainz: MusicBrainzSearchRoot!
   playlist: PlaylistSearchRoot!
   recommendations: RecommendationsSearchRoot!
-  recording: RecordingSearchRoot!
-  release: ReleaseSearchRoot!
-  releaseGroup: ReleaseGroupSearchRoot!
+  serverLibrary: ServerLibrarySearchRoot!
   serverSettings: ServerSettings!
   user: UserSearchRoot!
   viewer: User
@@ -575,73 +562,20 @@ type RecommendationsSearchRoot {
   topTracks: [LastFmTrack!]!
 }
 
-type Recording {
-  id: ID!
-  length: Int
-  mainAlbum: ReleaseGroup
-  nameCredits: [NameCredit!]!
-  statistics: LastFmStatistics
-  streamingServiceInfo: RecordingStreamingServiceInfo!
-  title: String!
-}
-
-type RecordingSearchRoot {
-  byId(id: ID!): Recording
-  searchByName(limit: Int! = 25, name: String!, offset: Int! = 0): [Recording!]!
-}
-
-type RecordingStreamingServiceInfo {
-  id: ID!
-  youtubeMusicUrl: String
-  youtubeSearchVideoId: String
-  youtubeVideoId: String
-}
-
-type Release implements IReleaseBase {
-  country: String
-  coverArtUri: String!
-  credits: [NameCredit!]!
-  date: String
-  id: ID!
-  labels: [Label!]!
-  recordings: [Recording!]!
-  releaseGroup: ReleaseGroup
-  status: String
-  title: String!
-  year: String
-}
-
-type ReleaseGroup implements ReleaseGroupBase {
-  coverArtUri: String
-  credits: [NameCredit!]!
+type Release {
+  coverArtUrl: String!
   firstReleaseDate: String
   firstReleaseYear: String
   id: ID!
-  mainRelease: Release
-  musicBrainzReleaseGroup: MbReleaseGroup
-  primaryType: String
-  secondaryTypes: [String!]!
   title: String!
+  tracks: [Track!]!
+  type: ReleaseType
 }
 
-interface ReleaseGroupBase {
-  firstReleaseDate: String
-  firstReleaseYear: String
-  id: ID!
-  primaryType: String
-  secondaryTypes: [String!]!
-  title: String!
-}
-
-type ReleaseGroupSearchRoot {
-  all: [ReleaseGroup!]!
-  byId(id: ID!): ReleaseGroup
-  searchByName(limit: Int! = 25, name: String!, offset: Int! = 0): [ReleaseGroup!]!
-}
-
-type ReleaseSearchRoot {
-  byId(id: ID!): Release
-  searchByName(limit: Int! = 25, name: String!, offset: Int! = 0): [Release!]!
+enum ReleaseType {
+  ALBUM
+  EP
+  SINGLE
 }
 
 input RenamePlaylistInput {
@@ -657,6 +591,19 @@ union RenamePlaylistResult = RenamePlaylistNoWriteAccess | RenamePlaylistSuccess
 
 type RenamePlaylistSuccess {
   viewer: User!
+}
+
+type ServerLibrarySearchRoot {
+  allArtists: [Artist!]!
+  allReleases: [Release!]!
+  allTracks: [Track!]!
+  artistById(id: ID!): Artist
+  libraryStatistics: CacheStatistics!
+  releasesForArtist(artistId: ID!): [Release!]!
+  searchArtists(limit: Int! = 20, searchTerm: String!): [Artist!]!
+  searchReleases(limit: Int! = 20, searchTerm: String!): [Release!]!
+  searchTracks(limit: Int! = 20, searchTerm: String!): [Track!]!
+  tracksForArtist(artistId: ID!): [Track!]!
 }
 
 type ServerSettings {
@@ -733,6 +680,14 @@ type Subscription {
   downloadStatusUpdated: DownloadStatus!
   ping: Ping!
   soulSeekStatusUpdated: SoulSeekStatus!
+}
+
+type Track {
+  audioUrl: String!
+  id: ID!
+  length: Int
+  statistics: LastFmStatistics
+  title: String!
 }
 
 scalar UUID

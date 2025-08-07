@@ -14,7 +14,7 @@ export interface AlbumPanelProps {
 }
 
 const albumPanelReleaseGroupFragment = graphql(`
-  fragment AlbumPanel_ReleaseGroup on ReleaseGroup {
+  fragment AlbumPanel_Release on Release {
     id
     ...AlbumHeader_ReleaseGroup
     ...AlbumTrackList_ReleaseGroup

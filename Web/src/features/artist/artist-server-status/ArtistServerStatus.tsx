@@ -11,8 +11,8 @@ export interface ArtistServerStatusProps {
 
 const query = graphql(`
   query ArtistServerStatus($artistId: ID!) {
-    artist {
-      byId(id: $artistId) {
+    serverLibrary {
+      artistById(id: $artistId) {
         id
         serverStatus {
           id
@@ -51,17 +51,17 @@ const subscription = graphql(`
             albums {
               id
               firstReleaseDate
-              ...AlbumCard_ReleaseGroup
+              ...AlbumCard_Release
             }
             eps {
               id
               firstReleaseDate
-              ...AlbumCard_ReleaseGroup
+              ...AlbumCard_Release
             }
             singles {
               id
               firstReleaseDate
-              ...AlbumCard_ReleaseGroup
+              ...AlbumCard_Release
             }
           }
         }
@@ -85,7 +85,10 @@ export const ArtistServerStatus: React.FC<ArtistServerStatusProps> = ({
 
   const label = whenTypename(serverStatus?.result)
     .is("ArtistServerStatusImportingArtist", () => "Importing artist...")
-    .is("ArtistServerStatusImportingArtistReleases", () => "Importing releases...")
+    .is(
+      "ArtistServerStatusImportingArtistReleases",
+      () => "Importing releases...",
+    )
     .default(() => "Finished");
 
   const visible = whenTypename(serverStatus?.result)

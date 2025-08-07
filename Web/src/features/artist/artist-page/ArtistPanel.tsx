@@ -29,20 +29,20 @@ const artistPanelArtistFragment = graphql(`
     albums {
       id
       firstReleaseDate
-      ...AlbumCard_ReleaseGroup
+      ...AlbumCard_Release
     }
     eps {
       id
       firstReleaseDate
-      ...AlbumCard_ReleaseGroup
+      ...AlbumCard_Release
     }
     singles {
       id
       firstReleaseDate
-      ...AlbumCard_ReleaseGroup
+      ...AlbumCard_Release
     }
     images {
-      artistBackground
+      backgrounds
     }
     serverStatus {
       id

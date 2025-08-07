@@ -8,8 +8,8 @@ export interface ArtistListPageProps {}
 
 const artistListQuery = graphql(`
   query ArtistListQuery {
-    artist {
-      all {
+    serverLibrary {
+      allArtists {
         id
         ...ArtistList_Artist
       }
