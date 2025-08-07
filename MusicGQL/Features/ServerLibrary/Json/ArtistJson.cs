@@ -11,9 +11,9 @@ public class ArtistJson
 
 public class ArtistPhotosJson
 {
-    public List<string>? BackgroundPhotos { get; set; }
-    public List<string>? BannerPhotos { get; set; }
-    public List<string>? ThumbPhotos { get; set; }
+    public List<string>? Backgrounds { get; set; }
+    public List<string>? Thumbs { get; set; }
+    public List<string>? Banners { get; set; }
     public List<string>? Logos { get; set; }
 }
 

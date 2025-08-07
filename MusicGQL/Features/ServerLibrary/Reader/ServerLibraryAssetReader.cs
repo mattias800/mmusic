@@ -1,6 +1,6 @@
-using System.IO;
+using Path = System.IO.Path;
 
-namespace MusicGQL.Features.ServerLibrary2.Reader;
+namespace MusicGQL.Features.ServerLibrary.Reader;
 
 /// <summary>
 /// Reads asset files (images, audio) from the music library folder structure
@@ -16,7 +16,7 @@ public class ServerLibraryAssetReader
     /// <param name="photoIndex">Photo index (0-based)</param>
     /// <returns>File stream and content type, or null if not found</returns>
     public async Task<(Stream? stream, string? contentType, string? fileName)> GetArtistPhotoAsync(
-        string artistId, 
+        string artistId,
         int photoIndex
     )
     {
@@ -32,19 +32,22 @@ public class ServerLibraryAssetReader
                 return (null, null, null);
 
             var jsonContent = await File.ReadAllTextAsync(artistJsonPath);
-            var artistJson = System.Text.Json.JsonSerializer.Deserialize<Json.ArtistJson>(jsonContent, GetJsonOptions());
+            var artistJson = System.Text.Json.JsonSerializer.Deserialize<Json.ArtistJson>(
+                jsonContent,
+                GetJsonOptions()
+            );
 
-            if (artistJson?.Photos?.ThumbPhotos == null || photoIndex >= artistJson.Photos.ThumbPhotos.Count)
+            if (artistJson?.Photos?.Thumbs == null || photoIndex >= artistJson.Photos.Thumbs.Count)
                 return (null, null, null);
 
-            var photoPath = artistJson.Photos.ThumbPhotos[photoIndex];
-            
+            var photoPath = artistJson.Photos.Thumbs[photoIndex];
+
             // Handle relative paths (remove ./ prefix)
             if (photoPath.StartsWith("./"))
                 photoPath = photoPath[2..];
 
             var fullPhotoPath = Path.Combine(artistPath, photoPath);
-            
+
             if (!File.Exists(fullPhotoPath))
                 return (null, null, null);
 
@@ -67,10 +70,11 @@ public class ServerLibraryAssetReader
     /// <param name="artistId">Artist ID</param>
     /// <param name="releaseFolderName">Release folder name</param>
     /// <returns>File stream and content type, or null if not found</returns>
-    public async Task<(Stream? stream, string? contentType, string? fileName)> GetReleaseCoverArtAsync(
-        string artistId,
-        string releaseFolderName
-    )
+    public async Task<(
+        Stream? stream,
+        string? contentType,
+        string? fileName
+    )> GetReleaseCoverArtAsync(string artistId, string releaseFolderName)
     {
         try
         {
@@ -84,15 +88,25 @@ public class ServerLibraryAssetReader
                 return (null, null, null);
 
             var jsonContent = await File.ReadAllTextAsync(releaseJsonPath);
-            var releaseJson = System.Text.Json.JsonSerializer.Deserialize<Json.ReleaseJson>(jsonContent, GetJsonOptions());
+            var releaseJson = System.Text.Json.JsonSerializer.Deserialize<Json.ReleaseJson>(
+                jsonContent,
+                GetJsonOptions()
+            );
 
             // Try to get cover art from release.json
             string? coverArtPath = null;
-            
+
             // Check if release.json has cover art reference (you may need to add this to ReleaseJson model)
             // For now, look for common cover art file names
-            var commonCoverNames = new[] { "cover.jpg", "cover.png", "cover.jpeg", "folder.jpg", "folder.png" };
-            
+            var commonCoverNames = new[]
+            {
+                "cover.jpg",
+                "cover.png",
+                "cover.jpeg",
+                "folder.jpg",
+                "folder.png",
+            };
+
             foreach (var coverName in commonCoverNames)
             {
                 var potentialPath = Path.Combine(releasePath, coverName);
@@ -107,7 +121,7 @@ public class ServerLibraryAssetReader
                 return (null, null, null);
 
             var fullCoverPath = Path.Combine(releasePath, coverArtPath);
-            
+
             if (!File.Exists(fullCoverPath))
                 return (null, null, null);
 
@@ -149,7 +163,10 @@ public class ServerLibraryAssetReader
                 return (null, null, null);
 
             var jsonContent = await File.ReadAllTextAsync(releaseJsonPath);
-            var releaseJson = System.Text.Json.JsonSerializer.Deserialize<Json.ReleaseJson>(jsonContent, GetJsonOptions());
+            var releaseJson = System.Text.Json.JsonSerializer.Deserialize<Json.ReleaseJson>(
+                jsonContent,
+                GetJsonOptions()
+            );
 
             if (releaseJson?.Tracks == null)
                 return (null, null, null);
@@ -164,7 +181,7 @@ public class ServerLibraryAssetReader
                 audioPath = audioPath[2..];
 
             var fullAudioPath = Path.Combine(releasePath, audioPath);
-            
+
             if (!File.Exists(fullAudioPath))
                 return (null, null, null);
 
@@ -197,7 +214,7 @@ public class ServerLibraryAssetReader
             ".flac" => "audio/flac",
             ".m4a" => "audio/mp4",
             ".ogg" => "audio/ogg",
-            _ => "application/octet-stream"
+            _ => "application/octet-stream",
         };
     }
 
@@ -210,7 +227,12 @@ public class ServerLibraryAssetReader
         {
             PropertyNameCaseInsensitive = true,
             PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase,
-            Converters = { new System.Text.Json.Serialization.JsonStringEnumConverter(System.Text.Json.JsonNamingPolicy.CamelCase) }
+            Converters =
+            {
+                new System.Text.Json.Serialization.JsonStringEnumConverter(
+                    System.Text.Json.JsonNamingPolicy.CamelCase
+                ),
+            },
         };
     }
-} 
+}
