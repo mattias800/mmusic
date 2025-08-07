@@ -387,6 +387,9 @@ public class ReleaseImportResult
     public string ArtistId { get; set; } = string.Empty;
     public List<SingleReleaseImportResult> ImportedReleases { get; set; } = [];
     public string? ErrorMessage { get; set; }
+    public int TotalReleases => ImportedReleases.Count;
+    public int SuccessfulReleases => ImportedReleases.Count(r => r.Success);
+    public int FailedReleases => ImportedReleases.Count(r => !r.Success);
 }
 
 /// <summary>
