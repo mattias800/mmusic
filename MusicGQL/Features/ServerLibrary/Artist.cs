@@ -1,8 +1,6 @@
 using Hqub.Lastfm;
 using MusicGQL.Features.LastFm;
-using MusicGQL.Features.MusicBrainz.Artist;
 using MusicGQL.Features.ServerLibrary.Cache;
-using MusicGQL.Integration.MusicBrainz;
 using TrackSeries.FanArtTV.Client;
 
 namespace MusicGQL.Features.ServerLibrary;
@@ -37,26 +35,6 @@ public record Artist([property: GraphQLIgnore] CachedArtist Model)
         {
             return [];
         }
-    }
-
-    public async Task<MbArtist?> MusicBrainzArtist(MusicBrainzService musicBrainzService)
-    {
-        // TODO Remove this, we should only use MB for imports.
-        var mbId = Model.ArtistJson.Connections?.MusicBrainzArtistId;
-
-        if (mbId is null)
-        {
-            return null;
-        }
-
-        var artist = await musicBrainzService.GetArtistByIdAsync(mbId);
-
-        if (artist == null)
-        {
-            return null;
-        }
-
-        return new(artist);
     }
 
     public async Task<IEnumerable<Release>> Releases(ServerLibraryCache cache)

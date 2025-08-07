@@ -32,6 +32,7 @@ using MusicGQL.Features.ServerLibrary.Cache;
 using MusicGQL.Features.ServerLibrary.Json;
 using MusicGQL.Features.ServerLibrary.Mutations;
 using MusicGQL.Features.ServerLibrary.Reader;
+using MusicGQL.Features.ServerLibrary2.Reader;
 using MusicGQL.Features.ServerSettings.Commands;
 using MusicGQL.Features.ServerSettings.Events;
 using MusicGQL.Features.ServerSettings.Mutations;
@@ -94,6 +95,7 @@ builder
     .AddSingleton<SpotifyService>()
     .AddSingleton<ArtistServerStatusService>()
     .AddSingleton<ServerLibraryJsonReader>()
+    .AddSingleton<ServerLibraryAssetReader>()
     .AddSingleton<ServerLibraryCache>()
     .AddScoped<LikeSongHandler>()
     .AddScoped<UnlikeSongHandler>()
