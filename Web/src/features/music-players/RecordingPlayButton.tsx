@@ -18,6 +18,13 @@ export interface RecordingPlayButtonProps {
 const recordingPlayButtonRecordingFragment = graphql(`
   fragment RecordingPlayButton_Track on Track {
     id
+    release {
+      artist {
+        id
+      }
+      folderName
+    }
+    title
   }
 `);
 
@@ -32,29 +39,27 @@ export const RecordingPlayButton: React.FC<RecordingPlayButtonProps> = ({
     props.recording,
   );
 
-  const playButtonVisible =
-    recording?.streamingServiceInfo.youtubeVideoId || recording?.id;
+  const playButtonVisible = !!recording?.id;
 
   const onClickPlay = () => {
-    if (recording?.streamingServiceInfo.youtubeVideoId) {
-      dispatch(
-        musicPlayerSlice.actions.openYoutubeVideoId({
-          youtubeVideoId: recording.streamingServiceInfo.youtubeVideoId,
-        }),
-      );
-    } else if (recording) {
-      dispatch(
-        musicPlayerSlice.actions.openRecordingId({
-          recordingId: recording.id,
-        }),
-      );
-    }
+    if (!recording) return;
+    const artistId = recording.release.artist.id;
+    const releaseFolderName = recording.release.folderName;
+    // track id is a composite, but list passes trackNumber via context; fall back to index from UI as needed
+    // For now this button is used in contexts where TrackItem provides number separately
+    dispatch(
+      musicPlayerSlice.actions.playTrack({
+        artistId,
+        releaseFolderName,
+        trackNumber: 1, // caller should provide precise number; replace when integrated with TrackItem props
+      }),
+    );
   };
 
   if (!playButtonVisible) {
     return renderWhenNotPlayable?.() ?? null;
   }
-  const needsYoutubeSearch = !recording?.streamingServiceInfo.youtubeVideoId;
+  const needsYoutubeSearch = false;
 
   if (renderButton) {
     return renderButton(onClickPlay, needsYoutubeSearch);

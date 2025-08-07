@@ -492,6 +492,7 @@ type Mutation {
   likeSong(input: LikeSongInput!): LikeSongResult!
   ping: Boolean!
   renamePlaylist(input: RenamePlaylistInput!): RenamePlaylistResult!
+  scanLibraryForMissingJson: ScanLibraryResult!
   signIn(input: SignInInput!): SignInResult!
   signOut: SignOutResult!
   startDownloadRelease(input: StartDownloadReleaseInput!): StartDownloadReleaseResult!
@@ -594,6 +595,14 @@ union RenamePlaylistResult = RenamePlaylistNoWriteAccess | RenamePlaylistSuccess
 
 type RenamePlaylistSuccess {
   viewer: User!
+}
+
+type ScanLibraryResult {
+  artistsCreated: Int!
+  errorMessage: String
+  notes: [String!]!
+  releasesCreated: Int!
+  success: Boolean!
 }
 
 type ServerLibrarySearchRoot {

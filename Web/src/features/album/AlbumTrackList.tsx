@@ -2,6 +2,8 @@ import { FragmentType, graphql, useFragment } from "@/gql";
 import * as React from "react";
 import { Link } from "react-router";
 import { TrackItem } from "@/components/track-item/TrackItem.tsx";
+import { useAppDispatch } from "@/ReduxAppHooks.ts";
+import { musicPlayerSlice } from "@/features/music-players/MusicPlayerSlice.ts";
 import { TrackListHeading } from "@/components/track-item/TrackListHeading.tsx";
 
 interface AlbumTrackListProps {
@@ -12,6 +14,10 @@ const albumTrackListReleaseGroupFragment = graphql(`
   fragment AlbumTrackList_Release on Release {
     id
     title
+    folderName
+    artist {
+      id
+    }
     tracks {
       id
       title
@@ -26,6 +32,7 @@ const albumTrackListReleaseGroupFragment = graphql(`
 `);
 
 export const AlbumTrackList: React.FC<AlbumTrackListProps> = (props) => {
+  const dispatch = useAppDispatch();
   const release = useFragment(
     albumTrackListReleaseGroupFragment,
     props.releaseGroup,
@@ -41,6 +48,15 @@ export const AlbumTrackList: React.FC<AlbumTrackListProps> = (props) => {
           title={track.title}
           trackLength={track.trackLength}
           playCount={track.statistics?.listeners ?? 0}
+          onClick={() =>
+            dispatch(
+              musicPlayerSlice.actions.playTrack({
+                artistId: (release?.artist.id as string) ?? "",
+                releaseFolderName: release?.folderName as string,
+                trackNumber: idx + 1,
+              }),
+            )
+          }
           renderSubtitle={() => (
             <>
               {[{ artist: { id: "1", name: "CreditArtist" } }].map(

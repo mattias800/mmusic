@@ -1,24 +1,19 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
-export type MusicPlayer =
-  | "youtube-video-id"
-  | "youtube-video-search"
-  | "recording";
-
 export interface MusicPlayerState {
   isOpen: boolean;
-  currentMusicPlayer: MusicPlayer | undefined;
-  youtubeVideoId: string | undefined;
-  youtubeVideoSearchText: string | undefined;
-  recordingId: string | undefined;
+  currentMusicPlayer: "library" | undefined;
+  artistId?: string;
+  releaseFolderName?: string;
+  trackNumber?: number;
 }
 
 const initialState: MusicPlayerState = {
   isOpen: false,
   currentMusicPlayer: undefined,
-  youtubeVideoId: undefined,
-  youtubeVideoSearchText: undefined,
-  recordingId: undefined,
+  artistId: undefined,
+  releaseFolderName: undefined,
+  trackNumber: undefined,
 };
 
 export const musicPlayerSlice = createSlice({
@@ -31,35 +26,19 @@ export const musicPlayerSlice = createSlice({
     close: (state) => {
       state.isOpen = false;
     },
-    openYoutubeVideoId: (
+    playTrack: (
       state,
-      action: PayloadAction<{ youtubeVideoId: string }>,
+      action: PayloadAction<{
+        artistId: string;
+        releaseFolderName: string;
+        trackNumber: number;
+      }>,
     ) => {
-      state.youtubeVideoId = action.payload.youtubeVideoId;
-      state.youtubeVideoSearchText = undefined;
-      state.recordingId = undefined;
+      state.artistId = action.payload.artistId;
+      state.releaseFolderName = action.payload.releaseFolderName;
+      state.trackNumber = action.payload.trackNumber;
       state.isOpen = true;
-      state.currentMusicPlayer = "youtube-video-id";
-    },
-    openYoutubeVideoSearchText: (
-      state,
-      action: PayloadAction<{ searchText: string }>,
-    ) => {
-      state.youtubeVideoId = undefined;
-      state.youtubeVideoSearchText = action.payload.searchText;
-      state.recordingId = undefined;
-      state.isOpen = true;
-      state.currentMusicPlayer = "youtube-video-search";
-    },
-    openRecordingId: (
-      state,
-      action: PayloadAction<{ recordingId: string }>,
-    ) => {
-      state.youtubeVideoId = undefined;
-      state.youtubeVideoSearchText = undefined;
-      state.recordingId = action.payload.recordingId;
-      state.isOpen = true;
-      state.currentMusicPlayer = "recording";
+      state.currentMusicPlayer = "library";
     },
   },
 });

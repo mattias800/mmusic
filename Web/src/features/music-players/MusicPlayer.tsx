@@ -1,15 +1,14 @@
 import * as React from "react";
 import { RootState } from "@/Store.ts";
 import { useAppSelector } from "@/ReduxAppHooks.ts";
-import { YoutubeMusicPlayer } from "@/features/music-players/youtube-music-player/YoutubeMusicPlayer.tsx";
-import { YoutubeVideoSearch } from "@/features/music-players/youtube-music-player/YoutubeVideoSearch.tsx";
+import { LibraryAudioPlayer } from "@/features/music-players/library-audio-player/LibraryAudioPlayer.tsx";
 
 export interface MusicPlayerProps {}
 
 const selector = (state: RootState) => state.musicPlayers;
 
 export const MusicPlayer: React.FC<MusicPlayerProps> = () => {
-  const { currentMusicPlayer, isOpen, youtubeVideoId, recordingId } =
+  const { currentMusicPlayer, isOpen, artistId, releaseFolderName, trackNumber } =
     useAppSelector(selector);
 
   if (!isOpen) {
@@ -21,11 +20,12 @@ export const MusicPlayer: React.FC<MusicPlayerProps> = () => {
       className={"fixed bottom-0 left-0 right-0 bg-black border-t-amber-50 p-8"}
     >
       PLAY
-      {currentMusicPlayer === "youtube-video-id" && youtubeVideoId && (
-        <YoutubeMusicPlayer youtubeVideoId={youtubeVideoId} />
-      )}
-      {currentMusicPlayer === "recording" && recordingId && (
-        <YoutubeVideoSearch recordingId={recordingId} />
+      {currentMusicPlayer === "library" && artistId && releaseFolderName && trackNumber && (
+        <LibraryAudioPlayer
+          artistId={artistId}
+          releaseFolderName={releaseFolderName}
+          trackNumber={trackNumber}
+        />
       )}
     </div>
   );
