@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using MusicGQL.Features.Import.Services;
+using Hqub.Lastfm;
 using MusicGQL.Features.ServerLibrary.Cache;
 using MusicGQL.Features.ServerLibrary.Json;
 using Path = System.IO.Path;
@@ -14,6 +15,7 @@ public class LibraryImportService(
     MusicBrainzImportService musicBrainzService,
     SpotifyImportService spotifyService,
     FanArtDownloadService fanArtService,
+    LastfmClient lastfmClient,
     ServerLibraryCache cache
 )
 {
@@ -82,12 +84,22 @@ public class LibraryImportService(
             );
             result.DownloadedPhotos = fanArtResult;
 
-            // 5. Create artist.json
+            // 5. Fetch LastFM monthly listeners (best-effort)
+            long? monthlyListeners = null;
+            try
+            {
+                var info = await lastfmClient.Artist.GetInfoByMbidAsync(mbArtist.Id);
+                monthlyListeners = info?.Statistics?.Listeners;
+            }
+            catch { }
+
+            // 6. Create artist.json
             var artistJson = new JsonArtist
             {
                 Id = artistFolderName, // Use folder name as ID
                 Name = mbArtist.Name,
                 SortName = mbArtist.SortName,
+                MonthlyListeners = monthlyListeners,
                 Photos = new JsonArtistPhotos
                 {
                     Thumbs = fanArtResult.Thumbs.Any() ? fanArtResult.Thumbs : null,
@@ -102,7 +114,7 @@ public class LibraryImportService(
                 },
             };
 
-            // 6. Write artist.json file
+            // 7. Write artist.json file
             var artistJsonPath = Path.Combine(artistFolderPath, "artist.json");
             var jsonOptions = GetJsonOptions();
             var jsonContent = JsonSerializer.Serialize(artistJson, jsonOptions);
@@ -110,7 +122,7 @@ public class LibraryImportService(
 
             Console.WriteLine($"✅ Created artist.json");
 
-            // 7. Update cache
+            // 8. Update cache
             await cache.UpdateCacheAsync();
             Console.WriteLine($"🔄 Updated cache");
 

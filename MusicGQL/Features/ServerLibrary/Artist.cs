@@ -70,25 +70,7 @@ public record Artist([property: GraphQLIgnore] CachedArtist Model)
         return release == null ? null : new Release(release);
     }
 
-    public async Task<long?> Listeners(LastfmClient lastfmClient)
-    {
-        var mbId = Model.JsonArtist.Connections?.MusicBrainzArtistId;
-
-        if (mbId is null)
-        {
-            return null;
-        }
-
-        try
-        {
-            var info = await lastfmClient.Artist.GetInfoByMbidAsync(mbId);
-            return info.Statistics.Listeners;
-        }
-        catch
-        {
-            return null;
-        }
-    }
+    public long? Listeners() => Model.JsonArtist.MonthlyListeners;
 
     public ArtistImages? Images()
     {

@@ -5,6 +5,7 @@ public class JsonArtist
     public string Id { get; set; }
     public string Name { get; set; }
     public string? SortName { get; set; }
+    public long? MonthlyListeners { get; set; }
     public JsonArtistPhotos? Photos { get; set; }
     public JsonArtistServiceConnections? Connections { get; set; }
 }
