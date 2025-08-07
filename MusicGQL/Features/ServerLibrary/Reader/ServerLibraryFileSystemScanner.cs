@@ -134,99 +134,148 @@ public class ServerLibraryFileSystemScanner(
                 foreach (var releaseDir in releaseDirsWithAudio)
                 {
                     var releaseJsonPath = Path.Combine(releaseDir, "release.json");
-                    if (File.Exists(releaseJsonPath))
-                        continue;
+                    JsonRelease? jsonRelease = null;
+                    bool createdReleaseJson = false;
 
-                    var releaseFolderName = Path.GetFileName(releaseDir) ?? "";
-
-                    // Try to find a matching release group on MusicBrainz
-                    var mbReleaseGroups = await musicBrainzService.SearchReleaseGroupByNameAsync(
-                        releaseFolderName,
-                        10
-                    );
-
-                    var matchedRg = mbReleaseGroups
-                        .Where(rg => rg != null)
-                        .FirstOrDefault(rg =>
-                            rg!.Credits?.Any() == true
-                                ? rg.Credits.Any(ac =>
-                                    string.Equals(
-                                        ac.Name,
-                                        artistDisplayName,
-                                        StringComparison.OrdinalIgnoreCase
-                                    )
-                                    || (
-                                        artistMusicBrainzId != null
-                                        && ac.Artist?.Id == artistMusicBrainzId
-                                    )
-                                )
-                                : true
-                        );
-
-                    if (matchedRg == null)
+                    if (!File.Exists(releaseJsonPath))
                     {
-                        result.Notes.Add(
-                            $"Could not match release '{releaseFolderName}' for artist '{artistDisplayName}' on MusicBrainz"
+                        var releaseFolderName = Path.GetFileName(releaseDir) ?? "";
+
+                        // Try to find a matching release group on MusicBrainz
+                        var mbReleaseGroups = await musicBrainzService.SearchReleaseGroupByNameAsync(
+                            releaseFolderName,
+                            10
                         );
-                        continue;
+
+                        var matchedRg = mbReleaseGroups
+                            .Where(rg => rg != null)
+                            .FirstOrDefault(rg =>
+                                rg!.Credits?.Any() == true
+                                    ? rg.Credits.Any(ac =>
+                                        string.Equals(
+                                            ac.Name,
+                                            artistDisplayName,
+                                            StringComparison.OrdinalIgnoreCase
+                                        )
+                                        || (
+                                            artistMusicBrainzId != null
+                                            && ac.Artist?.Id == artistMusicBrainzId
+                                        )
+                                    )
+                                    : true
+                            );
+
+                        if (matchedRg == null)
+                        {
+                            result.Notes.Add(
+                                $"Could not match release '{releaseFolderName}' for artist '{artistDisplayName}' on MusicBrainz"
+                            );
+                            continue;
+                        }
+
+                        // Fetch releases with recordings for the group and pick one
+                        var releases = await musicBrainzService.GetReleasesForReleaseGroupAsync(
+                            matchedRg.Id
+                        );
+                        var selected = releases.FirstOrDefault();
+
+                        // Download cover art if possible
+                        string? coverArtRelPath =
+                            await fanArtDownloadService.DownloadReleaseCoverArtAsync(
+                                matchedRg.Id,
+                                releaseDir
+                            );
+
+                        var releaseType = matchedRg.PrimaryType?.ToLowerInvariant() switch
+                        {
+                            "album" => JsonReleaseType.Album,
+                            "ep" => JsonReleaseType.Ep,
+                            "single" => JsonReleaseType.Single,
+                            _ => JsonReleaseType.Album,
+                        };
+
+                        var tracks = selected
+                            ?.Media?.SelectMany(m =>
+                                m.Tracks ?? new List<Hqub.MusicBrainz.Entities.Track>()
+                            )
+                            .Select(t => new JsonTrack
+                            {
+                                Title = t.Recording?.Title ?? "",
+                                TrackNumber = t.Position,
+                                TrackLength = t.Length,
+                                AudioFilePath = null,
+                            })
+                            .Where(t => t.TrackNumber > 0)
+                            .OrderBy(t => t.TrackNumber)
+                            .ToList();
+
+                        jsonRelease = new JsonRelease
+                        {
+                            Title = matchedRg.Title ?? releaseFolderName,
+                            SortTitle = matchedRg.Title,
+                            Type = releaseType,
+                            FirstReleaseDate = matchedRg.FirstReleaseDate,
+                            FirstReleaseYear =
+                                matchedRg.FirstReleaseDate?.Length >= 4
+                                    ? matchedRg.FirstReleaseDate!.Substring(0, 4)
+                                    : null,
+                            CoverArt = coverArtRelPath,
+                            Tracks = tracks?.Count > 0 ? tracks : null,
+                        };
+
+                        var jsonText = JsonSerializer.Serialize(jsonRelease, GetJsonOptions());
+                        await File.WriteAllTextAsync(releaseJsonPath, jsonText);
+                        result.ReleasesCreated++;
+                        result.Notes.Add(
+                            $"Created release.json for '{artistFolderName}/{releaseFolderName}'"
+                        );
+                        createdReleaseJson = true;
                     }
 
-                    // Fetch releases with recordings for the group and pick one
-                    var releases = await musicBrainzService.GetReleasesForReleaseGroupAsync(
-                        matchedRg.Id
-                    );
-                    var selected = releases.FirstOrDefault();
-
-                    // Download cover art if possible
-                    string? coverArtRelPath =
-                        await fanArtDownloadService.DownloadReleaseCoverArtAsync(
-                            matchedRg.Id,
-                            releaseDir
-                        );
-
-                    var releaseType = matchedRg.PrimaryType?.ToLowerInvariant() switch
+                    // Ensure audioFilePath is set for tracks based on files in folder (by trackNumber)
+                    try
                     {
-                        "album" => JsonReleaseType.Album,
-                        "ep" => JsonReleaseType.Ep,
-                        "single" => JsonReleaseType.Single,
-                        _ => JsonReleaseType.Album,
-                    };
-
-                    var tracks = selected
-                        ?.Media?.SelectMany(m =>
-                            m.Tracks ?? new List<Hqub.MusicBrainz.Entities.Track>()
-                        )
-                        .Select(t => new JsonTrack
+                        if (jsonRelease == null)
                         {
-                            Title = t.Recording?.Title ?? "",
-                            TrackNumber = t.Position,
-                            TrackLength = t.Length,
-                            AudioFilePath = null,
-                        })
-                        .Where(t => t.TrackNumber > 0)
-                        .OrderBy(t => t.TrackNumber)
-                        .ToList();
+                            var existingText = await File.ReadAllTextAsync(releaseJsonPath);
+                            jsonRelease = JsonSerializer.Deserialize<JsonRelease>(existingText, GetJsonOptions());
+                        }
 
-                    var jsonRelease = new JsonRelease
+                        if (jsonRelease?.Tracks != null && jsonRelease.Tracks.Count > 0)
+                        {
+                            var audioFiles = Directory
+                                .GetFiles(releaseDir)
+                                .Where(f => AudioExtensions.Contains(Path.GetExtension(f).ToLowerInvariant()))
+                                .OrderBy(f => f, StringComparer.OrdinalIgnoreCase)
+                                .Select(Path.GetFileName)
+                                .ToList();
+
+                            bool anyUpdated = false;
+                            foreach (var track in jsonRelease.Tracks)
+                            {
+                                if (!string.IsNullOrEmpty(track.AudioFilePath))
+                                    continue;
+
+                                var index = track.TrackNumber - 1;
+                                if (index >= 0 && index < audioFiles.Count)
+                                {
+                                    track.AudioFilePath = "./" + audioFiles[index];
+                                    anyUpdated = true;
+                                }
+                            }
+
+                            if (anyUpdated)
+                            {
+                                var updatedText = JsonSerializer.Serialize(jsonRelease, GetJsonOptions());
+                                await File.WriteAllTextAsync(releaseJsonPath, updatedText);
+                                result.Notes.Add($"Updated audioFilePath for tracks in '{artistFolderName}/{Path.GetFileName(releaseDir)}'");
+                            }
+                        }
+                    }
+                    catch (Exception e)
                     {
-                        Title = matchedRg.Title ?? releaseFolderName,
-                        SortTitle = matchedRg.Title,
-                        Type = releaseType,
-                        FirstReleaseDate = matchedRg.FirstReleaseDate,
-                        FirstReleaseYear =
-                            matchedRg.FirstReleaseDate?.Length >= 4
-                                ? matchedRg.FirstReleaseDate!.Substring(0, 4)
-                                : null,
-                        CoverArt = coverArtRelPath,
-                        Tracks = tracks?.Count > 0 ? tracks : null,
-                    };
-
-                    var jsonText = JsonSerializer.Serialize(jsonRelease, GetJsonOptions());
-                    await File.WriteAllTextAsync(releaseJsonPath, jsonText);
-                    result.ReleasesCreated++;
-                    result.Notes.Add(
-                        $"Created release.json for '{artistFolderName}/{releaseFolderName}'"
-                    );
+                        result.Notes.Add($"Failed setting audio paths for '{artistFolderName}/{Path.GetFileName(releaseDir)}': {e.Message}");
+                    }
                 }
             }
 

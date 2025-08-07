@@ -16,7 +16,7 @@ export const LibraryAudioPlayer: React.FC<LibraryAudioPlayerProps> = ({
   )}/tracks/${trackNumber}/audio`;
 
   return (
-    <audio src={src} controls style={{ width: "100%" }}>
+    <audio src={src} controls autoPlay style={{ width: "100%" }}>
       Your browser does not support the audio element.
     </audio>
   );
