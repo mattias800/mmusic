@@ -96,6 +96,7 @@ builder
     .AddSingleton<ArtistServerStatusService>()
     .AddSingleton<ServerLibraryJsonReader>()
     .AddSingleton<ServerLibraryAssetReader>()
+    .AddScoped<ServerLibraryFileSystemScanner>()
     .AddSingleton<ServerLibraryCache>()
     .AddScoped<MusicBrainzImportService>()
     .AddScoped<SpotifyImportService>()
@@ -243,6 +244,7 @@ builder
     .AddType<LikeSongResult.LikeSongSongDoesNotExist>()
     .AddTypeExtension<UpdateLibraryPathMutation>()
     .AddTypeExtension<UpdateDownloadPathMutation>()
+    .AddTypeExtension<MusicGQL.Features.ServerLibrary.ServerLibraryMaintenanceMutation>()
     .AddType<UpdateLibraryPathResult.UpdateLibraryPathSuccess>()
     .AddType<UpdateDownloadPathResult.UpdateDownloadPathSuccess>()
     .AddTypeExtension<AddArtistToServerLibraryMutation>()
@@ -433,6 +435,31 @@ using (var scope = app.Services.CreateScope())
             Console.WriteLine("📭 No artists found in library");
             Console.WriteLine("   💡 Make sure your library folder contains artist.json files");
         }
+
+        // After initial cache load, scan filesystem for missing JSON and refresh cache again
+        Console.WriteLine("🔎 Scanning library for folders with audio but missing JSON...");
+        var scanner = scope.ServiceProvider.GetRequiredService<ServerLibraryFileSystemScanner>();
+        var scanResult = await scanner.ScanAndFixMissingMetadataAsync();
+
+        if (!scanResult.Success)
+        {
+            Console.WriteLine($"   ⚠️ Scan encountered an error: {scanResult.ErrorMessage}");
+        }
+        else
+        {
+            Console.WriteLine(
+                $"   ✅ Scan complete. Created {scanResult.ArtistsCreated} artist(s), {scanResult.ReleasesCreated} release(s)"
+            );
+        }
+
+        // Reload cache to include any new JSON files created by the scan
+        Console.WriteLine("📀 Reloading music library cache after scan...");
+        await cache.UpdateCacheAsync();
+
+        var statsAfter = await cache.GetCacheStatisticsAsync();
+        Console.WriteLine(
+            $"   📊 Post-scan statistics: {statsAfter.ArtistCount} artists, {statsAfter.ReleaseCount} releases, {statsAfter.TrackCount} tracks"
+        );
 
         Console.WriteLine("═══════════════════════════════════════════════");
         Console.WriteLine("🚀 MUSIC LIBRARY CACHE READY");

@@ -45,6 +45,7 @@ export default defineConfig({
     strictPort: true,
     proxy: {
       "/graphql": proxyOptions,
+      "/library": proxyOptions,
     },
   },
 });
