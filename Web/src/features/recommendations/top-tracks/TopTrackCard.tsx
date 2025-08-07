@@ -40,9 +40,9 @@ export const TopTrackCard: React.FC<TopTrackCardProps> = (props) => {
   return (
     <PhotoCard
       imageUrl={
-        track.images?.artistThumb ??
+        track.images?.thumbs?.[0] ??
         track.album?.imageUrl ??
-        track.artist.musicBrainzArtist?.images?.artistThumb ??
+        track.artist.musicBrainzArtist?.images?.thumbs?.[0] ??
         ""
       }
       onClick={() =>

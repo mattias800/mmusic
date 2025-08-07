@@ -93,9 +93,9 @@ export function DirectoryTreeItem({
           </button>
         )}
       </div>
-      {isExpanded && data?.browseFileSystem && (
+      {isExpanded && data?.fileSystem.browseFileSystem && (
         <div className="pl-6">
-          {data.browseFileSystem
+          {data.fileSystem.browseFileSystem
             .filter((f) => f.isDirectory || showFiles)
             .map((entry) => (
               <DirectoryTreeItem

@@ -35,14 +35,14 @@ export const ArtistPage = () => {
   if (error) {
     return <div>Error: {error.message}</div>;
   }
-  if (!data?.artist.byId) {
+  if (!data?.serverLibrary.artistById) {
     return <ArtistNotFound />;
   }
 
   return (
     <>
-      <title>{data.artist.byId.name}</title>
-      <ArtistPanel artist={data.artist.byId} />
+      <title>{data.serverLibrary.artistById.name}</title>
+      <ArtistPanel artist={data.serverLibrary.artistById} />
     </>
   );
 };

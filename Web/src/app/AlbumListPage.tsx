@@ -24,12 +24,12 @@ export const AlbumListPage: React.FC<AlbumListPageProps> = () => {
 
   if (fetching || stale) return <ScreenSpinner />;
   if (error) return <div>Error: {error.message}</div>;
-  if (!data?.releaseGroup.all) return <div>No data</div>;
+  if (!data?.serverLibrary.allReleases) return <div>No data</div>;
 
   return (
     <>
       <title>Albums</title>
-      <AlbumList releaseGroups={data.releaseGroup.all} />
+      <AlbumList releaseGroups={data.serverLibrary.allReleases} />
     </>
   );
 };

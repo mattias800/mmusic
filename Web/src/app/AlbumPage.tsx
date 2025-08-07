@@ -33,18 +33,14 @@ export const AlbumPage = () => {
 
   if (fetching || stale) return <ScreenSpinner />;
   if (error) return <div>Error: {error.message}</div>;
-  if (!data?.releaseGroup.byId) return <div>No data</div>;
+  const release = data?.serverLibrary.artistById?.releaseByFolderName;
 
-  const title =
-    data.releaseGroup.byId.title +
-    (data.releaseGroup.byId.credits.length
-      ? " by " + data.releaseGroup.byId.credits[0].name
-      : "");
+  if (!release) return <div>No data</div>;
 
   return (
     <>
-      <title>{title}</title>
-      <AlbumPanel releaseGroup={data.releaseGroup.byId} />
+      <title>{release.title}</title>
+      <AlbumPanel release={release} />
     </>
   );
 };

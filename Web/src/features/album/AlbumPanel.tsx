@@ -10,7 +10,7 @@ import { GradientContent } from "@/components/page-body/GradientContent";
 import { MainPadding } from "@/components/layout/MainPadding.tsx";
 
 export interface AlbumPanelProps {
-  releaseGroup: FragmentType<typeof albumPanelReleaseGroupFragment>;
+  release: FragmentType<typeof albumPanelReleaseGroupFragment>;
 }
 
 const albumPanelReleaseGroupFragment = graphql(`
@@ -23,17 +23,14 @@ const albumPanelReleaseGroupFragment = graphql(`
 `);
 
 export const AlbumPanel: React.FC<AlbumPanelProps> = (props) => {
-  const releaseGroup = useFragment(
-    albumPanelReleaseGroupFragment,
-    props.releaseGroup,
-  );
+  const release = useFragment(albumPanelReleaseGroupFragment, props.release);
 
   return (
     <GradientContent>
       <MainPadding>
         <div>
           <div>
-            <AlbumHeader releaseGroup={releaseGroup} />
+            <AlbumHeader release={release} />
 
             <div className="flex items-center gap-6 mb-6">
               <LargePlayButton />
@@ -44,18 +41,11 @@ export const AlbumPanel: React.FC<AlbumPanelProps> = (props) => {
           </div>
 
           <div>
-            <AlbumTrackList releaseGroup={releaseGroup} />
+            <AlbumTrackList releaseGroup={release} />
 
-            {releaseGroup.mainRelease &&
-              releaseGroup.mainRelease.labels.length > 0 && (
-                <div className="text-white/40 text-xs mt-12">
-                  {releaseGroup.mainRelease.labels.map((label) => (
-                    <p>
-                      © {releaseGroup.firstReleaseYear} {label.name}
-                    </p>
-                  ))}
-                </div>
-              )}
+            <div className="text-white/40 text-xs mt-12">
+              <p>© {release.firstReleaseYear} Some label AB</p>
+            </div>
           </div>
         </div>
       </MainPadding>

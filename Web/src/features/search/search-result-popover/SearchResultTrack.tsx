@@ -4,6 +4,7 @@ import { Link } from "react-router";
 import { formatTrackLength } from "@/common/TrackLengthFormatter.ts";
 import { useQuery } from "urql";
 import { SearchResultGroup } from "@/features/search/search-result-popover/components/SearchResultGroup.tsx";
+import { getRouteToArtist, getRouteToRelease } from "@/AppRoutes.ts";
 
 export interface SearchResultTrackProps {
   searchText: string;
@@ -16,7 +17,17 @@ const songSearchQuery = graphql(`
       searchTracks(searchTerm: $text, limit: 5) {
         id
         title
-        length
+        trackLength
+        release {
+          id
+          title
+          coverArtUrl
+          folderName
+          artist {
+            id
+            name
+          }
+        }
       }
     }
   }
@@ -31,22 +42,22 @@ export const SearchResultTrack: React.FC<SearchResultTrackProps> = ({
     variables: { text: searchText },
   });
 
-  const recordings = data?.recording.searchByName;
+  const tracks = data?.serverLibrary.searchTracks;
 
   return (
     <SearchResultGroup
       heading={"Songs"}
       fetching={fetching}
-      items={recordings}
-      renderItem={(recording) => (
+      items={tracks}
+      renderItem={(track) => (
         <div
-          key={recording.id}
+          key={track.id}
           className="flex items-center p-2 hover:bg-white/10 rounded-md transition-colors"
         >
-          {recording.mainAlbum?.coverArtUri ? (
+          {track.release.coverArtUrl ? (
             <img
-              src={recording.mainAlbum.coverArtUri}
-              alt={recording.title}
+              src={track.release.coverArtUrl}
+              alt={track.title}
               className="w-10 h-10 object-cover mr-3"
             />
           ) : (
@@ -55,7 +66,7 @@ export const SearchResultTrack: React.FC<SearchResultTrackProps> = ({
             </div>
           )}
           <div className="flex-grow overflow-hidden">
-            <p className="text-white font-medium">{recording.title}</p>
+            <p className="text-white font-medium">{track.title}</p>
             <p
               className="text-xs text-white/60"
               style={{
@@ -66,31 +77,32 @@ export const SearchResultTrack: React.FC<SearchResultTrackProps> = ({
                 overflow: "hidden",
               }}
             >
-              {recording.nameCredits.map(({ artist }, index) => (
-                <React.Fragment key={artist.id}>
-                  {index > 0 && ", "}
-                  <Link to={`/artist/${artist.id}`} className="hover:underline">
-                    {artist.name}
-                  </Link>
-                </React.Fragment>
-              ))}
-              {recording.mainAlbum && (
+              <Link
+                to={getRouteToArtist(track.release.artist.id)}
+                className="hover:underline"
+              >
+                {track.release.artist.name}
+              </Link>
+              {track.release && (
                 <>
                   {" "}
                   •{" "}
                   <Link
-                    to={`/album/${recording.mainAlbum.id}`}
+                    to={getRouteToRelease(
+                      track.release.artist.id,
+                      track.release.folderName,
+                    )}
                     className="hover:underline"
                     onClick={onClickSearchResult}
                   >
-                    {recording.mainAlbum.title}
+                    {track.release.title}
                   </Link>
                 </>
               )}
             </p>
           </div>
           <div className="text-xs text-white/60 ml-2">
-            {recording.length ? formatTrackLength(recording.length) : ""}
+            {track.trackLength ? formatTrackLength(track.trackLength) : ""}
           </div>
         </div>
       )}

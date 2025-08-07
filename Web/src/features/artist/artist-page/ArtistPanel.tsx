@@ -82,7 +82,7 @@ export const ArtistPanel: React.FC<ArtistPanelProps> = (props) => {
     <GradientContent>
       <ArtistHeader
         artistName={artist.name}
-        artistBackgroundUrl={artist.images?.artistBackground ?? ""}
+        artistBackgroundUrl={artist.images?.backgrounds?.[0] ?? ""}
         listeners={artist.listeners}
         renderServerStatus={() => <ArtistServerStatus artistId={artist.id} />}
       />
@@ -122,7 +122,7 @@ export const ArtistPanel: React.FC<ArtistPanelProps> = (props) => {
                         )
                         .toReversed()
                         .map((release) => (
-                          <AlbumCard releaseGroup={release} key={release.id} />
+                          <AlbumCard release={release} key={release.id} />
                         ))}
                     </CardFlexList>
                   </Section>
@@ -136,7 +136,7 @@ export const ArtistPanel: React.FC<ArtistPanelProps> = (props) => {
                         )
                         .toReversed()
                         .map((release) => (
-                          <AlbumCard releaseGroup={release} key={release.id} />
+                          <AlbumCard release={release} key={release.id} />
                         ))}
                     </CardFlexList>
                   </Section>
@@ -150,7 +150,7 @@ export const ArtistPanel: React.FC<ArtistPanelProps> = (props) => {
                         )
                         .toReversed()
                         .map((release) => (
-                          <AlbumCard releaseGroup={release} key={release.id} />
+                          <AlbumCard release={release} key={release.id} />
                         ))}
                     </CardFlexList>
                   </Section>

@@ -12,7 +12,7 @@ public record Track([property: GraphQLIgnore] CachedTrack Model)
 
     public string Title() => Model.Title;
 
-    public int? Length() => Model.JsonTrack.TrackLength;
+    public int? TrackLength() => Model.JsonTrack.TrackLength;
 
     /// <summary>
     /// Gets the audio URL that the server can serve
@@ -23,6 +23,26 @@ public record Track([property: GraphQLIgnore] CachedTrack Model)
             Model.ReleaseFolderName,
             Model.TrackNumber
         );
+
+    public async Task<Release> Release(ServerLibraryCache cache)
+    {
+        var release = await cache.GetReleaseByArtistAndFolderAsync(
+            Model.ArtistId,
+            Model.ReleaseFolderName
+        );
+
+        if (release is null)
+        {
+            throw new Exception(
+                "Could not find release, artistId="
+                    + Model.ArtistId
+                    + ", folderName="
+                    + Model.ReleaseFolderName
+            );
+        }
+
+        return new(release);
+    }
 
     public async Task<LastFmStatistics?> Statistics(LastfmClient lastfmClient)
     {

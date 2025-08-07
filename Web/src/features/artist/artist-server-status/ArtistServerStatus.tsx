@@ -81,7 +81,7 @@ export const ArtistServerStatus: React.FC<ArtistServerStatusProps> = ({
 
   useSubscription({ query: subscription, variables: { artistId } });
 
-  const serverStatus = data?.artist.byId?.serverStatus;
+  const serverStatus = data?.serverLibrary.artistById?.serverStatus;
 
   const label = whenTypename(serverStatus?.result)
     .is("ArtistServerStatusImportingArtist", () => "Importing artist...")

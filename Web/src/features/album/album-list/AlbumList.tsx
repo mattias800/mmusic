@@ -28,7 +28,7 @@ export const AlbumList: React.FC<AlbumListProps> = (props) => {
           <SectionHeading>Albums</SectionHeading>
           <CardFlexList>
             {releaseGroup.map((album) => (
-              <AlbumCard releaseGroup={album} key={album.id} />
+              <AlbumCard release={album} key={album.id} />
             ))}
           </CardFlexList>
         </Section>

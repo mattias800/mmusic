@@ -24,12 +24,12 @@ export const ArtistListPage: React.FC<ArtistListPageProps> = () => {
 
   if (fetching || stale) return <ScreenSpinner />;
   if (error) return <div>Error: {error.message}</div>;
-  if (!data?.artist.all) return <div>No data</div>;
+  if (!data?.serverLibrary.allArtists) return <div>No data</div>;
 
   return (
     <>
       <title>Artists</title>
-      <ArtistList artists={data.artist.all} />
+      <ArtistList artists={data.serverLibrary.allArtists} />
     </>
   );
 };

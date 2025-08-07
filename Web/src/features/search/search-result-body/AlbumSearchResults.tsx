@@ -3,7 +3,6 @@ import * as React from "react";
 import { SearchResultGroup } from "./components/SearchResultGroup";
 import { useLimitQuery } from "@/common/LimitQuery.ts";
 import { ShowMoreButton } from "@/components/buttons/ShowMoreButton.tsx";
-import { AlbumCard } from "@/features/album/AlbumCard.tsx";
 import { MbReleaseGroupCard } from "@/features/album/MbReleaseGroupCard.tsx";
 
 export interface AlbumSearchResultsProps {

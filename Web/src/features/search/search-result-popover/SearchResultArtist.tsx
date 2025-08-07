@@ -32,7 +32,7 @@ export const SearchResultArtist: React.FC<SearchResultArtistProps> = ({
     variables: { text: searchText },
   });
 
-  const artists = data?.artist.searchByName;
+  const artists = data?.serverLibrary.searchArtists;
 
   return (
     <SearchResultGroup
@@ -46,9 +46,9 @@ export const SearchResultArtist: React.FC<SearchResultArtistProps> = ({
           className="flex items-center p-2 hover:bg-white/10 rounded-md transition-colors"
           onClick={onClickSearchResult}
         >
-          {artist.images?.artistThumb ? (
+          {artist.images?.thumbs?.[0] ? (
             <img
-              src={artist.images.artistThumb}
+              src={artist.images.thumbs?.[0]}
               alt={artist.name}
               className="w-10 h-10 rounded-full object-cover mr-3"
             />

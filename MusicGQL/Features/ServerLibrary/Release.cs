@@ -26,10 +26,23 @@ public record Release([property: GraphQLIgnore] CachedRelease Model)
             _ => null,
         };
 
+    public string FolderName() => Model.FolderName;
+
+    public async Task<Artist> Artist(ServerLibraryCache cache)
+    {
+        var artist = await cache.GetArtistByIdAsync(Model.ArtistId);
+
+        if (artist is null)
+        {
+            throw new Exception("Could not find artist, id=" + Model.ArtistId);
+        }
+
+        return new(artist);
+    }
+
     public string? FirstReleaseDate() => Model.JsonRelease.FirstReleaseDate;
 
-    public string? FirstReleaseYear() =>
-        Model.JsonRelease.FirstReleaseDate?.Split("-").FirstOrDefault();
+    public string? FirstReleaseYear() => Model.JsonRelease.FirstReleaseYear;
 
     /// <summary>
     /// Gets the cover art URL that the server can serve

@@ -39,16 +39,16 @@ export const ArtistEpList: React.FC<ArtistEpListProps> = (props) => {
     );
   }
 
-  if (!data?.artist.byId) {
+  if (!data?.serverLibrary.artistById) {
     return <div>No data..</div>;
   }
   return (
     <div className={"flex flex-wrap gap-8"}>
-      {data.artist.byId.eps
+      {data.serverLibrary.artistById.eps
         .toSorted(byStringField((a) => a.firstReleaseDate ?? ""))
         .toReversed()
         .map((release) => (
-          <AlbumCard releaseGroup={release} key={release.id} />
+          <AlbumCard release={release} key={release.id} />
         ))}
     </div>
   );

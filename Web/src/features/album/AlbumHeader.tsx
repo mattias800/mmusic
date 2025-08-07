@@ -3,32 +3,42 @@ import * as React from "react";
 import { Link } from "react-router";
 import { sumBy } from "lodash-es";
 import { formatAlbumLength } from "@/common/AlbumLengthFormatter.ts";
+import { ReleaseType } from "@/gql/graphql.ts";
+import { getRouteToArtist } from "@/AppRoutes.ts";
 
 export interface AlbumHeaderProps {
-  releaseGroup: FragmentType<typeof albumHeaderReleaseGroupFragment>;
+  release: FragmentType<typeof albumHeaderReleaseFragment>;
 }
 
-const albumHeaderReleaseGroupFragment = graphql(`
+const albumHeaderReleaseFragment = graphql(`
   fragment AlbumHeader_Release on Release {
     id
     title
+    type
     coverArtUrl
     firstReleaseYear
+    artist {
+      id
+      name
+    }
+    tracks {
+      id
+      trackLength
+    }
   }
 `);
 
 export const AlbumHeader: React.FC<AlbumHeaderProps> = (props) => {
-  const releaseGroup = useFragment(
-    albumHeaderReleaseGroupFragment,
-    props.releaseGroup,
-  );
+  const release = useFragment(albumHeaderReleaseFragment, props.release);
 
-  const release = releaseGroup.mainRelease;
-  const numTracks = release?.recordings.length ?? 0;
+  const numTracks = release?.tracks.length ?? 0;
+
+  console.log(release?.tracks);
+  console.log(sumBy(release?.tracks ?? [], (track) => track.trackLength ?? 0));
 
   const numSongsText = numTracks === 1 ? "1 song" : `${numTracks} songs`;
   const albumTime = formatAlbumLength(
-    sumBy(release?.recordings ?? [], (recording) => recording.length ?? 0),
+    sumBy(release?.tracks ?? [], (track) => track.trackLength ?? 0),
   );
 
   if (!release) {
@@ -38,22 +48,22 @@ export const AlbumHeader: React.FC<AlbumHeaderProps> = (props) => {
   return (
     <div className="flex flex-col sm:flex-row gap-6 items-center sm:items-end mb-8">
       <img
-        src={releaseGroup.coverArtUri ?? ""}
-        alt={releaseGroup.title + " album cover"}
+        src={release.coverArtUrl ?? ""}
+        alt={release.title + " album cover"}
         className="w-64 h-64 rounded shadow-lg"
       />
       <div className={"flex flex-col gap-3"}>
-        <p className="text-sm">{getReleaseType(releaseGroup.primaryType)}</p>
-        <h1 className="text-4xl sm:text-7xl font-bold">{releaseGroup.title}</h1>
+        <p className="text-sm">{getReleaseType(release.type)}</p>
+        <h1 className="text-4xl sm:text-7xl font-bold">{release.title}</h1>
         <div className={"flex gap-2"}>
           <Link
             className={"text-sm font-bold"}
-            to={"/artist/" + releaseGroup.credits[0].artist.id}
+            to={getRouteToArtist(release.artist.id)}
           >
-            {releaseGroup.credits[0].artist.name}
+            {release.artist.name}
           </Link>
           <p className="text-sm text-gray-300">
-            • {releaseGroup.firstReleaseYear} • {numSongsText}, {albumTime}
+            • {release.firstReleaseYear} • {numSongsText}, {albumTime}
           </p>
         </div>
       </div>
@@ -62,14 +72,14 @@ export const AlbumHeader: React.FC<AlbumHeaderProps> = (props) => {
 };
 
 const getReleaseType = (
-  primaryType: string | null | undefined,
+  releaseType: ReleaseType | null | undefined,
 ): string | undefined => {
-  switch (primaryType?.toLowerCase()) {
-    case "album":
+  switch (releaseType?.toLowerCase()) {
+    case ReleaseType.Album:
       return "Album";
-    case "ep":
+    case ReleaseType.Ep:
       return "EP";
-    case "single":
+    case ReleaseType.Single:
       return "Single";
     default:
       return undefined;

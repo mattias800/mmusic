@@ -18,9 +18,9 @@ export const AppRouter: React.FC<AppRouterProps> = () => {
     <Routes>
       <Route path="/" element={<IndexPage />} />
       <Route path="/albums" element={<AlbumListPage />} />
-      <Route path="/album/:releaseGroupId" element={<AlbumPage />} />
       <Route path="/artists" element={<ArtistListPage />} />
       <Route path="/artist/:artistId" element={<ArtistPage />} />
+      <Route path="/artist/:artistId/release/:releaseFolderName" element={<AlbumPage />} />
       <Route path="/liked-songs" element={<LikedSongsPage />} />
       <Route
         path="/playlists/import/spotify"

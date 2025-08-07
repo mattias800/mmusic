@@ -36,7 +36,7 @@ export const TopArtistTracks: React.FC<TopArtistTracksProps> = ({
 
   const [showingMore, setShowingMore] = useState(false);
 
-  const visibleTracks = (data?.artist.byId?.topTracks ?? []).slice(
+  const visibleTracks = (data?.serverLibrary.artistById?.topTracks ?? []).slice(
     0,
     showingMore ? 20 : 10,
   );

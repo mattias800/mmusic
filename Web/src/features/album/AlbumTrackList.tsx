@@ -15,7 +15,7 @@ const albumTrackListReleaseGroupFragment = graphql(`
     tracks {
       id
       title
-      length
+      trackLength
       ...RecordingPlayButton_Track
       statistics {
         listeners
@@ -26,33 +26,36 @@ const albumTrackListReleaseGroupFragment = graphql(`
 `);
 
 export const AlbumTrackList: React.FC<AlbumTrackListProps> = (props) => {
-  const releaseGroup = useFragment(
+  const release = useFragment(
     albumTrackListReleaseGroupFragment,
     props.releaseGroup,
   );
-
-  const release = releaseGroup.mainRelease;
 
   return (
     <div>
       <TrackListHeading />
 
-      {release?.recordings.map((recording, idx) => (
+      {release?.tracks.map((track, idx) => (
         <TrackItem
           trackNumber={idx + 1}
-          title={recording.title}
-          trackLength={recording.length}
-          playCount={recording.statistics?.listeners ?? 0}
+          title={track.title}
+          trackLength={track.trackLength}
+          playCount={track.statistics?.listeners ?? 0}
           renderSubtitle={() => (
             <>
-              {recording.nameCredits.map(({ artist }, index) => (
-                <React.Fragment key={artist.id}>
-                  {index > 0 && ", "}
-                  <Link to={`/artist/${artist.id}`} className="hover:underline">
-                    {artist.name}
-                  </Link>
-                </React.Fragment>
-              ))}
+              {[{ artist: { id: "1", name: "CreditArtist" } }].map(
+                ({ artist }, index) => (
+                  <React.Fragment key={artist.id}>
+                    {index > 0 && ", "}
+                    <Link
+                      to={`/artist/${artist.id}`}
+                      className="hover:underline"
+                    >
+                      {artist.name}
+                    </Link>
+                  </React.Fragment>
+                ),
+              )}
             </>
           )}
           playing={false}

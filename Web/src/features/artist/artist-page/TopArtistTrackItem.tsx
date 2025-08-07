@@ -19,7 +19,7 @@ const topArtistTrackItemLastFmTrackFragment = graphql(`
     recording {
       id
       title
-      length
+      trackLength
       ...RecordingPlayButton_Track
     }
   }
@@ -42,14 +42,13 @@ export const TopArtistTrackItem: React.FC<TopArtistTrackItemProps> = (
       playCount={track.playCount}
       playing={props.active}
       showCoverArt
-      coverArtUri={track.recording?.mainAlbum?.coverArtUri}
+      coverArtUri={""}
       contextMenuItems={
         <>
-          {track.recording?.mainAlbum && (
+          {track.recording && (
             <ContextMenuItem
               onClick={() =>
-                track.recording?.mainAlbum &&
-                navigate(`/album/${track.recording.mainAlbum.id}`)
+                track.recording && navigate(`/album/${track.recording.id}`)
               }
             >
               Go to album

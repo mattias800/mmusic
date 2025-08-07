@@ -37,19 +37,17 @@ export function DirectoryTreeView({
 
   return (
     <div className="flex flex-col space-y-1">
-      {data?.browseFileSystem
+      {data?.fileSystem.browseFileSystem
         ?.filter((f) => f.isDirectory || showFiles)
-        .map((entry) => {
-          return (
-            <DirectoryTreeItem
-              key={entry.path}
-              entry={entry}
-              onSelect={onSelect}
-              selectedPath={selectedPath}
-              showFiles={showFiles}
-            />
-          );
-        })}
+        .map((entry) => (
+          <DirectoryTreeItem
+            key={entry.path}
+            entry={entry}
+            onSelect={onSelect}
+            selectedPath={selectedPath}
+            showFiles={showFiles}
+          />
+        ))}
     </div>
   );
 }

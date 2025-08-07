@@ -2,21 +2,25 @@
   "title": "Example Album",
   "type": "Album",
   "firstReleaseYear": "2024",
+  "firstReleaseDate": "2024-08-13",
   "tracks": [
     {
       "title": "Song One",
       "trackNumber": 1,
-      "audioFilePath": "/path/to/song1.mp3"
+      "audioFilePath": "/path/to/song1.mp3",
+      "trackLength": 123000
     },
     {
-      "title": "Song Two", 
+      "title": "Song Two",
       "trackNumber": 2,
-      "audioFilePath": "/path/to/song2.mp3"
+      "audioFilePath": "/path/to/song2.mp3",
+      "trackLength": 223000
     },
     {
       "title": "Song Three",
       "trackNumber": 3,
-      "audioFilePath": "/path/to/song3.mp3"
+      "audioFilePath": "/path/to/song3.mp3",
+      "trackLength": 162000
     }
   ]
 } 

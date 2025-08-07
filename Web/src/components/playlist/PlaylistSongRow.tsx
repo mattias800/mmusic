@@ -12,7 +12,7 @@ const playlistSongRowFragment = graphql(`
   fragment LikedSongRow_Track on Track {
     id
     title
-    length
+    trackLength
   }
 `);
 

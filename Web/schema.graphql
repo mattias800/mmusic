@@ -564,9 +564,11 @@ type RecommendationsSearchRoot {
 }
 
 type Release {
+  artist: Artist!
   coverArtUrl: String!
   firstReleaseDate: String
   firstReleaseYear: String
+  folderName: String!
   id: ID!
   title: String!
   tracks: [Track!]!
@@ -686,9 +688,10 @@ type Subscription {
 type Track {
   audioUrl: String!
   id: ID!
-  length: Int
+  release: Release!
   statistics: LastFmStatistics
   title: String!
+  trackLength: Int
 }
 
 scalar UUID

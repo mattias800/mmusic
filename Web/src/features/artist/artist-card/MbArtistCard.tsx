@@ -23,7 +23,7 @@ const mbArtistCardArtistFragment = graphql(`
 
 export const MbArtistCard: React.FC<MbArtistCardProps> = (props) => {
   const mbArtist = useFragment(mbArtistCardArtistFragment, props.mbArtist);
-  const imageUrl = mbArtist.images?.artistThumb;
+  const imageUrl = mbArtist.images?.thumbs?.[0];
 
   const navigate = useNavigate();
 

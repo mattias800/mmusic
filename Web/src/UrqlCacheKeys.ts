@@ -3,7 +3,6 @@ import { TypesWithNoId } from "@/gql/types-with-no-id.ts";
 
 export const cacheKeys: Record<TypesWithNoId, KeyGenerator> = {
   ArtistImages: () => null,
-  ArtistSearchRoot: () => null,
   ArtistServerStatusImportingArtist: () => null,
   ArtistServerStatusImportingArtistReleases: () => null,
   ArtistServerStatusNotInLibrary: () => null,
@@ -24,15 +23,16 @@ export const cacheKeys: Record<TypesWithNoId, KeyGenerator> = {
   MusicBrainzReleaseGroupSearchRoot: () => null,
   MusicBrainzReleaseSearchRoot: () => null,
   MusicBrainzSearchRoot: () => null,
-  NameCredit: () => null,
   PageInfo: () => null,
   PlaylistSearchRoot: () => null,
   RecommendationsSearchRoot: () => null,
-  RecordingSearchRoot: () => null,
-  ReleaseGroupSearchRoot: () => null,
-  ReleaseSearchRoot: () => null,
   SpotifyPlaylistSearchRoot: () => null,
   UserSearchRoot: () => null,
   UsersConnection: () => null,
   UsersEdge: () => null,
+  CacheStatistics: () => null,
+  FileSystemSearchRoot: () => null,
+  ImportedRelease: () => null,
+  PhotosDownloaded: () => null,
+  ServerLibrarySearchRoot: () => null,
 };

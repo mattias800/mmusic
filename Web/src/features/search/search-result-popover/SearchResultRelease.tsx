@@ -15,6 +15,7 @@ const albumSearchQuery = graphql(`
       searchReleases(searchTerm: $text, limit: 5) {
         id
         title
+        coverArtUrl
       }
     }
   }
@@ -29,24 +30,24 @@ export const SearchResultRelease: React.FC<SearchResultReleaseProps> = ({
     variables: { text: searchText },
   });
 
-  const releaseGroups = data?.releaseGroup.searchByName;
+  const releases = data?.serverLibrary.searchReleases;
 
   return (
     <SearchResultGroup
       heading={"Albums"}
       fetching={fetching}
-      items={releaseGroups}
-      renderItem={(releaseGroup) => (
+      items={releases}
+      renderItem={(release) => (
         <Link
-          to={`/album/${releaseGroup.id}`}
-          key={releaseGroup.id}
+          to={`/album/${release.id}`}
+          key={release.id}
           className="flex items-center p-2 hover:bg-white/10 rounded-md transition-colors"
           onClick={onClickSearchResult}
         >
-          {releaseGroup.mainRelease?.coverArtUri ? (
+          {release.coverArtUrl ? (
             <img
-              src={releaseGroup.mainRelease.coverArtUri}
-              alt={releaseGroup.title}
+              src={release.coverArtUrl}
+              alt={release.title}
               className="w-10 h-10 object-cover mr-3"
             />
           ) : (
@@ -55,7 +56,7 @@ export const SearchResultRelease: React.FC<SearchResultReleaseProps> = ({
             </div>
           )}
           <div>
-            <p className="text-white font-medium">{releaseGroup.title}</p>
+            <p className="text-white font-medium">{release.title}</p>
             <p className="text-xs text-white/60">Album</p>
           </div>
         </Link>
