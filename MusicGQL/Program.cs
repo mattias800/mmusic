@@ -33,7 +33,6 @@ using MusicGQL.Features.Playlists.Import.Spotify.Mutations;
 using MusicGQL.Features.Playlists.Mutations;
 using MusicGQL.Features.ServerLibrary.Cache;
 using MusicGQL.Features.ServerLibrary.Json;
-using MusicGQL.Features.ServerLibrary.Mutations;
 using MusicGQL.Features.ServerLibrary.Reader;
 using MusicGQL.Features.ServerSettings.Commands;
 using MusicGQL.Features.ServerSettings.Events;
@@ -110,8 +109,6 @@ builder
     .AddScoped<ImportArtistToServerLibraryHandler>()
     .AddScoped<ImportArtistReleaseGroupsToServerLibraryHandler>()
     .AddScoped<ImportReleaseGroupToServerLibraryHandler>()
-    .AddScoped<ProcessMissingMetaDataHandler>()
-    .AddScoped<MissingMetaDataProcessingService>()
     // Event processors
     .AddScoped<LikedSongsEventProcessor>()
     .AddScoped<UserEventProcessor>()
@@ -364,10 +361,6 @@ using (var scope = app.Services.CreateScope())
 
     var soulSeekService = scope.ServiceProvider.GetRequiredService<SoulSeekService>();
     // _ = soulSeekService.Connect();
-
-    var missingMetaDataProcessingService =
-        scope.ServiceProvider.GetRequiredService<MissingMetaDataProcessingService>();
-    missingMetaDataProcessingService.ProcessMissingMetaData();
 
     // 🎵 Initialize and populate the music library cache
     Console.WriteLine();

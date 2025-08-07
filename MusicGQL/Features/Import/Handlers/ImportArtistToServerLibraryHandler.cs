@@ -1,5 +1,4 @@
 using MusicGQL.Integration.MusicBrainz;
-using MusicGQL.Integration.Neo4j;
 using Neo4j.Driver;
 
 namespace MusicGQL.Features.Import.Handlers;
@@ -7,7 +6,6 @@ namespace MusicGQL.Features.Import.Handlers;
 public class ImportArtistToServerLibraryHandler(
     IDriver driver,
     MusicBrainzService mbService,
-    ServerLibraryImporterService serverLibraryImporterService,
     ILogger<ImportArtistToServerLibraryHandler> logger
 )
 {
@@ -31,10 +29,10 @@ public class ImportArtistToServerLibraryHandler(
             await using var session = driver.AsyncSession();
             await session.ExecuteWriteAsync(async tx =>
             {
-                await serverLibraryImporterService.SaveArtistNodeAsync(
-                    (IAsyncTransaction)tx,
-                    artist
-                );
+                // await serverLibraryImporterService.SaveArtistNodeAsync(
+                //     (IAsyncTransaction)tx,
+                //     artist
+                // );
             });
 
             logger.LogInformation("Artist {ArtistMbId} saved/updated in Neo4j", artist.Id);

@@ -4,7 +4,6 @@ using MusicGQL.Features.Import.Services;
 using MusicGQL.Features.ServerLibrary.Cache;
 using MusicGQL.Features.ServerLibrary.Json;
 using Path = System.IO.Path;
-using ReleaseType = MusicGQL.Features.ServerLibrary.ReleaseType;
 
 namespace MusicGQL.Features.Import;
 

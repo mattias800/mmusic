@@ -4,14 +4,13 @@ using MusicGQL.Types;
 
 // Required for IHttpContextAccessor
 
-namespace MusicGQL.Features.ServerLibrary.Mutations;
+namespace MusicGQL.Features.Import.Mutations;
 
 [ExtendObjectType(typeof(Mutation))]
 public class AddArtistToServerLibraryMutation
 {
     public async Task<AddArtistToServerLibraryResult> AddArtistToServerLibrary(
-        MarkArtistAsAddedToServerLibraryHandler markArtistAsAddedToServerLibraryHandler,
-        MarkArtistReleaseGroupsAsAddedToServerLibraryHandler markArtistReleaseGroupsAsAddedToServerLibraryHandler,
+        LibraryImportService libraryImportService,
         ImportArtistToServerLibraryHandler importArtistToServerLibraryHandler,
         ImportArtistReleaseGroupsToServerLibraryHandler importArtistReleaseGroupsToServerLibraryHandler,
         AddArtistToServerLibraryInput input,
@@ -29,40 +28,16 @@ public class AddArtistToServerLibraryMutation
             );
         }
 
-        return await markArtistAsAddedToServerLibraryHandler.Handle(
-            new(userId, input.ArtistId)
-        ) switch
-        {
-            MarkArtistAsAddedToServerLibraryHandler.Result.Success => await HandleSuccess(
-                markArtistReleaseGroupsAsAddedToServerLibraryHandler,
-                importArtistToServerLibraryHandler,
-                importArtistReleaseGroupsToServerLibraryHandler,
-                userId,
-                input.ArtistId,
-                new AddArtistToServerLibraryResult.AddArtistToServerLibrarySuccess(true)
-            ),
-            MarkArtistAsAddedToServerLibraryHandler.Result.AlreadyAdded => await HandleSuccess(
-                markArtistReleaseGroupsAsAddedToServerLibraryHandler,
-                importArtistToServerLibraryHandler,
-                importArtistReleaseGroupsToServerLibraryHandler,
-                userId,
-                input.ArtistId,
-                new AddArtistToServerLibraryResult.AddArtistToServerLibraryArtistAlreadyAdded(
-                    "Artist already added!"
-                )
-            ),
-            MarkArtistAsAddedToServerLibraryHandler.Result.ArtistDoesNotExist =>
-                new AddArtistToServerLibraryResult.AddArtistToServerLibraryArtistDoesNotExist(
-                    "Artist does not exist in MusicBrainz!"
-                ),
-            _ => new AddArtistToServerLibraryResult.AddArtistToServerLibraryUnknownError(
-                "Unhandled result."
-            ),
-        };
+        return await HandleSuccess(
+            importArtistToServerLibraryHandler,
+            importArtistReleaseGroupsToServerLibraryHandler,
+            userId,
+            input.ArtistId,
+            new AddArtistToServerLibraryResult.AddArtistToServerLibrarySuccess(true)
+        );
     }
 
     private async Task<AddArtistToServerLibraryResult> HandleSuccess(
-        MarkArtistReleaseGroupsAsAddedToServerLibraryHandler markArtistReleaseGroupsAsAddedToServerLibraryHandler,
         ImportArtistToServerLibraryHandler importArtistToServerLibraryHandler,
         ImportArtistReleaseGroupsToServerLibraryHandler importArtistReleaseGroupsToServerLibraryHandler,
         Guid userId,
@@ -70,7 +45,6 @@ public class AddArtistToServerLibraryMutation
         AddArtistToServerLibraryResult success
     )
     {
-        await markArtistReleaseGroupsAsAddedToServerLibraryHandler.Handle(new(userId, artistId));
         await importArtistToServerLibraryHandler.Handle(new(artistId));
         _ = importArtistReleaseGroupsToServerLibraryHandler.Handle(new(artistId));
         return success;

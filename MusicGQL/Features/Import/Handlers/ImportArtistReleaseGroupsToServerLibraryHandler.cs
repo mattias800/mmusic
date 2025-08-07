@@ -1,15 +1,12 @@
 using MusicGQL.Features.ArtistServerStatus.Services;
-using MusicGQL.Features.ServerLibrary;
 using MusicGQL.Features.ServerLibrary.Utils;
 using MusicGQL.Integration.MusicBrainz;
-using MusicGQL.Integration.Neo4j;
 
 namespace MusicGQL.Features.Import.Handlers;
 
 public class ImportArtistReleaseGroupsToServerLibraryHandler(
     ArtistServerStatusService artistServerStatusService,
     MusicBrainzService mbService,
-    ServerLibraryImporterService serverLibraryImporterService,
     ILogger<ImportArtistReleaseGroupsToServerLibraryHandler> logger
 )
 {
@@ -50,10 +47,10 @@ public class ImportArtistReleaseGroupsToServerLibraryHandler(
                 }
                 else
                 {
-                    await serverLibraryImporterService.SaveReleaseGroupInDatabase(
-                        releaseGroup,
-                        mainRelease
-                    );
+                    // await serverLibraryImporterService.SaveReleaseGroupInDatabase(
+                    //     releaseGroup,
+                    //     mainRelease
+                    // );
                 }
 
                 artistServerStatusService.IncreaseNumReleaseGroupsFinishedImporting(
