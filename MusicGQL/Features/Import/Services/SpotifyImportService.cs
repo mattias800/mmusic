@@ -23,12 +23,13 @@ public class SpotifyImportService(SpotifyService spotifyService)
                 {
                     Id = artist.Id,
                     Name = artist.Name,
-                    Genres = artist.Genres?.ToList() ?? [],
+                    Genres = artist.Genres.ToList(),
                     Popularity = artist.Popularity,
-                    Followers = artist.Followers?.Total ?? 0,
-                    ExternalUrls =
-                        artist.ExternalUrls?.ToDictionary(kvp => kvp.Key, kvp => kvp.Value)
-                        ?? new Dictionary<string, string>(),
+                    Followers = artist.Followers.Total,
+                    ExternalUrls = artist.ExternalUrls.ToDictionary(
+                        kvp => kvp.Key,
+                        kvp => kvp.Value
+                    ),
                 })
                 .ToList();
         }
@@ -57,12 +58,10 @@ public class SpotifyImportService(SpotifyService spotifyService)
             {
                 Id = artist.Id,
                 Name = artist.Name,
-                Genres = artist.Genres?.ToList() ?? [],
+                Genres = artist.Genres.ToList(),
                 Popularity = artist.Popularity,
-                Followers = artist.Followers?.Total ?? 0,
-                ExternalUrls =
-                    artist.ExternalUrls?.ToDictionary(kvp => kvp.Key, kvp => kvp.Value)
-                    ?? new Dictionary<string, string>(),
+                Followers = artist.Followers.Total,
+                ExternalUrls = artist.ExternalUrls.ToDictionary(kvp => kvp.Key, kvp => kvp.Value),
             };
         }
         catch (Exception ex)
