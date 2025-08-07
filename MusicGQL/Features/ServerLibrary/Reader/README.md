@@ -7,21 +7,35 @@ This system serves images, audio files, and other assets from the music library 
 - **Portable Assets**: All assets are stored alongside the JSON metadata in the library
 - **Cache-Aligned URLs**: URL structure matches the `ServerLibraryCache` lookup system  
 - **Multiple Content Types**: Supports images (JPG, PNG, GIF, WebP) and audio (MP3, WAV, FLAC, M4A, OGG)
+- **Multiple Photo Types**: Supports thumbs, backgrounds, banners, and logos
 - **Flexible Extensions**: Works with or without file extensions in URLs
 - **Direct File Streaming**: Efficient file streaming from disk
 
 ## URL Structure
 
-### Artist Photos
+### Artist Photos by Type
 ```
-GET /library/{artistId}/photos/thumbPhotos/{photoIndex}
-GET /library/{artistId}/photos/thumbPhotos/{photoIndex}.{extension}
+GET /library/{artistId}/photos/{photoType}/{photoIndex}
+GET /library/{artistId}/photos/{photoType}/{photoIndex}.{extension}
 ```
 
+**Photo Types:**
+- `thumbs` - Thumbnail photos
+- `backgrounds` - Background images  
+- `banners` - Banner images
+- `logos` - Logo images
+
 **Examples:**
-- `/library/Matt%20%26%20Dyle/photos/thumbPhotos/0` - First photo (without extension)
-- `/library/Matt%20%26%20Dyle/photos/thumbPhotos/0.png` - First photo (with extension)
-- `/library/Matt%20%26%20Dyle/photos/thumbPhotos/1.jpg` - Second photo
+- `/library/Matt%20%26%20Dyle/photos/thumbs/0` - First thumbnail
+- `/library/Matt%20%26%20Dyle/photos/backgrounds/0.jpg` - First background with extension
+- `/library/Matt%20%26%20Dyle/photos/banners/1` - Second banner
+- `/library/Matt%20%26%20Dyle/photos/logos/0.png` - First logo with extension
+
+### Backward Compatibility (Thumbnails Only)
+```
+GET /library/{artistId}/photos/thumbs/{photoIndex}
+GET /library/{artistId}/photos/thumbs/{photoIndex}.{extension}
+```
 
 ### Release Cover Art
 ```
@@ -45,9 +59,13 @@ GET /library/{artistId}/releases/{releaseFolderName}/tracks/{trackNumber}/audio
 
 ## File Resolution
 
-### Artist Photos
+### Artist Photos by Type
 1. Reads `artist.json` from `Library/{artistId}/`
-2. Looks up `photos.thumbPhotos[photoIndex]` array
+2. Looks up the appropriate photo array based on type:
+   - `thumbs` → `photos.thumbs[photoIndex]`
+   - `backgrounds` → `photos.backgrounds[photoIndex]`
+   - `banners` → `photos.banners[photoIndex]`
+   - `logos` → `photos.logos[photoIndex]`
 3. Resolves relative path (handles `./` prefix)
 4. Serves the image file
 
@@ -56,120 +74,95 @@ GET /library/{artistId}/releases/{releaseFolderName}/tracks/{trackNumber}/audio
 2. Looks for common cover art files: `cover.jpg`, `cover.png`, `cover.jpeg`, `folder.jpg`, `folder.png`
 3. Serves the first found cover art file
 
-*Note: Future enhancement could add explicit cover art references in `release.json`*
-
 ### Track Audio
 1. Reads `release.json` from `Library/{artistId}/{releaseFolderName}/`
 2. Finds track with matching `trackNumber` in `tracks` array
 3. Uses `audioFilePath` property to locate the audio file
 4. Resolves relative path and serves the audio file
 
-## Content Types
+## Artist JSON Structure
 
-The system automatically detects content types based on file extensions:
+The `artist.json` file supports multiple photo types:
 
-**Images:**
-- `.jpg`, `.jpeg` → `image/jpeg`
-- `.png` → `image/png`  
-- `.gif` → `image/gif`
-- `.webp` → `image/webp`
-
-**Audio:**
-- `.mp3` → `audio/mpeg`
-- `.wav` → `audio/wav`
-- `.flac` → `audio/flac`
-- `.m4a` → `audio/mp4`
-- `.ogg` → `audio/ogg`
-
-**Default:** `application/octet-stream`
-
-## URL Encoding
-
-Remember to URL-encode special characters in artist names and folder names:
-
-- `Matt & Dyle` → `Matt%20%26%20Dyle`
-- `AC/DC` → `AC%2FDC`
-- `Guns N' Roses` → `Guns%20N%27%20Roses`
-
-## Error Responses
-
-- **404 Not Found**: Asset file doesn't exist or isn't referenced in JSON
-- **404 Extension Mismatch**: Requested extension doesn't match actual file extension (for extension-specific endpoints)
-
-## Implementation Details
-
-### ServerLibraryAssetReader
-Located in `Features/ServerLibrary2/Reader/ServerLibraryAssetReader.cs`
-
-**Key Methods:**
-- `GetArtistPhotoAsync(artistId, photoIndex)` - Gets artist photos
-- `GetReleaseCoverArtAsync(artistId, releaseFolderName)` - Gets release cover art  
-- `GetTrackAudioAsync(artistId, releaseFolderName, trackNumber)` - Gets track audio
-
-### LibraryAssetsController
-Located in `Controllers/LibraryAssetsController.cs`
-
-**Features:**
-- HTTP endpoint routing
-- Content type detection
-- File streaming
-- Error handling
-- Extension validation
+```json
+{
+  "id": "Matt & Dyle",
+  "name": "Matt & Dyle",
+  "photos": {
+    "thumbs": ["./thumb1.png", "./thumb2.jpg"],
+    "backgrounds": ["./bg1.jpg", "./bg2.png"], 
+    "banners": ["./banner1.png"],
+    "logos": ["./logo.svg", "./logo_hd.png"]
+  }
+}
+```
 
 ## GraphQL Integration
 
-These HTTP endpoints can be used in GraphQL resolvers to provide direct asset URLs:
+The `ArtistImages` GraphQL type provides URLs for all photo types:
 
-```csharp
-// In Artist GraphQL type
-public string? PhotoUrl(int index = 0) 
-{
-    if (Model.ArtistJson.Photos?.ThumbPhotos?.Count > index)
-    {
-        return $"/library/{Uri.EscapeDataString(Model.Id)}/photos/thumbPhotos/{index}";
+```graphql
+type ArtistImages {
+  # Lists of all photos by type
+  thumbs: [String!]!
+  backgrounds: [String!]!
+  banners: [String!]!
+  logos: [String!]!
+  
+  # First photo of each type (for convenience)
+  firstThumb: String
+  firstBackground: String  
+  firstBanner: String
+  firstLogo: String
+}
+```
+
+**Usage in GraphQL queries:**
+```graphql
+query GetArtist($id: ID!) {
+  serverLibrary {
+    artistById(id: $id) {
+      name
+      images {
+        thumbs      # ["http://localhost:5000/library/Matt%20%26%20Dyle/photos/thumbs/0"]
+        backgrounds # ["http://localhost:5000/library/Matt%20%26%20Dyle/photos/backgrounds/0"]
+        firstThumb  # "http://localhost:5000/library/Matt%20%26%20Dyle/photos/thumbs/0"
+      }
     }
-    return null;
-}
-
-// In Release GraphQL type  
-public string? CoverArtUrl()
-{
-    return $"/library/{Uri.EscapeDataString(Model.ArtistId)}/releases/{Uri.EscapeDataString(Model.FolderName)}/coverart";
-}
-
-// In Track GraphQL type
-public string? AudioUrl()
-{
-    return $"/library/{Uri.EscapeDataString(Model.ArtistId)}/releases/{Uri.EscapeDataString(Model.ReleaseFolderName)}/tracks/{Model.TrackNumber}/audio";
+  }
 }
 ```
 
-## File System Structure
+**Usage in React/HTML:**
+```jsx
+const artist = data.serverLibrary.artistById;
 
-The endpoints expect this folder structure:
+return (
+  <div>
+    {/* Show first thumbnail */}
+    {artist.images?.firstThumb && (
+      <img src={artist.images.firstThumb} alt={`${artist.name} thumbnail`} />
+    )}
+    
+    {/* Show all backgrounds */}
+    {artist.images?.backgrounds.map((bgUrl, index) => (
+      <img key={index} src={bgUrl} alt={`${artist.name} background ${index + 1}`} />
+    ))}
+  </div>
+);
+```
 
-```
-Library/
-├── Matt & Dyle/                    (Artist)
-│   ├── artist.json                 (References photos)
-│   ├── imagematt.png              (Artist photo)
-│   ├── Demo EP/                   (Release folder)
-│   │   ├── release.json           (References tracks)
-│   │   ├── cover.jpg              (Cover art)
-│   │   ├── 01-track1.mp3          (Track audio)
-│   │   └── 02-track2.mp3
-│   └── Example Album/
-│       ├── release.json
-│       ├── folder.png
-│       └── track.wav
-```
+## Content Types & Error Responses
+
+Same as before - automatic content type detection and proper 404/400 responses.
 
 ## Benefits
 
-1. **Portability**: Assets stored with metadata, no external dependencies
-2. **Performance**: Direct file streaming, efficient for large audio files
-3. **Consistency**: URLs mirror cache structure for intuitive usage
-4. **Flexibility**: Works with any file format and naming convention
-5. **GraphQL Ready**: Easy integration with GraphQL resolvers
+1. **📸 Complete Photo Support**: All four photo types (thumbs, backgrounds, banners, logos)
+2. **🎨 Rich UI Possibilities**: Multiple images per type for varied display options
+3. **📁 Portable**: Assets stored with metadata, no external dependencies
+4. **⚡ Performance**: Direct file streaming, efficient for large images
+5. **🔗 GraphQL Ready**: Easy integration with existing schema
+6. **🛡️ Type Safety**: Validates photo types and provides clear error messages
 
-This system provides a complete solution for serving music library assets while maintaining the portable, self-contained nature of the JSON-based library structure. 
+This system now provides complete support for all artist photo types while maintaining the portable, self-contained nature of the JSON-based library structure. 

@@ -10,13 +10,15 @@ public class ServerLibraryAssetReader
     private const string LibraryPath = "./Library/";
 
     /// <summary>
-    /// Gets an artist photo by artist ID and photo index
+    /// Gets an artist photo by artist ID, photo type, and photo index
     /// </summary>
     /// <param name="artistId">Artist ID</param>
+    /// <param name="photoType">Photo type (thumbs, backgrounds, banners, logos)</param>
     /// <param name="photoIndex">Photo index (0-based)</param>
     /// <returns>File stream and content type, or null if not found</returns>
     public async Task<(Stream? stream, string? contentType, string? fileName)> GetArtistPhotoAsync(
         string artistId,
+        string photoType,
         int photoIndex
     )
     {
@@ -37,10 +39,23 @@ public class ServerLibraryAssetReader
                 GetJsonOptions()
             );
 
-            if (artistJson?.Photos?.Thumbs == null || photoIndex >= artistJson.Photos.Thumbs.Count)
+            if (artistJson?.Photos == null)
                 return (null, null, null);
 
-            var photoPath = artistJson.Photos.Thumbs[photoIndex];
+            // Get the appropriate photo list based on type
+            List<string>? photoList = photoType.ToLowerInvariant() switch
+            {
+                "thumbs" => artistJson.Photos.Thumbs,
+                "backgrounds" => artistJson.Photos.Backgrounds,
+                "banners" => artistJson.Photos.Banners,
+                "logos" => artistJson.Photos.Logos,
+                _ => null
+            };
+
+            if (photoList == null || photoIndex >= photoList.Count)
+                return (null, null, null);
+
+            var photoPath = photoList[photoIndex];
 
             // Handle relative paths (remove ./ prefix)
             if (photoPath.StartsWith("./"))
@@ -62,6 +77,20 @@ public class ServerLibraryAssetReader
             Console.WriteLine($"Error reading artist photo: {ex.Message}");
             return (null, null, null);
         }
+    }
+
+    /// <summary>
+    /// Gets an artist thumbnail by artist ID and photo index (backward compatibility)
+    /// </summary>
+    /// <param name="artistId">Artist ID</param>
+    /// <param name="photoIndex">Photo index (0-based)</param>
+    /// <returns>File stream and content type, or null if not found</returns>
+    public async Task<(Stream? stream, string? contentType, string? fileName)> GetArtistPhotoAsync(
+        string artistId,
+        int photoIndex
+    )
+    {
+        return await GetArtistPhotoAsync(artistId, "thumbs", photoIndex);
     }
 
     /// <summary>

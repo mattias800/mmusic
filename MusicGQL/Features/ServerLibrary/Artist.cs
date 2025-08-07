@@ -63,23 +63,13 @@ public record Artist([property: GraphQLIgnore] CachedArtist Model)
         }
     }
 
-    public async Task<ArtistImages?> Images(IFanArtTVClient fanartClient)
+    public ArtistImages? Images()
     {
-        var mbId = Model.ArtistJson.Connections?.MusicBrainzArtistId;
-
-        if (mbId is null)
+        if (Model.ArtistJson.Photos == null)
         {
             return null;
         }
 
-        try
-        {
-            var artist = await fanartClient.Music.GetArtistAsync(mbId);
-            return artist is null ? null : new(artist);
-        }
-        catch
-        {
-            return null;
-        }
+        return new ArtistImages(Model.ArtistJson.Photos, Model.Id);
     }
 }

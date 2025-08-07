@@ -18,21 +18,29 @@ public class LibraryAssetsController : ControllerBase
     }
 
     /// <summary>
-    /// Serves artist photos
-    /// GET /library/{artistId}/photos/thumbs/{photoIndex}
+    /// Serves artist photos by type
+    /// GET /library/{artistId}/photos/{photoType}/{photoIndex}
     /// </summary>
-    [HttpGet("{artistId}/photos/thumbs/{photoIndex:int}")]
-    public async Task<IActionResult> GetArtistPhoto(string artistId, int photoIndex)
+    [HttpGet("{artistId}/photos/{photoType}/{photoIndex:int}")]
+    public async Task<IActionResult> GetArtistPhoto(string artistId, string photoType, int photoIndex)
     {
+        // Validate photo type
+        var validPhotoTypes = new[] { "thumbs", "backgrounds", "banners", "logos" };
+        if (!validPhotoTypes.Contains(photoType.ToLowerInvariant()))
+        {
+            return BadRequest($"Invalid photo type '{photoType}'. Valid types are: {string.Join(", ", validPhotoTypes)}");
+        }
+
         var (stream, contentType, fileName) = await _assetReader.GetArtistPhotoAsync(
             artistId,
+            photoType,
             photoIndex
         );
 
         if (stream == null || contentType == null)
         {
             return NotFound(
-                $"Artist photo not found for artist '{artistId}' at index {photoIndex}"
+                $"Artist {photoType} photo not found for artist '{artistId}' at index {photoIndex}"
             );
         }
 
@@ -40,6 +48,16 @@ public class LibraryAssetsController : ControllerBase
         var shouldIncludeExtension = ShouldIncludeFileExtension(Request.Path);
 
         return File(stream, contentType, shouldIncludeExtension ? fileName : null);
+    }
+
+    /// <summary>
+    /// Serves artist thumbnail photos (backward compatibility)
+    /// GET /library/{artistId}/photos/thumbs/{photoIndex}
+    /// </summary>
+    [HttpGet("{artistId}/photos/thumbs/{photoIndex:int}")]
+    public async Task<IActionResult> GetArtistThumbnail(string artistId, int photoIndex)
+    {
+        return await GetArtistPhoto(artistId, "thumbs", photoIndex);
     }
 
     /// <summary>
@@ -96,25 +114,34 @@ public class LibraryAssetsController : ControllerBase
     }
 
     /// <summary>
-    /// Alternative endpoint with file extension for artist photos
-    /// GET /library/{artistId}/photos/thumbs/{photoIndex}.{extension}
+    /// Alternative endpoint with file extension for artist photos by type
+    /// GET /library/{artistId}/photos/{photoType}/{photoIndex}.{extension}
     /// </summary>
-    [HttpGet("{artistId}/photos/thumbs/{photoIndex:int}.{extension}")]
+    [HttpGet("{artistId}/photos/{photoType}/{photoIndex:int}.{extension}")]
     public async Task<IActionResult> GetArtistPhotoWithExtension(
         string artistId,
+        string photoType,
         int photoIndex,
         string extension
     )
     {
+        // Validate photo type
+        var validPhotoTypes = new[] { "thumbs", "backgrounds", "banners", "logos" };
+        if (!validPhotoTypes.Contains(photoType.ToLowerInvariant()))
+        {
+            return BadRequest($"Invalid photo type '{photoType}'. Valid types are: {string.Join(", ", validPhotoTypes)}");
+        }
+
         var (stream, contentType, fileName) = await _assetReader.GetArtistPhotoAsync(
             artistId,
+            photoType,
             photoIndex
         );
 
         if (stream == null || contentType == null)
         {
             return NotFound(
-                $"Artist photo not found for artist '{artistId}' at index {photoIndex}"
+                $"Artist {photoType} photo not found for artist '{artistId}' at index {photoIndex}"
             );
         }
 
@@ -131,6 +158,20 @@ public class LibraryAssetsController : ControllerBase
         }
 
         return File(stream, contentType, fileName);
+    }
+
+    /// <summary>
+    /// Alternative endpoint with file extension for artist thumbnail photos (backward compatibility)
+    /// GET /library/{artistId}/photos/thumbs/{photoIndex}.{extension}
+    /// </summary>
+    [HttpGet("{artistId}/photos/thumbs/{photoIndex:int}.{extension}")]
+    public async Task<IActionResult> GetArtistThumbnailWithExtension(
+        string artistId,
+        int photoIndex,
+        string extension
+    )
+    {
+        return await GetArtistPhotoWithExtension(artistId, "thumbs", photoIndex, extension);
     }
 
     /// <summary>
