@@ -3,8 +3,6 @@ using MusicGQL.Db.Postgres;
 using MusicGQL.Db.Postgres.Models;
 using MusicGQL.Features.Likes.Events;
 using MusicGQL.Features.Playlists.Aggregate;
-using MusicGQL.Features.ServerLibrary.Artist.Aggregate;
-using MusicGQL.Features.ServerLibrary.ReleaseGroup.Aggregate;
 using MusicGQL.Features.ServerSettings.Events;
 using MusicGQL.Features.Users.Aggregate;
 
@@ -13,8 +11,6 @@ namespace MusicGQL.EventProcessor;
 public class EventProcessorWorker(
     EventDbContext dbContext,
     ILogger<EventProcessorWorker> logger,
-    ReleaseGroupsAddedToServerLibraryProcessor releaseGroupsAddedToServerLibraryProcessor,
-    ArtistsAddedToServerLibraryProcessor artistsAddedToServerLibraryProcessor,
     LikedSongsEventProcessor likedSongsEventProcessor,
     UserEventProcessor userEventProcessor,
     PlaylistsEventProcessor playlistsEventProcessor,
@@ -41,8 +37,6 @@ public class EventProcessorWorker(
 
         foreach (var ev in events)
         {
-            await releaseGroupsAddedToServerLibraryProcessor.ProcessEvent(ev, dbContext);
-            await artistsAddedToServerLibraryProcessor.ProcessEvent(ev, dbContext);
             await likedSongsEventProcessor.ProcessEvent(ev, dbContext);
             await userEventProcessor.ProcessEvent(ev, dbContext);
             await playlistsEventProcessor.ProcessEvent(ev, dbContext);

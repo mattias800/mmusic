@@ -36,7 +36,8 @@ public record LastFmArtist([property: GraphQLIgnore] Hqub.Lastfm.Entities.Artist
             }
 
             var artist = await fanartClient.Music.GetArtistAsync(id);
-            return artist is null ? null : new(artist);
+            // return artist is null ? null : new(artist);
+            return null;
         }
         catch
         {

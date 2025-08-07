@@ -1,7 +1,6 @@
 using System.Collections.Concurrent;
 using HotChocolate.Subscriptions;
-using Microsoft.EntityFrameworkCore;
-using MusicGQL.Db.Postgres;
+using MusicGQL.Features.ServerLibrary.Cache;
 
 namespace MusicGQL.Features.ArtistServerStatus.Services;
 
@@ -174,11 +173,11 @@ public class ArtistServerStatusService(ITopicEventSender sender, IServiceScopeFa
     private async Task<ArtistServerStatusResult> CreateForNoState(string artistId)
     {
         using var scope = scopeFactory.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<EventDbContext>();
+        var cache = scope.ServiceProvider.GetRequiredService<ServerLibraryCache>();
 
         // Check if the artist is in any user's server library
-        var isInLibrary = await dbContext.ServerArtists.AnyAsync(sa => sa.ArtistId == artistId);
-        return isInLibrary
+        var a = await cache.GetArtistByIdAsync(artistId);
+        return a != null
             ? new ArtistServerStatusReady(artistId)
             : new ArtistServerStatusNotInLibrary(artistId);
     }

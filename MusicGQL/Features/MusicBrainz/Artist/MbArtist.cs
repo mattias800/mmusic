@@ -8,7 +8,6 @@ using TrackSeries.FanArtTV.Client;
 namespace MusicGQL.Features.MusicBrainz.Artist;
 
 public record MbArtist([property: GraphQLIgnore] Hqub.MusicBrainz.Entities.Artist Model)
-    : IArtistBase
 {
     [ID]
     public string Id() => Model.Id;
@@ -71,8 +70,9 @@ public record MbArtist([property: GraphQLIgnore] Hqub.MusicBrainz.Entities.Artis
     {
         try
         {
-            var artist = await fanartClient.Music.GetArtistAsync(Model.Id);
-            return artist is null ? null : new(artist);
+            // var artist = await fanartClient.Music.GetArtistAsync(Model.Id);
+            // return artist is null ? null : new(artist);
+            return null;
         }
         catch
         {

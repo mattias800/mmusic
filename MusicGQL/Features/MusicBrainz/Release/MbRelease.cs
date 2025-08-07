@@ -7,7 +7,6 @@ using MusicGQL.Integration.MusicBrainz;
 namespace MusicGQL.Features.MusicBrainz.Release;
 
 public record MbRelease([property: GraphQLIgnore] Hqub.MusicBrainz.Entities.Release Model)
-    : IReleaseBase
 {
     [ID]
     public string Id() => Model.Id;

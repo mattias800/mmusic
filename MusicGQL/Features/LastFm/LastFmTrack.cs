@@ -2,7 +2,6 @@ using MusicGQL.Features.MusicBrainz.Recording;
 using MusicGQL.Features.ServerLibrary;
 using MusicGQL.Features.ServerLibrary.Cache;
 using MusicGQL.Integration.MusicBrainz;
-using MusicGQL.Integration.Neo4j;
 using TrackSeries.FanArtTV.Client;
 using Track = Hqub.Lastfm.Entities.Track;
 
@@ -33,13 +32,15 @@ public record LastFmTrack([property: GraphQLIgnore] Track Model)
             }
 
             var artist = await fanartClient.Music.GetArtistAsync(mbId);
-            return artist is null ? null : new(artist);
+            //return artist is null ? null : new(artist);
+            return null;
         }
 
         try
         {
             var artist = await fanartClient.Music.GetArtistAsync(Model.MBID);
-            return artist is null ? null : new(artist);
+            //return artist is null ? null : new(artist);
+            return null;
         }
         catch
         {
@@ -55,14 +56,15 @@ public record LastFmTrack([property: GraphQLIgnore] Track Model)
 
     public async Task<ServerLibrary.Track?> Recording(ServerLibraryCache cache)
     {
-        var r = await service.SearchRecordingForArtistByArtistNameExactNameMatchAsync(
-            Model.Name,
-            Model.Artist.Name
-        );
-
-        var f = r.FirstOrDefault();
-
-        return f is null ? null : new ServerLibrary.Track(f);
+        // var r = await service.SearchRecordingForArtistByArtistNameExactNameMatchAsync(
+        //     Model.Name,
+        //     Model.Artist.Name
+        // );
+        //
+        // var f = r.FirstOrDefault();
+        //
+        // return f is null ? null : new ServerLibrary.Track(f);
+        return null;
     }
 
     public async Task<MbRecording?> MusicBrainzRecording(MusicBrainzService service)

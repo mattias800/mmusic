@@ -1,6 +1,6 @@
 using MusicGQL.Features.ArtistServerStatus.Services;
 using MusicGQL.Features.ServerLibrary;
-using MusicGQL.Integration.Neo4j;
+using MusicGQL.Features.ServerLibrary.Cache;
 
 namespace MusicGQL.Features.ArtistServerStatus;
 
@@ -14,7 +14,7 @@ public record ArtistServerStatus([property: GraphQLIgnore] string ArtistMbId)
 }
 
 [UnionType("ArtistServerStatusResult")]
-public abstract record ArtistServerStatusResult([property: GraphQLIgnore] string ArtistMbId)
+public abstract record ArtistServerStatusResult([property: GraphQLIgnore] string ArtistId)
 {
     public abstract bool TopTracksVisible();
 
@@ -57,18 +57,18 @@ public record ArtistServerStatusUpdatingArtist(string ArtistMbId)
 }
 
 public record ArtistServerStatusImportingArtistReleases(
-    string ArtistMbId,
+    string ArtistId,
     int NumReleaseGroupsFinishedImporting,
     int TotalNumReleaseGroupsBeingImported
-) : ArtistServerStatusResult(ArtistMbId), IArtistServerStatusResult
+) : ArtistServerStatusResult(ArtistId), IArtistServerStatusResult
 {
     public override bool TopTracksVisible() => false;
 
     public override bool ReleasesVisible() => NumReleaseGroupsFinishedImporting > 0;
 
-    public async Task<Artist> Artist(ServerLibraryService service)
+    public async Task<Artist> Artist(ServerLibraryCache cache)
     {
-        var artist = await service.GetArtistByIdAsync(ArtistMbId);
+        var artist = await cache.GetArtistByIdAsync(ArtistId);
         if (artist is null)
         {
             throw new Exception("Artist not found");

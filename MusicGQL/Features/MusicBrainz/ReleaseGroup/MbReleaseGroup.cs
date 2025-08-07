@@ -1,14 +1,12 @@
 using Hqub.MusicBrainz.Entities;
 using MusicGQL.Features.MusicBrainz.Common;
 using MusicGQL.Features.ServerLibrary;
-using MusicGQL.Features.ServerLibrary.ReleaseGroup;
 using MusicGQL.Integration.MusicBrainz;
 using TrackSeries.FanArtTV.Client;
 
 namespace MusicGQL.Features.MusicBrainz.ReleaseGroup;
 
 public record MbReleaseGroup([property: GraphQLIgnore] Hqub.MusicBrainz.Entities.ReleaseGroup Model)
-    : IReleaseGroupBase
 {
     [ID]
     public string Id() => Model.Id;

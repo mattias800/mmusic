@@ -4,9 +4,6 @@ using MusicGQL.Features.Likes.Db;
 using MusicGQL.Features.Likes.Events;
 using MusicGQL.Features.Playlists.Db;
 using MusicGQL.Features.Playlists.Events;
-using MusicGQL.Features.ServerLibrary.Artist.Db;
-using MusicGQL.Features.ServerLibrary.Events;
-using MusicGQL.Features.ServerLibrary.ReleaseGroup.Db;
 using MusicGQL.Features.ServerSettings.Db;
 using MusicGQL.Features.ServerSettings.Events;
 using MusicGQL.Features.Users.Db;
@@ -21,8 +18,6 @@ public class EventDbContext(DbContextOptions<EventDbContext> options) : DbContex
 
     // Projections
     public DbSet<DbLikedSong> LikedSongs { get; set; }
-    public DbSet<DbServerArtist> ServerArtists { get; set; }
-    public DbSet<DbServerReleaseGroup> ServerReleaseGroups { get; set; }
 
     public DbSet<DbPlaylist> Playlists { get; set; }
     public DbSet<DbUser> Users { get; set; }
@@ -36,8 +31,6 @@ public class EventDbContext(DbContextOptions<EventDbContext> options) : DbContex
             .HasDiscriminator<string>("Discriminator")
             .HasValue<LikedSong>("LikedSong")
             .HasValue<UnlikedSong>("UnlikedSong")
-            .HasValue<AddArtistToServerLibrary>("AddArtistToServerLibrary")
-            .HasValue<AddReleaseGroupToServerLibrary>("AddReleaseGroupToServerLibrary")
             .HasValue<CreatedPlaylist>("CreatedPlaylist")
             .HasValue<RenamedPlaylist>("RenamedPlaylist")
             .HasValue<SongAddedToPlaylist>("SongAddedToPlaylist")
@@ -95,36 +88,6 @@ public class EventDbContext(DbContextOptions<EventDbContext> options) : DbContex
 
             // Optional: for query speed
             b.HasIndex(ls => ls.LikedByUserId);
-        });
-
-        modelBuilder.Entity<DbServerArtist>(b =>
-        {
-            b.ToTable("ServerArtists");
-            b.HasKey(sa => sa.Id);
-
-            b.HasIndex(sa => sa.ArtistId).IsUnique();
-
-            b.Property(sa => sa.ArtistId).IsRequired();
-
-            b.HasOne(sa => sa.AddedBy)
-                .WithMany()
-                .HasForeignKey(sa => sa.AddedByUserId)
-                .OnDelete(DeleteBehavior.Cascade);
-        });
-
-        modelBuilder.Entity<DbServerReleaseGroup>(b =>
-        {
-            b.ToTable("ServerReleaseGroups");
-            b.HasKey(srg => srg.Id);
-
-            b.HasIndex(srg => srg.ReleaseGroupId).IsUnique();
-
-            b.Property(srg => srg.ReleaseGroupId).IsRequired();
-
-            b.HasOne(srg => srg.AddedBy)
-                .WithMany()
-                .HasForeignKey(srg => srg.AddedByUserId)
-                .OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<DbServerSettings>(b =>
