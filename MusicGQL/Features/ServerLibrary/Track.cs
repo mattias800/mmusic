@@ -12,6 +12,8 @@ public record Track([property: GraphQLIgnore] CachedTrack Model)
 
     public string Title() => Model.Title;
 
+    public int TrackNumber() => Model.JsonTrack.TrackNumber;
+
     public int? TrackLength() => Model.JsonTrack.TrackLength;
 
     /// <summary>

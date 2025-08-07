@@ -86,10 +86,25 @@ public class LibraryImportService(
 
             // 5. Fetch LastFM monthly listeners (best-effort)
             long? monthlyListeners = null;
+            List<JsonTopTrack> topTracks = new();
             try
             {
                 var info = await lastfmClient.Artist.GetInfoByMbidAsync(mbArtist.Id);
                 monthlyListeners = info?.Statistics?.Listeners;
+                // Fetch top tracks as well
+                var top = await lastfmClient.Artist.GetTopTracksByMbidAsync(mbArtist.Id);
+                if (top != null)
+                {
+                    topTracks = top
+                        .Take(10)
+                        .Select(t => new JsonTopTrack
+                        {
+                            Title = t.Name,
+                            ReleaseTitle = t.Album?.Name,
+                            CoverArtUrl = t.Album?.Images?.LastOrDefault()?.Url,
+                        })
+                        .ToList();
+                }
             }
             catch { }
 
@@ -100,6 +115,7 @@ public class LibraryImportService(
                 Name = mbArtist.Name,
                 SortName = mbArtist.SortName,
                 MonthlyListeners = monthlyListeners,
+                TopTracks = topTracks,
                 Photos = new JsonArtistPhotos
                 {
                     Thumbs = fanArtResult.Thumbs.Any() ? fanArtResult.Thumbs : null,
@@ -121,6 +137,49 @@ public class LibraryImportService(
             await File.WriteAllTextAsync(artistJsonPath, jsonContent);
 
             Console.WriteLine($"✅ Created artist.json");
+
+            // Attempt to map top tracks to local library entries by title
+            try
+            {
+                if (artistJson.TopTracks != null && artistJson.TopTracks.Count > 0)
+                {
+                    // Read releases from disk for this artist
+                    var releaseDirs = Directory.GetDirectories(artistFolderPath);
+                    foreach (var releaseDir in releaseDirs)
+                    {
+                        var releaseJsonPath = Path.Combine(releaseDir, "release.json");
+                        if (!File.Exists(releaseJsonPath)) continue;
+
+                        var releaseJsonText = await File.ReadAllTextAsync(releaseJsonPath);
+                        var releaseJson = System.Text.Json.JsonSerializer.Deserialize<JsonRelease>(
+                            releaseJsonText,
+                            GetJsonOptions()
+                        );
+                        if (releaseJson?.Tracks == null) continue;
+
+                        var folderName = Path.GetFileName(releaseDir) ?? string.Empty;
+                        foreach (var top in artistJson.TopTracks)
+                        {
+                            if (top.ReleaseFolderName != null && top.TrackNumber != null)
+                                continue; // already mapped
+
+                            var match = releaseJson.Tracks.FirstOrDefault(
+                                t => string.Equals(t.Title, top.Title, StringComparison.OrdinalIgnoreCase)
+                            );
+                            if (match != null)
+                            {
+                                top.ReleaseFolderName = folderName;
+                                top.TrackNumber = match.TrackNumber;
+                            }
+                        }
+                    }
+
+                    // Rewrite artist.json if any mapping was added
+                    var updatedContent = JsonSerializer.Serialize(artistJson, jsonOptions);
+                    await File.WriteAllTextAsync(artistJsonPath, updatedContent);
+                }
+            }
+            catch { }
 
             // 8. Update cache
             await cache.UpdateCacheAsync();

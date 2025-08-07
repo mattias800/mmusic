@@ -1,7 +1,5 @@
 using MusicGQL.Features.ServerLibrary.Reader;
 
-using MusicGQL.Types;
-
 namespace MusicGQL.Features.ServerLibrary;
 
 [ExtendObjectType(typeof(MusicGQL.Types.Mutation))]
@@ -31,5 +29,3 @@ public class ScanLibraryResult
     public List<string> Notes { get; set; } = [];
     public string? ErrorMessage { get; set; }
 }
-
-

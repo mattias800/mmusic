@@ -9,7 +9,6 @@ import { SectionList } from "@/components/page-body/SectionList.tsx";
 import { whenTypename } from "@/common/utils/TypenameMatcher.ts";
 import { ArtistNotInLibrarySectionList } from "@/features/artist/artist-not-in-library/ArtistNotInLibrarySectionList.tsx";
 import { ArtistServerStatus } from "@/features/artist/artist-server-status/ArtistServerStatus.tsx";
-import { ArtistNotInLibraryTopTracks } from "@/features/artist/artist-not-in-library/ArtistNotInLibraryTopTracks.tsx";
 import { AddArtistToLibraryBox } from "@/features/artist/artist-not-in-library/AddArtistToLibraryBox.tsx";
 import { MainPadding } from "@/components/layout/MainPadding.tsx";
 import { ArtistActionButtons } from "@/features/artist/artist-page/ArtistActionButtons.tsx";
@@ -58,7 +57,6 @@ const artistPanelArtistFragment = graphql(`
         }
       }
     }
-    ...ArtistNotInLibraryTopTracks_Artist
   }
 `);
 
@@ -91,9 +89,6 @@ export const ArtistPanel: React.FC<ArtistPanelProps> = (props) => {
         <MainPadding>
           <ArtistNotInLibrarySectionList
             artistName={artist.name}
-            renderTopTracks={() => (
-              <ArtistNotInLibraryTopTracks artist={artist} />
-            )}
             renderImportBox={() => (
               <AddArtistToLibraryBox
                 artistId={artist.id}

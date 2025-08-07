@@ -1,5 +1,3 @@
-using Hqub.Lastfm;
-using MusicGQL.Features.LastFm;
 using MusicGQL.Features.ServerLibrary.Cache;
 using MusicGQL.Features.ServerLibrary.Json;
 
@@ -15,27 +13,6 @@ public record Artist([property: GraphQLIgnore] CachedArtist Model)
     public string SortName() => Model.SortName ?? Model.Name;
 
     public ArtistServerStatus.ArtistServerStatus ServerStatus() => new(Model.Id);
-
-    public async Task<IEnumerable<LastFmTrack>> TopTracks(LastfmClient lastfmClient)
-    {
-        var mbId = Model.JsonArtist.Connections?.MusicBrainzArtistId;
-
-        if (mbId is null)
-        {
-            return [];
-        }
-
-        try
-        {
-            var tracks = await lastfmClient.Artist.GetTopTracksByMbidAsync(Model.Id);
-
-            return tracks.Take(20).Select(t => new LastFmTrack(t)).ToList();
-        }
-        catch
-        {
-            return [];
-        }
-    }
 
     public async Task<IEnumerable<Release>> Releases(ServerLibraryCache cache)
     {
@@ -71,6 +48,9 @@ public record Artist([property: GraphQLIgnore] CachedArtist Model)
     }
 
     public long? Listeners() => Model.JsonArtist.MonthlyListeners;
+
+    public IEnumerable<ArtistTopTrack> TopTracks() =>
+        Model.JsonArtist.TopTracks?.Select(t => new ArtistTopTrack(Model.Id, t)) ?? [];
 
     public ArtistImages? Images()
     {

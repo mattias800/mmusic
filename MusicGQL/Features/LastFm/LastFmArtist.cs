@@ -1,3 +1,4 @@
+using Hqub.Lastfm;
 using MusicGQL.Features.MusicBrainz.Artist;
 using MusicGQL.Features.ServerLibrary;
 using MusicGQL.Features.ServerLibrary.Cache;
@@ -42,6 +43,20 @@ public record LastFmArtist([property: GraphQLIgnore] Hqub.Lastfm.Entities.Artist
         catch
         {
             return null;
+        }
+    }
+
+    public async Task<IEnumerable<LastFmTrack>> TopTracks(LastfmClient lastfmClient)
+    {
+        try
+        {
+            var tracks = await lastfmClient.Artist.GetTopTracksByMbidAsync(Model.MBID);
+
+            return tracks.Take(20).Select(t => new LastFmTrack(t)).ToList();
+        }
+        catch
+        {
+            return [];
         }
     }
 

@@ -7,7 +7,7 @@ export interface ArtistNotInLibraryTopTracksProps {
 }
 
 const artistNotInLibraryTopTracksArtistFragment = graphql(`
-  fragment ArtistNotInLibraryTopTracks_Artist on Artist {
+  fragment ArtistNotInLibraryTopTracks_Artist on LastFmArtist {
     id
     topTracks {
       id

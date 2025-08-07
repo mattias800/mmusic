@@ -18,8 +18,7 @@ const topArtistTracksArtistQuery = graphql(`
       artistById(id: $artistId) {
         id
         topTracks {
-          id
-          ...TopArtistTrackItem_LastFmTrack
+          ...TopArtistTrackItem_ArtistTopTrack
         }
       }
     }
@@ -67,9 +66,9 @@ export const TopArtistTracks: React.FC<TopArtistTracksProps> = ({
           <div>
             {visibleTracks.map((track, index) => (
               <TopArtistTrackItem
-                key={track.id}
+                key={index}
                 index={index + 1}
-                track={track}
+                artistTopTrack={track}
               />
             ))}
           </div>

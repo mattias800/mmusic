@@ -84,7 +84,7 @@ type Artist {
   serverStatus: ArtistServerStatus!
   singles: [Release!]!
   sortName: String!
-  topTracks: [LastFmTrack!]!
+  topTracks: [ArtistTopTrack!]!
 }
 
 type ArtistImages {
@@ -142,6 +142,12 @@ type ArtistServerStatusUpdatingArtistReleases implements ArtistServerStatusResul
   artistMbId: String!
   releasesVisible: Boolean!
   topTracksVisible: Boolean!
+}
+
+type ArtistTopTrack {
+  releaseTitle: String
+  title: String!
+  track: Track
 }
 
 type CacheStatistics {
@@ -280,6 +286,7 @@ type LastFmArtist {
   name: String!
   statistics: LastFmStatistics!
   summary: String
+  topTracks: [LastFmTrack!]!
 }
 
 type LastFmStatistics {
@@ -701,6 +708,7 @@ type Track {
   statistics: LastFmStatistics
   title: String!
   trackLength: Int
+  trackNumber: Int!
 }
 
 scalar UUID
