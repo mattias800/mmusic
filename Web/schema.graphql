@@ -547,6 +547,7 @@ type Query {
   areThereAnyUsers: Boolean!
   download: DownloadsSearchRoot!
   external: ExternalRoot!
+  fileSystem: FileSystemSearchRoot!
   musicBrainz: MusicBrainzSearchRoot!
   playlist: PlaylistSearchRoot!
   recommendations: RecommendationsSearchRoot!

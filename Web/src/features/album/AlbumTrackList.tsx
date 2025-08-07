@@ -12,24 +12,14 @@ const albumTrackListReleaseGroupFragment = graphql(`
   fragment AlbumTrackList_Release on Release {
     id
     title
-    mainRelease {
+    tracks {
       id
       title
-      recordings {
-        id
-        ...RecordingPlayButton_Track
-        title
-        length
-        statistics {
-          listeners
-        }
-        nameCredits {
-          name
-          artist {
-            id
-            name
-          }
-        }
+      length
+      ...RecordingPlayButton_Track
+      statistics {
+        listeners
+        playCount
       }
     }
   }

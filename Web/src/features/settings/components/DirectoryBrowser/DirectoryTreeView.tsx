@@ -4,10 +4,12 @@ import { DirectoryTreeItem } from "./DirectoryTreeItem";
 
 const browseFileSystemQuery = graphql(`
   query BrowseFileSystem($path: String) {
-    browseFileSystem(path: $path) {
-      path
-      isDirectory
-      ...DirectoryTreeItem_FileSystemEntry
+    fileSystem {
+      browseFileSystem(path: $path) {
+        path
+        isDirectory
+        ...DirectoryTreeItem_FileSystemEntry
+      }
     }
   }
 `);

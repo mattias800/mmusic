@@ -19,7 +19,7 @@ const topTrackCardLastFmTrackFragment = graphql(`
         id
         name
         images {
-          artistThumb
+          thumbs
         }
       }
     }
@@ -28,7 +28,7 @@ const topTrackCardLastFmTrackFragment = graphql(`
       imageUrl
     }
     images {
-      artistThumb
+      thumbs
     }
   }
 `);

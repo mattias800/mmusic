@@ -5860,6 +5860,22 @@
             "deprecationReason": null
           },
           {
+            "name": "fileSystem",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "OBJECT",
+                "name": "FileSystemSearchRoot",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "musicBrainz",
             "description": null,
             "args": [],

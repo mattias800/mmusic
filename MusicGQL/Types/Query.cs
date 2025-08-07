@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using MusicGQL.Db.Postgres;
 using MusicGQL.Features.Downloads;
 using MusicGQL.Features.External;
+using MusicGQL.Features.FileSystem;
 using MusicGQL.Features.MusicBrainz;
 using MusicGQL.Features.Playlists;
 using MusicGQL.Features.Recommendations;
@@ -80,6 +81,8 @@ public class Query
     {
         return await dbContext.Users.AnyAsync();
     }
+
+    public FileSystemSearchRoot FileSystem() => new();
 
     public async Task<ServerSettings> ServerSettings(EventDbContext dbContext) =>
         new(

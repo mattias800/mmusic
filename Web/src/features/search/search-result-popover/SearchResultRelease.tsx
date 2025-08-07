@@ -4,30 +4,26 @@ import { Link } from "react-router";
 import { useQuery } from "urql";
 import { SearchResultGroup } from "@/features/search/search-result-popover/components/SearchResultGroup.tsx";
 
-export interface SearchResultReleaseGroupProps {
+export interface SearchResultReleaseProps {
   searchText: string;
   onClickSearchResult: () => void;
 }
 
 const albumSearchQuery = graphql(`
-  query SearchResultAlbumSearch($text: String!) {
-    releaseGroup {
-      searchByName(name: $text, limit: 5) {
+  query SearchResultReleaseSearch($text: String!) {
+    serverLibrary {
+      searchReleases(searchTerm: $text, limit: 5) {
         id
         title
-        mainRelease {
-          id
-          title
-          coverArtUri
-        }
       }
     }
   }
 `);
 
-export const SearchResultReleaseGroup: React.FC<
-  SearchResultReleaseGroupProps
-> = ({ onClickSearchResult, searchText }) => {
+export const SearchResultRelease: React.FC<SearchResultReleaseProps> = ({
+  onClickSearchResult,
+  searchText,
+}) => {
   const [{ fetching, data }] = useQuery({
     query: albumSearchQuery,
     variables: { text: searchText },

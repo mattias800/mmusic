@@ -12,22 +12,8 @@ const albumHeaderReleaseGroupFragment = graphql(`
   fragment AlbumHeader_Release on Release {
     id
     title
-    primaryType
-    coverArtUri
+    coverArtUrl
     firstReleaseYear
-    credits {
-      artist {
-        id
-        name
-      }
-    }
-    mainRelease {
-      id
-      recordings {
-        id
-        length
-      }
-    }
   }
 `);
 

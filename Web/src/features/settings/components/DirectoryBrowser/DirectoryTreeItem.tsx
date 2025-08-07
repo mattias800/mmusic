@@ -17,11 +17,13 @@ const directoryTreeItemFileSystemEntryFragment = graphql(`
 
 const directoryTreeItemQuery = graphql(`
   query DirectoryTreeItem($path: String) {
-    browseFileSystem(path: $path) {
-      id
-      isDirectory
-      path
-      ...DirectoryTreeItem_FileSystemEntry
+    fileSystem {
+      browseFileSystem(path: $path) {
+        id
+        isDirectory
+        path
+        ...DirectoryTreeItem_FileSystemEntry
+      }
     }
   }
 `);

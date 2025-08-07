@@ -5,35 +5,24 @@ import { formatTrackLength } from "@/common/TrackLengthFormatter.ts";
 import { useQuery } from "urql";
 import { SearchResultGroup } from "@/features/search/search-result-popover/components/SearchResultGroup.tsx";
 
-export interface SearchResultRecordingProps {
+export interface SearchResultTrackProps {
   searchText: string;
   onClickSearchResult: () => void;
 }
 
 const songSearchQuery = graphql(`
-  query SearchResultSongSearch($text: String!) {
-    recording {
-      searchByName(name: $text, limit: 5) {
+  query SearchResultTrackSearch($text: String!) {
+    serverLibrary {
+      searchTracks(searchTerm: $text, limit: 5) {
         id
         title
         length
-        nameCredits {
-          artist {
-            id
-            name
-          }
-        }
-        mainAlbum {
-          id
-          title
-          coverArtUri
-        }
       }
     }
   }
 `);
 
-export const SearchResultRecording: React.FC<SearchResultRecordingProps> = ({
+export const SearchResultTrack: React.FC<SearchResultTrackProps> = ({
   onClickSearchResult,
   searchText,
 }) => {

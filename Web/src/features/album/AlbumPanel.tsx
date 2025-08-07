@@ -16,15 +16,9 @@ export interface AlbumPanelProps {
 const albumPanelReleaseGroupFragment = graphql(`
   fragment AlbumPanel_Release on Release {
     id
-    ...AlbumHeader_ReleaseGroup
-    ...AlbumTrackList_ReleaseGroup
+    ...AlbumHeader_Release
+    ...AlbumTrackList_Release
     firstReleaseYear
-    mainRelease {
-      labels {
-        id
-        name
-      }
-    }
   }
 `);
 

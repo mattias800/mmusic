@@ -9,21 +9,10 @@ export interface PlaylistSongRowProps {
 }
 
 const playlistSongRowFragment = graphql(`
-  fragment LikedSongRow_Recoding on Recording {
+  fragment LikedSongRow_Track on Track {
     id
     title
     length
-    nameCredits {
-      artist {
-        id
-        name
-      }
-    }
-    mainAlbum {
-      id
-      title
-      coverArtUri
-    }
   }
 `);
 
