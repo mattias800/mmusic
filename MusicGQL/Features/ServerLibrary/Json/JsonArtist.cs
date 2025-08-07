@@ -18,6 +18,7 @@ public class JsonTopTrack
     public string? CoverArtUrl { get; set; }
     public string? ReleaseFolderName { get; set; }
     public int? TrackNumber { get; set; }
+    public long? PlayCount { get; set; }
 }
 
 public class JsonArtistPhotos
