@@ -30,7 +30,7 @@ public class TrackJson
     public string Title { get; set; }
     public string? SortTitle { get; set; }
     public int TrackNumber { get; set; }
-    public int TrackLength { get; set; }
+    public int? TrackLength { get; set; }
     public string? AudioFilePath { get; set; }
     public TrackServiceConnections? Connections { get; set; }
 }
