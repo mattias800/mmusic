@@ -1,4 +1,5 @@
 using MusicGQL.Features.ServerLibrary.Cache;
+using MusicGQL.Features.ServerLibrary.Utils;
 
 namespace MusicGQL.Features.ServerLibrary;
 
@@ -33,7 +34,7 @@ public record Release([property: GraphQLIgnore] CachedRelease Model)
     /// <summary>
     /// Gets the cover art URL that the server can serve
     /// </summary>
-    public string CoverArtUrl() => 
+    public string CoverArtUrl() =>
         LibraryAssetUrlFactory.CreateReleaseCoverArtUrl(Model.ArtistId, Model.FolderName);
 
     public async Task<IEnumerable<Track>> Tracks(ServerLibraryCache cache)

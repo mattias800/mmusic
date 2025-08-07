@@ -1,4 +1,4 @@
-namespace MusicGQL.Features.ServerLibrary;
+namespace MusicGQL.Features.ServerLibrary.Utils;
 
 public static class LibraryDeciderExtensions
 {

@@ -1,0 +1,415 @@
+using System.Text.Json;
+using MusicGQL.Features.Import.Services;
+using MusicGQL.Features.ServerLibrary.Cache;
+using MusicGQL.Features.ServerLibrary.Json;
+using Path = System.IO.Path;
+using ReleaseType = MusicGQL.Features.ServerLibrary.ReleaseType;
+
+namespace MusicGQL.Features.Import;
+
+/// <summary>
+/// Main service for importing artists and releases from external sources into the local library
+/// </summary>
+public class LibraryImportService
+{
+    private readonly MusicBrainzImportService _musicBrainzService;
+    private readonly SpotifyImportService _spotifyService;
+    private readonly FanArtDownloadService _fanArtService;
+    private readonly ServerLibraryCache _cache;
+    private const string LibraryPath = "./Library/";
+
+    public LibraryImportService(
+        MusicBrainzImportService musicBrainzService,
+        SpotifyImportService spotifyService,
+        FanArtDownloadService fanArtService,
+        ServerLibraryCache cache
+    )
+    {
+        _musicBrainzService = musicBrainzService;
+        _spotifyService = spotifyService;
+        _fanArtService = fanArtService;
+        _cache = cache;
+    }
+
+    /// <summary>
+    /// Imports an artist by searching MusicBrainz and Spotify, downloading photos, and creating artist.json
+    /// </summary>
+    /// <param name="artistName">Name of the artist to import</param>
+    /// <returns>Import result with success status and details</returns>
+    public async Task<ArtistImportResult> ImportArtistAsync(string artistName)
+    {
+        var result = new ArtistImportResult { ArtistName = artistName };
+
+        try
+        {
+            Console.WriteLine($"🎤 Importing artist: {artistName}");
+
+            // 1. Search MusicBrainz for the artist
+            Console.WriteLine("🔍 Searching MusicBrainz...");
+            var mbResults = await _musicBrainzService.SearchArtistsAsync(artistName);
+
+            if (!mbResults.Any())
+            {
+                result.ErrorMessage = "Artist not found on MusicBrainz";
+                return result;
+            }
+
+            // Take the first/best match from MusicBrainz
+            var mbArtist = mbResults.First();
+            result.MusicBrainzId = mbArtist.Id;
+            Console.WriteLine($"✅ Found on MusicBrainz: {mbArtist.Name} ({mbArtist.Id})");
+
+            // 2. Search Spotify for matching artist
+            Console.WriteLine("🎵 Searching Spotify...");
+            var spotifyArtist = await _spotifyService.FindBestMatchAsync(artistName);
+            if (spotifyArtist != null)
+            {
+                result.SpotifyId = spotifyArtist.Id;
+                Console.WriteLine($"✅ Found on Spotify: {spotifyArtist.Name} ({spotifyArtist.Id})");
+            }
+            else
+            {
+                Console.WriteLine("⚠️ Not found on Spotify");
+            }
+
+            // 3. Create artist folder
+            var artistFolderName = SanitizeFolderName(mbArtist.Name);
+            var artistFolderPath = Path.Combine(LibraryPath, artistFolderName);
+
+            if (Directory.Exists(artistFolderPath))
+            {
+                result.ErrorMessage = $"Artist folder already exists: {artistFolderName}";
+                return result;
+            }
+
+            Directory.CreateDirectory(artistFolderPath);
+            result.ArtistFolderPath = artistFolderPath;
+            Console.WriteLine($"📁 Created folder: {artistFolderName}");
+
+            // 4. Download photos from fanart.tv
+            Console.WriteLine("🖼️ Downloading photos from fanart.tv...");
+            var fanArtResult = await _fanArtService.DownloadArtistPhotosAsync(
+                mbArtist.Id,
+                artistFolderPath
+            );
+            result.DownloadedPhotos = fanArtResult;
+
+            // 5. Create artist.json
+            var artistJson = new ArtistJson
+            {
+                Id = artistFolderName, // Use folder name as ID
+                Name = mbArtist.Name,
+                SortName = mbArtist.SortName,
+                Photos = new ArtistPhotosJson
+                {
+                    Thumbs = fanArtResult.Thumbs.Any() ? fanArtResult.Thumbs : null,
+                    Backgrounds = fanArtResult.Backgrounds.Any() ? fanArtResult.Backgrounds : null,
+                    Banners = fanArtResult.Banners.Any() ? fanArtResult.Banners : null,
+                    Logos = fanArtResult.Logos.Any() ? fanArtResult.Logos : null,
+                },
+                Connections = new ArtistServiceConnections
+                {
+                    MusicBrainzArtistId = mbArtist.Id,
+                    SpotifyId = spotifyArtist?.Id,
+                },
+            };
+
+            // 6. Write artist.json file
+            var artistJsonPath = Path.Combine(artistFolderPath, "artist.json");
+            var jsonOptions = GetJsonOptions();
+            var jsonContent = JsonSerializer.Serialize(artistJson, jsonOptions);
+            await File.WriteAllTextAsync(artistJsonPath, jsonContent);
+
+            Console.WriteLine($"✅ Created artist.json");
+
+            // 7. Update cache
+            await _cache.UpdateCacheAsync();
+            Console.WriteLine($"🔄 Updated cache");
+
+            result.Success = true;
+            result.ArtistJson = artistJson;
+            Console.WriteLine($"🎉 Successfully imported artist: {artistName}");
+        }
+        catch (Exception ex)
+        {
+            result.ErrorMessage = ex.Message;
+            Console.WriteLine($"❌ Error importing artist '{artistName}': {ex.Message}");
+
+            // Cleanup on error
+            if (
+                !string.IsNullOrEmpty(result.ArtistFolderPath)
+                && Directory.Exists(result.ArtistFolderPath)
+            )
+            {
+                try
+                {
+                    Directory.Delete(result.ArtistFolderPath, true);
+                    Console.WriteLine($"🧹 Cleaned up failed import folder");
+                }
+                catch (Exception cleanupEx)
+                {
+                    Console.WriteLine($"⚠️ Failed to cleanup folder: {cleanupEx.Message}");
+                }
+            }
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Imports all releases for an artist from MusicBrainz
+    /// </summary>
+    /// <param name="artistId">Local artist ID (folder name)</param>
+    /// <returns>Import result with success status and details</returns>
+    public async Task<ReleaseImportResult> ImportArtistReleasesAsync(string artistId)
+    {
+        var result = new ReleaseImportResult { ArtistId = artistId };
+
+        try
+        {
+            Console.WriteLine($"💿 Importing releases for artist: {artistId}");
+
+            // 1. Get artist info to find MusicBrainz ID
+            var artist = await _cache.GetArtistByIdAsync(artistId);
+            if (artist?.ArtistJson.Connections?.MusicBrainzArtistId == null)
+            {
+                result.ErrorMessage = "Artist not found or missing MusicBrainz ID";
+                return result;
+            }
+
+            var mbArtistId = artist.ArtistJson.Connections.MusicBrainzArtistId;
+            var artistFolderPath = Path.Combine(LibraryPath, artistId);
+
+            // 2. Get release groups from MusicBrainz
+            Console.WriteLine("🔍 Fetching release groups from MusicBrainz...");
+            var releaseGroups = await _musicBrainzService.GetArtistReleaseGroupsAsync(mbArtistId);
+
+            Console.WriteLine($"📀 Found {releaseGroups.Count} release groups");
+
+            // 3. Import each release group
+            foreach (var releaseGroup in releaseGroups)
+            {
+                try
+                {
+                    var releaseResult = await ImportReleaseGroupAsync(
+                        releaseGroup,
+                        artistFolderPath,
+                        artistId
+                    );
+                    result.ImportedReleases.Add(releaseResult);
+
+                    if (releaseResult.Success)
+                    {
+                        Console.WriteLine($"✅ Imported release: {releaseGroup.Title}");
+                    }
+                    else
+                    {
+                        Console.WriteLine(
+                            $"❌ Failed to import release: {releaseGroup.Title} - {releaseResult.ErrorMessage}"
+                        );
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(
+                        $"❌ Error importing release '{releaseGroup.Title}': {ex.Message}"
+                    );
+                    result.ImportedReleases.Add(
+                        new SingleReleaseImportResult
+                        {
+                            ReleaseGroupId = releaseGroup.Id,
+                            Title = releaseGroup.Title,
+                            ErrorMessage = ex.Message,
+                        }
+                    );
+                }
+            }
+
+            // 4. Update cache
+            await _cache.UpdateCacheAsync();
+            Console.WriteLine($"🔄 Updated cache");
+
+            result.Success = result.ImportedReleases.Any(r => r.Success);
+            Console.WriteLine(
+                $"🎉 Import complete: {result.ImportedReleases.Count(r => r.Success)}/{result.ImportedReleases.Count} releases imported"
+            );
+        }
+        catch (Exception ex)
+        {
+            result.ErrorMessage = ex.Message;
+            Console.WriteLine($"❌ Error importing releases for artist '{artistId}': {ex.Message}");
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Imports a single release group with its releases and tracks
+    /// </summary>
+    private async Task<SingleReleaseImportResult> ImportReleaseGroupAsync(
+        MusicBrainzReleaseGroupResult releaseGroup,
+        string artistFolderPath,
+        string artistId
+    )
+    {
+        var result = new SingleReleaseImportResult
+        {
+            ReleaseGroupId = releaseGroup.Id,
+            Title = releaseGroup.Title,
+        };
+
+        // 1. Create release folder
+        var releaseFolderName = SanitizeFolderName(releaseGroup.Title);
+        var releaseFolderPath = Path.Combine(artistFolderPath, releaseFolderName);
+
+        if (Directory.Exists(releaseFolderPath))
+        {
+            result.ErrorMessage = $"Release folder already exists: {releaseFolderName}";
+            return result;
+        }
+
+        Directory.CreateDirectory(releaseFolderPath);
+
+        try
+        {
+            // 2. Get releases with tracks
+            var releases = await _musicBrainzService.GetReleaseGroupReleasesAsync(releaseGroup.Id);
+
+            if (!releases.Any())
+            {
+                result.ErrorMessage = "No releases found for release group";
+                return result;
+            }
+
+            // Take the first release (or find the best one)
+            var selectedRelease = releases.First();
+
+            // 3. Download cover art
+            var coverArtPath = await _fanArtService.DownloadReleaseCoverArtAsync(
+                releaseGroup.Id,
+                releaseFolderPath
+            );
+
+            // 4. Create release.json
+            var releaseType = releaseGroup.PrimaryType?.ToLowerInvariant() switch
+            {
+                "album" => ReleaseType.Album,
+                "ep" => ReleaseType.Ep,
+                "single" => ReleaseType.Single,
+                _ => ReleaseType.Album,
+            };
+
+            var releaseJson = new ReleaseJson
+            {
+                Title = releaseGroup.Title,
+                SortTitle = releaseGroup.Title, // Could be improved
+                Type = releaseType,
+                FirstReleaseDate = releaseGroup.FirstReleaseDate,
+                CoverArt = coverArtPath,
+                Tracks = selectedRelease
+                    .Tracks.Select(track => new TrackJson
+                    {
+                        Title = track.Title,
+                        TrackNumber = track.TrackNumber,
+                        TrackLength = track.Length,
+                        AudioFilePath = null, // No audio files downloaded yet
+                    })
+                    .ToList(),
+            };
+
+            // 5. Write release.json file
+            var releaseJsonPath = Path.Combine(releaseFolderPath, "release.json");
+            var jsonOptions = GetJsonOptions();
+            var jsonContent = JsonSerializer.Serialize(releaseJson, jsonOptions);
+            await File.WriteAllTextAsync(releaseJsonPath, jsonContent);
+
+            result.Success = true;
+            result.ReleaseFolderPath = releaseFolderPath;
+            result.ReleaseJson = releaseJson;
+        }
+        catch (Exception ex)
+        {
+            result.ErrorMessage = ex.Message;
+
+            // Cleanup on error
+            if (Directory.Exists(releaseFolderPath))
+            {
+                try
+                {
+                    Directory.Delete(releaseFolderPath, true);
+                }
+                catch
+                {
+                    // Ignore cleanup errors
+                }
+            }
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Sanitizes a string to be safe for use as a folder name
+    /// </summary>
+    private static string SanitizeFolderName(string name)
+    {
+        var invalidChars = Path.GetInvalidFileNameChars();
+        var sanitized = string.Join(
+            "",
+            name.Split(invalidChars, StringSplitOptions.RemoveEmptyEntries)
+        );
+        return sanitized.Trim();
+    }
+
+    /// <summary>
+    /// Gets JSON serializer options consistent with the rest of the application
+    /// </summary>
+    private static JsonSerializerOptions GetJsonOptions()
+    {
+        return new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            WriteIndented = true,
+            Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) },
+        };
+    }
+}
+
+/// <summary>
+/// Result of importing an artist
+/// </summary>
+public class ArtistImportResult
+{
+    public bool Success { get; set; }
+    public string ArtistName { get; set; } = string.Empty;
+    public string? MusicBrainzId { get; set; }
+    public string? SpotifyId { get; set; }
+    public string? ArtistFolderPath { get; set; }
+    public FanArtDownloadResult? DownloadedPhotos { get; set; }
+    public ArtistJson? ArtistJson { get; set; }
+    public string? ErrorMessage { get; set; }
+}
+
+/// <summary>
+/// Result of importing releases for an artist
+/// </summary>
+public class ReleaseImportResult
+{
+    public bool Success { get; set; }
+    public string ArtistId { get; set; } = string.Empty;
+    public List<SingleReleaseImportResult> ImportedReleases { get; set; } = [];
+    public string? ErrorMessage { get; set; }
+}
+
+/// <summary>
+/// Result of importing a single release
+/// </summary>
+public class SingleReleaseImportResult
+{
+    public bool Success { get; set; }
+    public string ReleaseGroupId { get; set; } = string.Empty;
+    public string Title { get; set; } = string.Empty;
+    public string? ReleaseFolderPath { get; set; }
+    public ReleaseJson? ReleaseJson { get; set; }
+    public string? ErrorMessage { get; set; }
+}

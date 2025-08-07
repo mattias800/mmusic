@@ -19,7 +19,10 @@ using MusicGQL.Features.External.SoulSeek;
 using MusicGQL.Features.External.SoulSeek.Integration;
 using MusicGQL.Features.FileSystem;
 using MusicGQL.Features.FileSystem.Mutations;
+using MusicGQL.Features.Import;
 using MusicGQL.Features.Import.Handlers;
+using MusicGQL.Features.Import.Mutations;
+using MusicGQL.Features.Import.Services;
 using MusicGQL.Features.Likes.Commands;
 using MusicGQL.Features.Likes.Events;
 using MusicGQL.Features.Likes.Mutations;
@@ -96,6 +99,10 @@ builder
     .AddSingleton<ServerLibraryJsonReader>()
     .AddSingleton<ServerLibraryAssetReader>()
     .AddSingleton<ServerLibraryCache>()
+    .AddScoped<MusicBrainzImportService>()
+    .AddScoped<SpotifyImportService>()
+    .AddScoped<FanArtDownloadService>()
+    .AddScoped<LibraryImportService>()
     .AddScoped<LikeSongHandler>()
     .AddScoped<UnlikeSongHandler>()
     .AddScoped<UpdateLibraryPathHandler>()
@@ -236,6 +243,7 @@ builder
     .AddType<StartDownloadReleaseSuccess>()
     .AddTypeExtension<UnlikeSongMutation>()
     .AddTypeExtension<LikeSongMutation>()
+    .AddTypeExtension<ImportArtistMutation>()
     .AddType<LikeSongResult.LikeSongSuccess>()
     .AddType<LikeSongResult.LikeSongAlreadyLiked>()
     .AddType<LikeSongResult.LikeSongSongDoesNotExist>()

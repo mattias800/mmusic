@@ -1,6 +1,7 @@
 using Hqub.Lastfm;
 using MusicGQL.Features.LastFm;
 using MusicGQL.Features.ServerLibrary.Cache;
+using MusicGQL.Features.ServerLibrary.Utils;
 
 namespace MusicGQL.Features.ServerLibrary;
 
@@ -16,8 +17,12 @@ public record Track([property: GraphQLIgnore] CachedTrack Model)
     /// <summary>
     /// Gets the audio URL that the server can serve
     /// </summary>
-    public string AudioUrl() => 
-        LibraryAssetUrlFactory.CreateTrackAudioUrl(Model.ArtistId, Model.ReleaseFolderName, Model.TrackNumber);
+    public string AudioUrl() =>
+        LibraryAssetUrlFactory.CreateTrackAudioUrl(
+            Model.ArtistId,
+            Model.ReleaseFolderName,
+            Model.TrackNumber
+        );
 
     public async Task<LastFmStatistics?> Statistics(LastfmClient lastfmClient)
     {

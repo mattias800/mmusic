@@ -1,6 +1,6 @@
 using MbRelease = Hqub.MusicBrainz.Entities.Release;
 
-namespace MusicGQL.Features.ServerLibrary;
+namespace MusicGQL.Features.ServerLibrary.Utils;
 
 public static class LibraryDecider
 {
