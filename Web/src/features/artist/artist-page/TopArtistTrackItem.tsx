@@ -17,6 +17,7 @@ const topArtistTrackItemArtistTopTrackFragment = graphql(`
   fragment TopArtistTrackItem_ArtistTopTrack on ArtistTopTrack {
     title
     releaseTitle
+    playCount
     track {
       id
       trackLength

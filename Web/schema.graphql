@@ -145,6 +145,7 @@ type ArtistServerStatusUpdatingArtistReleases implements ArtistServerStatusResul
 }
 
 type ArtistTopTrack {
+  playCount: Long
   releaseTitle: String
   title: String!
   track: Track

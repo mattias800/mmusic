@@ -1168,6 +1168,18 @@
         "isOneOf": null,
         "fields": [
           {
+            "name": "playCount",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "SCALAR",
+              "name": "Long",
+              "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "releaseTitle",
             "description": null,
             "args": [],
