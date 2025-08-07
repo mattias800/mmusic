@@ -25,7 +25,7 @@ public class LibraryAssetsController : ControllerBase
     public async Task<IActionResult> GetArtistPhoto(string artistId, string photoType, int photoIndex)
     {
         // Validate photo type
-        var validPhotoTypes = new[] { "thumbs", "backgrounds", "banners", "logos" };
+        string[] validPhotoTypes = ["thumbs", "backgrounds", "banners", "logos"];
         if (!validPhotoTypes.Contains(photoType.ToLowerInvariant()))
         {
             return BadRequest($"Invalid photo type '{photoType}'. Valid types are: {string.Join(", ", validPhotoTypes)}");
@@ -126,7 +126,7 @@ public class LibraryAssetsController : ControllerBase
     )
     {
         // Validate photo type
-        var validPhotoTypes = new[] { "thumbs", "backgrounds", "banners", "logos" };
+        string[] validPhotoTypes = ["thumbs", "backgrounds", "banners", "logos"];
         if (!validPhotoTypes.Contains(photoType.ToLowerInvariant()))
         {
             return BadRequest($"Invalid photo type '{photoType}'. Valid types are: {string.Join(", ", validPhotoTypes)}");

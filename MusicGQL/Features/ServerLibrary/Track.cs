@@ -13,6 +13,12 @@ public record Track([property: GraphQLIgnore] CachedTrack Model)
 
     public int? Length() => Model.TrackJson.TrackLength;
 
+    /// <summary>
+    /// Gets the audio URL that the server can serve
+    /// </summary>
+    public string AudioUrl() => 
+        LibraryAssetUrlFactory.CreateTrackAudioUrl(Model.ArtistId, Model.ReleaseFolderName, Model.TrackNumber);
+
     public async Task<LastFmStatistics?> Statistics(LastfmClient lastfmClient)
     {
         return null;

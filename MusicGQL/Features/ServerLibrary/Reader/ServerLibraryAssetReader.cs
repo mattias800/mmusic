@@ -127,14 +127,13 @@ public class ServerLibraryAssetReader
 
             // Check if release.json has cover art reference (you may need to add this to ReleaseJson model)
             // For now, look for common cover art file names
-            var commonCoverNames = new[]
-            {
+            string[] commonCoverNames = [
                 "cover.jpg",
-                "cover.png",
+                "cover.png", 
                 "cover.jpeg",
                 "folder.jpg",
-                "folder.png",
-            };
+                "folder.png"
+            ];
 
             foreach (var coverName in commonCoverNames)
             {

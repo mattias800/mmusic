@@ -10,41 +10,24 @@ public record ArtistImages(
     /// <summary>
     /// Gets a list of thumbnail photo URLs
     /// </summary>
-    public List<string> Thumbs() =>
-        Model
-            .Thumbs?.Select(
-                (_, index) => $"/library/{Uri.EscapeDataString(ArtistId)}/photos/thumbs/{index}"
-            )
-            .ToList() ?? new List<string>();
+    public List<string> Thumbs() => 
+        LibraryAssetUrlFactory.CreateArtistPhotoUrls(ArtistId, "thumbs", Model.Thumbs?.Count ?? 0);
 
     /// <summary>
     /// Gets a list of background photo URLs
     /// </summary>
-    public List<string> Backgrounds() =>
-        Model
-            .Backgrounds?.Select(
-                (_, index) =>
-                    $"/library/{Uri.EscapeDataString(ArtistId)}/photos/backgrounds/{index}"
-            )
-            .ToList() ?? new List<string>();
+    public List<string> Backgrounds() => 
+        LibraryAssetUrlFactory.CreateArtistPhotoUrls(ArtistId, "backgrounds", Model.Backgrounds?.Count ?? 0);
 
     /// <summary>
     /// Gets a list of banner photo URLs
     /// </summary>
-    public List<string> Banners() =>
-        Model
-            .Banners?.Select(
-                (_, index) => $"/library/{Uri.EscapeDataString(ArtistId)}/photos/banners/{index}"
-            )
-            .ToList() ?? new List<string>();
+    public List<string> Banners() => 
+        LibraryAssetUrlFactory.CreateArtistPhotoUrls(ArtistId, "banners", Model.Banners?.Count ?? 0);
 
     /// <summary>
     /// Gets a list of logo photo URLs
     /// </summary>
-    public List<string> Logos() =>
-        Model
-            .Logos?.Select(
-                (_, index) => $"/library/{Uri.EscapeDataString(ArtistId)}/photos/logos/{index}"
-            )
-            .ToList() ?? new List<string>();
+    public List<string> Logos() => 
+        LibraryAssetUrlFactory.CreateArtistPhotoUrls(ArtistId, "logos", Model.Logos?.Count ?? 0);
 }

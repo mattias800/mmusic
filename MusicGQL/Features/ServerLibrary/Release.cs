@@ -30,8 +30,11 @@ public record Release([property: GraphQLIgnore] CachedRelease Model)
     public string? FirstReleaseYear() =>
         Model.ReleaseJson.FirstReleaseDate?.Split("-").FirstOrDefault();
 
-    // TODO: Return correct URL that the server can serve.
-    public string? CoverArtUri() => Model.ReleaseJson.CoverArt;
+    /// <summary>
+    /// Gets the cover art URL that the server can serve
+    /// </summary>
+    public string CoverArtUrl() => 
+        LibraryAssetUrlFactory.CreateReleaseCoverArtUrl(Model.ArtistId, Model.FolderName);
 
     public async Task<IEnumerable<Track>> Tracks(ServerLibraryCache cache)
     {
