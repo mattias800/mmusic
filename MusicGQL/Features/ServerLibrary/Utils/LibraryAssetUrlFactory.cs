@@ -40,7 +40,7 @@ public static class LibraryAssetUrlFactory
     /// <returns>Dictionary of photo type to URLs</returns>
     public static Dictionary<string, List<string>> CreateAllArtistPhotoUrls(
         string artistId,
-        ArtistPhotosJson? photos
+        JsonArtistPhotos? photos
     )
     {
         if (photos == null)

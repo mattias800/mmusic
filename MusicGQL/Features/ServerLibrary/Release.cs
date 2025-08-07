@@ -20,16 +20,16 @@ public record Release([property: GraphQLIgnore] CachedRelease Model)
     public ReleaseType? Type() =>
         Model.Type switch
         {
-            Json.ReleaseType.Album => ReleaseType.Album,
-            Json.ReleaseType.Ep => ReleaseType.Ep,
-            Json.ReleaseType.Single => ReleaseType.Single,
+            Json.JsonReleaseType.Album => ReleaseType.Album,
+            Json.JsonReleaseType.Ep => ReleaseType.Ep,
+            Json.JsonReleaseType.Single => ReleaseType.Single,
             _ => null,
         };
 
-    public string? FirstReleaseDate() => Model.ReleaseJson.FirstReleaseDate;
+    public string? FirstReleaseDate() => Model.JsonRelease.FirstReleaseDate;
 
     public string? FirstReleaseYear() =>
-        Model.ReleaseJson.FirstReleaseDate?.Split("-").FirstOrDefault();
+        Model.JsonRelease.FirstReleaseDate?.Split("-").FirstOrDefault();
 
     /// <summary>
     /// Gets the cover art URL that the server can serve
@@ -40,7 +40,7 @@ public record Release([property: GraphQLIgnore] CachedRelease Model)
     public async Task<IEnumerable<Track>> Tracks(ServerLibraryCache cache)
     {
         var tracks = await cache.GetAllTracksForReleaseAsync(Model.ArtistId, Model.FolderName);
-        var sortedByTrackPosition = tracks.OrderBy(r => r.TrackJson.TrackNumber).ToList();
+        var sortedByTrackPosition = tracks.OrderBy(r => r.JsonTrack.TrackNumber).ToList();
 
         return sortedByTrackPosition.Select(r => new Track(r));
     }

@@ -24,9 +24,9 @@ public class ServerLibraryJsonReader
     /// Reads all artists from the library
     /// </summary>
     /// <returns>List of artists with their metadata</returns>
-    public async Task<List<(string ArtistPath, ArtistJson Artist)>> ReadAllArtistsAsync()
+    public async Task<List<(string ArtistPath, JsonArtist Artist)>> ReadAllArtistsAsync()
     {
-        var artists = new List<(string, ArtistJson)>();
+        var artists = new List<(string, JsonArtist)>();
 
         if (!Directory.Exists(libraryPath))
         {
@@ -64,11 +64,11 @@ public class ServerLibraryJsonReader
     /// </summary>
     /// <param name="artistPath">Path to the artist folder</param>
     /// <returns>List of releases with their metadata</returns>
-    public async Task<List<(string ReleasePath, ReleaseJson Release)>> ReadArtistAlbumsAsync(
+    public async Task<List<(string ReleasePath, JsonRelease Release)>> ReadArtistAlbumsAsync(
         string artistPath
     )
     {
-        var releases = new List<(string, ReleaseJson)>();
+        var releases = new List<(string, JsonRelease)>();
 
         if (!Directory.Exists(artistPath))
         {
@@ -106,7 +106,7 @@ public class ServerLibraryJsonReader
     /// </summary>
     /// <param name="artistName">Name of the artist</param>
     /// <returns>List of releases with their metadata</returns>
-    public async Task<List<(string ReleasePath, ReleaseJson Release)>> ReadArtistAlbumsByNameAsync(
+    public async Task<List<(string ReleasePath, JsonRelease Release)>> ReadArtistAlbumsByNameAsync(
         string artistName
     )
     {
@@ -119,7 +119,7 @@ public class ServerLibraryJsonReader
     /// </summary>
     /// <param name="artistPath">Path to the artist folder</param>
     /// <returns>Artist metadata or null if not found</returns>
-    public async Task<ArtistJson?> ReadArtistFromPathAsync(string artistPath)
+    public async Task<JsonArtist?> ReadArtistFromPathAsync(string artistPath)
     {
         var artistJsonPath = Path.Combine(artistPath, "artist.json");
 
@@ -129,7 +129,7 @@ public class ServerLibraryJsonReader
         }
 
         var jsonContent = await File.ReadAllTextAsync(artistJsonPath);
-        return JsonSerializer.Deserialize<ArtistJson>(jsonContent, _jsonOptions);
+        return JsonSerializer.Deserialize<JsonArtist>(jsonContent, _jsonOptions);
     }
 
     /// <summary>
@@ -137,7 +137,7 @@ public class ServerLibraryJsonReader
     /// </summary>
     /// <param name="artistName">Name of the artist</param>
     /// <returns>Artist metadata or null if not found</returns>
-    public async Task<ArtistJson?> ReadArtistByNameAsync(string artistName)
+    public async Task<JsonArtist?> ReadArtistByNameAsync(string artistName)
     {
         var artistPath = Path.Combine(libraryPath, artistName);
         return await ReadArtistFromPathAsync(artistPath);
@@ -148,7 +148,7 @@ public class ServerLibraryJsonReader
     /// </summary>
     /// <param name="releasePath">Path to the release folder</param>
     /// <returns>Release metadata or null if not found</returns>
-    public async Task<ReleaseJson?> ReadReleaseFromPathAsync(string releasePath)
+    public async Task<JsonRelease?> ReadReleaseFromPathAsync(string releasePath)
     {
         var releaseJsonPath = Path.Combine(releasePath, "release.json");
 
@@ -158,7 +158,7 @@ public class ServerLibraryJsonReader
         }
 
         var jsonContent = await File.ReadAllTextAsync(releaseJsonPath);
-        return JsonSerializer.Deserialize<ReleaseJson>(jsonContent, _jsonOptions);
+        return JsonSerializer.Deserialize<JsonRelease>(jsonContent, _jsonOptions);
     }
 
     /// <summary>
@@ -167,7 +167,7 @@ public class ServerLibraryJsonReader
     /// <param name="artistName">Name of the artist</param>
     /// <param name="releaseName">Name of the release</param>
     /// <returns>Release metadata or null if not found</returns>
-    public async Task<ReleaseJson?> ReadReleaseAsync(string artistName, string releaseName)
+    public async Task<JsonRelease?> ReadReleaseAsync(string artistName, string releaseName)
     {
         var releasePath = Path.Combine(libraryPath, artistName, releaseName);
         return await ReadReleaseFromPathAsync(releasePath);

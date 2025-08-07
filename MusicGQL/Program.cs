@@ -415,9 +415,9 @@ using (var scope = app.Services.CreateScope())
                     {
                         var typeIcon = release.Type switch
                         {
-                            ReleaseType.Album => "💿",
-                            ReleaseType.Ep => "💽",
-                            ReleaseType.Single => "🎵",
+                            JsonReleaseType.Album => "💿",
+                            JsonReleaseType.Ep => "💽",
+                            JsonReleaseType.Single => "🎵",
                             _ => "📀",
                         };
 
@@ -425,10 +425,10 @@ using (var scope = app.Services.CreateScope())
                             release.Tracks.Count > 0 ? $" ({release.Tracks.Count} tracks)" : "";
                         Console.WriteLine($"   {typeIcon} {release.Title}{trackCountText}");
 
-                        if (!string.IsNullOrEmpty(release.ReleaseJson.FirstReleaseYear))
+                        if (!string.IsNullOrEmpty(release.JsonRelease.FirstReleaseYear))
                         {
                             Console.WriteLine(
-                                $"      📅 Released: {release.ReleaseJson.FirstReleaseYear}"
+                                $"      📅 Released: {release.JsonRelease.FirstReleaseYear}"
                             );
                         }
                     }

@@ -34,7 +34,7 @@ public class ServerLibraryAssetReader
                 return (null, null, null);
 
             var jsonContent = await File.ReadAllTextAsync(artistJsonPath);
-            var artistJson = System.Text.Json.JsonSerializer.Deserialize<Json.ArtistJson>(
+            var artistJson = System.Text.Json.JsonSerializer.Deserialize<Json.JsonArtist>(
                 jsonContent,
                 GetJsonOptions()
             );
@@ -49,7 +49,7 @@ public class ServerLibraryAssetReader
                 "backgrounds" => artistJson.Photos.Backgrounds,
                 "banners" => artistJson.Photos.Banners,
                 "logos" => artistJson.Photos.Logos,
-                _ => null
+                _ => null,
             };
 
             if (photoList == null || photoIndex >= photoList.Count)
@@ -117,7 +117,7 @@ public class ServerLibraryAssetReader
                 return (null, null, null);
 
             var jsonContent = await File.ReadAllTextAsync(releaseJsonPath);
-            var releaseJson = System.Text.Json.JsonSerializer.Deserialize<Json.ReleaseJson>(
+            var releaseJson = System.Text.Json.JsonSerializer.Deserialize<Json.JsonRelease>(
                 jsonContent,
                 GetJsonOptions()
             );
@@ -127,12 +127,13 @@ public class ServerLibraryAssetReader
 
             // Check if release.json has cover art reference (you may need to add this to ReleaseJson model)
             // For now, look for common cover art file names
-            string[] commonCoverNames = [
+            string[] commonCoverNames =
+            [
                 "cover.jpg",
-                "cover.png", 
+                "cover.png",
                 "cover.jpeg",
                 "folder.jpg",
-                "folder.png"
+                "folder.png",
             ];
 
             foreach (var coverName in commonCoverNames)
@@ -191,7 +192,7 @@ public class ServerLibraryAssetReader
                 return (null, null, null);
 
             var jsonContent = await File.ReadAllTextAsync(releaseJsonPath);
-            var releaseJson = System.Text.Json.JsonSerializer.Deserialize<Json.ReleaseJson>(
+            var releaseJson = System.Text.Json.JsonSerializer.Deserialize<Json.JsonRelease>(
                 jsonContent,
                 GetJsonOptions()
             );

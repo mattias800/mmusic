@@ -8,7 +8,7 @@ public class CachedArtist
     public string Name { get; set; } = string.Empty;
     public string? SortName { get; set; }
     public string ArtistPath { get; set; } = string.Empty;
-    public ArtistJson ArtistJson { get; set; } = new();
+    public JsonArtist JsonArtist { get; set; } = new();
     public List<CachedRelease> Releases { get; set; } = new();
 
     // Searchable properties

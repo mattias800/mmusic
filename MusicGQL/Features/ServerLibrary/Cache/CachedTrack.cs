@@ -12,8 +12,8 @@ public class CachedTrack
     public string ArtistName { get; set; } = string.Empty;
     public string ReleaseFolderName { get; set; } = string.Empty;
     public string ReleaseTitle { get; set; } = string.Empty;
-    public Json.ReleaseType ReleaseType { get; set; }
-    public TrackJson TrackJson { get; set; } = new();
+    public Json.JsonReleaseType JsonReleaseType { get; set; }
+    public JsonTrack JsonTrack { get; set; } = new();
 
     // Searchable properties
     public string SearchTitle => Title.ToLowerInvariant();

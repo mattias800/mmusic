@@ -1,17 +1,17 @@
 namespace MusicGQL.Features.ServerLibrary.Json;
 
-public class ReleaseJson
+public class JsonRelease
 {
     public string Title { get; set; }
     public string? SortTitle { get; set; }
-    public ReleaseType Type { get; set; }
-    public List<TrackJson>? Tracks { get; set; }
+    public JsonReleaseType Type { get; set; }
+    public List<JsonTrack>? Tracks { get; set; }
     public string? FirstReleaseDate { get; set; }
     public string? FirstReleaseYear { get; set; }
     public string? CoverArt { get; set; }
 }
 
-public enum ReleaseType
+public enum JsonReleaseType
 {
     Album,
     Ep,
@@ -25,17 +25,17 @@ public class ReleaseServiceConnections
     public string? YoutubePlaylistUrl { get; set; }
 }
 
-public class TrackJson
+public class JsonTrack
 {
     public string Title { get; set; }
     public string? SortTitle { get; set; }
     public int TrackNumber { get; set; }
     public int? TrackLength { get; set; }
     public string? AudioFilePath { get; set; }
-    public TrackServiceConnections? Connections { get; set; }
+    public JsonTrackServiceConnections? Connections { get; set; }
 }
 
-public class TrackServiceConnections
+public class JsonTrackServiceConnections
 {
     public string? MusicBrainzRecordingId { get; set; }
     public string? SpotifySongId { get; set; }

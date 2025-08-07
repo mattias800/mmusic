@@ -12,7 +12,7 @@ public record Track([property: GraphQLIgnore] CachedTrack Model)
 
     public string Title() => Model.Title;
 
-    public int? Length() => Model.TrackJson.TrackLength;
+    public int? Length() => Model.JsonTrack.TrackLength;
 
     /// <summary>
     /// Gets the audio URL that the server can serve

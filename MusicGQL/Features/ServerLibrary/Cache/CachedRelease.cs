@@ -6,12 +6,12 @@ public class CachedRelease
 {
     public string Title { get; set; } = string.Empty;
     public string? SortTitle { get; set; }
-    public Json.ReleaseType Type { get; set; }
+    public Json.JsonReleaseType Type { get; set; }
     public string ReleasePath { get; set; } = string.Empty;
     public string FolderName { get; set; } = string.Empty;
     public string ArtistId { get; set; } = string.Empty;
     public string ArtistName { get; set; } = string.Empty;
-    public ReleaseJson ReleaseJson { get; set; } = new();
+    public JsonRelease JsonRelease { get; set; } = new();
     public List<CachedTrack> Tracks { get; set; } = new();
 
     // Searchable properties

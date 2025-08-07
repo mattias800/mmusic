@@ -18,7 +18,7 @@ public record Artist([property: GraphQLIgnore] CachedArtist Model)
 
     public async Task<IEnumerable<LastFmTrack>> TopTracks(LastfmClient lastfmClient)
     {
-        var mbId = Model.ArtistJson.Connections?.MusicBrainzArtistId;
+        var mbId = Model.JsonArtist.Connections?.MusicBrainzArtistId;
 
         if (mbId is null)
         {
@@ -45,7 +45,7 @@ public record Artist([property: GraphQLIgnore] CachedArtist Model)
 
     public async Task<long?> Listeners(LastfmClient lastfmClient)
     {
-        var mbId = Model.ArtistJson.Connections?.MusicBrainzArtistId;
+        var mbId = Model.JsonArtist.Connections?.MusicBrainzArtistId;
 
         if (mbId is null)
         {
@@ -65,11 +65,11 @@ public record Artist([property: GraphQLIgnore] CachedArtist Model)
 
     public ArtistImages? Images()
     {
-        if (Model.ArtistJson.Photos == null)
+        if (Model.JsonArtist.Photos == null)
         {
             return null;
         }
 
-        return new ArtistImages(Model.ArtistJson.Photos, Model.Id);
+        return new ArtistImages(Model.JsonArtist.Photos, Model.Id);
     }
 }

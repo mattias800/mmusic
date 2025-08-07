@@ -11,26 +11,14 @@ namespace MusicGQL.Features.Import;
 /// <summary>
 /// Main service for importing artists and releases from external sources into the local library
 /// </summary>
-public class LibraryImportService
+public class LibraryImportService(
+    MusicBrainzImportService musicBrainzService,
+    SpotifyImportService spotifyService,
+    FanArtDownloadService fanArtService,
+    ServerLibraryCache cache
+)
 {
-    private readonly MusicBrainzImportService _musicBrainzService;
-    private readonly SpotifyImportService _spotifyService;
-    private readonly FanArtDownloadService _fanArtService;
-    private readonly ServerLibraryCache _cache;
     private const string LibraryPath = "./Library/";
-
-    public LibraryImportService(
-        MusicBrainzImportService musicBrainzService,
-        SpotifyImportService spotifyService,
-        FanArtDownloadService fanArtService,
-        ServerLibraryCache cache
-    )
-    {
-        _musicBrainzService = musicBrainzService;
-        _spotifyService = spotifyService;
-        _fanArtService = fanArtService;
-        _cache = cache;
-    }
 
     /// <summary>
     /// Imports an artist by searching MusicBrainz and Spotify, downloading photos, and creating artist.json
@@ -47,7 +35,7 @@ public class LibraryImportService
 
             // 1. Search MusicBrainz for the artist
             Console.WriteLine("🔍 Searching MusicBrainz...");
-            var mbResults = await _musicBrainzService.SearchArtistsAsync(artistName);
+            var mbResults = await musicBrainzService.SearchArtistsAsync(artistName);
 
             if (!mbResults.Any())
             {
@@ -62,7 +50,7 @@ public class LibraryImportService
 
             // 2. Search Spotify for matching artist
             Console.WriteLine("🎵 Searching Spotify...");
-            var spotifyArtist = await _spotifyService.FindBestMatchAsync(artistName);
+            var spotifyArtist = await spotifyService.FindBestMatchAsync(artistName);
             if (spotifyArtist != null)
             {
                 result.SpotifyId = spotifyArtist.Id;
@@ -89,26 +77,26 @@ public class LibraryImportService
 
             // 4. Download photos from fanart.tv
             Console.WriteLine("🖼️ Downloading photos from fanart.tv...");
-            var fanArtResult = await _fanArtService.DownloadArtistPhotosAsync(
+            var fanArtResult = await fanArtService.DownloadArtistPhotosAsync(
                 mbArtist.Id,
                 artistFolderPath
             );
             result.DownloadedPhotos = fanArtResult;
 
             // 5. Create artist.json
-            var artistJson = new ArtistJson
+            var artistJson = new JsonArtist
             {
                 Id = artistFolderName, // Use folder name as ID
                 Name = mbArtist.Name,
                 SortName = mbArtist.SortName,
-                Photos = new ArtistPhotosJson
+                Photos = new JsonArtistPhotos
                 {
                     Thumbs = fanArtResult.Thumbs.Any() ? fanArtResult.Thumbs : null,
                     Backgrounds = fanArtResult.Backgrounds.Any() ? fanArtResult.Backgrounds : null,
                     Banners = fanArtResult.Banners.Any() ? fanArtResult.Banners : null,
                     Logos = fanArtResult.Logos.Any() ? fanArtResult.Logos : null,
                 },
-                Connections = new ArtistServiceConnections
+                Connections = new JsonArtistServiceConnections
                 {
                     MusicBrainzArtistId = mbArtist.Id,
                     SpotifyId = spotifyArtist?.Id,
@@ -124,7 +112,7 @@ public class LibraryImportService
             Console.WriteLine($"✅ Created artist.json");
 
             // 7. Update cache
-            await _cache.UpdateCacheAsync();
+            await cache.UpdateCacheAsync();
             Console.WriteLine($"🔄 Updated cache");
 
             result.Success = true;
@@ -171,19 +159,19 @@ public class LibraryImportService
             Console.WriteLine($"💿 Importing releases for artist: {artistId}");
 
             // 1. Get artist info to find MusicBrainz ID
-            var artist = await _cache.GetArtistByIdAsync(artistId);
-            if (artist?.ArtistJson.Connections?.MusicBrainzArtistId == null)
+            var artist = await cache.GetArtistByIdAsync(artistId);
+            if (artist?.JsonArtist.Connections?.MusicBrainzArtistId == null)
             {
                 result.ErrorMessage = "Artist not found or missing MusicBrainz ID";
                 return result;
             }
 
-            var mbArtistId = artist.ArtistJson.Connections.MusicBrainzArtistId;
+            var mbArtistId = artist.JsonArtist.Connections.MusicBrainzArtistId;
             var artistFolderPath = Path.Combine(LibraryPath, artistId);
 
             // 2. Get release groups from MusicBrainz
             Console.WriteLine("🔍 Fetching release groups from MusicBrainz...");
-            var releaseGroups = await _musicBrainzService.GetArtistReleaseGroupsAsync(mbArtistId);
+            var releaseGroups = await musicBrainzService.GetArtistReleaseGroupsAsync(mbArtistId);
 
             Console.WriteLine($"📀 Found {releaseGroups.Count} release groups");
 
@@ -227,7 +215,7 @@ public class LibraryImportService
             }
 
             // 4. Update cache
-            await _cache.UpdateCacheAsync();
+            await cache.UpdateCacheAsync();
             Console.WriteLine($"🔄 Updated cache");
 
             result.Success = result.ImportedReleases.Any(r => r.Success);
@@ -274,7 +262,7 @@ public class LibraryImportService
         try
         {
             // 2. Get releases with tracks
-            var releases = await _musicBrainzService.GetReleaseGroupReleasesAsync(releaseGroup.Id);
+            var releases = await musicBrainzService.GetReleaseGroupReleasesAsync(releaseGroup.Id);
 
             if (!releases.Any())
             {
@@ -286,7 +274,7 @@ public class LibraryImportService
             var selectedRelease = releases.First();
 
             // 3. Download cover art
-            var coverArtPath = await _fanArtService.DownloadReleaseCoverArtAsync(
+            var coverArtPath = await fanArtService.DownloadReleaseCoverArtAsync(
                 releaseGroup.Id,
                 releaseFolderPath
             );
@@ -294,13 +282,13 @@ public class LibraryImportService
             // 4. Create release.json
             var releaseType = releaseGroup.PrimaryType?.ToLowerInvariant() switch
             {
-                "album" => ReleaseType.Album,
-                "ep" => ReleaseType.Ep,
-                "single" => ReleaseType.Single,
-                _ => ReleaseType.Album,
+                "album" => JsonReleaseType.Album,
+                "ep" => JsonReleaseType.Ep,
+                "single" => JsonReleaseType.Single,
+                _ => JsonReleaseType.Album,
             };
 
-            var releaseJson = new ReleaseJson
+            var releaseJson = new JsonRelease
             {
                 Title = releaseGroup.Title,
                 SortTitle = releaseGroup.Title, // Could be improved
@@ -308,7 +296,7 @@ public class LibraryImportService
                 FirstReleaseDate = releaseGroup.FirstReleaseDate,
                 CoverArt = coverArtPath,
                 Tracks = selectedRelease
-                    .Tracks.Select(track => new TrackJson
+                    .Tracks.Select(track => new JsonTrack
                     {
                         Title = track.Title,
                         TrackNumber = track.TrackNumber,
@@ -387,7 +375,7 @@ public class ArtistImportResult
     public string? SpotifyId { get; set; }
     public string? ArtistFolderPath { get; set; }
     public FanArtDownloadResult? DownloadedPhotos { get; set; }
-    public ArtistJson? ArtistJson { get; set; }
+    public JsonArtist? ArtistJson { get; set; }
     public string? ErrorMessage { get; set; }
 }
 
@@ -411,6 +399,6 @@ public class SingleReleaseImportResult
     public string ReleaseGroupId { get; set; } = string.Empty;
     public string Title { get; set; } = string.Empty;
     public string? ReleaseFolderPath { get; set; }
-    public ReleaseJson? ReleaseJson { get; set; }
+    public JsonRelease? ReleaseJson { get; set; }
     public string? ErrorMessage { get; set; }
 }

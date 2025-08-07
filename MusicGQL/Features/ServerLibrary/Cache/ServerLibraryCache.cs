@@ -72,7 +72,7 @@ public class ServerLibraryCache(ServerLibraryJsonReader reader)
                     Name = artistJson.Name,
                     SortName = artistJson.SortName,
                     ArtistPath = artistPath,
-                    ArtistJson = artistJson,
+                    JsonArtist = artistJson,
                     Releases = new List<CachedRelease>(),
                 };
 
@@ -94,7 +94,7 @@ public class ServerLibraryCache(ServerLibraryJsonReader reader)
                         FolderName = folderName,
                         ArtistId = artistJson.Id,
                         ArtistName = artistJson.Name,
-                        ReleaseJson = releaseJson,
+                        JsonRelease = releaseJson,
                         Tracks = new List<CachedTrack>(),
                     };
 
@@ -113,8 +113,8 @@ public class ServerLibraryCache(ServerLibraryJsonReader reader)
                                 ArtistName = artistJson.Name,
                                 ReleaseFolderName = folderName,
                                 ReleaseTitle = releaseJson.Title,
-                                ReleaseType = releaseJson.Type,
-                                TrackJson = trackJson,
+                                JsonReleaseType = releaseJson.Type,
+                                JsonTrack = trackJson,
                             };
 
                             cachedRelease.Tracks.Add(cachedTrack);

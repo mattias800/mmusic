@@ -4,7 +4,7 @@ using MusicGQL.Features.ServerLibrary.Utils;
 namespace MusicGQL.Features.ServerLibrary;
 
 public record ArtistImages(
-    [property: GraphQLIgnore] ArtistPhotosJson Model,
+    [property: GraphQLIgnore] JsonArtistPhotos Model,
     [property: GraphQLIgnore] string ArtistId
 )
 {

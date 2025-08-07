@@ -25,7 +25,7 @@ public record LastFmTrack([property: GraphQLIgnore] Track Model)
         if (string.IsNullOrEmpty(Model.MBID))
         {
             var a = await cache.GetArtistByNameAsync(Model.Artist.Name);
-            var mbId = a?.ArtistJson.Connections?.MusicBrainzArtistId;
+            var mbId = a?.JsonArtist.Connections?.MusicBrainzArtistId;
             if (mbId is null)
             {
                 return null;
