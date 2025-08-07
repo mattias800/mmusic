@@ -164,7 +164,10 @@ public class FanArtDownloadService
     {
         try
         {
-            var albumImages = await _fanArtClient.Music.GetAlbumAsync(releaseGroupId);
+            var artistInfo = await _fanArtClient.Music.GetAlbumAsync(releaseGroupId);
+
+            var albumImages = artistInfo.Albums.GetValueOrDefault(Guid.Parse(releaseGroupId));
+
             if (albumImages?.AlbumCover?.Any() != true)
                 return null;
 
