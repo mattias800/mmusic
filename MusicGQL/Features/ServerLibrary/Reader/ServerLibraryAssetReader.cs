@@ -28,7 +28,7 @@ public class ServerLibraryAssetReader
             if (!Directory.Exists(artistPath))
                 return (null, null, null);
 
-            // Read artist.json to get photo references
+            // Read artist.json to get photo references (strict)
             var artistJsonPath = Path.Combine(artistPath, "artist.json");
             if (!File.Exists(artistJsonPath))
                 return (null, null, null);
@@ -39,23 +39,26 @@ public class ServerLibraryAssetReader
                 GetJsonOptions()
             );
 
+            // Get the appropriate photo list based on type (if available)
             if (artistJson?.Photos == null)
                 return (null, null, null);
 
-            // Get the appropriate photo list based on type
             List<string>? photoList = photoType.ToLowerInvariant() switch
-            {
-                "thumbs" => artistJson.Photos.Thumbs,
-                "backgrounds" => artistJson.Photos.Backgrounds,
-                "banners" => artistJson.Photos.Banners,
-                "logos" => artistJson.Photos.Logos,
-                _ => null,
-            };
+                {
+                    "thumbs" => artistJson.Photos.Thumbs,
+                    "backgrounds" => artistJson.Photos.Backgrounds,
+                    "banners" => artistJson.Photos.Banners,
+                    "logos" => artistJson.Photos.Logos,
+                    _ => null,
+                };
 
             if (photoList == null || photoIndex >= photoList.Count)
                 return (null, null, null);
 
             var photoPath = photoList[photoIndex];
+
+            if (string.IsNullOrEmpty(photoPath))
+                return (null, null, null);
 
             // Handle relative paths (remove ./ prefix)
             if (photoPath.StartsWith("./"))
@@ -111,7 +114,7 @@ public class ServerLibraryAssetReader
             if (!Directory.Exists(releasePath))
                 return (null, null, null);
 
-            // Read release.json to get cover art references
+            // Read release.json to get cover art references (strict)
             var releaseJsonPath = Path.Combine(releasePath, "release.json");
             if (!File.Exists(releaseJsonPath))
                 return (null, null, null);
@@ -122,29 +125,10 @@ public class ServerLibraryAssetReader
                 GetJsonOptions()
             );
 
-            // Try to get cover art from release.json
-            string? coverArtPath = null;
-
-            // Check if release.json has cover art reference (you may need to add this to ReleaseJson model)
-            // For now, look for common cover art file names
-            string[] commonCoverNames =
-            [
-                "cover.jpg",
-                "cover.png",
-                "cover.jpeg",
-                "folder.jpg",
-                "folder.png",
-            ];
-
-            foreach (var coverName in commonCoverNames)
-            {
-                var potentialPath = Path.Combine(releasePath, coverName);
-                if (File.Exists(potentialPath))
-                {
-                    coverArtPath = coverName;
-                    break;
-                }
-            }
+            // Get cover art path from release.json only
+            string? coverArtPath = releaseJson?.CoverArt;
+            if (!string.IsNullOrEmpty(coverArtPath) && coverArtPath.StartsWith("./"))
+                coverArtPath = coverArtPath[2..];
 
             if (string.IsNullOrEmpty(coverArtPath))
                 return (null, null, null);

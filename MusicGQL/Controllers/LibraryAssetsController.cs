@@ -8,30 +8,29 @@ namespace MusicGQL.Controllers;
 /// </summary>
 [ApiController]
 [Route("library")]
-public class LibraryAssetsController : ControllerBase
+public class LibraryAssetsController(ServerLibraryAssetReader assetReader) : ControllerBase
 {
-    private readonly ServerLibraryAssetReader _assetReader;
-
-    public LibraryAssetsController(ServerLibraryAssetReader assetReader)
-    {
-        _assetReader = assetReader;
-    }
-
     /// <summary>
     /// Serves artist photos by type
     /// GET /library/{artistId}/photos/{photoType}/{photoIndex}
     /// </summary>
     [HttpGet("{artistId}/photos/{photoType}/{photoIndex:int}")]
-    public async Task<IActionResult> GetArtistPhoto(string artistId, string photoType, int photoIndex)
+    public async Task<IActionResult> GetArtistPhoto(
+        string artistId,
+        string photoType,
+        int photoIndex
+    )
     {
         // Validate photo type
         string[] validPhotoTypes = ["thumbs", "backgrounds", "banners", "logos"];
         if (!validPhotoTypes.Contains(photoType.ToLowerInvariant()))
         {
-            return BadRequest($"Invalid photo type '{photoType}'. Valid types are: {string.Join(", ", validPhotoTypes)}");
+            return BadRequest(
+                $"Invalid photo type '{photoType}'. Valid types are: {string.Join(", ", validPhotoTypes)}"
+            );
         }
 
-        var (stream, contentType, fileName) = await _assetReader.GetArtistPhotoAsync(
+        var (stream, contentType, fileName) = await assetReader.GetArtistPhotoAsync(
             artistId,
             photoType,
             photoIndex
@@ -67,7 +66,7 @@ public class LibraryAssetsController : ControllerBase
     [HttpGet("{artistId}/releases/{releaseFolderName}/coverart")]
     public async Task<IActionResult> GetReleaseCoverArt(string artistId, string releaseFolderName)
     {
-        var (stream, contentType, fileName) = await _assetReader.GetReleaseCoverArtAsync(
+        var (stream, contentType, fileName) = await assetReader.GetReleaseCoverArtAsync(
             artistId,
             releaseFolderName
         );
@@ -96,7 +95,7 @@ public class LibraryAssetsController : ControllerBase
         int trackNumber
     )
     {
-        var (stream, contentType, fileName) = await _assetReader.GetTrackAudioAsync(
+        var (stream, contentType, fileName) = await assetReader.GetTrackAudioAsync(
             artistId,
             releaseFolderName,
             trackNumber
@@ -129,10 +128,12 @@ public class LibraryAssetsController : ControllerBase
         string[] validPhotoTypes = ["thumbs", "backgrounds", "banners", "logos"];
         if (!validPhotoTypes.Contains(photoType.ToLowerInvariant()))
         {
-            return BadRequest($"Invalid photo type '{photoType}'. Valid types are: {string.Join(", ", validPhotoTypes)}");
+            return BadRequest(
+                $"Invalid photo type '{photoType}'. Valid types are: {string.Join(", ", validPhotoTypes)}"
+            );
         }
 
-        var (stream, contentType, fileName) = await _assetReader.GetArtistPhotoAsync(
+        var (stream, contentType, fileName) = await assetReader.GetArtistPhotoAsync(
             artistId,
             photoType,
             photoIndex
@@ -185,7 +186,7 @@ public class LibraryAssetsController : ControllerBase
         string extension
     )
     {
-        var (stream, contentType, fileName) = await _assetReader.GetReleaseCoverArtAsync(
+        var (stream, contentType, fileName) = await assetReader.GetReleaseCoverArtAsync(
             artistId,
             releaseFolderName
         );
@@ -222,4 +223,3 @@ public class LibraryAssetsController : ControllerBase
         return lastSegment.Contains('.');
     }
 }
- 

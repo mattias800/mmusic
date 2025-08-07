@@ -206,6 +206,9 @@ builder.Services.AddSingleton<
 builder.Services.AddAutoMapper(typeof(Program));
 builder.Services.AddHttpContextAccessor();
 
+// Add MVC controllers for asset endpoints
+builder.Services.AddControllers();
+
 builder.Services.AddStackExchangeRedisCache(options =>
 {
     options.Configuration = builder.Configuration.GetConnectionString("Redis");
@@ -476,6 +479,9 @@ using (var scope = app.Services.CreateScope())
 app.UseWebSockets();
 
 app.MapGraphQL();
+
+// Map attribute-routed controllers (serves /library/* endpoints)
+app.MapControllers();
 
 app.MapPost("/test-cors", () => Results.Ok("ok"));
 
