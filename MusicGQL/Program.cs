@@ -45,7 +45,6 @@ using MusicGQL.Integration.Spotify;
 using MusicGQL.Integration.Spotify.Configuration;
 using MusicGQL.Integration.Youtube.Configuration;
 using MusicGQL.Types;
-using Neo4j.Driver;
 using Rebus.Config;
 using Rebus.Routing.TypeBased;
 using Soulseek;
@@ -160,8 +159,6 @@ builder.Services.AddSingleton<SpotifyClient>(serviceProvider =>
 
     return new SpotifyClient(spotifyConfig.WithToken(response.AccessToken));
 });
-
-builder.Services.AddSingleton(GraphDatabase.Driver("bolt://localhost:7687", AuthTokens.None));
 
 builder.Services.AddDbContextFactory<EventDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Postgres"))
@@ -349,9 +346,6 @@ app.UseCors("AllowFrontend");
 app.UseRouting(); // Ensure UseRouting is called before UseAuthentication and UseAuthorization
 app.UseAuthentication();
 app.UseAuthorization();
-
-// Ensure Neo4j constraints are created/verified on startup
-await Neo4JSchemaSetup.EnsureConstraintsAsync(app.Services, app.Logger);
 
 // 🟢 Run event processor once on startup
 using (var scope = app.Services.CreateScope())

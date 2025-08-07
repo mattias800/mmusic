@@ -60,7 +60,7 @@ public class ImportArtistReleaseGroupsToServerLibraryHandler(
 
             artistServerStatusService.SetReadyStatus(command.ArtistMbId);
 
-            logger.LogInformation("Artist {ArtistMbId} saved/updated in Neo4j", command.ArtistMbId);
+            // logger.LogInformation("Artist {ArtistMbId} saved/updated in Neo4j", command.ArtistMbId);
 
             return new Result.Success();
         }
