@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Hqub.Lastfm;
 using MusicGQL.Features.ServerLibrary.Json;
 using MusicGQL.Integration.MusicBrainz;
 using Path = System.IO.Path;
@@ -14,7 +15,8 @@ public interface IImportExecutor
 
 public sealed class MusicBrainzImportExecutor(
     MusicBrainzService musicBrainzService,
-    FanArtDownloadService fanArtDownloadService
+    FanArtDownloadService fanArtDownloadService,
+    LastfmClient lastfmClient
 ) : IImportExecutor
 {
     private static readonly string[] AudioExtensions = [".mp3", ".flac", ".wav", ".m4a", ".ogg"];
@@ -22,29 +24,129 @@ public sealed class MusicBrainzImportExecutor(
     public async Task ImportArtistIfMissingAsync(string artistDir, string mbArtistId, string artistDisplayName)
     {
         var artistJsonPath = Path.Combine(artistDir, "artist.json");
-        if (File.Exists(artistJsonPath))
+        JsonArtist? jsonArtist = null;
+        bool created = false;
+
+        if (!File.Exists(artistJsonPath))
         {
-            return;
+            var photos = await fanArtDownloadService.DownloadArtistPhotosAsync(mbArtistId, artistDir);
+            jsonArtist = new JsonArtist
+            {
+                Id = Path.GetFileName(artistDir) ?? artistDisplayName,
+                Name = artistDisplayName,
+                Photos = new JsonArtistPhotos
+                {
+                    Thumbs = photos.Thumbs.Any() ? photos.Thumbs : null,
+                    Backgrounds = photos.Backgrounds.Any() ? photos.Backgrounds : null,
+                    Banners = photos.Banners.Any() ? photos.Banners : null,
+                    Logos = photos.Logos.Any() ? photos.Logos : null,
+                },
+                Connections = new JsonArtistServiceConnections
+                {
+                    MusicBrainzArtistId = mbArtistId,
+                },
+            };
+            created = true;
+        }
+        else
+        {
+            try
+            {
+                var text = await File.ReadAllTextAsync(artistJsonPath);
+                jsonArtist = JsonSerializer.Deserialize<JsonArtist>(text, GetJsonOptions()) ?? new JsonArtist();
+            }
+            catch
+            {
+                jsonArtist = new JsonArtist { Id = Path.GetFileName(artistDir) ?? artistDisplayName, Name = artistDisplayName };
+            }
+
+            // ensure connections
+            jsonArtist.Connections ??= new JsonArtistServiceConnections();
+            if (string.IsNullOrWhiteSpace(jsonArtist.Connections.MusicBrainzArtistId))
+            {
+                jsonArtist.Connections.MusicBrainzArtistId = mbArtistId;
+            }
+            if (string.IsNullOrWhiteSpace(jsonArtist.Name)) jsonArtist.Name = artistDisplayName;
+            if (string.IsNullOrWhiteSpace(jsonArtist.Id)) jsonArtist.Id = Path.GetFileName(artistDir) ?? artistDisplayName;
         }
 
-        var photos = await fanArtDownloadService.DownloadArtistPhotosAsync(mbArtistId, artistDir);
-
-        var jsonArtist = new JsonArtist
+        // Fetch Last.fm enrichment (only if missing or we just created)
+        try
         {
-            Id = Path.GetFileName(artistDir) ?? artistDisplayName,
-            Name = artistDisplayName,
-            Photos = new JsonArtistPhotos
+            if (created || jsonArtist.MonthlyListeners == null || jsonArtist.TopTracks == null || jsonArtist.TopTracks.Count == 0)
             {
-                Thumbs = photos.Thumbs.Any() ? photos.Thumbs : null,
-                Backgrounds = photos.Backgrounds.Any() ? photos.Backgrounds : null,
-                Banners = photos.Banners.Any() ? photos.Banners : null,
-                Logos = photos.Logos.Any() ? photos.Logos : null,
-            },
-            Connections = new JsonArtistServiceConnections
-            {
-                MusicBrainzArtistId = mbArtistId,
-            },
-        };
+                var info = await lastfmClient.Artist.GetInfoByMbidAsync(mbArtistId);
+                jsonArtist.MonthlyListeners = info?.Statistics?.Listeners ?? jsonArtist.MonthlyListeners;
+
+                var top = await lastfmClient.Artist.GetTopTracksByMbidAsync(mbArtistId);
+                if (top != null)
+                {
+                    jsonArtist.TopTracks = top
+                        .Take(10)
+                        .Select(t => new JsonTopTrack
+                        {
+                            Title = t.Name,
+                            ReleaseTitle = t.Album?.Name,
+                            CoverArtUrl = t.Album?.Images?.LastOrDefault()?.Url,
+                            PlayCount = t.Statistics?.PlayCount,
+                        })
+                        .ToList();
+                }
+
+                // Attempt to map stored top tracks to local library tracks to enable playback
+                try
+                {
+                    if (jsonArtist.TopTracks != null && jsonArtist.TopTracks.Count > 0)
+                    {
+                        var releaseDirs = Directory.GetDirectories(artistDir);
+                        foreach (var releaseDir in releaseDirs)
+                        {
+                            var releaseJsonPath = Path.Combine(releaseDir, "release.json");
+                            if (!File.Exists(releaseJsonPath)) continue;
+
+                            JsonRelease? releaseJson = null;
+                            try
+                            {
+                                var releaseText = await File.ReadAllTextAsync(releaseJsonPath);
+                                releaseJson = JsonSerializer.Deserialize<JsonRelease>(releaseText, GetJsonOptions());
+                            }
+                            catch
+                            {
+                                continue;
+                            }
+
+                            if (releaseJson?.Tracks == null) continue;
+
+                            var folderName = Path.GetFileName(releaseDir) ?? string.Empty;
+                            foreach (var topTrack in jsonArtist.TopTracks)
+                            {
+                                if (topTrack.ReleaseFolderName != null && topTrack.TrackNumber != null)
+                                    continue;
+
+                                var match = releaseJson.Tracks.FirstOrDefault(t =>
+                                    !string.IsNullOrWhiteSpace(t.Title)
+                                    && string.Equals(t.Title, topTrack.Title, StringComparison.OrdinalIgnoreCase)
+                                );
+
+                                if (match != null)
+                                {
+                                    topTrack.ReleaseFolderName = folderName;
+                                    topTrack.TrackNumber = match.TrackNumber;
+                                }
+                            }
+                        }
+                    }
+                }
+                catch
+                {
+                    // ignore mapping failures
+                }
+            }
+        }
+        catch
+        {
+            // ignore Last.fm failures
+        }
 
         var artistJson = JsonSerializer.Serialize(jsonArtist, GetJsonOptions());
         await File.WriteAllTextAsync(artistJsonPath, artistJson);
