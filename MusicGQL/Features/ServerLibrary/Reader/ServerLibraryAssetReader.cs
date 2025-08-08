@@ -152,8 +152,9 @@ public class ServerLibraryAssetReader
     }
 
     /// <summary>
-    /// Gets a locally stored top track cover art by artist ID and index
-    /// Looks up artist.json to find the CoverArt path for that top track and serves it.
+    /// Gets a top track cover art by artist ID and index.
+    /// Reads artist.json and if the top track has a mapped release, serves that release cover art;
+    /// otherwise serves the local toptrackNN.jpg if present.
     /// </summary>
     public async Task<(Stream? stream, string? contentType, string? fileName)> GetTopTrackCoverArtAsync(
         string artistId,
@@ -176,11 +177,19 @@ public class ServerLibraryAssetReader
                 GetJsonOptions()
             );
 
-            var coverArtRel = artistJson?.TopTracks != null
-                && index >= 0
-                && index < artistJson.TopTracks.Count
-                ? artistJson.TopTracks[index].CoverArt
-                : null;
+            if (artistJson?.TopTracks == null || index < 0 || index >= artistJson.TopTracks.Count)
+                return (null, null, null);
+
+            var topTrack = artistJson.TopTracks[index];
+
+            // If mapped to a local release, defer to release.json cover art strictly
+            if (!string.IsNullOrWhiteSpace(topTrack.ReleaseFolderName))
+            {
+                return await GetReleaseCoverArtAsync(artistId, topTrack.ReleaseFolderName);
+            }
+
+            // Otherwise, serve local toptrackNN.jpg referenced by CoverArt
+            var coverArtRel = topTrack.CoverArt;
 
             if (string.IsNullOrWhiteSpace(coverArtRel))
                 return (null, null, null);

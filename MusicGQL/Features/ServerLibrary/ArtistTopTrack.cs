@@ -19,22 +19,10 @@ public record ArtistTopTrack(
 
     public string? CoverArtUrl()
     {
-        if (!string.IsNullOrWhiteSpace(Model.ReleaseFolderName) && !string.IsNullOrWhiteSpace(Model.CoverArt))
-        {
-            // Build server URL for cover art based on stored release folder
-            var escapedArtistId = Uri.EscapeDataString(ArtistId);
-            var escapedReleaseFolderName = Uri.EscapeDataString(Model.ReleaseFolderName);
-            return $"/library/{escapedArtistId}/releases/{escapedReleaseFolderName}/coverart";
-        }
-
-        // If there is a locally stored top track image (e.g. ./toptrack01.jpg), serve it via dedicated endpoint
-        if (!string.IsNullOrWhiteSpace(Model.CoverArt))
-        {
-            var escapedArtistId = Uri.EscapeDataString(ArtistId);
-            return $"/library/{escapedArtistId}/toptracks/{Index}/coverart";
-        }
-
-        return null;
+        // Always point to the unified toptracks endpoint; the endpoint will read artist.json
+        // and decide whether to serve release cover art or a local toptrackNN.jpg.
+        var escapedArtistId = Uri.EscapeDataString(ArtistId);
+        return $"/library/{escapedArtistId}/toptracks/{Index}/coverart";
     }
 
     public async Task<Track?> Track(ServerLibraryCache cache)
