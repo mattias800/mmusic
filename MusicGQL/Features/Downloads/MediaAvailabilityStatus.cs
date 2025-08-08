@@ -6,5 +6,6 @@ public enum MediaAvailabilityStatus
     Missing,
     QueuedForDownload,
     Downloading,
+    Processing,
     Available,
 }

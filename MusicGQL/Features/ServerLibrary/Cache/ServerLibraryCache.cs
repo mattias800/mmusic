@@ -204,7 +204,12 @@ public class ServerLibraryCache(ServerLibraryJsonReader reader, ITopicEventSende
         {
             await eventSender.SendAsync(
                 nameof(LibrarySubscription.LibraryCacheTrackUpdated),
-                new LibraryCacheTrackUpdated(new(track))
+                new LibraryCacheTrackStatus(artistId, releaseFolderName, trackNumber)
+            );
+
+            await eventSender.SendAsync(
+                nameof(LibrarySubscription.LibraryCacheTracksInReleaseUpdated),
+                new LibraryCacheTrackStatus(artistId, releaseFolderName, trackNumber)
             );
         }
     }

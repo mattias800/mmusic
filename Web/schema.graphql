@@ -302,8 +302,11 @@ type LastFmTrack {
   summary: String
 }
 
-type LibraryCacheTrackUpdated {
-  track: Track!
+type LibraryCacheTrackStatus {
+  artistId: String!
+  releaseFolderName: String!
+  track: Track
+  trackNumber: Int!
 }
 
 type LikeSongAlreadyLiked {
@@ -457,6 +460,7 @@ enum MediaAvailabilityStatus {
   AVAILABLE
   DOWNLOADING
   MISSING
+  PROCESSING
   QUEUED_FOR_DOWNLOAD
   UNKNOWN
 }
@@ -722,7 +726,8 @@ type StartDownloadReleaseSuccess {
 
 type Subscription {
   artistServerStatusUpdated(artistId: ID!): ArtistServerStatus!
-  libraryCacheTrackUpdated: LibraryCacheTrackUpdated!
+  libraryCacheTrackUpdated(artistId: String!, releaseFolderName: String!, trackNumber: Int!): LibraryCacheTrackStatus!
+  libraryCacheTracksInReleaseUpdated(artistId: String!, releaseFolderName: String!): LibraryCacheTrackStatus!
   ping: Ping!
   soulSeekStatusUpdated: SoulSeekStatus!
 }

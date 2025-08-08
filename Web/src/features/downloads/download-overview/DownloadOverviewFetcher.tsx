@@ -1,7 +1,6 @@
 import { graphql } from "@/gql";
 import * as React from "react";
 import { useQuery, useSubscription } from "urql";
-import { DownloadOverview } from "@/features/downloads/download-overview/DownloadOverview.tsx";
 
 export interface DownloadOverviewFetcherProps {}
 
@@ -32,5 +31,6 @@ export const DownloadOverviewFetcher: React.FC<
     return null;
   }
 
-  return <DownloadOverview downloadStatuses={data.download.all} />;
+  return null;
+  // return <DownloadOverview downloadStatuses={data.download.all} />;
 };

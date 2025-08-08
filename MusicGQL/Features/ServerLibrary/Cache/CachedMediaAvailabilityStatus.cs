@@ -22,6 +22,7 @@ public static class CachedMediaAvailabilityStatusExtensions
             CachedMediaAvailabilityStatus.QueuedForDownload =>
                 MediaAvailabilityStatus.QueuedForDownload,
             CachedMediaAvailabilityStatus.Downloading => MediaAvailabilityStatus.Downloading,
+            CachedMediaAvailabilityStatus.Processing => MediaAvailabilityStatus.Processing,
             CachedMediaAvailabilityStatus.Available => MediaAvailabilityStatus.Available,
             _ => MediaAvailabilityStatus.Unknown,
         };

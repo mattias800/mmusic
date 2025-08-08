@@ -1,4 +1,5 @@
 import * as React from "react";
+import { useState } from "react";
 import { LargePlayButton } from "@/components/buttons/LargePlayButton.tsx";
 import { ShuffleButton } from "@/components/buttons/ShuffleButton.tsx";
 import { DotsButton } from "@/components/buttons/DotsButton.tsx";
@@ -10,7 +11,7 @@ import { GradientContent } from "@/components/page-body/GradientContent";
 import { MainPadding } from "@/components/layout/MainPadding.tsx";
 import { Button } from "@/components/ui/button.tsx";
 import { Download } from "lucide-react";
-import { useMutation } from "urql";
+import { useMutation, useSubscription } from "urql";
 
 export interface AlbumPanelProps {
   release: FragmentType<typeof albumPanelReleaseGroupFragment>;
@@ -46,10 +47,36 @@ const startDownloadReleaseMutation = graphql(`
   }
 `);
 
+const albumUpdatesSubscription = graphql(`
+  subscription AlbumPanelUpdates(
+    $artistId: String!
+    $releaseFolderName: String!
+  ) {
+    libraryCacheTracksInReleaseUpdated(
+      artistId: $artistId
+      releaseFolderName: $releaseFolderName
+    ) {
+      track {
+        id
+        isMissing
+        mediaAvailabilityStatus
+      }
+    }
+  }
+`);
+
 export const AlbumPanel: React.FC<AlbumPanelProps> = (props) => {
   const release = useFragment(albumPanelReleaseGroupFragment, props.release);
   const [, startDownload] = useMutation(startDownloadReleaseMutation);
-  const [queued, setQueued] = React.useState(false);
+  useSubscription({
+    query: albumUpdatesSubscription,
+    variables: {
+      artistId: release.artist.id,
+      releaseFolderName: release.folderName,
+    },
+  });
+
+  const [queued, setQueued] = useState(false);
 
   const onClickDownload = async () => {
     try {

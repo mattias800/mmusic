@@ -5,7 +5,7 @@ import { TrackItem } from "@/components/track-item/TrackItem.tsx";
 import { useAppDispatch } from "@/ReduxAppHooks.ts";
 import { musicPlayerSlice } from "@/features/music-players/MusicPlayerSlice.ts";
 import { TrackListHeading } from "@/components/track-item/TrackListHeading.tsx";
-import { Tag } from "@/components/text/Tag.tsx";
+import { AlbumTrackTag } from "@/features/album/AlbumTrackTag.tsx";
 
 interface AlbumTrackListProps {
   releaseGroup: FragmentType<typeof albumTrackListReleaseGroupFragment>;
@@ -24,6 +24,7 @@ const albumTrackListReleaseGroupFragment = graphql(`
       title
       trackLength
       isMissing
+      ...AlbumTrackTag_Track
       ...RecordingPlayButton_Track
       statistics {
         listeners
@@ -80,7 +81,7 @@ export const AlbumTrackList: React.FC<AlbumTrackListProps> = (props) => {
               )}
             </>
           )}
-          renderTag={track.isMissing ? () => <Tag>Missing</Tag> : undefined}
+          renderTag={() => <AlbumTrackTag track={track} />}
           playing={false}
         />
       ))}
