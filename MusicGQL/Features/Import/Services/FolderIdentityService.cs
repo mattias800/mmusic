@@ -55,23 +55,61 @@ public sealed class FolderIdentityService(MusicBrainzService musicBrainzService)
     {
         var releaseFolderName = Path.GetFileName(releaseDir) ?? string.Empty;
         var groups = await musicBrainzService.SearchReleaseGroupByNameAsync(releaseFolderName, 10);
-        var matched = groups
-            .Where(g => g != null)
-            .FirstOrDefault(g =>
-                g!.Credits?.Any() == true
-                    ? g.Credits.Any(ac =>
-                        string.Equals(ac.Name, artistName, StringComparison.OrdinalIgnoreCase)
-                        || (mbArtistId != null && ac.Artist?.Id == mbArtistId)
-                    )
-                    : true
-            );
 
-        if (matched == null)
+        // Count local audio files to help pick the correct release group
+        var audioExtensions = new[] { ".mp3", ".flac", ".wav", ".m4a", ".ogg" };
+        var audioFileCount = System.IO.Directory
+            .GetFiles(releaseDir)
+            .Count(f => audioExtensions.Contains(Path.GetExtension(f).ToLowerInvariant()));
+
+        IdentifyReleaseResult? best = null;
+        int bestScore = int.MinValue;
+
+        foreach (var g in groups.Where(g => g != null))
         {
-            return null;
+            // Ensure artist matches this release group when credits are available
+            if (g!.Credits?.Any() == true)
+            {
+                var hasArtist = g.Credits.Any(ac =>
+                    string.Equals(ac.Name, artistName, StringComparison.OrdinalIgnoreCase)
+                    || (mbArtistId != null && ac.Artist?.Id == mbArtistId)
+                );
+                if (!hasArtist) continue;
+            }
+
+            // Fetch releases for the group to evaluate track counts
+            List<Hqub.MusicBrainz.Entities.Release> releases;
+            try
+            {
+                releases = await musicBrainzService.GetReleasesForReleaseGroupAsync(g.Id);
+            }
+            catch
+            {
+                continue;
+            }
+
+            var maxTracks = releases
+                .Select(r => r.Media?.SelectMany(m => m.Tracks ?? new List<Hqub.MusicBrainz.Entities.Track>()).Count() ?? 0)
+                .DefaultIfEmpty(0)
+                .Max();
+
+            var isAlbum = string.Equals(g.PrimaryType, "Album", StringComparison.OrdinalIgnoreCase);
+            var titleExact = string.Equals(g.Title, releaseFolderName, StringComparison.OrdinalIgnoreCase);
+
+            int score = 0;
+            if (isAlbum) score += 1000;
+            if (maxTracks == audioFileCount && audioFileCount > 0) score += 10000;
+            score += Math.Max(0, 100 - Math.Abs(maxTracks - audioFileCount));
+            if (titleExact) score += 50;
+
+            if (score > bestScore)
+            {
+                bestScore = score;
+                best = new IdentifyReleaseResult(g.Id, g.Title ?? releaseFolderName, g.PrimaryType);
+            }
         }
 
-        return new IdentifyReleaseResult(matched.Id, matched.Title ?? releaseFolderName, matched.PrimaryType);
+        return best;
     }
 }
 

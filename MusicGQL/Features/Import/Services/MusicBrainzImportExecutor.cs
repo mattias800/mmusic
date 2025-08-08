@@ -24,7 +24,8 @@ public sealed class MusicBrainzImportExecutor(
     MusicBrainzService musicBrainzService,
     FanArtDownloadService fanArtDownloadService,
     LastfmClient lastfmClient,
-    Integration.Spotify.SpotifyService spotifyService
+    Integration.Spotify.SpotifyService spotifyService,
+    ILogger<MusicBrainzImportExecutor> logger
 ) : IImportExecutor
 {
     private static readonly string[] AudioExtensions = [".mp3", ".flac", ".wav", ".m4a", ".ogg"];
@@ -251,19 +252,67 @@ public sealed class MusicBrainzImportExecutor(
         var releases = await musicBrainzService.GetReleasesForReleaseGroupAsync(releaseGroupId);
 
         // Prefer a release whose track count matches the number of audio files present, else fall back
-        int audioFileCount = Directory
+        var audioFiles = Directory
             .GetFiles(releaseDir)
-            .Count(f => AudioExtensions.Contains(Path.GetExtension(f).ToLowerInvariant()));
+            .Where(f => AudioExtensions.Contains(Path.GetExtension(f).ToLowerInvariant()))
+            .OrderBy(f => f, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        int audioFileCount = audioFiles.Count;
+
+        logger.LogInformation(
+            "[ImportRelease] Evaluating releases for group {ReleaseGroupId} in dir '{ReleaseDir}'. Audio files found: {AudioCount}. Files: {Files}",
+            releaseGroupId,
+            releaseDir,
+            audioFileCount,
+            string.Join(", ", audioFiles.Select(Path.GetFileName))
+        );
+
+        foreach (var r in releases)
+        {
+            var trackCount = r.Media?.SelectMany(m => m.Tracks ?? new List<Hqub.MusicBrainz.Entities.Track>()).Count() ?? 0;
+            logger.LogInformation(
+                "[ImportRelease] Candidate Release: Id={Id}, Title='{Title}', Date={Date}, Country={Country}, TrackCount={TrackCount}",
+                r.Id,
+                r.Title,
+                r.Date,
+                r.Country,
+                trackCount
+            );
+        }
 
         var selected = releases
             .OrderByDescending(r =>
             {
                 var mediaTracks = r.Media?.SelectMany(m => m.Tracks ?? new List<Hqub.MusicBrainz.Entities.Track>()).Count() ?? 0;
-                // Exact match gets priority, otherwise sort by closeness
-                var diff = Math.Abs(mediaTracks - audioFileCount);
-                return mediaTracks == audioFileCount ? int.MaxValue : (1000 - diff);
+                var exactMatch = mediaTracks == audioFileCount;
+                var isAlbum = string.Equals(r.ReleaseGroup?.PrimaryType, "Album", StringComparison.OrdinalIgnoreCase);
+                var score = 0;
+                if (exactMatch) score += 10000;
+                if (isAlbum) score += 1000;
+                // Prefer US releases when tied
+                if (string.Equals(r.Country, "US", StringComparison.OrdinalIgnoreCase)) score += 100;
+                // Closer track count difference is better
+                score += Math.Max(0, 100 - Math.Abs(mediaTracks - audioFileCount));
+                return score;
             })
             .FirstOrDefault();
+
+        if (selected != null)
+        {
+            var selectedCount = selected.Media?.SelectMany(m => m.Tracks ?? new List<Hqub.MusicBrainz.Entities.Track>()).Count() ?? 0;
+            logger.LogInformation(
+                "[ImportRelease] Selected Release: Id={Id}, Title='{Title}', TrackCount={TrackCount}, AudioFiles={AudioCount}",
+                selected.Id,
+                selected.Title,
+                selectedCount,
+                audioFileCount
+            );
+        }
+        else
+        {
+            logger.LogWarning("[ImportRelease] No releases returned by MusicBrainz for group {ReleaseGroupId}", releaseGroupId);
+        }
 
         string? coverArtRelPath = await fanArtDownloadService.DownloadReleaseCoverArtAsync(
             releaseGroupId,

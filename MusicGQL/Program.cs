@@ -57,6 +57,11 @@ using YouTubeService = MusicGQL.Integration.Youtube.YouTubeService;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Reduce EF Core SQL logging noise
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
+builder.Logging.AddFilter("Microsoft.EntityFrameworkCore", LogLevel.Warning);
+
 // Cookie settings for module federation.
 builder.Services.ConfigureApplicationCookie(options =>
 {
