@@ -85,6 +85,24 @@ public class LibraryAssetsController(ServerLibraryAssetReader assetReader) : Con
     }
 
     /// <summary>
+    /// Serves cover art for locally stored top track images (./toptrackNN.jpg in artist folder)
+    /// GET /library/{artistId}/toptracks/{index}/coverart
+    /// </summary>
+    [HttpGet("{artistId}/toptracks/{index:int}/coverart")]
+    public async Task<IActionResult> GetTopTrackCoverArt(string artistId, int index)
+    {
+        var (stream, contentType, fileName) = await assetReader.GetTopTrackCoverArtAsync(artistId, index);
+
+        if (stream == null || contentType == null)
+        {
+            return NotFound($"Top track cover art not found for artist '{artistId}' at index {index}");
+        }
+
+        var shouldIncludeExtension = ShouldIncludeFileExtension(Request.Path);
+        return File(stream, contentType, shouldIncludeExtension ? fileName : null);
+    }
+
+    /// <summary>
     /// Serves track audio files
     /// GET /library/{artistId}/releases/{releaseFolderName}/tracks/{trackNumber}/audio
     /// </summary>

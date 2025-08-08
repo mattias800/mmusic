@@ -5,7 +5,8 @@ namespace MusicGQL.Features.ServerLibrary;
 
 public record ArtistTopTrack(
     [property: GraphQLIgnore] string ArtistId,
-    [property: GraphQLIgnore] JsonTopTrack Model
+    [property: GraphQLIgnore] JsonTopTrack Model,
+    [property: GraphQLIgnore] int Index
 )
 {
     public string Title() => Model.Title;
@@ -26,7 +27,13 @@ public record ArtistTopTrack(
             return $"/library/{escapedArtistId}/releases/{escapedReleaseFolderName}/coverart";
         }
 
-        // Fallback: if CoverArt holds a relative path, expose it as null since assets are served via endpoints only
+        // If there is a locally stored top track image (e.g. ./toptrack01.jpg), serve it via dedicated endpoint
+        if (!string.IsNullOrWhiteSpace(Model.CoverArt))
+        {
+            var escapedArtistId = Uri.EscapeDataString(ArtistId);
+            return $"/library/{escapedArtistId}/toptracks/{Index}/coverart";
+        }
+
         return null;
     }
 

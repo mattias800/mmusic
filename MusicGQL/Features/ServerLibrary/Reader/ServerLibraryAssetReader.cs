@@ -152,6 +152,61 @@ public class ServerLibraryAssetReader
     }
 
     /// <summary>
+    /// Gets a locally stored top track cover art by artist ID and index
+    /// Looks up artist.json to find the CoverArt path for that top track and serves it.
+    /// </summary>
+    public async Task<(Stream? stream, string? contentType, string? fileName)> GetTopTrackCoverArtAsync(
+        string artistId,
+        int index
+    )
+    {
+        try
+        {
+            var artistPath = Path.Combine(LibraryPath, artistId);
+            if (!Directory.Exists(artistPath))
+                return (null, null, null);
+
+            var artistJsonPath = Path.Combine(artistPath, "artist.json");
+            if (!File.Exists(artistJsonPath))
+                return (null, null, null);
+
+            var jsonContent = await File.ReadAllTextAsync(artistJsonPath);
+            var artistJson = System.Text.Json.JsonSerializer.Deserialize<Json.JsonArtist>(
+                jsonContent,
+                GetJsonOptions()
+            );
+
+            var coverArtRel = artistJson?.TopTracks != null
+                && index >= 0
+                && index < artistJson.TopTracks.Count
+                ? artistJson.TopTracks[index].CoverArt
+                : null;
+
+            if (string.IsNullOrWhiteSpace(coverArtRel))
+                return (null, null, null);
+
+            if (coverArtRel.StartsWith("./"))
+            {
+                coverArtRel = coverArtRel[2..];
+            }
+
+            var fullPath = Path.Combine(artistPath, coverArtRel);
+            if (!File.Exists(fullPath))
+                return (null, null, null);
+
+            var fileStream = new FileStream(fullPath, FileMode.Open, FileAccess.Read);
+            var contentType = GetContentTypeFromExtension(Path.GetExtension(fullPath));
+            var fileName = Path.GetFileName(fullPath);
+            return (fileStream, contentType, fileName);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error reading top track cover art: {ex.Message}");
+            return (null, null, null);
+        }
+    }
+
+    /// <summary>
     /// Gets an audio file by artist ID, release folder name, and track number
     /// </summary>
     /// <param name="artistId">Artist ID</param>

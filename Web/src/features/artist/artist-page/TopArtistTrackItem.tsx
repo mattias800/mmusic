@@ -19,6 +19,7 @@ const topArtistTrackItemArtistTopTrackFragment = graphql(`
     title
     releaseTitle
     playCount
+    coverArtUrl
     track {
       id
       trackLength
@@ -53,7 +54,7 @@ export const TopArtistTrackItem: React.FC<TopArtistTrackItemProps> = (
       playCount={artistTopTrack.playCount}
       playing={props.active}
       showCoverArt
-      coverArtUri={""}
+      coverArtUri={artistTopTrack.coverArtUrl}
       renderTag={!artistTopTrack.track ? () => <Tag>Missing</Tag> : undefined}
       onClick={() =>
         artistTopTrack.track &&

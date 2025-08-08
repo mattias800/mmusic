@@ -50,7 +50,8 @@ public record Artist([property: GraphQLIgnore] CachedArtist Model)
     public long? Listeners() => Model.JsonArtist.MonthlyListeners;
 
     public IEnumerable<ArtistTopTrack> TopTracks() =>
-        Model.JsonArtist.TopTracks?.Select(t => new ArtistTopTrack(Model.Id, t)) ?? [];
+        Model.JsonArtist.TopTracks?
+            .Select((t, index) => new ArtistTopTrack(Model.Id, t, index)) ?? [];
 
     public ArtistImages? Images()
     {
