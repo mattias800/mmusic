@@ -41,7 +41,8 @@ public class TopTracksCompleter(SpotifyService spotifyService)
         {
             try
             {
-                spotifyTopTracks = await spotifyService.GetArtistTopTracksAsync(spotifyArtistId!) ?? [];
+                spotifyTopTracks =
+                    await spotifyService.GetArtistTopTracksAsync(spotifyArtistId!) ?? [];
             }
             catch
             {
@@ -49,9 +50,10 @@ public class TopTracksCompleter(SpotifyService spotifyService)
             }
         }
 
-        var titleToSpotify = spotifyTopTracks?
-            .GroupBy(t => Normalize(t.Name))
-            .ToDictionary(g => g.Key, g => g.First())
+        var titleToSpotify =
+            spotifyTopTracks
+                ?.GroupBy(t => Normalize(t.Name))
+                .ToDictionary(g => g.Key, g => g.First())
             ?? new Dictionary<string, SpotifyAPI.Web.FullTrack>();
 
         // Ensure an HttpClient for downloading images when needed
@@ -68,6 +70,12 @@ public class TopTracksCompleter(SpotifyService spotifyService)
             if (string.IsNullOrWhiteSpace(tt.ReleaseTitle) && spotifyMatch?.Album != null)
             {
                 tt.ReleaseTitle = spotifyMatch.Album.Name;
+            }
+
+            // Fill missing track length from Spotify if available
+            if ((tt.TrackLength == null || tt.TrackLength == 0) && spotifyMatch != null)
+            {
+                tt.TrackLength = spotifyMatch.DurationMs;
             }
 
             // Cover art handling
@@ -95,5 +103,3 @@ public class TopTracksCompleter(SpotifyService spotifyService)
         }
     }
 }
-
-
