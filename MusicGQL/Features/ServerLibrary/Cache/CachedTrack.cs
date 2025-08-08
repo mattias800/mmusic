@@ -8,11 +8,12 @@ public class CachedTrack
     public string? SortTitle { get; set; }
     public int TrackNumber { get; set; }
     public string? AudioFilePath { get; set; }
+
     public string ArtistId { get; set; } = string.Empty;
     public string ArtistName { get; set; } = string.Empty;
     public string ReleaseFolderName { get; set; } = string.Empty;
     public string ReleaseTitle { get; set; } = string.Empty;
-    public Json.JsonReleaseType JsonReleaseType { get; set; }
+    public JsonReleaseType JsonReleaseType { get; set; }
     public JsonTrack JsonTrack { get; set; } = new();
 
     // Searchable properties
@@ -21,4 +22,8 @@ public class CachedTrack
     public string SearchArtistName => ArtistName.ToLowerInvariant();
     public string SearchReleaseTitle => ReleaseTitle.ToLowerInvariant();
     public string SearchReleaseFolderName => ReleaseFolderName.ToLowerInvariant();
+
+    // Download status
+    public CachedMediaAvailabilityStatus CachedMediaAvailabilityStatus { get; set; } =
+        CachedMediaAvailabilityStatus.Unknown;
 }

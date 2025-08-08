@@ -1,4 +1,5 @@
 using Hqub.Lastfm;
+using MusicGQL.Features.Downloads;
 using MusicGQL.Features.LastFm;
 using MusicGQL.Features.ServerLibrary.Cache;
 using MusicGQL.Features.ServerLibrary.Utils;
@@ -47,6 +48,9 @@ public record Track([property: GraphQLIgnore] CachedTrack Model)
 
         return new(release);
     }
+
+    public MediaAvailabilityStatus MediaAvailabilityStatus() =>
+        Model.CachedMediaAvailabilityStatus.ToGql();
 
     public async Task<LastFmStatistics?> Statistics(LastfmClient lastfmClient)
     {

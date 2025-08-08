@@ -1,4 +1,3 @@
-using System.Net.Http;
 using MusicGQL.Features.ServerLibrary.Json;
 using MusicGQL.Integration.Spotify;
 

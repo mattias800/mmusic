@@ -1,7 +1,6 @@
 using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 using MusicGQL.Db.Postgres;
-using MusicGQL.Features.Downloads;
 using MusicGQL.Features.External;
 using MusicGQL.Features.FileSystem;
 using MusicGQL.Features.MusicBrainz;
@@ -65,8 +64,6 @@ public class Query
 
         return new User(userProjection);
     }
-
-    public DownloadsSearchRoot Download() => new();
 
     public ExternalRoot External() => new();
 

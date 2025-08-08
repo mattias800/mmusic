@@ -1,16 +1,20 @@
+using HotChocolate.Subscriptions;
 using MusicGQL.Features.ServerLibrary.Reader;
+using MusicGQL.Features.ServerLibrary.Subscription;
 using Path = System.IO.Path;
 
 namespace MusicGQL.Features.ServerLibrary.Cache;
 
-public class ServerLibraryCache(ServerLibraryJsonReader reader)
+public class ServerLibraryCache(ServerLibraryJsonReader reader, ITopicEventSender eventSender)
 {
     private readonly Dictionary<string, CachedArtist> _artistsById = new();
     private readonly Dictionary<string, CachedArtist> _artistsByName = new();
+
     private readonly Dictionary<
         string,
         Dictionary<string, CachedRelease>
     > _releasesByArtistAndFolder = new();
+
     private readonly List<CachedArtist> _allArtists = new();
     private readonly List<CachedRelease> _allReleases = new();
     private readonly List<CachedTrack> _allTracks = new();
@@ -165,6 +169,43 @@ public class ServerLibraryCache(ServerLibraryJsonReader reader)
             // Log the error but don't clear existing cache
             Console.WriteLine($"Error updating cache: {ex.Message}");
             throw;
+        }
+    }
+
+    public async Task UpdateMediaAvailabilityStatus(
+        string artistId,
+        string releaseFolderName,
+        int trackNumber,
+        CachedMediaAvailabilityStatus status
+    )
+    {
+        CachedTrack? track;
+        lock (_lockObject)
+        {
+            if (
+                !_releasesByArtistAndFolder.TryGetValue(
+                    artistId.ToLowerInvariant(),
+                    out var artistReleases
+                )
+            )
+                return;
+
+            if (!artistReleases.TryGetValue(releaseFolderName.ToLowerInvariant(), out var release))
+                return;
+
+            track = release.Tracks.FirstOrDefault(t => t.TrackNumber == trackNumber);
+            if (track != null)
+            {
+                track.CachedMediaAvailabilityStatus = status;
+            }
+        }
+
+        if (track != null)
+        {
+            await eventSender.SendAsync(
+                nameof(LibrarySubscription.LibraryCacheTrackUpdated),
+                new LibraryCacheTrackUpdated(new(track))
+            );
         }
     }
 

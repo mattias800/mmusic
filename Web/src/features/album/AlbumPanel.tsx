@@ -19,16 +19,25 @@ export interface AlbumPanelProps {
 const albumPanelReleaseGroupFragment = graphql(`
   fragment AlbumPanel_Release on Release {
     id
+    folderName
     isFullyMissing
     ...AlbumHeader_Release
     ...AlbumTrackList_Release
     firstReleaseYear
+    artist {
+      id
+    }
   }
 `);
 
 const startDownloadReleaseMutation = graphql(`
-  mutation AlbumPanel_StartDownloadRelease($releaseId: String!) {
-    startDownloadRelease(input: { releaseId: $releaseId }) {
+  mutation AlbumPanel_StartDownloadRelease(
+    $artistId: String!
+    $releaseFolderName: String!
+  ) {
+    startDownloadRelease(
+      input: { artistId: $artistId, releaseFolderName: $releaseFolderName }
+    ) {
       __typename
       ... on StartDownloadReleaseSuccess {
         success
@@ -44,7 +53,11 @@ export const AlbumPanel: React.FC<AlbumPanelProps> = (props) => {
 
   const onClickDownload = async () => {
     try {
-      const res = await startDownload({ releaseId: release.id });
+      const res = await startDownload({
+        artistId: release.artist.id,
+        releaseFolderName: release.folderName,
+      });
+
       if (
         res.data?.startDownloadRelease?.__typename ===
         "StartDownloadReleaseSuccess"

@@ -1,7 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using MusicGQL.Features.Downloads.Services;
-using MusicGQL.Features.External.SoulSeek.Integration;
 using MusicGQL.Features.ServerLibrary.Cache;
 using MusicGQL.Features.ServerLibrary.Json;
 using MusicGQL.Types;
@@ -18,16 +17,11 @@ public class StartDownloadReleaseMutation
         StartDownloadReleaseInput input
     )
     {
-        var parts = input.ReleaseId.Split('/');
-        if (parts.Length != 2)
-        {
-            return new StartDownloadReleaseUnknownError("Invalid release id");
-        }
+        var release = await cache.GetReleaseByArtistAndFolderAsync(
+            input.ArtistId,
+            input.ReleaseFolderName
+        );
 
-        var artistId = parts[0];
-        var releaseFolder = parts[1];
-
-        var release = await cache.GetReleaseByArtistAndFolderAsync(artistId, releaseFolder);
         if (release == null)
         {
             return new StartDownloadReleaseUnknownError("Release not found in cache");
@@ -35,9 +29,11 @@ public class StartDownloadReleaseMutation
 
         var artistName = release.ArtistName;
         var releaseTitle = release.Title;
-        var targetDir = release.ReleasePath;
+        var targetDir = input.ReleaseFolderName;
 
         var ok = await soulSeekReleaseDownloader.DownloadReleaseAsync(
+            input.ArtistId,
+            input.ReleaseFolderName,
             artistName,
             releaseTitle,
             targetDir
@@ -77,9 +73,25 @@ public class StartDownloadReleaseMutation
 
                     var updated = JsonSerializer.Serialize(json, GetJsonOptions());
                     await File.WriteAllTextAsync(releaseJsonPath, updated);
+
+                    for (int i = 0; i < json.Tracks.Count; i++)
+                    {
+                        if (i < audioFiles.Count)
+                        {
+                            await cache.UpdateMediaAvailabilityStatus(
+                                input.ArtistId,
+                                input.ReleaseFolderName,
+                                i + 1,
+                                CachedMediaAvailabilityStatus.Available
+                            );
+                        }
+                    }
                 }
             }
-            catch { }
+            catch
+            {
+                // ignored
+            }
         }
 
         await cache.UpdateCacheAsync();
@@ -95,7 +107,7 @@ public class StartDownloadReleaseMutation
         };
 }
 
-public record StartDownloadReleaseInput(string ReleaseId);
+public record StartDownloadReleaseInput(string ArtistId, string ReleaseFolderName);
 
 [UnionType("StartDownloadReleaseResult")]
 public abstract record StartDownloadReleaseResult { };

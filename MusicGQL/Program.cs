@@ -11,10 +11,7 @@ using MusicGQL.Features.ArtistServerStatus;
 using MusicGQL.Features.ArtistServerStatus.Services;
 using MusicGQL.Features.Authentication.Handlers;
 using MusicGQL.Features.Authorization;
-using MusicGQL.Features.Downloads;
 using MusicGQL.Features.Downloads.Mutations;
-using MusicGQL.Features.Downloads.Sagas;
-using MusicGQL.Features.Downloads.Sagas.Handlers;
 using MusicGQL.Features.Downloads.Services;
 using MusicGQL.Features.External.SoulSeek;
 using MusicGQL.Features.External.SoulSeek.Integration;
@@ -37,6 +34,7 @@ using MusicGQL.Features.ServerLibrary.Cache;
 using MusicGQL.Features.ServerLibrary.Json;
 using MusicGQL.Features.ServerLibrary.Mutation;
 using MusicGQL.Features.ServerLibrary.Reader;
+using MusicGQL.Features.ServerLibrary.Subscription;
 using MusicGQL.Features.ServerSettings.Commands;
 using MusicGQL.Features.ServerSettings.Events;
 using MusicGQL.Features.ServerSettings.Mutations;
@@ -48,8 +46,6 @@ using MusicGQL.Integration.Spotify;
 using MusicGQL.Integration.Spotify.Configuration;
 using MusicGQL.Integration.Youtube.Configuration;
 using MusicGQL.Types;
-using Rebus.Config;
-using Rebus.Routing.TypeBased;
 using Soulseek;
 using Soulseek.Diagnostics;
 using SpotifyAPI.Web;
@@ -248,7 +244,7 @@ builder
     .AddType<ImportSpotifyPlaylistSuccess>()
     .AddType<ImportSpotifyPlaylistError>()
     .AddTypeExtension<SoulSeekSubscription>()
-    .AddTypeExtension<DownloadSubscription>()
+    .AddTypeExtension<LibrarySubscription>()
     .AddTypeExtension<ArtistServerStatusSubscription>()
     .AddTypeExtension<StartDownloadReleaseMutation>()
     .AddType<StartDownloadReleaseSuccess>()
@@ -323,42 +319,7 @@ builder.Services.AddFanArtTVClient(options =>
     options.BaseAddress = fanartOptions?.BaseAddress;
 });
 
-builder.Services.AddRebus(
-    rebus =>
-        rebus
-            .Routing(r =>
-                r.TypeBased()
-                    .Map<DownloadReleaseQueuedEvent>("mmusic-queue")
-                    .Map<LookupReleaseInMusicBrainz>("mmusic-queue")
-                    .Map<LookupRecordingsForReleaseInMusicBrainz>("mmusic-queue")
-                    .Map<FoundReleaseInMusicBrainz>("mmusic-queue")
-                    .Map<FoundRecordingsForReleaseInMusicBrainz>("mmusic-queue")
-                    .Map<ReleaseNotFoundInMusicBrainz>("mmusic-queue")
-                    .Map<NoRecordingsFoundInMusicBrainz>("mmusic-queue")
-            )
-            .Transport(t =>
-                t.UseRabbitMq(
-                    builder.Configuration.GetConnectionString("MessageBroker"),
-                    "mmusic-queue"
-                )
-            )
-            // Use JSON serialization so EF can query the database
-            .Sagas(s =>
-                s.StoreInPostgres(
-                    builder.Configuration.GetConnectionString("Postgres"),
-                    "sagas",
-                    "saga_indexes"
-                )
-            ),
-    onCreated: async bus =>
-    {
-        await bus.Subscribe<FoundReleaseInMusicBrainz>();
-    }
-);
-
-builder.Services.AddRebusHandler<DownloadReleaseSaga>();
-builder.Services.AddRebusHandler<LookupReleaseInMusicBrainzHandler>();
-builder.Services.AddRebusHandler<LookupRecordingsForReleaseInMusicBrainzHandler>();
+;
 
 builder.Services.AddHostedService<ScheduledTaskPublisher>();
 

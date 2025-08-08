@@ -7,23 +7,8 @@ export interface DownloadStatusProps {
 }
 
 const downloadStatusDownloadStatusFragment = graphql(`
-  fragment DownloadStatus_DownloadStatus on DownloadStatus {
-    id
-    numberOfTracks
-    tracksDownloaded
-    statusDescription
-    release {
-      id
-      title
-      year
-      artists {
-        id
-        name
-      }
-      recordings {
-        id
-      }
-    }
+  fragment DownloadStatus_DownloadStatus on Query {
+    areThereAnyUsers
   }
 `);
 

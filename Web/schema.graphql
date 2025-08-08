@@ -199,20 +199,6 @@ type DeletePlaylistSuccess {
   viewer: User!
 }
 
-type DownloadStatus {
-  artistName: String
-  id: ID!
-  numberOfTracks: Int
-  release: MbRelease
-  releaseName: String
-  statusDescription: String!
-  tracksDownloaded: Int
-}
-
-type DownloadsSearchRoot {
-  all: [DownloadStatus!]!
-}
-
 type ExternalRoot {
   id: ID!
   soulSeek: SoulSeekRoot!
@@ -314,6 +300,10 @@ type LastFmTrack {
   recording: Track
   statistics: LastFmStatistics!
   summary: String
+}
+
+type LibraryCacheTrackUpdated {
+  track: Track!
 }
 
 type LikeSongAlreadyLiked {
@@ -463,6 +453,14 @@ type MbTrack {
   position: Int!
 }
 
+enum MediaAvailabilityStatus {
+  AVAILABLE
+  DOWNLOADING
+  MISSING
+  QUEUED_FOR_DOWNLOAD
+  UNKNOWN
+}
+
 type MusicBrainzArtistSearchRoot {
   byId(id: ID!): MbArtist
   searchByName(limit: Int! = 25, name: String!, offset: Int! = 0): [MbArtist!]!
@@ -558,7 +556,6 @@ type PlaylistSearchRoot {
 
 type Query {
   areThereAnyUsers: Boolean!
-  download: DownloadsSearchRoot!
   external: ExternalRoot!
   fileSystem: FileSystemSearchRoot!
   musicBrainz: MusicBrainzSearchRoot!
@@ -713,7 +710,8 @@ type SpotifyPlaylistSearchRoot {
 }
 
 input StartDownloadReleaseInput {
-  releaseId: String!
+  artistId: String!
+  releaseFolderName: String!
 }
 
 union StartDownloadReleaseResult = StartDownloadReleaseSuccess
@@ -724,8 +722,7 @@ type StartDownloadReleaseSuccess {
 
 type Subscription {
   artistServerStatusUpdated(artistId: ID!): ArtistServerStatus!
-  downloadStarted: DownloadStatus!
-  downloadStatusUpdated: DownloadStatus!
+  libraryCacheTrackUpdated: LibraryCacheTrackUpdated!
   ping: Ping!
   soulSeekStatusUpdated: SoulSeekStatus!
 }
@@ -734,6 +731,7 @@ type Track {
   audioUrl: String!
   id: ID!
   isMissing: Boolean!
+  mediaAvailabilityStatus: MediaAvailabilityStatus!
   release: Release!
   statistics: LastFmStatistics
   title: String!

@@ -1,6 +1,5 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using MusicGQL.Features.ServerLibrary.Json;
 using Path = System.IO.Path;
 
 namespace MusicGQL.Features.ServerLibrary.Reader;
@@ -23,9 +22,18 @@ public class ServerLibraryFileSystemScanner()
         public string? ErrorMessage { get; set; }
     }
 
-    public record ReleaseFolderScan(string ArtistDir, string ReleaseDir, bool HasAudio, bool MissingReleaseJson);
+    public record ReleaseFolderScan(
+        string ArtistDir,
+        string ReleaseDir,
+        bool HasAudio,
+        bool MissingReleaseJson
+    );
 
-    public record ArtistFolderScan(string ArtistDir, bool MissingArtistJson, List<ReleaseFolderScan> Releases);
+    public record ArtistFolderScan(
+        string ArtistDir,
+        bool MissingArtistJson,
+        List<ReleaseFolderScan> Releases
+    );
 
     public class ScanPlan
     {
@@ -59,7 +67,9 @@ public class ServerLibraryFileSystemScanner()
                 {
                     if (rel.MissingReleaseJson)
                     {
-                        result.Notes.Add($"Release '{Path.GetFileName(rel.ReleaseDir)}' under '{artistFolderName}' is missing release.json");
+                        result.Notes.Add(
+                            $"Release '{Path.GetFileName(rel.ReleaseDir)}' under '{artistFolderName}' is missing release.json"
+                        );
                     }
                 }
             }
@@ -93,11 +103,14 @@ public class ServerLibraryFileSystemScanner()
             foreach (var releaseDir in releaseDirs)
             {
                 var hasAudio = ContainsAnyAudioFile(releaseDir);
-                var missingReleaseJson = hasAudio && !File.Exists(Path.Combine(releaseDir, "release.json"));
+                var missingReleaseJson =
+                    hasAudio && !File.Exists(Path.Combine(releaseDir, "release.json"));
                 if (hasAudio)
                 {
                     hasAnyAudio = true;
-                    releaseScans.Add(new ReleaseFolderScan(artistDir, releaseDir, hasAudio, missingReleaseJson));
+                    releaseScans.Add(
+                        new ReleaseFolderScan(artistDir, releaseDir, hasAudio, missingReleaseJson)
+                    );
                 }
             }
 

@@ -1,4 +1,3 @@
-using System.Linq;
 using MusicGQL.Integration.MusicBrainz;
 using Path = System.IO.Path;
 
@@ -6,13 +5,24 @@ namespace MusicGQL.Features.Import.Services;
 
 public interface IFolderIdentityService
 {
-    Task<IdentifyArtistResult?> IdentifyArtistAsync(string artistDir, IEnumerable<string> releaseDirs);
-    Task<IdentifyReleaseResult?> IdentifyReleaseAsync(string artistName, string? mbArtistId, string releaseDir);
+    Task<IdentifyArtistResult?> IdentifyArtistAsync(
+        string artistDir,
+        IEnumerable<string> releaseDirs
+    );
+    Task<IdentifyReleaseResult?> IdentifyReleaseAsync(
+        string artistName,
+        string? mbArtistId,
+        string releaseDir
+    );
 }
 
-public sealed class FolderIdentityService(MusicBrainzService musicBrainzService) : IFolderIdentityService
+public sealed class FolderIdentityService(MusicBrainzService musicBrainzService)
+    : IFolderIdentityService
 {
-    public async Task<IdentifyArtistResult?> IdentifyArtistAsync(string artistDir, IEnumerable<string> releaseDirs)
+    public async Task<IdentifyArtistResult?> IdentifyArtistAsync(
+        string artistDir,
+        IEnumerable<string> releaseDirs
+    )
     {
         var artistFolderName = Path.GetFileName(artistDir) ?? string.Empty;
         var candidates = await musicBrainzService.SearchArtistByNameAsync(artistFolderName, 10);
@@ -28,16 +38,24 @@ public sealed class FolderIdentityService(MusicBrainzService musicBrainzService)
         }
 
         // Try disambiguation using releases
-        var releaseNames = releaseDirs.Select(Path.GetFileName).Where(n => !string.IsNullOrWhiteSpace(n)).ToList();
+        var releaseNames = releaseDirs
+            .Select(Path.GetFileName)
+            .Where(n => !string.IsNullOrWhiteSpace(n))
+            .ToList();
         foreach (var candidate in candidates)
         {
             try
             {
                 var rgs = await musicBrainzService.GetReleaseGroupsForArtistAsync(candidate.Id);
-                var rgTitles = rgs.Select(r => r.Title?.ToLowerInvariant()).Where(t => t != null).ToHashSet();
+                var rgTitles = rgs.Select(r => r.Title?.ToLowerInvariant())
+                    .Where(t => t != null)
+                    .ToHashSet();
                 if (releaseNames.Any(r => rgTitles.Contains(r!.ToLowerInvariant())))
                 {
-                    return new IdentifyArtistResult(candidate.Id, candidate.Name ?? artistFolderName);
+                    return new IdentifyArtistResult(
+                        candidate.Id,
+                        candidate.Name ?? artistFolderName
+                    );
                 }
             }
             catch
@@ -51,14 +69,18 @@ public sealed class FolderIdentityService(MusicBrainzService musicBrainzService)
         return new IdentifyArtistResult(first.Id, first.Name ?? artistFolderName);
     }
 
-    public async Task<IdentifyReleaseResult?> IdentifyReleaseAsync(string artistName, string? mbArtistId, string releaseDir)
+    public async Task<IdentifyReleaseResult?> IdentifyReleaseAsync(
+        string artistName,
+        string? mbArtistId,
+        string releaseDir
+    )
     {
         var releaseFolderName = Path.GetFileName(releaseDir) ?? string.Empty;
         var groups = await musicBrainzService.SearchReleaseGroupByNameAsync(releaseFolderName, 10);
 
         // Count local audio files to help pick the correct release group
         var audioExtensions = new[] { ".mp3", ".flac", ".wav", ".m4a", ".ogg" };
-        var audioFileCount = System.IO.Directory
+        var audioFileCount = Directory
             .GetFiles(releaseDir)
             .Count(f => audioExtensions.Contains(Path.GetExtension(f).ToLowerInvariant()));
 
@@ -74,7 +96,8 @@ public sealed class FolderIdentityService(MusicBrainzService musicBrainzService)
                     string.Equals(ac.Name, artistName, StringComparison.OrdinalIgnoreCase)
                     || (mbArtistId != null && ac.Artist?.Id == mbArtistId)
                 );
-                if (!hasArtist) continue;
+                if (!hasArtist)
+                    continue;
             }
 
             // Fetch releases for the group to evaluate track counts
@@ -89,18 +112,30 @@ public sealed class FolderIdentityService(MusicBrainzService musicBrainzService)
             }
 
             var maxTracks = releases
-                .Select(r => r.Media?.SelectMany(m => m.Tracks ?? new List<Hqub.MusicBrainz.Entities.Track>()).Count() ?? 0)
+                .Select(r =>
+                    r.Media?.SelectMany(m =>
+                            m.Tracks ?? new List<Hqub.MusicBrainz.Entities.Track>()
+                        )
+                        .Count() ?? 0
+                )
                 .DefaultIfEmpty(0)
                 .Max();
 
             var isAlbum = string.Equals(g.PrimaryType, "Album", StringComparison.OrdinalIgnoreCase);
-            var titleExact = string.Equals(g.Title, releaseFolderName, StringComparison.OrdinalIgnoreCase);
+            var titleExact = string.Equals(
+                g.Title,
+                releaseFolderName,
+                StringComparison.OrdinalIgnoreCase
+            );
 
             int score = 0;
-            if (isAlbum) score += 1000;
-            if (maxTracks == audioFileCount && audioFileCount > 0) score += 10000;
+            if (isAlbum)
+                score += 1000;
+            if (maxTracks == audioFileCount && audioFileCount > 0)
+                score += 10000;
             score += Math.Max(0, 100 - Math.Abs(maxTracks - audioFileCount));
-            if (titleExact) score += 50;
+            if (titleExact)
+                score += 50;
 
             if (score > bestScore)
             {
@@ -116,5 +151,3 @@ public sealed class FolderIdentityService(MusicBrainzService musicBrainzService)
 public record IdentifyArtistResult(string MusicBrainzArtistId, string ArtistDisplayName);
 
 public record IdentifyReleaseResult(string ReleaseGroupId, string Title, string? PrimaryType);
-
-

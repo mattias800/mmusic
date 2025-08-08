@@ -1,6 +1,8 @@
 using Soulseek;
 
-namespace MusicGQL.Features.Downloads.Sagas.Util;
+namespace MusicGQL.Features.Downloads.Util;
+
+public record DownloadQueueItem(string Username, string FileName, string LocalFileName);
 
 public static class DownloadQueueFactory
 {
@@ -10,14 +12,14 @@ public static class DownloadQueueFactory
                 .Files.Select(
                     (file, i) =>
                     {
-                        var safe = SanitizeFileName(System.IO.Path.GetFileNameWithoutExtension(file.Filename));
-                        var ext = System.IO.Path.GetExtension(file.Filename);
-                        var local = string.IsNullOrWhiteSpace(safe) ? $"track_{i}{ext}" : $"{safe}{ext}";
-                        return new DownloadQueueItem(
-                            searchResponse.Username,
-                            file.Filename,
-                            local
+                        var safe = SanitizeFileName(
+                            System.IO.Path.GetFileNameWithoutExtension(file.Filename)
                         );
+                        var ext = System.IO.Path.GetExtension(file.Filename);
+                        var local = string.IsNullOrWhiteSpace(safe)
+                            ? $"track_{i}{ext}"
+                            : $"{safe}{ext}";
+                        return new DownloadQueueItem(searchResponse.Username, file.Filename, local);
                     }
                 )
                 .ToList()

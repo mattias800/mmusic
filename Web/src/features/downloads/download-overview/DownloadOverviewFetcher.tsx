@@ -7,20 +7,14 @@ export interface DownloadOverviewFetcherProps {}
 
 const downloadOverviewFetcherQuery = graphql(`
   query DownloadOverviewQuery {
-    download {
-      all {
-        id
-        ...DownloadOverview_DownloadStatus
-      }
-    }
+    areThereAnyUsers
   }
 `);
 
 const downloadOverviewFetcherSubscription = graphql(`
   subscription DownloadOverviewSubscription {
-    downloadStatusUpdated {
+    ping {
       id
-      ...DownloadOverview_DownloadStatus
     }
   }
 `);
