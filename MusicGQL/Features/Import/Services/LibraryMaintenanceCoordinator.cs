@@ -8,7 +8,8 @@ public class LibraryMaintenanceCoordinator(
     ServerLibraryFileSystemScanner scanner,
     IFolderIdentityService identifier,
     IImportExecutor importer,
-    ServerLibraryCache cache
+    ServerLibraryCache cache,
+    LastFmEnrichmentService enrichment
 )
 {
     public class MaintenanceResult
@@ -26,6 +27,7 @@ public class LibraryMaintenanceCoordinator(
         try
         {
             var plan = await scanner.ScanAsync();
+            var artistsToEnrich = new Dictionary<string, string>(); // artistDir -> mbArtistId
             foreach (var artist in plan.ArtistsNeedingWork)
             {
                 var releaseDirs = artist.Releases.Select(r => r.ReleaseDir).ToList();
@@ -36,11 +38,13 @@ public class LibraryMaintenanceCoordinator(
                     continue;
                 }
 
+                var importedAnyReleaseForThisArtist = false;
                 if (artist.MissingArtistJson)
                 {
                     await importer.ImportArtistIfMissingAsync(artist.ArtistDir, idArtist.MusicBrainzArtistId, idArtist.ArtistDisplayName);
                     result.ArtistsCreated++;
                     result.Notes.Add($"Created artist.json for '{Path.GetFileName(artist.ArtistDir)}'");
+                    artistsToEnrich[artist.ArtistDir] = idArtist.MusicBrainzArtistId;
                 }
 
                 foreach (var rel in artist.Releases.Where(r => r.MissingReleaseJson))
@@ -55,11 +59,30 @@ public class LibraryMaintenanceCoordinator(
                     await importer.ImportReleaseIfMissingAsync(artist.ArtistDir, rel.ReleaseDir, idRel.ReleaseGroupId, idRel.Title, idRel.PrimaryType);
                     result.ReleasesCreated++;
                     result.Notes.Add($"Created release.json for '{Path.GetFileName(artist.ArtistDir)}/{Path.GetFileName(rel.ReleaseDir)}'");
+                    importedAnyReleaseForThisArtist = true;
+                }
+
+                if (importedAnyReleaseForThisArtist)
+                {
+                    artistsToEnrich[artist.ArtistDir] = idArtist.MusicBrainzArtistId;
                 }
             }
 
             if (result.ArtistsCreated > 0 || result.ReleasesCreated > 0)
             {
+                // Enrich affected artists so topTracks link to newly imported releases
+                foreach (var kvp in artistsToEnrich)
+                {
+                    try
+                    {
+                        await enrichment.EnrichArtistAsync(kvp.Key, kvp.Value);
+                    }
+                    catch (Exception ex)
+                    {
+                        result.Notes.Add($"Enrichment failed for '{Path.GetFileName(kvp.Key)}': {ex.Message}");
+                    }
+                }
+
                 await cache.UpdateCacheAsync();
             }
         }
