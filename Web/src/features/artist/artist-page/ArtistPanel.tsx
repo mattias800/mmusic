@@ -28,16 +28,19 @@ const artistPanelArtistFragment = graphql(`
     albums {
       id
       firstReleaseDate
+      isFullyMissing
       ...AlbumCard_Release
     }
     eps {
       id
       firstReleaseDate
+      isFullyMissing
       ...AlbumCard_Release
     }
     singles {
       id
       firstReleaseDate
+      isFullyMissing
       ...AlbumCard_Release
     }
     images {
@@ -76,12 +79,18 @@ export const ArtistPanel: React.FC<ArtistPanelProps> = (props) => {
   const totalNumReleaseGroups =
     artist.albums.length + artist.eps.length + artist.singles.length;
 
+  const availableCount =
+    artist.albums.filter((r) => !r.isFullyMissing).length +
+    artist.eps.filter((r) => !r.isFullyMissing).length +
+    artist.singles.filter((r) => !r.isFullyMissing).length;
+
   return (
     <GradientContent>
       <ArtistHeader
         artistName={artist.name}
         artistBackgroundUrl={artist.images?.backgrounds?.[0] ?? ""}
         listeners={artist.listeners}
+        availability={{ availableCount, totalCount: totalNumReleaseGroups }}
         renderServerStatus={() => <ArtistServerStatus artistId={artist.id} />}
       />
 
