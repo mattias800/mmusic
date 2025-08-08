@@ -4,8 +4,8 @@ using Path = System.IO.Path;
 
 namespace MusicGQL.Features.ServerLibrary;
 
-[ExtendObjectType(typeof(MusicGQL.Types.Mutation))]
-public partial class ServerLibraryMaintenanceMutation
+[ExtendObjectType(typeof(Types.Mutation))]
+public class ServerLibraryMaintenanceMutation
 {
     public async Task<ScanLibraryResult> ScanLibraryForMissingJson(
         [Service] LibraryMaintenanceCoordinator coordinator
@@ -21,7 +21,6 @@ public partial class ServerLibraryMaintenanceMutation
             ErrorMessage = scan.ErrorMessage,
         };
     }
-}
 
 public class RefreshArtistLastFmInput
 {
@@ -34,8 +33,7 @@ public class RefreshArtistLastFmResult
     public string? ErrorMessage { get; set; }
 }
 
-public partial class ServerLibraryMaintenanceMutation
-{
+    // Keep all server library maintenance mutations in this class
     [GraphQLName("refreshArtistLastFm")]
     public async Task<RefreshArtistLastFmResult> RefreshArtistLastFm(
         RefreshArtistLastFmInput input,
@@ -47,14 +45,22 @@ public partial class ServerLibraryMaintenanceMutation
         var mbId = artist?.JsonArtist.Connections?.MusicBrainzArtistId;
         if (artist == null || string.IsNullOrWhiteSpace(mbId))
         {
-            return new RefreshArtistLastFmResult { Success = false, ErrorMessage = "Artist not found or missing MusicBrainz ID" };
+            return new RefreshArtistLastFmResult
+            {
+                Success = false,
+                ErrorMessage = "Artist not found or missing MusicBrainz ID",
+            };
         }
 
         var dir = Path.Combine("./Library/", input.ArtistId);
         var res = await enrichment.EnrichArtistAsync(dir, mbId!);
         if (!res.Success)
         {
-            return new RefreshArtistLastFmResult { Success = false, ErrorMessage = res.ErrorMessage };
+            return new RefreshArtistLastFmResult
+            {
+                Success = false,
+                ErrorMessage = res.ErrorMessage,
+            };
         }
 
         await cache.UpdateCacheAsync();

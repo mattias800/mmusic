@@ -4,9 +4,10 @@ import { TopArtistTrackItem } from "@/features/artist/artist-page/TopArtistTrack
 import { graphql } from "@/gql";
 import { SectionHeading } from "@/components/headings/SectionHeading.tsx";
 import { Section } from "@/components/page-body/Section.tsx";
-import { useQuery } from "urql";
+import { useMutation, useQuery } from "urql";
 import { TopTrackShimmer } from "@/features/artist/artist-page/TopTrackShimmer.tsx";
 import { ShowMoreButton } from "@/components/buttons/ShowMoreButton.tsx";
+import { RefreshButton } from "@/components/buttons/RefreshButton.tsx";
 
 export interface TopArtistTracksProps {
   artistId: string;
@@ -25,13 +26,35 @@ const topArtistTracksArtistQuery = graphql(`
   }
 `);
 
+const refreshTopTracksMutation = graphql(`
+  mutation RefreshArtistTopTracks($input: RefreshArtistTopTracksInput!) {
+    refreshArtistTopTracks(input: $input) {
+      __typename
+      ... on RefreshArtistTopTracksSuccess {
+        artist {
+          id
+          topTracks {
+            ...TopArtistTrackItem_ArtistTopTrack
+          }
+        }
+      }
+      ... on RefreshArtistTopTracksUnknownError {
+        message
+      }
+    }
+  }
+`);
+
 export const TopArtistTracks: React.FC<TopArtistTracksProps> = ({
   artistId,
 }) => {
-  const [{ data, fetching }] = useQuery({
+  const [{ data, fetching }, reexecuteQuery] = useQuery({
     query: topArtistTracksArtistQuery,
     variables: { artistId },
   });
+  const [{ fetching: refreshing }, refreshMutation] = useMutation(
+    refreshTopTracksMutation,
+  );
 
   const [showingMore, setShowingMore] = useState(false);
 
@@ -44,12 +67,22 @@ export const TopArtistTracks: React.FC<TopArtistTracksProps> = ({
     return null;
   }
 
+  const onRefresh = async () => {
+    await refreshMutation({ input: { artistId } });
+    reexecuteQuery({ requestPolicy: "network-only" });
+  };
+
   return (
     <Section>
-      <SectionHeading>Popular</SectionHeading>
+      <div className={"flex gap-4 items-center"}>
+        <SectionHeading loading={fetching || refreshing}>
+          Popular
+        </SectionHeading>
+        <RefreshButton loading={refreshing} onClick={onRefresh} />
+      </div>
 
-      {fetching ? (
-        <>
+      {fetching || refreshing ? (
+        <div>
           <TopTrackShimmer trackNumber={1} />
           <TopTrackShimmer trackNumber={2} />
           <TopTrackShimmer trackNumber={3} />
@@ -60,7 +93,7 @@ export const TopArtistTracks: React.FC<TopArtistTracksProps> = ({
           <TopTrackShimmer trackNumber={8} />
           <TopTrackShimmer trackNumber={9} />
           <TopTrackShimmer trackNumber={10} />
-        </>
+        </div>
       ) : (
         <>
           <div>

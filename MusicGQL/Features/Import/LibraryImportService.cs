@@ -153,7 +153,7 @@ public class LibraryImportService(
                             continue;
 
                         var releaseJsonText = await File.ReadAllTextAsync(releaseJsonPath);
-                        var releaseJson = System.Text.Json.JsonSerializer.Deserialize<JsonRelease>(
+                        var releaseJson = JsonSerializer.Deserialize<JsonRelease>(
                             releaseJsonText,
                             GetJsonOptions()
                         );

@@ -145,10 +145,12 @@ type ArtistServerStatusUpdatingArtistReleases implements ArtistServerStatusResul
 }
 
 type ArtistTopTrack {
+  coverArtUrl: String
   playCount: Long
   releaseTitle: String
   title: String!
   track: Track
+  trackLength: Int
 }
 
 type CacheStatistics {
@@ -499,6 +501,8 @@ type Mutation {
   importSpotifyPlaylistById(playlistId: String!, userId: UUID!): ImportSpotifyPlaylistResult!
   likeSong(input: LikeSongInput!): LikeSongResult!
   ping: Boolean!
+  refreshArtistLastFm(input: RefreshArtistLastFmInput!): RefreshArtistLastFmResult!
+  refreshArtistTopTracks(input: RefreshArtistTopTracksInput!): RefreshArtistTopTracksResult!
   renamePlaylist(input: RenamePlaylistInput!): RenamePlaylistResult!
   scanLibraryForMissingJson: ScanLibraryResult!
   signIn(input: SignInInput!): SignInResult!
@@ -570,6 +574,29 @@ type RecommendationsSearchRoot {
   topArtists: [LastFmArtist!]!
   topTags: [LastFmTag!]!
   topTracks: [LastFmTrack!]!
+}
+
+input RefreshArtistLastFmInput {
+  artistId: String!
+}
+
+type RefreshArtistLastFmResult {
+  errorMessage: String
+  success: Boolean!
+}
+
+input RefreshArtistTopTracksInput {
+  artistId: String!
+}
+
+union RefreshArtistTopTracksResult = RefreshArtistTopTracksSuccess | RefreshArtistTopTracksUnknownError
+
+type RefreshArtistTopTracksSuccess {
+  artist: Artist!
+}
+
+type RefreshArtistTopTracksUnknownError {
+  message: String!
 }
 
 type Release {

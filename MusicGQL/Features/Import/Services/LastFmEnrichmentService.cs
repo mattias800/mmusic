@@ -6,7 +6,10 @@ using Path = System.IO.Path;
 
 namespace MusicGQL.Features.Import.Services;
 
-public class LastFmEnrichmentService(LastfmClient lastfmClient, MusicGQL.Integration.Spotify.SpotifyService spotifyService)
+public class LastFmEnrichmentService(
+    LastfmClient lastfmClient,
+    Integration.Spotify.SpotifyService spotifyService
+)
 {
     private static JsonSerializerOptions GetJsonOptions() =>
         new()
@@ -51,11 +54,13 @@ public class LastFmEnrichmentService(LastfmClient lastfmClient, MusicGQL.Integra
             jsonArtist.MonthlyListeners = info?.Statistics?.Listeners;
 
             // Replaceable top tracks importer; default to Last.fm
-            Features.Import.Services.TopTracks.ITopTracksImporter importer = new Features.Import.Services.TopTracks.TopTracksLastFmImporter(lastfmClient);
+            TopTracks.ITopTracksImporter importer = new TopTracks.TopTracksLastFmImporter(
+                lastfmClient
+            );
             jsonArtist.TopTracks = await importer.GetTopTracksAsync(mbArtistId, 10);
 
             // Complete missing fields using Spotify as fallback (releaseTitle, cover art download)
-            var completer = new Features.Import.Services.TopTracks.TopTracksCompleter(spotifyService);
+            var completer = new TopTracks.TopTracksCompleter(spotifyService);
             await completer.CompleteAsync(artistDir, jsonArtist);
 
             // Map to local library if present
@@ -112,7 +117,7 @@ public class LastFmEnrichmentService(LastfmClient lastfmClient, MusicGQL.Integra
                                 var relPath = releaseJson.CoverArt.StartsWith("./")
                                     ? releaseJson.CoverArt[2..]
                                     : releaseJson.CoverArt;
-                                var combined = Path.Combine(folderName, relPath).Replace('\\','/');
+                                var combined = Path.Combine(folderName, relPath).Replace('\\', '/');
                                 topTrack.CoverArt = "./" + combined;
                             }
                         }

@@ -24,7 +24,7 @@ public sealed class MusicBrainzImportExecutor(
     MusicBrainzService musicBrainzService,
     FanArtDownloadService fanArtDownloadService,
     LastfmClient lastfmClient,
-    MusicGQL.Integration.Spotify.SpotifyService spotifyService
+    Integration.Spotify.SpotifyService spotifyService
 ) : IImportExecutor
 {
     private static readonly string[] AudioExtensions = [".mp3", ".flac", ".wav", ".m4a", ".ogg"];
@@ -102,11 +102,14 @@ public sealed class MusicBrainzImportExecutor(
             )
             {
                 var info = await lastfmClient.Artist.GetInfoByMbidAsync(mbArtistId);
-                jsonArtist.MonthlyListeners = info?.Statistics?.Listeners ?? jsonArtist.MonthlyListeners;
+                jsonArtist.MonthlyListeners =
+                    info?.Statistics?.Listeners ?? jsonArtist.MonthlyListeners;
 
                 // TOP TRACKS VIA IMPORTER (switchable)
                 // For now, hardcode Last.fm importer; switch to Spotify importer by replacing this line
-                Features.Import.Services.TopTracks.ITopTracksImporter importer = new Features.Import.Services.TopTracks.TopTracksLastFmImporter(lastfmClient);
+                TopTracks.ITopTracksImporter importer = new TopTracks.TopTracksLastFmImporter(
+                    lastfmClient
+                );
                 jsonArtist.TopTracks = await importer.GetTopTracksAsync(mbArtistId, 10);
 
                 // Attempt to map stored top tracks to local library tracks to enable playback
@@ -167,7 +170,8 @@ public sealed class MusicBrainzImportExecutor(
                                             ? releaseJson.CoverArt[2..]
                                             : releaseJson.CoverArt;
                                         // Store path relative to artist folder so it resolves correctly from artist.json
-                                        var combined = System.IO.Path.Combine(folderName, relPath).Replace('\\','/');
+                                        var combined = Path.Combine(folderName, relPath)
+                                            .Replace('\\', '/');
                                         topTrack.CoverArt = "./" + combined;
                                     }
                                 }
@@ -183,12 +187,10 @@ public sealed class MusicBrainzImportExecutor(
                 // Complete missing fields (releaseTitle/cover art) using Spotify fallback
                 try
                 {
-                    var completer = new Features.Import.Services.TopTracks.TopTracksCompleter(spotifyService);
+                    var completer = new TopTracks.TopTracksCompleter(spotifyService);
                     await completer.CompleteAsync(artistDir, jsonArtist);
                 }
-                catch
-                {
-                }
+                catch { }
             }
         }
         catch

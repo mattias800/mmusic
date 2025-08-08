@@ -31,8 +31,10 @@ using MusicGQL.Features.Playlists.Commands;
 using MusicGQL.Features.Playlists.Import.Spotify;
 using MusicGQL.Features.Playlists.Import.Spotify.Mutations;
 using MusicGQL.Features.Playlists.Mutations;
+using MusicGQL.Features.ServerLibrary;
 using MusicGQL.Features.ServerLibrary.Cache;
 using MusicGQL.Features.ServerLibrary.Json;
+using MusicGQL.Features.ServerLibrary.Mutation;
 using MusicGQL.Features.ServerLibrary.Reader;
 using MusicGQL.Features.ServerSettings.Commands;
 using MusicGQL.Features.ServerSettings.Events;
@@ -231,7 +233,7 @@ builder
         )
     )
     .AddDiagnosticEventListener<MyExecutionEventListener>()
-    .AddQueryType<MusicGQL.Types.Query>()
+    .AddQueryType<Query>()
     .AddMutationType<Mutation>()
     .AddSubscriptionType<Subscription>()
     .AddTypeExtension<SpotifyPlaylistSearchRoot>()
@@ -251,9 +253,12 @@ builder
     .AddType<LikeSongResult.LikeSongSongDoesNotExist>()
     .AddTypeExtension<UpdateLibraryPathMutation>()
     .AddTypeExtension<UpdateDownloadPathMutation>()
-    .AddTypeExtension<MusicGQL.Features.ServerLibrary.ServerLibraryMaintenanceMutation>()
+    .AddTypeExtension<ServerLibraryMaintenanceMutation>()
     .AddType<UpdateLibraryPathResult.UpdateLibraryPathSuccess>()
     .AddType<UpdateDownloadPathResult.UpdateDownloadPathSuccess>()
+    .AddTypeExtension<RefreshArtistTopTracksMutation>()
+    .AddType<RefreshArtistTopTracksSuccess>()
+    .AddType<RefreshArtistTopTracksUnknownError>()
     .AddTypeExtension<AddArtistToServerLibraryMutation>()
     .AddType<AddArtistToServerLibraryResult.AddArtistToServerLibrarySuccess>()
     .AddType<AddArtistToServerLibraryResult.AddArtistToServerLibraryArtistAlreadyAdded>()
