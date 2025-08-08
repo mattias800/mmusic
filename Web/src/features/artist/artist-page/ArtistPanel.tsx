@@ -122,33 +122,37 @@ export const ArtistPanel: React.FC<ArtistPanelProps> = (props) => {
                     </CardFlexList>
                   </Section>
 
-                  <Section>
-                    <SectionHeading>EPs</SectionHeading>
-                    <CardFlexList>
-                      {artist.eps
-                        .toSorted(
-                          byStringField((a) => a.firstReleaseDate ?? ""),
-                        )
-                        .toReversed()
-                        .map((release) => (
-                          <AlbumCard release={release} key={release.id} />
-                        ))}
-                    </CardFlexList>
-                  </Section>
+                  {artist.eps.length > 0 && (
+                    <Section>
+                      <SectionHeading>EPs</SectionHeading>
+                      <CardFlexList>
+                        {artist.eps
+                          .toSorted(
+                            byStringField((a) => a.firstReleaseDate ?? ""),
+                          )
+                          .toReversed()
+                          .map((release) => (
+                            <AlbumCard release={release} key={release.id} />
+                          ))}
+                      </CardFlexList>
+                    </Section>
+                  )}
 
-                  <Section>
-                    <SectionHeading>Singles</SectionHeading>
-                    <CardFlexList>
-                      {artist.singles
-                        .toSorted(
-                          byStringField((a) => a.firstReleaseDate ?? ""),
-                        )
-                        .toReversed()
-                        .map((release) => (
-                          <AlbumCard release={release} key={release.id} />
-                        ))}
-                    </CardFlexList>
-                  </Section>
+                  {artist.singles.length > 0 && (
+                    <Section>
+                      <SectionHeading>Singles</SectionHeading>
+                      <CardFlexList>
+                        {artist.singles
+                          .toSorted(
+                            byStringField((a) => a.firstReleaseDate ?? ""),
+                          )
+                          .toReversed()
+                          .map((release) => (
+                            <AlbumCard release={release} key={release.id} />
+                          ))}
+                      </CardFlexList>
+                    </Section>
+                  )}
                 </>
               )}
             </SectionList>

@@ -29,6 +29,40 @@ public sealed class MusicBrainzImportExecutor(
 {
     private static readonly string[] AudioExtensions = [".mp3", ".flac", ".wav", ".m4a", ".ogg"];
 
+    private static string NormalizeTitle(string input)
+    {
+        if (string.IsNullOrWhiteSpace(input)) return string.Empty;
+        var s = input
+            .Replace("’", "'")
+            .Replace("“", "\"")
+            .Replace("”", "\"");
+        var builder = new System.Text.StringBuilder(s.Length);
+        foreach (var ch in s)
+        {
+            if (char.IsLetterOrDigit(ch) || char.IsWhiteSpace(ch))
+            {
+                builder.Append(char.ToLowerInvariant(ch));
+            }
+        }
+        var normalized = System.Text.RegularExpressions.Regex.Replace(builder.ToString(), "\\s+", " ").Trim();
+        return normalized;
+    }
+
+    private static string StripParentheses(string input)
+    {
+        return System.Text.RegularExpressions.Regex.Replace(input, "\\(.*?\\)", string.Empty).Trim();
+    }
+
+    private static bool AreTitlesEquivalent(string a, string b)
+    {
+        var na = NormalizeTitle(a);
+        var nb = NormalizeTitle(b);
+        if (na.Equals(nb, StringComparison.Ordinal)) return true;
+        var npa = NormalizeTitle(StripParentheses(a));
+        var npb = NormalizeTitle(StripParentheses(b));
+        return npa.Equals(npb, StringComparison.Ordinal);
+    }
+
     public async Task ImportOrEnrichArtistAsync(
         string artistDir,
         string mbArtistId,
@@ -127,7 +161,7 @@ public sealed class MusicBrainzImportExecutor(
                             JsonRelease? releaseJson = null;
                             try
                             {
-                                var releaseText = await File.ReadAllTextAsync(releaseJsonPath);
+                            var releaseText = await File.ReadAllTextAsync(releaseJsonPath);
                                 releaseJson = JsonSerializer.Deserialize<JsonRelease>(
                                     releaseText,
                                     GetJsonOptions()
@@ -152,11 +186,7 @@ public sealed class MusicBrainzImportExecutor(
 
                                 var match = releaseJson.Tracks.FirstOrDefault(t =>
                                     !string.IsNullOrWhiteSpace(t.Title)
-                                    && string.Equals(
-                                        t.Title,
-                                        topTrack.Title,
-                                        StringComparison.OrdinalIgnoreCase
-                                    )
+                                    && AreTitlesEquivalent(t.Title, topTrack.Title)
                                 );
 
                                 if (match != null)
@@ -219,7 +249,21 @@ public sealed class MusicBrainzImportExecutor(
         }
 
         var releases = await musicBrainzService.GetReleasesForReleaseGroupAsync(releaseGroupId);
-        var selected = releases.FirstOrDefault();
+
+        // Prefer a release whose track count matches the number of audio files present, else fall back
+        int audioFileCount = Directory
+            .GetFiles(releaseDir)
+            .Count(f => AudioExtensions.Contains(Path.GetExtension(f).ToLowerInvariant()));
+
+        var selected = releases
+            .OrderByDescending(r =>
+            {
+                var mediaTracks = r.Media?.SelectMany(m => m.Tracks ?? new List<Hqub.MusicBrainz.Entities.Track>()).Count() ?? 0;
+                // Exact match gets priority, otherwise sort by closeness
+                var diff = Math.Abs(mediaTracks - audioFileCount);
+                return mediaTracks == audioFileCount ? int.MaxValue : (1000 - diff);
+            })
+            .FirstOrDefault();
 
         string? coverArtRelPath = await fanArtDownloadService.DownloadReleaseCoverArtAsync(
             releaseGroupId,

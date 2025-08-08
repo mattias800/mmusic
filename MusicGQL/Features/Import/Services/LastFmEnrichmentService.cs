@@ -11,6 +11,42 @@ public class LastFmEnrichmentService(
     Integration.Spotify.SpotifyService spotifyService
 )
 {
+    private static string NormalizeTitle(string input)
+    {
+        if (string.IsNullOrWhiteSpace(input)) return string.Empty;
+        var s = input
+            .Replace("’", "'")
+            .Replace("“", "\"")
+            .Replace("”", "\"");
+        var builder = new System.Text.StringBuilder(s.Length);
+        foreach (var ch in s)
+        {
+            if (char.IsLetterOrDigit(ch) || char.IsWhiteSpace(ch))
+            {
+                builder.Append(char.ToLowerInvariant(ch));
+            }
+        }
+        var normalized = System.Text.RegularExpressions.Regex.Replace(builder.ToString(), "\\s+", " ").Trim();
+        return normalized;
+    }
+
+    private static string StripParentheses(string input)
+    {
+        return System.Text.RegularExpressions.Regex.Replace(input, "\\(.*?\\)", string.Empty).Trim();
+    }
+
+    private static bool AreTitlesEquivalent(string a, string b)
+    {
+        var na = NormalizeTitle(a);
+        var nb = NormalizeTitle(b);
+        if (na.Equals(nb, StringComparison.Ordinal)) return true;
+
+        // Fallback: ignore parenthetical qualifiers
+        var npa = NormalizeTitle(StripParentheses(a));
+        var npb = NormalizeTitle(StripParentheses(b));
+        return npa.Equals(npb, StringComparison.Ordinal);
+    }
+
     private static JsonSerializerOptions GetJsonOptions() =>
         new()
         {
@@ -98,11 +134,7 @@ public class LastFmEnrichmentService(
 
                         var match = releaseJson.Tracks.FirstOrDefault(t =>
                             !string.IsNullOrWhiteSpace(t.Title)
-                            && string.Equals(
-                                t.Title,
-                                topTrack.Title,
-                                StringComparison.OrdinalIgnoreCase
-                            )
+                            && AreTitlesEquivalent(t.Title, topTrack.Title)
                         );
 
                         if (match != null)
