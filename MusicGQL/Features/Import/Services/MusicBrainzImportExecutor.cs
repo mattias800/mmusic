@@ -101,23 +101,12 @@ public sealed class MusicBrainzImportExecutor(
             )
             {
                 var info = await lastfmClient.Artist.GetInfoByMbidAsync(mbArtistId);
-                jsonArtist.MonthlyListeners =
-                    info?.Statistics?.Listeners ?? jsonArtist.MonthlyListeners;
+                jsonArtist.MonthlyListeners = info?.Statistics?.Listeners ?? jsonArtist.MonthlyListeners;
 
-                var top = await lastfmClient.Artist.GetTopTracksByMbidAsync(mbArtistId);
-                if (top != null)
-                {
-                    jsonArtist.TopTracks = top.Take(10)
-                        .Select(t => new JsonTopTrack
-                        {
-                            Title = t.Name,
-                            ReleaseTitle = t.Album?.Name,
-                            CoverArt = null,
-                            PlayCount = t.Statistics?.PlayCount,
-                            TrackLength = t.Duration,
-                        })
-                        .ToList();
-                }
+                // TOP TRACKS VIA IMPORTER (switchable)
+                // For now, hardcode Last.fm importer; switch to Spotify importer by replacing this line
+                Features.Import.Services.TopTracks.ITopTracksImporter importer = new Features.Import.Services.TopTracks.TopTracksLastFmImporter(lastfmClient);
+                jsonArtist.TopTracks = await importer.GetTopTracksAsync(mbArtistId, 10);
 
                 // Attempt to map stored top tracks to local library tracks to enable playback
                 try

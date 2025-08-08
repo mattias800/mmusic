@@ -50,20 +50,9 @@ public class LastFmEnrichmentService(LastfmClient lastfmClient)
             var info = await lastfmClient.Artist.GetInfoByMbidAsync(mbArtistId);
             jsonArtist.MonthlyListeners = info?.Statistics?.Listeners;
 
-            var top = await lastfmClient.Artist.GetTopTracksByMbidAsync(mbArtistId);
-            if (top != null)
-            {
-                jsonArtist.TopTracks = top.Take(10)
-                    .Select(t => new JsonTopTrack
-                    {
-                        Title = t.Name,
-                        ReleaseTitle = t.Album?.Name,
-                        CoverArt = null,
-                        PlayCount = t.Statistics?.PlayCount,
-                        TrackLength = t.Duration,
-                    })
-                    .ToList();
-            }
+            // Replaceable top tracks importer; default to Last.fm
+            Features.Import.Services.TopTracks.ITopTracksImporter importer = new Features.Import.Services.TopTracks.TopTracksLastFmImporter(lastfmClient);
+            jsonArtist.TopTracks = await importer.GetTopTracksAsync(mbArtistId, 10);
 
             // Map to local library if present
             if (jsonArtist.TopTracks != null && jsonArtist.TopTracks.Count > 0)
