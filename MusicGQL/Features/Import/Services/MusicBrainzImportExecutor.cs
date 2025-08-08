@@ -274,7 +274,6 @@ public sealed class MusicBrainzImportExecutor(
                     continue;
                 }
 
-                Directory.CreateDirectory(releaseDir);
                 await ImportReleaseIfMissingAsync(
                     artistDir,
                     releaseDir,
@@ -282,7 +281,10 @@ public sealed class MusicBrainzImportExecutor(
                     rg.Title,
                     rg.PrimaryType
                 );
-                created++;
+                if (File.Exists(releaseJsonPath))
+                {
+                    created++;
+                }
             }
             catch
             {
@@ -364,21 +366,26 @@ public sealed class MusicBrainzImportExecutor(
                 .FirstOrDefault();
         }
 
-        if (selected != null)
+        if (selected == null)
         {
-            var selectedCount = selected.Media?.SelectMany(m => m.Tracks ?? new List<Hqub.MusicBrainz.Entities.Track>()).Count() ?? 0;
-            logger.LogInformation(
-                "[ImportRelease] Selected Release: Id={Id}, Title='{Title}', TrackCount={TrackCount}, AudioFiles={AudioCount}",
-                selected.Id,
-                selected.Title,
-                selectedCount,
-                audioFileCount
-            );
+            logger.LogWarning("[ImportRelease] No suitable release selected for group {ReleaseGroupId}", releaseGroupId);
+            return; // do not create folder or write release.json
         }
-        else
+
+        // ensure folder exists only now that we know we will save a release.json
+        if (!Directory.Exists(releaseDir))
         {
-            logger.LogWarning("[ImportRelease] No releases returned by MusicBrainz for group {ReleaseGroupId}", releaseGroupId);
+            Directory.CreateDirectory(releaseDir);
         }
+
+        var selectedCount = selected.Media?.SelectMany(m => m.Tracks ?? new List<Hqub.MusicBrainz.Entities.Track>()).Count() ?? 0;
+        logger.LogInformation(
+            "[ImportRelease] Selected Release: Id={Id}, Title='{Title}', TrackCount={TrackCount}, AudioFiles={AudioCount}",
+            selected.Id,
+            selected.Title,
+            selectedCount,
+            audioFileCount
+        );
 
         string? coverArtRelPath = await fanArtDownloadService.DownloadReleaseCoverArtAsync(
             releaseGroupId,

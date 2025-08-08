@@ -12,16 +12,20 @@ public static class LibraryDecider
     {
         var official = releases.Where(r => r.Status == "Official").ToList();
 
-        var releasesAvailable = official.Count != 0 ? official : releases;
+        // Only process official releases - do not fall back to bootlegs/demos/etc.
+        if (official.Count == 0)
+        {
+            return null;
+        }
 
-        var worldWideReleases = releasesAvailable.Where(r => r.Country == "XW").ToList();
+        var worldWideReleases = official.Where(r => r.Country == "XW").ToList();
 
         if (worldWideReleases.Any())
         {
             return worldWideReleases.Last();
         }
 
-        return releasesAvailable // filter by official only
+        return official // filter by official only
                 .OrderBy(r =>
                     r.Country switch
                     {
@@ -31,37 +35,41 @@ public static class LibraryDecider
                     }
                 )
                 .ThenBy(r => r.Date) // prefer earlier date
-                .FirstOrDefault() ?? releases.FirstOrDefault();
+                .FirstOrDefault();
     }
 
     public static MbRelease? FindMainAlbumForSong(List<MbRelease> releases)
     {
         var official = releases.Where(r => r.Status == "Official").ToList();
 
-        var releasesAvailable = official.Count != 0 ? official : releases;
+        // Only process official releases - do not fall back to bootlegs/demos/etc.
+        if (official.Count == 0)
+        {
+            return null;
+        }
 
-        var allAlbums = releasesAvailable.Where(r => r.ReleaseGroup.IsMainAlbum()).ToList();
+        var allAlbums = official.Where(r => r.ReleaseGroup.IsMainAlbum()).ToList();
 
         if (allAlbums.Count > 0)
         {
             return FindPrioritizedRegionalAlbum(allAlbums);
         }
 
-        var allEps = releasesAvailable.Where(r => r.ReleaseGroup.IsMainEP()).ToList();
+        var allEps = official.Where(r => r.ReleaseGroup.IsMainEP()).ToList();
 
         if (allEps.Count > 0)
         {
             return FindPrioritizedRegionalAlbum(allEps);
         }
 
-        var allSingles = releasesAvailable.Where(r => r.ReleaseGroup.IsMainSingle()).ToList();
+        var allSingles = official.Where(r => r.ReleaseGroup.IsMainSingle()).ToList();
 
         if (allSingles.Count > 0)
         {
             return FindPrioritizedRegionalAlbum(allSingles);
         }
 
-        return releasesAvailable.First();
+        return official.FirstOrDefault();
     }
 
     public static MbRelease? FindPrioritizedRegionalAlbum(List<MbRelease> releases)
