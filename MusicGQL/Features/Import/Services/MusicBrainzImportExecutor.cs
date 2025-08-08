@@ -313,14 +313,18 @@ public sealed class MusicBrainzImportExecutor(
 
         var releases = await musicBrainzService.GetReleasesForReleaseGroupAsync(releaseGroupId);
 
-        // Prefer a release whose track count matches the number of audio files present, else fall back
-        var audioFiles = Directory
-            .GetFiles(releaseDir)
-            .Where(f => AudioExtensions.Contains(Path.GetExtension(f).ToLowerInvariant()))
-            .OrderBy(f => f, StringComparer.OrdinalIgnoreCase)
-            .ToList();
-
-        int audioFileCount = audioFiles.Count;
+        // Prefer a release whose track count matches local audio files if folder exists; otherwise assume none
+        List<string> audioFiles = [];
+        int audioFileCount = 0;
+        if (Directory.Exists(releaseDir))
+        {
+            audioFiles = Directory
+                .GetFiles(releaseDir)
+                .Where(f => AudioExtensions.Contains(Path.GetExtension(f).ToLowerInvariant()))
+                .OrderBy(f => f, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+            audioFileCount = audioFiles.Count;
+        }
 
         logger.LogInformation(
             "[ImportRelease] Evaluating releases for group {ReleaseGroupId} in dir '{ReleaseDir}'. Audio files found: {AudioCount}. Files: {Files}",
