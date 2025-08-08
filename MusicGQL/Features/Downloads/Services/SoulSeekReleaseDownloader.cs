@@ -67,7 +67,7 @@ public class SoulSeekReleaseDownloader(
             await cache.UpdateMediaAvailabilityStatus(
                 artistId,
                 releaseFolderName,
-                trackIndex,
+                trackIndex + 1,
                 CachedMediaAvailabilityStatus.Downloading
             );
 
@@ -76,7 +76,7 @@ public class SoulSeekReleaseDownloader(
             await cache.UpdateMediaAvailabilityStatus(
                 artistId,
                 releaseFolderName,
-                trackIndex,
+                trackIndex + 1,
                 CachedMediaAvailabilityStatus.Processing
             );
 
