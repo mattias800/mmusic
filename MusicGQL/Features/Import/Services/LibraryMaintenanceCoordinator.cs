@@ -41,7 +41,7 @@ public class LibraryMaintenanceCoordinator(
                 var importedAnyReleaseForThisArtist = false;
                 if (artist.MissingArtistJson)
                 {
-                    await importer.ImportArtistIfMissingAsync(artist.ArtistDir, idArtist.MusicBrainzArtistId, idArtist.ArtistDisplayName);
+                    await importer.ImportOrEnrichArtistAsync(artist.ArtistDir, idArtist.MusicBrainzArtistId, idArtist.ArtistDisplayName);
                     result.ArtistsCreated++;
                     result.Notes.Add($"Created artist.json for '{Path.GetFileName(artist.ArtistDir)}'");
                     artistsToEnrich[artist.ArtistDir] = idArtist.MusicBrainzArtistId;

@@ -21,6 +21,7 @@ export interface TrackItemProps {
   coverArtUri?: string | null | undefined;
   showCoverArt?: boolean;
   title: string;
+  renderTag?: () => ReactNode;
   renderSubtitle?: () => ReactNode;
   onClick?: () => void;
   trackNumber: number;
@@ -34,6 +35,7 @@ export const TrackItem: React.FC<TrackItemProps> = ({
   coverArtUri,
   title,
   renderSubtitle,
+  renderTag,
   onClick,
   trackNumber,
   playing,
@@ -68,8 +70,8 @@ export const TrackItem: React.FC<TrackItemProps> = ({
             </>
           )}
 
-          <div className={"flex gap-4 items-center"}>
-            <div>
+          <div className={"flex flex-col gap-1 justify-center"}>
+            <div className={"flex items-center gap-4"}>
               {onClick ? (
                 <button
                   className={
@@ -82,10 +84,11 @@ export const TrackItem: React.FC<TrackItemProps> = ({
               ) : (
                 <span>{title}</span>
               )}
-              {renderSubtitle ? (
-                <div className="text-white/50 text-xs">{renderSubtitle()}</div>
-              ) : null}
+              {renderTag?.()}
             </div>
+            {renderSubtitle ? (
+              <div className="text-white/50 text-xs">{renderSubtitle()}</div>
+            ) : null}
           </div>
 
           <span className="text-sm text-neutral-400 text-right">

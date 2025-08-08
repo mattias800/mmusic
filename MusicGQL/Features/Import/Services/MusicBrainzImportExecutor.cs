@@ -9,7 +9,7 @@ namespace MusicGQL.Features.Import.Services;
 
 public interface IImportExecutor
 {
-    Task ImportArtistIfMissingAsync(string artistDir, string mbArtistId, string artistDisplayName);
+    Task ImportOrEnrichArtistAsync(string artistDir, string mbArtistId, string artistDisplayName);
 
     Task ImportReleaseIfMissingAsync(
         string artistDir,
@@ -23,12 +23,13 @@ public interface IImportExecutor
 public sealed class MusicBrainzImportExecutor(
     MusicBrainzService musicBrainzService,
     FanArtDownloadService fanArtDownloadService,
-    LastfmClient lastfmClient
+    LastfmClient lastfmClient,
+    MusicGQL.Integration.Spotify.SpotifyService spotifyService
 ) : IImportExecutor
 {
     private static readonly string[] AudioExtensions = [".mp3", ".flac", ".wav", ".m4a", ".ogg"];
 
-    public async Task ImportArtistIfMissingAsync(
+    public async Task ImportOrEnrichArtistAsync(
         string artistDir,
         string mbArtistId,
         string artistDisplayName
@@ -162,7 +163,12 @@ public sealed class MusicBrainzImportExecutor(
                                     topTrack.ReleaseTitle = releaseJson.Title;
                                     if (!string.IsNullOrWhiteSpace(releaseJson.CoverArt))
                                     {
-                                        topTrack.CoverArt = releaseJson.CoverArt;
+                                        var relPath = releaseJson.CoverArt.StartsWith("./")
+                                            ? releaseJson.CoverArt[2..]
+                                            : releaseJson.CoverArt;
+                                        // Store path relative to artist folder so it resolves correctly from artist.json
+                                        var combined = System.IO.Path.Combine(folderName, relPath).Replace('\\','/');
+                                        topTrack.CoverArt = "./" + combined;
                                     }
                                 }
                             }
@@ -172,6 +178,16 @@ public sealed class MusicBrainzImportExecutor(
                 catch
                 {
                     // ignore mapping failures
+                }
+
+                // Complete missing fields (releaseTitle/cover art) using Spotify fallback
+                try
+                {
+                    var completer = new Features.Import.Services.TopTracks.TopTracksCompleter(spotifyService);
+                    await completer.CompleteAsync(artistDir, jsonArtist);
+                }
+                catch
+                {
                 }
             }
         }

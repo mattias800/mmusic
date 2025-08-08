@@ -6,7 +6,7 @@ using Path = System.IO.Path;
 
 namespace MusicGQL.Features.Import.Services;
 
-public class LastFmEnrichmentService(LastfmClient lastfmClient)
+public class LastFmEnrichmentService(LastfmClient lastfmClient, MusicGQL.Integration.Spotify.SpotifyService spotifyService)
 {
     private static JsonSerializerOptions GetJsonOptions() =>
         new()
@@ -53,6 +53,10 @@ public class LastFmEnrichmentService(LastfmClient lastfmClient)
             // Replaceable top tracks importer; default to Last.fm
             Features.Import.Services.TopTracks.ITopTracksImporter importer = new Features.Import.Services.TopTracks.TopTracksLastFmImporter(lastfmClient);
             jsonArtist.TopTracks = await importer.GetTopTracksAsync(mbArtistId, 10);
+
+            // Complete missing fields using Spotify as fallback (releaseTitle, cover art download)
+            var completer = new Features.Import.Services.TopTracks.TopTracksCompleter(spotifyService);
+            await completer.CompleteAsync(artistDir, jsonArtist);
 
             // Map to local library if present
             if (jsonArtist.TopTracks != null && jsonArtist.TopTracks.Count > 0)
@@ -105,7 +109,11 @@ public class LastFmEnrichmentService(LastfmClient lastfmClient)
                             // Use release cover art for portable cover art
                             if (!string.IsNullOrWhiteSpace(releaseJson.CoverArt))
                             {
-                                topTrack.CoverArt = releaseJson.CoverArt;
+                                var relPath = releaseJson.CoverArt.StartsWith("./")
+                                    ? releaseJson.CoverArt[2..]
+                                    : releaseJson.CoverArt;
+                                var combined = Path.Combine(folderName, relPath).Replace('\\','/');
+                                topTrack.CoverArt = "./" + combined;
                             }
                         }
                     }

@@ -145,10 +145,12 @@ export type ArtistServerStatusUpdatingArtistReleases = ArtistServerStatusResultB
 
 export type ArtistTopTrack = {
   __typename?: 'ArtistTopTrack';
+  coverArtUrl?: Maybe<Scalars['String']['output']>;
   playCount?: Maybe<Scalars['Long']['output']>;
   releaseTitle?: Maybe<Scalars['String']['output']>;
   title: Scalars['String']['output'];
   track?: Maybe<Track>;
+  trackLength?: Maybe<Scalars['Int']['output']>;
 };
 
 export type CacheStatistics = {
@@ -589,6 +591,7 @@ export type Mutation = {
   importSpotifyPlaylistById: ImportSpotifyPlaylistResult;
   likeSong: LikeSongResult;
   ping: Scalars['Boolean']['output'];
+  refreshArtistLastFm: RefreshArtistLastFmResult;
   renamePlaylist: RenamePlaylistResult;
   scanLibraryForMissingJson: ScanLibraryResult;
   signIn: SignInResult;
@@ -638,6 +641,11 @@ export type MutationImportSpotifyPlaylistByIdArgs = {
 
 export type MutationLikeSongArgs = {
   input: LikeSongInput;
+};
+
+
+export type MutationRefreshArtistLastFmArgs = {
+  input: RefreshArtistLastFmInput;
 };
 
 
@@ -731,6 +739,16 @@ export type RecommendationsSearchRoot = {
   topArtists: Array<LastFmArtist>;
   topTags: Array<LastFmTag>;
   topTracks: Array<LastFmTrack>;
+};
+
+export type RefreshArtistLastFmInput = {
+  artistId: Scalars['String']['input'];
+};
+
+export type RefreshArtistLastFmResult = {
+  __typename?: 'RefreshArtistLastFmResult';
+  errorMessage?: Maybe<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
 };
 
 export type Release = {
