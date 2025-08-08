@@ -3,10 +3,9 @@ import { LargePlayButton } from "@/components/buttons/LargePlayButton.tsx";
 import { ShuffleButton } from "@/components/buttons/ShuffleButton.tsx";
 import { FollowButton } from "@/components/buttons/FollowButton.tsx";
 import { DotsButton } from "@/components/buttons/DotsButton.tsx";
-import { Button } from "@/components/ui/button.tsx";
-import { RefreshCcw } from "lucide-react";
 import { graphql } from "@/gql";
 import { useMutation } from "urql";
+import { RefreshButton } from "@/components/buttons/RefreshButton.tsx";
 
 export interface ArtistActionButtonsProps {
   artistId: string;
@@ -33,11 +32,8 @@ export const ArtistActionButtons: React.FC<ArtistActionButtonsProps> = ({
       <ShuffleButton />
       <FollowButton />
       <DotsButton />
-      <Button
-        variant={"secondary"}
-        size={"icon"}
+      <RefreshButton
         loading={fetching || isImporting}
-        iconLeft={RefreshCcw}
         onClick={() => !fetching && refreshArtist({ artistId })}
       />
     </div>
