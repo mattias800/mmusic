@@ -15,6 +15,7 @@ public class JsonTopTrack
 {
     public string Title { get; set; } = string.Empty;
     public string? ReleaseTitle { get; set; }
+    public int? TrackLength { get; set; }
     public string? CoverArtUrl { get; set; }
     public string? ReleaseFolderName { get; set; }
     public int? TrackNumber { get; set; }

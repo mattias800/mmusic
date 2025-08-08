@@ -10,7 +10,14 @@ namespace MusicGQL.Features.Import.Services;
 public interface IImportExecutor
 {
     Task ImportArtistIfMissingAsync(string artistDir, string mbArtistId, string artistDisplayName);
-    Task ImportReleaseIfMissingAsync(string artistDir, string releaseDir, string releaseGroupId, string? releaseTitle, string? primaryType);
+
+    Task ImportReleaseIfMissingAsync(
+        string artistDir,
+        string releaseDir,
+        string releaseGroupId,
+        string? releaseTitle,
+        string? primaryType
+    );
 }
 
 public sealed class MusicBrainzImportExecutor(
@@ -21,7 +28,11 @@ public sealed class MusicBrainzImportExecutor(
 {
     private static readonly string[] AudioExtensions = [".mp3", ".flac", ".wav", ".m4a", ".ogg"];
 
-    public async Task ImportArtistIfMissingAsync(string artistDir, string mbArtistId, string artistDisplayName)
+    public async Task ImportArtistIfMissingAsync(
+        string artistDir,
+        string mbArtistId,
+        string artistDisplayName
+    )
     {
         var artistJsonPath = Path.Combine(artistDir, "artist.json");
         JsonArtist? jsonArtist = null;
@@ -29,7 +40,10 @@ public sealed class MusicBrainzImportExecutor(
 
         if (!File.Exists(artistJsonPath))
         {
-            var photos = await fanArtDownloadService.DownloadArtistPhotosAsync(mbArtistId, artistDir);
+            var photos = await fanArtDownloadService.DownloadArtistPhotosAsync(
+                mbArtistId,
+                artistDir
+            );
             jsonArtist = new JsonArtist
             {
                 Id = Path.GetFileName(artistDir) ?? artistDisplayName,
@@ -41,10 +55,7 @@ public sealed class MusicBrainzImportExecutor(
                     Banners = photos.Banners.Any() ? photos.Banners : null,
                     Logos = photos.Logos.Any() ? photos.Logos : null,
                 },
-                Connections = new JsonArtistServiceConnections
-                {
-                    MusicBrainzArtistId = mbArtistId,
-                },
+                Connections = new JsonArtistServiceConnections { MusicBrainzArtistId = mbArtistId },
             };
             created = true;
         }
@@ -53,11 +64,17 @@ public sealed class MusicBrainzImportExecutor(
             try
             {
                 var text = await File.ReadAllTextAsync(artistJsonPath);
-                jsonArtist = JsonSerializer.Deserialize<JsonArtist>(text, GetJsonOptions()) ?? new JsonArtist();
+                jsonArtist =
+                    JsonSerializer.Deserialize<JsonArtist>(text, GetJsonOptions())
+                    ?? new JsonArtist();
             }
             catch
             {
-                jsonArtist = new JsonArtist { Id = Path.GetFileName(artistDir) ?? artistDisplayName, Name = artistDisplayName };
+                jsonArtist = new JsonArtist
+                {
+                    Id = Path.GetFileName(artistDir) ?? artistDisplayName,
+                    Name = artistDisplayName,
+                };
             }
 
             // ensure connections
@@ -66,29 +83,38 @@ public sealed class MusicBrainzImportExecutor(
             {
                 jsonArtist.Connections.MusicBrainzArtistId = mbArtistId;
             }
-            if (string.IsNullOrWhiteSpace(jsonArtist.Name)) jsonArtist.Name = artistDisplayName;
-            if (string.IsNullOrWhiteSpace(jsonArtist.Id)) jsonArtist.Id = Path.GetFileName(artistDir) ?? artistDisplayName;
+
+            if (string.IsNullOrWhiteSpace(jsonArtist.Name))
+                jsonArtist.Name = artistDisplayName;
+            if (string.IsNullOrWhiteSpace(jsonArtist.Id))
+                jsonArtist.Id = Path.GetFileName(artistDir) ?? artistDisplayName;
         }
 
         // Fetch Last.fm enrichment (only if missing or we just created)
         try
         {
-            if (created || jsonArtist.MonthlyListeners == null || jsonArtist.TopTracks == null || jsonArtist.TopTracks.Count == 0)
+            if (
+                created
+                || jsonArtist.MonthlyListeners == null
+                || jsonArtist.TopTracks == null
+                || jsonArtist.TopTracks.Count == 0
+            )
             {
                 var info = await lastfmClient.Artist.GetInfoByMbidAsync(mbArtistId);
-                jsonArtist.MonthlyListeners = info?.Statistics?.Listeners ?? jsonArtist.MonthlyListeners;
+                jsonArtist.MonthlyListeners =
+                    info?.Statistics?.Listeners ?? jsonArtist.MonthlyListeners;
 
                 var top = await lastfmClient.Artist.GetTopTracksByMbidAsync(mbArtistId);
                 if (top != null)
                 {
-                    jsonArtist.TopTracks = top
-                        .Take(10)
+                    jsonArtist.TopTracks = top.Take(10)
                         .Select(t => new JsonTopTrack
                         {
                             Title = t.Name,
                             ReleaseTitle = t.Album?.Name,
                             CoverArtUrl = t.Album?.Images?.LastOrDefault()?.Url,
                             PlayCount = t.Statistics?.PlayCount,
+                            TrackLength = t.Duration,
                         })
                         .ToList();
                 }
@@ -102,30 +128,42 @@ public sealed class MusicBrainzImportExecutor(
                         foreach (var releaseDir in releaseDirs)
                         {
                             var releaseJsonPath = Path.Combine(releaseDir, "release.json");
-                            if (!File.Exists(releaseJsonPath)) continue;
+                            if (!File.Exists(releaseJsonPath))
+                                continue;
 
                             JsonRelease? releaseJson = null;
                             try
                             {
                                 var releaseText = await File.ReadAllTextAsync(releaseJsonPath);
-                                releaseJson = JsonSerializer.Deserialize<JsonRelease>(releaseText, GetJsonOptions());
+                                releaseJson = JsonSerializer.Deserialize<JsonRelease>(
+                                    releaseText,
+                                    GetJsonOptions()
+                                );
                             }
                             catch
                             {
                                 continue;
                             }
 
-                            if (releaseJson?.Tracks == null) continue;
+                            if (releaseJson?.Tracks == null)
+                                continue;
 
                             var folderName = Path.GetFileName(releaseDir) ?? string.Empty;
                             foreach (var topTrack in jsonArtist.TopTracks)
                             {
-                                if (topTrack.ReleaseFolderName != null && topTrack.TrackNumber != null)
+                                if (
+                                    topTrack.ReleaseFolderName != null
+                                    && topTrack.TrackNumber != null
+                                )
                                     continue;
 
                                 var match = releaseJson.Tracks.FirstOrDefault(t =>
                                     !string.IsNullOrWhiteSpace(t.Title)
-                                    && string.Equals(t.Title, topTrack.Title, StringComparison.OrdinalIgnoreCase)
+                                    && string.Equals(
+                                        t.Title,
+                                        topTrack.Title,
+                                        StringComparison.OrdinalIgnoreCase
+                                    )
                                 );
 
                                 if (match != null)
@@ -152,7 +190,13 @@ public sealed class MusicBrainzImportExecutor(
         await File.WriteAllTextAsync(artistJsonPath, artistJson);
     }
 
-    public async Task ImportReleaseIfMissingAsync(string artistDir, string releaseDir, string releaseGroupId, string? releaseTitle, string? primaryType)
+    public async Task ImportReleaseIfMissingAsync(
+        string artistDir,
+        string releaseDir,
+        string releaseGroupId,
+        string? releaseTitle,
+        string? primaryType
+    )
     {
         var releaseJsonPath = Path.Combine(releaseDir, "release.json");
         if (File.Exists(releaseJsonPath))
@@ -165,7 +209,10 @@ public sealed class MusicBrainzImportExecutor(
         var releases = await musicBrainzService.GetReleasesForReleaseGroupAsync(releaseGroupId);
         var selected = releases.FirstOrDefault();
 
-        string? coverArtRelPath = await fanArtDownloadService.DownloadReleaseCoverArtAsync(releaseGroupId, releaseDir);
+        string? coverArtRelPath = await fanArtDownloadService.DownloadReleaseCoverArtAsync(
+            releaseGroupId,
+            releaseDir
+        );
 
         var releaseType = primaryType?.ToLowerInvariant() switch
         {
@@ -193,9 +240,10 @@ public sealed class MusicBrainzImportExecutor(
             SortTitle = releaseTitle,
             Type = releaseType,
             FirstReleaseDate = selected?.ReleaseGroup?.FirstReleaseDate,
-            FirstReleaseYear = selected?.ReleaseGroup?.FirstReleaseDate?.Length >= 4
-                ? selected!.ReleaseGroup!.FirstReleaseDate!.Substring(0, 4)
-                : null,
+            FirstReleaseYear =
+                selected?.ReleaseGroup?.FirstReleaseDate?.Length >= 4
+                    ? selected!.ReleaseGroup!.FirstReleaseDate!.Substring(0, 4)
+                    : null,
             CoverArt = coverArtRelPath,
             Tracks = tracks?.Count > 0 ? tracks : null,
         };
@@ -211,7 +259,10 @@ public sealed class MusicBrainzImportExecutor(
         try
         {
             var existingText = await File.ReadAllTextAsync(releaseJsonPath);
-            var jsonRelease = JsonSerializer.Deserialize<JsonRelease>(existingText, GetJsonOptions());
+            var jsonRelease = JsonSerializer.Deserialize<JsonRelease>(
+                existingText,
+                GetJsonOptions()
+            );
             if (jsonRelease?.Tracks == null || jsonRelease.Tracks.Count == 0)
             {
                 return;
@@ -260,5 +311,3 @@ public sealed class MusicBrainzImportExecutor(
         };
     }
 }
-
-

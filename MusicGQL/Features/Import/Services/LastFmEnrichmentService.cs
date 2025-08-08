@@ -8,12 +8,13 @@ namespace MusicGQL.Features.Import.Services;
 
 public class LastFmEnrichmentService(LastfmClient lastfmClient)
 {
-    private static JsonSerializerOptions GetJsonOptions() => new()
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        WriteIndented = true,
-        Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) },
-    };
+    private static JsonSerializerOptions GetJsonOptions() =>
+        new()
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            WriteIndented = true,
+            Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) },
+        };
 
     public async Task<EnrichmentResult> EnrichArtistAsync(string artistDir, string mbArtistId)
     {
@@ -52,14 +53,14 @@ public class LastFmEnrichmentService(LastfmClient lastfmClient)
             var top = await lastfmClient.Artist.GetTopTracksByMbidAsync(mbArtistId);
             if (top != null)
             {
-                jsonArtist.TopTracks = top
-                    .Take(10)
+                jsonArtist.TopTracks = top.Take(10)
                     .Select(t => new JsonTopTrack
                     {
                         Title = t.Name,
                         ReleaseTitle = t.Album?.Name,
                         CoverArtUrl = t.Album?.Images?.LastOrDefault()?.Url,
                         PlayCount = t.Statistics?.PlayCount,
+                        TrackLength = t.Duration,
                     })
                     .ToList();
             }
@@ -71,20 +72,25 @@ public class LastFmEnrichmentService(LastfmClient lastfmClient)
                 foreach (var releaseDir in releaseDirs)
                 {
                     var releaseJsonPath = Path.Combine(releaseDir, "release.json");
-                    if (!File.Exists(releaseJsonPath)) continue;
+                    if (!File.Exists(releaseJsonPath))
+                        continue;
 
                     JsonRelease? releaseJson = null;
                     try
                     {
                         var releaseText = await File.ReadAllTextAsync(releaseJsonPath);
-                        releaseJson = JsonSerializer.Deserialize<JsonRelease>(releaseText, GetJsonOptions());
+                        releaseJson = JsonSerializer.Deserialize<JsonRelease>(
+                            releaseText,
+                            GetJsonOptions()
+                        );
                     }
                     catch
                     {
                         continue;
                     }
 
-                    if (releaseJson?.Tracks == null) continue;
+                    if (releaseJson?.Tracks == null)
+                        continue;
 
                     var folderName = Path.GetFileName(releaseDir) ?? string.Empty;
                     foreach (var topTrack in jsonArtist.TopTracks)
@@ -94,7 +100,11 @@ public class LastFmEnrichmentService(LastfmClient lastfmClient)
 
                         var match = releaseJson.Tracks.FirstOrDefault(t =>
                             !string.IsNullOrWhiteSpace(t.Title)
-                            && string.Equals(t.Title, topTrack.Title, StringComparison.OrdinalIgnoreCase)
+                            && string.Equals(
+                                t.Title,
+                                topTrack.Title,
+                                StringComparison.OrdinalIgnoreCase
+                            )
                         );
 
                         if (match != null)
@@ -125,5 +135,3 @@ public class LastFmEnrichmentService(LastfmClient lastfmClient)
         public string? ErrorMessage { get; set; }
     }
 }
-
-

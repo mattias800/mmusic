@@ -14,6 +14,8 @@ public record ArtistTopTrack(
 
     public long? PlayCount() => Model.PlayCount;
 
+    public int? TrackLength() => Model.TrackLength;
+
     public async Task<Track?> Track(ServerLibraryCache cache)
     {
         if (Model.ReleaseFolderName == null || Model.TrackNumber == null)

@@ -102,6 +102,7 @@ public class LibraryImportService(
                             ReleaseTitle = t.Album?.Name,
                             CoverArtUrl = t.Album?.Images?.LastOrDefault()?.Url,
                             PlayCount = t.Statistics?.PlayCount,
+                            TrackLength = t.Duration,
                         })
                         .ToList();
                 }
