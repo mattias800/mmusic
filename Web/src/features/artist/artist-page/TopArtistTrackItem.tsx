@@ -6,7 +6,7 @@ import { TrackItem } from "@/components/track-item/TrackItem.tsx";
 import { useAppDispatch } from "@/ReduxAppHooks.ts";
 import { musicPlayerSlice } from "@/features/music-players/MusicPlayerSlice.ts";
 import { getRouteToRelease } from "@/AppRoutes.ts";
-import { Tag } from "@/components/text/Tag.tsx";
+import { AlbumTrackTag } from "@/features/album/AlbumTrackTag.tsx";
 
 interface TopArtistTrackItemProps {
   artistTopTrack: FragmentType<typeof topArtistTrackItemArtistTopTrackFragment>;
@@ -22,8 +22,10 @@ const topArtistTrackItemArtistTopTrackFragment = graphql(`
     coverArtUrl
     track {
       id
+      ...AlbumTrackTag_Track
       trackLength
       trackNumber
+      isMissing
       release {
         id
         folderName
@@ -55,7 +57,7 @@ export const TopArtistTrackItem: React.FC<TopArtistTrackItemProps> = (
       playing={props.active}
       showCoverArt
       coverArtUri={artistTopTrack.coverArtUrl}
-      renderTag={!artistTopTrack.track ? () => <Tag>Missing</Tag> : undefined}
+      renderTag={() => <AlbumTrackTag track={artistTopTrack?.track} />}
       onClick={() =>
         artistTopTrack.track &&
         dispatch(

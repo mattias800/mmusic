@@ -4,7 +4,7 @@ import { Tag } from "@/components/text/Tag.tsx";
 import { MediaAvailabilityStatus } from "@/gql/graphql.ts";
 
 export interface AlbumTrackTagProps {
-  track: FragmentType<typeof albumTrackTagTrackFragment>;
+  track: FragmentType<typeof albumTrackTagTrackFragment> | undefined | null;
 }
 
 const albumTrackTagTrackFragment = graphql(`
@@ -17,6 +17,10 @@ const albumTrackTagTrackFragment = graphql(`
 
 export const AlbumTrackTag: React.FC<AlbumTrackTagProps> = (props) => {
   const track = useFragment(albumTrackTagTrackFragment, props.track);
+
+  if (!track) {
+    return null;
+  }
 
   if (track.isMissing) {
     return <Tag>Missing</Tag>;
