@@ -10,7 +10,6 @@ namespace MusicGQL.Features.Import.Mutations;
 public class AddArtistToServerLibraryMutation
 {
     public async Task<AddArtistToServerLibraryResult> AddArtistToServerLibrary(
-        LibraryImportService libraryImportService,
         ImportArtistToServerLibraryHandler importArtistToServerLibraryHandler,
         ImportArtistReleaseGroupsToServerLibraryHandler importArtistReleaseGroupsToServerLibraryHandler,
         AddArtistToServerLibraryInput input,
