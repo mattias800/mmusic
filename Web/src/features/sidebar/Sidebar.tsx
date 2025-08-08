@@ -18,6 +18,8 @@ import { SidebarSection } from "@/features/sidebar/SidebarSection.tsx";
 import { SoulSeekNetworkStatusFetcher } from "@/features/soul-seek-network-status/SoulSeekNetworkStatusFetcher.tsx";
 import { MmusicLogo } from "@/components/logo/MmusicLogo.tsx";
 import { PlaylistList } from "@/features/playlists/playlist-list/PlaylistList.tsx";
+import { RootState } from "@/Store.ts";
+import { useSelector } from "react-redux";
 
 export interface SidebarProps {
   className?: string;
@@ -32,17 +34,24 @@ const sidebarQuery = graphql(`
   }
 `);
 
+const selector = (state: RootState) => state.musicPlayers.isOpen;
+
 export const Sidebar = ({ className }: SidebarProps) => {
   const [{ data }] = useQuery({
     query: sidebarQuery,
   });
 
   const username = data?.viewer?.username ?? "Profile";
+  const musicPlayerIsOpen = useSelector(selector);
 
   return (
     <div
       id="sidebar"
-      className={cn("h-full flex flex-col justify-between", className)}
+      className={cn(
+        "h-full flex flex-col justify-between relative z-10",
+        musicPlayerIsOpen && "pb-24",
+        className,
+      )}
     >
       <div className={"flex flex-col gap-4"}>
         <div className={"flex justify-center"}>

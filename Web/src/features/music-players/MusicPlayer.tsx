@@ -1,10 +1,18 @@
 import * as React from "react";
 import { RootState } from "@/Store.ts";
-import { useAppSelector } from "@/ReduxAppHooks.ts";
+import { useAppDispatch, useAppSelector } from "@/ReduxAppHooks.ts";
 import { LibraryAudioPlayer } from "@/features/music-players/library-audio-player/LibraryAudioPlayer.tsx";
 import { musicPlayerSlice } from "@/features/music-players/MusicPlayerSlice.ts";
 import { formatTrackLength } from "@/common/TrackLengthFormatter.ts";
-import { useAppDispatch } from "@/ReduxAppHooks.ts";
+import { Button } from "@/components/ui/button.tsx";
+import {
+  Pause,
+  Play,
+  SkipBack,
+  SkipForward,
+  Volume2,
+  VolumeX,
+} from "lucide-react";
 
 export interface MusicPlayerProps {}
 
@@ -32,19 +40,25 @@ export const MusicPlayer: React.FC<MusicPlayerProps> = () => {
   }
 
   const currentQueueItem =
-    currentIndex >= 0 && currentIndex < queue.length ? queue[currentIndex] : undefined;
+    currentIndex >= 0 && currentIndex < queue.length
+      ? queue[currentIndex]
+      : undefined;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-background/90 backdrop-blur border-t px-4 py-2">
+    <div className="fixed bottom-0 left-0 right-0 bg-background/90 backdrop-blur border-t px-4 py-2 z-50">
       <div className="max-w-screen-2xl mx-auto grid grid-cols-3 items-center gap-4">
         {/* Left: Now playing info */}
         <div className="flex items-center gap-3 min-w-0">
           {currentQueueItem?.coverArtUrl && (
-            <img src={currentQueueItem.coverArtUrl} className="h-12 w-12 rounded" />
+            <img
+              src={currentQueueItem.coverArtUrl}
+              className="h-12 w-12 rounded"
+            />
           )}
           <div className="min-w-0">
             <div className="truncate font-medium">
-              {currentQueueItem?.title ?? `${artistId ?? ""} - ${releaseFolderName ?? ""}`}
+              {currentQueueItem?.title ??
+                `${artistId ?? ""} - ${releaseFolderName ?? ""}`}
             </div>
             <div className="truncate text-muted-foreground text-sm">
               {currentQueueItem?.artistName ?? artistId}
@@ -55,13 +69,41 @@ export const MusicPlayer: React.FC<MusicPlayerProps> = () => {
         {/* Center: Transport & Scrubber */}
         <div className="flex flex-col items-center gap-1">
           <div className="flex items-center gap-4">
-            <button onClick={() => dispatch(musicPlayerSlice.actions.prev())}>⏮️</button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-10 w-10"
+              onClick={() => dispatch(musicPlayerSlice.actions.prev())}
+            >
+              <SkipBack className="h-5 w-5" />
+            </Button>
             {isPlaying ? (
-              <button onClick={() => dispatch(musicPlayerSlice.actions.pause())}>⏸️</button>
+              <Button
+                variant="default"
+                size="icon"
+                className="h-12 w-12 rounded-full"
+                onClick={() => dispatch(musicPlayerSlice.actions.pause())}
+              >
+                <Pause className="h-6 w-6" />
+              </Button>
             ) : (
-              <button onClick={() => dispatch(musicPlayerSlice.actions.play())}>▶️</button>
+              <Button
+                variant="default"
+                size="icon"
+                className="h-12 w-12 rounded-full"
+                onClick={() => dispatch(musicPlayerSlice.actions.play())}
+              >
+                <Play className="h-6 w-6" />
+              </Button>
             )}
-            <button onClick={() => dispatch(musicPlayerSlice.actions.next())}>⏭️</button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-10 w-10"
+              onClick={() => dispatch(musicPlayerSlice.actions.next())}
+            >
+              <SkipForward className="h-5 w-5" />
+            </Button>
           </div>
           <div className="flex items-center gap-2 w-full">
             <span className="text-xs tabular-nums w-10 text-right">
@@ -74,7 +116,9 @@ export const MusicPlayer: React.FC<MusicPlayerProps> = () => {
               step={0.1}
               value={positionSec}
               onChange={(e) =>
-                dispatch(musicPlayerSlice.actions.seekTo(parseFloat(e.target.value)))
+                dispatch(
+                  musicPlayerSlice.actions.seekTo(parseFloat(e.target.value)),
+                )
               }
               className="w-full"
             />
@@ -86,9 +130,18 @@ export const MusicPlayer: React.FC<MusicPlayerProps> = () => {
 
         {/* Right: Volume */}
         <div className="flex items-center justify-end gap-2">
-          <button onClick={() => dispatch(musicPlayerSlice.actions.setMuted(!muted))}>
-            {muted ? "🔇" : "🔊"}
-          </button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-10 w-10"
+            onClick={() => dispatch(musicPlayerSlice.actions.setMuted(!muted))}
+          >
+            {muted ? (
+              <VolumeX className="h-5 w-5" />
+            ) : (
+              <Volume2 className="h-5 w-5" />
+            )}
+          </Button>
           <input
             type="range"
             min={0}
@@ -96,20 +149,25 @@ export const MusicPlayer: React.FC<MusicPlayerProps> = () => {
             step={0.01}
             value={muted ? 0 : volume}
             onChange={(e) =>
-              dispatch(musicPlayerSlice.actions.setVolume(parseFloat(e.target.value)))
+              dispatch(
+                musicPlayerSlice.actions.setVolume(parseFloat(e.target.value)),
+              )
             }
-            className="w-28"
+            className="w-28 accent-green-600"
           />
         </div>
       </div>
 
-      {currentMusicPlayer === "library" && artistId && releaseFolderName && trackNumber && (
-        <LibraryAudioPlayer
-          artistId={artistId}
-          releaseFolderName={releaseFolderName}
-          trackNumber={trackNumber}
-        />
-      )}
+      {currentMusicPlayer === "library" &&
+        artistId &&
+        releaseFolderName &&
+        trackNumber && (
+          <LibraryAudioPlayer
+            artistId={artistId}
+            releaseFolderName={releaseFolderName}
+            trackNumber={trackNumber}
+          />
+        )}
     </div>
   );
 };
