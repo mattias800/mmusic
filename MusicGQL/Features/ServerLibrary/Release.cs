@@ -57,4 +57,11 @@ public record Release([property: GraphQLIgnore] CachedRelease Model)
 
         return sortedByTrackPosition.Select(r => new Track(r));
     }
+
+    public async Task<bool> IsFullyMissing(ServerLibraryCache cache)
+    {
+        var tracks = await cache.GetAllTracksForReleaseAsync(Model.ArtistId, Model.FolderName);
+        if (tracks.Count == 0) return true;
+        return tracks.All(t => string.IsNullOrWhiteSpace(t.JsonTrack.AudioFilePath));
+    }
 };

@@ -2,6 +2,7 @@ import * as React from "react";
 import { FragmentType, graphql, useFragment } from "@/gql";
 import { useNavigate } from "react-router";
 import { getRouteToRelease } from "@/AppRoutes.ts";
+import { Tag } from "@/components/text/Tag.tsx";
 
 export interface AlbumCardProps {
   release: FragmentType<typeof albumCardReleaseGroupFragment>;
@@ -14,6 +15,7 @@ const albumCardReleaseGroupFragment = graphql(`
     firstReleaseYear
     coverArtUrl
     folderName
+    isFullyMissing
     artist {
       id
     }
@@ -43,7 +45,10 @@ export const AlbumCard: React.FC<AlbumCardProps> = (props) => {
           />
         </div>
       )}
-      <div className={"bold"}>{release.title}</div>
+      <div className={"bold flex items-center gap-2"}>
+        <span className="truncate">{release.title}</span>
+        {release.isFullyMissing && <Tag>Missing</Tag>}
+      </div>
       <div className={"text-gray-400 text-sm"}>{release.firstReleaseYear}</div>
     </button>
   );

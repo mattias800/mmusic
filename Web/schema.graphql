@@ -606,6 +606,7 @@ type Release {
   firstReleaseYear: String
   folderName: String!
   id: ID!
+  isFullyMissing: Boolean!
   title: String!
   tracks: [Track!]!
   type: ReleaseType
@@ -732,6 +733,7 @@ type Subscription {
 type Track {
   audioUrl: String!
   id: ID!
+  isMissing: Boolean!
   release: Release!
   statistics: LastFmStatistics
   title: String!
