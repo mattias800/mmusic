@@ -58,7 +58,7 @@ public class LastFmEnrichmentService(LastfmClient lastfmClient)
                     {
                         Title = t.Name,
                         ReleaseTitle = t.Album?.Name,
-                        CoverArtUrl = t.Album?.Images?.LastOrDefault()?.Url,
+                        CoverArt = null,
                         PlayCount = t.Statistics?.PlayCount,
                         TrackLength = t.Duration,
                     })
@@ -111,6 +111,13 @@ public class LastFmEnrichmentService(LastfmClient lastfmClient)
                         {
                             topTrack.ReleaseFolderName = folderName;
                             topTrack.TrackNumber = match.TrackNumber;
+                            // Fill release title when we can match to a release
+                            topTrack.ReleaseTitle = releaseJson.Title;
+                            // Use release cover art for portable cover art
+                            if (!string.IsNullOrWhiteSpace(releaseJson.CoverArt))
+                            {
+                                topTrack.CoverArt = releaseJson.CoverArt;
+                            }
                         }
                     }
                 }

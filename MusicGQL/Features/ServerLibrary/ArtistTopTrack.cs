@@ -16,6 +16,20 @@ public record ArtistTopTrack(
 
     public int? TrackLength() => Model.TrackLength;
 
+    public string? CoverArtUrl()
+    {
+        if (!string.IsNullOrWhiteSpace(Model.ReleaseFolderName) && !string.IsNullOrWhiteSpace(Model.CoverArt))
+        {
+            // Build server URL for cover art based on stored release folder
+            var escapedArtistId = Uri.EscapeDataString(ArtistId);
+            var escapedReleaseFolderName = Uri.EscapeDataString(Model.ReleaseFolderName);
+            return $"/library/{escapedArtistId}/releases/{escapedReleaseFolderName}/coverart";
+        }
+
+        // Fallback: if CoverArt holds a relative path, expose it as null since assets are served via endpoints only
+        return null;
+    }
+
     public async Task<Track?> Track(ServerLibraryCache cache)
     {
         if (Model.ReleaseFolderName == null || Model.TrackNumber == null)

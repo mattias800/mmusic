@@ -112,7 +112,7 @@ public sealed class MusicBrainzImportExecutor(
                         {
                             Title = t.Name,
                             ReleaseTitle = t.Album?.Name,
-                            CoverArtUrl = t.Album?.Images?.LastOrDefault()?.Url,
+                            CoverArt = null,
                             PlayCount = t.Statistics?.PlayCount,
                             TrackLength = t.Duration,
                         })
@@ -170,6 +170,11 @@ public sealed class MusicBrainzImportExecutor(
                                 {
                                     topTrack.ReleaseFolderName = folderName;
                                     topTrack.TrackNumber = match.TrackNumber;
+                                    topTrack.ReleaseTitle = releaseJson.Title;
+                                    if (!string.IsNullOrWhiteSpace(releaseJson.CoverArt))
+                                    {
+                                        topTrack.CoverArt = releaseJson.CoverArt;
+                                    }
                                 }
                             }
                         }

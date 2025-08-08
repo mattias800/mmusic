@@ -100,7 +100,7 @@ public class LibraryImportService(
                         {
                             Title = t.Name,
                             ReleaseTitle = t.Album?.Name,
-                            CoverArtUrl = t.Album?.Images?.LastOrDefault()?.Url,
+                            CoverArt = null,
                             PlayCount = t.Statistics?.PlayCount,
                             TrackLength = t.Duration,
                         })
