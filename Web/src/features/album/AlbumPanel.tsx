@@ -8,6 +8,9 @@ import { AlbumTrackList } from "@/features/album/AlbumTrackList.tsx";
 import { FragmentType, graphql, useFragment } from "@/gql";
 import { GradientContent } from "@/components/page-body/GradientContent";
 import { MainPadding } from "@/components/layout/MainPadding.tsx";
+import { Button } from "@/components/ui/button.tsx";
+import { Download } from "lucide-react";
+import { useMutation } from "urql";
 
 export interface AlbumPanelProps {
   release: FragmentType<typeof albumPanelReleaseGroupFragment>;
@@ -16,14 +19,43 @@ export interface AlbumPanelProps {
 const albumPanelReleaseGroupFragment = graphql(`
   fragment AlbumPanel_Release on Release {
     id
+    isFullyMissing
     ...AlbumHeader_Release
     ...AlbumTrackList_Release
     firstReleaseYear
   }
 `);
 
+const startDownloadReleaseMutation = graphql(`
+  mutation AlbumPanel_StartDownloadRelease($releaseId: String!) {
+    startDownloadRelease(input: { releaseId: $releaseId }) {
+      __typename
+      ... on StartDownloadReleaseSuccess {
+        success
+      }
+    }
+  }
+`);
+
 export const AlbumPanel: React.FC<AlbumPanelProps> = (props) => {
   const release = useFragment(albumPanelReleaseGroupFragment, props.release);
+  const [, startDownload] = useMutation(startDownloadReleaseMutation);
+  const [queued, setQueued] = React.useState(false);
+
+  const onClickDownload = async () => {
+    try {
+      const res = await startDownload({ releaseId: release.id });
+      if (
+        res.data?.startDownloadRelease?.__typename ===
+        "StartDownloadReleaseSuccess"
+      ) {
+        setQueued(true);
+        setTimeout(() => setQueued(false), 4000);
+      }
+    } catch {
+      /* empty */
+    }
+  };
 
   return (
     <GradientContent>
@@ -36,6 +68,16 @@ export const AlbumPanel: React.FC<AlbumPanelProps> = (props) => {
               <LargePlayButton />
               <ShuffleButton />
               <LargeLikeButton />
+              {release.isFullyMissing && (
+                <Button
+                  variant="secondary"
+                  onClick={onClickDownload}
+                  className="flex items-center gap-2"
+                >
+                  <Download className="h-5 w-5" />
+                  {queued ? "Queued" : "Download"}
+                </Button>
+              )}
               <DotsButton />
             </div>
           </div>

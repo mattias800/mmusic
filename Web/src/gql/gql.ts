@@ -27,7 +27,8 @@ type Documents = {
     "\n  mutation AddArtistToServerLibrary($artistId: ID!) {\n    addArtistToServerLibrary(input: { artistId: $artistId }) {\n      __typename\n    }\n  }\n": typeof types.AddArtistToServerLibraryDocument,
     "\n  fragment AlbumCard_Release on Release {\n    id\n    title\n    firstReleaseYear\n    coverArtUrl\n    folderName\n    isFullyMissing\n    artist {\n      id\n    }\n  }\n": typeof types.AlbumCard_ReleaseFragmentDoc,
     "\n  fragment AlbumHeader_Release on Release {\n    id\n    title\n    type\n    coverArtUrl\n    firstReleaseYear\n    artist {\n      id\n      name\n    }\n    tracks {\n      id\n      trackLength\n    }\n  }\n": typeof types.AlbumHeader_ReleaseFragmentDoc,
-    "\n  fragment AlbumPanel_Release on Release {\n    id\n    ...AlbumHeader_Release\n    ...AlbumTrackList_Release\n    firstReleaseYear\n  }\n": typeof types.AlbumPanel_ReleaseFragmentDoc,
+    "\n  fragment AlbumPanel_Release on Release {\n    id\n    isFullyMissing\n    ...AlbumHeader_Release\n    ...AlbumTrackList_Release\n    firstReleaseYear\n  }\n": typeof types.AlbumPanel_ReleaseFragmentDoc,
+    "\n  mutation AlbumPanel_StartDownloadRelease($releaseId: String!) {\n    startDownloadRelease(input: { releaseId: $releaseId }) {\n      __typename\n      ... on StartDownloadReleaseSuccess {\n        success\n      }\n    }\n  }\n": typeof types.AlbumPanel_StartDownloadReleaseDocument,
     "\n  fragment AlbumTrackList_Release on Release {\n    id\n    title\n    folderName\n    artist {\n      id\n    }\n    tracks {\n      id\n      title\n      trackLength\n      isMissing\n      ...RecordingPlayButton_Track\n      statistics {\n        listeners\n        playCount\n      }\n    }\n  }\n": typeof types.AlbumTrackList_ReleaseFragmentDoc,
     "\n  fragment MbReleaseGroupCard_MbReleaseGroup on MbReleaseGroup {\n    id\n    title\n    firstReleaseYear\n    coverArtUri\n  }\n": typeof types.MbReleaseGroupCard_MbReleaseGroupFragmentDoc,
     "\n  fragment AlbumList_Release on Release {\n    id\n    ...AlbumCard_Release\n  }\n": typeof types.AlbumList_ReleaseFragmentDoc,
@@ -56,7 +57,7 @@ type Documents = {
     "\n  mutation CreateUser($username: String!, $password: String!) {\n    createUser(input: { username: $username, password: $password }) {\n      __typename\n      ... on CreateUserSuccess {\n        # Assuming a similar success payload\n        user {\n          id\n          username\n        }\n      }\n      ... on CreateUserError {\n        # Assuming a similar error payload\n        message\n      }\n    }\n  }\n": typeof types.CreateUserDocument,
     "\n  fragment LikedSongRow_LikedSong on LikedSong {\n    id\n    recording {\n      id\n      title\n      length\n      artists {\n        id\n        name\n      }\n      mainAlbum {\n        id\n        title\n        coverArtUri\n        artists {\n          id\n        }\n      }\n    }\n  }\n": typeof types.LikedSongRow_LikedSongFragmentDoc,
     "\n  fragment LikedSongsList_User on User {\n    id\n    likedSongs {\n      id\n      ...LikedSongRow_LikedSong\n    }\n  }\n": typeof types.LikedSongsList_UserFragmentDoc,
-    "\n  fragment RecordingPlayButton_Track on Track {\n    id\n    release {\n      artist {\n        id\n      }\n      folderName\n    }\n    title\n  }\n": typeof types.RecordingPlayButton_TrackFragmentDoc,
+    "\n  fragment RecordingPlayButton_Track on Track {\n    id\n    release {\n      id\n      artist {\n        id\n      }\n      folderName\n    }\n    title\n  }\n": typeof types.RecordingPlayButton_TrackFragmentDoc,
     "\n  query YoutubeVideoSearch($recordingId: ID!) {\n    musicBrainz {\n      recording {\n        byId(id: $recordingId) {\n          id\n          streamingServiceInfo {\n            id\n            youtubeSearchVideoId\n          }\n        }\n      }\n    }\n  }\n": typeof types.YoutubeVideoSearchDocument,
     "\n  mutation CreatePlaylist {\n    createPlaylist {\n      __typename\n      ... on CreatePlaylistSuccess {\n        viewer {\n          id\n          playlists {\n            id\n            name\n            createdAt\n          }\n        }\n      }\n    }\n  }\n": typeof types.CreatePlaylistDocument,
     "\n  query PlaylistList {\n    viewer {\n      id\n      playlists {\n        id\n        name\n        createdAt\n      }\n    }\n  }\n": typeof types.PlaylistListDocument,
@@ -102,7 +103,8 @@ const documents: Documents = {
     "\n  mutation AddArtistToServerLibrary($artistId: ID!) {\n    addArtistToServerLibrary(input: { artistId: $artistId }) {\n      __typename\n    }\n  }\n": types.AddArtistToServerLibraryDocument,
     "\n  fragment AlbumCard_Release on Release {\n    id\n    title\n    firstReleaseYear\n    coverArtUrl\n    folderName\n    isFullyMissing\n    artist {\n      id\n    }\n  }\n": types.AlbumCard_ReleaseFragmentDoc,
     "\n  fragment AlbumHeader_Release on Release {\n    id\n    title\n    type\n    coverArtUrl\n    firstReleaseYear\n    artist {\n      id\n      name\n    }\n    tracks {\n      id\n      trackLength\n    }\n  }\n": types.AlbumHeader_ReleaseFragmentDoc,
-    "\n  fragment AlbumPanel_Release on Release {\n    id\n    ...AlbumHeader_Release\n    ...AlbumTrackList_Release\n    firstReleaseYear\n  }\n": types.AlbumPanel_ReleaseFragmentDoc,
+    "\n  fragment AlbumPanel_Release on Release {\n    id\n    isFullyMissing\n    ...AlbumHeader_Release\n    ...AlbumTrackList_Release\n    firstReleaseYear\n  }\n": types.AlbumPanel_ReleaseFragmentDoc,
+    "\n  mutation AlbumPanel_StartDownloadRelease($releaseId: String!) {\n    startDownloadRelease(input: { releaseId: $releaseId }) {\n      __typename\n      ... on StartDownloadReleaseSuccess {\n        success\n      }\n    }\n  }\n": types.AlbumPanel_StartDownloadReleaseDocument,
     "\n  fragment AlbumTrackList_Release on Release {\n    id\n    title\n    folderName\n    artist {\n      id\n    }\n    tracks {\n      id\n      title\n      trackLength\n      isMissing\n      ...RecordingPlayButton_Track\n      statistics {\n        listeners\n        playCount\n      }\n    }\n  }\n": types.AlbumTrackList_ReleaseFragmentDoc,
     "\n  fragment MbReleaseGroupCard_MbReleaseGroup on MbReleaseGroup {\n    id\n    title\n    firstReleaseYear\n    coverArtUri\n  }\n": types.MbReleaseGroupCard_MbReleaseGroupFragmentDoc,
     "\n  fragment AlbumList_Release on Release {\n    id\n    ...AlbumCard_Release\n  }\n": types.AlbumList_ReleaseFragmentDoc,
@@ -131,7 +133,7 @@ const documents: Documents = {
     "\n  mutation CreateUser($username: String!, $password: String!) {\n    createUser(input: { username: $username, password: $password }) {\n      __typename\n      ... on CreateUserSuccess {\n        # Assuming a similar success payload\n        user {\n          id\n          username\n        }\n      }\n      ... on CreateUserError {\n        # Assuming a similar error payload\n        message\n      }\n    }\n  }\n": types.CreateUserDocument,
     "\n  fragment LikedSongRow_LikedSong on LikedSong {\n    id\n    recording {\n      id\n      title\n      length\n      artists {\n        id\n        name\n      }\n      mainAlbum {\n        id\n        title\n        coverArtUri\n        artists {\n          id\n        }\n      }\n    }\n  }\n": types.LikedSongRow_LikedSongFragmentDoc,
     "\n  fragment LikedSongsList_User on User {\n    id\n    likedSongs {\n      id\n      ...LikedSongRow_LikedSong\n    }\n  }\n": types.LikedSongsList_UserFragmentDoc,
-    "\n  fragment RecordingPlayButton_Track on Track {\n    id\n    release {\n      artist {\n        id\n      }\n      folderName\n    }\n    title\n  }\n": types.RecordingPlayButton_TrackFragmentDoc,
+    "\n  fragment RecordingPlayButton_Track on Track {\n    id\n    release {\n      id\n      artist {\n        id\n      }\n      folderName\n    }\n    title\n  }\n": types.RecordingPlayButton_TrackFragmentDoc,
     "\n  query YoutubeVideoSearch($recordingId: ID!) {\n    musicBrainz {\n      recording {\n        byId(id: $recordingId) {\n          id\n          streamingServiceInfo {\n            id\n            youtubeSearchVideoId\n          }\n        }\n      }\n    }\n  }\n": types.YoutubeVideoSearchDocument,
     "\n  mutation CreatePlaylist {\n    createPlaylist {\n      __typename\n      ... on CreatePlaylistSuccess {\n        viewer {\n          id\n          playlists {\n            id\n            name\n            createdAt\n          }\n        }\n      }\n    }\n  }\n": types.CreatePlaylistDocument,
     "\n  query PlaylistList {\n    viewer {\n      id\n      playlists {\n        id\n        name\n        createdAt\n      }\n    }\n  }\n": types.PlaylistListDocument,
@@ -233,7 +235,11 @@ export function graphql(source: "\n  fragment AlbumHeader_Release on Release {\n
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment AlbumPanel_Release on Release {\n    id\n    ...AlbumHeader_Release\n    ...AlbumTrackList_Release\n    firstReleaseYear\n  }\n"): (typeof documents)["\n  fragment AlbumPanel_Release on Release {\n    id\n    ...AlbumHeader_Release\n    ...AlbumTrackList_Release\n    firstReleaseYear\n  }\n"];
+export function graphql(source: "\n  fragment AlbumPanel_Release on Release {\n    id\n    isFullyMissing\n    ...AlbumHeader_Release\n    ...AlbumTrackList_Release\n    firstReleaseYear\n  }\n"): (typeof documents)["\n  fragment AlbumPanel_Release on Release {\n    id\n    isFullyMissing\n    ...AlbumHeader_Release\n    ...AlbumTrackList_Release\n    firstReleaseYear\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  mutation AlbumPanel_StartDownloadRelease($releaseId: String!) {\n    startDownloadRelease(input: { releaseId: $releaseId }) {\n      __typename\n      ... on StartDownloadReleaseSuccess {\n        success\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation AlbumPanel_StartDownloadRelease($releaseId: String!) {\n    startDownloadRelease(input: { releaseId: $releaseId }) {\n      __typename\n      ... on StartDownloadReleaseSuccess {\n        success\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -349,7 +355,7 @@ export function graphql(source: "\n  fragment LikedSongsList_User on User {\n   
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment RecordingPlayButton_Track on Track {\n    id\n    release {\n      artist {\n        id\n      }\n      folderName\n    }\n    title\n  }\n"): (typeof documents)["\n  fragment RecordingPlayButton_Track on Track {\n    id\n    release {\n      artist {\n        id\n      }\n      folderName\n    }\n    title\n  }\n"];
+export function graphql(source: "\n  fragment RecordingPlayButton_Track on Track {\n    id\n    release {\n      id\n      artist {\n        id\n      }\n      folderName\n    }\n    title\n  }\n"): (typeof documents)["\n  fragment RecordingPlayButton_Track on Track {\n    id\n    release {\n      id\n      artist {\n        id\n      }\n      folderName\n    }\n    title\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

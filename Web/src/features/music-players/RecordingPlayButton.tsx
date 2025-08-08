@@ -19,6 +19,7 @@ const recordingPlayButtonRecordingFragment = graphql(`
   fragment RecordingPlayButton_Track on Track {
     id
     release {
+      id
       artist {
         id
       }

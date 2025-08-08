@@ -11,7 +11,7 @@ public class SoulSeekService(
     ILogger<SoulSeekService> logger
 )
 {
-    public SoulSeekState State { get; private set; } = new(SoulSeekNetworkState.Offline);
+    public SoulSeekState State { get; set; } = new(SoulSeekNetworkState.Offline);
 
     public async Task Connect()
     {
@@ -25,19 +25,37 @@ public class SoulSeekService(
         PublishUpdate();
         logger.LogInformation("Connecting to Soulseek...");
 
-        await client.ConnectAsync(
-            options.Value.Host,
-            options.Value.Port,
-            options.Value.Username,
-            options.Value.Password
-        );
+        try
+        {
+            await client.ConnectAsync(
+                options.Value.Host,
+                options.Value.Port,
+                options.Value.Username,
+                options.Value.Password
+            );
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(
+                ex,
+                "Failed to connect to Soulseek host {Host}:{Port}",
+                options.Value.Host,
+                options.Value.Port
+            );
+            State = new(SoulSeekNetworkState.Offline);
+            PublishUpdate();
+        }
     }
 
     private void OnDisconnected(object? sender, SoulseekClientDisconnectedEventArgs e)
     {
         State = new(SoulSeekNetworkState.Offline);
         PublishUpdate();
-        logger.LogInformation("Disconnected from Soulseek: {Reason}", e.Message);
+        logger.LogWarning(
+            "Disconnected from Soulseek: {Message} (Exception={Exception})",
+            e.Message,
+            e.Exception?.Message
+        );
     }
 
     private void OnConnected(object? sender, EventArgs eventArgs)

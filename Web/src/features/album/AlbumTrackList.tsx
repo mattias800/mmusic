@@ -46,6 +46,7 @@ export const AlbumTrackList: React.FC<AlbumTrackListProps> = (props) => {
 
       {release?.tracks.map((track, idx) => (
         <TrackItem
+          key={track.id}
           trackNumber={idx + 1}
           title={track.title}
           trackLength={track.trackLength}

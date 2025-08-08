@@ -15,6 +15,7 @@ using MusicGQL.Features.Downloads;
 using MusicGQL.Features.Downloads.Mutations;
 using MusicGQL.Features.Downloads.Sagas;
 using MusicGQL.Features.Downloads.Sagas.Handlers;
+using MusicGQL.Features.Downloads.Services;
 using MusicGQL.Features.External.SoulSeek;
 using MusicGQL.Features.External.SoulSeek.Integration;
 using MusicGQL.Features.FileSystem;
@@ -97,6 +98,7 @@ builder
         )
     ))
     .AddSingleton<SoulSeekService>()
+    .AddSingleton<SoulSeekReleaseDownloader>()
     .AddSingleton<MusicBrainzService>()
     .AddSingleton<YouTubeService>()
     .AddSingleton<SpotifyService>()
@@ -373,7 +375,7 @@ using (var scope = app.Services.CreateScope())
     await processor.ProcessEvents();
 
     var soulSeekService = scope.ServiceProvider.GetRequiredService<SoulSeekService>();
-    // _ = soulSeekService.Connect();
+    _ = soulSeekService.Connect();
 
     // 🎵 Initialize and populate the music library cache
     Console.WriteLine();
