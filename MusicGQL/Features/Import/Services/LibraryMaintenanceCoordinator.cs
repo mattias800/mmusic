@@ -45,6 +45,22 @@ public class LibraryMaintenanceCoordinator(
                     result.ArtistsCreated++;
                     result.Notes.Add($"Created artist.json for '{Path.GetFileName(artist.ArtistDir)}'");
                     artistsToEnrich[artist.ArtistDir] = idArtist.MusicBrainzArtistId;
+
+                    // Import all eligible release groups (Albums, EPs, Singles) even if no audio exists on disk
+                    try
+                    {
+                        var createdCount = await importer.ImportEligibleReleaseGroupsAsync(artist.ArtistDir, idArtist.MusicBrainzArtistId);
+                        result.ReleasesCreated += createdCount;
+                        if (createdCount > 0)
+                        {
+                            result.Notes.Add($"Imported {createdCount} eligible release group(s) for '{Path.GetFileName(artist.ArtistDir)}'");
+                        }
+                        importedAnyReleaseForThisArtist = importedAnyReleaseForThisArtist || createdCount > 0;
+                    }
+                    catch (Exception ex)
+                    {
+                        result.Notes.Add($"Failed to import eligible release groups: {ex.Message}");
+                    }
                 }
 
                 foreach (var rel in artist.Releases.Where(r => r.MissingReleaseJson))

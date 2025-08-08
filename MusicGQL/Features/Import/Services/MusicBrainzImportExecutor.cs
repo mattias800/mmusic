@@ -3,6 +3,7 @@ using System.Text.Json.Serialization;
 using Hqub.Lastfm;
 using MusicGQL.Features.ServerLibrary.Json;
 using MusicGQL.Integration.MusicBrainz;
+using MusicGQL.Features.ServerLibrary.Utils;
 using Path = System.IO.Path;
 
 namespace MusicGQL.Features.Import.Services;
@@ -18,6 +19,8 @@ public interface IImportExecutor
         string? releaseTitle,
         string? primaryType
     );
+
+    Task<int> ImportEligibleReleaseGroupsAsync(string artistDir, string mbArtistId);
 }
 
 public sealed class MusicBrainzImportExecutor(
@@ -62,6 +65,16 @@ public sealed class MusicBrainzImportExecutor(
         var npa = NormalizeTitle(StripParentheses(a));
         var npb = NormalizeTitle(StripParentheses(b));
         return npa.Equals(npb, StringComparison.Ordinal);
+    }
+
+    private static string SanitizeFolderName(string name)
+    {
+        var invalidChars = Path.GetInvalidFileNameChars();
+        var sanitized = string.Join(
+            "",
+            name.Split(invalidChars, StringSplitOptions.RemoveEmptyEntries)
+        );
+        return sanitized.Trim();
     }
 
     public async Task ImportOrEnrichArtistAsync(
@@ -233,6 +246,53 @@ public sealed class MusicBrainzImportExecutor(
         await File.WriteAllTextAsync(artistJsonPath, artistJson);
     }
 
+    public async Task<int> ImportEligibleReleaseGroupsAsync(string artistDir, string mbArtistId)
+    {
+        var releaseGroups = await musicBrainzService.GetReleaseGroupsForArtistAsync(mbArtistId);
+        int created = 0;
+
+        foreach (var rg in releaseGroups)
+        {
+            try
+            {
+                if (!LibraryDecider.ShouldBeAddedWhenAddingArtistToServerLibrary(rg))
+                {
+                    continue;
+                }
+
+                var folderName = SanitizeFolderName(rg.Title ?? "");
+                if (string.IsNullOrWhiteSpace(folderName))
+                {
+                    continue;
+                }
+
+                var releaseDir = Path.Combine(artistDir, folderName);
+                var releaseJsonPath = Path.Combine(releaseDir, "release.json");
+                if (File.Exists(releaseJsonPath))
+                {
+                    // already imported (possibly from audio present)
+                    continue;
+                }
+
+                Directory.CreateDirectory(releaseDir);
+                await ImportReleaseIfMissingAsync(
+                    artistDir,
+                    releaseDir,
+                    rg.Id,
+                    rg.Title,
+                    rg.PrimaryType
+                );
+                created++;
+            }
+            catch
+            {
+                // ignore single RG failures
+            }
+        }
+
+        return created;
+    }
+
     public async Task ImportReleaseIfMissingAsync(
         string artistDir,
         string releaseDir,
@@ -281,22 +341,28 @@ public sealed class MusicBrainzImportExecutor(
             );
         }
 
-        var selected = releases
-            .OrderByDescending(r =>
-            {
-                var mediaTracks = r.Media?.SelectMany(m => m.Tracks ?? new List<Hqub.MusicBrainz.Entities.Track>()).Count() ?? 0;
-                var exactMatch = mediaTracks == audioFileCount;
-                var isAlbum = string.Equals(r.ReleaseGroup?.PrimaryType, "Album", StringComparison.OrdinalIgnoreCase);
-                var score = 0;
-                if (exactMatch) score += 10000;
-                if (isAlbum) score += 1000;
-                // Prefer US releases when tied
-                if (string.Equals(r.Country, "US", StringComparison.OrdinalIgnoreCase)) score += 100;
-                // Closer track count difference is better
-                score += Math.Max(0, 100 - Math.Abs(mediaTracks - audioFileCount));
-                return score;
-            })
-            .FirstOrDefault();
+        Hqub.MusicBrainz.Entities.Release? selected;
+        if (audioFileCount <= 0)
+        {
+            selected = LibraryDecider.GetMainReleaseInReleaseGroup(releases.ToList());
+        }
+        else
+        {
+            selected = releases
+                .OrderByDescending(r =>
+                {
+                    var mediaTracks = r.Media?.SelectMany(m => m.Tracks ?? new List<Hqub.MusicBrainz.Entities.Track>()).Count() ?? 0;
+                    var exactMatch = mediaTracks == audioFileCount;
+                    var isAlbum = string.Equals(r.ReleaseGroup?.PrimaryType, "Album", StringComparison.OrdinalIgnoreCase);
+                    var score = 0;
+                    if (exactMatch) score += 10000;
+                    if (isAlbum) score += 1000;
+                    if (string.Equals(r.Country, "US", StringComparison.OrdinalIgnoreCase)) score += 100;
+                    score += Math.Max(0, 100 - Math.Abs(mediaTracks - audioFileCount));
+                    return score;
+                })
+                .FirstOrDefault();
+        }
 
         if (selected != null)
         {
