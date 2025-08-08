@@ -104,6 +104,7 @@ builder
     .AddScoped<IFolderIdentityService, FolderIdentityService>()
     .AddScoped<IImportExecutor, MusicBrainzImportExecutor>()
     .AddScoped<LibraryMaintenanceCoordinator>()
+    .AddScoped<LastFmEnrichmentService>()
     .AddScoped<LibraryImportService>()
     .AddScoped<LikeSongHandler>()
     .AddScoped<UnlikeSongHandler>()

@@ -1,7 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using MusicGQL.Features.Import.Services;
 using Hqub.Lastfm;
+using MusicGQL.Features.Import.Services;
 using MusicGQL.Features.ServerLibrary.Cache;
 using MusicGQL.Features.ServerLibrary.Json;
 using Path = System.IO.Path;
@@ -95,8 +95,7 @@ public class LibraryImportService(
                 var top = await lastfmClient.Artist.GetTopTracksByMbidAsync(mbArtist.Id);
                 if (top != null)
                 {
-                    topTracks = top
-                        .Take(10)
+                    topTracks = top.Take(10)
                         .Select(t => new JsonTopTrack
                         {
                             Title = t.Name,
@@ -114,7 +113,7 @@ public class LibraryImportService(
             {
                 Id = artistFolderName, // Use folder name as ID
                 Name = mbArtist.Name,
-                SortName = mbArtist.SortName,
+                SortName = mbArtist.SortName ?? mbArtist.Name,
                 MonthlyListeners = monthlyListeners,
                 TopTracks = topTracks,
                 Photos = new JsonArtistPhotos
@@ -149,14 +148,16 @@ public class LibraryImportService(
                     foreach (var releaseDir in releaseDirs)
                     {
                         var releaseJsonPath = Path.Combine(releaseDir, "release.json");
-                        if (!File.Exists(releaseJsonPath)) continue;
+                        if (!File.Exists(releaseJsonPath))
+                            continue;
 
                         var releaseJsonText = await File.ReadAllTextAsync(releaseJsonPath);
                         var releaseJson = System.Text.Json.JsonSerializer.Deserialize<JsonRelease>(
                             releaseJsonText,
                             GetJsonOptions()
                         );
-                        if (releaseJson?.Tracks == null) continue;
+                        if (releaseJson?.Tracks == null)
+                            continue;
 
                         var folderName = Path.GetFileName(releaseDir) ?? string.Empty;
                         foreach (var top in artistJson.TopTracks)
@@ -164,8 +165,12 @@ public class LibraryImportService(
                             if (top.ReleaseFolderName != null && top.TrackNumber != null)
                                 continue; // already mapped
 
-                            var match = releaseJson.Tracks.FirstOrDefault(
-                                t => string.Equals(t.Title, top.Title, StringComparison.OrdinalIgnoreCase)
+                            var match = releaseJson.Tracks.FirstOrDefault(t =>
+                                string.Equals(
+                                    t.Title,
+                                    top.Title,
+                                    StringComparison.OrdinalIgnoreCase
+                                )
                             );
                             if (match != null)
                             {

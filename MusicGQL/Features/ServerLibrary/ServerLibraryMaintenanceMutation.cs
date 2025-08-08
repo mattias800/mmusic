@@ -1,9 +1,11 @@
 using MusicGQL.Features.Import.Services;
+using MusicGQL.Features.ServerLibrary.Cache;
+using Path = System.IO.Path;
 
 namespace MusicGQL.Features.ServerLibrary;
 
 [ExtendObjectType(typeof(MusicGQL.Types.Mutation))]
-public class ServerLibraryMaintenanceMutation
+public partial class ServerLibraryMaintenanceMutation
 {
     public async Task<ScanLibraryResult> ScanLibraryForMissingJson(
         [Service] LibraryMaintenanceCoordinator coordinator
@@ -18,6 +20,45 @@ public class ServerLibraryMaintenanceMutation
             Notes = scan.Notes,
             ErrorMessage = scan.ErrorMessage,
         };
+    }
+}
+
+public class RefreshArtistLastFmInput
+{
+    public string ArtistId { get; set; } = string.Empty;
+}
+
+public class RefreshArtistLastFmResult
+{
+    public bool Success { get; set; }
+    public string? ErrorMessage { get; set; }
+}
+
+public partial class ServerLibraryMaintenanceMutation
+{
+    [GraphQLName("refreshArtistLastFm")]
+    public async Task<RefreshArtistLastFmResult> RefreshArtistLastFm(
+        RefreshArtistLastFmInput input,
+        [Service] ServerLibraryCache cache,
+        [Service] LastFmEnrichmentService enrichment
+    )
+    {
+        var artist = await cache.GetArtistByIdAsync(input.ArtistId);
+        var mbId = artist?.JsonArtist.Connections?.MusicBrainzArtistId;
+        if (artist == null || string.IsNullOrWhiteSpace(mbId))
+        {
+            return new RefreshArtistLastFmResult { Success = false, ErrorMessage = "Artist not found or missing MusicBrainz ID" };
+        }
+
+        var dir = Path.Combine("./Library/", input.ArtistId);
+        var res = await enrichment.EnrichArtistAsync(dir, mbId!);
+        if (!res.Success)
+        {
+            return new RefreshArtistLastFmResult { Success = false, ErrorMessage = res.ErrorMessage };
+        }
+
+        await cache.UpdateCacheAsync();
+        return new RefreshArtistLastFmResult { Success = true };
     }
 }
 
