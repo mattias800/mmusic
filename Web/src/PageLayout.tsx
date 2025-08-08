@@ -25,7 +25,7 @@ export const PageLayout: React.FC<PageLayoutProps> = ({
                   </aside>
                 </>
               )}
-              <main className="col-span-3 lg:col-span-4 lg:border-l">
+              <main className="col-span-3 lg:col-span-4 lg:border-l pb-24">
                 {children}
               </main>
             </div>
