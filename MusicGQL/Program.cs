@@ -96,11 +96,14 @@ builder
     .AddSingleton<ArtistServerStatusService>()
     .AddSingleton<ServerLibraryJsonReader>()
     .AddSingleton<ServerLibraryAssetReader>()
-    .AddScoped<ServerLibraryFileSystemScanner>()
+    .AddSingleton<ServerLibraryFileSystemScanner>()
     .AddSingleton<ServerLibraryCache>()
     .AddScoped<MusicBrainzImportService>()
     .AddScoped<SpotifyImportService>()
     .AddScoped<FanArtDownloadService>()
+    .AddScoped<IFolderIdentityService, FolderIdentityService>()
+    .AddScoped<IImportExecutor, MusicBrainzImportExecutor>()
+    .AddScoped<LibraryMaintenanceCoordinator>()
     .AddScoped<LibraryImportService>()
     .AddScoped<LikeSongHandler>()
     .AddScoped<UnlikeSongHandler>()
@@ -439,10 +442,10 @@ using (var scope = app.Services.CreateScope())
             Console.WriteLine("   💡 Make sure your library folder contains artist.json files");
         }
 
-        // After initial cache load, scan filesystem for missing JSON and refresh cache again
+        // After initial cache load, run maintenance: scan, identify, import, and refresh cache again
         Console.WriteLine("🔎 Scanning library for folders with audio but missing JSON...");
-        var scanner = scope.ServiceProvider.GetRequiredService<ServerLibraryFileSystemScanner>();
-        var scanResult = await scanner.ScanAndFixMissingMetadataAsync();
+        var coordinator = scope.ServiceProvider.GetRequiredService<LibraryMaintenanceCoordinator>();
+        var scanResult = await coordinator.RunAsync();
 
         if (!scanResult.Success)
         {

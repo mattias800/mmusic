@@ -1,4 +1,4 @@
-using MusicGQL.Features.ServerLibrary.Reader;
+using MusicGQL.Features.Import.Services;
 
 namespace MusicGQL.Features.ServerLibrary;
 
@@ -6,10 +6,10 @@ namespace MusicGQL.Features.ServerLibrary;
 public class ServerLibraryMaintenanceMutation
 {
     public async Task<ScanLibraryResult> ScanLibraryForMissingJson(
-        [Service] ServerLibraryFileSystemScanner scanner
+        [Service] LibraryMaintenanceCoordinator coordinator
     )
     {
-        var scan = await scanner.ScanAndFixMissingMetadataAsync();
+        var scan = await coordinator.RunAsync();
         return new ScanLibraryResult
         {
             Success = scan.Success,
