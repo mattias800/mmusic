@@ -103,4 +103,21 @@ Please refer to the specific guidelines relevant to the part of the codebase you
 - **Tool Usage Explanation:** Briefly explain why a tool is being used if it's not obvious.
 - **Summaries:** Provide summaries of changes made, especially for larger tasks.
 
+## 11. Recent Lessons (Do Not Repeat)
+
+- Always convert new GraphQL mutations to use a single input object parameter, following the SignInMutation pattern.
+  - Example: prefer `refreshRelease(input: RefreshReleaseInput!)` over `refreshRelease(artistId: String!, releaseFolderName: String!)`.
+  - Backend: method signature should accept a C# input record/class, e.g., `public Task<RefreshReleaseResult> RefreshRelease(RefreshReleaseInput input, ...)`.
+  - Frontend: call with `refreshRelease({ input: { artistId, releaseFolderName }})` and regenerate types (`bun run types:once`).
+
+- After creating new GraphQL type extensions, register them in Program.cs.
+  - Add `.AddTypeExtension<YourMutationClass>()` and explicitly add result types if needed.
+  - Missing registration causes the operation to be absent from the runtime schema.
+
+- When adding potentially destructive actions in the UI (e.g., deleting audio files), implement a confirmation dialog and extract it into a dedicated component for reuse and clarity.
+  - Place components under a feature-appropriate folder (e.g., `Web/src/features/album/components/ConfirmDeleteReleaseAudioDialog.tsx`).
+
+- When modifying release metadata or audio references, update only the affected release in the cache instead of rebuilding the entire cache.
+  - Use `ServerLibraryCache.UpdateReleaseFromJsonAsync(artistId, releaseFolderName)` and preserve track-level statuses.
+
 This is a starting point. Please feel free to update and expand these guidelines as the project evolves! 
