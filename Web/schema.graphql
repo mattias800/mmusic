@@ -506,7 +506,7 @@ type Mutation {
   redownloadRelease(artistId: String!, releaseFolderName: String!): RedownloadReleaseResult!
   refreshArtistMetaData(input: RefreshArtistMetaDataInput!): RefreshArtistMetaDataResult!
   refreshArtistTopTracks(input: RefreshArtistTopTracksInput!): RefreshArtistTopTracksResult!
-  refreshRelease(artistId: String!, releaseFolderName: String!): RefreshReleaseResult!
+  refreshRelease(input: RefreshReleaseInput!): RefreshReleaseResult!
   renamePlaylist(input: RenamePlaylistInput!): RenamePlaylistResult!
   scanLibraryForMissingJson: ScanLibraryForMissingJsonResult!
   signIn(input: SignInInput!): SignInResult!
@@ -614,10 +614,15 @@ type RefreshReleaseError {
   message: String!
 }
 
+input RefreshReleaseInput {
+  artistId: String!
+  releaseFolderName: String!
+}
+
 union RefreshReleaseResult = RefreshReleaseError | RefreshReleaseSuccess
 
 type RefreshReleaseSuccess {
-  success: Boolean!
+  release: Release!
 }
 
 type Release {

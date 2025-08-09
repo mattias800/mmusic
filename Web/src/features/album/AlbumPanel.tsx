@@ -9,14 +9,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu.tsx";
 import { Spinner } from "@/components/spinner/Spinner.tsx";
-import { graphql, useMutation } from "urql";
+import { useMutation, useSubscription } from "urql";
 import { LargeLikeButton } from "@/components/buttons/LargeLikeButton.tsx";
 import { AlbumHeader } from "@/features/album/AlbumHeader.tsx";
 import { AlbumTrackList } from "@/features/album/AlbumTrackList.tsx";
 import { FragmentType, graphql, useFragment } from "@/gql";
 import { GradientContent } from "@/components/page-body/GradientContent";
 import { MainPadding } from "@/components/layout/MainPadding.tsx";
-import { useSubscription } from "urql";
 import { ReleaseDownloadButton } from "@/features/downloads/release-download-button/ReleaseDownloadButton.tsx";
 import { PlayAlbumButton } from "@/features/album/PlayAlbumButton.tsx";
 
@@ -59,10 +58,13 @@ const albumUpdatesSubscription = graphql(`
 `);
 
 const refreshReleaseMutation = graphql(`
-  mutation RefreshRelease($artistId: String!, $releaseFolderName: String!) {
-    refreshRelease(artistId: $artistId, releaseFolderName: $releaseFolderName) {
+  mutation RefreshRelease($input: RefreshReleaseInput!) {
+    refreshRelease(input: $input) {
       ... on RefreshReleaseSuccess {
-        success
+        release {
+          id
+          ...AlbumPanel_Release
+        }
       }
       ... on RefreshReleaseError {
         message
@@ -73,7 +75,9 @@ const refreshReleaseMutation = graphql(`
 
 export const AlbumPanel: React.FC<AlbumPanelProps> = (props) => {
   const release = useFragment(albumPanelReleaseGroupFragment, props.release);
-  const [, refreshRelease] = useMutation(refreshReleaseMutation);
+  const [{ fetching: refreshing }, refreshRelease] = useMutation(
+    refreshReleaseMutation,
+  );
 
   useSubscription({
     query: albumUpdatesSubscription,
@@ -103,8 +107,10 @@ export const AlbumPanel: React.FC<AlbumPanelProps> = (props) => {
                   <DropdownMenuItem
                     onSelect={() =>
                       refreshRelease({
-                        artistId: release.artist.id,
-                        releaseFolderName: release.folderName,
+                        input: {
+                          artistId: release.artist.id,
+                          releaseFolderName: release.folderName,
+                        },
                       })
                     }
                   >
@@ -112,6 +118,7 @@ export const AlbumPanel: React.FC<AlbumPanelProps> = (props) => {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
+              {refreshing && <Spinner size={"sm"} />}
               <ReleaseDownloadButton release={release} />
             </div>
           </div>

@@ -11,11 +11,13 @@ public class RefreshReleaseMutation
         [Service] ServerLibraryCache cache,
         [Service] MusicBrainzImportService mbImport,
         [Service] LibraryReleaseImportService releaseImporter,
-        string ArtistId,
-        string ReleaseFolderName
+        RefreshReleaseInput input
     )
     {
-        var release = await cache.GetReleaseByArtistAndFolderAsync(ArtistId, ReleaseFolderName);
+        var release = await cache.GetReleaseByArtistAndFolderAsync(
+            input.ArtistId,
+            input.ReleaseFolderName
+        );
         if (release == null)
         {
             return new RefreshReleaseError("Release not found");
@@ -44,14 +46,14 @@ public class RefreshReleaseMutation
         }
 
         // Find release group to import using MusicBrainz (by title under artist MBID)
-        var artist = await cache.GetArtistByIdAsync(ArtistId);
+        var artist = await cache.GetArtistByIdAsync(input.ArtistId);
         var mbArtistId = artist?.JsonArtist.Connections?.MusicBrainzArtistId;
         if (string.IsNullOrWhiteSpace(mbArtistId))
         {
             return new RefreshReleaseError("Artist missing MusicBrainz ID");
         }
 
-        var rgs = await mbImport.GetArtistReleaseGroupsAsync(mbArtistId!);
+        var rgs = await mbImport.GetArtistReleaseGroupsAsync(mbArtistId);
         var match = rgs.FirstOrDefault(rg =>
             string.Equals(rg.Title, release.Title, StringComparison.OrdinalIgnoreCase)
         );
@@ -62,16 +64,16 @@ public class RefreshReleaseMutation
 
         var importResult = await releaseImporter.ImportReleaseGroupAsync(
             match,
-            Path.GetDirectoryName(release.ReleasePath) ?? Path.Combine("./Library", ArtistId),
-            ArtistId
+            Path.GetDirectoryName(release.ReleasePath) ?? Path.Combine("./Library", input.ArtistId),
+            input.ArtistId
         );
 
         // Only update this release in cache (keep statuses)
-        await cache.UpdateReleaseFromJsonAsync(ArtistId, ReleaseFolderName);
+        await cache.UpdateReleaseFromJsonAsync(input.ArtistId, input.ReleaseFolderName);
 
         var releaseAfterRefresh = await cache.GetReleaseByArtistAndFolderAsync(
-            ArtistId,
-            ReleaseFolderName
+            input.ArtistId,
+            input.ReleaseFolderName
         );
 
         if (releaseAfterRefresh == null)
@@ -84,6 +86,8 @@ public class RefreshReleaseMutation
             : new RefreshReleaseError(importResult.ErrorMessage ?? "Unknown error");
     }
 }
+
+public record RefreshReleaseInput(string ArtistId, string ReleaseFolderName);
 
 [UnionType("RefreshReleaseResult")]
 public abstract record RefreshReleaseResult;
