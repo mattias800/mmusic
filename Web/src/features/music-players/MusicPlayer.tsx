@@ -12,6 +12,8 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet.tsx";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs.tsx";
+import { HistoryPanel } from "@/features/music-players/HistoryPanel.tsx";
 import {
   Pause,
   Play,
@@ -36,6 +38,7 @@ export const MusicPlayer: React.FC<MusicPlayerProps> = () => {
     releaseFolderName,
     trackNumber,
     queue,
+    history,
     currentIndex,
     isPlaying,
     positionSec,
@@ -177,19 +180,30 @@ export const MusicPlayer: React.FC<MusicPlayerProps> = () => {
         </div>
       </div>
 
-      {/* Queue Sheet */}
+      {/* Queue/History Sheet */}
       <Sheet open={queueOpen} onOpenChange={setQueueOpen}>
         <SheetContent side="right" className="p-0">
           <SheetHeader>
-            <SheetTitle>Queue ({queue.length})</SheetTitle>
+            <SheetTitle>Playback</SheetTitle>
           </SheetHeader>
-          <div className="flex-1 overflow-y-auto">
-            <QueuePanel
-              queue={queue}
-              currentIndex={currentIndex}
-              onSelect={(idx) => dispatch(musicPlayerSlice.actions.playAtIndex(idx))}
-            />
-          </div>
+          <Tabs defaultValue="queue" className="flex-1 overflow-hidden">
+            <div className="px-3 pt-2">
+              <TabsList>
+                <TabsTrigger value="queue">Queue ({queue.length})</TabsTrigger>
+                <TabsTrigger value="history">History ({history.length})</TabsTrigger>
+              </TabsList>
+            </div>
+            <TabsContent value="queue" className="flex-1 overflow-y-auto">
+              <QueuePanel
+                queue={queue}
+                currentIndex={currentIndex}
+                onSelect={(idx) => dispatch(musicPlayerSlice.actions.playAtIndex(idx))}
+              />
+            </TabsContent>
+            <TabsContent value="history" className="flex-1 overflow-y-auto">
+              <HistoryPanel history={history} />
+            </TabsContent>
+          </Tabs>
         </SheetContent>
       </Sheet>
 

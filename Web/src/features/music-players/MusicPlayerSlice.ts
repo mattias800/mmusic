@@ -16,6 +16,17 @@ export interface MusicPlayerState {
     coverArtUrl?: string;
     trackLengthMs?: number;
   }>;
+  // play history
+  history: Array<{
+    artistId: string;
+    releaseFolderName: string;
+    trackNumber: number;
+    title?: string;
+    artistName?: string;
+    coverArtUrl?: string;
+    trackLengthMs?: number;
+    startedAtIso: string;
+  }>;
   currentIndex: number; // index in queue
   isPlaying: boolean;
   volume: number; // 0..1
@@ -31,12 +42,33 @@ const initialState: MusicPlayerState = {
   releaseFolderName: undefined,
   trackNumber: undefined,
   queue: [],
+  history: [],
   currentIndex: -1,
   isPlaying: false,
   volume: 1,
   muted: false,
   positionSec: 0,
   durationSec: 0,
+};
+
+const pushCurrentToHistory = (state: MusicPlayerState) => {
+  if (!state.artistId || !state.releaseFolderName || !state.trackNumber) return;
+  const current =
+    state.currentIndex >= 0 && state.currentIndex < state.queue.length
+      ? state.queue[state.currentIndex]
+      : undefined;
+  state.history.unshift({
+    artistId: state.artistId,
+    releaseFolderName: state.releaseFolderName,
+    trackNumber: state.trackNumber,
+    title: current?.title,
+    artistName: current?.artistName,
+    coverArtUrl: current?.coverArtUrl,
+    trackLengthMs: current?.trackLengthMs,
+    startedAtIso: new Date().toISOString(),
+  });
+  // keep history from growing unbounded; cap to last 500 items
+  if (state.history.length > 500) state.history.length = 500;
 };
 
 export const musicPlayerSlice = createSlice({
@@ -63,6 +95,7 @@ export const musicPlayerSlice = createSlice({
       state.isOpen = true;
       state.currentMusicPlayer = "library";
       state.isPlaying = true;
+      pushCurrentToHistory(state);
     },
     enqueueAndPlay: (
       state,
@@ -81,6 +114,7 @@ export const musicPlayerSlice = createSlice({
       state.currentMusicPlayer = state.isOpen ? "library" : undefined;
       state.isPlaying = state.isOpen;
       state.positionSec = 0;
+      if (state.isOpen) pushCurrentToHistory(state);
     },
     next: (state) => {
       if (state.queue.length === 0) return;
@@ -96,6 +130,7 @@ export const musicPlayerSlice = createSlice({
       state.trackNumber = current.trackNumber;
       state.isPlaying = true;
       state.positionSec = 0;
+      pushCurrentToHistory(state);
     },
     prev: (state) => {
       if (state.queue.length === 0) return;
@@ -142,6 +177,7 @@ export const musicPlayerSlice = createSlice({
       state.positionSec = 0;
       state.isOpen = true;
       state.currentMusicPlayer = "library";
+      pushCurrentToHistory(state);
     },
   },
 });

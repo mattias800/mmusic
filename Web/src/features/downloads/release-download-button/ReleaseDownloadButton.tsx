@@ -51,6 +51,7 @@ const subscription = graphql(`
       release {
         id
         downloadStatus
+        isFullyMissing
       }
     }
   }
