@@ -5423,7 +5423,7 @@
             "deprecationReason": null
           },
           {
-            "name": "refreshArtistLastFm",
+            "name": "refreshArtistMetaData",
             "description": null,
             "args": [
               {
@@ -5434,7 +5434,7 @@
                   "name": null,
                   "ofType": {
                     "kind": "INPUT_OBJECT",
-                    "name": "RefreshArtistLastFmInput",
+                    "name": "RefreshArtistMetaDataInput",
                     "ofType": null
                   }
                 },
@@ -5448,7 +5448,7 @@
               "name": null,
               "ofType": {
                 "kind": "UNION",
-                "name": "RefreshArtistLastFmResult",
+                "name": "RefreshArtistMetaDataResult",
                 "ofType": null
               }
             },
@@ -6409,7 +6409,7 @@
       },
       {
         "kind": "OBJECT",
-        "name": "RefreshArtistLastFmError",
+        "name": "RefreshArtistMetaDataError",
         "description": null,
         "isOneOf": null,
         "fields": [
@@ -6437,7 +6437,7 @@
       },
       {
         "kind": "INPUT_OBJECT",
-        "name": "RefreshArtistLastFmInput",
+        "name": "RefreshArtistMetaDataInput",
         "description": null,
         "isOneOf": false,
         "fields": null,
@@ -6465,7 +6465,7 @@
       },
       {
         "kind": "UNION",
-        "name": "RefreshArtistLastFmResult",
+        "name": "RefreshArtistMetaDataResult",
         "description": null,
         "isOneOf": null,
         "fields": null,
@@ -6475,32 +6475,32 @@
         "possibleTypes": [
           {
             "kind": "OBJECT",
-            "name": "RefreshArtistLastFmError",
+            "name": "RefreshArtistMetaDataError",
             "ofType": null
           },
           {
             "kind": "OBJECT",
-            "name": "RefreshArtistLastFmSuccess",
+            "name": "RefreshArtistMetaDataSuccess",
             "ofType": null
           }
         ]
       },
       {
         "kind": "OBJECT",
-        "name": "RefreshArtistLastFmSuccess",
+        "name": "RefreshArtistMetaDataSuccess",
         "description": null,
         "isOneOf": null,
         "fields": [
           {
-            "name": "success",
+            "name": "artist",
             "description": null,
             "args": [],
             "type": {
               "kind": "NON_NULL",
               "name": null,
               "ofType": {
-                "kind": "SCALAR",
-                "name": "Boolean",
+                "kind": "OBJECT",
+                "name": "Artist",
                 "ofType": null
               }
             },

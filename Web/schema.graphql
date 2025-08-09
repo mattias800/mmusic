@@ -504,7 +504,7 @@ type Mutation {
   likeSong(input: LikeSongInput!): LikeSongResult!
   ping: Boolean!
   redownloadRelease(artistId: String!, releaseFolderName: String!): RedownloadReleaseResult!
-  refreshArtistLastFm(input: RefreshArtistLastFmInput!): RefreshArtistLastFmResult!
+  refreshArtistMetaData(input: RefreshArtistMetaDataInput!): RefreshArtistMetaDataResult!
   refreshArtistTopTracks(input: RefreshArtistTopTracksInput!): RefreshArtistTopTracksResult!
   reimportRelease(artistId: String!, releaseFolderName: String!): ReimportReleaseResult!
   renamePlaylist(input: RenamePlaylistInput!): RenamePlaylistResult!
@@ -589,18 +589,18 @@ type RedownloadReleaseSuccess {
   success: Boolean!
 }
 
-type RefreshArtistLastFmError {
+type RefreshArtistMetaDataError {
   message: String!
 }
 
-input RefreshArtistLastFmInput {
+input RefreshArtistMetaDataInput {
   artistId: String!
 }
 
-union RefreshArtistLastFmResult = RefreshArtistLastFmError | RefreshArtistLastFmSuccess
+union RefreshArtistMetaDataResult = RefreshArtistMetaDataError | RefreshArtistMetaDataSuccess
 
-type RefreshArtistLastFmSuccess {
-  success: Boolean!
+type RefreshArtistMetaDataSuccess {
+  artist: Artist!
 }
 
 input RefreshArtistTopTracksInput {

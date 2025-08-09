@@ -4,12 +4,13 @@ import { TopArtistTrackItem } from "@/features/artist/artist-page/TopArtistTrack
 import { graphql } from "@/gql";
 import { SectionHeading } from "@/components/headings/SectionHeading.tsx";
 import { Section } from "@/components/page-body/Section.tsx";
-import { useMutation, useQuery } from "urql";
+import { useQuery } from "urql";
 import { TopTrackShimmer } from "@/features/artist/artist-page/TopTrackShimmer.tsx";
 import { ShowMoreButton } from "@/components/buttons/ShowMoreButton.tsx";
 
 export interface TopArtistTracksProps {
   artistId: string;
+  loadingTopTracks?: boolean;
 }
 
 const topArtistTracksArtistQuery = graphql(`
@@ -25,33 +26,14 @@ const topArtistTracksArtistQuery = graphql(`
   }
 `);
 
-const refreshTopTracksMutation = graphql(`
-  mutation RefreshArtistTopTracks($input: RefreshArtistTopTracksInput!) {
-    refreshArtistTopTracks(input: $input) {
-      __typename
-      ... on RefreshArtistTopTracksSuccess {
-        artist {
-          id
-          topTracks {
-            ...TopArtistTrackItem_ArtistTopTrack
-          }
-        }
-      }
-      ... on RefreshArtistTopTracksUnknownError {
-        message
-      }
-    }
-  }
-`);
-
 export const TopArtistTracks: React.FC<TopArtistTracksProps> = ({
   artistId,
+  loadingTopTracks,
 }) => {
   const [{ data, fetching }] = useQuery({
     query: topArtistTracksArtistQuery,
     variables: { artistId },
   });
-  const [{ fetching: refreshing }] = useMutation(refreshTopTracksMutation);
 
   const [showingMore, setShowingMore] = useState(false);
 
@@ -64,15 +46,15 @@ export const TopArtistTracks: React.FC<TopArtistTracksProps> = ({
     return null;
   }
 
+  const busy = fetching || (loadingTopTracks ?? false);
+
   return (
     <Section>
       <div className={"flex gap-4 items-center"}>
-        <SectionHeading loading={fetching || refreshing}>
-          Popular
-        </SectionHeading>
+        <SectionHeading>Popular</SectionHeading>
       </div>
 
-      {fetching || refreshing ? (
+      {busy ? (
         <div>
           <TopTrackShimmer trackNumber={1} />
           <TopTrackShimmer trackNumber={2} />

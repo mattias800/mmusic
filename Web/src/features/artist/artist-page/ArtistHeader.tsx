@@ -8,7 +8,8 @@ export interface ArtistHeaderProps {
   listeners: number;
   artistBackgroundUrl: string | undefined;
   renderServerStatus?: () => ReactNode;
-  availability?: { availableCount: number; totalCount: number };
+  availableNumReleases: number;
+  totalNumReleases?: number;
 }
 
 export const ArtistHeader: React.FC<ArtistHeaderProps> = ({
@@ -16,7 +17,8 @@ export const ArtistHeader: React.FC<ArtistHeaderProps> = ({
   artistName,
   artistBackgroundUrl,
   listeners,
-  availability,
+  availableNumReleases,
+  totalNumReleases,
 }) => {
   return (
     <div className="relative">
@@ -34,16 +36,16 @@ export const ArtistHeader: React.FC<ArtistHeaderProps> = ({
             <p className="text-white text-sm">
               {formatLargeNumber(listeners)} monthly listeners
             </p>
-            {availability && availability.totalCount > 0 && (
+            {totalNumReleases != null && totalNumReleases > 0 && (
               <div className="text-white text-sm flex items-center gap-2">
-                {availability.availableCount === availability.totalCount ? (
+                {availableNumReleases === totalNumReleases ? (
                   <>
                     <CheckCircle className="w-4 h-4 text-green-400" />
                     <span>Available</span>
                   </>
                 ) : (
                   <span>
-                    {availability.availableCount}/{availability.totalCount} available
+                    {availableNumReleases}/{totalNumReleases} available
                   </span>
                 )}
               </div>
