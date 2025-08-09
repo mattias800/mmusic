@@ -1,6 +1,4 @@
-using Hqub.Lastfm;
 using MusicGQL.Features.Downloads;
-using MusicGQL.Features.LastFm;
 using MusicGQL.Features.ServerLibrary.Cache;
 using MusicGQL.Features.ServerLibrary.Utils;
 
@@ -54,21 +52,11 @@ public record Track([property: GraphQLIgnore] CachedTrack Model)
     public MediaAvailabilityStatus MediaAvailabilityStatus() =>
         Model.CachedMediaAvailabilityStatus.ToGql();
 
-    public IEnumerable<TrackCredit> Credits() => Model.TrackCredits.Select(t => new TrackCredit(t));
+    public IEnumerable<TrackCredit> Credits() =>
+        Model.JsonTrack.Credits?.Select(t => new TrackCredit(t)) ?? [];
 
-    public async Task<LastFmStatistics?> Statistics(LastfmClient lastfmClient)
+    public async Task<TrackStatistics?> Statistics()
     {
-        return null;
-        // var artists = await service.GetArtistsForRecordingAsync(Model.Id);
-        //
-        // try
-        // {
-        //     var track = await lastfmClient.Track.GetInfoAsync(Model.Title, artists.First().Name);
-        //     return track is null ? null : new(track.Statistics);
-        // }
-        // catch
-        // {
-        //     return null;
-        // }
+        return new TrackStatistics(Model.JsonTrack.Statistics);
     }
 }
