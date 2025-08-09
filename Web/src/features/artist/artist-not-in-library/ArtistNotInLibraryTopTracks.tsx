@@ -3,11 +3,11 @@ import { FragmentType, graphql, useFragment } from "@/gql";
 import { formatLargeNumber } from "@/common/TrackLengthFormatter.ts";
 
 export interface ArtistNotInLibraryTopTracksProps {
-  artist: FragmentType<typeof artistNotInLibraryTopTracksArtistFragment>;
+  lastFmArtist: FragmentType<typeof artistNotInLibraryTopTracksArtistFragment>;
 }
 
 const artistNotInLibraryTopTracksArtistFragment = graphql(`
-  fragment ArtistNotInLibraryTopTracks_Artist on LastFmArtist {
+  fragment ArtistNotInLibraryTopTracks_LastFmArtist on LastFmArtist {
     id
     topTracks {
       id
@@ -22,12 +22,12 @@ const artistNotInLibraryTopTracksArtistFragment = graphql(`
 export const ArtistNotInLibraryTopTracks: React.FC<
   ArtistNotInLibraryTopTracksProps
 > = (props) => {
-  const artist = useFragment(
+  const lastFmArtist = useFragment(
     artistNotInLibraryTopTracksArtistFragment,
-    props.artist,
+    props.lastFmArtist,
   );
 
-  const topTracks = artist.topTracks.slice(0, 3);
+  const topTracks = lastFmArtist.topTracks.slice(0, 3);
 
   return (
     <div className={"flex flex-col grow"}>

@@ -72,7 +72,7 @@ enum ApplyPolicy {
   VALIDATION
 }
 
-type Artist {
+type Artist implements ArtistBase {
   albums: [Release!]!
   eps: [Release!]!
   id: ID!
@@ -85,6 +85,12 @@ type Artist {
   singles: [Release!]!
   sortName: String!
   topTracks: [ArtistTopTrack!]!
+}
+
+interface ArtistBase {
+  id: ID!
+  name: String!
+  sortName: String!
 }
 
 type ArtistImages {
@@ -217,14 +223,18 @@ type FileSystemSearchRoot {
   browseFileSystem(path: String): [FileSystemEntry!]!
 }
 
-type ImportArtistResult {
-  artistId: String
-  artistName: String!
-  errorMessage: String
-  musicBrainzId: String
-  photosDownloaded: PhotosDownloaded!
-  spotifyId: String
-  success: Boolean!
+type ImportArtistError {
+  message: String!
+}
+
+input ImportArtistInput {
+  musicBrainzArtistId: String!
+}
+
+union ImportArtistResult = ImportArtistError | ImportArtistSuccess
+
+type ImportArtistSuccess {
+  artist: Artist!
 }
 
 type ImportPlaylistSearchRoot {
@@ -346,11 +356,12 @@ type MbAlbumImages {
   cdArt: String
 }
 
-type MbArtist {
+type MbArtist implements ArtistBase {
   albums: [MbReleaseGroup!]!
   disambiguation: String
   id: ID!
-  images: ArtistImages
+  images: MbArtistImages
+  lastFmArtist: LastFmArtist
   listeners: Long
   name: String!
   releaseGroups: [MbReleaseGroup!]!
@@ -360,6 +371,14 @@ type MbArtist {
   sortName: String!
   topTracks: [LastFmTrack!]!
   type: String
+}
+
+type MbArtistImages {
+  artistBackground: String
+  artistThumb: String
+  hdMusicLogo: String
+  musicBanner: String
+  musicLogo: String
 }
 
 type MbGenre {
@@ -502,7 +521,7 @@ type Mutation {
   createPlaylist: CreatePlaylistResult!
   createUser(input: CreateUserInput!): CreateUserResult!
   deletePlaylist(input: DeletePlaylistInput!): DeletePlaylistResult!
-  importArtist(artistName: String!): ImportArtistResult!
+  importArtist(input: ImportArtistInput!): ImportArtistResult!
   importArtistReleases(artistId: String!): ImportReleasesResult!
   importSpotifyPlaylistById(playlistId: String!, userId: UUID!): ImportSpotifyPlaylistResult!
   likeSong(input: LikeSongInput!): LikeSongResult!
@@ -538,13 +557,6 @@ type PageInfo {
 
   """When paginating backwards, the cursor to continue."""
   startCursor: String
-}
-
-type PhotosDownloaded {
-  backgrounds: Int!
-  banners: Int!
-  logos: Int!
-  thumbs: Int!
 }
 
 type Ping {

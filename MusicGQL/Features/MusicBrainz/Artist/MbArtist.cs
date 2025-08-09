@@ -1,14 +1,15 @@
 using Hqub.Lastfm;
 using MusicGQL.Features.LastFm;
 using MusicGQL.Features.MusicBrainz.ReleaseGroup;
-using MusicGQL.Features.ServerLibrary;
 using MusicGQL.Features.ServerLibrary.Utils;
 using MusicGQL.Integration.MusicBrainz;
 using TrackSeries.FanArtTV.Client;
 
+using MusicGQL.Features.Artists;
+
 namespace MusicGQL.Features.MusicBrainz.Artist;
 
-public record MbArtist([property: GraphQLIgnore] Hqub.MusicBrainz.Entities.Artist Model)
+public record MbArtist([property: GraphQLIgnore] Hqub.MusicBrainz.Entities.Artist Model) : IArtistBase
 {
     [ID]
     public string Id() => Model.Id;
@@ -67,13 +68,12 @@ public record MbArtist([property: GraphQLIgnore] Hqub.MusicBrainz.Entities.Artis
         }
     }
 
-    public async Task<ArtistImages?> Images(IFanArtTVClient fanartClient)
+    public async Task<MbArtistImages?> Images(IFanArtTVClient fanartClient)
     {
         try
         {
-            // var artist = await fanartClient.Music.GetArtistAsync(Model.Id);
-            // return artist is null ? null : new(artist);
-            return null;
+            var artistImages = await fanartClient.Music.GetArtistAsync(Model.Id);
+            return artistImages is null ? null : new(artistImages);
         }
         catch
         {
@@ -95,4 +95,17 @@ public record MbArtist([property: GraphQLIgnore] Hqub.MusicBrainz.Entities.Artis
     }
 
     public ArtistServerStatus.ArtistServerStatus ServerStatus() => new(Model.Id);
+
+    public async Task<LastFmArtist?> LastFmArtist(LastfmClient lastfmClient)
+    {
+        try
+        {
+            var artist = await lastfmClient.Artist.GetInfoByMbidAsync(Model.Id);
+            return artist is null ? null : new LastFmArtist(artist);
+        }
+        catch
+        {
+            return null;
+        }
+    }
 }

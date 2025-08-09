@@ -18,7 +18,7 @@ const topArtistCardArtistFragment = graphql(`
       id
       name
       images {
-        thumbs
+        artistThumb
       }
     }
     statistics {
@@ -29,7 +29,7 @@ const topArtistCardArtistFragment = graphql(`
 
 export const TopArtistCard: React.FC<TopArtistCardProps> = (props) => {
   const artist = useFragment(topArtistCardArtistFragment, props.artist);
-  const imageUrl = artist.musicBrainzArtist?.images?.thumbs?.[0];
+  const imageUrl = artist.musicBrainzArtist?.images?.artistThumb;
 
   const navigate = useNavigate();
 

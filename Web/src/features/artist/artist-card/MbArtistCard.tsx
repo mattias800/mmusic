@@ -16,14 +16,14 @@ const mbArtistCardArtistFragment = graphql(`
     name
     listeners
     images {
-      thumbs
+      artistThumb
     }
   }
 `);
 
 export const MbArtistCard: React.FC<MbArtistCardProps> = (props) => {
   const mbArtist = useFragment(mbArtistCardArtistFragment, props.mbArtist);
-  const imageUrl = mbArtist.images?.thumbs?.[0];
+  const imageUrl = mbArtist.images?.artistThumb;
 
   const navigate = useNavigate();
 
@@ -31,7 +31,7 @@ export const MbArtistCard: React.FC<MbArtistCardProps> = (props) => {
     <PhotoCard
       imageUrl={imageUrl ?? ""}
       imageAlt={mbArtist.name + " cover"}
-      onClick={() => navigate(`/artist/${mbArtist.id}`)}
+      onClick={() => navigate(`/mb-artist/${mbArtist.id}`)}
     >
       <PhotoCardCenterHeading>{mbArtist.name}</PhotoCardCenterHeading>
       <PhotoCardBottomText>

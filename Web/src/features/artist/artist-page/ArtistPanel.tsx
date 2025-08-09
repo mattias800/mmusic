@@ -121,7 +121,8 @@ export const ArtistPanel: React.FC<ArtistPanelProps> = (props) => {
         artistName={artist.name}
         artistBackgroundUrl={artist.images?.backgrounds?.[0] ?? ""}
         listeners={artist.listeners}
-        availability={{ availableCount, totalCount: totalNumReleases }}
+        availableNumReleases={availableCount}
+        totalNumReleases={totalNumReleases}
         renderServerStatus={() => <ArtistServerStatus artistId={artist.id} />}
       />
 

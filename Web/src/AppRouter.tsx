@@ -10,6 +10,7 @@ import { SettingsPage } from "@/app/SettingsPage.tsx";
 import { ArtistListPage } from "@/app/ArtistListPage.tsx";
 import { AlbumListPage } from "@/app/AlbumListPage.tsx";
 import { SearchResultPage } from "@/app/SearchResultPage.tsx";
+import { MbArtistPage } from "@/app/MbArtistPage.tsx";
 
 export interface AppRouterProps {}
 
@@ -20,7 +21,11 @@ export const AppRouter: React.FC<AppRouterProps> = () => {
       <Route path="/albums" element={<AlbumListPage />} />
       <Route path="/artists" element={<ArtistListPage />} />
       <Route path="/artist/:artistId" element={<ArtistPage />} />
-      <Route path="/artist/:artistId/release/:releaseFolderName" element={<AlbumPage />} />
+      <Route path="/mb-artist/:mbArtistId" element={<MbArtistPage />} />
+      <Route
+        path="/artist/:artistId/release/:releaseFolderName"
+        element={<AlbumPage />}
+      />
       <Route path="/liked-songs" element={<LikedSongsPage />} />
       <Route
         path="/playlists/import/spotify"

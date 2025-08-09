@@ -7,6 +7,7 @@ using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using MusicGQL.Db.Postgres;
 using MusicGQL.EventProcessor;
+using MusicGQL.Features.Artists;
 using MusicGQL.Features.ArtistServerStatus;
 using MusicGQL.Features.ArtistServerStatus.Services;
 using MusicGQL.Features.Authentication.Handlers;
@@ -254,6 +255,7 @@ builder
     .AddTypeExtension<UnlikeSongMutation>()
     .AddTypeExtension<LikeSongMutation>()
     .AddTypeExtension<ImportArtistMutation>()
+    .AddType<IArtistBase>()
     .AddType<ImportArtistSuccess>()
     .AddType<ImportArtistError>()
     .AddType<LikeSongResult.LikeSongSuccess>()
@@ -333,8 +335,6 @@ builder.Services.AddFanArtTVClient(options =>
     options.ApiKey = fanartOptions?.ApiKey;
     options.BaseAddress = fanartOptions?.BaseAddress;
 });
-
-;
 
 builder.Services.AddHostedService<ScheduledTaskPublisher>();
 

@@ -18,7 +18,7 @@ const artistSearchQueryDocument = graphql(`
           name
           ...MbArtistCard_MbArtist
           images {
-            thumbs
+            artistThumb
           }
         }
       }

@@ -19,7 +19,7 @@ const topTrackCardLastFmTrackFragment = graphql(`
         id
         name
         images {
-          thumbs
+          artistThumb
         }
       }
     }
@@ -42,7 +42,7 @@ export const TopTrackCard: React.FC<TopTrackCardProps> = (props) => {
       imageUrl={
         track.images?.thumbs?.[0] ??
         track.album?.imageUrl ??
-        track.artist.musicBrainzArtist?.images?.thumbs?.[0] ??
+        track.artist.musicBrainzArtist?.images?.artistThumb ??
         ""
       }
       onClick={() =>
