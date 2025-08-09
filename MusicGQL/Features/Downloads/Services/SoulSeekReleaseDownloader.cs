@@ -45,8 +45,16 @@ public class SoulSeekReleaseDownloader(
 
         var result = await client.SearchAsync(new SearchQuery(query));
 
-        var best = Sagas.Util.BestResponseFinder.GetBestSearchResponse(result.Responses.ToList());
-        if (best == null)
+        // Order candidate responses similarly to BestResponseFinder but return an ordered list
+        var orderedCandidates = result.Responses
+            .Where(r => r.FileCount > 0)
+            .Where(Sagas.Util.BestResponseFinder.HasCorrectMediaType)
+            .OrderBy(r => r.QueueLength)
+            .ThenBy(r => r.HasFreeUploadSlot)
+            .ThenByDescending(r => r.UploadSpeed)
+            .ToList();
+
+        if (orderedCandidates.Count == 0)
         {
             logger.LogWarning(
                 "[SoulSeek] No results for: {Artist} - {Release}",
@@ -63,46 +71,93 @@ public class SoulSeekReleaseDownloader(
             CachedReleaseDownloadStatus.Downloading
         );
 
-        var queue = DownloadQueueFactory.Create(best);
-        int trackIndex = 0;
-        while (queue.Any())
+        foreach (var candidate in orderedCandidates)
         {
-            var item = queue.Dequeue();
-            var localPath = Path.Combine(targetDirectory, item.LocalFileName);
-            var localDir = Path.GetDirectoryName(localPath);
-            if (!string.IsNullOrWhiteSpace(localDir))
-                Directory.CreateDirectory(localDir);
+            bool userFailed = false;
+            var queue = DownloadQueueFactory.Create(candidate);
+            int trackIndex = 0;
+
             logger.LogInformation(
-                "[SoulSeek] Downloading {File} to {Path}",
-                item.FileName,
-                localPath
+                "[SoulSeek] Trying user '{User}' with {Count} files",
+                candidate.Username,
+                queue.Count
             );
 
-            await cache.UpdateMediaAvailabilityStatus(
-                artistId,
-                releaseFolderName,
-                trackIndex + 1,
-                CachedMediaAvailabilityStatus.Downloading
+            while (queue.Any())
+            {
+                var item = queue.Dequeue();
+                var localPath = Path.Combine(targetDirectory, item.LocalFileName);
+                var localDir = Path.GetDirectoryName(localPath);
+                if (!string.IsNullOrWhiteSpace(localDir))
+                    Directory.CreateDirectory(localDir);
+                logger.LogInformation(
+                    "[SoulSeek] Downloading {File} to {Path}",
+                    item.FileName,
+                    localPath
+                );
+
+                await cache.UpdateMediaAvailabilityStatus(
+                    artistId,
+                    releaseFolderName,
+                    trackIndex + 1,
+                    CachedMediaAvailabilityStatus.Downloading
+                );
+
+                try
+                {
+                    await client.DownloadAsync(item.Username, item.FileName, localPath);
+                }
+                catch (Exception ex)
+                {
+                    // If download fails for this user, skip the rest of this user's files
+                    logger.LogWarning(
+                        ex,
+                        "[SoulSeek] Download failed from user '{User}' for file {File}. Skipping user and trying next candidate...",
+                        item.Username,
+                        item.FileName
+                    );
+                    userFailed = true;
+                }
+
+                if (userFailed)
+                {
+                    break;
+                }
+
+                await cache.UpdateMediaAvailabilityStatus(
+                    artistId,
+                    releaseFolderName,
+                    trackIndex + 1,
+                    CachedMediaAvailabilityStatus.Processing
+                );
+
+                trackIndex++;
+            }
+
+            if (!userFailed)
+            {
+                logger.LogInformation(
+                    "[SoulSeek] Download complete: {Artist} - {Release} (user {User})",
+                    artistName,
+                    releaseTitle,
+                    candidate.Username
+                );
+                return true;
+            }
+
+            // try next candidate
+            logger.LogInformation(
+                "[SoulSeek] Moving to next candidate user after failure: {User}",
+                candidate.Username
             );
-
-            await client.DownloadAsync(item.Username, item.FileName, localPath);
-
-            await cache.UpdateMediaAvailabilityStatus(
-                artistId,
-                releaseFolderName,
-                trackIndex + 1,
-                CachedMediaAvailabilityStatus.Processing
-            );
-
-            trackIndex++;
         }
 
-        logger.LogInformation(
-            "[SoulSeek] Download complete: {Artist} - {Release}",
+        logger.LogWarning(
+            "[SoulSeek] All candidates failed for: {Artist} - {Release}",
             artistName,
             releaseTitle
         );
-        return true;
+        return false;
     }
 
     private static string NormalizeForSearch(string input)
