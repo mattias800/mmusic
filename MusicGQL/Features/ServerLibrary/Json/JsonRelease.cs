@@ -34,6 +34,7 @@ public class JsonTrack
     public string? AudioFilePath { get; set; }
     public long? PlayCount { get; set; }
     public JsonTrackServiceConnections? Connections { get; set; }
+    public List<JsonTrackCredit>? Credits { get; set; }
 }
 
 public class JsonTrackCredit

@@ -26,6 +26,15 @@ const albumTrackListReleaseGroupFragment = graphql(`
       isMissing
       ...AlbumTrackTag_Track
       ...RecordingPlayButton_Track
+      credits {
+        artistName
+        artist {
+          id
+        }
+        mbArtist {
+          id
+        }
+      }
       statistics {
         listeners
         playCount
@@ -75,16 +84,27 @@ export const AlbumTrackList: React.FC<AlbumTrackListProps> = (props) => {
             }
             renderSubtitle={() => (
               <>
-                {[{ artist: { id: "1", name: "CreditArtist" } }].map(
-                  ({ artist }, index) => (
-                    <React.Fragment key={artist.id}>
+                {track.credits.map(
+                  ({ artist, mbArtist, artistName }, index) => (
+                    <React.Fragment key={index}>
                       {index > 0 && ", "}
-                      <Link
-                        to={`/artist/${artist.id}`}
-                        className="hover:underline"
-                      >
-                        {artist.name}
-                      </Link>
+                      {artist ? (
+                        <Link
+                          to={`/artist/${artist.id}`}
+                          className="hover:underline"
+                        >
+                          {artistName}
+                        </Link>
+                      ) : mbArtist ? (
+                        <Link
+                          to={`/mb-artist/${mbArtist.id}`}
+                          className="hover:underline"
+                        >
+                          {artistName}
+                        </Link>
+                      ) : (
+                        <span>{artistName}</span>
+                      )}
                     </React.Fragment>
                   ),
                 )}

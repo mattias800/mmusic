@@ -404,13 +404,76 @@ public sealed class MusicBrainzImportExecutor(
             _ => JsonReleaseType.Album,
         };
 
+        // Build a lookup of MusicBrainz artist IDs -> local artist Ids in server library
+        var mbToLocalArtistId = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        try
+        {
+            var libraryRoot = Path.Combine("./", "Library");
+            if (Directory.Exists(libraryRoot))
+            {
+                foreach (var artistPath in Directory.GetDirectories(libraryRoot))
+                {
+                    try
+                    {
+                        var artistJsonPath = Path.Combine(artistPath, "artist.json");
+                        if (!File.Exists(artistJsonPath)) continue;
+                        var text = await File.ReadAllTextAsync(artistJsonPath);
+                        var jsonArtist = JsonSerializer.Deserialize<JsonArtist>(text, GetJsonOptions());
+                        var mbId = jsonArtist?.Connections?.MusicBrainzArtistId;
+                        if (!string.IsNullOrWhiteSpace(mbId) && !string.IsNullOrWhiteSpace(jsonArtist?.Id))
+                        {
+                            mbToLocalArtistId[mbId!] = jsonArtist!.Id!;
+                        }
+                    }
+                    catch { }
+                }
+            }
+        }
+        catch { }
+
+        // Fetch recordings with artist credits for the selected release to populate track credits
+        var recordings = await musicBrainzService.GetRecordingsForReleaseAsync(selected.Id);
+        var recById = recordings.ToDictionary(r => r.Id, r => r);
+
         var tracks = selected
             ?.Media?.SelectMany(m => m.Tracks ?? new List<Hqub.MusicBrainz.Entities.Track>())
-            .Select(t => new JsonTrack
+            .Select(t =>
             {
-                Title = t.Recording?.Title ?? string.Empty,
-                TrackNumber = t.Position,
-                TrackLength = t.Length,
+                var recordingId = t.Recording?.Id;
+                List<JsonTrackCredit>? credits = null;
+                if (!string.IsNullOrWhiteSpace(recordingId) && recById.TryGetValue(recordingId!, out var rec))
+                {
+                    var recCredits = rec.Credits ?? new List<Hqub.MusicBrainz.Entities.NameCredit>();
+                    var list = new List<JsonTrackCredit>();
+                    foreach (var c in recCredits)
+                    {
+                        var mbArtistId = c.Artist?.Id;
+                        string? localArtistId = null;
+                        if (!string.IsNullOrWhiteSpace(mbArtistId) && mbToLocalArtistId.TryGetValue(mbArtistId!, out var local))
+                        {
+                            localArtistId = local;
+                        }
+                        var artistName = !string.IsNullOrWhiteSpace(c.Name) ? c.Name! : c.Artist?.Name ?? string.Empty;
+                        list.Add(new JsonTrackCredit
+                        {
+                            ArtistName = artistName,
+                            ArtistId = localArtistId,
+                            MusicBrainzArtistId = mbArtistId,
+                        });
+                    }
+                    credits = list.Count > 0 ? list : null;
+                }
+
+                return new JsonTrack
+                {
+                    Title = t.Recording?.Title ?? string.Empty,
+                    TrackNumber = t.Position,
+                    TrackLength = t.Length,
+                    Connections = string.IsNullOrWhiteSpace(recordingId)
+                        ? null
+                        : new JsonTrackServiceConnections { MusicBrainzRecordingId = recordingId },
+                    Credits = credits,
+                };
             })
             .Where(t => t.TrackNumber > 0)
             .OrderBy(t => t.TrackNumber)

@@ -769,6 +769,7 @@ type Subscription {
 
 type Track {
   audioUrl: String!
+  credits: [TrackCredit!]!
   id: ID!
   isMissing: Boolean!
   mediaAvailabilityStatus: MediaAvailabilityStatus!
@@ -778,6 +779,12 @@ type Track {
   title: String!
   trackLength: Int
   trackNumber: Int!
+}
+
+type TrackCredit {
+  artist: Artist
+  artistName: String!
+  mbArtist: MbArtist
 }
 
 scalar UUID

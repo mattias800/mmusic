@@ -54,8 +54,7 @@ public record Track([property: GraphQLIgnore] CachedTrack Model)
     public MediaAvailabilityStatus MediaAvailabilityStatus() =>
         Model.CachedMediaAvailabilityStatus.ToGql();
 
-    public IEnumerable<TrackCredit> TrackCredits() =>
-        Model.TrackCredits.Select(t => new TrackCredit(t));
+    public IEnumerable<TrackCredit> Credits() => Model.TrackCredits.Select(t => new TrackCredit(t));
 
     public async Task<LastFmStatistics?> Statistics(LastfmClient lastfmClient)
     {

@@ -8,7 +8,7 @@ public record TrackCredit([property: GraphQLIgnore] CachedTrackCredit Model)
 {
     public string ArtistName() => Model.JsonTrackCredit.ArtistName;
 
-    public async Task<Artist?> ArtistName(ServerLibraryCache cache)
+    public async Task<Artist?> Artist(ServerLibraryCache cache)
     {
         if (Model.JsonTrackCredit.ArtistId == null)
         {
@@ -19,7 +19,7 @@ public record TrackCredit([property: GraphQLIgnore] CachedTrackCredit Model)
         return a != null ? new Artist(a) : null;
     }
 
-    public async Task<MbArtist?> ArtistName(ServerLibraryCache cache, MusicBrainzService mbService)
+    public async Task<MbArtist?> MbArtist(MusicBrainzService mbService)
     {
         if (Model.JsonTrackCredit.MusicBrainzArtistId == null)
         {
