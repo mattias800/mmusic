@@ -1,5 +1,9 @@
 using MusicGQL.Features.Import.Services;
 using MusicGQL.Features.ServerLibrary.Cache;
+using MusicGQL.Features.ServerLibrary.Json;
+using MusicGQL.Features.ServerLibrary.Writer;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Path = System.IO.Path;
 
 namespace MusicGQL.Features.ServerLibrary.Mutation;
@@ -23,26 +27,28 @@ public class RefreshReleaseMutation
             return new RefreshReleaseError("Release not found");
         }
 
-        // Delete metadata: release.json and cover art file referenced by it
+        // Load existing release.json to preserve local audio file references
         var releaseJsonPath = Path.Combine(release.ReleasePath, "release.json");
-        string? coverArtRel = release.JsonRelease.CoverArt;
-        string? coverArtAbs = null;
-        if (!string.IsNullOrWhiteSpace(coverArtRel))
-        {
-            var rel = coverArtRel.StartsWith("./") ? coverArtRel[2..] : coverArtRel;
-            coverArtAbs = Path.Combine(release.ReleasePath, rel);
-        }
-
+        JsonRelease? existingRelease = null;
         try
         {
             if (File.Exists(releaseJsonPath))
-                File.Delete(releaseJsonPath);
-            if (!string.IsNullOrWhiteSpace(coverArtAbs) && File.Exists(coverArtAbs))
-                File.Delete(coverArtAbs);
+            {
+                var text = await File.ReadAllTextAsync(releaseJsonPath);
+                existingRelease = JsonSerializer.Deserialize<JsonRelease>(
+                    text,
+                    new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true,
+                        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                        Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) },
+                    }
+                );
+            }
         }
-        catch (Exception ex)
+        catch
         {
-            return new RefreshReleaseError($"Failed deleting metadata: {ex.Message}");
+            // If parsing fails, continue without preservation (best effort)
         }
 
         // Find release group to import using MusicBrainz (by title under artist MBID)
@@ -67,6 +73,32 @@ public class RefreshReleaseMutation
             Path.GetDirectoryName(release.ReleasePath) ?? Path.Combine("./Library", input.ArtistId),
             input.ArtistId
         );
+
+        // After importer writes new release.json, restore audio file references from the previous JSON
+        if (existingRelease?.Tracks != null && existingRelease.Tracks.Count > 0)
+        {
+            var byNumber = existingRelease.Tracks
+                .Where(t => t != null)
+                .ToDictionary(t => t!.TrackNumber, t => t!.AudioFilePath);
+
+            var writer = new ServerLibraryJsonWriter();
+            await writer.UpdateReleaseAsync(
+                input.ArtistId,
+                input.ReleaseFolderName,
+                rel =>
+                {
+                    if (rel.Tracks == null) return;
+                    foreach (var t in rel.Tracks)
+                    {
+                        if (t == null) continue;
+                        if (byNumber.TryGetValue(t.TrackNumber, out var oldPath) && !string.IsNullOrWhiteSpace(oldPath))
+                        {
+                            t.AudioFilePath = oldPath;
+                        }
+                    }
+                }
+            );
+        }
 
         // Only update this release in cache (keep statuses)
         await cache.UpdateReleaseFromJsonAsync(input.ArtistId, input.ReleaseFolderName);

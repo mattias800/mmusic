@@ -13,8 +13,8 @@ const variantClasses: Record<TagVariant, { bg: string; text: string }> = {
     text: "text-blue-100",
   },
   error: {
-    bg: "bg-red-600/40",
-    text: "text-red-100",
+    bg: "bg-red-600/30",
+    text: "text-red-300",
   },
   success: {
     bg: "bg-green-600/40",
