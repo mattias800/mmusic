@@ -23,6 +23,7 @@ const playAlbumButtonReleaseFragment = graphql(`
       isMissing
       trackLength
       media {
+        id
         audioQualityLabel
       }
     }

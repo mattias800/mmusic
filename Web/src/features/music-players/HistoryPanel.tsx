@@ -19,15 +19,16 @@ export const HistoryPanel: React.FC<HistoryPanelProps> = ({ history }) => {
 
   return (
     <ul className="divide-y">
-      {history.map((item, idx) => {
-        const playedAgo = item.startedAtIso
-          ? formatDistanceToNowStrict(new Date(item.startedAtIso), {
+      {history.map((h, idx) => {
+        const playedAgo = h.startedAtIso
+          ? formatDistanceToNowStrict(new Date(h.startedAtIso), {
               addSuffix: true,
             })
           : "";
+        const item = h.track;
         return (
           <li
-            key={`${item.artistId}-${item.releaseFolderName}-${item.trackNumber}-${idx}-${item.startedAtIso}`}
+            key={`${item.artistId}-${item.releaseFolderName}-${item.trackNumber}-${idx}-${h.startedAtIso}`}
             className={"p-3 transition-colors"}
           >
             <div className="flex items-center gap-3">

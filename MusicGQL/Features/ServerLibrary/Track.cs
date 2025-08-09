@@ -41,7 +41,7 @@ public record Track([property: GraphQLIgnore] CachedTrack Model)
     }
 
     public TrackMedia? Media() =>
-        string.IsNullOrWhiteSpace(Model.JsonTrack.AudioFilePath) ? new(Model) : null;
+        string.IsNullOrWhiteSpace(Model.JsonTrack.AudioFilePath) ? null : new(Model);
 
     public MediaAvailabilityStatus MediaAvailabilityStatus() =>
         Model.CachedMediaAvailabilityStatus.ToGql();

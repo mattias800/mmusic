@@ -30,6 +30,7 @@ import {
   ListMusic,
 } from "lucide-react";
 import { useState } from "react";
+import { Tag } from "@/components/text/Tag.tsx";
 
 export interface MusicPlayerProps {}
 
@@ -41,9 +42,7 @@ export const MusicPlayer: React.FC<MusicPlayerProps> = () => {
   const {
     currentMusicPlayer,
     isOpen,
-    artistId,
-    releaseFolderName,
-    trackNumber,
+    currentTrack,
     queue,
     history,
     currentIndex,
@@ -63,32 +62,35 @@ export const MusicPlayer: React.FC<MusicPlayerProps> = () => {
       ? queue[currentIndex]
       : undefined;
 
+  console.log({ currentTrack });
+
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-background/90 backdrop-blur border-t px-4 py-2 z-50">
       <div className="max-w-screen-2xl mx-auto grid grid-cols-3 items-center gap-4">
         {/* Left: Now playing info */}
         <div className="flex items-center gap-3 min-w-0">
-          {currentQueueItem && (
+          {currentTrack && (
             <ReleaseCoverArt
-              srcUrl={currentQueueItem.coverArtUrl}
-              titleForPlaceholder={currentQueueItem.title ?? ""}
+              srcUrl={currentTrack.coverArtUrl}
+              titleForPlaceholder={currentTrack.title ?? ""}
               className="h-12 w-12 rounded"
             />
           )}
           <div className="min-w-0">
-            <div className="truncate font-medium">
-              {currentQueueItem?.title ??
-                `${artistId ?? ""} - ${releaseFolderName ?? ""}`}
+            <div className={"flex gap-4 items-center"}>
+              <div className="truncate font-medium">
+                {currentQueueItem?.title ??
+                  `${currentTrack?.artistId ?? ""} - ${currentTrack?.releaseFolderName ?? ""}`}
+              </div>
+              {currentTrack?.qualityLabel && (
+                <div className="text-xs text-muted-foreground opacity-70 pr-8">
+                  <Tag>{currentTrack.qualityLabel}</Tag>
+                </div>
+              )}
             </div>
             <div className="truncate text-muted-foreground text-sm">
-              {currentQueueItem?.artistName ?? artistId}
+              {currentQueueItem?.artistName ?? currentTrack?.artistId}
             </div>
-            {/* Quality label */}
-            {currentQueueItem?.qualityLabel && (
-              <div className="text-xs text-muted-foreground opacity-70">
-                {currentQueueItem.qualityLabel}
-              </div>
-            )}
           </div>
         </div>
 
@@ -225,16 +227,13 @@ export const MusicPlayer: React.FC<MusicPlayerProps> = () => {
         </SheetContent>
       </Sheet>
 
-      {currentMusicPlayer === "library" &&
-        artistId &&
-        releaseFolderName &&
-        trackNumber && (
-          <LibraryAudioPlayer
-            artistId={artistId}
-            releaseFolderName={releaseFolderName}
-            trackNumber={trackNumber}
-          />
-        )}
+      {currentMusicPlayer === "library" && currentTrack && (
+        <LibraryAudioPlayer
+          artistId={currentTrack.artistId}
+          releaseFolderName={currentTrack.releaseFolderName}
+          trackNumber={currentTrack.trackNumber}
+        />
+      )}
     </div>
   );
 };

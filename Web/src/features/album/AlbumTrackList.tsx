@@ -27,6 +27,7 @@ const albumTrackListReleaseGroupFragment = graphql(`
       media {
         id
         audioUrl
+        audioQualityLabel
       }
       ...AlbumTrackTag_Track
       ...RecordingPlayButton_Track
@@ -63,10 +64,11 @@ export const AlbumTrackList: React.FC<AlbumTrackListProps> = (props) => {
       {release?.tracks.map((track, idx) => {
         const isPlaying =
           player.currentMusicPlayer === "library" &&
-          player.artistId === release?.artist.id &&
-          player.releaseFolderName === release?.folderName &&
-          player.trackNumber === idx + 1 &&
+          player.currentTrack?.artistId === release?.artist.id &&
+          player.currentTrack.releaseFolderName === release?.folderName &&
+          player.currentTrack.trackNumber === idx + 1 &&
           player.isPlaying;
+
         return (
           <TrackItem
             key={track.id}

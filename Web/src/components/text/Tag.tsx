@@ -9,20 +9,20 @@ export interface TagProps extends PropsWithChildren {
 
 const variantClasses: Record<TagVariant, { bg: string; text: string }> = {
   info: {
-    bg: "bg-blue-600/20",
-    text: "text-blue-400",
+    bg: "bg-blue-600/40",
+    text: "text-blue-100",
   },
   error: {
-    bg: "bg-red-600/20",
-    text: "text-red-400",
+    bg: "bg-red-600/40",
+    text: "text-red-100",
   },
   success: {
-    bg: "bg-green-600/20",
-    text: "text-green-400",
+    bg: "bg-green-600/40",
+    text: "text-green-100",
   },
   warning: {
-    bg: "bg-yellow-600/20",
-    text: "text-yellow-500",
+    bg: "bg-yellow-600/40",
+    text: "text-yellow-100",
   },
 };
 

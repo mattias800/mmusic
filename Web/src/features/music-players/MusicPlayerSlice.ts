@@ -1,32 +1,25 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
+export interface MusicPlayerTrack {
+  artistId: string;
+  releaseFolderName: string;
+  trackNumber: number;
+  title?: string;
+  artistName?: string;
+  coverArtUrl?: string;
+  trackLengthMs?: number;
+  qualityLabel?: string;
+}
+
 export interface MusicPlayerState {
   isOpen: boolean;
   currentMusicPlayer: "library" | undefined;
-  artistId?: string;
-  releaseFolderName?: string;
-  trackNumber?: number;
+  currentTrack?: MusicPlayerTrack;
   // queue
-  queue: Array<{
-    artistId: string;
-    releaseFolderName: string;
-    trackNumber: number;
-    title?: string;
-    artistName?: string;
-    coverArtUrl?: string;
-    trackLengthMs?: number;
-    qualityLabel?: string;
-  }>;
+  queue: Array<MusicPlayerTrack>;
   // play history
   history: Array<{
-    artistId: string;
-    releaseFolderName: string;
-    trackNumber: number;
-    title?: string;
-    artistName?: string;
-    coverArtUrl?: string;
-    trackLengthMs?: number;
-    qualityLabel?: string;
+    track: MusicPlayerTrack;
     startedAtIso: string;
   }>;
   currentIndex: number; // index in queue
@@ -40,9 +33,7 @@ export interface MusicPlayerState {
 const initialState: MusicPlayerState = {
   isOpen: false,
   currentMusicPlayer: undefined,
-  artistId: undefined,
-  releaseFolderName: undefined,
-  trackNumber: undefined,
+  currentTrack: undefined,
   queue: [],
   history: [],
   currentIndex: -1,
@@ -54,23 +45,11 @@ const initialState: MusicPlayerState = {
 };
 
 const pushCurrentToHistory = (state: MusicPlayerState) => {
-  if (!state.artistId || !state.releaseFolderName || !state.trackNumber) return;
-  const current =
-    state.currentIndex >= 0 && state.currentIndex < state.queue.length
-      ? state.queue[state.currentIndex]
-      : undefined;
+  if (!state.currentTrack) return;
   state.history.unshift({
-    artistId: state.artistId,
-    releaseFolderName: state.releaseFolderName,
-    trackNumber: state.trackNumber,
-    title: current?.title,
-    artistName: current?.artistName,
-    coverArtUrl: current?.coverArtUrl,
-    trackLengthMs: current?.trackLengthMs,
-    qualityLabel: current?.qualityLabel,
+    track: state.currentTrack,
     startedAtIso: new Date().toISOString(),
   });
-  // keep history from growing unbounded; cap to last 500 items
   if (state.history.length > 500) state.history.length = 500;
 };
 
@@ -92,9 +71,11 @@ export const musicPlayerSlice = createSlice({
         trackNumber: number;
       }>,
     ) => {
-      state.artistId = action.payload.artistId;
-      state.releaseFolderName = action.payload.releaseFolderName;
-      state.trackNumber = action.payload.trackNumber;
+      state.currentTrack = {
+        artistId: action.payload.artistId,
+        releaseFolderName: action.payload.releaseFolderName,
+        trackNumber: action.payload.trackNumber,
+      };
       state.isOpen = true;
       state.currentMusicPlayer = "library";
       state.isPlaying = true;
@@ -106,13 +87,8 @@ export const musicPlayerSlice = createSlice({
     ) => {
       state.queue = action.payload;
       state.currentIndex = action.payload.length > 0 ? 0 : -1;
-      const current =
-        state.currentIndex >= 0
-          ? action.payload[state.currentIndex]
-          : undefined;
-      state.artistId = current?.artistId;
-      state.releaseFolderName = current?.releaseFolderName;
-      state.trackNumber = current?.trackNumber;
+      const current = state.currentIndex >= 0 ? action.payload[state.currentIndex] : undefined;
+      state.currentTrack = current;
       state.isOpen = state.currentIndex >= 0;
       state.currentMusicPlayer = state.isOpen ? "library" : undefined;
       state.isPlaying = state.isOpen;
@@ -128,9 +104,7 @@ export const musicPlayerSlice = createSlice({
       }
       state.currentIndex = nextIndex;
       const current = state.queue[state.currentIndex];
-      state.artistId = current.artistId;
-      state.releaseFolderName = current.releaseFolderName;
-      state.trackNumber = current.trackNumber;
+      state.currentTrack = current;
       state.isPlaying = true;
       state.positionSec = 0;
       pushCurrentToHistory(state);
@@ -140,9 +114,7 @@ export const musicPlayerSlice = createSlice({
       const prevIndex = Math.max(0, state.currentIndex - 1);
       state.currentIndex = prevIndex;
       const current = state.queue[state.currentIndex];
-      state.artistId = current.artistId;
-      state.releaseFolderName = current.releaseFolderName;
-      state.trackNumber = current.trackNumber;
+      state.currentTrack = current;
       state.isPlaying = true;
       state.positionSec = 0;
     },
@@ -172,21 +144,21 @@ export const musicPlayerSlice = createSlice({
       state,
       action: PayloadAction<string | undefined>,
     ) => {
-      if (state.currentIndex < 0 || state.currentIndex >= state.queue.length)
-        return;
+      if (state.currentIndex < 0 || state.currentIndex >= state.queue.length) return;
       state.queue[state.currentIndex] = {
         ...state.queue[state.currentIndex],
         qualityLabel: action.payload,
       };
+      if (state.currentTrack && state.currentTrack.artistId === state.queue[state.currentIndex].artistId && state.currentTrack.releaseFolderName === state.queue[state.currentIndex].releaseFolderName && state.currentTrack.trackNumber === state.queue[state.currentIndex].trackNumber) {
+        state.currentTrack = { ...state.currentTrack, qualityLabel: action.payload };
+      }
     },
     playAtIndex: (state, action: PayloadAction<number>) => {
       const idx = action.payload;
       if (idx < 0 || idx >= state.queue.length) return;
       state.currentIndex = idx;
       const current = state.queue[state.currentIndex];
-      state.artistId = current.artistId;
-      state.releaseFolderName = current.releaseFolderName;
-      state.trackNumber = current.trackNumber;
+      state.currentTrack = current;
       state.isPlaying = true;
       state.positionSec = 0;
       state.isOpen = true;
