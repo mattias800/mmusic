@@ -246,6 +246,121 @@ public class ServerLibraryCache(ServerLibraryJsonReader reader, ITopicEventSende
         }
     }
 
+    // Incremental: reload a single release from JSON and update cache structures
+    public async Task UpdateReleaseFromJsonAsync(string artistId, string releaseFolderName)
+    {
+        CachedRelease? oldRelease = null;
+        CachedArtist? artist = null;
+        string releasePath = string.Empty;
+        string artistIdLower = artistId.ToLowerInvariant();
+        string folderLower = releaseFolderName.ToLowerInvariant();
+
+        // Snapshot previous statuses by track number for this release
+        var previousStatusesByTrackNumber = new Dictionary<int, CachedMediaAvailabilityStatus>();
+
+        lock (_lockObject)
+        {
+            if (!_releasesByArtistAndFolder.TryGetValue(artistIdLower, out var artistReleases))
+            {
+                return;
+            }
+            if (!artistReleases.TryGetValue(folderLower, out oldRelease))
+            {
+                return;
+            }
+            _artistsById.TryGetValue(artistIdLower, out artist);
+            releasePath = oldRelease.ReleasePath;
+
+            foreach (var t in oldRelease.Tracks)
+            {
+                previousStatusesByTrackNumber[t.TrackNumber] = t.CachedMediaAvailabilityStatus;
+            }
+        }
+
+        if (oldRelease == null || artist == null)
+        {
+            return;
+        }
+
+        // Read JSON for this release from disk
+        var releaseJson = await reader.ReadReleaseFromPathAsync(releasePath);
+        if (releaseJson == null)
+        {
+            return;
+        }
+
+        // Build a new CachedRelease from JSON
+        var newRelease = new CachedRelease
+        {
+            Title = releaseJson.Title,
+            SortTitle = releaseJson.SortTitle,
+            Type = releaseJson.Type,
+            ReleasePath = releasePath,
+            FolderName = releaseFolderName,
+            ArtistId = artist.Id,
+            ArtistName = artist.Name,
+            JsonRelease = releaseJson,
+            Tracks = new List<CachedTrack>(),
+        };
+
+        if (releaseJson.Tracks != null)
+        {
+            foreach (var jt in releaseJson.Tracks)
+            {
+                var ct = new CachedTrack
+                {
+                    Title = jt.Title,
+                    SortTitle = jt.SortTitle,
+                    TrackNumber = jt.TrackNumber,
+                    AudioFilePath = jt.AudioFilePath,
+                    ArtistId = artist.Id,
+                    ArtistName = artist.Name,
+                    ReleaseFolderName = releaseFolderName,
+                    ReleaseTitle = newRelease.Title,
+                    JsonReleaseType = releaseJson.Type,
+                    JsonTrack = jt,
+                };
+
+                if (previousStatusesByTrackNumber.TryGetValue(ct.TrackNumber, out var prev))
+                {
+                    ct.CachedMediaAvailabilityStatus = prev;
+                }
+
+                newRelease.Tracks.Add(ct);
+            }
+        }
+
+        // Replace the release in cache structures
+        lock (_lockObject)
+        {
+            if (_releasesByArtistAndFolder.TryGetValue(artistIdLower, out var artistReleases))
+            {
+                artistReleases[folderLower] = newRelease;
+            }
+
+            // Replace in artist's Releases list
+            var idx = artist.Releases.FindIndex(r => r.FolderName.Equals(releaseFolderName, StringComparison.OrdinalIgnoreCase));
+            if (idx >= 0)
+            {
+                artist.Releases[idx] = newRelease;
+            }
+
+            // Update _allReleases: remove old instance and add new
+            _allReleases.Remove(oldRelease);
+            _allReleases.Add(newRelease);
+
+            // Update _allTracks: remove old tracks for this release and add new tracks
+            _allTracks.RemoveAll(t =>
+                t.ArtistId.Equals(artistId, StringComparison.OrdinalIgnoreCase)
+                && t.ReleaseFolderName.Equals(releaseFolderName, StringComparison.OrdinalIgnoreCase)
+            );
+            _allTracks.AddRange(newRelease.Tracks);
+
+            _lastUpdated = DateTime.UtcNow;
+            _isInitialized = true;
+        }
+    }
+
     /// <summary>
     /// Ensures the cache is initialized, updating it if necessary
     /// </summary>

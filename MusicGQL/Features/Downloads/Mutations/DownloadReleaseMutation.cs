@@ -109,9 +109,9 @@ public class StartDownloadReleaseMutation
 
                 logger.LogInformation("[StartDownload] Updated release.json with audio file paths");
 
-                // Reload cache so it reflects new JSON (preserving transient availability statuses)
-                logger.LogInformation("[StartDownload] Refreshing library cache after JSON update...");
-                await cache.UpdateCacheAsync();
+                // Reload just this release into cache so it reflects new JSON (preserves transient availability)
+                logger.LogInformation("[StartDownload] Refreshing release in cache after JSON update...");
+                await cache.UpdateReleaseFromJsonAsync(input.ArtistId, input.ReleaseFolderName);
 
                 // Now publish availability status updates to reflect current runtime state
                 var relAfterCount = audioFiles.Count; // used for bounds below
