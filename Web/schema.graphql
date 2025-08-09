@@ -309,6 +309,12 @@ type LibraryCacheTrackStatus {
   trackNumber: Int!
 }
 
+type LibraryReleaseDownloadStatusUpdate {
+  artistId: String!
+  releaseFolderName: String!
+  status: ReleaseDownloadStatus!
+}
+
 type LikeSongAlreadyLiked {
   message: String!
 }
@@ -630,6 +636,7 @@ type ReimportReleaseSuccess {
 type Release {
   artist: Artist!
   coverArtUrl: String!
+  downloadStatus: ReleaseDownloadStatus!
   firstReleaseDate: String
   firstReleaseYear: String
   folderName: String!
@@ -638,6 +645,13 @@ type Release {
   title: String!
   tracks: [Track!]!
   type: ReleaseType
+}
+
+enum ReleaseDownloadStatus {
+  DOWNLOADING
+  DOWNLOAD_BUTTON_NOT_VISIBLE
+  DOWNLOAD_BUTTON_VISIBLE
+  SEARCHING
 }
 
 enum ReleaseType {
@@ -747,16 +761,21 @@ input StartDownloadReleaseInput {
   releaseFolderName: String!
 }
 
-union StartDownloadReleaseResult = StartDownloadReleaseSuccess
+union StartDownloadReleaseResult = StartDownloadReleaseSuccess | StartDownloadReleaseUnknownError
 
 type StartDownloadReleaseSuccess {
   success: Boolean!
+}
+
+type StartDownloadReleaseUnknownError {
+  message: String!
 }
 
 type Subscription {
   artistServerStatusUpdated(artistId: ID!): ArtistServerStatus!
   libraryCacheTrackUpdated(artistId: String!, releaseFolderName: String!, trackNumber: Int!): LibraryCacheTrackStatus!
   libraryCacheTracksInReleaseUpdated(artistId: String!, releaseFolderName: String!): LibraryCacheTrackStatus!
+  libraryReleaseDownloadStatusUpdated(artistId: String!, releaseFolderName: String!): LibraryReleaseDownloadStatusUpdate!
   ping: Ping!
   soulSeekStatusUpdated: SoulSeekStatus!
 }

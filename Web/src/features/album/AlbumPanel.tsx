@@ -1,5 +1,4 @@
 import * as React from "react";
-import { useState } from "react";
 import { LargePlayButton } from "@/components/buttons/LargePlayButton.tsx";
 import { ShuffleButton } from "@/components/buttons/ShuffleButton.tsx";
 import { DotsButton } from "@/components/buttons/DotsButton.tsx";
@@ -9,9 +8,8 @@ import { AlbumTrackList } from "@/features/album/AlbumTrackList.tsx";
 import { FragmentType, graphql, useFragment } from "@/gql";
 import { GradientContent } from "@/components/page-body/GradientContent";
 import { MainPadding } from "@/components/layout/MainPadding.tsx";
-import { Button } from "@/components/ui/button.tsx";
-import { Download } from "lucide-react";
-import { useMutation, useSubscription } from "urql";
+import { useSubscription } from "urql";
+import { ReleaseDownloadButton } from "@/features/downloads/release-download-button/ReleaseDownloadButton.tsx";
 
 export interface AlbumPanelProps {
   release: FragmentType<typeof albumPanelReleaseGroupFragment>;
@@ -22,27 +20,12 @@ const albumPanelReleaseGroupFragment = graphql(`
     id
     folderName
     isFullyMissing
+    ...ReleaseDownloadButton_Release
     ...AlbumHeader_Release
     ...AlbumTrackList_Release
     firstReleaseYear
     artist {
       id
-    }
-  }
-`);
-
-const startDownloadReleaseMutation = graphql(`
-  mutation AlbumPanel_StartDownloadRelease(
-    $artistId: String!
-    $releaseFolderName: String!
-  ) {
-    startDownloadRelease(
-      input: { artistId: $artistId, releaseFolderName: $releaseFolderName }
-    ) {
-      __typename
-      ... on StartDownloadReleaseSuccess {
-        success
-      }
     }
   }
 `);
@@ -67,7 +50,6 @@ const albumUpdatesSubscription = graphql(`
 
 export const AlbumPanel: React.FC<AlbumPanelProps> = (props) => {
   const release = useFragment(albumPanelReleaseGroupFragment, props.release);
-  const [, startDownload] = useMutation(startDownloadReleaseMutation);
   useSubscription({
     query: albumUpdatesSubscription,
     variables: {
@@ -75,27 +57,6 @@ export const AlbumPanel: React.FC<AlbumPanelProps> = (props) => {
       releaseFolderName: release.folderName,
     },
   });
-
-  const [queued, setQueued] = useState(false);
-
-  const onClickDownload = async () => {
-    try {
-      const res = await startDownload({
-        artistId: release.artist.id,
-        releaseFolderName: release.folderName,
-      });
-
-      if (
-        res.data?.startDownloadRelease?.__typename ===
-        "StartDownloadReleaseSuccess"
-      ) {
-        setQueued(true);
-        setTimeout(() => setQueued(false), 4000);
-      }
-    } catch {
-      /* empty */
-    }
-  };
 
   return (
     <GradientContent>
@@ -108,16 +69,7 @@ export const AlbumPanel: React.FC<AlbumPanelProps> = (props) => {
               <LargePlayButton />
               <ShuffleButton />
               <LargeLikeButton />
-              {release.isFullyMissing && (
-                <Button
-                  variant="secondary"
-                  onClick={onClickDownload}
-                  className="flex items-center gap-2"
-                >
-                  <Download className="h-5 w-5" />
-                  {queued ? "Queued" : "Download"}
-                </Button>
-              )}
+              <ReleaseDownloadButton release={release} />
               <DotsButton />
             </div>
           </div>

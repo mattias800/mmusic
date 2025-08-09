@@ -123,7 +123,8 @@ public class ServerLibraryCache(ServerLibraryJsonReader reader, ITopicEventSende
                     };
 
                     // Preserve previous per-release download status if present
-                    var relKey = $"{artistJson.Id.ToLowerInvariant()}|{folderName.ToLowerInvariant()}";
+                    var relKey =
+                        $"{artistJson.Id.ToLowerInvariant()}|{folderName.ToLowerInvariant()}";
                     if (previousReleaseStatuses.TryGetValue(relKey, out var prevRelStatus))
                     {
                         cachedRelease.DownloadStatus = prevRelStatus;
@@ -149,7 +150,8 @@ public class ServerLibraryCache(ServerLibraryJsonReader reader, ITopicEventSende
                             };
 
                             // Preserve previous media availability status if present
-                            var statusKey = $"{artistJson.Id.ToLowerInvariant()}|{folderName.ToLowerInvariant()}|{cachedTrack.TrackNumber}";
+                            var statusKey =
+                                $"{artistJson.Id.ToLowerInvariant()}|{folderName.ToLowerInvariant()}|{cachedTrack.TrackNumber}";
                             if (previousStatuses.TryGetValue(statusKey, out var prevStatus))
                             {
                                 cachedTrack.CachedMediaAvailabilityStatus = prevStatus;
@@ -274,10 +276,12 @@ public class ServerLibraryCache(ServerLibraryJsonReader reader, ITopicEventSende
             {
                 return;
             }
+
             if (!artistReleases.TryGetValue(folderLower, out oldRelease))
             {
                 return;
             }
+
             _artistsById.TryGetValue(artistIdLower, out artist);
             releasePath = oldRelease.ReleasePath;
 
@@ -350,7 +354,9 @@ public class ServerLibraryCache(ServerLibraryJsonReader reader, ITopicEventSende
             }
 
             // Replace in artist's Releases list
-            var idx = artist.Releases.FindIndex(r => r.FolderName.Equals(releaseFolderName, StringComparison.OrdinalIgnoreCase));
+            var idx = artist.Releases.FindIndex(r =>
+                r.FolderName.Equals(releaseFolderName, StringComparison.OrdinalIgnoreCase)
+            );
             if (idx >= 0)
             {
                 artist.Releases[idx] = newRelease;
@@ -690,8 +696,10 @@ public class ServerLibraryCache(ServerLibraryJsonReader reader, ITopicEventSende
         bool updated = false;
         lock (_lockObject)
         {
-            if (_releasesByArtistAndFolder.TryGetValue(artistId.ToLowerInvariant(), out var rels)
-                && rels.TryGetValue(releaseFolderName.ToLowerInvariant(), out var release))
+            if (
+                _releasesByArtistAndFolder.TryGetValue(artistId.ToLowerInvariant(), out var rels)
+                && rels.TryGetValue(releaseFolderName.ToLowerInvariant(), out var release)
+            )
             {
                 release.DownloadStatus = status;
                 updated = true;
@@ -701,12 +709,11 @@ public class ServerLibraryCache(ServerLibraryJsonReader reader, ITopicEventSende
         if (updated)
         {
             await eventSender.SendAsync(
-                LibrarySubscription.LibraryReleaseDownloadStatusUpdatedTopic(artistId, releaseFolderName),
-                new LibraryReleaseDownloadStatusUpdate(
+                LibrarySubscription.LibraryReleaseDownloadStatusUpdatedTopic(
                     artistId,
-                    releaseFolderName,
-                    status.ToGql()
-                )
+                    releaseFolderName
+                ),
+                new LibraryReleaseDownloadStatusUpdate(new(release))
             );
         }
     }

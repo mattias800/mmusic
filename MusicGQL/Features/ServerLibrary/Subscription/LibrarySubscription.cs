@@ -1,6 +1,5 @@
 using HotChocolate.Execution;
 using HotChocolate.Subscriptions;
-using MusicGQL.Features.Downloads;
 using MusicGQL.Features.ServerLibrary.Cache;
 
 namespace MusicGQL.Features.ServerLibrary.Subscription;
@@ -94,8 +93,4 @@ public record LibraryCacheTrackStatus(string ArtistId, string ReleaseFolderName,
     }
 }
 
-public record LibraryReleaseDownloadStatusUpdate(
-    string ArtistId,
-    string ReleaseFolderName,
-    ReleaseDownloadStatus Status
-);
+public record LibraryReleaseDownloadStatusUpdate(Release Release);
