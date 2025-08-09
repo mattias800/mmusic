@@ -33,6 +33,9 @@ public class CachedTrack
 public class CachedTrackCredit
 {
     public JsonTrackCredit JsonTrackCredit { get; set; } = new();
+}
 
-    // Add searchable properties if needed.
+public class CachedTrackStatistics
+{
+    public JsonTrackStatistics JsonTrackStatistics { get; set; } = new();
 }

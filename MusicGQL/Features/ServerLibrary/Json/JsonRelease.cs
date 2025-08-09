@@ -35,6 +35,7 @@ public class JsonTrack
     public long? PlayCount { get; set; }
     public JsonTrackServiceConnections? Connections { get; set; }
     public List<JsonTrackCredit>? Credits { get; set; }
+    public JsonTrackStatistics? Statistics { get; set; }
 }
 
 public class JsonTrackCredit
@@ -49,4 +50,10 @@ public class JsonTrackServiceConnections
     public string? MusicBrainzRecordingId { get; set; }
     public string? SpotifySongId { get; set; }
     public string? MusicVideoYoutubeVideoUrl { get; set; }
+}
+
+public class JsonTrackStatistics
+{
+    public long Listeners { get; set; }
+    public long PlayCount { get; set; }
 }
