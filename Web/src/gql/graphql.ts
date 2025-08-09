@@ -592,10 +592,12 @@ export type Mutation = {
   importSpotifyPlaylistById: ImportSpotifyPlaylistResult;
   likeSong: LikeSongResult;
   ping: Scalars['Boolean']['output'];
+  redownloadRelease: RedownloadReleaseResult;
   refreshArtistLastFm: RefreshArtistLastFmResult;
   refreshArtistTopTracks: RefreshArtistTopTracksResult;
+  reimportRelease: ReimportReleaseResult;
   renamePlaylist: RenamePlaylistResult;
-  scanLibraryForMissingJson: ScanLibraryResult;
+  scanLibraryForMissingJson: ScanLibraryForMissingJsonResult;
   signIn: SignInResult;
   signOut: SignOutResult;
   startDownloadRelease: StartDownloadReleaseResult;
@@ -646,6 +648,12 @@ export type MutationLikeSongArgs = {
 };
 
 
+export type MutationRedownloadReleaseArgs = {
+  artistId: Scalars['String']['input'];
+  releaseFolderName: Scalars['String']['input'];
+};
+
+
 export type MutationRefreshArtistLastFmArgs = {
   input: RefreshArtistLastFmInput;
 };
@@ -653,6 +661,12 @@ export type MutationRefreshArtistLastFmArgs = {
 
 export type MutationRefreshArtistTopTracksArgs = {
   input: RefreshArtistTopTracksInput;
+};
+
+
+export type MutationReimportReleaseArgs = {
+  artistId: Scalars['String']['input'];
+  releaseFolderName: Scalars['String']['input'];
 };
 
 
@@ -747,13 +761,31 @@ export type RecommendationsSearchRoot = {
   topTracks: Array<LastFmTrack>;
 };
 
+export type RedownloadReleaseError = {
+  __typename?: 'RedownloadReleaseError';
+  message: Scalars['String']['output'];
+};
+
+export type RedownloadReleaseResult = RedownloadReleaseError | RedownloadReleaseSuccess;
+
+export type RedownloadReleaseSuccess = {
+  __typename?: 'RedownloadReleaseSuccess';
+  success: Scalars['Boolean']['output'];
+};
+
+export type RefreshArtistLastFmError = {
+  __typename?: 'RefreshArtistLastFmError';
+  message: Scalars['String']['output'];
+};
+
 export type RefreshArtistLastFmInput = {
   artistId: Scalars['String']['input'];
 };
 
-export type RefreshArtistLastFmResult = {
-  __typename?: 'RefreshArtistLastFmResult';
-  errorMessage?: Maybe<Scalars['String']['output']>;
+export type RefreshArtistLastFmResult = RefreshArtistLastFmError | RefreshArtistLastFmSuccess;
+
+export type RefreshArtistLastFmSuccess = {
+  __typename?: 'RefreshArtistLastFmSuccess';
   success: Scalars['Boolean']['output'];
 };
 
@@ -771,6 +803,18 @@ export type RefreshArtistTopTracksSuccess = {
 export type RefreshArtistTopTracksUnknownError = {
   __typename?: 'RefreshArtistTopTracksUnknownError';
   message: Scalars['String']['output'];
+};
+
+export type ReimportReleaseError = {
+  __typename?: 'ReimportReleaseError';
+  message: Scalars['String']['output'];
+};
+
+export type ReimportReleaseResult = ReimportReleaseError | ReimportReleaseSuccess;
+
+export type ReimportReleaseSuccess = {
+  __typename?: 'ReimportReleaseSuccess';
+  success: Scalars['Boolean']['output'];
 };
 
 export type Release = {
@@ -810,8 +854,10 @@ export type RenamePlaylistSuccess = {
   viewer: User;
 };
 
-export type ScanLibraryResult = {
-  __typename?: 'ScanLibraryResult';
+export type ScanLibraryForMissingJsonResult = ScanLibraryForMissingJsonSuccess;
+
+export type ScanLibraryForMissingJsonSuccess = {
+  __typename?: 'ScanLibraryForMissingJsonSuccess';
   artistsCreated: Scalars['Int']['output'];
   errorMessage?: Maybe<Scalars['String']['output']>;
   notes: Array<Scalars['String']['output']>;

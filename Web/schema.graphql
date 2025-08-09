@@ -503,10 +503,12 @@ type Mutation {
   importSpotifyPlaylistById(playlistId: String!, userId: UUID!): ImportSpotifyPlaylistResult!
   likeSong(input: LikeSongInput!): LikeSongResult!
   ping: Boolean!
+  redownloadRelease(artistId: String!, releaseFolderName: String!): RedownloadReleaseResult!
   refreshArtistLastFm(input: RefreshArtistLastFmInput!): RefreshArtistLastFmResult!
   refreshArtistTopTracks(input: RefreshArtistTopTracksInput!): RefreshArtistTopTracksResult!
+  reimportRelease(artistId: String!, releaseFolderName: String!): ReimportReleaseResult!
   renamePlaylist(input: RenamePlaylistInput!): RenamePlaylistResult!
-  scanLibraryForMissingJson: ScanLibraryResult!
+  scanLibraryForMissingJson: ScanLibraryForMissingJsonResult!
   signIn(input: SignInInput!): SignInResult!
   signOut: SignOutResult!
   startDownloadRelease(input: StartDownloadReleaseInput!): StartDownloadReleaseResult!
@@ -577,12 +579,27 @@ type RecommendationsSearchRoot {
   topTracks: [LastFmTrack!]!
 }
 
+type RedownloadReleaseError {
+  message: String!
+}
+
+union RedownloadReleaseResult = RedownloadReleaseError | RedownloadReleaseSuccess
+
+type RedownloadReleaseSuccess {
+  success: Boolean!
+}
+
+type RefreshArtistLastFmError {
+  message: String!
+}
+
 input RefreshArtistLastFmInput {
   artistId: String!
 }
 
-type RefreshArtistLastFmResult {
-  errorMessage: String
+union RefreshArtistLastFmResult = RefreshArtistLastFmError | RefreshArtistLastFmSuccess
+
+type RefreshArtistLastFmSuccess {
   success: Boolean!
 }
 
@@ -598,6 +615,16 @@ type RefreshArtistTopTracksSuccess {
 
 type RefreshArtistTopTracksUnknownError {
   message: String!
+}
+
+type ReimportReleaseError {
+  message: String!
+}
+
+union ReimportReleaseResult = ReimportReleaseError | ReimportReleaseSuccess
+
+type ReimportReleaseSuccess {
+  success: Boolean!
 }
 
 type Release {
@@ -634,7 +661,9 @@ type RenamePlaylistSuccess {
   viewer: User!
 }
 
-type ScanLibraryResult {
+union ScanLibraryForMissingJsonResult = ScanLibraryForMissingJsonSuccess
+
+type ScanLibraryForMissingJsonSuccess {
   artistsCreated: Int!
   errorMessage: String
   notes: [String!]!
