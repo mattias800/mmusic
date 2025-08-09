@@ -21,32 +21,6 @@ export type Scalars = {
   UUID: { input: any; output: any; }
 };
 
-export type AddArtistToServerLibraryArtistAlreadyAdded = {
-  __typename?: 'AddArtistToServerLibraryArtistAlreadyAdded';
-  message: Scalars['String']['output'];
-};
-
-export type AddArtistToServerLibraryArtistDoesNotExist = {
-  __typename?: 'AddArtistToServerLibraryArtistDoesNotExist';
-  message: Scalars['String']['output'];
-};
-
-export type AddArtistToServerLibraryInput = {
-  artistId: Scalars['ID']['input'];
-};
-
-export type AddArtistToServerLibraryResult = AddArtistToServerLibraryArtistAlreadyAdded | AddArtistToServerLibraryArtistDoesNotExist | AddArtistToServerLibrarySuccess | AddArtistToServerLibraryUnknownError;
-
-export type AddArtistToServerLibrarySuccess = {
-  __typename?: 'AddArtistToServerLibrarySuccess';
-  success: Scalars['Boolean']['output'];
-};
-
-export type AddArtistToServerLibraryUnknownError = {
-  __typename?: 'AddArtistToServerLibraryUnknownError';
-  message: Scalars['String']['output'];
-};
-
 /** Defines when a policy shall be executed. */
 export enum ApplyPolicy {
   /** After the resolver was executed. */
@@ -608,7 +582,6 @@ export type MusicBrainzSearchRoot = {
 
 export type Mutation = {
   __typename?: 'Mutation';
-  addArtistToServerLibrary: AddArtistToServerLibraryResult;
   createDirectory: FileSystemEntry;
   createPlaylist: CreatePlaylistResult;
   createUser: CreateUserResult;
@@ -630,11 +603,6 @@ export type Mutation = {
   unlikeSong: UnlikedSongPayload;
   updateDownloadPath: UpdateDownloadPathResult;
   updateLibraryPath: UpdateLibraryPathResult;
-};
-
-
-export type MutationAddArtistToServerLibraryArgs = {
-  input: AddArtistToServerLibraryInput;
 };
 
 

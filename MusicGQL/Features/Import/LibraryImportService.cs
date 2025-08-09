@@ -17,7 +17,9 @@ public class LibraryImportService(
     FanArtDownloadService fanArtService,
     LastfmClient lastfmClient,
     ServerLibraryCache cache,
-    LibraryReleaseImportService releaseImporter
+    LibraryReleaseImportService releaseImporter,
+    Services.IImportExecutor importExecutor,
+    Services.LastFmEnrichmentService enrichmentService
 )
 {
     private const string LibraryPath = "./Library/";
@@ -44,7 +46,8 @@ public class LibraryImportService(
     }
 
     /// <summary>
-    /// Imports an artist directly by MusicBrainz artist ID. This is preferred for UI flows where the user selects an artist.
+    /// Imports an artist directly by MusicBrainz artist ID, and also imports all eligible releases.
+    /// This now delegates to the same executor used by the file-scanner flow so both paths are unified.
     /// </summary>
     /// <param name="musicBrainzArtistId">MusicBrainz artist ID (MBID)</param>
     public async Task<ArtistImportResult> ImportArtistByMusicBrainzIdAsync(string musicBrainzArtistId)
@@ -53,10 +56,9 @@ public class LibraryImportService(
 
         try
         {
-            Console.WriteLine($"🎤 Importing artist by MBID: {musicBrainzArtistId}");
+            Console.WriteLine($"🎤 Importing artist by MBID (unified): {musicBrainzArtistId}");
 
-            // 1. Fetch MusicBrainz artist by ID
-            Console.WriteLine("🔍 Fetching MusicBrainz artist by ID...");
+            // 1) Resolve MB artist to get display name and canonicalize folder
             var mbArtist = await musicBrainzService.GetArtistByIdAsync(musicBrainzArtistId);
             if (mbArtist is null)
             {
@@ -64,173 +66,46 @@ public class LibraryImportService(
                 return result;
             }
             result.ArtistName = mbArtist.Name;
-            Console.WriteLine($"✅ Found on MusicBrainz: {mbArtist.Name} ({mbArtist.Id})");
 
-            // 2. Search Spotify for matching artist (best-effort)
-            Console.WriteLine("🎵 Searching Spotify...");
-            var spotifyArtist = await spotifyService.FindBestMatchAsync(mbArtist.Name);
-            if (spotifyArtist != null)
-            {
-                result.SpotifyId = spotifyArtist.Id;
-                Console.WriteLine($"✅ Found on Spotify: {spotifyArtist.Name} ({spotifyArtist.Id})");
-            }
-            else
-            {
-                Console.WriteLine("⚠️ Not found on Spotify");
-            }
-
-            // 3. Create artist folder
             var artistFolderName = SanitizeFolderName(mbArtist.Name);
             var artistFolderPath = Path.Combine(LibraryPath, artistFolderName);
-
-            if (Directory.Exists(artistFolderPath))
+            if (!Directory.Exists(artistFolderPath))
             {
-                result.ErrorMessage = $"Artist folder already exists: {artistFolderName}";
-                return result;
+                Directory.CreateDirectory(artistFolderPath);
             }
-
-            Directory.CreateDirectory(artistFolderPath);
             result.ArtistFolderPath = artistFolderPath;
-            Console.WriteLine($"📁 Created folder: {artistFolderName}");
 
-            // 4. Download photos from fanart.tv
-            Console.WriteLine("🖼️ Downloading photos from fanart.tv...");
-            var fanArtResult = await fanArtService.DownloadArtistPhotosAsync(
-                mbArtist.Id,
-                artistFolderPath
-            );
-            result.DownloadedPhotos = fanArtResult;
+            // 2) Use the same executor as the file-scanner to create/enrich artist.json (photos, connections, top tracks)
+            await importExecutor.ImportOrEnrichArtistAsync(artistFolderPath, mbArtist.Id, mbArtist.Name);
 
-            // 5. Fetch LastFM monthly listeners (best-effort)
-            long? monthlyListeners = null;
-            List<JsonTopTrack> topTracks = new();
+            // 3) Import all eligible release groups (albums, EPs, singles)
+            await importExecutor.ImportEligibleReleaseGroupsAsync(artistFolderPath, mbArtist.Id);
+
+            // 4) Enrich artist (map top tracks to releases, fill missing info)
             try
             {
-                var info = await lastfmClient.Artist.GetInfoByMbidAsync(mbArtist.Id);
-                monthlyListeners = info?.Statistics?.Listeners;
-                // Fetch top tracks as well
-                var top = await lastfmClient.Artist.GetTopTracksByMbidAsync(mbArtist.Id);
-                if (top != null)
-                {
-                    topTracks = top.Take(10)
-                        .Select(t => new JsonTopTrack
-                        {
-                            Title = t.Name,
-                            ReleaseTitle = t.Album?.Name,
-                            CoverArt = null,
-                            PlayCount = t.Statistics?.PlayCount,
-                            TrackLength = t.Duration,
-                        })
-                        .ToList();
-                }
+                await enrichmentService.EnrichArtistAsync(artistFolderPath, mbArtist.Id);
             }
             catch { }
 
-            // 6. Create artist.json
-            var artistJson = new JsonArtist
-            {
-                Id = artistFolderName, // Use folder name as ID
-                Name = mbArtist.Name,
-                SortName = mbArtist.SortName ?? mbArtist.Name,
-                MonthlyListeners = monthlyListeners,
-                TopTracks = topTracks,
-                Photos = new JsonArtistPhotos
-                {
-                    Thumbs = fanArtResult.Thumbs.Any() ? fanArtResult.Thumbs : null,
-                    Backgrounds = fanArtResult.Backgrounds.Any() ? fanArtResult.Backgrounds : null,
-                    Banners = fanArtResult.Banners.Any() ? fanArtResult.Banners : null,
-                    Logos = fanArtResult.Logos.Any() ? fanArtResult.Logos : null,
-                },
-                Connections = new JsonArtistServiceConnections
-                {
-                    MusicBrainzArtistId = mbArtist.Id,
-                    SpotifyId = spotifyArtist?.Id,
-                },
-            };
-
-            // 7. Write artist.json file (centralized writer)
-            var jsonWriter = new ServerLibrary.Writer.ServerLibraryJsonWriter();
-            await jsonWriter.WriteArtistAsync(artistJson);
-
-            Console.WriteLine($"✅ Created artist.json");
-
-            // Attempt to map top tracks to local library entries by title
-            try
-            {
-                if (artistJson.TopTracks != null && artistJson.TopTracks.Count > 0)
-                {
-                    // Read releases from disk for this artist
-                    var releaseDirs = Directory.GetDirectories(artistFolderPath);
-                    foreach (var releaseDir in releaseDirs)
-                    {
-                        var releaseJsonPath = Path.Combine(releaseDir, "release.json");
-                        if (!File.Exists(releaseJsonPath))
-                            continue;
-
-                        var releaseJsonText = await File.ReadAllTextAsync(releaseJsonPath);
-                        var releaseJson = JsonSerializer.Deserialize<JsonRelease>(
-                            releaseJsonText,
-                            GetJsonOptions()
-                        );
-                        if (releaseJson?.Tracks == null)
-                            continue;
-
-                        var folderName = Path.GetFileName(releaseDir) ?? string.Empty;
-                        foreach (var top in artistJson.TopTracks)
-                        {
-                            if (top.ReleaseFolderName != null && top.TrackNumber != null)
-                                continue; // already mapped
-
-                            var match = releaseJson.Tracks.FirstOrDefault(t =>
-                                string.Equals(
-                                    t.Title,
-                                    top.Title,
-                                    StringComparison.OrdinalIgnoreCase
-                                )
-                            );
-                            if (match != null)
-                            {
-                                top.ReleaseFolderName = folderName;
-                                top.TrackNumber = match.TrackNumber;
-                            }
-                        }
-                    }
-
-                    // Rewrite artist.json if any mapping was added (centralized writer)
-                    await jsonWriter.WriteArtistAsync(artistJson);
-                }
-            }
-            catch { }
-
-            // 8. Update cache
+            // 5) Update cache and load artist json for return
             await cache.UpdateCacheAsync();
-            Console.WriteLine($"🔄 Updated cache");
+
+            // Read back artist.json to include in result
+            try
+            {
+                var artistJsonText = await File.ReadAllTextAsync(Path.Combine(artistFolderPath, "artist.json"));
+                result.ArtistJson = JsonSerializer.Deserialize<JsonArtist>(artistJsonText, GetJsonOptions());
+            }
+            catch { }
 
             result.Success = true;
-            result.ArtistJson = artistJson;
-            Console.WriteLine($"🎉 Successfully imported artist: {mbArtist.Name}");
+            Console.WriteLine($"🎉 Successfully imported artist and releases: {mbArtist.Name}");
         }
         catch (Exception ex)
         {
             result.ErrorMessage = ex.Message;
             Console.WriteLine($"❌ Error importing artist by MBID '{musicBrainzArtistId}': {ex.Message}");
-
-            // Cleanup on error
-            if (
-                !string.IsNullOrEmpty(result.ArtistFolderPath)
-                && Directory.Exists(result.ArtistFolderPath)
-            )
-            {
-                try
-                {
-                    Directory.Delete(result.ArtistFolderPath, true);
-                    Console.WriteLine($"🧹 Cleaned up failed import folder");
-                }
-                catch (Exception cleanupEx)
-                {
-                    Console.WriteLine($"⚠️ Failed to cleanup folder: {cleanupEx.Message}");
-                }
-            }
         }
 
         return result;

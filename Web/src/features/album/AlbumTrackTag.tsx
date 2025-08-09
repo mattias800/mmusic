@@ -31,7 +31,7 @@ export const AlbumTrackTag: React.FC<AlbumTrackTagProps> = (props) => {
   }
 
   if (track.isMissing) {
-    return <Tag>Missing</Tag>;
+    return <Tag variant={"error"}>Missing</Tag>;
   }
 
   return null;

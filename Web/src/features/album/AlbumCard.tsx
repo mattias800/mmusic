@@ -47,7 +47,7 @@ export const AlbumCard: React.FC<AlbumCardProps> = (props) => {
       )}
       <div className={"bold flex items-center gap-2"}>
         <span className="truncate">{release.title}</span>
-        {release.isFullyMissing && <Tag>Missing</Tag>}
+        {release.isFullyMissing && <Tag variant={"error"}>Missing</Tag>}
       </div>
       <div className={"text-gray-400 text-sm"}>{release.firstReleaseYear}</div>
     </button>
