@@ -1,5 +1,5 @@
-using MusicGQL.Features.ServerLibrary.Reader;
 using MusicGQL.Features.ServerLibrary.Cache;
+using MusicGQL.Features.ServerLibrary.Reader;
 using Path = System.IO.Path;
 
 namespace MusicGQL.Features.Import.Services;
@@ -10,7 +10,7 @@ public class LibraryMaintenanceCoordinator(
     IImportExecutor importer,
     ServerLibraryCache cache,
     LastFmEnrichmentService enrichment,
-    MusicGQL.Features.ServerLibrary.MediaFileAssignmentService assigner
+    ServerLibrary.MediaFileAssignmentService assigner
 )
 {
     public class MaintenanceResult
@@ -42,21 +42,33 @@ public class LibraryMaintenanceCoordinator(
                 var importedAnyReleaseForThisArtist = false;
                 if (artist.MissingArtistJson)
                 {
-                    await importer.ImportOrEnrichArtistAsync(artist.ArtistDir, idArtist.MusicBrainzArtistId, idArtist.ArtistDisplayName);
+                    await importer.ImportOrEnrichArtistAsync(
+                        artist.ArtistDir,
+                        idArtist.MusicBrainzArtistId,
+                        idArtist.ArtistDisplayName
+                    );
                     result.ArtistsCreated++;
-                    result.Notes.Add($"Created artist.json for '{Path.GetFileName(artist.ArtistDir)}'");
+                    result.Notes.Add(
+                        $"Created artist.json for '{Path.GetFileName(artist.ArtistDir)}'"
+                    );
                     artistsToEnrich[artist.ArtistDir] = idArtist.MusicBrainzArtistId;
 
                     // Import all eligible release groups (Albums, EPs, Singles) even if no audio exists on disk
                     try
                     {
-                        var createdCount = await importer.ImportEligibleReleaseGroupsAsync(artist.ArtistDir, idArtist.MusicBrainzArtistId);
+                        var createdCount = await importer.ImportEligibleReleaseGroupsAsync(
+                            artist.ArtistDir,
+                            idArtist.MusicBrainzArtistId
+                        );
                         result.ReleasesCreated += createdCount;
                         if (createdCount > 0)
                         {
-                            result.Notes.Add($"Imported {createdCount} eligible release group(s) for '{Path.GetFileName(artist.ArtistDir)}'");
+                            result.Notes.Add(
+                                $"Imported {createdCount} eligible release group(s) for '{Path.GetFileName(artist.ArtistDir)}'"
+                            );
                         }
-                        importedAnyReleaseForThisArtist = importedAnyReleaseForThisArtist || createdCount > 0;
+                        importedAnyReleaseForThisArtist =
+                            importedAnyReleaseForThisArtist || createdCount > 0;
                     }
                     catch (Exception ex)
                     {
@@ -66,16 +78,28 @@ public class LibraryMaintenanceCoordinator(
 
                 foreach (var rel in artist.Releases.Where(r => r.MissingReleaseJson))
                 {
-                    var idRel = await identifier.IdentifyReleaseAsync(idArtist.ArtistDisplayName, idArtist.MusicBrainzArtistId, rel.ReleaseDir);
+                    var idRel = await identifier.IdentifyReleaseAsync(
+                        idArtist.ArtistDisplayName,
+                        idArtist.MusicBrainzArtistId,
+                        rel.ReleaseDir
+                    );
                     if (idRel == null)
                     {
                         result.Notes.Add($"Could not match release for '{rel.ReleaseDir}'");
                         continue;
                     }
 
-                    await importer.ImportReleaseIfMissingAsync(artist.ArtistDir, rel.ReleaseDir, idRel.ReleaseGroupId, idRel.Title, idRel.PrimaryType);
+                    await importer.ImportReleaseIfMissingAsync(
+                        artist.ArtistDir,
+                        rel.ReleaseDir,
+                        idRel.ReleaseGroupId,
+                        idRel.Title,
+                        idRel.PrimaryType
+                    );
                     result.ReleasesCreated++;
-                    result.Notes.Add($"Created release.json for '{Path.GetFileName(artist.ArtistDir)}/{Path.GetFileName(rel.ReleaseDir)}'");
+                    result.Notes.Add(
+                        $"Created release.json for '{Path.GetFileName(artist.ArtistDir)}/{Path.GetFileName(rel.ReleaseDir)}'"
+                    );
 
                     // Assign media files to tracks (always overwrite existing references)
                     var artistId = Path.GetFileName(artist.ArtistDir) ?? string.Empty;
@@ -86,7 +110,9 @@ public class LibraryMaintenanceCoordinator(
                     }
                     catch (Exception ex)
                     {
-                        result.Notes.Add($"Failed assigning media files for '{artistId}/{releaseFolderName}': {ex.Message}");
+                        result.Notes.Add(
+                            $"Failed assigning media files for '{artistId}/{releaseFolderName}': {ex.Message}"
+                        );
                     }
 
                     importedAnyReleaseForThisArtist = true;
@@ -109,7 +135,9 @@ public class LibraryMaintenanceCoordinator(
                     }
                     catch (Exception ex)
                     {
-                        result.Notes.Add($"Enrichment failed for '{Path.GetFileName(kvp.Key)}': {ex.Message}");
+                        result.Notes.Add(
+                            $"Enrichment failed for '{Path.GetFileName(kvp.Key)}': {ex.Message}"
+                        );
                     }
                 }
 
@@ -125,5 +153,3 @@ public class LibraryMaintenanceCoordinator(
         return result;
     }
 }
-
-

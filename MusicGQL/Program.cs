@@ -112,6 +112,7 @@ builder
     .AddScoped<IImportExecutor, MusicBrainzImportExecutor>()
     .AddScoped<LibraryMaintenanceCoordinator>()
     .AddScoped<LastFmEnrichmentService>()
+    .AddScoped<ReleaseJsonBuilder>()
     .AddScoped<LibraryReleaseImportService>()
     .AddScoped<LibraryImportService>()
     .AddScoped<MusicGQL.Features.ServerLibrary.Writer.ServerLibraryJsonWriter>()

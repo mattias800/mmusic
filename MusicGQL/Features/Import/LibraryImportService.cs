@@ -18,8 +18,8 @@ public class LibraryImportService(
     LastfmClient lastfmClient,
     ServerLibraryCache cache,
     LibraryReleaseImportService releaseImporter,
-    Services.IImportExecutor importExecutor,
-    Services.LastFmEnrichmentService enrichmentService
+    IImportExecutor importExecutor,
+    LastFmEnrichmentService enrichmentService
 )
 {
     private const string LibraryPath = "./Library/";
@@ -50,7 +50,9 @@ public class LibraryImportService(
     /// This now delegates to the same executor used by the file-scanner flow so both paths are unified.
     /// </summary>
     /// <param name="musicBrainzArtistId">MusicBrainz artist ID (MBID)</param>
-    public async Task<ArtistImportResult> ImportArtistByMusicBrainzIdAsync(string musicBrainzArtistId)
+    public async Task<ArtistImportResult> ImportArtistByMusicBrainzIdAsync(
+        string musicBrainzArtistId
+    )
     {
         var result = new ArtistImportResult { MusicBrainzId = musicBrainzArtistId };
 
@@ -76,7 +78,11 @@ public class LibraryImportService(
             result.ArtistFolderPath = artistFolderPath;
 
             // 2) Use the same executor as the file-scanner to create/enrich artist.json (photos, connections, top tracks)
-            await importExecutor.ImportOrEnrichArtistAsync(artistFolderPath, mbArtist.Id, mbArtist.Name);
+            await importExecutor.ImportOrEnrichArtistAsync(
+                artistFolderPath,
+                mbArtist.Id,
+                mbArtist.Name
+            );
 
             // 3) Import all eligible release groups (albums, EPs, singles)
             await importExecutor.ImportEligibleReleaseGroupsAsync(artistFolderPath, mbArtist.Id);
@@ -94,8 +100,13 @@ public class LibraryImportService(
             // Read back artist.json to include in result
             try
             {
-                var artistJsonText = await File.ReadAllTextAsync(Path.Combine(artistFolderPath, "artist.json"));
-                result.ArtistJson = JsonSerializer.Deserialize<JsonArtist>(artistJsonText, GetJsonOptions());
+                var artistJsonText = await File.ReadAllTextAsync(
+                    Path.Combine(artistFolderPath, "artist.json")
+                );
+                result.ArtistJson = JsonSerializer.Deserialize<JsonArtist>(
+                    artistJsonText,
+                    GetJsonOptions()
+                );
             }
             catch { }
 
@@ -105,7 +116,9 @@ public class LibraryImportService(
         catch (Exception ex)
         {
             result.ErrorMessage = ex.Message;
-            Console.WriteLine($"❌ Error importing artist by MBID '{musicBrainzArtistId}': {ex.Message}");
+            Console.WriteLine(
+                $"❌ Error importing artist by MBID '{musicBrainzArtistId}': {ex.Message}"
+            );
         }
 
         return result;
@@ -208,7 +221,11 @@ public class LibraryImportService(
     )
     {
         // Delegate to dedicated release import service for single-responsibility and reuse
-        return await releaseImporter.ImportReleaseGroupAsync(releaseGroup, artistFolderPath, artistId);
+        return await releaseImporter.ImportReleaseGroupAsync(
+            releaseGroup,
+            artistFolderPath,
+            artistId
+        );
     }
 
     /// <summary>

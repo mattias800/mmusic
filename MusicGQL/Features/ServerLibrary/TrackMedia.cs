@@ -40,7 +40,7 @@ public record TrackMedia([property: GraphQLIgnore] CachedTrack Model)
                     FileAccess.Read,
                     FileShare.Read
                 );
-                return Features.ServerLibrary.Audio.Mp3HeaderReader.TryReadBitrateKbps(fs);
+                return Audio.Mp3HeaderReader.TryReadBitrateKbps(fs);
             }
         }
         catch

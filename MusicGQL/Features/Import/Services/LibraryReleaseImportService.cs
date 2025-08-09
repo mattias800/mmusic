@@ -1,6 +1,5 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Hqub.Lastfm;
 using MusicGQL.Features.ServerLibrary.Json;
 using Path = System.IO.Path;
 
@@ -11,9 +10,8 @@ namespace MusicGQL.Features.Import.Services;
 /// Also enriches tracks with per-track Last.fm play count when available.
 /// </summary>
 public class LibraryReleaseImportService(
-    MusicBrainzImportService musicBrainzService,
-    FanArtDownloadService fanArtService,
-    LastfmClient lastfmClient
+    ReleaseJsonBuilder releaseJsonBuilder,
+    ServerLibrary.Writer.ServerLibraryJsonWriter writer
 )
 {
     private static JsonSerializerOptions GetJsonOptions() =>
@@ -47,112 +45,27 @@ public class LibraryReleaseImportService(
 
         try
         {
-            // 2. Get releases with tracks
-            var releases = await musicBrainzService.GetReleaseGroupReleasesAsync(releaseGroup.Id);
+            // Build release.json using centralized builder
+            var built = await releaseJsonBuilder.BuildAsync(
+                artistFolderPath,
+                releaseGroup.Id,
+                releaseFolderName,
+                releaseGroup.Title,
+                releaseGroup.PrimaryType
+            );
 
-            if (!releases.Any())
+            if (built is null)
             {
-                result.ErrorMessage = "No releases found for release group";
+                result.ErrorMessage = "No suitable release found for release group";
                 return result;
             }
 
-            // Take the first release (or find the best one)
-            var selectedRelease = releases.First();
-
-            // 3. Download cover art
-            var coverArtPath = await fanArtService.DownloadReleaseCoverArtAsync(
-                releaseGroup.Id,
-                releaseFolderPath
-            );
-
-            // 4. Create release.json
-            var releaseType = releaseGroup.PrimaryType?.ToLowerInvariant() switch
-            {
-                "album" => JsonReleaseType.Album,
-                "ep" => JsonReleaseType.Ep,
-                "single" => JsonReleaseType.Single,
-                _ => JsonReleaseType.Album,
-            };
-
-            // Fetch per-track Last.fm play counts
-            var artistJsonPath = Path.Combine(artistFolderPath, "artist.json");
-            string? artistName = null;
-            try
-            {
-                if (File.Exists(artistJsonPath))
-                {
-                    var artistJsonText = await File.ReadAllTextAsync(artistJsonPath);
-                    var jsonArtist = JsonSerializer.Deserialize<JsonArtist>(
-                        artistJsonText,
-                        GetJsonOptions()
-                    );
-                    artistName = jsonArtist?.Name;
-                }
-            }
-            catch
-            {
-                // ignore errors reading artist.json; we'll proceed without artistName
-            }
-
-            var enrichedTracks = new List<JsonTrack>();
-            foreach (var track in selectedRelease.Tracks)
-            {
-                JsonTrackStatistics? stats = null;
-                if (!string.IsNullOrWhiteSpace(artistName))
-                {
-                    try
-                    {
-                        // Last.fm Track.GetInfo requires artist name and track title
-                        var lfTrack = await lastfmClient.Track.GetInfoAsync(
-                            track.Title,
-                            artistName
-                        );
-                        if (lfTrack?.Statistics != null)
-                        {
-                            stats = new JsonTrackStatistics
-                            {
-                                PlayCount = lfTrack.Statistics.PlayCount,
-                                Listeners = lfTrack.Statistics.Listeners,
-                            };
-                        }
-                    }
-                    catch
-                    {
-                        // ignore Last.fm errors per track to keep import robust
-                    }
-                }
-
-                enrichedTracks.Add(
-                    new JsonTrack
-                    {
-                        Title = track.Title,
-                        TrackNumber = track.TrackNumber,
-                        TrackLength = track.Length,
-                        // Preserve legacy PlayCount while adding structured Statistics
-                        PlayCount = stats?.PlayCount,
-                        Statistics = stats,
-                        AudioFilePath = null,
-                    }
-                );
-            }
-
-            var releaseJson = new JsonRelease
-            {
-                Title = releaseGroup.Title,
-                SortTitle = releaseGroup.Title,
-                Type = releaseType,
-                FirstReleaseDate = releaseGroup.FirstReleaseDate,
-                CoverArt = coverArtPath,
-                Tracks = enrichedTracks,
-            };
-
-            // 5. Write release.json file (centralized writer)
-            var writer = new MusicGQL.Features.ServerLibrary.Writer.ServerLibraryJsonWriter();
-            await writer.WriteReleaseAsync(artistId, releaseFolderName, releaseJson);
+            // Write via centralized writer
+            await writer.WriteReleaseAsync(artistId, releaseFolderName, built);
 
             result.Success = true;
             result.ReleaseFolderPath = releaseFolderPath;
-            result.ReleaseJson = releaseJson;
+            result.ReleaseJson = built;
         }
         catch (Exception ex)
         {
