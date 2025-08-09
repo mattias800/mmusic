@@ -1,7 +1,7 @@
 import * as React from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { RootState } from "@/Store.ts";
 import { useAppDispatch, useAppSelector } from "@/ReduxAppHooks.ts";
-import { LibraryAudioPlayer } from "@/features/music-players/library-audio-player/LibraryAudioPlayer.tsx";
 import { musicPlayerSlice } from "@/features/music-players/MusicPlayerSlice.ts";
 import { formatTrackLength } from "@/common/TrackLengthFormatter.ts";
 import { QueuePanel } from "@/features/music-players/QueuePanel.tsx";
@@ -21,15 +21,14 @@ import {
 import { HistoryPanel } from "@/features/music-players/HistoryPanel.tsx";
 import { ReleaseCoverArt } from "@/components/images/ReleaseCoverArt.tsx";
 import {
+  ListMusic,
   Pause,
   Play,
   SkipBack,
   SkipForward,
   Volume2,
   VolumeX,
-  ListMusic,
 } from "lucide-react";
-import { useState } from "react";
 import { Tag } from "@/components/text/Tag.tsx";
 
 export interface MusicPlayerProps {}
@@ -38,20 +37,54 @@ const selector = (state: RootState) => state.musicPlayers;
 
 export const MusicPlayer: React.FC<MusicPlayerProps> = () => {
   const dispatch = useAppDispatch();
-  const [queueOpen, setQueueOpen] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
   const {
-    currentMusicPlayer,
     isOpen,
     currentTrack,
     queue,
     history,
     currentIndex,
     isPlaying,
-    positionSec,
-    durationSec,
     volume,
     muted,
   } = useAppSelector(selector);
+  const [queueOpen, setQueueOpen] = useState(false);
+  const [scrubValue, setScrubValue] = useState<number | null>(null);
+  const [positionSec, setPositionSec] = useState(0);
+  const [durationSec, setDurationSec] = useState(0);
+
+  const commitScrub = useCallback(() => {
+    if (scrubValue != null) {
+      setPositionSec(scrubValue);
+      if (audioRef.current) {
+        audioRef.current.currentTime = scrubValue;
+      }
+    }
+    setScrubValue(null);
+  }, [scrubValue]);
+
+  const src = useMemo(
+    () =>
+      currentTrack == null
+        ? undefined
+        : `/library/${encodeURIComponent(currentTrack.artistId)}/releases/${encodeURIComponent(
+            currentTrack.releaseFolderName,
+          )}/tracks/${currentTrack.trackNumber}/audio`,
+    [currentTrack],
+  );
+
+  useEffect(() => {
+    if (!audioRef.current) return;
+    audioRef.current.volume = volume;
+    audioRef.current.muted = muted;
+  }, [volume, muted]);
+
+  useEffect(() => {
+    if (!audioRef.current) return;
+    if (isPlaying) audioRef.current.play().catch(() => {});
+    else audioRef.current.pause();
+  }, [isPlaying, src]);
 
   if (!isOpen) {
     return null;
@@ -61,8 +94,6 @@ export const MusicPlayer: React.FC<MusicPlayerProps> = () => {
     currentIndex >= 0 && currentIndex < queue.length
       ? queue[currentIndex]
       : undefined;
-
-  console.log({ currentTrack });
 
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-background/90 backdrop-blur border-t px-4 py-2 z-50">
@@ -142,12 +173,10 @@ export const MusicPlayer: React.FC<MusicPlayerProps> = () => {
               min={0}
               max={Math.max(1, durationSec)}
               step={0.1}
-              value={positionSec}
-              onChange={(e) =>
-                dispatch(
-                  musicPlayerSlice.actions.seekTo(parseFloat(e.target.value)),
-                )
-              }
+              value={scrubValue ?? positionSec}
+              onChange={(e) => setScrubValue(parseFloat(e.target.value))}
+              onPointerUp={commitScrub}
+              onBlur={commitScrub}
               className="w-full"
             />
             <span className="text-xs tabular-nums w-10">
@@ -227,13 +256,19 @@ export const MusicPlayer: React.FC<MusicPlayerProps> = () => {
         </SheetContent>
       </Sheet>
 
-      {currentMusicPlayer === "library" && currentTrack && (
-        <LibraryAudioPlayer
-          artistId={currentTrack.artistId}
-          releaseFolderName={currentTrack.releaseFolderName}
-          trackNumber={currentTrack.trackNumber}
-        />
-      )}
+      <audio
+        ref={audioRef}
+        src={src}
+        autoPlay
+        onDurationChange={() => {
+          setDurationSec(audioRef.current?.duration ?? 0);
+        }}
+        onTimeUpdate={() => {
+          setPositionSec(audioRef.current?.currentTime ?? 0);
+        }}
+        onEnded={() => dispatch(musicPlayerSlice.actions.next())}
+        style={{ width: "100%" }}
+      />
     </div>
   );
 };

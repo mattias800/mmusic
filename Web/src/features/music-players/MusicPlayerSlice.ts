@@ -13,7 +13,6 @@ export interface MusicPlayerTrack {
 
 export interface MusicPlayerState {
   isOpen: boolean;
-  currentMusicPlayer: "library" | undefined;
   currentTrack?: MusicPlayerTrack;
   // queue
   queue: Array<MusicPlayerTrack>;
@@ -26,13 +25,10 @@ export interface MusicPlayerState {
   isPlaying: boolean;
   volume: number; // 0..1
   muted: boolean;
-  positionSec: number; // current time
-  durationSec: number; // duration
 }
 
 const initialState: MusicPlayerState = {
   isOpen: false,
-  currentMusicPlayer: undefined,
   currentTrack: undefined,
   queue: [],
   history: [],
@@ -40,8 +36,6 @@ const initialState: MusicPlayerState = {
   isPlaying: false,
   volume: 1,
   muted: false,
-  positionSec: 0,
-  durationSec: 0,
 };
 
 const pushCurrentToHistory = (state: MusicPlayerState) => {
@@ -77,7 +71,6 @@ export const musicPlayerSlice = createSlice({
         trackNumber: action.payload.trackNumber,
       };
       state.isOpen = true;
-      state.currentMusicPlayer = "library";
       state.isPlaying = true;
       pushCurrentToHistory(state);
     },
@@ -87,12 +80,13 @@ export const musicPlayerSlice = createSlice({
     ) => {
       state.queue = action.payload;
       state.currentIndex = action.payload.length > 0 ? 0 : -1;
-      const current = state.currentIndex >= 0 ? action.payload[state.currentIndex] : undefined;
+      const current =
+        state.currentIndex >= 0
+          ? action.payload[state.currentIndex]
+          : undefined;
       state.currentTrack = current;
       state.isOpen = state.currentIndex >= 0;
-      state.currentMusicPlayer = state.isOpen ? "library" : undefined;
       state.isPlaying = state.isOpen;
-      state.positionSec = 0;
       if (state.isOpen) pushCurrentToHistory(state);
     },
     next: (state) => {
@@ -106,7 +100,6 @@ export const musicPlayerSlice = createSlice({
       const current = state.queue[state.currentIndex];
       state.currentTrack = current;
       state.isPlaying = true;
-      state.positionSec = 0;
       pushCurrentToHistory(state);
     },
     prev: (state) => {
@@ -116,7 +109,6 @@ export const musicPlayerSlice = createSlice({
       const current = state.queue[state.currentIndex];
       state.currentTrack = current;
       state.isPlaying = true;
-      state.positionSec = 0;
     },
     play: (state) => {
       state.isPlaying = true;
@@ -130,29 +122,6 @@ export const musicPlayerSlice = createSlice({
     setMuted: (state, action: PayloadAction<boolean>) => {
       state.muted = action.payload;
     },
-    seekTo: (state, action: PayloadAction<number>) => {
-      state.positionSec = Math.max(0, action.payload);
-    },
-    updatePlaybackTime: (
-      state,
-      action: PayloadAction<{ positionSec: number; durationSec: number }>,
-    ) => {
-      state.positionSec = action.payload.positionSec;
-      state.durationSec = action.payload.durationSec;
-    },
-    updateCurrentQualityLabel: (
-      state,
-      action: PayloadAction<string | undefined>,
-    ) => {
-      if (state.currentIndex < 0 || state.currentIndex >= state.queue.length) return;
-      state.queue[state.currentIndex] = {
-        ...state.queue[state.currentIndex],
-        qualityLabel: action.payload,
-      };
-      if (state.currentTrack && state.currentTrack.artistId === state.queue[state.currentIndex].artistId && state.currentTrack.releaseFolderName === state.queue[state.currentIndex].releaseFolderName && state.currentTrack.trackNumber === state.queue[state.currentIndex].trackNumber) {
-        state.currentTrack = { ...state.currentTrack, qualityLabel: action.payload };
-      }
-    },
     playAtIndex: (state, action: PayloadAction<number>) => {
       const idx = action.payload;
       if (idx < 0 || idx >= state.queue.length) return;
@@ -160,9 +129,7 @@ export const musicPlayerSlice = createSlice({
       const current = state.queue[state.currentIndex];
       state.currentTrack = current;
       state.isPlaying = true;
-      state.positionSec = 0;
       state.isOpen = true;
-      state.currentMusicPlayer = "library";
       pushCurrentToHistory(state);
     },
   },
