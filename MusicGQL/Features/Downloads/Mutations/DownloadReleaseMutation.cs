@@ -3,6 +3,7 @@ using System.Text.Json.Serialization;
 using MusicGQL.Features.Downloads.Services;
 using MusicGQL.Features.ServerLibrary.Cache;
 using MusicGQL.Features.ServerLibrary.Json;
+using MusicGQL.Features.ServerLibrary.Writer;
 using MusicGQL.Types;
 using Path = System.IO.Path;
 
@@ -15,6 +16,7 @@ public class StartDownloadReleaseMutation
         [Service] ServerLibraryCache cache,
         [Service] SoulSeekReleaseDownloader soulSeekReleaseDownloader,
         [Service] ILogger<StartDownloadReleaseMutation> logger,
+        [Service] ServerLibraryJsonWriter writer,
         StartDownloadReleaseInput input
     )
     {
@@ -56,48 +58,45 @@ public class StartDownloadReleaseMutation
         {
             try
             {
-                var jsonText = await File.ReadAllTextAsync(releaseJsonPath);
-                var json = JsonSerializer.Deserialize<JsonRelease>(jsonText, GetJsonOptions());
-                if (json?.Tracks != null && json.Tracks.Count > 0)
-                {
-                    var audioFiles = Directory
-                        .GetFiles(targetDir)
-                        .Where(f =>
-                            new[] { ".mp3", ".flac", ".wav", ".m4a", ".ogg" }.Contains(
-                                Path.GetExtension(f).ToLowerInvariant()
-                            )
-                        )
-                        .OrderBy(f => f, StringComparer.OrdinalIgnoreCase)
-                        .Select(Path.GetFileName)
-                        .ToList();
+                var audioFiles = Directory
+                    .GetFiles(targetDir)
+                    .Where(f => new[] { ".mp3", ".flac", ".wav", ".m4a", ".ogg" }.Contains(Path.GetExtension(f).ToLowerInvariant()))
+                    .OrderBy(f => f, StringComparer.OrdinalIgnoreCase)
+                    .Select(Path.GetFileName)
+                    .ToList();
 
-                    logger.LogInformation("[StartDownload] Found {Count} audio files in {Dir}", audioFiles.Count, targetDir);
-                    for (int i = 0; i < json.Tracks.Count; i++)
+                logger.LogInformation("[StartDownload] Found {Count} audio files in {Dir}", audioFiles.Count, targetDir);
+
+                await writer.UpdateReleaseAsync(
+                    input.ArtistId,
+                    input.ReleaseFolderName,
+                    rel =>
                     {
-                        if (i < audioFiles.Count)
+                        if (rel.Tracks is null) return;
+                        for (int i = 0; i < rel.Tracks.Count; i++)
                         {
-                            json.Tracks[i].AudioFilePath = "./" + audioFiles[i];
+                            if (i < audioFiles.Count)
+                            {
+                                rel.Tracks[i].AudioFilePath = "./" + audioFiles[i];
+                            }
                         }
                     }
+                );
 
-                    var updated = JsonSerializer.Serialize(json, GetJsonOptions());
-                    await File.WriteAllTextAsync(releaseJsonPath, updated);
-
-                    logger.LogInformation("[StartDownload] Updated release.json with audio file paths");
-                    for (int i = 0; i < json.Tracks.Count; i++)
+                logger.LogInformation("[StartDownload] Updated release.json with audio file paths");
+                // Update cache statuses
+                var relAfterCount = audioFiles.Count; // used for bounds below
+                await Task.WhenAll(Enumerable.Range(0, relAfterCount).Select(async i =>
                     {
-                        if (i < audioFiles.Count)
-                        {
-                            await cache.UpdateMediaAvailabilityStatus(
-                                input.ArtistId,
-                                input.ReleaseFolderName,
-                                i + 1,
-                                CachedMediaAvailabilityStatus.Available
-                            );
-                            logger.LogInformation("[StartDownload] Marked track {Track} as Available", i + 1);
-                        }
+                        await cache.UpdateMediaAvailabilityStatus(
+                            input.ArtistId,
+                            input.ReleaseFolderName,
+                            i + 1,
+                            CachedMediaAvailabilityStatus.Available
+                        );
+                        logger.LogInformation("[StartDownload] Marked track {Track} as Available", i + 1);
                     }
-                }
+                ));
             }
             catch (Exception ex)
             {

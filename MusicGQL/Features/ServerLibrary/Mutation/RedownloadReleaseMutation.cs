@@ -1,4 +1,5 @@
 using MusicGQL.Features.ServerLibrary.Cache;
+using MusicGQL.Features.ServerLibrary.Writer;
 using Path = System.IO.Path;
 
 namespace MusicGQL.Features.ServerLibrary.Mutation;
@@ -8,6 +9,7 @@ public class RedownloadReleaseMutation
 {
     public async Task<RedownloadReleaseResult> RedownloadRelease(
         [Service] ServerLibraryCache cache,
+        [Service] ServerLibraryJsonWriter writer,
         string ArtistId,
         string ReleaseFolderName
     )
@@ -40,32 +42,20 @@ public class RedownloadReleaseMutation
         }
 
         // Update release.json to clear audio references
-        var releaseJsonPath = Path.Combine(dir, "release.json");
         try
         {
-            if (File.Exists(releaseJsonPath))
-            {
-                var jsonText = await File.ReadAllTextAsync(releaseJsonPath);
-                var json = System.Text.Json.JsonSerializer.Deserialize<MusicGQL.Features.ServerLibrary.Json.JsonRelease>(jsonText, new System.Text.Json.JsonSerializerOptions
+            await writer.UpdateReleaseAsync(
+                ArtistId,
+                ReleaseFolderName,
+                rel =>
                 {
-                    PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase,
-                    Converters = { new System.Text.Json.Serialization.JsonStringEnumConverter(System.Text.Json.JsonNamingPolicy.CamelCase) }
-                });
-                if (json?.Tracks != null)
-                {
-                    foreach (var t in json.Tracks)
+                    if (rel.Tracks is null) return;
+                    foreach (var t in rel.Tracks)
                     {
                         t.AudioFilePath = null;
                     }
-                    var updated = System.Text.Json.JsonSerializer.Serialize(json, new System.Text.Json.JsonSerializerOptions
-                    {
-                        PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase,
-                        WriteIndented = true,
-                        Converters = { new System.Text.Json.Serialization.JsonStringEnumConverter(System.Text.Json.JsonNamingPolicy.CamelCase) }
-                    });
-                    await File.WriteAllTextAsync(releaseJsonPath, updated);
                 }
-            }
+            );
         }
         catch (Exception ex)
         {

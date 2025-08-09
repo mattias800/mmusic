@@ -132,11 +132,9 @@ public class LibraryImportService(
                 },
             };
 
-            // 7. Write artist.json file
-            var artistJsonPath = Path.Combine(artistFolderPath, "artist.json");
-            var jsonOptions = GetJsonOptions();
-            var jsonContent = JsonSerializer.Serialize(artistJson, jsonOptions);
-            await File.WriteAllTextAsync(artistJsonPath, jsonContent);
+            // 7. Write artist.json file (centralized writer)
+            var jsonWriter = new ServerLibrary.Writer.ServerLibraryJsonWriter();
+            await jsonWriter.WriteArtistAsync(artistJson);
 
             Console.WriteLine($"✅ Created artist.json");
 
@@ -182,9 +180,8 @@ public class LibraryImportService(
                         }
                     }
 
-                    // Rewrite artist.json if any mapping was added
-                    var updatedContent = JsonSerializer.Serialize(artistJson, jsonOptions);
-                    await File.WriteAllTextAsync(artistJsonPath, updatedContent);
+                    // Rewrite artist.json if any mapping was added (centralized writer)
+                    await jsonWriter.WriteArtistAsync(artistJson);
                 }
             }
             catch { }

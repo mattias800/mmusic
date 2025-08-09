@@ -129,11 +129,9 @@ public class LibraryReleaseImportService(
                 Tracks = enrichedTracks,
             };
 
-            // 5. Write release.json file
-            var releaseJsonPath = Path.Combine(releaseFolderPath, "release.json");
-            var jsonOptions = GetJsonOptions();
-            var jsonContent = JsonSerializer.Serialize(releaseJson, jsonOptions);
-            await File.WriteAllTextAsync(releaseJsonPath, jsonContent);
+            // 5. Write release.json file (centralized writer)
+            var writer = new MusicGQL.Features.ServerLibrary.Writer.ServerLibraryJsonWriter();
+            await writer.WriteReleaseAsync(artistId, releaseFolderName, releaseJson);
 
             result.Success = true;
             result.ReleaseFolderPath = releaseFolderPath;
