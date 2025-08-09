@@ -202,13 +202,21 @@ public class ServerLibraryCache(ServerLibraryJsonReader reader, ITopicEventSende
 
         if (track != null)
         {
+            // Publish to the exact topics that the subscriptions are listening to
             await eventSender.SendAsync(
-                nameof(LibrarySubscription.LibraryCacheTrackUpdated),
+                LibrarySubscription.LibraryCacheTrackUpdatedTopic(
+                    artistId,
+                    releaseFolderName,
+                    trackNumber
+                ),
                 new LibraryCacheTrackStatus(artistId, releaseFolderName, trackNumber)
             );
 
             await eventSender.SendAsync(
-                nameof(LibrarySubscription.LibraryCacheTracksInReleaseUpdated),
+                LibrarySubscription.LibraryCacheInTracksReleaseUpdatedTopic(
+                    artistId,
+                    releaseFolderName
+                ),
                 new LibraryCacheTrackStatus(artistId, releaseFolderName, trackNumber)
             );
         }
