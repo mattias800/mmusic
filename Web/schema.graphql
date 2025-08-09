@@ -38,28 +38,6 @@ directive @listSize(
   slicingArguments: [String!]
 ) on FIELD_DEFINITION
 
-type AddArtistToServerLibraryArtistAlreadyAdded {
-  message: String!
-}
-
-type AddArtistToServerLibraryArtistDoesNotExist {
-  message: String!
-}
-
-input AddArtistToServerLibraryInput {
-  artistId: ID!
-}
-
-union AddArtistToServerLibraryResult = AddArtistToServerLibraryArtistAlreadyAdded | AddArtistToServerLibraryArtistDoesNotExist | AddArtistToServerLibrarySuccess | AddArtistToServerLibraryUnknownError
-
-type AddArtistToServerLibrarySuccess {
-  success: Boolean!
-}
-
-type AddArtistToServerLibraryUnknownError {
-  message: String!
-}
-
 """Defines when a policy shall be executed."""
 enum ApplyPolicy {
   """After the resolver was executed."""
@@ -516,7 +494,6 @@ type MusicBrainzSearchRoot {
 }
 
 type Mutation {
-  addArtistToServerLibrary(input: AddArtistToServerLibraryInput!): AddArtistToServerLibraryResult!
   createDirectory(path: String!): FileSystemEntry!
   createPlaylist: CreatePlaylistResult!
   createUser(input: CreateUserInput!): CreateUserResult!

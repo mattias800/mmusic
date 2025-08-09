@@ -34,7 +34,9 @@ export function SearchResultGroup<T extends { id: string }>({
         )}
         {!items || (items.length === 0 && <NoResultsFound />)}
 
-        {items?.map((item) => <div key={item.id}>{renderItem(item)}</div>)}
+        {items?.map((item) => (
+          <div key={item.id}>{renderItem(item)}</div>
+        ))}
       </div>
       {children ? (
         <>

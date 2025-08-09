@@ -5,6 +5,7 @@ import { sumBy } from "lodash-es";
 import { formatAlbumLength } from "@/common/AlbumLengthFormatter.ts";
 import { ReleaseType } from "@/gql/graphql.ts";
 import { getRouteToArtist } from "@/AppRoutes.ts";
+import { buildCoverArtPlaceholder } from "@/components/images/placeholderCoverArt.ts";
 
 export interface AlbumHeaderProps {
   release: FragmentType<typeof albumHeaderReleaseFragment>;
@@ -20,6 +21,9 @@ const albumHeaderReleaseFragment = graphql(`
     artist {
       id
       name
+      images {
+        thumbs
+      }
     }
     tracks {
       id
@@ -33,9 +37,6 @@ export const AlbumHeader: React.FC<AlbumHeaderProps> = (props) => {
 
   const numTracks = release?.tracks.length ?? 0;
 
-  console.log(release?.tracks);
-  console.log(sumBy(release?.tracks ?? [], (track) => track.trackLength ?? 0));
-
   const numSongsText = numTracks === 1 ? "1 song" : `${numTracks} songs`;
   const albumTime = formatAlbumLength(
     sumBy(release?.tracks ?? [], (track) => track.trackLength ?? 0),
@@ -48,9 +49,22 @@ export const AlbumHeader: React.FC<AlbumHeaderProps> = (props) => {
   return (
     <div className="flex flex-col sm:flex-row gap-6 items-center sm:items-end mb-8">
       <img
-        src={release.coverArtUrl ?? ""}
+        src={
+          release.coverArtUrl ||
+          release.artist.images?.thumbs?.[0] ||
+          buildCoverArtPlaceholder(release.title)
+        }
         alt={release.title + " album cover"}
-        className="w-64 h-64 rounded shadow-lg"
+        onError={(e) => {
+          const target = e.currentTarget as HTMLImageElement;
+          if (!target.dataset.fallback) {
+            target.dataset.fallback = "1";
+            target.src =
+              release.artist.images?.thumbs?.[0] ||
+              buildCoverArtPlaceholder(release.title);
+          }
+        }}
+        className="w-64 h-64 rounded shadow-lg object-cover"
       />
       <div className={"flex flex-col gap-3"}>
         <p className="text-sm">{getReleaseType(release.type)}</p>

@@ -62,5 +62,3 @@ export const LibraryAudioPlayer: React.FC<LibraryAudioPlayerProps> = ({
     />
   );
 };
-
-

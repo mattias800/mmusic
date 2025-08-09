@@ -69,7 +69,10 @@ export const musicPlayerSlice = createSlice({
     ) => {
       state.queue = action.payload;
       state.currentIndex = action.payload.length > 0 ? 0 : -1;
-      const current = state.currentIndex >= 0 ? action.payload[state.currentIndex] : undefined;
+      const current =
+        state.currentIndex >= 0
+          ? action.payload[state.currentIndex]
+          : undefined;
       state.artistId = current?.artistId;
       state.releaseFolderName = current?.releaseFolderName;
       state.trackNumber = current?.trackNumber;

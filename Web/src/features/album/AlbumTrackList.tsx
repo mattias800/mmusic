@@ -56,44 +56,44 @@ export const AlbumTrackList: React.FC<AlbumTrackListProps> = (props) => {
           player.isPlaying;
         return (
           <TrackItem
-          key={track.id}
-          trackNumber={idx + 1}
-          title={track.title}
-          trackLength={track.trackLength}
-          playCount={track.statistics?.listeners ?? 0}
-          onClick={
-            track.isMissing
-              ? undefined
-              : () =>
-                  dispatch(
-                    musicPlayerSlice.actions.playTrack({
-                      artistId: (release?.artist.id as string) ?? "",
-                      releaseFolderName: release?.folderName as string,
-                      trackNumber: idx + 1,
-                    }),
-                  )
-          }
-          renderSubtitle={() => (
-            <>
-              {[{ artist: { id: "1", name: "CreditArtist" } }].map(
-                ({ artist }, index) => (
-                  <React.Fragment key={artist.id}>
-                    {index > 0 && ", "}
-                    <Link
-                      to={`/artist/${artist.id}`}
-                      className="hover:underline"
-                    >
-                      {artist.name}
-                    </Link>
-                  </React.Fragment>
-                ),
-              )}
-            </>
-          )}
-          renderTag={() => <AlbumTrackTag track={track} />}
-          playing={isPlaying}
-        />
-      );
+            key={track.id}
+            trackNumber={idx + 1}
+            title={track.title}
+            trackLength={track.trackLength}
+            playCount={track.statistics?.listeners ?? 0}
+            onClick={
+              track.isMissing
+                ? undefined
+                : () =>
+                    dispatch(
+                      musicPlayerSlice.actions.playTrack({
+                        artistId: (release?.artist.id as string) ?? "",
+                        releaseFolderName: release?.folderName as string,
+                        trackNumber: idx + 1,
+                      }),
+                    )
+            }
+            renderSubtitle={() => (
+              <>
+                {[{ artist: { id: "1", name: "CreditArtist" } }].map(
+                  ({ artist }, index) => (
+                    <React.Fragment key={artist.id}>
+                      {index > 0 && ", "}
+                      <Link
+                        to={`/artist/${artist.id}`}
+                        className="hover:underline"
+                      >
+                        {artist.name}
+                      </Link>
+                    </React.Fragment>
+                  ),
+                )}
+              </>
+            )}
+            renderTag={() => <AlbumTrackTag track={track} />}
+            playing={isPlaying}
+          />
+        );
       })}
     </div>
   );

@@ -10,7 +10,9 @@ export interface SidebarContextProps {
   toggleSidebar: () => void;
 }
 
-export const SidebarContext = React.createContext<SidebarContextProps | null>(null);
+export const SidebarContext = React.createContext<SidebarContextProps | null>(
+  null,
+);
 
 function useSidebar() {
   const context = React.useContext(SidebarContext);

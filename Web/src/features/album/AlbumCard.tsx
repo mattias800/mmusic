@@ -3,6 +3,7 @@ import { FragmentType, graphql, useFragment } from "@/gql";
 import { useNavigate } from "react-router";
 import { getRouteToRelease } from "@/AppRoutes.ts";
 import { Tag } from "@/components/text/Tag.tsx";
+import { buildCoverArtPlaceholder } from "@/components/images/placeholderCoverArt.ts";
 
 export interface AlbumCardProps {
   release: FragmentType<typeof albumCardReleaseGroupFragment>;
@@ -18,6 +19,9 @@ const albumCardReleaseGroupFragment = graphql(`
     isFullyMissing
     artist {
       id
+      images {
+        thumbs
+      }
     }
   }
 `);
@@ -34,17 +38,28 @@ export const AlbumCard: React.FC<AlbumCardProps> = (props) => {
         navigate(getRouteToRelease(release.artist.id, release.folderName))
       }
     >
-      {release.coverArtUrl && (
-        <div className="overflow-hidden rounded-md flex flex-col gap-2 w-64">
-          <img
-            src={release.coverArtUrl}
-            alt={release.title}
-            className={
-              "h-64 w-64 object-cover transition-all hover:scale-105 aspect-square"
+      <div className="overflow-hidden rounded-md flex flex-col gap-2 w-64">
+        <img
+          src={
+            release.coverArtUrl ||
+            release.artist.images?.thumbs?.[0] ||
+            buildCoverArtPlaceholder(release.title)
+          }
+          alt={release.title}
+          onError={(e) => {
+            const target = e.currentTarget as HTMLImageElement;
+            if (!target.dataset.fallback) {
+              target.dataset.fallback = "1";
+              target.src =
+                release.artist.images?.thumbs?.[0] ||
+                buildCoverArtPlaceholder(release.title);
             }
-          />
-        </div>
-      )}
+          }}
+          className={
+            "h-64 w-64 object-cover transition-all hover:scale-105 aspect-square"
+          }
+        />
+      </div>
       <div className={"bold flex items-center gap-2"}>
         <span className="truncate">{release.title}</span>
         {release.isFullyMissing && <Tag variant={"error"}>Missing</Tag>}
