@@ -16,6 +16,8 @@ public class CachedTrack
     public JsonReleaseType JsonReleaseType { get; set; }
     public JsonTrack JsonTrack { get; set; } = new();
 
+    public List<CachedTrackCredit> TrackCredits { get; set; } = new();
+
     // Searchable properties
     public string SearchTitle => Title.ToLowerInvariant();
     public string? SearchSortTitle => SortTitle?.ToLowerInvariant();
@@ -26,4 +28,11 @@ public class CachedTrack
     // Download status
     public CachedMediaAvailabilityStatus CachedMediaAvailabilityStatus { get; set; } =
         CachedMediaAvailabilityStatus.Unknown;
+}
+
+public class CachedTrackCredit
+{
+    public JsonTrackCredit JsonTrackCredit { get; set; } = new();
+
+    // Add searchable properties if needed.
 }

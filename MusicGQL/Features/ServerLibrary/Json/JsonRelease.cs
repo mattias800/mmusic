@@ -36,6 +36,13 @@ public class JsonTrack
     public JsonTrackServiceConnections? Connections { get; set; }
 }
 
+public class JsonTrackCredit
+{
+    public string ArtistName { get; set; }
+    public string? ArtistId { get; set; }
+    public string? MusicBrainzArtistId { get; set; }
+}
+
 public class JsonTrackServiceConnections
 {
     public string? MusicBrainzRecordingId { get; set; }
