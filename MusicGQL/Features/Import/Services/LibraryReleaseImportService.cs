@@ -97,7 +97,7 @@ public class LibraryReleaseImportService(
             var enrichedTracks = new List<JsonTrack>();
             foreach (var track in selectedRelease.Tracks)
             {
-                long? playCount = null;
+                JsonTrackStatistics? stats = null;
                 if (!string.IsNullOrWhiteSpace(artistName))
                 {
                     try
@@ -107,7 +107,14 @@ public class LibraryReleaseImportService(
                             track.Title,
                             artistName
                         );
-                        playCount = lfTrack?.Statistics?.PlayCount;
+                        if (lfTrack?.Statistics != null)
+                        {
+                            stats = new JsonTrackStatistics
+                            {
+                                PlayCount = lfTrack.Statistics.PlayCount,
+                                Listeners = lfTrack.Statistics.Listeners,
+                            };
+                        }
                     }
                     catch
                     {
@@ -121,7 +128,9 @@ public class LibraryReleaseImportService(
                         Title = track.Title,
                         TrackNumber = track.TrackNumber,
                         TrackLength = track.Length,
-                        PlayCount = playCount,
+                        // Preserve legacy PlayCount while adding structured Statistics
+                        PlayCount = stats?.PlayCount,
+                        Statistics = stats,
                         AudioFilePath = null,
                     }
                 );

@@ -147,13 +147,6 @@ public class ServerLibraryCache(ServerLibraryJsonReader reader, ITopicEventSende
                                 ReleaseTitle = releaseJson.Title,
                                 JsonReleaseType = releaseJson.Type,
                                 JsonTrack = trackJson,
-                                TrackCredits =
-                                    trackJson
-                                        .Credits?.Select(c => new CachedTrackCredit
-                                        {
-                                            JsonTrackCredit = c,
-                                        })
-                                        .ToList() ?? [],
                             };
 
                             // Preserve previous media availability status if present
@@ -341,9 +334,6 @@ public class ServerLibraryCache(ServerLibraryJsonReader reader, ITopicEventSende
                     ReleaseTitle = newRelease.Title,
                     JsonReleaseType = releaseJson.Type,
                     JsonTrack = jt,
-                    TrackCredits =
-                        jt.Credits?.Select(c => new CachedTrackCredit { JsonTrackCredit = c })
-                            .ToList() ?? new List<CachedTrackCredit>(),
                 };
 
                 if (previousStatusesByTrackNumber.TryGetValue(ct.TrackNumber, out var prev))

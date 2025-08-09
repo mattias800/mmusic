@@ -479,6 +479,42 @@ public sealed class MusicBrainzImportExecutor(
             .OrderBy(t => t.TrackNumber)
             .ToList();
 
+        // After building the track list, enrich with Last.fm statistics
+        try
+        {
+            string? artistDisplayName = null;
+            var artistJsonPath = Path.Combine(artistDir, "artist.json");
+            if (File.Exists(artistJsonPath))
+            {
+                var text = await File.ReadAllTextAsync(artistJsonPath);
+                var jsonArtist = JsonSerializer.Deserialize<JsonArtist>(text, GetJsonOptions());
+                artistDisplayName = jsonArtist?.Name;
+            }
+
+            if (!string.IsNullOrWhiteSpace(artistDisplayName) && tracks != null)
+            {
+                foreach (var jt in tracks)
+                {
+                    try
+                    {
+                        var info = await lastfmClient.Track.GetInfoAsync(jt.Title, artistDisplayName);
+                        if (info?.Statistics != null)
+                        {
+                            jt.Statistics = new JsonTrackStatistics
+                            {
+                                PlayCount = info.Statistics.PlayCount,
+                                Listeners = info.Statistics.Listeners,
+                            };
+                            // keep legacy field in sync
+                            jt.PlayCount = jt.Statistics.PlayCount;
+                        }
+                    }
+                    catch { /* ignore per-track enrichment failures */ }
+                }
+            }
+        }
+        catch { /* ignore enrichment failures */ }
+
         var jsonRelease = new JsonRelease
         {
             Title = releaseTitle ?? Path.GetFileName(releaseDir) ?? string.Empty,

@@ -55,8 +55,8 @@ public record Track([property: GraphQLIgnore] CachedTrack Model)
     public IEnumerable<TrackCredit> Credits() =>
         Model.JsonTrack.Credits?.Select(t => new TrackCredit(t)) ?? [];
 
-    public async Task<TrackStatistics?> Statistics()
+    public TrackStatistics? Statistics()
     {
-        return new TrackStatistics(Model.JsonTrack.Statistics);
+        return Model.JsonTrack.Statistics is null ? null : new TrackStatistics(Model.JsonTrack.Statistics);
     }
 }
