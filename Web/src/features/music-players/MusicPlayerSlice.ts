@@ -15,6 +15,7 @@ export interface MusicPlayerState {
     artistName?: string;
     coverArtUrl?: string;
     trackLengthMs?: number;
+    qualityLabel?: string;
   }>;
   // play history
   history: Array<{
@@ -25,6 +26,7 @@ export interface MusicPlayerState {
     artistName?: string;
     coverArtUrl?: string;
     trackLengthMs?: number;
+    qualityLabel?: string;
     startedAtIso: string;
   }>;
   currentIndex: number; // index in queue
@@ -65,6 +67,7 @@ const pushCurrentToHistory = (state: MusicPlayerState) => {
     artistName: current?.artistName,
     coverArtUrl: current?.coverArtUrl,
     trackLengthMs: current?.trackLengthMs,
+    qualityLabel: current?.qualityLabel,
     startedAtIso: new Date().toISOString(),
   });
   // keep history from growing unbounded; cap to last 500 items
@@ -164,6 +167,17 @@ export const musicPlayerSlice = createSlice({
     ) => {
       state.positionSec = action.payload.positionSec;
       state.durationSec = action.payload.durationSec;
+    },
+    updateCurrentQualityLabel: (
+      state,
+      action: PayloadAction<string | undefined>,
+    ) => {
+      if (state.currentIndex < 0 || state.currentIndex >= state.queue.length)
+        return;
+      state.queue[state.currentIndex] = {
+        ...state.queue[state.currentIndex],
+        qualityLabel: action.payload,
+      };
     },
     playAtIndex: (state, action: PayloadAction<number>) => {
       const idx = action.payload;

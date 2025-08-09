@@ -24,6 +24,10 @@ const albumTrackListReleaseGroupFragment = graphql(`
       title
       trackLength
       isMissing
+      media {
+        id
+        audioUrl
+      }
       ...AlbumTrackTag_Track
       ...RecordingPlayButton_Track
       credits {

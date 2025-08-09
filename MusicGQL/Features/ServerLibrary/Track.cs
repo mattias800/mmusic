@@ -1,6 +1,7 @@
 using MusicGQL.Features.Downloads;
 using MusicGQL.Features.ServerLibrary.Cache;
 using MusicGQL.Features.ServerLibrary.Utils;
+using IO = System.IO;
 
 namespace MusicGQL.Features.ServerLibrary;
 
@@ -18,16 +19,6 @@ public record Track([property: GraphQLIgnore] CachedTrack Model)
     public long? PlayCount() => Model.JsonTrack.PlayCount;
 
     public bool IsMissing() => string.IsNullOrWhiteSpace(Model.JsonTrack.AudioFilePath);
-
-    /// <summary>
-    /// Gets the audio URL that the server can serve
-    /// </summary>
-    public string AudioUrl() =>
-        LibraryAssetUrlFactory.CreateTrackAudioUrl(
-            Model.ArtistId,
-            Model.ReleaseFolderName,
-            Model.TrackNumber
-        );
 
     public async Task<Release> Release(ServerLibraryCache cache)
     {
@@ -49,6 +40,9 @@ public record Track([property: GraphQLIgnore] CachedTrack Model)
         return new(release);
     }
 
+    public TrackMedia? Media() =>
+        string.IsNullOrWhiteSpace(Model.JsonTrack.AudioFilePath) ? new(Model) : null;
+
     public MediaAvailabilityStatus MediaAvailabilityStatus() =>
         Model.CachedMediaAvailabilityStatus.ToGql();
 
@@ -57,6 +51,8 @@ public record Track([property: GraphQLIgnore] CachedTrack Model)
 
     public TrackStatistics? Statistics()
     {
-        return Model.JsonTrack.Statistics is null ? null : new TrackStatistics(Model.JsonTrack.Statistics);
+        return Model.JsonTrack.Statistics is null
+            ? null
+            : new TrackStatistics(Model.JsonTrack.Statistics);
     }
 }

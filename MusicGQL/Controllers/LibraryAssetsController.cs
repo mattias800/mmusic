@@ -91,11 +91,16 @@ public class LibraryAssetsController(ServerLibraryAssetReader assetReader) : Con
     [HttpGet("{artistId}/toptracks/{index:int}/coverart")]
     public async Task<IActionResult> GetTopTrackCoverArt(string artistId, int index)
     {
-        var (stream, contentType, fileName) = await assetReader.GetTopTrackCoverArtAsync(artistId, index);
+        var (stream, contentType, fileName) = await assetReader.GetTopTrackCoverArtAsync(
+            artistId,
+            index
+        );
 
         if (stream == null || contentType == null)
         {
-            return NotFound($"Top track cover art not found for artist '{artistId}' at index {index}");
+            return NotFound(
+                $"Top track cover art not found for artist '{artistId}' at index {index}"
+            );
         }
 
         var shouldIncludeExtension = ShouldIncludeFileExtension(Request.Path);

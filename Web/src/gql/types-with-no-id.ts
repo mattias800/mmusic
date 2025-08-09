@@ -15,7 +15,7 @@ export type TypesWithNoId = 'ArtistImages' | 'ArtistServerStatusImportingArtist'
  * Union type of all GraphQL object types that have an id field.
  * This is used for reference and validation.
  */
-export type TypesWithId = 'Artist' | 'ArtistServerStatus' | 'ExternalRoot' | 'LastFmAlbum' | 'LastFmArtist' | 'LastFmTrack' | 'LikedSong' | 'MbArtist' | 'MbGenre' | 'MbLabel' | 'MbRecording' | 'MbRecordingStreamingServiceInfo' | 'MbRelease' | 'MbReleaseGroup' | 'MbTrack' | 'Ping' | 'Playlist' | 'Release' | 'ServerSettings' | 'SoulSeekRoot' | 'SoulSeekStatus' | 'SpotifyPlaylist' | 'Track' | 'Url' | 'User';
+export type TypesWithId = 'Artist' | 'ArtistServerStatus' | 'ExternalRoot' | 'LastFmAlbum' | 'LastFmArtist' | 'LastFmTrack' | 'LikedSong' | 'MbArtist' | 'MbGenre' | 'MbLabel' | 'MbRecording' | 'MbRecordingStreamingServiceInfo' | 'MbRelease' | 'MbReleaseGroup' | 'MbTrack' | 'Ping' | 'Playlist' | 'Release' | 'ServerSettings' | 'SoulSeekRoot' | 'SoulSeekStatus' | 'SpotifyPlaylist' | 'Track' | 'TrackMedia' | 'Url' | 'User';
 
 /**
  * Type guard to check if a type has an id field.
@@ -23,7 +23,7 @@ export type TypesWithId = 'Artist' | 'ArtistServerStatus' | 'ExternalRoot' | 'La
  * @returns True if the type has an id field, false otherwise
  */
 export function hasIdField(type: string): type is TypesWithId {
-  const typesWithId: string[] = ['Artist', 'ArtistServerStatus', 'ExternalRoot', 'LastFmAlbum', 'LastFmArtist', 'LastFmTrack', 'LikedSong', 'MbArtist', 'MbGenre', 'MbLabel', 'MbRecording', 'MbRecordingStreamingServiceInfo', 'MbRelease', 'MbReleaseGroup', 'MbTrack', 'Ping', 'Playlist', 'Release', 'ServerSettings', 'SoulSeekRoot', 'SoulSeekStatus', 'SpotifyPlaylist', 'Track', 'Url', 'User'];
+  const typesWithId: string[] = ['Artist', 'ArtistServerStatus', 'ExternalRoot', 'LastFmAlbum', 'LastFmArtist', 'LastFmTrack', 'LikedSong', 'MbArtist', 'MbGenre', 'MbLabel', 'MbRecording', 'MbRecordingStreamingServiceInfo', 'MbRelease', 'MbReleaseGroup', 'MbTrack', 'Ping', 'Playlist', 'Release', 'ServerSettings', 'SoulSeekRoot', 'SoulSeekStatus', 'SpotifyPlaylist', 'Track', 'TrackMedia', 'Url', 'User'];
   return typesWithId.includes(type);
 }
 

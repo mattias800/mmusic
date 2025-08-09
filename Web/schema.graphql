@@ -789,10 +789,10 @@ type Subscription {
 }
 
 type Track {
-  audioUrl: String!
   credits: [TrackCredit!]!
   id: ID!
   isMissing: Boolean!
+  media: TrackMedia
   mediaAvailabilityStatus: MediaAvailabilityStatus!
   playCount: Long
   release: Release!
@@ -806,6 +806,15 @@ type TrackCredit {
   artist: Artist
   artistName: String!
   mbArtist: MbArtist
+}
+
+type TrackMedia {
+  audioBitrateKbps: Int
+  audioFormat: String
+  audioQualityLabel: String!
+  audioUrl: String!
+  id: ID!
+  isLosslessFormat: Boolean!
 }
 
 type TrackStatistics {

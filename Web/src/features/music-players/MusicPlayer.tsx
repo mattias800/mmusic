@@ -12,7 +12,12 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet.tsx";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs.tsx";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs.tsx";
 import { HistoryPanel } from "@/features/music-players/HistoryPanel.tsx";
 import { ReleaseCoverArt } from "@/components/images/ReleaseCoverArt.tsx";
 import {
@@ -24,6 +29,7 @@ import {
   VolumeX,
   ListMusic,
 } from "lucide-react";
+import { useState } from "react";
 
 export interface MusicPlayerProps {}
 
@@ -31,7 +37,7 @@ const selector = (state: RootState) => state.musicPlayers;
 
 export const MusicPlayer: React.FC<MusicPlayerProps> = () => {
   const dispatch = useAppDispatch();
-  const [queueOpen, setQueueOpen] = React.useState(false);
+  const [queueOpen, setQueueOpen] = useState(false);
   const {
     currentMusicPlayer,
     isOpen,
@@ -77,6 +83,12 @@ export const MusicPlayer: React.FC<MusicPlayerProps> = () => {
             <div className="truncate text-muted-foreground text-sm">
               {currentQueueItem?.artistName ?? artistId}
             </div>
+            {/* Quality label */}
+            {currentQueueItem?.qualityLabel && (
+              <div className="text-xs text-muted-foreground opacity-70">
+                {currentQueueItem.qualityLabel}
+              </div>
+            )}
           </div>
         </div>
 
@@ -192,14 +204,18 @@ export const MusicPlayer: React.FC<MusicPlayerProps> = () => {
             <div className="px-3 pt-2">
               <TabsList>
                 <TabsTrigger value="queue">Queue ({queue.length})</TabsTrigger>
-                <TabsTrigger value="history">History ({history.length})</TabsTrigger>
+                <TabsTrigger value="history">
+                  History ({history.length})
+                </TabsTrigger>
               </TabsList>
             </div>
             <TabsContent value="queue" className="flex-1 overflow-y-auto">
               <QueuePanel
                 queue={queue}
                 currentIndex={currentIndex}
-                onSelect={(idx) => dispatch(musicPlayerSlice.actions.playAtIndex(idx))}
+                onSelect={(idx) =>
+                  dispatch(musicPlayerSlice.actions.playAtIndex(idx))
+                }
               />
             </TabsContent>
             <TabsContent value="history" className="flex-1 overflow-y-auto">
