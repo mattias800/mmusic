@@ -40,13 +40,10 @@ public class LibraryReleaseImportService(
         var releaseFolderName = SanitizeFolderName(releaseGroup.Title);
         var releaseFolderPath = Path.Combine(artistFolderPath, releaseFolderName);
 
-        if (Directory.Exists(releaseFolderPath))
+        if (!Directory.Exists(releaseFolderPath))
         {
-            result.ErrorMessage = $"Release folder already exists: {releaseFolderName}";
-            return result;
+            Directory.CreateDirectory(releaseFolderPath);
         }
-
-        Directory.CreateDirectory(releaseFolderPath);
 
         try
         {
