@@ -43,21 +43,32 @@ public class SoulSeekReleaseDownloader(
         var query = $"{normArtist} - {normTitle}".Trim();
         logger.LogInformation("[SoulSeek] Normalized search query: {Query}", query);
 
+        // Determine expected track count from cache (if available)
+        var cachedRelease = await cache.GetReleaseByArtistAndFolderAsync(artistId, releaseFolderName);
+        int expectedTrackCount = cachedRelease?.Tracks?.Count ?? 0;
+        int minRequiredTracks = expectedTrackCount > 0 ? Math.Max(2, Math.Min(expectedTrackCount, expectedTrackCount - 1)) : 5; // allow off-by-one if known, else require at least 5
+
         var result = await client.SearchAsync(new SearchQuery(query));
 
-        // Order candidate responses similarly to BestResponseFinder but return an ordered list
+        // Filter and order candidate responses. Prefer users that have many proper audio files (mp3 320kbps).
         var orderedCandidates = result.Responses
-            .Where(r => r.FileCount > 0)
-            .Where(Sagas.Util.BestResponseFinder.HasCorrectMediaType)
-            .OrderBy(r => r.QueueLength)
-            .ThenBy(r => r.HasFreeUploadSlot)
-            .ThenByDescending(r => r.UploadSpeed)
+            .Select(r => new
+            {
+                Response = r,
+                Audio320Files = r.Files.Where(f => f.Extension.Equals("mp3", StringComparison.OrdinalIgnoreCase) && f.BitRate == 320).ToList()
+            })
+            .Where(x => x.Audio320Files.Count >= minRequiredTracks)
+            .OrderBy(x => x.Response.QueueLength)
+            .ThenBy(x => x.Response.HasFreeUploadSlot)
+            .ThenByDescending(x => x.Response.UploadSpeed)
+            .ThenByDescending(x => x.Audio320Files.Count)
+            .Select(x => x.Response)
             .ToList();
 
         if (orderedCandidates.Count == 0)
         {
             logger.LogWarning(
-                "[SoulSeek] No results for: {Artist} - {Release}",
+                "[SoulSeek] No suitable album candidates for: {Artist} - {Release}. Try adjusting search or availability.",
                 artistName,
                 releaseTitle
             );
@@ -82,6 +93,18 @@ public class SoulSeekReleaseDownloader(
                 candidate.Username,
                 queue.Count
             );
+
+            if (queue.Count < minRequiredTracks)
+            {
+                // Defensive: skip users that don't have enough audio tracks even after queue creation filtering
+                logger.LogInformation(
+                    "[SoulSeek] Skipping user '{User}' due to insufficient tracks: {Count} < {Min}",
+                    candidate.Username,
+                    queue.Count,
+                    minRequiredTracks
+                );
+                continue;
+            }
 
             while (queue.Any())
             {
@@ -166,7 +189,7 @@ public class SoulSeekReleaseDownloader(
             return string.Empty;
         // Keep only letters, numbers, and spaces; collapse multiple spaces
         // \p{L} = any kind of letter from any language; \p{N} = any kind of numeric character
-        var alnumSpaceOnly = Regex.Replace(input, "[^\\p{L}\\p{N}\\s]", " ");
-        return Regex.Replace(alnumSpaceOnly, "\\s+", " ").Trim();
+        var alnumSpaceOnly = Regex.Replace(input, @"[^\p{L}\p{N}\s]", " ");
+        return Regex.Replace(alnumSpaceOnly, @"\s+", " ").Trim();
     }
 }

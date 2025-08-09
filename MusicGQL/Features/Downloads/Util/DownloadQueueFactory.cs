@@ -9,6 +9,7 @@ public static class DownloadQueueFactory
     public static Queue<DownloadQueueItem> Create(SearchResponse searchResponse)
     {
         var ordered = searchResponse.Files
+            .Where(file => file.Extension.Equals("mp3", StringComparison.OrdinalIgnoreCase) && file.BitRate == 320)
             .Select(file =>
             {
                 var normalized = file.Filename.Replace('\\', '/');
