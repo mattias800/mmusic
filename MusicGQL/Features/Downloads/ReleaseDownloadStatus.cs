@@ -2,8 +2,8 @@ namespace MusicGQL.Features.Downloads;
 
 public enum ReleaseDownloadStatus
 {
-    DownloadButtonVisible,
+    Idle,
     Searching,
     Downloading,
-    DownloadButtonNotVisible,
+    NotFound,
 }

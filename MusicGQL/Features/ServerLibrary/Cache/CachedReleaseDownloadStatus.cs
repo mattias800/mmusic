@@ -4,10 +4,10 @@ namespace MusicGQL.Features.ServerLibrary.Cache;
 
 public enum CachedReleaseDownloadStatus
 {
-    DownloadButtonVisible,
+    Idle,
     Searching,
     Downloading,
-    DownloadButtonNotVisible,
+    NotFound,
 }
 
 public static class CachedReleaseDownloadStatusExtensions
@@ -15,10 +15,10 @@ public static class CachedReleaseDownloadStatusExtensions
     public static ReleaseDownloadStatus ToGql(this CachedReleaseDownloadStatus status) =>
         status switch
         {
-            CachedReleaseDownloadStatus.DownloadButtonVisible =>
-                ReleaseDownloadStatus.DownloadButtonVisible,
+            CachedReleaseDownloadStatus.Idle => ReleaseDownloadStatus.Idle,
             CachedReleaseDownloadStatus.Searching => ReleaseDownloadStatus.Searching,
             CachedReleaseDownloadStatus.Downloading => ReleaseDownloadStatus.Downloading,
-            _ => ReleaseDownloadStatus.DownloadButtonNotVisible,
+            CachedReleaseDownloadStatus.NotFound => ReleaseDownloadStatus.NotFound,
+            _ => ReleaseDownloadStatus.Idle,
         };
 }

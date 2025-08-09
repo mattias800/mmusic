@@ -647,8 +647,8 @@ type Release {
 
 enum ReleaseDownloadStatus {
   DOWNLOADING
-  DOWNLOAD_BUTTON_NOT_VISIBLE
-  DOWNLOAD_BUTTON_VISIBLE
+  IDLE
+  NOT_FOUND
   SEARCHING
 }
 

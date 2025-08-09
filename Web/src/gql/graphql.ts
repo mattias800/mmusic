@@ -839,8 +839,8 @@ export type Release = {
 
 export enum ReleaseDownloadStatus {
   Downloading = 'DOWNLOADING',
-  DownloadButtonNotVisible = 'DOWNLOAD_BUTTON_NOT_VISIBLE',
-  DownloadButtonVisible = 'DOWNLOAD_BUTTON_VISIBLE',
+  Idle = 'IDLE',
+  NotFound = 'NOT_FOUND',
   Searching = 'SEARCHING'
 }
 

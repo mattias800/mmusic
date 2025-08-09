@@ -6925,13 +6925,13 @@
             "deprecationReason": null
           },
           {
-            "name": "DOWNLOAD_BUTTON_NOT_VISIBLE",
+            "name": "IDLE",
             "description": null,
             "isDeprecated": false,
             "deprecationReason": null
           },
           {
-            "name": "DOWNLOAD_BUTTON_VISIBLE",
+            "name": "NOT_FOUND",
             "description": null,
             "isDeprecated": false,
             "deprecationReason": null

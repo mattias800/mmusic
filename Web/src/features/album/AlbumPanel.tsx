@@ -69,8 +69,8 @@ export const AlbumPanel: React.FC<AlbumPanelProps> = (props) => {
               <LargePlayButton />
               <ShuffleButton />
               <LargeLikeButton />
-              <ReleaseDownloadButton release={release} />
               <DotsButton />
+              <ReleaseDownloadButton release={release} />
             </div>
           </div>
 

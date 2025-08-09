@@ -5,6 +5,7 @@ import { FragmentType, graphql, useFragment } from "@/gql";
 import { Button } from "@/components/ui/button.tsx";
 import { Download } from "lucide-react";
 import { ReleaseDownloadStatus } from "@/gql/graphql.ts";
+import { Tag } from "@/components/text/Tag.tsx";
 
 export interface ReleaseDownloadButtonProps {
   release: FragmentType<typeof releaseDownloadButtonReleaseFragment>;
@@ -94,17 +95,41 @@ export const ReleaseDownloadButton: React.FC<ReleaseDownloadButtonProps> = (
     }
   };
 
-  switch (release.downloadStatus) {
-    case ReleaseDownloadStatus.DownloadButtonNotVisible:
-      return null;
+  if (
+    release.downloadStatus === ReleaseDownloadStatus.Idle &&
+    !release.isFullyMissing
+  ) {
+    return null;
+  }
 
+  switch (release.downloadStatus) {
     case ReleaseDownloadStatus.Downloading:
-      return <span>Downloading...</span>;
+      return (
+        <Button
+          variant="secondary"
+          onClick={onClickDownload}
+          className="flex items-center gap-2"
+          loading={true}
+          disabled={true}
+        >
+          Downloading...
+        </Button>
+      );
 
     case ReleaseDownloadStatus.Searching:
-      return <span>Searching...</span>;
+      return (
+        <Button
+          variant="secondary"
+          onClick={onClickDownload}
+          className="flex items-center gap-2"
+          loading={true}
+          disabled={true}
+        >
+          Searching...
+        </Button>
+      );
 
-    case ReleaseDownloadStatus.DownloadButtonVisible:
+    case ReleaseDownloadStatus.Idle:
       return (
         <Button
           variant="secondary"
@@ -114,6 +139,21 @@ export const ReleaseDownloadButton: React.FC<ReleaseDownloadButtonProps> = (
           <Download className="h-5 w-5" />
           {queued ? "Queued" : "Download"}
         </Button>
+      );
+
+    case ReleaseDownloadStatus.NotFound:
+      return (
+        <div className={"flex items-center gap-2 text-red-500"}>
+          <Button
+            variant="secondary"
+            onClick={onClickDownload}
+            className="flex items-center gap-2"
+          >
+            <Download className="h-5 w-5" />
+            {queued ? "Queued" : "Download"}
+          </Button>
+          <Tag>Could not find release.</Tag>
+        </div>
       );
   }
 

@@ -61,12 +61,13 @@ public class StartDownloadReleaseService(
         {
             var msg = $"No suitable download found for {artistName} - {releaseTitle}";
             logger.LogWarning("[StartDownload] {Message}", msg);
-            // reset to show button again
+
             await cache.UpdateReleaseDownloadStatus(
                 artistId,
                 releaseFolderName,
-                CachedReleaseDownloadStatus.DownloadButtonVisible
+                CachedReleaseDownloadStatus.NotFound
             );
+
             return (false, "No suitable download found");
         }
 
@@ -145,6 +146,12 @@ public class StartDownloadReleaseService(
                 return (false, "Failed to update release.json after download");
             }
         }
+
+        await cache.UpdateReleaseDownloadStatus(
+            artistId,
+            releaseFolderName,
+            CachedReleaseDownloadStatus.Idle
+        );
 
         // Finished initial phase; keep Downloading until track-level statuses progress
         logger.LogInformation("[StartDownload] Done");

@@ -16,7 +16,7 @@ public class CachedRelease
 
     // Download workflow status for the whole release
     public CachedReleaseDownloadStatus DownloadStatus { get; set; } =
-        CachedReleaseDownloadStatus.DownloadButtonVisible;
+        CachedReleaseDownloadStatus.Idle;
 
     // Searchable properties
     public string SearchFolderName => FolderName.ToLowerInvariant();
