@@ -131,8 +131,8 @@ public class LibraryAssetsController(ServerLibraryAssetReader assetReader) : Con
             );
         }
 
-        // For audio files, we typically want to include the filename for download purposes
-        return File(stream, contentType, fileName);
+        // Enable HTTP Range processing so the <audio> element can seek without restarting
+        return File(stream, contentType, fileName, enableRangeProcessing: true);
     }
 
     /// <summary>
