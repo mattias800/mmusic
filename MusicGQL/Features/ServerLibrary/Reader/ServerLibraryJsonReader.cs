@@ -8,17 +8,13 @@ namespace MusicGQL.Features.ServerLibrary.Reader;
 public class ServerLibraryJsonReader
 {
     private const string libraryPath = "./Library/";
-    private readonly JsonSerializerOptions _jsonOptions;
 
-    public ServerLibraryJsonReader()
+    private readonly JsonSerializerOptions _jsonOptions = new()
     {
-        _jsonOptions = new JsonSerializerOptions
-        {
-            PropertyNameCaseInsensitive = true,
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) },
-        };
-    }
+        PropertyNameCaseInsensitive = true,
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) },
+    };
 
     /// <summary>
     /// Reads all artists from the library
