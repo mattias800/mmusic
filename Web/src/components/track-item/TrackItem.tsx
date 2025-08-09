@@ -18,8 +18,8 @@ import {
 import { playlists } from "@/components/playlists.ts";
 
 export interface TrackItemProps {
-  coverArtUri?: string | null | undefined;
   showCoverArt?: boolean;
+  renderCoverArt?: () => ReactNode;
   title: string;
   renderTag?: () => ReactNode;
   renderSubtitle?: () => ReactNode;
@@ -32,7 +32,7 @@ export interface TrackItemProps {
 }
 
 export const TrackItem: React.FC<TrackItemProps> = ({
-  coverArtUri,
+  renderCoverArt,
   title,
   renderSubtitle,
   renderTag,
@@ -53,17 +53,10 @@ export const TrackItem: React.FC<TrackItemProps> = ({
           }`}
         >
           <span>{playing ? "▶" : trackNumber}</span>
-
           {showCoverArt && (
             <>
-              {coverArtUri ? (
-                <img
-                  src={coverArtUri}
-                  alt={title ?? ""}
-                  className={
-                    "h-12 w-12 object-cover transition-all hover:scale-105 aspect-square rounded-md"
-                  }
-                />
+              {renderCoverArt ? (
+                renderCoverArt()
               ) : (
                 <div className={"h-12 w-12"} />
               )}

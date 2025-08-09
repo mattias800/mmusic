@@ -7,6 +7,7 @@ import { useAppDispatch } from "@/ReduxAppHooks.ts";
 import { musicPlayerSlice } from "@/features/music-players/MusicPlayerSlice.ts";
 import { getRouteToRelease } from "@/AppRoutes.ts";
 import { AlbumTrackTag } from "@/features/album/AlbumTrackTag.tsx";
+import { ReleaseCoverArt } from "@/components/images/ReleaseCoverArt.tsx";
 
 interface TopArtistTrackItemProps {
   artistTopTrack: FragmentType<typeof topArtistTrackItemArtistTopTrackFragment>;
@@ -31,6 +32,9 @@ const topArtistTrackItemArtistTopTrackFragment = graphql(`
         folderName
         artist {
           id
+          images {
+            thumbs
+          }
         }
       }
     }
@@ -56,7 +60,21 @@ export const TopArtistTrackItem: React.FC<TopArtistTrackItemProps> = (
       playCount={artistTopTrack.playCount}
       playing={props.active}
       showCoverArt
-      coverArtUri={artistTopTrack.coverArtUrl}
+      renderCoverArt={() => (
+        <ReleaseCoverArt
+          srcUrl={artistTopTrack.coverArtUrl ?? undefined}
+          artistThumbUrl={
+            artistTopTrack.track?.release.artist.images?.thumbs?.[0]
+          }
+          titleForPlaceholder={
+            artistTopTrack.releaseTitle ?? artistTopTrack.title
+          }
+          alt={artistTopTrack.title}
+          className={
+            "h-12 w-12 object-cover transition-all hover:scale-105 aspect-square rounded-md"
+          }
+        />
+      )}
       renderTag={() => <AlbumTrackTag track={artistTopTrack?.track} />}
       onClick={() =>
         artistTopTrack.track &&
