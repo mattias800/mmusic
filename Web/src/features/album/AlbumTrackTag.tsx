@@ -27,7 +27,7 @@ export const AlbumTrackTag: React.FC<AlbumTrackTagProps> = (props) => {
   }
 
   if (track.mediaAvailabilityStatus === MediaAvailabilityStatus.Processing) {
-    return <Tag>Processing...</Tag>;
+    return <Tag variant={"success"}>Processing...</Tag>;
   }
 
   if (track.isMissing) {
