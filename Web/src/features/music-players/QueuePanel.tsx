@@ -1,6 +1,7 @@
 import * as React from "react";
 import { formatTrackLength } from "@/common/TrackLengthFormatter.ts";
 import { MusicPlayerState } from "@/features/music-players/MusicPlayerSlice.ts";
+import { ReleaseCoverArt } from "@/components/images/ReleaseCoverArt.tsx";
 
 export interface QueuePanelProps {
   queue: MusicPlayerState["queue"];
@@ -35,13 +36,11 @@ export const QueuePanel: React.FC<QueuePanelProps> = ({
             onClick={() => onSelect(idx)}
           >
             <div className="flex items-center gap-3">
-              {item.coverArtUrl ? (
-                <img src={item.coverArtUrl} className="h-10 w-10 rounded" />
-              ) : (
-                <div className="h-10 w-10 rounded bg-muted flex items-center justify-center text-xs text-muted-foreground">
-                  {item.trackNumber}
-                </div>
-              )}
+              <ReleaseCoverArt
+                srcUrl={item.coverArtUrl}
+                titleForPlaceholder={item.title ?? `#${item.trackNumber}`}
+                className="h-10 w-10 rounded"
+              />
               <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between gap-3">
                   <div className="truncate font-medium">

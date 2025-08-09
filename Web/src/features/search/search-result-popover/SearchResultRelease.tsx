@@ -3,6 +3,7 @@ import * as React from "react";
 import { Link } from "react-router";
 import { useQuery } from "urql";
 import { SearchResultGroup } from "@/features/search/search-result-popover/components/SearchResultGroup.tsx";
+import { ReleaseCoverArt } from "@/components/images/ReleaseCoverArt.tsx";
 
 export interface SearchResultReleaseProps {
   searchText: string;
@@ -44,17 +45,12 @@ export const SearchResultRelease: React.FC<SearchResultReleaseProps> = ({
           className="flex items-center p-2 hover:bg-white/10 rounded-md transition-colors"
           onClick={onClickSearchResult}
         >
-          {release.coverArtUrl ? (
-            <img
-              src={release.coverArtUrl}
-              alt={release.title}
-              className="w-10 h-10 object-cover mr-3"
-            />
-          ) : (
-            <div className="w-10 h-10 bg-neutral-700 flex items-center justify-center mr-3">
-              <span className="text-white text-xs">🎵</span>
-            </div>
-          )}
+          <ReleaseCoverArt
+            srcUrl={release.coverArtUrl}
+            titleForPlaceholder={release.title}
+            alt={release.title}
+            className="w-10 h-10 object-cover mr-3"
+          />
           <div>
             <p className="text-white font-medium">{release.title}</p>
             <p className="text-xs text-white/60">Album</p>

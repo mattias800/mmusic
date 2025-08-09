@@ -2,6 +2,7 @@ import * as React from "react";
 import { FragmentType, graphql, useFragment } from "@/gql";
 import { formatTrackLength } from "@/common/TrackLengthFormatter.ts";
 import { Link } from "react-router";
+import { ReleaseCoverArt } from "@/components/images/ReleaseCoverArt.tsx";
 
 export interface PlaylistSongRowProps {
   song: FragmentType<typeof playlistSongRowFragment>;
@@ -24,8 +25,9 @@ export const PlaylistSongRow: React.FC<PlaylistSongRowProps> = (props) => {
       <span className="text-neutral-400 text-right">{props.index}</span>
 
       {recording?.mainAlbum && (
-        <img
-          src={recording.mainAlbum.coverArtUri ?? undefined}
+        <ReleaseCoverArt
+          srcUrl={recording.mainAlbum.coverArtUri ?? undefined}
+          titleForPlaceholder={recording.mainAlbum.title}
           alt="Cover"
           className="w-12 h-12 rounded"
         />

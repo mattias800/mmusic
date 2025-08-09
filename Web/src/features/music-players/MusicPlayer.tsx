@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/sheet.tsx";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs.tsx";
 import { HistoryPanel } from "@/features/music-players/HistoryPanel.tsx";
+import { ReleaseCoverArt } from "@/components/images/ReleaseCoverArt.tsx";
 import {
   Pause,
   Play,
@@ -61,9 +62,10 @@ export const MusicPlayer: React.FC<MusicPlayerProps> = () => {
       <div className="max-w-screen-2xl mx-auto grid grid-cols-3 items-center gap-4">
         {/* Left: Now playing info */}
         <div className="flex items-center gap-3 min-w-0">
-          {currentQueueItem?.coverArtUrl && (
-            <img
-              src={currentQueueItem.coverArtUrl}
+          {currentQueueItem && (
+            <ReleaseCoverArt
+              srcUrl={currentQueueItem.coverArtUrl}
+              titleForPlaceholder={currentQueueItem.title ?? ""}
               className="h-12 w-12 rounded"
             />
           )}

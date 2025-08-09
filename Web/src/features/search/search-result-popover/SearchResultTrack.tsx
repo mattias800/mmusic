@@ -4,6 +4,7 @@ import { Link } from "react-router";
 import { formatTrackLength } from "@/common/TrackLengthFormatter.ts";
 import { useQuery } from "urql";
 import { SearchResultGroup } from "@/features/search/search-result-popover/components/SearchResultGroup.tsx";
+import { ReleaseCoverArt } from "@/components/images/ReleaseCoverArt.tsx";
 import { getRouteToArtist, getRouteToRelease } from "@/AppRoutes.ts";
 
 export interface SearchResultTrackProps {
@@ -54,17 +55,12 @@ export const SearchResultTrack: React.FC<SearchResultTrackProps> = ({
           key={track.id}
           className="flex items-center p-2 hover:bg-white/10 rounded-md transition-colors"
         >
-          {track.release.coverArtUrl ? (
-            <img
-              src={track.release.coverArtUrl}
-              alt={track.title}
-              className="w-10 h-10 object-cover mr-3"
-            />
-          ) : (
-            <div className="w-10 h-10 bg-neutral-700 flex items-center justify-center mr-3">
-              <span className="text-white text-xs">♪</span>
-            </div>
-          )}
+          <ReleaseCoverArt
+            srcUrl={track.release.coverArtUrl}
+            titleForPlaceholder={track.release.title}
+            alt={track.title}
+            className="w-10 h-10 object-cover mr-3"
+          />
           <div className="flex-grow overflow-hidden">
             <p className="text-white font-medium">{track.title}</p>
             <p

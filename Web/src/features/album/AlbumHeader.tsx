@@ -5,7 +5,7 @@ import { sumBy } from "lodash-es";
 import { formatAlbumLength } from "@/common/AlbumLengthFormatter.ts";
 import { ReleaseType } from "@/gql/graphql.ts";
 import { getRouteToArtist } from "@/AppRoutes.ts";
-import { buildCoverArtPlaceholder } from "@/components/images/placeholderCoverArt.ts";
+import { ReleaseCoverArt } from "@/components/images/ReleaseCoverArt.tsx";
 
 export interface AlbumHeaderProps {
   release: FragmentType<typeof albumHeaderReleaseFragment>;
@@ -48,22 +48,11 @@ export const AlbumHeader: React.FC<AlbumHeaderProps> = (props) => {
 
   return (
     <div className="flex flex-col sm:flex-row gap-6 items-center sm:items-end mb-8">
-      <img
-        src={
-          release.coverArtUrl ||
-          release.artist.images?.thumbs?.[0] ||
-          buildCoverArtPlaceholder(release.title)
-        }
+      <ReleaseCoverArt
+        srcUrl={release.coverArtUrl ?? undefined}
+        artistThumbUrl={release.artist.images?.thumbs?.[0]}
+        titleForPlaceholder={release.title}
         alt={release.title + " album cover"}
-        onError={(e) => {
-          const target = e.currentTarget as HTMLImageElement;
-          if (!target.dataset.fallback) {
-            target.dataset.fallback = "1";
-            target.src =
-              release.artist.images?.thumbs?.[0] ||
-              buildCoverArtPlaceholder(release.title);
-          }
-        }}
         className="w-64 h-64 rounded shadow-lg object-cover"
       />
       <div className={"flex flex-col gap-3"}>
