@@ -14,6 +14,8 @@ import { LargeLikeButton } from "@/components/buttons/LargeLikeButton.tsx";
 import { AlbumHeader } from "@/features/album/AlbumHeader.tsx";
 import { AlbumTrackList } from "@/features/album/AlbumTrackList.tsx";
 import { FragmentType, graphql, useFragment } from "@/gql";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog.tsx";
+import { Button } from "@/components/ui/button.tsx";
 import { GradientContent } from "@/components/page-body/GradientContent";
 import { MainPadding } from "@/components/layout/MainPadding.tsx";
 import { ReleaseDownloadButton } from "@/features/downloads/release-download-button/ReleaseDownloadButton.tsx";
@@ -98,6 +100,19 @@ export const AlbumPanel: React.FC<AlbumPanelProps> = (props) => {
     deleteReleaseAudioMutation,
   );
 
+  const [confirmOpen, setConfirmOpen] = React.useState(false);
+  const hasAnyAudio = React.useMemo(() => {
+    // We don't have audioFilePath in this fragment; use isMissing on tracks inversely
+    // If any track is not missing, we consider audio present
+    return (release.tracks ?? []).some((t) => !t.isMissing);
+  }, [release]);
+
+  const onConfirmDelete = React.useCallback(() => {
+    deleteReleaseAudio({
+      input: { artistId: release.artist.id, releaseFolderName: release.folderName },
+    });
+  }, [deleteReleaseAudio, release]);
+
   useSubscription({
     query: albumUpdatesSubscription,
     variables: {
@@ -136,14 +151,7 @@ export const AlbumPanel: React.FC<AlbumPanelProps> = (props) => {
                     Refresh release metadata
                   </DropdownMenuItem>
                   <DropdownMenuItem
-                    onSelect={() =>
-                      deleteReleaseAudio({
-                        input: {
-                          artistId: release.artist.id,
-                          releaseFolderName: release.folderName,
-                        },
-                      })
-                    }
+                    onSelect={() => setConfirmOpen(true)}
                   >
                     Delete audio files for this release
                   </DropdownMenuItem>
@@ -156,6 +164,37 @@ export const AlbumPanel: React.FC<AlbumPanelProps> = (props) => {
 
           <div>
             <AlbumTrackList releaseGroup={release} />
+
+            <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>
+                    {hasAnyAudio ? "Delete all audio files?" : "No audio files to delete"}
+                  </DialogTitle>
+                  <DialogDescription>
+                    {hasAnyAudio
+                      ? "Are you sure you want to delete all audio files for this release? This will remove the files from disk and clear references in release.json."
+                      : "There are no audio files referenced in this release. No action will be taken."}
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setConfirmOpen(false)}>
+                    Close
+                  </Button>
+                  {hasAnyAudio && (
+                    <Button
+                      variant="destructive"
+                      onClick={() => {
+                        onConfirmDelete();
+                        setConfirmOpen(false);
+                      }}
+                    >
+                      Delete audio files
+                    </Button>
+                  )}
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
 
             <div className="text-white/40 text-xs mt-12">
               <p>© {release.firstReleaseYear} Some label AB</p>
