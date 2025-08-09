@@ -198,6 +198,9 @@ describe('Alert Component', () => {
 - Use the generated types from GraphQL schema
 - Follow the query/mutation patterns in the existing code
 - Use the URQL client for GraphQL operations
+- Do not add ad-hoc REST endpoints for data that belongs in GraphQL.
+- Only use controlled endpoints for binary assets (audio files and images) under /library/… as already established.
+- Never fetch data via window.fetch or React useEffect hooks; always use GraphQL queries/mutations/subscriptions with co-located fragments.
 
 ## Debugging
 
