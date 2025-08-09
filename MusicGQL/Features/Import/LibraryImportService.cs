@@ -29,30 +29,46 @@ public class LibraryImportService(
     /// <returns>Import result with success status and details</returns>
     public async Task<ArtistImportResult> ImportArtistAsync(string artistName)
     {
-        var result = new ArtistImportResult { ArtistName = artistName };
+        // For backward compatibility, delegate to the new ID-based method by first resolving the MBID
+        var mbResults = await musicBrainzService.SearchArtistsAsync(artistName);
+        var mbArtist = mbResults.FirstOrDefault();
+        if (mbArtist is null)
+        {
+            return new ArtistImportResult
+            {
+                ArtistName = artistName,
+                ErrorMessage = "Artist not found on MusicBrainz",
+            };
+        }
+        return await ImportArtistByMusicBrainzIdAsync(mbArtist.Id);
+    }
+
+    /// <summary>
+    /// Imports an artist directly by MusicBrainz artist ID. This is preferred for UI flows where the user selects an artist.
+    /// </summary>
+    /// <param name="musicBrainzArtistId">MusicBrainz artist ID (MBID)</param>
+    public async Task<ArtistImportResult> ImportArtistByMusicBrainzIdAsync(string musicBrainzArtistId)
+    {
+        var result = new ArtistImportResult { MusicBrainzId = musicBrainzArtistId };
 
         try
         {
-            Console.WriteLine($"🎤 Importing artist: {artistName}");
+            Console.WriteLine($"🎤 Importing artist by MBID: {musicBrainzArtistId}");
 
-            // 1. Search MusicBrainz for the artist
-            Console.WriteLine("🔍 Searching MusicBrainz...");
-            var mbResults = await musicBrainzService.SearchArtistsAsync(artistName);
-
-            if (!mbResults.Any())
+            // 1. Fetch MusicBrainz artist by ID
+            Console.WriteLine("🔍 Fetching MusicBrainz artist by ID...");
+            var mbArtist = await musicBrainzService.GetArtistByIdAsync(musicBrainzArtistId);
+            if (mbArtist is null)
             {
                 result.ErrorMessage = "Artist not found on MusicBrainz";
                 return result;
             }
-
-            // Take the first/best match from MusicBrainz
-            var mbArtist = mbResults.First();
-            result.MusicBrainzId = mbArtist.Id;
+            result.ArtistName = mbArtist.Name;
             Console.WriteLine($"✅ Found on MusicBrainz: {mbArtist.Name} ({mbArtist.Id})");
 
-            // 2. Search Spotify for matching artist
+            // 2. Search Spotify for matching artist (best-effort)
             Console.WriteLine("🎵 Searching Spotify...");
-            var spotifyArtist = await spotifyService.FindBestMatchAsync(artistName);
+            var spotifyArtist = await spotifyService.FindBestMatchAsync(mbArtist.Name);
             if (spotifyArtist != null)
             {
                 result.SpotifyId = spotifyArtist.Id;
@@ -192,12 +208,12 @@ public class LibraryImportService(
 
             result.Success = true;
             result.ArtistJson = artistJson;
-            Console.WriteLine($"🎉 Successfully imported artist: {artistName}");
+            Console.WriteLine($"🎉 Successfully imported artist: {mbArtist.Name}");
         }
         catch (Exception ex)
         {
             result.ErrorMessage = ex.Message;
-            Console.WriteLine($"❌ Error importing artist '{artistName}': {ex.Message}");
+            Console.WriteLine($"❌ Error importing artist by MBID '{musicBrainzArtistId}': {ex.Message}");
 
             // Cleanup on error
             if (

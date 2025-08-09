@@ -16,7 +16,7 @@ public class ImportArtistMutation
         ImportArtistInput input
     )
     {
-        var result = await importService.ImportArtistAsync(input.ArtistName);
+        var result = await importService.ImportArtistByMusicBrainzIdAsync(input.MusicBrainzArtistId);
 
         if (!result.Success)
         {
@@ -72,7 +72,7 @@ public class ImportArtistMutation
     }
 }
 
-public record ImportArtistInput(string ArtistName);
+public record ImportArtistInput(string MusicBrainzArtistId);
 
 [UnionType]
 public abstract record ImportArtistResult;
