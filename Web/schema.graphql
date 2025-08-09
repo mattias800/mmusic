@@ -183,6 +183,21 @@ type DeletePlaylistSuccess {
   viewer: User!
 }
 
+type DeleteReleaseAudioError {
+  message: String!
+}
+
+input DeleteReleaseAudioInput {
+  artistId: String!
+  releaseFolderName: String!
+}
+
+union DeleteReleaseAudioResult = DeleteReleaseAudioError | DeleteReleaseAudioSuccess
+
+type DeleteReleaseAudioSuccess {
+  release: Release!
+}
+
 type ExternalRoot {
   id: ID!
   soulSeek: SoulSeekRoot!
@@ -498,6 +513,7 @@ type Mutation {
   createPlaylist: CreatePlaylistResult!
   createUser(input: CreateUserInput!): CreateUserResult!
   deletePlaylist(input: DeletePlaylistInput!): DeletePlaylistResult!
+  deleteReleaseAudio(input: DeleteReleaseAudioInput!): DeleteReleaseAudioResult!
   importArtist(input: ImportArtistInput!): ImportArtistResult!
   importArtistReleases(artistId: String!): ImportReleasesResult!
   importSpotifyPlaylistById(playlistId: String!, userId: UUID!): ImportSpotifyPlaylistResult!

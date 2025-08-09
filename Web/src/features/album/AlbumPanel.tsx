@@ -73,10 +73,29 @@ const refreshReleaseMutation = graphql(`
   }
 `);
 
+const deleteReleaseAudioMutation = graphql(`
+  mutation DeleteReleaseAudio($input: DeleteReleaseAudioInput!) {
+    deleteReleaseAudio(input: $input) {
+      ... on DeleteReleaseAudioSuccess {
+        release {
+          id
+          ...AlbumPanel_Release
+        }
+      }
+      ... on DeleteReleaseAudioError {
+        message
+      }
+    }
+  }
+`);
+
 export const AlbumPanel: React.FC<AlbumPanelProps> = (props) => {
   const release = useFragment(albumPanelReleaseGroupFragment, props.release);
   const [{ fetching: refreshing }, refreshRelease] = useMutation(
     refreshReleaseMutation,
+  );
+  const [{ fetching: deleting }, deleteReleaseAudio] = useMutation(
+    deleteReleaseAudioMutation,
   );
 
   useSubscription({
@@ -103,7 +122,7 @@ export const AlbumPanel: React.FC<AlbumPanelProps> = (props) => {
                   <DotsButton />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent>
-                  <DropdownMenuLabel>Refresh</DropdownMenuLabel>
+                  <DropdownMenuLabel>Actions</DropdownMenuLabel>
                   <DropdownMenuItem
                     onSelect={() =>
                       refreshRelease({
@@ -116,9 +135,21 @@ export const AlbumPanel: React.FC<AlbumPanelProps> = (props) => {
                   >
                     Refresh release metadata
                   </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onSelect={() =>
+                      deleteReleaseAudio({
+                        input: {
+                          artistId: release.artist.id,
+                          releaseFolderName: release.folderName,
+                        },
+                      })
+                    }
+                  >
+                    Delete audio files for this release
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-              {refreshing && <Spinner size={"sm"} />}
+              {(refreshing || deleting) && <Spinner size={"sm"} />}
               <ReleaseDownloadButton release={release} />
             </div>
           </div>
