@@ -4,10 +4,10 @@ export interface MusicPlayerTrack {
   artistId: string;
   releaseFolderName: string;
   trackNumber: number;
-  title?: string;
-  artistName?: string;
-  coverArtUrl?: string;
-  trackLengthMs?: number;
+  title: string;
+  artistName: string;
+  coverArtUrl: string;
+  trackLengthMs: number;
   qualityLabel?: string;
 }
 
@@ -57,19 +57,8 @@ export const musicPlayerSlice = createSlice({
     close: (state) => {
       state.isOpen = false;
     },
-    playTrack: (
-      state,
-      action: PayloadAction<{
-        artistId: string;
-        releaseFolderName: string;
-        trackNumber: number;
-      }>,
-    ) => {
-      state.currentTrack = {
-        artistId: action.payload.artistId,
-        releaseFolderName: action.payload.releaseFolderName,
-        trackNumber: action.payload.trackNumber,
-      };
+    playTrack: (state, action: PayloadAction<MusicPlayerTrack>) => {
+      state.currentTrack = action.payload;
       state.isOpen = true;
       state.isPlaying = true;
       pushCurrentToHistory(state);
@@ -80,11 +69,10 @@ export const musicPlayerSlice = createSlice({
     ) => {
       state.queue = action.payload;
       state.currentIndex = action.payload.length > 0 ? 0 : -1;
-      const current =
+      state.currentTrack =
         state.currentIndex >= 0
           ? action.payload[state.currentIndex]
           : undefined;
-      state.currentTrack = current;
       state.isOpen = state.currentIndex >= 0;
       state.isPlaying = state.isOpen;
       if (state.isOpen) pushCurrentToHistory(state);
@@ -97,17 +85,14 @@ export const musicPlayerSlice = createSlice({
         return;
       }
       state.currentIndex = nextIndex;
-      const current = state.queue[state.currentIndex];
-      state.currentTrack = current;
+      state.currentTrack = state.queue[state.currentIndex];
       state.isPlaying = true;
       pushCurrentToHistory(state);
     },
     prev: (state) => {
       if (state.queue.length === 0) return;
-      const prevIndex = Math.max(0, state.currentIndex - 1);
-      state.currentIndex = prevIndex;
-      const current = state.queue[state.currentIndex];
-      state.currentTrack = current;
+      state.currentIndex = Math.max(0, state.currentIndex - 1);
+      state.currentTrack = state.queue[state.currentIndex];
       state.isPlaying = true;
     },
     play: (state) => {
@@ -126,8 +111,7 @@ export const musicPlayerSlice = createSlice({
       const idx = action.payload;
       if (idx < 0 || idx >= state.queue.length) return;
       state.currentIndex = idx;
-      const current = state.queue[state.currentIndex];
-      state.currentTrack = current;
+      state.currentTrack = state.queue[state.currentIndex];
       state.isPlaying = true;
       state.isOpen = true;
       pushCurrentToHistory(state);

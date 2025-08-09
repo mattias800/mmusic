@@ -6,6 +6,7 @@ import { useAppDispatch, useAppSelector } from "@/ReduxAppHooks.ts";
 import { musicPlayerSlice } from "@/features/music-players/MusicPlayerSlice.ts";
 import { TrackListHeading } from "@/components/track-item/TrackListHeading.tsx";
 import { AlbumTrackTag } from "@/features/album/AlbumTrackTag.tsx";
+import { createMusicPlayerTrack } from "@/features/music-players/MusicPlayerTrackFactory.ts";
 
 interface AlbumTrackListProps {
   releaseGroup: FragmentType<typeof albumTrackListReleaseGroupFragment>;
@@ -29,8 +30,8 @@ const albumTrackListReleaseGroupFragment = graphql(`
         audioUrl
         audioQualityLabel
       }
+      ...MusicPlayerTrackFactory_Track
       ...AlbumTrackTag_Track
-      ...RecordingPlayButton_Track
       credits {
         artistName
         artist {
@@ -63,7 +64,6 @@ export const AlbumTrackList: React.FC<AlbumTrackListProps> = (props) => {
 
       {release?.tracks.map((track, idx) => {
         const isPlaying =
-          player.currentMusicPlayer === "library" &&
           player.currentTrack?.artistId === release?.artist.id &&
           player.currentTrack.releaseFolderName === release?.folderName &&
           player.currentTrack.trackNumber === idx + 1 &&
@@ -81,11 +81,9 @@ export const AlbumTrackList: React.FC<AlbumTrackListProps> = (props) => {
                 ? undefined
                 : () =>
                     dispatch(
-                      musicPlayerSlice.actions.playTrack({
-                        artistId: (release?.artist.id as string) ?? "",
-                        releaseFolderName: release?.folderName as string,
-                        trackNumber: idx + 1,
-                      }),
+                      musicPlayerSlice.actions.playTrack(
+                        createMusicPlayerTrack(track),
+                      ),
                     )
             }
             renderSubtitle={() => (

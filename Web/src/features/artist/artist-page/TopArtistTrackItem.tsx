@@ -8,6 +8,7 @@ import { musicPlayerSlice } from "@/features/music-players/MusicPlayerSlice.ts";
 import { getRouteToRelease } from "@/AppRoutes.ts";
 import { AlbumTrackTag } from "@/features/album/AlbumTrackTag.tsx";
 import { ReleaseCoverArt } from "@/components/images/ReleaseCoverArt.tsx";
+import { createMusicPlayerTrack } from "@/features/music-players/MusicPlayerTrackFactory.ts";
 
 interface TopArtistTrackItemProps {
   artistTopTrack: FragmentType<typeof topArtistTrackItemArtistTopTrackFragment>;
@@ -23,6 +24,7 @@ const topArtistTrackItemArtistTopTrackFragment = graphql(`
     coverArtUrl
     track {
       id
+      ...MusicPlayerTrackFactory_Track
       ...AlbumTrackTag_Track
       trackLength
       trackNumber
@@ -79,11 +81,9 @@ export const TopArtistTrackItem: React.FC<TopArtistTrackItemProps> = (
       onClick={() =>
         artistTopTrack.track &&
         dispatch(
-          musicPlayerSlice.actions.playTrack({
-            artistId: artistTopTrack.track.release.artist.id,
-            releaseFolderName: artistTopTrack.track.release.folderName,
-            trackNumber: artistTopTrack.track.trackNumber,
-          }),
+          musicPlayerSlice.actions.playTrack(
+            createMusicPlayerTrack(artistTopTrack.track),
+          ),
         )
       }
       contextMenuItems={
