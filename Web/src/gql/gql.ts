@@ -28,11 +28,12 @@ type Documents = {
     "\n  mutation ImportArtist($musicBrainzArtistId: String!) {\n    importArtist(input: { musicBrainzArtistId: $musicBrainzArtistId }) {\n      __typename\n      ... on ImportArtistSuccess {\n        artist {\n          id\n          name\n        }\n      }\n      ... on ImportArtistError {\n        message\n      }\n    }\n  }\n": typeof types.ImportArtistDocument,
     "\n  fragment AlbumCard_Release on Release {\n    id\n    title\n    firstReleaseYear\n    coverArtUrl\n    folderName\n    isFullyMissing\n    artist {\n      id\n    }\n  }\n": typeof types.AlbumCard_ReleaseFragmentDoc,
     "\n  fragment AlbumHeader_Release on Release {\n    id\n    title\n    type\n    coverArtUrl\n    firstReleaseYear\n    artist {\n      id\n      name\n    }\n    tracks {\n      id\n      trackLength\n    }\n  }\n": typeof types.AlbumHeader_ReleaseFragmentDoc,
-    "\n  fragment AlbumPanel_Release on Release {\n    id\n    folderName\n    isFullyMissing\n    ...ReleaseDownloadButton_Release\n    ...AlbumHeader_Release\n    ...AlbumTrackList_Release\n    firstReleaseYear\n    artist {\n      id\n    }\n  }\n": typeof types.AlbumPanel_ReleaseFragmentDoc,
+    "\n  fragment AlbumPanel_Release on Release {\n    id\n    folderName\n    isFullyMissing\n    ...PlayAlbumButton_Release\n    ...ReleaseDownloadButton_Release\n    ...AlbumHeader_Release\n    ...AlbumTrackList_Release\n    firstReleaseYear\n    artist {\n      id\n    }\n  }\n": typeof types.AlbumPanel_ReleaseFragmentDoc,
     "\n  subscription AlbumPanelUpdates(\n    $artistId: String!\n    $releaseFolderName: String!\n  ) {\n    libraryCacheTracksInReleaseUpdated(\n      artistId: $artistId\n      releaseFolderName: $releaseFolderName\n    ) {\n      track {\n        id\n        isMissing\n        mediaAvailabilityStatus\n      }\n    }\n  }\n": typeof types.AlbumPanelUpdatesDocument,
     "\n  fragment AlbumTrackList_Release on Release {\n    id\n    title\n    folderName\n    artist {\n      id\n    }\n    tracks {\n      id\n      title\n      trackLength\n      isMissing\n      ...AlbumTrackTag_Track\n      ...RecordingPlayButton_Track\n      statistics {\n        listeners\n        playCount\n      }\n    }\n  }\n": typeof types.AlbumTrackList_ReleaseFragmentDoc,
     "\n  fragment AlbumTrackTag_Track on Track {\n    id\n    isMissing\n    mediaAvailabilityStatus\n  }\n": typeof types.AlbumTrackTag_TrackFragmentDoc,
     "\n  fragment MbReleaseGroupCard_MbReleaseGroup on MbReleaseGroup {\n    id\n    title\n    firstReleaseYear\n    coverArtUri\n  }\n": typeof types.MbReleaseGroupCard_MbReleaseGroupFragmentDoc,
+    "\n  fragment PlayAlbumButton_Release on Release {\n    id\n    folderName\n    coverArtUrl\n    artist {\n      id\n      name\n    }\n    tracks {\n      id\n      title\n      isMissing\n    }\n  }\n": typeof types.PlayAlbumButton_ReleaseFragmentDoc,
     "\n  fragment AlbumList_Release on Release {\n    id\n    ...AlbumCard_Release\n  }\n": typeof types.AlbumList_ReleaseFragmentDoc,
     "\n  fragment ArtistCard_Artist on Artist {\n    id\n    name\n    listeners\n    images {\n      thumbs\n    }\n  }\n": typeof types.ArtistCard_ArtistFragmentDoc,
     "\n  fragment MbArtistCard_MbArtist on MbArtist {\n    id\n    name\n    listeners\n    images {\n      artistThumb\n    }\n  }\n": typeof types.MbArtistCard_MbArtistFragmentDoc,
@@ -110,11 +111,12 @@ const documents: Documents = {
     "\n  mutation ImportArtist($musicBrainzArtistId: String!) {\n    importArtist(input: { musicBrainzArtistId: $musicBrainzArtistId }) {\n      __typename\n      ... on ImportArtistSuccess {\n        artist {\n          id\n          name\n        }\n      }\n      ... on ImportArtistError {\n        message\n      }\n    }\n  }\n": types.ImportArtistDocument,
     "\n  fragment AlbumCard_Release on Release {\n    id\n    title\n    firstReleaseYear\n    coverArtUrl\n    folderName\n    isFullyMissing\n    artist {\n      id\n    }\n  }\n": types.AlbumCard_ReleaseFragmentDoc,
     "\n  fragment AlbumHeader_Release on Release {\n    id\n    title\n    type\n    coverArtUrl\n    firstReleaseYear\n    artist {\n      id\n      name\n    }\n    tracks {\n      id\n      trackLength\n    }\n  }\n": types.AlbumHeader_ReleaseFragmentDoc,
-    "\n  fragment AlbumPanel_Release on Release {\n    id\n    folderName\n    isFullyMissing\n    ...ReleaseDownloadButton_Release\n    ...AlbumHeader_Release\n    ...AlbumTrackList_Release\n    firstReleaseYear\n    artist {\n      id\n    }\n  }\n": types.AlbumPanel_ReleaseFragmentDoc,
+    "\n  fragment AlbumPanel_Release on Release {\n    id\n    folderName\n    isFullyMissing\n    ...PlayAlbumButton_Release\n    ...ReleaseDownloadButton_Release\n    ...AlbumHeader_Release\n    ...AlbumTrackList_Release\n    firstReleaseYear\n    artist {\n      id\n    }\n  }\n": types.AlbumPanel_ReleaseFragmentDoc,
     "\n  subscription AlbumPanelUpdates(\n    $artistId: String!\n    $releaseFolderName: String!\n  ) {\n    libraryCacheTracksInReleaseUpdated(\n      artistId: $artistId\n      releaseFolderName: $releaseFolderName\n    ) {\n      track {\n        id\n        isMissing\n        mediaAvailabilityStatus\n      }\n    }\n  }\n": types.AlbumPanelUpdatesDocument,
     "\n  fragment AlbumTrackList_Release on Release {\n    id\n    title\n    folderName\n    artist {\n      id\n    }\n    tracks {\n      id\n      title\n      trackLength\n      isMissing\n      ...AlbumTrackTag_Track\n      ...RecordingPlayButton_Track\n      statistics {\n        listeners\n        playCount\n      }\n    }\n  }\n": types.AlbumTrackList_ReleaseFragmentDoc,
     "\n  fragment AlbumTrackTag_Track on Track {\n    id\n    isMissing\n    mediaAvailabilityStatus\n  }\n": types.AlbumTrackTag_TrackFragmentDoc,
     "\n  fragment MbReleaseGroupCard_MbReleaseGroup on MbReleaseGroup {\n    id\n    title\n    firstReleaseYear\n    coverArtUri\n  }\n": types.MbReleaseGroupCard_MbReleaseGroupFragmentDoc,
+    "\n  fragment PlayAlbumButton_Release on Release {\n    id\n    folderName\n    coverArtUrl\n    artist {\n      id\n      name\n    }\n    tracks {\n      id\n      title\n      isMissing\n    }\n  }\n": types.PlayAlbumButton_ReleaseFragmentDoc,
     "\n  fragment AlbumList_Release on Release {\n    id\n    ...AlbumCard_Release\n  }\n": types.AlbumList_ReleaseFragmentDoc,
     "\n  fragment ArtistCard_Artist on Artist {\n    id\n    name\n    listeners\n    images {\n      thumbs\n    }\n  }\n": types.ArtistCard_ArtistFragmentDoc,
     "\n  fragment MbArtistCard_MbArtist on MbArtist {\n    id\n    name\n    listeners\n    images {\n      artistThumb\n    }\n  }\n": types.MbArtistCard_MbArtistFragmentDoc,
@@ -251,7 +253,7 @@ export function graphql(source: "\n  fragment AlbumHeader_Release on Release {\n
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment AlbumPanel_Release on Release {\n    id\n    folderName\n    isFullyMissing\n    ...ReleaseDownloadButton_Release\n    ...AlbumHeader_Release\n    ...AlbumTrackList_Release\n    firstReleaseYear\n    artist {\n      id\n    }\n  }\n"): (typeof documents)["\n  fragment AlbumPanel_Release on Release {\n    id\n    folderName\n    isFullyMissing\n    ...ReleaseDownloadButton_Release\n    ...AlbumHeader_Release\n    ...AlbumTrackList_Release\n    firstReleaseYear\n    artist {\n      id\n    }\n  }\n"];
+export function graphql(source: "\n  fragment AlbumPanel_Release on Release {\n    id\n    folderName\n    isFullyMissing\n    ...PlayAlbumButton_Release\n    ...ReleaseDownloadButton_Release\n    ...AlbumHeader_Release\n    ...AlbumTrackList_Release\n    firstReleaseYear\n    artist {\n      id\n    }\n  }\n"): (typeof documents)["\n  fragment AlbumPanel_Release on Release {\n    id\n    folderName\n    isFullyMissing\n    ...PlayAlbumButton_Release\n    ...ReleaseDownloadButton_Release\n    ...AlbumHeader_Release\n    ...AlbumTrackList_Release\n    firstReleaseYear\n    artist {\n      id\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -268,6 +270,10 @@ export function graphql(source: "\n  fragment AlbumTrackTag_Track on Track {\n  
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  fragment MbReleaseGroupCard_MbReleaseGroup on MbReleaseGroup {\n    id\n    title\n    firstReleaseYear\n    coverArtUri\n  }\n"): (typeof documents)["\n  fragment MbReleaseGroupCard_MbReleaseGroup on MbReleaseGroup {\n    id\n    title\n    firstReleaseYear\n    coverArtUri\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  fragment PlayAlbumButton_Release on Release {\n    id\n    folderName\n    coverArtUrl\n    artist {\n      id\n      name\n    }\n    tracks {\n      id\n      title\n      isMissing\n    }\n  }\n"): (typeof documents)["\n  fragment PlayAlbumButton_Release on Release {\n    id\n    folderName\n    coverArtUrl\n    artist {\n      id\n      name\n    }\n    tracks {\n      id\n      title\n      isMissing\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

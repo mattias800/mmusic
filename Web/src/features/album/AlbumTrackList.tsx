@@ -2,7 +2,7 @@ import { FragmentType, graphql, useFragment } from "@/gql";
 import * as React from "react";
 import { Link } from "react-router";
 import { TrackItem } from "@/components/track-item/TrackItem.tsx";
-import { useAppDispatch } from "@/ReduxAppHooks.ts";
+import { useAppDispatch, useAppSelector } from "@/ReduxAppHooks.ts";
 import { musicPlayerSlice } from "@/features/music-players/MusicPlayerSlice.ts";
 import { TrackListHeading } from "@/components/track-item/TrackListHeading.tsx";
 import { AlbumTrackTag } from "@/features/album/AlbumTrackTag.tsx";
@@ -41,12 +41,21 @@ export const AlbumTrackList: React.FC<AlbumTrackListProps> = (props) => {
     props.releaseGroup,
   );
 
+  const player = useAppSelector((s) => s.musicPlayers);
+
   return (
     <div>
       <TrackListHeading />
 
-      {release?.tracks.map((track, idx) => (
-        <TrackItem
+      {release?.tracks.map((track, idx) => {
+        const isPlaying =
+          player.currentMusicPlayer === "library" &&
+          player.artistId === release?.artist.id &&
+          player.releaseFolderName === release?.folderName &&
+          player.trackNumber === idx + 1 &&
+          player.isPlaying;
+        return (
+          <TrackItem
           key={track.id}
           trackNumber={idx + 1}
           title={track.title}
@@ -82,9 +91,10 @@ export const AlbumTrackList: React.FC<AlbumTrackListProps> = (props) => {
             </>
           )}
           renderTag={() => <AlbumTrackTag track={track} />}
-          playing={false}
+          playing={isPlaying}
         />
-      ))}
+      );
+      })}
     </div>
   );
 };

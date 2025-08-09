@@ -6,7 +6,7 @@ export type ShuffleButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement>;
 export const ShuffleButton: React.FC<ShuffleButtonProps> = ({ ...props }) => {
   return (
     <button
-      className="text-white opacity-70 hover:opacity-100 text-xl"
+      className="flex h-12 w-12 justify-center items-center text-white text-2xl opacity-70 hover:bg-green-900 cursor-pointer rounded-full"
       {...props}
     >
       <Shuffle />

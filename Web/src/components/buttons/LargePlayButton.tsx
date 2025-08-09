@@ -14,7 +14,7 @@ export const LargePlayButton: React.FC<LargePlayButtonProps> = ({
 }) => {
   return (
     <button
-      className="bg-green-500 hover:bg-green-600 text-black font-bold rounded-full text-sm h-14 w-14 justify-center items-center flex"
+      className="bg-green-500 hover:bg-green-600 text-black font-bold rounded-full text-sm h-14 w-14 justify-center items-center flex cursor-pointer"
       {...props}
     >
       {iconVariant === "play" && <Play className="h-6 w-6" />}

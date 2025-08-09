@@ -1,5 +1,4 @@
 import * as React from "react";
-import { LargePlayButton } from "@/components/buttons/LargePlayButton.tsx";
 import { ShuffleButton } from "@/components/buttons/ShuffleButton.tsx";
 import { DotsButton } from "@/components/buttons/DotsButton.tsx";
 import { LargeLikeButton } from "@/components/buttons/LargeLikeButton.tsx";
@@ -10,6 +9,7 @@ import { GradientContent } from "@/components/page-body/GradientContent";
 import { MainPadding } from "@/components/layout/MainPadding.tsx";
 import { useSubscription } from "urql";
 import { ReleaseDownloadButton } from "@/features/downloads/release-download-button/ReleaseDownloadButton.tsx";
+import { PlayAlbumButton } from "@/features/album/PlayAlbumButton.tsx";
 
 export interface AlbumPanelProps {
   release: FragmentType<typeof albumPanelReleaseGroupFragment>;
@@ -20,6 +20,7 @@ const albumPanelReleaseGroupFragment = graphql(`
     id
     folderName
     isFullyMissing
+    ...PlayAlbumButton_Release
     ...ReleaseDownloadButton_Release
     ...AlbumHeader_Release
     ...AlbumTrackList_Release
@@ -65,8 +66,8 @@ export const AlbumPanel: React.FC<AlbumPanelProps> = (props) => {
           <div>
             <AlbumHeader release={release} />
 
-            <div className="flex items-center gap-6 mb-6">
-              <LargePlayButton />
+            <div className="flex items-center gap-3 mb-6">
+              <PlayAlbumButton release={release} />
               <ShuffleButton />
               <LargeLikeButton />
               <DotsButton />
