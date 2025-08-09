@@ -1,3 +1,5 @@
+using MusicGQL.Features.ServerLibrary;
+using MusicGQL.Features.ServerLibrary.Cache;
 using MusicGQL.Types;
 
 namespace MusicGQL.Features.Import.Mutations;
@@ -8,32 +10,32 @@ public class ImportArtistMutation
     /// <summary>
     /// Imports an artist from MusicBrainz and Spotify, downloads photos from fanart.tv
     /// </summary>
-    /// <param name="artistName">Name of the artist to import</param>
-    /// <param name="importService">Library import service</param>
-    /// <returns>Import result</returns>
     public async Task<ImportArtistResult> ImportArtist(
-        string artistName,
-        [Service] LibraryImportService importService
+        [Service] LibraryImportService importService,
+        [Service] ServerLibraryCache cache,
+        ImportArtistInput input
     )
     {
-        var result = await importService.ImportArtistAsync(artistName);
+        var result = await importService.ImportArtistAsync(input.ArtistName);
 
-        return new ImportArtistResult
+        if (!result.Success)
         {
-            Success = result.Success,
-            ArtistName = result.ArtistName,
-            ArtistId = result.ArtistJson?.Id,
-            MusicBrainzId = result.MusicBrainzId,
-            SpotifyId = result.SpotifyId,
-            PhotosDownloaded = new PhotosDownloaded
-            {
-                Thumbs = result.DownloadedPhotos?.Thumbs.Count ?? 0,
-                Backgrounds = result.DownloadedPhotos?.Backgrounds.Count ?? 0,
-                Banners = result.DownloadedPhotos?.Banners.Count ?? 0,
-                Logos = result.DownloadedPhotos?.Logos.Count ?? 0,
-            },
-            ErrorMessage = result.ErrorMessage,
-        };
+            return new ImportArtistError(result.ErrorMessage ?? "Unknown error importing artist.");
+        }
+
+        var artistId = result.ArtistJson?.Id;
+        if (string.IsNullOrEmpty(artistId))
+        {
+            return new ImportArtistError("Artist was imported but no artist ID was produced.");
+        }
+
+        var cached = await cache.GetArtistByIdAsync(artistId);
+        if (cached is null)
+        {
+            return new ImportArtistError("Artist was imported but not found in cache.");
+        }
+
+        return new ImportArtistSuccess(new Artist(cached));
     }
 
     /// <summary>
@@ -70,30 +72,14 @@ public class ImportArtistMutation
     }
 }
 
-/// <summary>
-/// Result of importing an artist
-/// </summary>
-public class ImportArtistResult
-{
-    public bool Success { get; set; }
-    public string ArtistName { get; set; } = string.Empty;
-    public string? ArtistId { get; set; }
-    public string? MusicBrainzId { get; set; }
-    public string? SpotifyId { get; set; }
-    public PhotosDownloaded PhotosDownloaded { get; set; } = new();
-    public string? ErrorMessage { get; set; }
-}
+public record ImportArtistInput(string ArtistName);
 
-/// <summary>
-/// Number of photos downloaded by type
-/// </summary>
-public class PhotosDownloaded
-{
-    public int Thumbs { get; set; }
-    public int Backgrounds { get; set; }
-    public int Banners { get; set; }
-    public int Logos { get; set; }
-}
+[UnionType]
+public abstract record ImportArtistResult;
+
+public record ImportArtistSuccess(Artist Artist) : ImportArtistResult;
+
+public record ImportArtistError(string Message) : ImportArtistResult;
 
 /// <summary>
 /// Result of importing releases for an artist

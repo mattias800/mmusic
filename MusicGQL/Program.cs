@@ -254,6 +254,8 @@ builder
     .AddTypeExtension<UnlikeSongMutation>()
     .AddTypeExtension<LikeSongMutation>()
     .AddTypeExtension<ImportArtistMutation>()
+    .AddType<ImportArtistSuccess>()
+    .AddType<ImportArtistError>()
     .AddType<LikeSongResult.LikeSongSuccess>()
     .AddType<LikeSongResult.LikeSongAlreadyLiked>()
     .AddType<LikeSongResult.LikeSongSongDoesNotExist>()
