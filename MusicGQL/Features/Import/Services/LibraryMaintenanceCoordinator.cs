@@ -9,7 +9,8 @@ public class LibraryMaintenanceCoordinator(
     IFolderIdentityService identifier,
     IImportExecutor importer,
     ServerLibraryCache cache,
-    LastFmEnrichmentService enrichment
+    LastFmEnrichmentService enrichment,
+    MusicGQL.Features.ServerLibrary.MediaFileAssignmentService assigner
 )
 {
     public class MaintenanceResult
@@ -75,6 +76,19 @@ public class LibraryMaintenanceCoordinator(
                     await importer.ImportReleaseIfMissingAsync(artist.ArtistDir, rel.ReleaseDir, idRel.ReleaseGroupId, idRel.Title, idRel.PrimaryType);
                     result.ReleasesCreated++;
                     result.Notes.Add($"Created release.json for '{Path.GetFileName(artist.ArtistDir)}/{Path.GetFileName(rel.ReleaseDir)}'");
+
+                    // Assign media files to tracks (always overwrite existing references)
+                    var artistId = Path.GetFileName(artist.ArtistDir) ?? string.Empty;
+                    var releaseFolderName = Path.GetFileName(rel.ReleaseDir) ?? string.Empty;
+                    try
+                    {
+                        await assigner.AssignAsync(artistId, releaseFolderName);
+                    }
+                    catch (Exception ex)
+                    {
+                        result.Notes.Add($"Failed assigning media files for '{artistId}/{releaseFolderName}': {ex.Message}");
+                    }
+
                     importedAnyReleaseForThisArtist = true;
                 }
 

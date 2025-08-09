@@ -525,6 +525,7 @@ type Mutation {
   refreshRelease(input: RefreshReleaseInput!): RefreshReleaseResult!
   renamePlaylist(input: RenamePlaylistInput!): RenamePlaylistResult!
   scanLibraryForMissingJson: ScanLibraryForMissingJsonResult!
+  scanReleaseFolderForMedia(input: ScanReleaseFolderForMediaInput!): ScanReleaseFolderForMediaResult!
   signIn(input: SignInInput!): SignInResult!
   signOut: SignOutResult!
   startDownloadRelease(input: StartDownloadReleaseInput!): StartDownloadReleaseResult!
@@ -691,6 +692,21 @@ type ScanLibraryForMissingJsonSuccess {
   notes: [String!]!
   releasesCreated: Int!
   success: Boolean!
+}
+
+type ScanReleaseFolderForMediaError {
+  message: String!
+}
+
+input ScanReleaseFolderForMediaInput {
+  artistId: String!
+  releaseFolderName: String!
+}
+
+union ScanReleaseFolderForMediaResult = ScanReleaseFolderForMediaError | ScanReleaseFolderForMediaSuccess
+
+type ScanReleaseFolderForMediaSuccess {
+  release: Release!
 }
 
 type ServerLibrarySearchRoot {
