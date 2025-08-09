@@ -1,5 +1,6 @@
 using HotChocolate.Execution;
 using HotChocolate.Subscriptions;
+using MusicGQL.Features.Downloads;
 using MusicGQL.Features.ServerLibrary.Cache;
 
 namespace MusicGQL.Features.ServerLibrary.Subscription;
@@ -17,6 +18,12 @@ public record LibrarySubscription
         string artistId,
         string releaseFolderName
     ) => $"LibraryCacheTrackUpdated_{artistId}_{releaseFolderName}";
+
+    // New: release-level download status updates
+    public static string LibraryReleaseDownloadStatusUpdatedTopic(
+        string artistId,
+        string releaseFolderName
+    ) => $"LibraryReleaseDownloadStatusUpdated_{artistId}_{releaseFolderName}";
 
     public ValueTask<ISourceStream<LibraryCacheTrackStatus>> SubscribeToLibraryCacheTrackUpdated(
         [Service] ITopicEventReceiver receiver,
@@ -52,6 +59,25 @@ public record LibrarySubscription
     public LibraryCacheTrackStatus LibraryCacheTracksInReleaseUpdated(
         [EventMessage] LibraryCacheTrackStatus status
     ) => status;
+
+    // Release-level status subscription
+    public ValueTask<
+        ISourceStream<LibraryReleaseDownloadStatusUpdate>
+    > SubscribeToLibraryReleaseDownloadStatusUpdated(
+        [Service] ITopicEventReceiver receiver,
+        string artistId,
+        string releaseFolderName,
+        CancellationToken cancellationToken
+    ) =>
+        receiver.SubscribeAsync<LibraryReleaseDownloadStatusUpdate>(
+            LibraryReleaseDownloadStatusUpdatedTopic(artistId, releaseFolderName),
+            cancellationToken
+        );
+
+    [Subscribe(With = nameof(SubscribeToLibraryReleaseDownloadStatusUpdated))]
+    public LibraryReleaseDownloadStatusUpdate LibraryReleaseDownloadStatusUpdated(
+        [EventMessage] LibraryReleaseDownloadStatusUpdate update
+    ) => update;
 }
 
 public record LibraryCacheTrackStatus(string ArtistId, string ReleaseFolderName, int TrackNumber)
@@ -67,3 +93,9 @@ public record LibraryCacheTrackStatus(string ArtistId, string ReleaseFolderName,
         return cachedTrack == null ? null : new(cachedTrack);
     }
 }
+
+public record LibraryReleaseDownloadStatusUpdate(
+    string ArtistId,
+    string ReleaseFolderName,
+    ReleaseDownloadStatus Status
+);

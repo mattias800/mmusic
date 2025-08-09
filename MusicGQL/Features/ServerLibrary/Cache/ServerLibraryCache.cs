@@ -701,8 +701,12 @@ public class ServerLibraryCache(ServerLibraryJsonReader reader, ITopicEventSende
         if (updated)
         {
             await eventSender.SendAsync(
-                LibrarySubscription.LibraryCacheInTracksReleaseUpdatedTopic(artistId, releaseFolderName),
-                new LibraryCacheTrackStatus(artistId, releaseFolderName, 1)
+                LibrarySubscription.LibraryReleaseDownloadStatusUpdatedTopic(artistId, releaseFolderName),
+                new LibraryReleaseDownloadStatusUpdate(
+                    artistId,
+                    releaseFolderName,
+                    status.ToGql()
+                )
             );
         }
     }
