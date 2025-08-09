@@ -4,7 +4,14 @@ import { useAppDispatch, useAppSelector } from "@/ReduxAppHooks.ts";
 import { LibraryAudioPlayer } from "@/features/music-players/library-audio-player/LibraryAudioPlayer.tsx";
 import { musicPlayerSlice } from "@/features/music-players/MusicPlayerSlice.ts";
 import { formatTrackLength } from "@/common/TrackLengthFormatter.ts";
+import { QueuePanel } from "@/features/music-players/QueuePanel.tsx";
 import { Button } from "@/components/ui/button.tsx";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet.tsx";
 import {
   Pause,
   Play,
@@ -12,6 +19,7 @@ import {
   SkipForward,
   Volume2,
   VolumeX,
+  ListMusic,
 } from "lucide-react";
 
 export interface MusicPlayerProps {}
@@ -20,6 +28,7 @@ const selector = (state: RootState) => state.musicPlayers;
 
 export const MusicPlayer: React.FC<MusicPlayerProps> = () => {
   const dispatch = useAppDispatch();
+  const [queueOpen, setQueueOpen] = React.useState(false);
   const {
     currentMusicPlayer,
     isOpen,
@@ -128,8 +137,18 @@ export const MusicPlayer: React.FC<MusicPlayerProps> = () => {
           </div>
         </div>
 
-        {/* Right: Volume */}
+        {/* Right: Volume + Queue */}
         <div className="flex items-center justify-end gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-10 w-10"
+            onClick={() => setQueueOpen(true)}
+            aria-label="Open queue"
+            title="Open queue"
+          >
+            <ListMusic className="h-5 w-5" />
+          </Button>
           <Button
             variant="ghost"
             size="icon"
@@ -157,6 +176,22 @@ export const MusicPlayer: React.FC<MusicPlayerProps> = () => {
           />
         </div>
       </div>
+
+      {/* Queue Sheet */}
+      <Sheet open={queueOpen} onOpenChange={setQueueOpen}>
+        <SheetContent side="right" className="p-0">
+          <SheetHeader>
+            <SheetTitle>Queue ({queue.length})</SheetTitle>
+          </SheetHeader>
+          <div className="flex-1 overflow-y-auto">
+            <QueuePanel
+              queue={queue}
+              currentIndex={currentIndex}
+              onSelect={(idx) => dispatch(musicPlayerSlice.actions.playAtIndex(idx))}
+            />
+          </div>
+        </SheetContent>
+      </Sheet>
 
       {currentMusicPlayer === "library" &&
         artistId &&

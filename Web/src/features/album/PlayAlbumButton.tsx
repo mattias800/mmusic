@@ -21,6 +21,7 @@ const playAlbumButtonReleaseFragment = graphql(`
       id
       title
       isMissing
+      trackLength
     }
   }
 `);
@@ -43,6 +44,7 @@ export const PlayAlbumButton: React.FC<PlayAlbumButtonProps> = (props) => {
         title: track.title,
         artistName: release.artist?.name,
         coverArtUrl: release.coverArtUrl,
+        trackLengthMs: track.trackLength ?? undefined,
       }));
 
     if (queue.length > 0) {

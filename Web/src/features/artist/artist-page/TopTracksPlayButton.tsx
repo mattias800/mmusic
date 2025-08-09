@@ -19,6 +19,7 @@ const query = graphql(`
           coverArtUrl
           track {
             trackNumber
+            trackLength
             release {
               folderName
               artist {
@@ -55,6 +56,7 @@ export const TopTracksPlayButton: React.FC<TopTracksPlayButtonProps> = ({
         title: t.title,
         artistName: t.track!.release.artist.name,
         coverArtUrl: t.coverArtUrl ?? undefined,
+        trackLengthMs: t.track!.trackLength ?? undefined,
       }));
 
     if (queue.length > 0) {

@@ -14,6 +14,7 @@ export interface MusicPlayerState {
     title?: string;
     artistName?: string;
     coverArtUrl?: string;
+    trackLengthMs?: number;
   }>;
   currentIndex: number; // index in queue
   isPlaying: boolean;
@@ -128,6 +129,19 @@ export const musicPlayerSlice = createSlice({
     ) => {
       state.positionSec = action.payload.positionSec;
       state.durationSec = action.payload.durationSec;
+    },
+    playAtIndex: (state, action: PayloadAction<number>) => {
+      const idx = action.payload;
+      if (idx < 0 || idx >= state.queue.length) return;
+      state.currentIndex = idx;
+      const current = state.queue[state.currentIndex];
+      state.artistId = current.artistId;
+      state.releaseFolderName = current.releaseFolderName;
+      state.trackNumber = current.trackNumber;
+      state.isPlaying = true;
+      state.positionSec = 0;
+      state.isOpen = true;
+      state.currentMusicPlayer = "library";
     },
   },
 });
