@@ -506,7 +506,7 @@ type Mutation {
   redownloadRelease(artistId: String!, releaseFolderName: String!): RedownloadReleaseResult!
   refreshArtistMetaData(input: RefreshArtistMetaDataInput!): RefreshArtistMetaDataResult!
   refreshArtistTopTracks(input: RefreshArtistTopTracksInput!): RefreshArtistTopTracksResult!
-  reimportRelease(artistId: String!, releaseFolderName: String!): ReimportReleaseResult!
+  refreshRelease(artistId: String!, releaseFolderName: String!): RefreshReleaseResult!
   renamePlaylist(input: RenamePlaylistInput!): RenamePlaylistResult!
   scanLibraryForMissingJson: ScanLibraryForMissingJsonResult!
   signIn(input: SignInInput!): SignInResult!
@@ -610,13 +610,13 @@ type RefreshArtistTopTracksUnknownError {
   message: String!
 }
 
-type ReimportReleaseError {
+type RefreshReleaseError {
   message: String!
 }
 
-union ReimportReleaseResult = ReimportReleaseError | ReimportReleaseSuccess
+union RefreshReleaseResult = RefreshReleaseError | RefreshReleaseSuccess
 
-type ReimportReleaseSuccess {
+type RefreshReleaseSuccess {
   success: Boolean!
 }
 
@@ -775,7 +775,7 @@ type Track {
   mediaAvailabilityStatus: MediaAvailabilityStatus!
   playCount: Long
   release: Release!
-  statistics: LastFmStatistics
+  statistics: TrackStatistics
   title: String!
   trackLength: Int
   trackNumber: Int!
@@ -785,6 +785,11 @@ type TrackCredit {
   artist: Artist
   artistName: String!
   mbArtist: MbArtist
+}
+
+type TrackStatistics {
+  listeners: Long!
+  playCount: Long!
 }
 
 scalar UUID

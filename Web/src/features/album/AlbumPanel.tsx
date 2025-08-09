@@ -1,6 +1,15 @@
 import * as React from "react";
 import { ShuffleButton } from "@/components/buttons/ShuffleButton.tsx";
 import { DotsButton } from "@/components/buttons/DotsButton.tsx";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu.tsx";
+import { Spinner } from "@/components/spinner/Spinner.tsx";
+import { graphql, useMutation } from "urql";
 import { LargeLikeButton } from "@/components/buttons/LargeLikeButton.tsx";
 import { AlbumHeader } from "@/features/album/AlbumHeader.tsx";
 import { AlbumTrackList } from "@/features/album/AlbumTrackList.tsx";
@@ -49,8 +58,23 @@ const albumUpdatesSubscription = graphql(`
   }
 `);
 
+const refreshReleaseMutation = graphql(`
+  mutation RefreshRelease($artistId: String!, $releaseFolderName: String!) {
+    refreshRelease(artistId: $artistId, releaseFolderName: $releaseFolderName) {
+      ... on RefreshReleaseSuccess {
+        success
+      }
+      ... on RefreshReleaseError {
+        message
+      }
+    }
+  }
+`);
+
 export const AlbumPanel: React.FC<AlbumPanelProps> = (props) => {
   const release = useFragment(albumPanelReleaseGroupFragment, props.release);
+  const [, refreshRelease] = useMutation(refreshReleaseMutation);
+
   useSubscription({
     query: albumUpdatesSubscription,
     variables: {
@@ -70,7 +94,24 @@ export const AlbumPanel: React.FC<AlbumPanelProps> = (props) => {
               <PlayAlbumButton release={release} />
               <ShuffleButton />
               <LargeLikeButton />
-              <DotsButton />
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <DotsButton />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuLabel>Refresh</DropdownMenuLabel>
+                  <DropdownMenuItem
+                    onSelect={() =>
+                      refreshRelease({
+                        artistId: release.artist.id,
+                        releaseFolderName: release.folderName,
+                      })
+                    }
+                  >
+                    Refresh release metadata
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
               <ReleaseDownloadButton release={release} />
             </div>
           </div>

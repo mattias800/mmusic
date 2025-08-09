@@ -5,11 +5,11 @@ using Path = System.IO.Path;
 namespace MusicGQL.Features.ServerLibrary.Mutation;
 
 [ExtendObjectType(typeof(MusicGQL.Types.Mutation))]
-public class ReimportReleaseMutation
+public class RefreshReleaseMutation
 {
-    public async Task<ReimportReleaseResult> ReimportRelease(
+    public async Task<RefreshReleaseResult> RefreshRelease(
         [Service] ServerLibraryCache cache,
-        [Service] MusicGQL.Features.Import.Services.MusicBrainzImportService mbImport,
+        [Service] MusicBrainzImportService mbImport,
         [Service] LibraryReleaseImportService releaseImporter,
         string ArtistId,
         string ReleaseFolderName
@@ -18,7 +18,7 @@ public class ReimportReleaseMutation
         var release = await cache.GetReleaseByArtistAndFolderAsync(ArtistId, ReleaseFolderName);
         if (release == null)
         {
-            return new ReimportReleaseError("Release not found");
+            return new RefreshReleaseError("Release not found");
         }
 
         // Delete metadata: release.json and cover art file referenced by it
@@ -40,7 +40,7 @@ public class ReimportReleaseMutation
         }
         catch (Exception ex)
         {
-            return new ReimportReleaseError($"Failed deleting metadata: {ex.Message}");
+            return new RefreshReleaseError($"Failed deleting metadata: {ex.Message}");
         }
 
         // Find release group to import using MusicBrainz (by title under artist MBID)
@@ -48,7 +48,7 @@ public class ReimportReleaseMutation
         var mbArtistId = artist?.JsonArtist.Connections?.MusicBrainzArtistId;
         if (string.IsNullOrWhiteSpace(mbArtistId))
         {
-            return new ReimportReleaseError("Artist missing MusicBrainz ID");
+            return new RefreshReleaseError("Artist missing MusicBrainz ID");
         }
 
         var rgs = await mbImport.GetArtistReleaseGroupsAsync(mbArtistId!);
@@ -57,7 +57,7 @@ public class ReimportReleaseMutation
         );
         if (match == null)
         {
-            return new ReimportReleaseError("Could not match release group by title");
+            return new RefreshReleaseError("Could not match release group by title");
         }
 
         var importResult = await releaseImporter.ImportReleaseGroupAsync(
@@ -65,16 +65,29 @@ public class ReimportReleaseMutation
             Path.GetDirectoryName(release.ReleasePath) ?? Path.Combine("./Library", ArtistId),
             ArtistId
         );
-        await cache.UpdateCacheAsync();
+
+        // Only update this release in cache (keep statuses)
+        await cache.UpdateReleaseFromJsonAsync(ArtistId, ReleaseFolderName);
+
+        var releaseAfterRefresh = await cache.GetReleaseByArtistAndFolderAsync(
+            ArtistId,
+            ReleaseFolderName
+        );
+
+        if (releaseAfterRefresh == null)
+        {
+            return new RefreshReleaseError("Release does not exist after refreshing metadata.");
+        }
+
         return importResult.Success
-            ? new ReimportReleaseSuccess(true)
-            : new ReimportReleaseError(importResult.ErrorMessage ?? "Unknown error");
+            ? new RefreshReleaseSuccess(new(releaseAfterRefresh))
+            : new RefreshReleaseError(importResult.ErrorMessage ?? "Unknown error");
     }
 }
 
-[UnionType("ReimportReleaseResult")]
-public abstract record ReimportReleaseResult;
+[UnionType("RefreshReleaseResult")]
+public abstract record RefreshReleaseResult;
 
-public record ReimportReleaseSuccess(bool Success) : ReimportReleaseResult;
+public record RefreshReleaseSuccess(Release Release) : RefreshReleaseResult;
 
-public record ReimportReleaseError(string Message) : ReimportReleaseResult;
+public record RefreshReleaseError(string Message) : RefreshReleaseResult;

@@ -5477,7 +5477,7 @@
             "deprecationReason": null
           },
           {
-            "name": "reimportRelease",
+            "name": "refreshRelease",
             "description": null,
             "args": [
               {
@@ -5518,7 +5518,7 @@
               "name": null,
               "ofType": {
                 "kind": "UNION",
-                "name": "ReimportReleaseResult",
+                "name": "RefreshReleaseResult",
                 "ofType": null
               }
             },
@@ -6533,7 +6533,7 @@
       },
       {
         "kind": "OBJECT",
-        "name": "ReimportReleaseError",
+        "name": "RefreshReleaseError",
         "description": null,
         "isOneOf": null,
         "fields": [
@@ -6561,7 +6561,7 @@
       },
       {
         "kind": "UNION",
-        "name": "ReimportReleaseResult",
+        "name": "RefreshReleaseResult",
         "description": null,
         "isOneOf": null,
         "fields": null,
@@ -6571,19 +6571,19 @@
         "possibleTypes": [
           {
             "kind": "OBJECT",
-            "name": "ReimportReleaseError",
+            "name": "RefreshReleaseError",
             "ofType": null
           },
           {
             "kind": "OBJECT",
-            "name": "ReimportReleaseSuccess",
+            "name": "RefreshReleaseSuccess",
             "ofType": null
           }
         ]
       },
       {
         "kind": "OBJECT",
-        "name": "ReimportReleaseSuccess",
+        "name": "RefreshReleaseSuccess",
         "description": null,
         "isOneOf": null,
         "fields": [
@@ -8476,7 +8476,7 @@
             "args": [],
             "type": {
               "kind": "OBJECT",
-              "name": "LastFmStatistics",
+              "name": "TrackStatistics",
               "ofType": null
             },
             "isDeprecated": false,
@@ -8574,6 +8574,50 @@
               "kind": "OBJECT",
               "name": "MbArtist",
               "ofType": null
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          }
+        ],
+        "inputFields": null,
+        "interfaces": [],
+        "enumValues": null,
+        "possibleTypes": null
+      },
+      {
+        "kind": "OBJECT",
+        "name": "TrackStatistics",
+        "description": null,
+        "isOneOf": null,
+        "fields": [
+          {
+            "name": "listeners",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "Long",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "playCount",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "Long",
+                "ofType": null
+              }
             },
             "isDeprecated": false,
             "deprecationReason": null
