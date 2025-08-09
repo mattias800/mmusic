@@ -110,6 +110,7 @@ builder
     .AddScoped<IImportExecutor, MusicBrainzImportExecutor>()
     .AddScoped<LibraryMaintenanceCoordinator>()
     .AddScoped<LastFmEnrichmentService>()
+    .AddScoped<LibraryReleaseImportService>()
     .AddScoped<LibraryImportService>()
     .AddScoped<LikeSongHandler>()
     .AddScoped<UnlikeSongHandler>()

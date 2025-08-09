@@ -16,7 +16,8 @@ public class LibraryImportService(
     SpotifyImportService spotifyService,
     FanArtDownloadService fanArtService,
     LastfmClient lastfmClient,
-    ServerLibraryCache cache
+    ServerLibraryCache cache,
+    LibraryReleaseImportService releaseImporter
 )
 {
     private const string LibraryPath = "./Library/";
@@ -318,100 +319,8 @@ public class LibraryImportService(
         string artistId
     )
     {
-        var result = new SingleReleaseImportResult
-        {
-            ReleaseGroupId = releaseGroup.Id,
-            Title = releaseGroup.Title,
-        };
-
-        // 1. Create release folder
-        var releaseFolderName = SanitizeFolderName(releaseGroup.Title);
-        var releaseFolderPath = Path.Combine(artistFolderPath, releaseFolderName);
-
-        if (Directory.Exists(releaseFolderPath))
-        {
-            result.ErrorMessage = $"Release folder already exists: {releaseFolderName}";
-            return result;
-        }
-
-        Directory.CreateDirectory(releaseFolderPath);
-
-        try
-        {
-            // 2. Get releases with tracks
-            var releases = await musicBrainzService.GetReleaseGroupReleasesAsync(releaseGroup.Id);
-
-            if (!releases.Any())
-            {
-                result.ErrorMessage = "No releases found for release group";
-                return result;
-            }
-
-            // Take the first release (or find the best one)
-            var selectedRelease = releases.First();
-
-            // 3. Download cover art
-            var coverArtPath = await fanArtService.DownloadReleaseCoverArtAsync(
-                releaseGroup.Id,
-                releaseFolderPath
-            );
-
-            // 4. Create release.json
-            var releaseType = releaseGroup.PrimaryType?.ToLowerInvariant() switch
-            {
-                "album" => JsonReleaseType.Album,
-                "ep" => JsonReleaseType.Ep,
-                "single" => JsonReleaseType.Single,
-                _ => JsonReleaseType.Album,
-            };
-
-            var releaseJson = new JsonRelease
-            {
-                Title = releaseGroup.Title,
-                SortTitle = releaseGroup.Title, // Could be improved
-                Type = releaseType,
-                FirstReleaseDate = releaseGroup.FirstReleaseDate,
-                CoverArt = coverArtPath,
-                Tracks = selectedRelease
-                    .Tracks.Select(track => new JsonTrack
-                    {
-                        Title = track.Title,
-                        TrackNumber = track.TrackNumber,
-                        TrackLength = track.Length,
-                        AudioFilePath = null, // No audio files downloaded yet
-                    })
-                    .ToList(),
-            };
-
-            // 5. Write release.json file
-            var releaseJsonPath = Path.Combine(releaseFolderPath, "release.json");
-            var jsonOptions = GetJsonOptions();
-            var jsonContent = JsonSerializer.Serialize(releaseJson, jsonOptions);
-            await File.WriteAllTextAsync(releaseJsonPath, jsonContent);
-
-            result.Success = true;
-            result.ReleaseFolderPath = releaseFolderPath;
-            result.ReleaseJson = releaseJson;
-        }
-        catch (Exception ex)
-        {
-            result.ErrorMessage = ex.Message;
-
-            // Cleanup on error
-            if (Directory.Exists(releaseFolderPath))
-            {
-                try
-                {
-                    Directory.Delete(releaseFolderPath, true);
-                }
-                catch
-                {
-                    // Ignore cleanup errors
-                }
-            }
-        }
-
-        return result;
+        // Delegate to dedicated release import service for single-responsibility and reuse
+        return await releaseImporter.ImportReleaseGroupAsync(releaseGroup, artistFolderPath, artistId);
     }
 
     /// <summary>

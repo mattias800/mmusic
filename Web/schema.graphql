@@ -737,6 +737,7 @@ type Track {
   id: ID!
   isMissing: Boolean!
   mediaAvailabilityStatus: MediaAvailabilityStatus!
+  playCount: Long
   release: Release!
   statistics: LastFmStatistics
   title: String!

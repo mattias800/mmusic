@@ -11,6 +11,7 @@
     "codegen:schema": "graphql-codegen --config codegen.schema.ts",
     "codegen:types": "graphql-codegen --config codegen.ts",
     "types": "concurrently -n schema,types -c blue,green \"bun codegen:schema --watch\" \"bun codegen:types --watch\"",
+    "types:once": "concurrently -n schema,types -c blue,green \"bun codegen:schema\" \"bun codegen:types\"",
     "prettier": "prettier --no-config --write \"./src/**/*.{ts,tsx,css,graphql}\"",
     "test": "vitest run",
     "test:watch": "vitest",

@@ -17,6 +17,8 @@ public record Track([property: GraphQLIgnore] CachedTrack Model)
 
     public int? TrackLength() => Model.JsonTrack.TrackLength;
 
+    public long? PlayCount() => Model.JsonTrack.PlayCount;
+
     public bool IsMissing() => string.IsNullOrWhiteSpace(Model.JsonTrack.AudioFilePath);
 
     /// <summary>

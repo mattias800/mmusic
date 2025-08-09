@@ -983,6 +983,7 @@ export type Track = {
   id: Scalars['ID']['output'];
   isMissing: Scalars['Boolean']['output'];
   mediaAvailabilityStatus: MediaAvailabilityStatus;
+  playCount?: Maybe<Scalars['Long']['output']>;
   release: Release;
   statistics?: Maybe<LastFmStatistics>;
   title: Scalars['String']['output'];
