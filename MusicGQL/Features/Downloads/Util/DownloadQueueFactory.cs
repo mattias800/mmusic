@@ -15,8 +15,9 @@ public static class DownloadQueueFactory
                 var justFile = normalized.Split('/').Last();
                 var nameWithoutExt = System.IO.Path.GetFileNameWithoutExtension(justFile);
                 var ext = System.IO.Path.GetExtension(justFile);
-                var safe = SanitizeFileName(nameWithoutExt);
-                var lead = ExtractLeadingTrackNumber(safe);
+                var trimmedBase = RemoveLeadingTrackNumberPrefix(nameWithoutExt);
+                var safe = SanitizeFileName(trimmedBase);
+                var lead = ExtractLeadingTrackNumber(nameWithoutExt);
                 return new { file, safe, ext, lead, justFile };
             })
             .OrderBy(x => x.lead ?? int.MaxValue)
@@ -59,5 +60,27 @@ public static class DownloadQueueFactory
             }
         }
         return null;
+    }
+
+    private static string RemoveLeadingTrackNumberPrefix(string name)
+    {
+        // Remove patterns like "01 - ", "1.", "01_", "01 " from the start
+        var span = name.AsSpan();
+        int pos = 0;
+        while (pos < span.Length && char.IsWhiteSpace(span[pos])) pos++;
+        int start = pos;
+        while (pos < span.Length && char.IsDigit(span[pos])) pos++;
+        if (pos > start)
+        {
+            // Skip common separators following the number
+            while (pos < span.Length && (span[pos] == '-' || span[pos] == '.' || span[pos] == '_' || span[pos] == ' '))
+            {
+                pos++;
+                // If it's a dash followed by a space, skip the space too
+                if (pos < span.Length && span[pos - 1] == '-' && span[pos] == ' ') pos++;
+            }
+            return span.Slice(pos).ToString();
+        }
+        return name;
     }
 }
