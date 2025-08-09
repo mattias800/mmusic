@@ -25,7 +25,7 @@ type Documents = {
     "\n  query ProfilePage {\n    viewer {\n      id\n      username\n      ...UserProfilePanel_User\n    }\n  }\n": typeof types.ProfilePageDocument,
     "\n  fragment Playlist_User on User {\n    id\n    likedSongs {\n      id\n      ...LikedSongRow_LikedSong\n    }\n  }\n": typeof types.Playlist_UserFragmentDoc,
     "\n  fragment LikedSongRow_Track on Track {\n    id\n    title\n    trackLength\n  }\n": typeof types.LikedSongRow_TrackFragmentDoc,
-    "\n  mutation AddArtistToServerLibrary($artistId: ID!) {\n    addArtistToServerLibrary(input: { artistId: $artistId }) {\n      __typename\n    }\n  }\n": typeof types.AddArtistToServerLibraryDocument,
+    "\n  mutation ImportArtist($musicBrainzArtistId: String!) {\n    importArtist(input: { musicBrainzArtistId: $musicBrainzArtistId }) {\n      __typename\n      ... on ImportArtistSuccess {\n        artist {\n          id\n          name\n        }\n      }\n      ... on ImportArtistError {\n        message\n      }\n    }\n  }\n": typeof types.ImportArtistDocument,
     "\n  fragment AlbumCard_Release on Release {\n    id\n    title\n    firstReleaseYear\n    coverArtUrl\n    folderName\n    isFullyMissing\n    artist {\n      id\n    }\n  }\n": typeof types.AlbumCard_ReleaseFragmentDoc,
     "\n  fragment AlbumHeader_Release on Release {\n    id\n    title\n    type\n    coverArtUrl\n    firstReleaseYear\n    artist {\n      id\n      name\n    }\n    tracks {\n      id\n      trackLength\n    }\n  }\n": typeof types.AlbumHeader_ReleaseFragmentDoc,
     "\n  fragment AlbumPanel_Release on Release {\n    id\n    folderName\n    isFullyMissing\n    ...ReleaseDownloadButton_Release\n    ...AlbumHeader_Release\n    ...AlbumTrackList_Release\n    firstReleaseYear\n    artist {\n      id\n    }\n  }\n": typeof types.AlbumPanel_ReleaseFragmentDoc,
@@ -107,7 +107,7 @@ const documents: Documents = {
     "\n  query ProfilePage {\n    viewer {\n      id\n      username\n      ...UserProfilePanel_User\n    }\n  }\n": types.ProfilePageDocument,
     "\n  fragment Playlist_User on User {\n    id\n    likedSongs {\n      id\n      ...LikedSongRow_LikedSong\n    }\n  }\n": types.Playlist_UserFragmentDoc,
     "\n  fragment LikedSongRow_Track on Track {\n    id\n    title\n    trackLength\n  }\n": types.LikedSongRow_TrackFragmentDoc,
-    "\n  mutation AddArtistToServerLibrary($artistId: ID!) {\n    addArtistToServerLibrary(input: { artistId: $artistId }) {\n      __typename\n    }\n  }\n": types.AddArtistToServerLibraryDocument,
+    "\n  mutation ImportArtist($musicBrainzArtistId: String!) {\n    importArtist(input: { musicBrainzArtistId: $musicBrainzArtistId }) {\n      __typename\n      ... on ImportArtistSuccess {\n        artist {\n          id\n          name\n        }\n      }\n      ... on ImportArtistError {\n        message\n      }\n    }\n  }\n": types.ImportArtistDocument,
     "\n  fragment AlbumCard_Release on Release {\n    id\n    title\n    firstReleaseYear\n    coverArtUrl\n    folderName\n    isFullyMissing\n    artist {\n      id\n    }\n  }\n": types.AlbumCard_ReleaseFragmentDoc,
     "\n  fragment AlbumHeader_Release on Release {\n    id\n    title\n    type\n    coverArtUrl\n    firstReleaseYear\n    artist {\n      id\n      name\n    }\n    tracks {\n      id\n      trackLength\n    }\n  }\n": types.AlbumHeader_ReleaseFragmentDoc,
     "\n  fragment AlbumPanel_Release on Release {\n    id\n    folderName\n    isFullyMissing\n    ...ReleaseDownloadButton_Release\n    ...AlbumHeader_Release\n    ...AlbumTrackList_Release\n    firstReleaseYear\n    artist {\n      id\n    }\n  }\n": types.AlbumPanel_ReleaseFragmentDoc,
@@ -239,7 +239,7 @@ export function graphql(source: "\n  fragment LikedSongRow_Track on Track {\n   
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  mutation AddArtistToServerLibrary($artistId: ID!) {\n    addArtistToServerLibrary(input: { artistId: $artistId }) {\n      __typename\n    }\n  }\n"): (typeof documents)["\n  mutation AddArtistToServerLibrary($artistId: ID!) {\n    addArtistToServerLibrary(input: { artistId: $artistId }) {\n      __typename\n    }\n  }\n"];
+export function graphql(source: "\n  mutation ImportArtist($musicBrainzArtistId: String!) {\n    importArtist(input: { musicBrainzArtistId: $musicBrainzArtistId }) {\n      __typename\n      ... on ImportArtistSuccess {\n        artist {\n          id\n          name\n        }\n      }\n      ... on ImportArtistError {\n        message\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation ImportArtist($musicBrainzArtistId: String!) {\n    importArtist(input: { musicBrainzArtistId: $musicBrainzArtistId }) {\n      __typename\n      ... on ImportArtistSuccess {\n        artist {\n          id\n          name\n        }\n      }\n      ... on ImportArtistError {\n        message\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

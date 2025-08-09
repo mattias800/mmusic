@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using MusicGQL.Features.ServerLibrary;
 using MusicGQL.Features.ServerLibrary.Cache;
 using MusicGQL.Types;
@@ -13,10 +14,19 @@ public class ImportArtistMutation
     public async Task<ImportArtistResult> ImportArtist(
         [Service] LibraryImportService importService,
         [Service] ServerLibraryCache cache,
-        ImportArtistInput input
+        ImportArtistInput input,
+        [Service] IHttpContextAccessor httpContextAccessor
     )
     {
-        var result = await importService.ImportArtistByMusicBrainzIdAsync(input.MusicBrainzArtistId);
+        var userIdString = httpContextAccessor.HttpContext?.User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!Guid.TryParse(userIdString, out _))
+        {
+            return new ImportArtistError("User not authenticated or invalid user ID.");
+        }
+
+        var result = await importService.ImportArtistByMusicBrainzIdAsync(
+            input.MusicBrainzArtistId
+        );
 
         if (!result.Success)
         {
