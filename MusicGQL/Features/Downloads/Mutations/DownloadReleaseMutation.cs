@@ -2,7 +2,6 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using MusicGQL.Features.Downloads.Services;
 using MusicGQL.Features.ServerLibrary.Cache;
-using MusicGQL.Features.ServerLibrary.Json;
 using MusicGQL.Features.ServerLibrary.Writer;
 using MusicGQL.Types;
 using Path = System.IO.Path;
@@ -20,7 +19,11 @@ public class StartDownloadReleaseMutation
         StartDownloadReleaseInput input
     )
     {
-        logger.LogInformation("[StartDownload] Begin for {ArtistId}/{ReleaseFolder}", input.ArtistId, input.ReleaseFolderName);
+        logger.LogInformation(
+            "[StartDownload] Begin for {ArtistId}/{ReleaseFolder}",
+            input.ArtistId,
+            input.ReleaseFolderName
+        );
         var release = await cache.GetReleaseByArtistAndFolderAsync(
             input.ArtistId,
             input.ReleaseFolderName
@@ -28,7 +31,11 @@ public class StartDownloadReleaseMutation
 
         if (release == null)
         {
-            logger.LogWarning("[StartDownload] Release not found in cache: {ArtistId}/{ReleaseFolder}", input.ArtistId, input.ReleaseFolderName);
+            logger.LogWarning(
+                "[StartDownload] Release not found in cache: {ArtistId}/{ReleaseFolder}",
+                input.ArtistId,
+                input.ReleaseFolderName
+            );
             return new StartDownloadReleaseUnknownError("Release not found in cache");
         }
 
@@ -36,8 +43,12 @@ public class StartDownloadReleaseMutation
         var releaseTitle = release.Title;
         var targetDir = release.ReleasePath; // full path on disk
 
-        logger.LogInformation("[StartDownload] Resolved targetDir={TargetDir}, artistName='{Artist}', releaseTitle='{Title}'",
-            targetDir, artistName, releaseTitle);
+        logger.LogInformation(
+            "[StartDownload] Resolved targetDir={TargetDir}, artistName='{Artist}', releaseTitle='{Title}'",
+            targetDir,
+            artistName,
+            releaseTitle
+        );
 
         var ok = await soulSeekReleaseDownloader.DownloadReleaseAsync(
             input.ArtistId,
@@ -48,7 +59,11 @@ public class StartDownloadReleaseMutation
         );
         if (!ok)
         {
-            logger.LogWarning("[StartDownload] No suitable download found for {Artist} - {Title}", artistName, releaseTitle);
+            logger.LogWarning(
+                "[StartDownload] No suitable download found for {Artist} - {Title}",
+                artistName,
+                releaseTitle
+            );
             return new StartDownloadReleaseUnknownError("No suitable download found");
         }
 
@@ -60,19 +75,28 @@ public class StartDownloadReleaseMutation
             {
                 var audioFiles = Directory
                     .GetFiles(targetDir)
-                    .Where(f => new[] { ".mp3", ".flac", ".wav", ".m4a", ".ogg" }.Contains(Path.GetExtension(f).ToLowerInvariant()))
+                    .Where(f =>
+                        new[] { ".mp3", ".flac", ".wav", ".m4a", ".ogg" }.Contains(
+                            Path.GetExtension(f).ToLowerInvariant()
+                        )
+                    )
                     .OrderBy(f => f, StringComparer.OrdinalIgnoreCase)
                     .Select(Path.GetFileName)
                     .ToList();
 
-                logger.LogInformation("[StartDownload] Found {Count} audio files in {Dir}", audioFiles.Count, targetDir);
+                logger.LogInformation(
+                    "[StartDownload] Found {Count} audio files in {Dir}",
+                    audioFiles.Count,
+                    targetDir
+                );
 
                 await writer.UpdateReleaseAsync(
                     input.ArtistId,
                     input.ReleaseFolderName,
                     rel =>
                     {
-                        if (rel.Tracks is null) return;
+                        if (rel.Tracks is null)
+                            return;
                         for (int i = 0; i < rel.Tracks.Count; i++)
                         {
                             if (i < audioFiles.Count)
@@ -84,28 +108,42 @@ public class StartDownloadReleaseMutation
                 );
 
                 logger.LogInformation("[StartDownload] Updated release.json with audio file paths");
-                // Update cache statuses
+
+                // Reload cache so it reflects new JSON (preserving transient availability statuses)
+                logger.LogInformation("[StartDownload] Refreshing library cache after JSON update...");
+                await cache.UpdateCacheAsync();
+
+                // Now publish availability status updates to reflect current runtime state
                 var relAfterCount = audioFiles.Count; // used for bounds below
-                await Task.WhenAll(Enumerable.Range(0, relAfterCount).Select(async i =>
-                    {
-                        await cache.UpdateMediaAvailabilityStatus(
-                            input.ArtistId,
-                            input.ReleaseFolderName,
-                            i + 1,
-                            CachedMediaAvailabilityStatus.Available
-                        );
-                        logger.LogInformation("[StartDownload] Marked track {Track} as Available", i + 1);
-                    }
-                ));
+                await Task.WhenAll(
+                    Enumerable
+                        .Range(0, relAfterCount)
+                        .Select(async i =>
+                        {
+                            await cache.UpdateMediaAvailabilityStatus(
+                                input.ArtistId,
+                                input.ReleaseFolderName,
+                                i + 1,
+                                CachedMediaAvailabilityStatus.Available
+                            );
+                            logger.LogInformation(
+                                "[StartDownload] Marked track {Track} as Available",
+                                i + 1
+                            );
+                        })
+                );
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "[StartDownload] Failed updating release.json for {ArtistId}/{Folder}", input.ArtistId, input.ReleaseFolderName);
+                logger.LogError(
+                    ex,
+                    "[StartDownload] Failed updating release.json for {ArtistId}/{Folder}",
+                    input.ArtistId,
+                    input.ReleaseFolderName
+                );
             }
         }
 
-        logger.LogInformation("[StartDownload] Refreshing library cache...");
-        await cache.UpdateCacheAsync();
         logger.LogInformation("[StartDownload] Done");
         return new StartDownloadReleaseSuccess(true);
     }

@@ -64,6 +64,23 @@ public class ServerLibraryCache(ServerLibraryJsonReader reader, ITopicEventSende
         var newAllReleases = new List<CachedRelease>();
         var newAllTracks = new List<CachedTrack>();
 
+        // Snapshot previous per-track media availability statuses so we can preserve them
+        var previousStatuses = new Dictionary<string, CachedMediaAvailabilityStatus>();
+        lock (_lockObject)
+        {
+            foreach (var (artistKey, releases) in _releasesByArtistAndFolder)
+            {
+                foreach (var (releaseKey, release) in releases)
+                {
+                    foreach (var t in release.Tracks)
+                    {
+                        var k = $"{artistKey}|{releaseKey}|{t.TrackNumber}";
+                        previousStatuses[k] = t.CachedMediaAvailabilityStatus;
+                    }
+                }
+            }
+        }
+
         try
         {
             var artistsData = await reader.ReadAllArtistsAsync();
@@ -120,6 +137,13 @@ public class ServerLibraryCache(ServerLibraryJsonReader reader, ITopicEventSende
                                 JsonReleaseType = releaseJson.Type,
                                 JsonTrack = trackJson,
                             };
+
+                            // Preserve previous media availability status if present
+                            var statusKey = $"{artistJson.Id.ToLowerInvariant()}|{folderName.ToLowerInvariant()}|{cachedTrack.TrackNumber}";
+                            if (previousStatuses.TryGetValue(statusKey, out var prevStatus))
+                            {
+                                cachedTrack.CachedMediaAvailabilityStatus = prevStatus;
+                            }
 
                             cachedRelease.Tracks.Add(cachedTrack);
                             newAllTracks.Add(cachedTrack);
