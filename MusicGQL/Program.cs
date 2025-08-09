@@ -250,6 +250,7 @@ builder
     .AddTypeExtension<ArtistServerStatusSubscription>()
     .AddTypeExtension<StartDownloadReleaseMutation>()
     .AddType<StartDownloadReleaseSuccess>()
+    .AddType<StartDownloadReleaseUnknownError>()
     .AddTypeExtension<UnlikeSongMutation>()
     .AddTypeExtension<LikeSongMutation>()
     .AddTypeExtension<ImportArtistMutation>()

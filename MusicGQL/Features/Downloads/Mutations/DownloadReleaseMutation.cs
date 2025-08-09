@@ -1,5 +1,3 @@
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using MusicGQL.Features.Downloads.Services;
 using MusicGQL.Features.ServerLibrary.Cache;
 using MusicGQL.Features.ServerLibrary.Writer;
@@ -110,7 +108,9 @@ public class StartDownloadReleaseMutation
                 logger.LogInformation("[StartDownload] Updated release.json with audio file paths");
 
                 // Reload just this release into cache so it reflects new JSON (preserves transient availability)
-                logger.LogInformation("[StartDownload] Refreshing release in cache after JSON update...");
+                logger.LogInformation(
+                    "[StartDownload] Refreshing release in cache after JSON update..."
+                );
                 await cache.UpdateReleaseFromJsonAsync(input.ArtistId, input.ReleaseFolderName);
 
                 // Now publish availability status updates to reflect current runtime state
@@ -147,14 +147,6 @@ public class StartDownloadReleaseMutation
         logger.LogInformation("[StartDownload] Done");
         return new StartDownloadReleaseSuccess(true);
     }
-
-    private static JsonSerializerOptions GetJsonOptions() =>
-        new()
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            WriteIndented = true,
-            Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) },
-        };
 }
 
 public record StartDownloadReleaseInput(string ArtistId, string ReleaseFolderName);

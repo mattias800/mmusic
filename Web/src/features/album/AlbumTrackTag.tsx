@@ -22,16 +22,16 @@ export const AlbumTrackTag: React.FC<AlbumTrackTagProps> = (props) => {
     return null;
   }
 
-  if (track.isMissing) {
-    return <Tag>Missing</Tag>;
-  }
-
   if (track.mediaAvailabilityStatus === MediaAvailabilityStatus.Downloading) {
     return <Tag>Downloading...</Tag>;
   }
 
   if (track.mediaAvailabilityStatus === MediaAvailabilityStatus.Processing) {
     return <Tag>Processing...</Tag>;
+  }
+
+  if (track.isMissing) {
+    return <Tag>Missing</Tag>;
   }
 
   return null;

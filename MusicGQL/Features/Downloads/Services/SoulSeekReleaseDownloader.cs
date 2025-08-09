@@ -4,6 +4,7 @@ using MusicGQL.Features.External.SoulSeek.Integration;
 using MusicGQL.Features.ServerLibrary.Cache;
 using MusicGQL.Features.ServerLibrary.Subscription;
 using Soulseek;
+using System.Text.RegularExpressions;
 using Directory = System.IO.Directory;
 using Path = System.IO.Path;
 
@@ -36,7 +37,14 @@ public class SoulSeekReleaseDownloader(
             artistName,
             releaseTitle
         );
-        var result = await client.SearchAsync(new SearchQuery($"{artistName} - {releaseTitle}"));
+
+        // Normalize query (e.g., remove commas) to improve matching
+        string normArtist = NormalizeForSearch(artistName);
+        string normTitle = NormalizeForSearch(releaseTitle);
+        var query = $"{normArtist} - {normTitle}".Trim();
+        logger.LogInformation("[SoulSeek] Normalized search query: {Query}", query);
+
+        var result = await client.SearchAsync(new SearchQuery(query));
 
         var best = Sagas.Util.BestResponseFinder.GetBestSearchResponse(result.Responses.ToList());
         if (best == null)
@@ -89,5 +97,13 @@ public class SoulSeekReleaseDownloader(
             releaseTitle
         );
         return true;
+    }
+    private static string NormalizeForSearch(string input)
+    {
+        if (string.IsNullOrWhiteSpace(input)) return string.Empty;
+        // Keep only letters, numbers, and spaces; collapse multiple spaces
+        // \p{L} = any kind of letter from any language; \p{N} = any kind of numeric character
+        var alnumSpaceOnly = Regex.Replace(input, "[^\\p{L}\\p{N}\\s]", " ");
+        return Regex.Replace(alnumSpaceOnly, "\\s+", " ").Trim();
     }
 }
