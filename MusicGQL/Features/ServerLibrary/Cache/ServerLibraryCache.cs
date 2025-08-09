@@ -66,12 +66,15 @@ public class ServerLibraryCache(ServerLibraryJsonReader reader, ITopicEventSende
 
         // Snapshot previous per-track media availability statuses so we can preserve them
         var previousStatuses = new Dictionary<string, CachedMediaAvailabilityStatus>();
+        // Snapshot previous per-release download statuses
+        var previousReleaseStatuses = new Dictionary<string, CachedReleaseDownloadStatus>();
         lock (_lockObject)
         {
             foreach (var (artistKey, releases) in _releasesByArtistAndFolder)
             {
                 foreach (var (releaseKey, release) in releases)
                 {
+                    previousReleaseStatuses[$"{artistKey}|{releaseKey}"] = release.DownloadStatus;
                     foreach (var t in release.Tracks)
                     {
                         var k = $"{artistKey}|{releaseKey}|{t.TrackNumber}";
@@ -118,6 +121,13 @@ public class ServerLibraryCache(ServerLibraryJsonReader reader, ITopicEventSende
                         JsonRelease = releaseJson,
                         Tracks = new List<CachedTrack>(),
                     };
+
+                    // Preserve previous per-release download status if present
+                    var relKey = $"{artistJson.Id.ToLowerInvariant()}|{folderName.ToLowerInvariant()}";
+                    if (previousReleaseStatuses.TryGetValue(relKey, out var prevRelStatus))
+                    {
+                        cachedRelease.DownloadStatus = prevRelStatus;
+                    }
 
                     // Process tracks if they exist
                     if (releaseJson.Tracks != null)
@@ -301,6 +311,7 @@ public class ServerLibraryCache(ServerLibraryJsonReader reader, ITopicEventSende
             ArtistName = artist.Name,
             JsonRelease = releaseJson,
             Tracks = new List<CachedTrack>(),
+            DownloadStatus = oldRelease.DownloadStatus,
         };
 
         if (releaseJson.Tracks != null)
@@ -666,6 +677,33 @@ public class ServerLibraryCache(ServerLibraryJsonReader reader, ITopicEventSende
                 LastUpdated = _lastUpdated,
                 IsInitialized = _isInitialized,
             };
+        }
+    }
+
+    // Update per-release download status and notify subscribers
+    public async Task UpdateReleaseDownloadStatus(
+        string artistId,
+        string releaseFolderName,
+        CachedReleaseDownloadStatus status
+    )
+    {
+        bool updated = false;
+        lock (_lockObject)
+        {
+            if (_releasesByArtistAndFolder.TryGetValue(artistId.ToLowerInvariant(), out var rels)
+                && rels.TryGetValue(releaseFolderName.ToLowerInvariant(), out var release))
+            {
+                release.DownloadStatus = status;
+                updated = true;
+            }
+        }
+
+        if (updated)
+        {
+            await eventSender.SendAsync(
+                LibrarySubscription.LibraryCacheInTracksReleaseUpdatedTopic(artistId, releaseFolderName),
+                new LibraryCacheTrackStatus(artistId, releaseFolderName, 1)
+            );
         }
     }
 }

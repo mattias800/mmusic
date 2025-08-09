@@ -14,6 +14,10 @@ public class CachedRelease
     public JsonRelease JsonRelease { get; set; } = new();
     public List<CachedTrack> Tracks { get; set; } = new();
 
+    // Download workflow status for the whole release
+    public CachedReleaseDownloadStatus DownloadStatus { get; set; } =
+        CachedReleaseDownloadStatus.DownloadButtonVisible;
+
     // Searchable properties
     public string SearchFolderName => FolderName.ToLowerInvariant();
     public string SearchTitle => Title.ToLowerInvariant();

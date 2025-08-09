@@ -44,6 +44,13 @@ public class StartDownloadReleaseService(
             releaseTitle
         );
 
+        // Set status to Searching before starting
+        await cache.UpdateReleaseDownloadStatus(
+            artistId,
+            releaseFolderName,
+            CachedReleaseDownloadStatus.Searching
+        );
+
         var ok = await soulSeekReleaseDownloader.DownloadReleaseAsync(
             artistId,
             releaseFolderName,
@@ -55,6 +62,12 @@ public class StartDownloadReleaseService(
         {
             var msg = $"No suitable download found for {artistName} - {releaseTitle}";
             logger.LogWarning("[StartDownload] {Message}", msg);
+            // reset to show button again
+            await cache.UpdateReleaseDownloadStatus(
+                artistId,
+                releaseFolderName,
+                CachedReleaseDownloadStatus.DownloadButtonVisible
+            );
             return (false, "No suitable download found");
         }
 
@@ -134,6 +147,7 @@ public class StartDownloadReleaseService(
             }
         }
 
+        // Finished initial phase; keep Downloading until track-level statuses progress
         logger.LogInformation("[StartDownload] Done");
         return (true, null);
     }

@@ -1,3 +1,4 @@
+using MusicGQL.Features.Downloads;
 using MusicGQL.Features.ServerLibrary.Cache;
 using MusicGQL.Features.ServerLibrary.Utils;
 
@@ -57,6 +58,8 @@ public record Release([property: GraphQLIgnore] CachedRelease Model)
 
         return sortedByTrackPosition.Select(r => new Track(r));
     }
+
+    public ReleaseDownloadStatus DownloadStatus() => Model.DownloadStatus.ToGql();
 
     public async Task<bool> IsFullyMissing(ServerLibraryCache cache)
     {

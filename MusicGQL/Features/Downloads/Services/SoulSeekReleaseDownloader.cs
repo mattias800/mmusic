@@ -57,6 +57,13 @@ public class SoulSeekReleaseDownloader(
             return false;
         }
 
+        // Transition to Downloading state once we have a candidate
+        await cache.UpdateReleaseDownloadStatus(
+            artistId,
+            releaseFolderName,
+            CachedReleaseDownloadStatus.Downloading
+        );
+
         var queue = DownloadQueueFactory.Create(best);
         int trackIndex = 0;
         while (queue.Any())
