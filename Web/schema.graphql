@@ -310,9 +310,7 @@ type LibraryCacheTrackStatus {
 }
 
 type LibraryReleaseDownloadStatusUpdate {
-  artistId: String!
-  releaseFolderName: String!
-  status: ReleaseDownloadStatus!
+  release: Release!
 }
 
 type LikeSongAlreadyLiked {

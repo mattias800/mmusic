@@ -1,7 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Hqub.Lastfm;
-using MusicGQL.Features.Import.Services;
 using MusicGQL.Features.ServerLibrary.Json;
 using Path = System.IO.Path;
 
@@ -17,12 +16,13 @@ public class LibraryReleaseImportService(
     LastfmClient lastfmClient
 )
 {
-    private static JsonSerializerOptions GetJsonOptions() => new()
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        WriteIndented = true,
-        Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) },
-    };
+    private static JsonSerializerOptions GetJsonOptions() =>
+        new()
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            WriteIndented = true,
+            Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) },
+        };
 
     public async Task<SingleReleaseImportResult> ImportReleaseGroupAsync(
         MusicBrainzReleaseGroupResult releaseGroup,
@@ -82,7 +82,10 @@ public class LibraryReleaseImportService(
                 if (File.Exists(artistJsonPath))
                 {
                     var artistJsonText = await File.ReadAllTextAsync(artistJsonPath);
-                    var jsonArtist = JsonSerializer.Deserialize<JsonArtist>(artistJsonText, GetJsonOptions());
+                    var jsonArtist = JsonSerializer.Deserialize<JsonArtist>(
+                        artistJsonText,
+                        GetJsonOptions()
+                    );
                     artistName = jsonArtist?.Name;
                 }
             }
@@ -100,7 +103,10 @@ public class LibraryReleaseImportService(
                     try
                     {
                         // Last.fm Track.GetInfo requires artist name and track title
-                        var lfTrack = await lastfmClient.Track.GetInfoAsync(track.Title, artistName);
+                        var lfTrack = await lastfmClient.Track.GetInfoAsync(
+                            track.Title,
+                            artistName
+                        );
                         playCount = lfTrack?.Statistics?.PlayCount;
                     }
                     catch
@@ -109,14 +115,16 @@ public class LibraryReleaseImportService(
                     }
                 }
 
-                enrichedTracks.Add(new JsonTrack
-                {
-                    Title = track.Title,
-                    TrackNumber = track.TrackNumber,
-                    TrackLength = track.Length,
-                    PlayCount = playCount,
-                    AudioFilePath = null,
-                });
+                enrichedTracks.Add(
+                    new JsonTrack
+                    {
+                        Title = track.Title,
+                        TrackNumber = track.TrackNumber,
+                        TrackLength = track.Length,
+                        PlayCount = playCount,
+                        AudioFilePath = null,
+                    }
+                );
             }
 
             var releaseJson = new JsonRelease
@@ -161,8 +169,10 @@ public class LibraryReleaseImportService(
     private static string SanitizeFolderName(string name)
     {
         var invalidChars = Path.GetInvalidFileNameChars();
-        var sanitized = string.Join("", name.Split(invalidChars, StringSplitOptions.RemoveEmptyEntries));
+        var sanitized = string.Join(
+            "",
+            name.Split(invalidChars, StringSplitOptions.RemoveEmptyEntries)
+        );
         return sanitized.Trim();
     }
 }
-

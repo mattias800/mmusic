@@ -1,6 +1,5 @@
 using MusicGQL.Features.Import.Services;
 using MusicGQL.Features.ServerLibrary.Cache;
-using MusicGQL.Features.ServerLibrary.Writer;
 using Path = System.IO.Path;
 
 namespace MusicGQL.Features.ServerLibrary.Mutation;
@@ -34,8 +33,10 @@ public class ReimportReleaseMutation
 
         try
         {
-            if (File.Exists(releaseJsonPath)) File.Delete(releaseJsonPath);
-            if (!string.IsNullOrWhiteSpace(coverArtAbs) && File.Exists(coverArtAbs)) File.Delete(coverArtAbs);
+            if (File.Exists(releaseJsonPath))
+                File.Delete(releaseJsonPath);
+            if (!string.IsNullOrWhiteSpace(coverArtAbs) && File.Exists(coverArtAbs))
+                File.Delete(coverArtAbs);
         }
         catch (Exception ex)
         {
@@ -51,15 +52,23 @@ public class ReimportReleaseMutation
         }
 
         var rgs = await mbImport.GetArtistReleaseGroupsAsync(mbArtistId!);
-        var match = rgs.FirstOrDefault(rg => string.Equals(rg.Title, release.Title, StringComparison.OrdinalIgnoreCase));
+        var match = rgs.FirstOrDefault(rg =>
+            string.Equals(rg.Title, release.Title, StringComparison.OrdinalIgnoreCase)
+        );
         if (match == null)
         {
             return new ReimportReleaseError("Could not match release group by title");
         }
 
-        var importResult = await releaseImporter.ImportReleaseGroupAsync(match, Path.GetDirectoryName(release.ReleasePath) ?? Path.Combine("./Library", ArtistId), ArtistId);
+        var importResult = await releaseImporter.ImportReleaseGroupAsync(
+            match,
+            Path.GetDirectoryName(release.ReleasePath) ?? Path.Combine("./Library", ArtistId),
+            ArtistId
+        );
         await cache.UpdateCacheAsync();
-        return importResult.Success ? new ReimportReleaseSuccess(true) : new ReimportReleaseError(importResult.ErrorMessage ?? "Unknown error");
+        return importResult.Success
+            ? new ReimportReleaseSuccess(true)
+            : new ReimportReleaseError(importResult.ErrorMessage ?? "Unknown error");
     }
 }
 
@@ -69,4 +78,3 @@ public abstract record ReimportReleaseResult;
 public record ReimportReleaseSuccess(bool Success) : ReimportReleaseResult;
 
 public record ReimportReleaseError(string Message) : ReimportReleaseResult;
-

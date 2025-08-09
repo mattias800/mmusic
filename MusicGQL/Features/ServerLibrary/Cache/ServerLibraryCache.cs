@@ -693,7 +693,7 @@ public class ServerLibraryCache(ServerLibraryJsonReader reader, ITopicEventSende
         CachedReleaseDownloadStatus status
     )
     {
-        bool updated = false;
+        CachedRelease? cachedRelease = null;
         lock (_lockObject)
         {
             if (
@@ -702,18 +702,18 @@ public class ServerLibraryCache(ServerLibraryJsonReader reader, ITopicEventSende
             )
             {
                 release.DownloadStatus = status;
-                updated = true;
+                cachedRelease = release;
             }
         }
 
-        if (updated)
+        if (cachedRelease != null)
         {
             await eventSender.SendAsync(
                 LibrarySubscription.LibraryReleaseDownloadStatusUpdatedTopic(
                     artistId,
                     releaseFolderName
                 ),
-                new LibraryReleaseDownloadStatusUpdate(new(release))
+                new LibraryReleaseDownloadStatusUpdate(new Release(cachedRelease))
             );
         }
     }

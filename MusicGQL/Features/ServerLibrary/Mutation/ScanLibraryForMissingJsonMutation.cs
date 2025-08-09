@@ -1,6 +1,4 @@
 using MusicGQL.Features.Import.Services;
-using MusicGQL.Features.ServerLibrary.Cache;
-using Path = System.IO.Path;
 
 namespace MusicGQL.Features.ServerLibrary.Mutation;
 
@@ -32,4 +30,3 @@ public record ScanLibraryForMissingJsonSuccess(
     List<string> Notes,
     string? ErrorMessage
 ) : ScanLibraryForMissingJsonResult;
-

@@ -43,11 +43,14 @@ const subscription = graphql(`
     $artistId: String!
     $releaseFolderName: String!
   ) {
-    libraryReleaseDownloadStatusUpdated(artistId: $artistId, releaseFolderName: $releaseFolderName) {
-      
-    }
-    ping {
-      id
+    libraryReleaseDownloadStatusUpdated(
+      artistId: $artistId
+      releaseFolderName: $releaseFolderName
+    ) {
+      release {
+        id
+        downloadStatus
+      }
     }
   }
 `);
@@ -100,6 +103,7 @@ export const ReleaseDownloadButton: React.FC<ReleaseDownloadButtonProps> = (
 
     case ReleaseDownloadStatus.Searching:
       return <span>Searching...</span>;
+
     case ReleaseDownloadStatus.DownloadButtonVisible:
       return (
         <Button

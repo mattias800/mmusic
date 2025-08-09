@@ -1,8 +1,5 @@
 using MusicGQL.Features.Downloads.Services;
-using MusicGQL.Features.ServerLibrary.Cache;
-using MusicGQL.Features.ServerLibrary.Writer;
 using MusicGQL.Types;
-using Path = System.IO.Path;
 
 namespace MusicGQL.Features.Downloads.Mutations;
 

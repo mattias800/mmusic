@@ -29,7 +29,6 @@ using MusicGQL.Features.Playlists.Commands;
 using MusicGQL.Features.Playlists.Import.Spotify;
 using MusicGQL.Features.Playlists.Import.Spotify.Mutations;
 using MusicGQL.Features.Playlists.Mutations;
-using MusicGQL.Features.ServerLibrary;
 using MusicGQL.Features.ServerLibrary.Cache;
 using MusicGQL.Features.ServerLibrary.Json;
 using MusicGQL.Features.ServerLibrary.Mutation;
@@ -94,7 +93,7 @@ builder
         )
     ))
     .AddSingleton<SoulSeekService>()
-.AddSingleton<SoulSeekReleaseDownloader>()
+    .AddSingleton<SoulSeekReleaseDownloader>()
     .AddScoped<StartDownloadReleaseService>()
     .AddSingleton<MusicBrainzService>()
     .AddSingleton<YouTubeService>()
