@@ -11,6 +11,8 @@ import {
 } from "@/components/ui/dropdown-menu.tsx";
 import { Spinner } from "@/components/spinner/Spinner.tsx";
 import { useMutation, useSubscription } from "urql";
+import { toast } from "sonner";
+import { FixMatchDialog } from "@/features/album/components/FixMatchDialog.tsx";
 import { LargeLikeButton } from "@/components/buttons/LargeLikeButton.tsx";
 import { AlbumHeader } from "@/features/album/AlbumHeader.tsx";
 import { AlbumTrackList } from "@/features/album/AlbumTrackList.tsx";
@@ -55,6 +57,21 @@ const albumUpdatesSubscription = graphql(`
         isMissing
         mediaAvailabilityStatus
       }
+    }
+  }
+`);
+
+const releaseMetadataUpdatedSubscription = graphql(`
+  subscription AlbumPanelReleaseMetadataUpdated(
+    $artistId: String!
+    $releaseFolderName: String!
+  ) {
+    libraryReleaseMetadataUpdated(
+      artistId: $artistId
+      releaseFolderName: $releaseFolderName
+    ) {
+      id
+      ...AlbumPanel_Release
     }
   }
 `);
@@ -120,6 +137,7 @@ export const AlbumPanel: React.FC<AlbumPanelProps> = (props) => {
   );
 
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [fixOpen, setFixOpen] = useState(false);
 
   const onConfirmDelete = useCallback(async () => {
     await deleteReleaseAudio({
@@ -135,6 +153,22 @@ export const AlbumPanel: React.FC<AlbumPanelProps> = (props) => {
     variables: {
       artistId: release.artist.id,
       releaseFolderName: release.folderName,
+    },
+  });
+
+  // When backend rebuilds metadata (e.g., after download or manual override),
+  // this subscription delivers the updated Release object. urql cache will merge it.
+  useSubscription({
+    query: releaseMetadataUpdatedSubscription,
+    variables: {
+      artistId: release.artist.id,
+      releaseFolderName: release.folderName,
+    },
+    handler: (_prev, data) => {
+      if (data?.libraryReleaseMetadataUpdated?.id) {
+        toast.success("Album metadata updated");
+      }
+      return data;
     },
   });
 
@@ -182,6 +216,9 @@ export const AlbumPanel: React.FC<AlbumPanelProps> = (props) => {
                   <DropdownMenuItem onSelect={() => setConfirmOpen(true)}>
                     Delete audio files for this release
                   </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => setFixOpen(true)}>
+                    Fix match
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
               {(refreshing || deleting || scanning) && <Spinner size={"sm"} />}
@@ -205,6 +242,12 @@ export const AlbumPanel: React.FC<AlbumPanelProps> = (props) => {
           />
         </div>
       </MainPadding>
+      <FixMatchDialog
+        open={fixOpen}
+        onOpenChange={setFixOpen}
+        artistId={release.artist.id}
+        releaseFolderName={release.folderName}
+      />
     </GradientContent>
   );
 };

@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Linq;
 using Hqub.Lastfm;
 using MusicGQL.Features.ServerLibrary.Json;
 using MusicGQL.Integration.MusicBrainz;
@@ -45,14 +46,39 @@ public class ReleaseJsonBuilder(
             audioFileCount = audioFiles.Count;
         }
 
+        // If release.json exists already, honor an explicit override if present
+        Hqub.MusicBrainz.Entities.Release? selected = null;
+        string? existingOverrideId = null;
+        try
+        {
+            var existingPath = Path.Combine(releaseDir, "release.json");
+            if (File.Exists(existingPath))
+            {
+                var txt = await File.ReadAllTextAsync(existingPath);
+                var existing = JsonSerializer.Deserialize<JsonRelease>(txt, GetJsonOptions());
+                var overrideId = existing?.Connections?.MusicBrainzReleaseIdOverride;
+                if (!string.IsNullOrWhiteSpace(overrideId))
+                {
+                    existingOverrideId = overrideId;
+                    var exact = await musicBrainzService.GetReleaseByIdAsync(overrideId!);
+                    if (exact != null)
+                    {
+                        selected = exact;
+                    }
+                }
+            }
+        }
+        catch { }
+
         // Select the best fitting release
-        Hqub.MusicBrainz.Entities.Release? selected;
+        if (selected == null)
         if (audioFileCount <= 0)
         {
             selected = LibraryDecider.GetMainReleaseInReleaseGroup(releases.ToList());
         }
         else
         {
+            // Prefer a release whose track count matches and whose titles best match filenames
             selected = releases
                 .OrderByDescending(r =>
                 {
@@ -60,9 +86,59 @@ public class ReleaseJsonBuilder(
                     var exactMatch = mediaTracks == audioFileCount;
                     var isAlbum = string.Equals(r.ReleaseGroup?.PrimaryType, "Album", StringComparison.OrdinalIgnoreCase);
                     var score = 0;
+
                     if (exactMatch) score += 10000;
                     if (isAlbum) score += 1000;
                     if (string.Equals(r.Country, "US", StringComparison.OrdinalIgnoreCase)) score += 100;
+
+                    // Penalize likely deluxe/anniversary editions by title
+                    var title = r.Title ?? string.Empty;
+                    if (title.Contains("deluxe", StringComparison.OrdinalIgnoreCase)
+                        || title.Contains("anniversary", StringComparison.OrdinalIgnoreCase)
+                        || title.Contains("expanded", StringComparison.OrdinalIgnoreCase)
+                        || title.Contains("remaster", StringComparison.OrdinalIgnoreCase)
+                        || title.Contains("special", StringComparison.OrdinalIgnoreCase)
+                        || title.Contains("bonus", StringComparison.OrdinalIgnoreCase)
+                        || title.Contains("tour", StringComparison.OrdinalIgnoreCase))
+                    {
+                        score -= 500;
+                    }
+
+                    // Title/filename similarity
+                    var titles = r.Media?
+                        .SelectMany(m => m.Tracks ?? new List<Hqub.MusicBrainz.Entities.Track>())
+                        .Select(tt => tt.Recording?.Title ?? string.Empty)
+                        .Where(s => !string.IsNullOrWhiteSpace(s))
+                        .Select(Normalize)
+                        .ToList() ?? new List<string>();
+
+                    var filesNorm = audioFiles
+                        .Select(f => Normalize(Path.GetFileNameWithoutExtension(f)))
+                        .ToList();
+
+                    int matchCount = 0;
+                    int considered = Math.Min(Math.Min(titles.Count, filesNorm.Count), 30); // limit cost
+                    for (int i = 0; i < considered; i++)
+                    {
+                        var t = titles[i];
+                        var f = filesNorm[i];
+                        if (t.Length == 0 || f.Length == 0) continue;
+                        if (f.Contains(t, StringComparison.OrdinalIgnoreCase) || t.Contains(f, StringComparison.OrdinalIgnoreCase))
+                        {
+                            matchCount++;
+                        }
+                        else
+                        {
+                            // loose word overlap (>=2 shared words)
+                            var tw = t.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                            var fw = f.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                            var overlap = tw.Intersect(fw, StringComparer.OrdinalIgnoreCase).Count();
+                            if (overlap >= 2) matchCount++;
+                        }
+                    }
+                    score += matchCount * 50;
+
+                    // Finally, closeness of track count
                     score += Math.Max(0, 100 - Math.Abs(mediaTracks - audioFileCount));
                     return score;
                 })
@@ -232,7 +308,26 @@ public class ReleaseJsonBuilder(
                 : null,
             CoverArt = coverArtRelPath,
             Tracks = tracks?.Count > 0 ? tracks : null,
+            Connections = new ReleaseServiceConnections
+            {
+                MusicBrainzReleaseGroupId = releaseGroupId,
+                MusicBrainzSelectedReleaseId = selected.Id,
+                // If an explicit override was used, keep it; otherwise leave null
+                MusicBrainzReleaseIdOverride = existingOverrideId,
+            }
         };
+    }
+
+    private static string Normalize(string? s)
+    {
+        if (string.IsNullOrWhiteSpace(s)) return string.Empty;
+        var cleaned = new string(s
+            .ToLowerInvariant()
+            .Select(ch => char.IsLetterOrDigit(ch) ? ch : ' ')
+            .ToArray());
+        // collapse spaces
+        var parts = cleaned.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        return string.Join(" ", parts);
     }
 
     private static JsonSerializerOptions GetJsonOptions() => new()
@@ -242,5 +337,4 @@ public class ReleaseJsonBuilder(
         Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) },
     };
 }
-
 

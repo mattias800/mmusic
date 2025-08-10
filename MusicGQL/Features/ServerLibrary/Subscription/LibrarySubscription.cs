@@ -77,6 +77,26 @@ public record LibrarySubscription
     public LibraryReleaseDownloadStatusUpdate LibraryReleaseDownloadStatusUpdated(
         [EventMessage] LibraryReleaseDownloadStatusUpdate update
     ) => update;
+
+    // Release metadata updated subscription
+    public static string LibraryReleaseMetadataUpdatedTopic(
+        string artistId,
+        string releaseFolderName
+    ) => $"LibraryReleaseMetadataUpdated_{artistId}_{releaseFolderName}";
+
+    public ValueTask<ISourceStream<Release>> SubscribeToLibraryReleaseMetadataUpdated(
+        [Service] ITopicEventReceiver receiver,
+        string artistId,
+        string releaseFolderName,
+        CancellationToken cancellationToken
+    ) =>
+        receiver.SubscribeAsync<Release>(
+            LibraryReleaseMetadataUpdatedTopic(artistId, releaseFolderName),
+            cancellationToken
+        );
+
+    [Subscribe(With = nameof(SubscribeToLibraryReleaseMetadataUpdated))]
+    public Release LibraryReleaseMetadataUpdated([EventMessage] Release release) => release;
 }
 
 public record LibraryCacheTrackStatus(string ArtistId, string ReleaseFolderName, int TrackNumber)

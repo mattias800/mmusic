@@ -9,6 +9,7 @@ public class JsonRelease
     public string? FirstReleaseDate { get; set; }
     public string? FirstReleaseYear { get; set; }
     public string? CoverArt { get; set; }
+    public ReleaseServiceConnections? Connections { get; set; }
 }
 
 public enum JsonReleaseType
@@ -21,6 +22,8 @@ public enum JsonReleaseType
 public class ReleaseServiceConnections
 {
     public string? MusicBrainzReleaseGroupId { get; set; }
+    public string? MusicBrainzSelectedReleaseId { get; set; }
+    public string? MusicBrainzReleaseIdOverride { get; set; }
     public string? SpotifyAlbumId { get; set; }
     public string? YoutubePlaylistUrl { get; set; }
 }

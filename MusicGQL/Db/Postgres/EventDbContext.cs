@@ -32,6 +32,8 @@ public class EventDbContext(DbContextOptions<EventDbContext> options) : DbContex
         modelBuilder
             .Entity<Event>()
             .HasDiscriminator<string>("Discriminator")
+            // Map DB rows with Discriminator = "Event" to a concrete fallback type
+            .HasValue<UnknownEvent>("Event")
             .HasValue<LikedSong>("LikedSong")
             .HasValue<UnlikedSong>("UnlikedSong")
             .HasValue<CreatedPlaylist>("CreatedPlaylist")

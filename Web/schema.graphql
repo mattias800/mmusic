@@ -835,6 +835,7 @@ type Subscription {
   libraryCacheTrackUpdated(artistId: String!, releaseFolderName: String!, trackNumber: Int!): LibraryCacheTrackStatus!
   libraryCacheTracksInReleaseUpdated(artistId: String!, releaseFolderName: String!): LibraryCacheTrackStatus!
   libraryReleaseDownloadStatusUpdated(artistId: String!, releaseFolderName: String!): LibraryReleaseDownloadStatusUpdate!
+  libraryReleaseMetadataUpdated(artistId: String!, releaseFolderName: String!): Release!
   ping: Ping!
   soulSeekStatusUpdated: SoulSeekStatus!
 }

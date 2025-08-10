@@ -8,7 +8,10 @@ public class StartDownloadReleaseService(
     ServerLibraryCache cache,
     SoulSeekReleaseDownloader soulSeekReleaseDownloader,
     ServerLibraryJsonWriter writer,
-    ILogger<StartDownloadReleaseService> logger
+    ILogger<StartDownloadReleaseService> logger,
+    Features.Import.Services.MusicBrainzImportService mbImport,
+    Features.Import.Services.LibraryReleaseImportService releaseImporter,
+    HotChocolate.Subscriptions.ITopicEventSender eventSender
 )
 {
     public async Task<(bool Success, string? ErrorMessage)> StartAsync(
@@ -153,7 +156,45 @@ public class StartDownloadReleaseService(
             CachedReleaseDownloadStatus.Idle
         );
 
-        // Finished initial phase; keep Downloading until track-level statuses progress
+        // Auto-refresh metadata now that audio exists
+        try
+        {
+            var rel = await cache.GetReleaseByArtistAndFolderAsync(artistId, releaseFolderName);
+            var artist = await cache.GetArtistByIdAsync(artistId);
+            var mbArtistId = artist?.JsonArtist.Connections?.MusicBrainzArtistId;
+            if (!string.IsNullOrWhiteSpace(mbArtistId) && rel != null)
+            {
+                var rgs = await mbImport.GetArtistReleaseGroupsAsync(mbArtistId!);
+                var match = rgs.FirstOrDefault(rg => string.Equals(rg.Title, rel.Title, StringComparison.OrdinalIgnoreCase));
+                if (match != null)
+                {
+                    var importResult = await releaseImporter.ImportReleaseGroupAsync(
+                        match,
+                        Path.GetDirectoryName(rel.ReleasePath) ?? Path.Combine("./Library", artistId),
+                        artistId
+                    );
+                    if (importResult.Success)
+                    {
+                        await cache.UpdateReleaseFromJsonAsync(artistId, releaseFolderName);
+                        // Publish metadata updated event
+                        var updated = await cache.GetReleaseByArtistAndFolderAsync(artistId, releaseFolderName);
+                        if (updated != null)
+                        {
+                            await eventSender.SendAsync(
+                                Features.ServerLibrary.Subscription.LibrarySubscription.LibraryReleaseMetadataUpdatedTopic(artistId, releaseFolderName),
+                                new Features.ServerLibrary.Release(updated)
+                            );
+                        }
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "[StartDownload] Auto-refresh after download failed");
+        }
+
+        // Finished
         logger.LogInformation("[StartDownload] Done");
         return (true, null);
     }
