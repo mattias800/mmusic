@@ -36,6 +36,17 @@ public class ImportSpotifyPlaylistMutation
 
         db.Events.Add(createdPlaylistEvent);
 
+        // 1b. Connect to external Spotify playlist for future sync
+        db.Events.Add(
+            new ConnectPlaylistToExternalPlaylist
+            {
+                PlaylistId = playlistGuid,
+                ActorUserId = userId,
+                ExternalService = ExternalServiceType.Spotify,
+                ExternalPlaylistId = playlistId,
+            }
+        );
+
         // 2. Fetch tracks from Spotify
         var tracks = await spotifyService.GetTracksFromPlaylist(playlistId) ?? [];
 

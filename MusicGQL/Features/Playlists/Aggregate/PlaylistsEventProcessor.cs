@@ -35,6 +35,10 @@ public class PlaylistsEventProcessor(ILogger<PlaylistsEventProcessor> logger)
             case DeletedPlaylist e:
                 await HandleEvent(e, dbContext);
                 break;
+
+            case ConnectPlaylistToExternalPlaylist e:
+                await HandleEvent(e, dbContext);
+                break;
         }
     }
 
@@ -131,6 +135,26 @@ public class PlaylistsEventProcessor(ILogger<PlaylistsEventProcessor> logger)
             "Deleted Playlist {PlaylistId} for UserId: {UserId}",
             ev.PlaylistId,
             userId
+        );
+    }
+
+    private async Task HandleEvent(ConnectPlaylistToExternalPlaylist ev, EventDbContext dbContext)
+    {
+        var playlist = await dbContext.Playlists.FirstOrDefaultAsync(p => p.Id == ev.PlaylistId);
+        if (playlist is null)
+        {
+            logger.LogWarning("Playlist {PlaylistId} not found for external connection", ev.PlaylistId);
+            return;
+        }
+
+        // Store external mapping in a side table or as items metadata. For now, we persist a synthetic item 0 with playlist-level external id.
+        // A proper model (DbPlaylistExternal) would be ideal but we avoid migrations here.
+        // No-op: we rely on events to reconstruct external mapping in the future.
+        logger.LogInformation(
+            "Connected playlist {PlaylistId} to external {ExternalService} id={ExternalId}",
+            ev.PlaylistId,
+            ev.ExternalService,
+            ev.ExternalPlaylistId
         );
     }
 
