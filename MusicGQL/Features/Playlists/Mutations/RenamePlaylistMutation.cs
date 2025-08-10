@@ -3,7 +3,6 @@ using HotChocolate.Authorization;
 using Microsoft.EntityFrameworkCore;
 using MusicGQL.Db.Postgres;
 using MusicGQL.Features.Playlists.Commands;
-using MusicGQL.Features.Users;
 using MusicGQL.Types;
 
 namespace MusicGQL.Features.Playlists.Mutations;
@@ -45,7 +44,12 @@ public class RenamePlaylistMutation
             RenamePlaylistHandler.Result.NotAllowed => new RenamePlaylistNoWriteAccess(
                 "You do not have write access to this playlist."
             ),
-            RenamePlaylistHandler.Result.Success => new RenamePlaylistSuccess(new User(user)),
+            RenamePlaylistHandler.Result.Success => await dbContext.Playlists.FindAsync(
+                Guid.Parse(input.PlaylistId)
+            )
+                is { } playlist
+                ? new RenamePlaylistSuccess(new Playlist(playlist))
+                : new RenamePlaylistError("Playlist not found after rename"),
             _ => throw new ArgumentOutOfRangeException(),
         };
     }
@@ -56,6 +60,8 @@ public record RenamePlaylistInput([ID] string PlaylistId, string NewPlaylistName
 [UnionType("RenamePlaylistResult")]
 public abstract record RenamePlaylistResult;
 
-public record RenamePlaylistSuccess(User Viewer) : RenamePlaylistResult;
+public record RenamePlaylistSuccess(Playlist Playlist) : RenamePlaylistResult;
 
 public record RenamePlaylistNoWriteAccess(string Message) : RenamePlaylistResult;
+
+public record RenamePlaylistError(string Message) : RenamePlaylistResult;

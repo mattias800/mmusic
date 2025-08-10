@@ -12,7 +12,7 @@ public class EventProcessorWorker(
     EventDbContext dbContext,
     ILogger<EventProcessorWorker> logger,
     LikedSongsEventProcessor likedSongsEventProcessor,
-    MusicGQL.Features.PlayCounts.PlayCountsEventProcessor playCountsEventProcessor,
+    Features.PlayCounts.PlayCountsEventProcessor playCountsEventProcessor,
     UserEventProcessor userEventProcessor,
     PlaylistsEventProcessor playlistsEventProcessor,
     ServerSettingsEventProcessor serverSettingsEventProcessor

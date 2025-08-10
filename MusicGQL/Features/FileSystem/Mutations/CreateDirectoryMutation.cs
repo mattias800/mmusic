@@ -1,4 +1,3 @@
-using System.Security;
 using MusicGQL.Types;
 
 namespace MusicGQL.Features.FileSystem.Mutations;
@@ -6,18 +5,20 @@ namespace MusicGQL.Features.FileSystem.Mutations;
 [ExtendObjectType(typeof(Mutation))]
 public class CreateDirectoryMutation
 {
-    public FileSystemEntry CreateDirectory(string path)
+    public CreateDirectoryResult CreateDirectory(CreateDirectoryInput input)
     {
         var rootPath = "/";
 
-        if (!IsPathAllowed(path, rootPath))
+        if (!IsPathAllowed(input.Path, rootPath))
         {
-            throw new SecurityException("Cannot create directory at the specified path.");
+            return new CreateDirectoryError("Cannot create directory at the specified path.");
         }
 
-        var directoryInfo = Directory.CreateDirectory(path);
+        var directoryInfo = Directory.CreateDirectory(input.Path);
 
-        return new FileSystemEntry(directoryInfo.Name, directoryInfo.FullName, true, false, true);
+        return new CreateDirectorySuccess(
+            new FileSystemEntry(directoryInfo.Name, directoryInfo.FullName, true, false, true)
+        );
     }
 
     private static bool IsPathAllowed(string path, string rootPath)
@@ -28,3 +29,12 @@ public class CreateDirectoryMutation
         return fullPath.StartsWith(fullAllowedBasePath, StringComparison.OrdinalIgnoreCase);
     }
 }
+
+public record CreateDirectoryInput(string Path);
+
+[UnionType("CreateDirectoryResult")]
+public abstract record CreateDirectoryResult;
+
+public record CreateDirectorySuccess(FileSystemEntry Entry) : CreateDirectoryResult;
+
+public record CreateDirectoryError(string Message) : CreateDirectoryResult;

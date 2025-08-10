@@ -29,10 +29,7 @@ public class LikeSongMutation // Changed to class as it now has dependencies
         );
         if (!Guid.TryParse(userIdString, out var userId))
         {
-            // User not authenticated or UserId claim is missing/invalid
-            // Return an appropriate error. For now, throwing, but a GraphQL error object is better.
-            // This could also be a specific LikeSongResult type like LikeSongResult.NotAuthenticated
-            throw new UnauthorizedAccessException("User not authenticated.");
+            return new NotAuthenticated("User not authenticated.");
         }
 
         var handlerResult = await likeSongHandler.Handle(
@@ -50,13 +47,12 @@ public class LikeSongMutation // Changed to class as it now has dependencies
                     // This case should ideally not happen if user is authenticated
                     throw new Exception("Authenticated user projection not found.");
                 }
-                return new LikeSongResult.LikeSongSuccess(new User(userProjection));
+
+                return new LikeSongSuccess(new User(userProjection));
             case LikeSongHandler.Result.AlreadyLiked:
-                return new LikeSongResult.LikeSongAlreadyLiked("Song already liked!");
+                return new LikeSongAlreadyLiked("Song already liked!");
             case LikeSongHandler.Result.SongDoesNotExist:
-                return new LikeSongResult.LikeSongSongDoesNotExist(
-                    "Song does not exist in MusicBrainz!"
-                );
+                return new LikeSongSongDoesNotExist("Song does not exist in MusicBrainz!");
             default:
                 // Log error: Unhandled handler result
                 throw new ArgumentOutOfRangeException(
@@ -70,12 +66,12 @@ public class LikeSongMutation // Changed to class as it now has dependencies
 public record LikeSongInput(string RecordingId);
 
 [UnionType("LikeSongResult")]
-public abstract record LikeSongResult
-{
-    public record LikeSongSuccess(User Viewer) : LikeSongResult;
+public abstract record LikeSongResult;
 
-    public record LikeSongAlreadyLiked(string Message) : LikeSongResult;
+public record LikeSongSuccess(User Viewer) : LikeSongResult;
 
-    public record LikeSongSongDoesNotExist(string Message) : LikeSongResult;
-    // Consider adding: public record NotAuthenticated(string Message) : LikeSongResult;
-}
+public record LikeSongAlreadyLiked(string Message) : LikeSongResult;
+
+public record LikeSongSongDoesNotExist(string Message) : LikeSongResult;
+
+public record NotAuthenticated(string Message) : LikeSongResult;

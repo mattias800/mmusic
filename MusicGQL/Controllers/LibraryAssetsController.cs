@@ -116,7 +116,7 @@ public class LibraryAssetsController(ServerLibraryAssetReader assetReader) : Con
         string artistId,
         string releaseFolderName,
         int trackNumber,
-        [FromServices] MusicGQL.Db.Postgres.EventDbContext dbContext,
+        [FromServices] Db.Postgres.EventDbContext dbContext,
         [FromServices] EventProcessor.EventProcessorWorker eventProcessor
     )
     {
@@ -135,13 +135,16 @@ public class LibraryAssetsController(ServerLibraryAssetReader assetReader) : Con
 
         // Increment play-count in release.json and refresh the cache.
         // Emit a TrackPlayed event and process (projection will be updated by the event processor)
-        var userIdClaim = HttpContext.User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        var userIdClaim = HttpContext
+            .User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)
+            ?.Value;
         Guid? subjectUserId = null;
-        if (Guid.TryParse(userIdClaim, out var parsed)) subjectUserId = parsed;
+        if (Guid.TryParse(userIdClaim, out var parsed))
+            subjectUserId = parsed;
 
         if (subjectUserId.HasValue)
         {
-            var ev = new MusicGQL.Features.PlayCounts.Events.TrackPlayed
+            var ev = new Features.PlayCounts.Events.TrackPlayed
             {
                 ArtistId = artistId,
                 ReleaseFolderName = releaseFolderName,

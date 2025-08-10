@@ -165,24 +165,33 @@ public class StartDownloadReleaseService(
             if (!string.IsNullOrWhiteSpace(mbArtistId) && rel != null)
             {
                 var rgs = await mbImport.GetArtistReleaseGroupsAsync(mbArtistId!);
-                var match = rgs.FirstOrDefault(rg => string.Equals(rg.Title, rel.Title, StringComparison.OrdinalIgnoreCase));
+                var match = rgs.FirstOrDefault(rg =>
+                    string.Equals(rg.Title, rel.Title, StringComparison.OrdinalIgnoreCase)
+                );
                 if (match != null)
                 {
                     var importResult = await releaseImporter.ImportReleaseGroupAsync(
                         match,
-                        Path.GetDirectoryName(rel.ReleasePath) ?? Path.Combine("./Library", artistId),
+                        Path.GetDirectoryName(rel.ReleasePath)
+                            ?? Path.Combine("./Library", artistId),
                         artistId
                     );
                     if (importResult.Success)
                     {
                         await cache.UpdateReleaseFromJsonAsync(artistId, releaseFolderName);
                         // Publish metadata updated event
-                        var updated = await cache.GetReleaseByArtistAndFolderAsync(artistId, releaseFolderName);
+                        var updated = await cache.GetReleaseByArtistAndFolderAsync(
+                            artistId,
+                            releaseFolderName
+                        );
                         if (updated != null)
                         {
                             await eventSender.SendAsync(
-                                Features.ServerLibrary.Subscription.LibrarySubscription.LibraryReleaseMetadataUpdatedTopic(artistId, releaseFolderName),
-                                new Features.ServerLibrary.Release(updated)
+                                ServerLibrary.Subscription.LibrarySubscription.LibraryReleaseMetadataUpdatedTopic(
+                                    artistId,
+                                    releaseFolderName
+                                ),
+                                new ServerLibrary.Release(updated)
                             );
                         }
                     }

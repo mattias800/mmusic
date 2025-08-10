@@ -8,13 +8,12 @@ namespace MusicGQL.Features.ServerLibrary.Mutation;
 public class RedownloadReleaseMutation
 {
     public async Task<RedownloadReleaseResult> RedownloadRelease(
+        RedownloadReleaseInput input,
         [Service] ServerLibraryCache cache,
-        [Service] ServerLibraryJsonWriter writer,
-        string ArtistId,
-        string ReleaseFolderName
+        [Service] ServerLibraryJsonWriter writer
     )
     {
-        var release = await cache.GetReleaseByArtistAndFolderAsync(ArtistId, ReleaseFolderName);
+        var release = await cache.GetReleaseByArtistAndFolderAsync(input.ArtistId, input.ReleaseFolderName);
         if (release == null)
         {
             return new RedownloadReleaseError("Release not found");
@@ -45,8 +44,8 @@ public class RedownloadReleaseMutation
         try
         {
             await writer.UpdateReleaseAsync(
-                ArtistId,
-                ReleaseFolderName,
+                input.ArtistId,
+                input.ReleaseFolderName,
                 rel =>
                 {
                     if (rel.Tracks is null) return;
@@ -63,14 +62,23 @@ public class RedownloadReleaseMutation
         }
 
         await cache.UpdateCacheAsync();
-        return new RedownloadReleaseSuccess(true);
+        var updated = await cache.GetReleaseByArtistAndFolderAsync(
+            input.ArtistId,
+            input.ReleaseFolderName
+        );
+        if (updated is null)
+        {
+            return new RedownloadReleaseError("Release not found after redownload");
+        }
+        return new RedownloadReleaseSuccess(new Release(updated));
     }
 }
 
 [UnionType("RedownloadReleaseResult")]
 public abstract record RedownloadReleaseResult;
 
-public record RedownloadReleaseSuccess(bool Success) : RedownloadReleaseResult;
+public record RedownloadReleaseSuccess(Release Release) : RedownloadReleaseResult;
 
 public record RedownloadReleaseError(string Message) : RedownloadReleaseResult;
 
+public record RedownloadReleaseInput(string ArtistId, string ReleaseFolderName);

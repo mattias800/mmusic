@@ -3,7 +3,6 @@ using HotChocolate.Authorization;
 using Microsoft.EntityFrameworkCore;
 using MusicGQL.Db.Postgres;
 using MusicGQL.Features.Playlists.Commands;
-using MusicGQL.Features.Users;
 using MusicGQL.Types;
 
 namespace MusicGQL.Features.Playlists.Mutations;
@@ -15,7 +14,8 @@ public class CreatePlaylistMutation
     public async Task<CreatePlaylistResult> CreatePlaylist(
         ClaimsPrincipal claimsPrincipal,
         CreatePlaylistHandler createPlaylistHandler,
-        EventDbContext dbContext
+        EventDbContext dbContext,
+        CreatePlaylistInput input
     )
     {
         var userIdClaim = claimsPrincipal.FindFirst(ClaimTypes.NameIdentifier);
@@ -35,13 +35,26 @@ public class CreatePlaylistMutation
 
         await createPlaylistHandler.Handle(new CreatePlaylistHandler.Command(userId));
 
-        return new CreatePlaylistSuccess(new User(user));
+        // Fetch the newly created playlist for this user (latest by CreatedAt)
+        var playlist = await dbContext
+            .Playlists.Where(p => p.UserId == userId)
+            .OrderByDescending(p => p.CreatedAt)
+            .FirstOrDefaultAsync();
+
+        return playlist == null
+            ? new CreatePlaylistError("Playlist was created but not found")
+            : new CreatePlaylistSuccess(new Playlist(playlist));
     }
 }
+
+[GraphQLName("CreatePlaylistInput")]
+public record CreatePlaylistInput(string? Name, string? Description);
 
 [UnionType("CreatePlaylistResult")]
 public abstract record CreatePlaylistResult;
 
-public record CreatePlaylistSuccess(User Viewer) : CreatePlaylistResult;
+public record CreatePlaylistSuccess(Playlist Playlist) : CreatePlaylistResult;
 
 public record CreatePlaylistNoWriteAccess() : CreatePlaylistResult;
+
+public record CreatePlaylistError(string Message) : CreatePlaylistResult;

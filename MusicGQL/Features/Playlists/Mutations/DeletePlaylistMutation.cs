@@ -3,7 +3,6 @@ using HotChocolate.Authorization;
 using Microsoft.EntityFrameworkCore;
 using MusicGQL.Db.Postgres;
 using MusicGQL.Features.Playlists.Commands;
-using MusicGQL.Features.Users;
 using MusicGQL.Types;
 
 namespace MusicGQL.Features.Playlists.Mutations;
@@ -41,7 +40,9 @@ public class DeletePlaylistMutation
             DeletePlaylistHandler.Result.NotAllowed => new DeletePlaylistNoWriteAccess(
                 "You do not have write access to this playlist."
             ),
-            DeletePlaylistHandler.Result.Success => new DeletePlaylistSuccess(new User(user)),
+            DeletePlaylistHandler.Result.Success => new DeletePlaylistSuccess(
+                Guid.Parse(input.PlaylistId)
+            ),
             _ => throw new ArgumentOutOfRangeException(),
         };
     }
@@ -52,6 +53,6 @@ public record DeletePlaylistInput([ID] string PlaylistId);
 [UnionType("DeletePlaylistResult")]
 public abstract record DeletePlaylistResult;
 
-public record DeletePlaylistSuccess(User Viewer) : DeletePlaylistResult;
+public record DeletePlaylistSuccess([ID] Guid DeletedPlaylistId) : DeletePlaylistResult;
 
 public record DeletePlaylistNoWriteAccess(string Message) : DeletePlaylistResult;

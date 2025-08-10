@@ -16,7 +16,7 @@ public class DbPlaylistItem
     public int? LocalTrackNumber { get; set; }
 
     // Optional external service references
-    public MusicGQL.Features.Playlists.Events.ExternalServiceType? ExternalService { get; set; }
+    public Events.ExternalServiceType? ExternalService { get; set; }
     public string? ExternalTrackId { get; set; }
     public string? ExternalAlbumId { get; set; }
     public string? ExternalArtistId { get; set; }

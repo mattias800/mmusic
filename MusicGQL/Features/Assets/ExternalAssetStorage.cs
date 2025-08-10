@@ -1,14 +1,15 @@
 using System.Net.Http.Headers;
 using System.Text.RegularExpressions;
 using IOPath = System.IO.Path;
-using System.IO;
-using System.Linq;
 
 namespace MusicGQL.Features.Assets;
 
 public class ExternalAssetStorage(IWebHostEnvironment env, IHttpClientFactory httpClientFactory)
 {
-    private static readonly Regex FileExtensionRegex = new("\\.(jpg|jpeg|png|webp|gif)(?:\\?|$)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+    private static readonly Regex FileExtensionRegex = new(
+        "\\.(jpg|jpeg|png|webp|gif)(?:\\?|$)",
+        RegexOptions.IgnoreCase | RegexOptions.Compiled
+    );
 
     private string BaseDirectory => IOPath.Combine(env.ContentRootPath, "ExternalAssets");
 
@@ -27,17 +28,19 @@ public class ExternalAssetStorage(IWebHostEnvironment env, IHttpClientFactory ht
 
             var http = httpClientFactory.CreateClient();
             using var response = await http.GetAsync(imageUrl, cancellationToken);
-            if (!response.IsSuccessStatusCode) return null;
+            if (!response.IsSuccessStatusCode)
+                return null;
             var bytes = await response.Content.ReadAsByteArrayAsync(cancellationToken);
 
             // Determine extension
-            var ext = GetExtensionFromContentType(response.Content.Headers.ContentType)
-                      ?? GetExtensionFromUrl(imageUrl)
-                      ?? ".jpg";
+            var ext =
+                GetExtensionFromContentType(response.Content.Headers.ContentType)
+                ?? GetExtensionFromUrl(imageUrl)
+                ?? ".jpg";
 
             var fileName = SanitizeFileName(trackId) + ext;
             var filePath = IOPath.Combine(coverDir, fileName);
-            await System.IO.File.WriteAllBytesAsync(filePath, bytes, cancellationToken);
+            await File.WriteAllBytesAsync(filePath, bytes, cancellationToken);
 
             // Return local URL served by controller
             return $"/assets/coverart/{playlistId}/{Uri.EscapeDataString(trackId)}";
@@ -71,7 +74,8 @@ public class ExternalAssetStorage(IWebHostEnvironment env, IHttpClientFactory ht
     private static string? GetExtensionFromUrl(string url)
     {
         var match = FileExtensionRegex.Match(url);
-        if (match.Success) return "." + match.Groups[1].Value.ToLowerInvariant();
+        if (match.Success)
+            return "." + match.Groups[1].Value.ToLowerInvariant();
         return null;
     }
 
@@ -85,9 +89,14 @@ public class ExternalAssetStorage(IWebHostEnvironment env, IHttpClientFactory ht
         foreach (var ext in new[] { ".jpg", ".jpeg", ".png", ".webp", ".gif" })
         {
             var filePath = IOPath.Combine(coverDir, SanitizeFileName(trackId) + ext);
-            if (System.IO.File.Exists(filePath))
+            if (File.Exists(filePath))
             {
-                var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+                var stream = new FileStream(
+                    filePath,
+                    FileMode.Open,
+                    FileAccess.Read,
+                    FileShare.Read
+                );
                 var contentType = ext switch
                 {
                     ".jpg" or ".jpeg" => "image/jpeg",
@@ -104,5 +113,3 @@ public class ExternalAssetStorage(IWebHostEnvironment env, IHttpClientFactory ht
         return (null, null, null);
     }
 }
-
-
