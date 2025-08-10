@@ -201,6 +201,8 @@ describe('Alert Component', () => {
 - Do not add ad-hoc REST endpoints for data that belongs in GraphQL.
 - Only use controlled endpoints for binary assets (audio files and images) under /library/… as already established.
 - Never fetch data via window.fetch or React useEffect hooks; always use GraphQL queries/mutations/subscriptions with co-located fragments.
+- Define all `graphql` documents (queries, mutations, fragments) at module scope, not inside React component bodies. Do not duplicate the same document multiple times within a file.
+- After changing the GraphQL schema or any document, regenerate types: `bun types` (from Web directory).
 - Naming convention: files containing GraphQL mutation classes must be named exactly like the mutation class (e.g., RefreshReleaseMutation.cs contains class RefreshReleaseMutation). Place related mutations together in the same folder.
 
 ## Debugging

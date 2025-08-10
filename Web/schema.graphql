@@ -249,6 +249,13 @@ type ImportArtistSuccess {
   artist: Artist!
 }
 
+type ImportArtistsFromSpotifyPlaylistResult {
+  failedArtists: [String!]!
+  importedArtists: Int!
+  success: Boolean!
+  totalArtists: Int!
+}
+
 type ImportPlaylistSearchRoot {
   spotify: SpotifyPlaylistSearchRoot!
 }
@@ -546,6 +553,7 @@ type Mutation {
   deleteReleaseAudio(input: DeleteReleaseAudioInput!): DeleteReleaseAudioResult!
   importArtist(input: ImportArtistInput!): ImportArtistResult!
   importArtistReleases(artistId: String!): ImportReleasesResult!
+  importArtistsFromSpotifyPlaylist(playlistId: String!): ImportArtistsFromSpotifyPlaylistResult!
   importSpotifyPlaylistById(playlistId: String!, userId: UUID!): ImportSpotifyPlaylistResult!
   likeSong(input: LikeSongInput!): LikeSongResult!
   movePlaylistItem(actorUserId: UUID!, artistId: String!, newIndex: Int!, playlistId: UUID!, releaseFolderName: String!, trackNumber: Int!): MovePlaylistItemResult!

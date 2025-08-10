@@ -102,8 +102,8 @@ type Documents = {
     "\n  fragment SpotifyPlaylistsList_SpotifyPlaylist on SpotifyPlaylist {\n    id\n    description\n    name\n    coverImageUrl\n  }\n": typeof types.SpotifyPlaylistsList_SpotifyPlaylistFragmentDoc,
     "\n  query UserPlaylistsLoader_Query($spotifyUsername: String!) {\n    playlist {\n      importPlaylists {\n        spotify {\n          spotifyPlaylistsForUser(username: $spotifyUsername) {\n            id\n            ...SpotifyPlaylistsList_SpotifyPlaylist\n          }\n        }\n      }\n    }\n  }\n": typeof types.UserPlaylistsLoader_QueryDocument,
     "\n  fragment SpotifyPlaylistPanel_SpotifyPlaylist on SpotifyPlaylist {\n    id\n    name\n    description\n    coverImageUrl\n    totalTracks\n    tracks {\n      id\n      title\n      durationMs\n      artistNames\n      albumCoverImageUrl\n      previewUrl\n    }\n  }\n": typeof types.SpotifyPlaylistPanel_SpotifyPlaylistFragmentDoc,
-    "\n    query ViewerIdForSpotifyImport {\n      viewer { id }\n    }\n  ": typeof types.ViewerIdForSpotifyImportDocument,
-    "\n    mutation ImportSpotifyPlaylistById($playlistId: String!, $userId: UUID!) {\n      importSpotifyPlaylistById(playlistId: $playlistId, userId: $userId) {\n        __typename\n        ... on ImportSpotifyPlaylistSuccess { success }\n        ... on ImportSpotifyPlaylistError { message }\n      }\n    }\n  ": typeof types.ImportSpotifyPlaylistByIdDocument,
+    "\n  query ViewerIdForSpotifyImport {\n    viewer {\n      id\n    }\n  }\n": typeof types.ViewerIdForSpotifyImportDocument,
+    "\n  mutation ImportArtistsFromSpotifyPlaylist($playlistId: String!) {\n    importArtistsFromSpotifyPlaylist(playlistId: $playlistId) {\n      success\n      totalArtists\n      importedArtists\n      failedArtists\n    }\n  }\n": typeof types.ImportArtistsFromSpotifyPlaylistDocument,
     "\n  fragment UserProfilePanel_User on User {\n    id\n    username\n    createdAt\n    updatedAt\n    likedSongs {\n      id\n    }\n  }\n": typeof types.UserProfilePanel_UserFragmentDoc,
     "\n  query UserProfileWidget {\n    viewer {\n      id\n      username\n    }\n  }\n": typeof types.UserProfileWidgetDocument,
 };
@@ -196,8 +196,8 @@ const documents: Documents = {
     "\n  fragment SpotifyPlaylistsList_SpotifyPlaylist on SpotifyPlaylist {\n    id\n    description\n    name\n    coverImageUrl\n  }\n": types.SpotifyPlaylistsList_SpotifyPlaylistFragmentDoc,
     "\n  query UserPlaylistsLoader_Query($spotifyUsername: String!) {\n    playlist {\n      importPlaylists {\n        spotify {\n          spotifyPlaylistsForUser(username: $spotifyUsername) {\n            id\n            ...SpotifyPlaylistsList_SpotifyPlaylist\n          }\n        }\n      }\n    }\n  }\n": types.UserPlaylistsLoader_QueryDocument,
     "\n  fragment SpotifyPlaylistPanel_SpotifyPlaylist on SpotifyPlaylist {\n    id\n    name\n    description\n    coverImageUrl\n    totalTracks\n    tracks {\n      id\n      title\n      durationMs\n      artistNames\n      albumCoverImageUrl\n      previewUrl\n    }\n  }\n": types.SpotifyPlaylistPanel_SpotifyPlaylistFragmentDoc,
-    "\n    query ViewerIdForSpotifyImport {\n      viewer { id }\n    }\n  ": types.ViewerIdForSpotifyImportDocument,
-    "\n    mutation ImportSpotifyPlaylistById($playlistId: String!, $userId: UUID!) {\n      importSpotifyPlaylistById(playlistId: $playlistId, userId: $userId) {\n        __typename\n        ... on ImportSpotifyPlaylistSuccess { success }\n        ... on ImportSpotifyPlaylistError { message }\n      }\n    }\n  ": types.ImportSpotifyPlaylistByIdDocument,
+    "\n  query ViewerIdForSpotifyImport {\n    viewer {\n      id\n    }\n  }\n": types.ViewerIdForSpotifyImportDocument,
+    "\n  mutation ImportArtistsFromSpotifyPlaylist($playlistId: String!) {\n    importArtistsFromSpotifyPlaylist(playlistId: $playlistId) {\n      success\n      totalArtists\n      importedArtists\n      failedArtists\n    }\n  }\n": types.ImportArtistsFromSpotifyPlaylistDocument,
     "\n  fragment UserProfilePanel_User on User {\n    id\n    username\n    createdAt\n    updatedAt\n    likedSongs {\n      id\n    }\n  }\n": types.UserProfilePanel_UserFragmentDoc,
     "\n  query UserProfileWidget {\n    viewer {\n      id\n      username\n    }\n  }\n": types.UserProfileWidgetDocument,
 };
@@ -571,11 +571,11 @@ export function graphql(source: "\n  fragment SpotifyPlaylistPanel_SpotifyPlayli
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n    query ViewerIdForSpotifyImport {\n      viewer { id }\n    }\n  "): (typeof documents)["\n    query ViewerIdForSpotifyImport {\n      viewer { id }\n    }\n  "];
+export function graphql(source: "\n  query ViewerIdForSpotifyImport {\n    viewer {\n      id\n    }\n  }\n"): (typeof documents)["\n  query ViewerIdForSpotifyImport {\n    viewer {\n      id\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n    mutation ImportSpotifyPlaylistById($playlistId: String!, $userId: UUID!) {\n      importSpotifyPlaylistById(playlistId: $playlistId, userId: $userId) {\n        __typename\n        ... on ImportSpotifyPlaylistSuccess { success }\n        ... on ImportSpotifyPlaylistError { message }\n      }\n    }\n  "): (typeof documents)["\n    mutation ImportSpotifyPlaylistById($playlistId: String!, $userId: UUID!) {\n      importSpotifyPlaylistById(playlistId: $playlistId, userId: $userId) {\n        __typename\n        ... on ImportSpotifyPlaylistSuccess { success }\n        ... on ImportSpotifyPlaylistError { message }\n      }\n    }\n  "];
+export function graphql(source: "\n  mutation ImportArtistsFromSpotifyPlaylist($playlistId: String!) {\n    importArtistsFromSpotifyPlaylist(playlistId: $playlistId) {\n      success\n      totalArtists\n      importedArtists\n      failedArtists\n    }\n  }\n"): (typeof documents)["\n  mutation ImportArtistsFromSpotifyPlaylist($playlistId: String!) {\n    importArtistsFromSpotifyPlaylist(playlistId: $playlistId) {\n      success\n      totalArtists\n      importedArtists\n      failedArtists\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

@@ -114,6 +114,11 @@ Please refer to the specific guidelines relevant to the part of the codebase you
   - Add `.AddTypeExtension<YourMutationClass>()` and explicitly add result types if needed.
   - Missing registration causes the operation to be absent from the runtime schema.
 
+- Frontend GraphQL documents (queries, mutations, fragments) must be defined at module scope, not inside React component bodies.
+  - Do not redeclare the same `graphql` document inside a component; define it once at the top of the file and reuse it with hooks.
+  - This avoids recreating documents on each render and ensures stable document identities for caching/codegen.
+  - After any schema or document change, regenerate types (`cd Web && bun run types`).
+
 - When adding potentially destructive actions in the UI (e.g., deleting audio files), implement a confirmation dialog and extract it into a dedicated component for reuse and clarity.
   - Place components under a feature-appropriate folder (e.g., `Web/src/features/album/components/ConfirmDeleteReleaseAudioDialog.tsx`).
 

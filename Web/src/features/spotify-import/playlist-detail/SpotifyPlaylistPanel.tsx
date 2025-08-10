@@ -5,7 +5,14 @@ import { SectionList } from "@/components/page-body/SectionList.tsx";
 import { Section } from "@/components/page-body/Section.tsx";
 import { SectionHeading } from "@/components/headings/SectionHeading.tsx";
 import { Button } from "@/components/ui/button.tsx";
-import { CheckSquare, Download, Play, Square, Library, Users } from "lucide-react";
+import {
+  CheckSquare,
+  Download,
+  Play,
+  Square,
+  Library,
+  Users,
+} from "lucide-react";
 import { PlaylistSummaryHeader } from "@/common/PlaylistSummaryHeader.tsx";
 import { FragmentType, graphql, useFragment } from "@/gql";
 import { useMutation, useQuery } from "urql";
@@ -34,6 +41,39 @@ const spotifyPlaylistPanelPlaylistFragment = graphql(`
   }
 `);
 
+const viewerQuery = graphql(`
+  query ViewerIdForSpotifyImport {
+    viewer {
+      id
+    }
+  }
+`);
+
+const importSpotifyPlaylistByIdMutation = graphql(`
+  mutation ImportSpotifyPlaylistById($playlistId: String!, $userId: UUID!) {
+    importSpotifyPlaylistById(playlistId: $playlistId, userId: $userId) {
+      __typename
+      ... on ImportSpotifyPlaylistSuccess {
+        success
+      }
+      ... on ImportSpotifyPlaylistError {
+        message
+      }
+    }
+  }
+`);
+
+const importArtistsFromSpotifyPlaylistMutation = graphql(`
+  mutation ImportArtistsFromSpotifyPlaylist($playlistId: String!) {
+    importArtistsFromSpotifyPlaylist(playlistId: $playlistId) {
+      success
+      totalArtists
+      importedArtists
+      failedArtists
+    }
+  }
+`);
+
 type TrackSelectionState = Record<string, boolean>;
 
 export const SpotifyPlaylistPanel: React.FC<SpotifyPlaylistPanelProps> = (
@@ -54,31 +94,23 @@ export const SpotifyPlaylistPanel: React.FC<SpotifyPlaylistPanelProps> = (
     setSelected(next);
   }, [playlist.id, playlist.tracks, selectAll]);
 
-  const viewerQuery = graphql(`
-    query ViewerIdForSpotifyImport {
-      viewer { id }
-    }
-  `);
   const [{ data: viewerData }] = useQuery({ query: viewerQuery });
 
-  const importSpotifyPlaylistByIdMutation = graphql(`
-    mutation ImportSpotifyPlaylistById($playlistId: String!, $userId: UUID!) {
-      importSpotifyPlaylistById(playlistId: $playlistId, userId: $userId) {
-        __typename
-        ... on ImportSpotifyPlaylistSuccess { success }
-        ... on ImportSpotifyPlaylistError { message }
-      }
-    }
-  `);
   const [, importPlaylist] = useMutation(importSpotifyPlaylistByIdMutation);
+  const [, importArtists] = useMutation(
+    importArtistsFromSpotifyPlaylistMutation,
+  );
 
   const handleImportPlaylist = async () => {
     if (!viewerData?.viewer?.id) return;
-    await importPlaylist({ playlistId: playlist.id, userId: viewerData.viewer.id });
+    await importPlaylist({
+      playlistId: playlist.id,
+      userId: viewerData.viewer.id,
+    });
   };
 
   const handleImportArtists = async () => {
-    // TODO: implement backend mutation to batch import artists from this playlist
+    await importArtists({ playlistId: playlist.id });
   };
 
   if (!playlist) return <div className="p-4">Playlist not found.</div>;
@@ -119,10 +151,19 @@ export const SpotifyPlaylistPanel: React.FC<SpotifyPlaylistPanelProps> = (
                   >
                     {selectAll ? "Unselect all" : "Select all"}
                   </Button>
-                  <Button size="sm" iconLeft={Library} onClick={handleImportPlaylist}>
+                  <Button
+                    size="sm"
+                    iconLeft={Library}
+                    onClick={handleImportPlaylist}
+                  >
                     Import playlist
                   </Button>
-                  <Button size="sm" variant="secondary" iconLeft={Users} onClick={handleImportArtists}>
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    iconLeft={Users}
+                    onClick={handleImportArtists}
+                  >
                     Import artists
                   </Button>
                 </>

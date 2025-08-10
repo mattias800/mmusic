@@ -249,6 +249,7 @@ builder
     .AddTypeExtension<ImportSpotifyPlaylistMutation>()
     .AddType<ImportSpotifyPlaylistSuccess>()
     .AddType<ImportSpotifyPlaylistError>()
+    .AddTypeExtension<MusicGQL.Features.Playlists.Import.Spotify.Mutations.ImportSpotifyPlaylistArtistsMutation>()
     .AddTypeExtension<SoulSeekSubscription>()
     .AddTypeExtension<LibrarySubscription>()
     .AddTypeExtension<ArtistServerStatusSubscription>()
