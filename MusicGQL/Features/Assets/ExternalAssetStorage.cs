@@ -14,7 +14,7 @@ public class ExternalAssetStorage(IWebHostEnvironment env, IHttpClientFactory ht
     private string BaseDirectory => IOPath.Combine(env.ContentRootPath, "ExternalAssets");
 
     public async Task<string?> SaveCoverImageForPlaylistTrackAsync(
-        Guid playlistId,
+        string playlistId,
         string trackId,
         string imageUrl,
         CancellationToken cancellationToken = default

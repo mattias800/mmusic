@@ -39,7 +39,7 @@ public class RenamePlaylistHandler(
         return new Result.Success();
     }
 
-    public record Command(Guid UserId, Guid PlaylistId, string NewPlaylistName);
+    public record Command(Guid UserId, string PlaylistId, string NewPlaylistName);
 
     public abstract record Result
     {

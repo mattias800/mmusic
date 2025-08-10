@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using MusicGQL.Db.Postgres.Models;
 using MusicGQL.Features.Likes.Db;
 using MusicGQL.Features.Likes.Events;
+using MusicGQL.Features.PlayCounts.Db;
 using MusicGQL.Features.Playlists.Db;
 using MusicGQL.Features.Playlists.Events;
 using MusicGQL.Features.ServerSettings.Db;
@@ -22,8 +23,8 @@ public class EventDbContext(DbContextOptions<EventDbContext> options) : DbContex
     public DbSet<DbPlaylist> Playlists { get; set; }
     public DbSet<DbUser> Users { get; set; }
 
-    public DbSet<MusicGQL.Features.PlayCounts.Db.DbTrackPlayCount> TrackPlayCounts { get; set; }
-    public DbSet<MusicGQL.Features.PlayCounts.Db.DbUserTrackPlayCount> UserTrackPlayCounts { get; set; }
+    public DbSet<DbTrackPlayCount> TrackPlayCounts { get; set; }
+    public DbSet<DbUserTrackPlayCount> UserTrackPlayCounts { get; set; }
 
     public DbSet<DbServerSettings> ServerSettings { get; set; }
 
@@ -49,7 +50,13 @@ public class EventDbContext(DbContextOptions<EventDbContext> options) : DbContex
             b.Property(x => x.ArtistId).IsRequired();
             b.Property(x => x.ReleaseFolderName).IsRequired();
             b.Property(x => x.TrackNumber).IsRequired();
-            b.HasIndex(x => new { x.ArtistId, x.ReleaseFolderName, x.TrackNumber }).IsUnique();
+            b.HasIndex(x => new
+                {
+                    x.ArtistId,
+                    x.ReleaseFolderName,
+                    x.TrackNumber,
+                })
+                .IsUnique();
         });
 
         modelBuilder.Entity<MusicGQL.Features.PlayCounts.Db.DbUserTrackPlayCount>(b =>
@@ -60,7 +67,14 @@ public class EventDbContext(DbContextOptions<EventDbContext> options) : DbContex
             b.Property(x => x.ArtistId).IsRequired();
             b.Property(x => x.ReleaseFolderName).IsRequired();
             b.Property(x => x.TrackNumber).IsRequired();
-            b.HasIndex(x => new { x.UserId, x.ArtistId, x.ReleaseFolderName, x.TrackNumber }).IsUnique();
+            b.HasIndex(x => new
+                {
+                    x.UserId,
+                    x.ArtistId,
+                    x.ReleaseFolderName,
+                    x.TrackNumber,
+                })
+                .IsUnique();
         });
 
         modelBuilder.Entity<DbUser>().ToTable("Users").HasKey(u => u.UserId);
@@ -88,8 +102,6 @@ public class EventDbContext(DbContextOptions<EventDbContext> options) : DbContex
         {
             b.ToTable("PlaylistItems");
             b.HasKey(i => i.Id);
-
-            b.Property(i => i.RecordingId).IsRequired();
 
             b.HasOne(i => i.Playlist)
                 .WithMany(p => p.Items)

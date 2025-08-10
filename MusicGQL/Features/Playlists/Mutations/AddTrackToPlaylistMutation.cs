@@ -19,17 +19,17 @@ public class AddTrackToPlaylistMutation
         var userIdClaim = httpContext
             ?.User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)
             ?.Value;
+
         if (userIdClaim == null || !Guid.TryParse(userIdClaim, out var actorUserId))
         {
             return new AddTrackToPlaylistError("Not authenticated");
         }
 
-        var recordingId = $"{input.ArtistId}/{input.ReleaseFolderName}/{input.TrackNumber}";
         db.Events.Add(
             new SongAddedToPlaylist
             {
                 PlaylistId = input.PlaylistId,
-                RecordingId = recordingId,
+                PlaylistItemId = Guid.NewGuid().ToString(),
                 ActorUserId = actorUserId,
                 LocalArtistId = input.ArtistId,
                 LocalReleaseFolderName = input.ReleaseFolderName,
@@ -51,7 +51,7 @@ public class AddTrackToPlaylistMutation
 
 [GraphQLName("AddTrackToPlaylistInput")]
 public record AddTrackToPlaylistInput(
-    Guid PlaylistId,
+    string PlaylistId,
     string ArtistId,
     string ReleaseFolderName,
     int TrackNumber

@@ -17,7 +17,7 @@ public class VerifyPlaylistWriteAccessHandler(EventDbContext dbContext)
         };
     }
 
-    public record Query(Guid UserId, Guid PlaylistId);
+    public record Query(Guid UserId, string PlaylistId);
 
     public abstract record Result
     {

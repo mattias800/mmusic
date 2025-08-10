@@ -34,7 +34,7 @@ public class DeletePlaylistMutation
         }
 
         return await renamePlaylistHandler.Handle(
-            new DeletePlaylistHandler.Command(userId, Guid.Parse(input.PlaylistId))
+            new DeletePlaylistHandler.Command(userId, input.PlaylistId)
         ) switch
         {
             DeletePlaylistHandler.Result.NotAllowed => new DeletePlaylistNoWriteAccess(

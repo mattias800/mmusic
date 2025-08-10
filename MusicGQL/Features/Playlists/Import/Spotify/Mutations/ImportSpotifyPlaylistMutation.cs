@@ -23,10 +23,10 @@ public class ImportSpotifyPlaylistMutation
         }
 
         // 1. Create Playlist event
-        var playlistGuid = Guid.NewGuid();
+        var playlistId = Guid.NewGuid().ToString();
         var createdPlaylistEvent = new CreatedPlaylist
         {
-            PlaylistId = playlistGuid,
+            PlaylistId = playlistId,
             ActorUserId = input.UserId,
             Name = spotifyPlaylist.Name ?? string.Empty,
             Description = spotifyPlaylist.Description,
@@ -39,7 +39,7 @@ public class ImportSpotifyPlaylistMutation
         db.Events.Add(
             new ConnectPlaylistToExternalPlaylist
             {
-                PlaylistId = playlistGuid,
+                PlaylistId = playlistId,
                 ActorUserId = input.UserId,
                 ExternalService = ExternalServiceType.Spotify,
                 ExternalPlaylistId = input.PlaylistId,
@@ -60,7 +60,7 @@ public class ImportSpotifyPlaylistMutation
             {
                 // Attempt to cache cover art locally for portability
                 localCoverUrl = await assetStorage.SaveCoverImageForPlaylistTrackAsync(
-                    playlistGuid,
+                    playlistId,
                     track.Id,
                     coverUrl
                 );
@@ -69,10 +69,10 @@ public class ImportSpotifyPlaylistMutation
             db.Events.Add(
                 new SongAddedToPlaylist
                 {
-                    PlaylistId = playlistGuid,
-                    RecordingId = track.Id, // Keep original RecordingId for backward compat
+                    PlaylistId = playlistId,
+                    PlaylistItemId = Guid.NewGuid().ToString(),
                     ActorUserId = input.UserId,
-                    Position = null, // Null means append to the end
+                    AtIndex = null, // Null means append to the end
                     ExternalService = ExternalServiceType.Spotify,
                     ExternalTrackId = track.Id,
                     ExternalAlbumId = track.Album?.Id,
@@ -93,7 +93,7 @@ public class ImportSpotifyPlaylistMutation
         // Return the created playlist projection
         var created = new Db.DbPlaylist
         {
-            Id = playlistGuid,
+            Id = playlistId,
             UserId = input.UserId,
             Name = spotifyPlaylist.Name,
             Description = spotifyPlaylist.Description,

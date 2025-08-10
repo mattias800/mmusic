@@ -6,9 +6,8 @@ namespace MusicGQL.Features.Playlists;
 
 public record PlaylistItem([property: GraphQLIgnore] Db.DbPlaylistItem Model)
 {
-    public int Id() => Model.Id;
-
-    public string RecordingId() => Model.RecordingId;
+    [ID]
+    public string Id() => Model.Id;
 
     public DateTime AddedAt() => Model.AddedAt;
 
@@ -34,65 +33,32 @@ public record PlaylistItem([property: GraphQLIgnore] Db.DbPlaylistItem Model)
 
     public string? LocalCoverImageUrl() => Model.LocalCoverImageUrl;
 
-    public bool IsLocalReferencePresent() =>
-        !string.IsNullOrWhiteSpace(Model.LocalArtistId)
-        && !string.IsNullOrWhiteSpace(Model.LocalReleaseFolderName)
-        && Model.LocalTrackNumber.HasValue;
-
-    public async Task<bool> IsLocalAvailable([Service] ServerLibraryCache cache)
+    public async Task<Artist?> Artist([Service] ServerLibraryCache cache)
     {
-        if (IsLocalReferencePresent())
+        if (Model.LocalArtistId is null)
         {
-            var track = await cache.GetTrackByArtistReleaseAndNumberAsync(
-                Model.LocalArtistId!,
-                Model.LocalReleaseFolderName!,
-                Model.LocalTrackNumber!.Value
-            );
-            return track is not null;
+            return null;
         }
 
-        // Fallback: try to parse RecordingId as local ID format artistId/releaseFolder/trackNumber
-        var parts = Model.RecordingId.Split(
-            '/',
-            StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries
-        );
-        if (parts.Length == 3 && int.TryParse(parts[2], out var trackNumber))
-        {
-            var track = await cache.GetTrackByArtistReleaseAndNumberAsync(
-                parts[0],
-                parts[1],
-                trackNumber
-            );
-            return track is not null;
-        }
-
-        return false;
+        var cached = await cache.GetArtistByIdAsync(Model.LocalArtistId);
+        return cached is null ? null : new Artist(cached);
     }
 
     public async Task<Track?> Track([Service] ServerLibraryCache cache)
     {
-        // Prefer explicit local reference
-        if (IsLocalReferencePresent())
+        if (
+            Model is
+            {
+                LocalArtistId: not null,
+                LocalReleaseFolderName: not null,
+                LocalTrackNumber: not null
+            }
+        )
         {
             var cached = await cache.GetTrackByArtistReleaseAndNumberAsync(
-                Model.LocalArtistId!,
-                Model.LocalReleaseFolderName!,
-                Model.LocalTrackNumber!.Value
-            );
-            return cached is null ? null : new Track(cached);
-        }
-
-        // Fallback: parse RecordingId
-        var parts = Model.RecordingId.Split(
-            '/',
-            StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries
-        );
-        if (parts.Length == 3 && int.TryParse(parts[2], out var trackNumber))
-        {
-            var cached = await cache.GetTrackByArtistReleaseAndNumberAsync(
-                parts[0],
-                parts[1],
-                trackNumber
+                Model.LocalArtistId,
+                Model.LocalReleaseFolderName,
+                Model.LocalTrackNumber.Value
             );
             return cached is null ? null : new Track(cached);
         }

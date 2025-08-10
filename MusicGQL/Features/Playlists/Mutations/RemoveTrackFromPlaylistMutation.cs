@@ -23,18 +23,20 @@ public class RemoveItemFromPlaylistMutation
         {
             return new RemoveItemFromPlaylistError("Not authenticated");
         }
-        var playlistItem = await db.Set<Features.Playlists.Db.DbPlaylistItem>()
-            .FirstOrDefaultAsync(i => i.Id == input.PlaylistItemId && i.PlaylistId == input.PlaylistId);
+        var playlistItem = await db.Set<Db.DbPlaylistItem>()
+            .FirstOrDefaultAsync(i =>
+                i.Id == input.PlaylistItemId && i.PlaylistId == input.PlaylistId
+            );
         if (playlistItem == null)
         {
             return new RemoveItemFromPlaylistError("Playlist item not found");
         }
-        var recordingId = playlistItem.RecordingId;
+
         db.Events.Add(
             new SongRemovedFromPlaylist
             {
                 PlaylistId = input.PlaylistId,
-                RecordingId = recordingId,
+                PlaylistItemId = input.PlaylistItemId,
                 ActorUserId = actorUserId,
             }
         );
@@ -52,10 +54,7 @@ public class RemoveItemFromPlaylistMutation
 }
 
 [GraphQLName("RemoveItemFromPlaylistInput")]
-public record RemoveItemFromPlaylistInput(
-    Guid PlaylistId,
-    int PlaylistItemId
-);
+public record RemoveItemFromPlaylistInput(string PlaylistId, string PlaylistItemId);
 
 [UnionType]
 public abstract record RemoveItemFromPlaylistResult;

@@ -4,7 +4,7 @@ namespace MusicGQL.Features.Playlists.Db;
 
 public class DbPlaylist
 {
-    public Guid Id { get; set; }
+    public string Id { get; set; }
 
     public Guid UserId { get; set; }
     public DbUser User { get; set; } = null!; // optional, but useful for navigation

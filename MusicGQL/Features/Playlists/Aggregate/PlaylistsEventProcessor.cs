@@ -143,7 +143,10 @@ public class PlaylistsEventProcessor(ILogger<PlaylistsEventProcessor> logger)
         var playlist = await dbContext.Playlists.FirstOrDefaultAsync(p => p.Id == ev.PlaylistId);
         if (playlist is null)
         {
-            logger.LogWarning("Playlist {PlaylistId} not found for external connection", ev.PlaylistId);
+            logger.LogWarning(
+                "Playlist {PlaylistId} not found for external connection",
+                ev.PlaylistId
+            );
             return;
         }
 
@@ -182,7 +185,6 @@ public class PlaylistsEventProcessor(ILogger<PlaylistsEventProcessor> logger)
         playlist.Items.Add(
             new DbPlaylistItem
             {
-                RecordingId = ev.RecordingId,
                 AddedAt = DateTime.UtcNow,
                 LocalArtistId = ev.LocalArtistId,
                 LocalReleaseFolderName = ev.LocalReleaseFolderName,
@@ -204,10 +206,9 @@ public class PlaylistsEventProcessor(ILogger<PlaylistsEventProcessor> logger)
         await dbContext.SaveChangesAsync();
 
         logger.LogInformation(
-            "Added recording {RecordingId} to Playlist {PlaylistId} at position {Position} for UserId: {UserId}",
-            ev.RecordingId,
+            "Added recording to Playlist {PlaylistId} at position {Position} for UserId: {UserId}",
             ev.PlaylistId,
-            ev.Position,
+            ev.AtIndex,
             userId
         );
     }
@@ -233,7 +234,7 @@ public class PlaylistsEventProcessor(ILogger<PlaylistsEventProcessor> logger)
             return;
         }
 
-        var item = playlist.Items.FirstOrDefault(i => i.RecordingId == ev.RecordingId);
+        var item = playlist.Items.FirstOrDefault(i => i.Id == ev.PlaylistItemId);
         if (item != null)
         {
             dbContext.Remove(item);
@@ -263,12 +264,16 @@ public class PlaylistsEventProcessor(ILogger<PlaylistsEventProcessor> logger)
         }
 
         // Simple reorder: remove all, then insert recording at new index maintaining order
-        var item = playlist.Items.FirstOrDefault(i => i.RecordingId == ev.RecordingId);
+        var item = playlist.Items.FirstOrDefault(i => i.Id == ev.PlaylistItemId);
         if (item == null)
+        {
             return;
+        }
+
         playlist.Items.Remove(item);
         var newIndex = Math.Clamp(ev.NewIndex, 0, playlist.Items.Count);
         playlist.Items.Insert(newIndex, item);
+
         await dbContext.SaveChangesAsync();
     }
 }

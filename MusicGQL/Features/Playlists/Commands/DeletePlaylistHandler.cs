@@ -34,7 +34,7 @@ public class DeletePlaylistHandler(
         return new Result.Success();
     }
 
-    public record Command(Guid UserId, Guid PlaylistId);
+    public record Command(Guid UserId, string PlaylistId);
 
     public abstract record Result
     {

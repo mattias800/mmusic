@@ -39,10 +39,10 @@ export const PlaylistHeader: React.FC<PlaylistHeaderProps> = (props) => {
   );
 
   return (
-    <div className="flex items-end gap-4 mb-2">
+    <div className="flex flex-col sm:flex-row gap-6 items-center sm:items-end mb-8">
       <div>
         {collageUrls.length >= 4 ? (
-          <div className="grid grid-cols-2 grid-rows-2 w-28 h-28 overflow-hidden rounded-md ring-1 ring-white/10">
+          <div className="grid grid-cols-2 grid-rows-2 w-64 h-64 overflow-hidden rounded-md ring-1 ring-white/10">
             {collageUrls.map((url, i) => (
               <img
                 key={i}
@@ -54,25 +54,26 @@ export const PlaylistHeader: React.FC<PlaylistHeaderProps> = (props) => {
             ))}
           </div>
         ) : (
-          <div className="w-28 h-28">
+          <div className="w-64 h-64">
             {uniqueCoverUrls[0] ? (
               <img
                 src={uniqueCoverUrls[0]}
                 alt="Playlist cover"
-                className="w-28 h-28 object-cover rounded-md ring-1 ring-white/10"
+                className="w-64 h-64 object-cover rounded-md ring-1 ring-white/10"
                 draggable={false}
               />
             ) : (
-              <div className="w-28 h-28 rounded-md bg-neutral-800 ring-1 ring-white/10" />
+              <div className="w-64 h-64 rounded-md bg-neutral-800 ring-1 ring-white/10" />
             )}
           </div>
         )}
       </div>
-      <div className="flex flex-col">
-        <h1 className="text-2xl font-semibold">
+
+      <div className={"flex flex-col gap-3"}>
+        <h1 className="text-4xl font-semibold">
           {playlist.name ?? "Playlist"}
         </h1>
-        <div className="text-sm text-neutral-400">
+        <div className="text-sm text-gray-300">
           {playlist.items.length}{" "}
           {playlist.items.length === 1 ? "track" : "tracks"}
         </div>

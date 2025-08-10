@@ -16,6 +16,7 @@ import {
 import { TrackCreditLinks } from "@/features/album/TrackCreditLinks.tsx";
 import { PlaylistHeader } from "@/features/playlists/PlaylistHeader.tsx";
 import { Tag } from "@/components/text/Tag.tsx";
+import { TrackListHeading } from "@/components/track-item/TrackListHeading.tsx";
 
 export interface PlaylistPanelProps {
   playlist: FragmentType<typeof playlistPanelPlaylistFragment>;
@@ -132,104 +133,101 @@ export const PlaylistPanel: React.FC<PlaylistPanelProps> = (props) => {
   return (
     <GradientContent>
       <MainPadding>
-        <div className="flex flex-col gap-4">
-          <PlaylistHeader playlist={playlist} />
+        <PlaylistHeader playlist={playlist} />
+        <div className="mb-12" />
 
-          {items.map((item, index) => (
-            <TrackItem
-              key={item.id}
-              title={item.title ?? ""}
-              renderSubtitle={() =>
-                item.track ? (
-                  <TrackCreditLinks track={item.track} />
-                ) : (
-                  <span>{item.artistName}</span>
-                )
-              }
-              trackNumber={index + 1}
-              playCount={0}
-              trackLength={item.trackLengthMs}
-              showCoverArt
-              renderCoverArt={() => (
-                <ReleaseCoverArt
-                  className="h-12 w-12"
-                  srcUrl={
-                    item.coverImageUrl ?? item.track?.release?.coverArtUrl
-                  }
-                  artistThumbUrl={
-                    item.track?.release.artist.images?.thumbs?.[0]
-                  }
-                  titleForPlaceholder={
-                    item.track?.release.artist.name ?? item.artistName ?? ""
-                  }
-                  alt={item.title ?? item.track?.title ?? ""}
-                />
-              )}
-              renderTag={() =>
-                item.track ? (
-                  <AlbumTrackTag track={item.track} />
-                ) : (
-                  <Tag variant={"error"}>Missing</Tag>
-                )
-              }
-              contextMenuItems={[
-                <ContextMenuItem
-                  key="remove"
-                  onClick={async () => {
-                    setItems((prev) => prev.filter((t) => t.id !== item.id));
-                    await removeFromPlaylist({
-                      playlistId: playlist.id,
-                      playlistItemId: item.id,
-                    });
-                  }}
-                >
-                  Remove from this Playlist
-                </ContextMenuItem>,
-                <ContextMenuSeparator key="sep" />,
-              ]}
-              onClick={() => {
-                if (!item.track) {
-                  return;
+        <TrackListHeading showCoverArt />
+
+        {items.map((item, index) => (
+          <TrackItem
+            key={item.id}
+            title={item.title ?? ""}
+            renderSubtitle={() =>
+              item.track ? (
+                <TrackCreditLinks track={item.track} />
+              ) : (
+                <span>{item.artistName}</span>
+              )
+            }
+            trackNumber={index + 1}
+            playCount={0}
+            trackLength={item.trackLengthMs}
+            showCoverArt
+            renderCoverArt={() => (
+              <ReleaseCoverArt
+                className="h-12 w-12"
+                srcUrl={item.coverImageUrl ?? item.track?.release?.coverArtUrl}
+                artistThumbUrl={item.track?.release.artist.images?.thumbs?.[0]}
+                titleForPlaceholder={
+                  item.track?.release.artist.name ?? item.artistName ?? ""
                 }
-                dispatch(
-                  musicPlayerSlice.actions.enqueueAndPlay([
-                    {
-                      artistId: item.track.release.artist.id,
-                      releaseFolderName: item.track.release.folderName,
-                      trackNumber: item.track.trackNumber,
-                      title: item.title ?? "",
-                      artistName: item.track.release.artist.name,
-                      coverArtUrl: item.track.release.coverArtUrl,
-                      trackLengthMs: item.track.trackLength ?? 0,
-                      qualityLabel:
-                        item.track.media?.audioQualityLabel ?? undefined,
-                    },
-                  ]),
-                );
-              }}
-              draggable
-              onDragStart={() => setDragIndex(index)}
-              onDragOver={(ev) => ev.preventDefault()}
-              onDrop={async () => {
-                if (dragIndex == null || dragIndex === index) return;
-                setItems((prev) => {
-                  const next = prev.slice();
-                  const [moved] = next.splice(dragIndex, 1);
-                  next.splice(index, 0, moved);
-                  return next;
-                });
-                if (viewerData?.viewer?.id) {
-                  await movePlaylistItem({
-                    newIndex: index,
+                alt={item.title ?? item.track?.title ?? ""}
+              />
+            )}
+            renderTag={() =>
+              item.track ? (
+                <AlbumTrackTag track={item.track} />
+              ) : (
+                <Tag variant={"error"}>Missing</Tag>
+              )
+            }
+            contextMenuItems={[
+              <ContextMenuItem
+                key="remove"
+                onClick={async () => {
+                  setItems((prev) => prev.filter((t) => t.id !== item.id));
+                  await removeFromPlaylist({
                     playlistId: playlist.id,
                     playlistItemId: item.id,
                   });
-                }
-                setDragIndex(null);
-              }}
-            />
-          ))}
-        </div>
+                }}
+              >
+                Remove from this Playlist
+              </ContextMenuItem>,
+              <ContextMenuSeparator key="sep" />,
+            ]}
+            onClick={() => {
+              if (!item.track) {
+                return;
+              }
+              dispatch(
+                musicPlayerSlice.actions.enqueueAndPlay([
+                  {
+                    artistId: item.track.release.artist.id,
+                    releaseFolderName: item.track.release.folderName,
+                    trackNumber: item.track.trackNumber,
+                    title: item.title ?? "",
+                    artistName: item.track.release.artist.name,
+                    coverArtUrl: item.track.release.coverArtUrl,
+                    trackLengthMs: item.track.trackLength ?? 0,
+                    qualityLabel:
+                      item.track.media?.audioQualityLabel ?? undefined,
+                  },
+                ]),
+              );
+            }}
+            draggable
+            onDragStart={() => setDragIndex(index)}
+            onDragOver={(ev) => ev.preventDefault()}
+            onDrop={async () => {
+              if (dragIndex == null || dragIndex === index) return;
+              setItems((prev) => {
+                const next = prev.slice();
+                const [moved] = next.splice(dragIndex, 1);
+                next.splice(index, 0, moved);
+                return next;
+              });
+              if (viewerData?.viewer?.id) {
+                await movePlaylistItem({
+                  newIndex: index,
+                  playlistId: playlist.id,
+                  playlistItemId: item.id,
+                });
+              }
+              setDragIndex(null);
+            }}
+          />
+        ))}
       </MainPadding>
     </GradientContent>
   );

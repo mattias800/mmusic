@@ -34,11 +34,7 @@ public class RenamePlaylistMutation
         }
 
         return await renamePlaylistHandler.Handle(
-            new RenamePlaylistHandler.Command(
-                userId,
-                Guid.Parse(input.PlaylistId),
-                input.NewPlaylistName
-            )
+            new RenamePlaylistHandler.Command(userId, input.PlaylistId, input.NewPlaylistName)
         ) switch
         {
             RenamePlaylistHandler.Result.NotAllowed => new RenamePlaylistNoWriteAccess(

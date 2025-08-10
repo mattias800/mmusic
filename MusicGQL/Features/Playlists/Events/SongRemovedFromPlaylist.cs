@@ -4,8 +4,6 @@ namespace MusicGQL.Features.Playlists.Events;
 
 public class SongRemovedFromPlaylist : Event
 {
-    public required Guid PlaylistId { get; set; }
-    public required string RecordingId { get; set; }
+    public required string PlaylistId { get; set; }
+    public required string PlaylistItemId { get; set; }
 }
-
-

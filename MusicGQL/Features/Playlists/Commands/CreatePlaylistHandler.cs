@@ -13,7 +13,7 @@ public class CreatePlaylistHandler(
         dbContext.Events.Add(
             new CreatedPlaylist
             {
-                PlaylistId = Guid.NewGuid(),
+                PlaylistId = Guid.NewGuid().ToString(),
                 CreatedAt = DateTime.UtcNow,
                 ActorUserId = command.UserId,
             }
