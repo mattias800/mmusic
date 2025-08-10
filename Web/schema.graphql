@@ -213,6 +213,15 @@ type ExternalRoot {
   soulSeek: SoulSeekRoot!
 }
 
+enum ExternalServiceType {
+  APPLE_MUSIC
+  DEEZER
+  OTHER
+  SPOTIFY
+  TIDAL
+  YOU_TUBE_MUSIC
+}
+
 type FileSystemEntry {
   hasChildren: Boolean!
   id: ID!
@@ -585,9 +594,30 @@ type Playlist {
   coverImageUrl: String
   createdAt: DateTime!
   id: ID!
+  items: [PlaylistItem!]!
   modifiedAt: DateTime
   name: String
   tracks: [Track!]!
+}
+
+type PlaylistItem {
+  addedAt: DateTime!
+  artistName: String
+  coverImageUrl: String
+  externalAlbumId: String
+  externalArtistId: String
+  externalService: ExternalServiceType
+  externalTrackId: String
+  id: Int!
+  isLocalAvailable: Boolean!
+  isLocalReferencePresent: Boolean!
+  localCoverImageUrl: String
+  localTrack: Track
+  recordingId: String!
+  releaseTitle: String
+  releaseType: String
+  title: String
+  trackLengthMs: Int
 }
 
 type PlaylistSearchRoot {
@@ -837,10 +867,22 @@ type SpotifyPlaylist {
   description: String
   id: String!
   name: String!
+  totalTracks: Int
+  tracks: [SpotifyTrack!]!
 }
 
 type SpotifyPlaylistSearchRoot {
+  spotifyPlaylistById(id: String!): SpotifyPlaylist
   spotifyPlaylistsForUser(username: String!): [SpotifyPlaylist!]!
+}
+
+type SpotifyTrack {
+  albumCoverImageUrl: String
+  artistNames: [String!]!
+  durationMs: Int
+  id: String!
+  previewUrl: String
+  title: String!
 }
 
 input StartDownloadReleaseInput {

@@ -22,4 +22,22 @@ public class SpotifyPlaylistSearchRoot
             return [];
         }
     }
+
+    public async Task<SpotifyPlaylist?> SpotifyPlaylistById(
+        [Service] SpotifyService spotifyService,
+        [Service] ILogger<SpotifyPlaylistSearchRoot> logger,
+        string id
+    )
+    {
+        try
+        {
+            var playlist = await spotifyService.GetPlaylistDetailsAsync(id);
+            return playlist is null ? null : new SpotifyPlaylist(playlist);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to fetch Spotify playlist by id {PlaylistId}", id);
+            return null;
+        }
+    }
 }

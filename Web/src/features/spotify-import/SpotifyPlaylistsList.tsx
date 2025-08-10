@@ -2,6 +2,7 @@ import React from "react";
 import { FragmentType, graphql, useFragment } from "@/gql";
 import { useMutation } from "urql";
 import { SpotifyPlaylistCard } from "@/features/spotify-import/SpotifyPlaylistCard.tsx";
+import { Link } from "react-router";
 import { CardFlexList } from "@/components/page-body/CardFlexList.tsx";
 
 interface SpotifyPlaylistsListProps {
@@ -47,10 +48,12 @@ export const SpotifyPlaylistsList: React.FC<SpotifyPlaylistsListProps> = ({
   return (
     <CardFlexList>
       {playlists.map((playlist) => (
-        <SpotifyPlaylistCard
-          title={playlist.name}
-          imageUrl={playlist.coverImageUrl ?? ""}
-        />
+        <Link key={playlist.id} to={`/playlists/import/spotify/${playlist.id}`}>
+          <SpotifyPlaylistCard
+            title={playlist.name}
+            imageUrl={playlist.coverImageUrl ?? ""}
+          />
+        </Link>
       ))}
     </CardFlexList>
   );

@@ -249,6 +249,7 @@ builder
     .AddMutationType<Mutation>()
     .AddSubscriptionType<Subscription>()
     .AddTypeExtension<SpotifyPlaylistSearchRoot>()
+    .AddType<MusicGQL.Features.Playlists.Import.Spotify.SpotifyTrack>()
     .AddTypeExtension<ImportSpotifyPlaylistMutation>()
     .AddType<ImportSpotifyPlaylistSuccess>()
     .AddType<ImportSpotifyPlaylistError>()

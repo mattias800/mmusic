@@ -217,6 +217,15 @@ export type ExternalRoot = {
   soulSeek: SoulSeekRoot;
 };
 
+export enum ExternalServiceType {
+  AppleMusic = 'APPLE_MUSIC',
+  Deezer = 'DEEZER',
+  Other = 'OTHER',
+  Spotify = 'SPOTIFY',
+  Tidal = 'TIDAL',
+  YouTubeMusic = 'YOU_TUBE_MUSIC'
+}
+
 export type FileSystemEntry = {
   __typename?: 'FileSystemEntry';
   hasChildren: Scalars['Boolean']['output'];
@@ -803,9 +812,31 @@ export type Playlist = {
   coverImageUrl?: Maybe<Scalars['String']['output']>;
   createdAt: Scalars['DateTime']['output'];
   id: Scalars['ID']['output'];
+  items: Array<PlaylistItem>;
   modifiedAt?: Maybe<Scalars['DateTime']['output']>;
   name?: Maybe<Scalars['String']['output']>;
   tracks: Array<Track>;
+};
+
+export type PlaylistItem = {
+  __typename?: 'PlaylistItem';
+  addedAt: Scalars['DateTime']['output'];
+  artistName?: Maybe<Scalars['String']['output']>;
+  coverImageUrl?: Maybe<Scalars['String']['output']>;
+  externalAlbumId?: Maybe<Scalars['String']['output']>;
+  externalArtistId?: Maybe<Scalars['String']['output']>;
+  externalService?: Maybe<ExternalServiceType>;
+  externalTrackId?: Maybe<Scalars['String']['output']>;
+  id: Scalars['Int']['output'];
+  isLocalAvailable: Scalars['Boolean']['output'];
+  isLocalReferencePresent: Scalars['Boolean']['output'];
+  localCoverImageUrl?: Maybe<Scalars['String']['output']>;
+  localTrack?: Maybe<Track>;
+  recordingId: Scalars['String']['output'];
+  releaseTitle?: Maybe<Scalars['String']['output']>;
+  releaseType?: Maybe<Scalars['String']['output']>;
+  title?: Maybe<Scalars['String']['output']>;
+  trackLengthMs?: Maybe<Scalars['Int']['output']>;
 };
 
 export type PlaylistSearchRoot = {
@@ -1142,16 +1173,34 @@ export type SpotifyPlaylist = {
   description?: Maybe<Scalars['String']['output']>;
   id: Scalars['String']['output'];
   name: Scalars['String']['output'];
+  totalTracks?: Maybe<Scalars['Int']['output']>;
+  tracks: Array<SpotifyTrack>;
 };
 
 export type SpotifyPlaylistSearchRoot = {
   __typename?: 'SpotifyPlaylistSearchRoot';
+  spotifyPlaylistById?: Maybe<SpotifyPlaylist>;
   spotifyPlaylistsForUser: Array<SpotifyPlaylist>;
+};
+
+
+export type SpotifyPlaylistSearchRootSpotifyPlaylistByIdArgs = {
+  id: Scalars['String']['input'];
 };
 
 
 export type SpotifyPlaylistSearchRootSpotifyPlaylistsForUserArgs = {
   username: Scalars['String']['input'];
+};
+
+export type SpotifyTrack = {
+  __typename?: 'SpotifyTrack';
+  albumCoverImageUrl?: Maybe<Scalars['String']['output']>;
+  artistNames: Array<Scalars['String']['output']>;
+  durationMs?: Maybe<Scalars['Int']['output']>;
+  id: Scalars['String']['output'];
+  previewUrl?: Maybe<Scalars['String']['output']>;
+  title: Scalars['String']['output'];
 };
 
 export type StartDownloadReleaseInput = {
