@@ -48,7 +48,7 @@ public class DeletePlaylistMutation
     }
 }
 
-public record DeletePlaylistInput([ID] string PlaylistId);
+public record DeletePlaylistInput([property: ID] string PlaylistId);
 
 [UnionType("DeletePlaylistResult")]
 public abstract record DeletePlaylistResult;

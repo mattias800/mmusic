@@ -24,6 +24,7 @@ public class MovePlaylistItemMutation
         {
             return new MovePlaylistItemError("Not authenticated");
         }
+
         var playlistItem = await db.Set<DbPlaylistItem>()
             .FirstOrDefaultAsync(i =>
                 i.Id == input.PlaylistItemId && i.PlaylistId == input.PlaylistId
@@ -56,7 +57,11 @@ public class MovePlaylistItemMutation
 }
 
 [GraphQLName("MovePlaylistItemInput")]
-public record MovePlaylistItemInput(string PlaylistId, string PlaylistItemId, int NewIndex);
+public record MovePlaylistItemInput(
+    [property: ID] string PlaylistId,
+    [property: ID] string PlaylistItemId,
+    int NewIndex
+);
 
 [UnionType]
 public abstract record MovePlaylistItemResult;

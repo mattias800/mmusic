@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using MusicGQL.Db.Postgres;
 using MusicGQL.Features.Playlists.Events;
 using MusicGQL.Integration.Spotify;
@@ -9,11 +10,11 @@ namespace MusicGQL.Features.Playlists.Import.Spotify.Mutations;
 public class ImportSpotifyPlaylistMutation
 {
     public async Task<ImportSpotifyPlaylistResult> ImportSpotifyPlaylist(
-        ImportSpotifyPlaylistInput input,
-        [Service] SpotifyService spotifyService,
-        [Service] EventDbContext db,
-        [Service] IHttpClientFactory httpClientFactory,
-        [Service] Assets.ExternalAssetStorage assetStorage
+        SpotifyService spotifyService,
+        EventDbContext db,
+        Assets.ExternalAssetStorage assetStorage,
+        EventProcessor.EventProcessorWorker eventProcessorWorker,
+        ImportSpotifyPlaylistInput input
     )
     {
         var spotifyPlaylist = await spotifyService.GetPlaylistDetailsAsync(input.PlaylistId);
@@ -90,19 +91,16 @@ public class ImportSpotifyPlaylistMutation
 
         await db.SaveChangesAsync();
 
-        // Return the created playlist projection
-        var created = new Db.DbPlaylist
+        await eventProcessorWorker.ProcessEvents();
+
+        var playlist = await db.Playlists.FirstOrDefaultAsync(p => p.Id == playlistId);
+
+        if (playlist is null)
         {
-            Id = playlistId,
-            UserId = input.UserId,
-            Name = spotifyPlaylist.Name,
-            Description = spotifyPlaylist.Description,
-            CoverImageUrl = spotifyPlaylist.Images?.FirstOrDefault()?.Url,
-            CreatedAt = DateTime.UtcNow,
-            ModifiedAt = DateTime.UtcNow,
-        };
-        // Note: We don't have a post-projection read here; we construct a minimal model for return.
-        return new ImportSpotifyPlaylistSuccess(new Playlist(created));
+            return new ImportSpotifyPlaylistError("Playlist not found after update");
+        }
+
+        return new ImportSpotifyPlaylistSuccess(new Playlist(playlist));
     }
 }
 

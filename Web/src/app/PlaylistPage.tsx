@@ -8,7 +8,7 @@ import { PlaylistPanel } from "@/features/playlists/PlaylistPanel.tsx";
 const playlistQuery = graphql(`
   query PlaylistQuery($playlistId: ID!) {
     playlist {
-      playlist(playlistId: $playlistId) {
+      byId(playlistId: $playlistId) {
         id
         name
         ...PlaylistPanel_Playlist
@@ -29,12 +29,15 @@ export const PlaylistPage: React.FC = () => {
   if (!playlistId) return "Invalid playlist ID";
   if (fetching || stale) return <ScreenSpinner />;
   if (error) return <div>Error: {error.message}</div>;
-  if (!data?.playlist.playlist) return <div>Playlist not found.</div>;
+
+  if (!data?.playlist.byId) {
+    return <div>Playlist not found.</div>;
+  }
 
   return (
     <>
-      <title>{data.playlist.playlist.name ?? "Playlist"}</title>
-      <PlaylistPanel playlist={data.playlist.playlist} />
+      <title>{data.playlist.byId.name ?? "Playlist"}</title>
+      <PlaylistPanel playlist={data.playlist.byId} />
     </>
   );
 };

@@ -51,8 +51,8 @@ public class AddTrackToPlaylistMutation
 
 [GraphQLName("AddTrackToPlaylistInput")]
 public record AddTrackToPlaylistInput(
-    string PlaylistId,
-    string ArtistId,
+    [property: ID] string PlaylistId,
+    [property: ID] string ArtistId,
     string ReleaseFolderName,
     int TrackNumber
 );

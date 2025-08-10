@@ -51,7 +51,7 @@ public class RenamePlaylistMutation
     }
 }
 
-public record RenamePlaylistInput([ID] string PlaylistId, string NewPlaylistName);
+public record RenamePlaylistInput([property: ID] string PlaylistId, string NewPlaylistName);
 
 [UnionType("RenamePlaylistResult")]
 public abstract record RenamePlaylistResult;

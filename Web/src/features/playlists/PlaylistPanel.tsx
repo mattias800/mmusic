@@ -61,7 +61,7 @@ const playlistPanelPlaylistFragment = graphql(`
 `);
 
 const removeFromPlaylistMutation = graphql(`
-  mutation RemoveItemFromPlaylist($playlistId: UUID!, $playlistItemId: Int!) {
+  mutation RemoveItemFromPlaylist($playlistId: ID!, $playlistItemId: ID!) {
     removeItemFromPlaylist(
       input: { playlistId: $playlistId, playlistItemId: $playlistItemId }
     ) {
@@ -81,8 +81,8 @@ const removeFromPlaylistMutation = graphql(`
 const movePlaylistItemMutation = graphql(`
   mutation MovePlaylistItem(
     $newIndex: Int!
-    $playlistId: UUID!
-    $playlistItemId: Int!
+    $playlistId: ID!
+    $playlistItemId: ID!
   ) {
     movePlaylistItem(
       input: {

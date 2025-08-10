@@ -6,7 +6,7 @@ namespace MusicGQL.Features.Playlists;
 public record Playlist([property: GraphQLIgnore] Db.DbPlaylist Model)
 {
     [ID]
-    public string Id() => Model.Id.ToString();
+    public string Id() => Model.Id;
 
     public string? Name() => Model.Name;
 

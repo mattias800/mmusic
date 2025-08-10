@@ -185,6 +185,8 @@ public class PlaylistsEventProcessor(ILogger<PlaylistsEventProcessor> logger)
         playlist.Items.Add(
             new DbPlaylistItem
             {
+                Id = ev.PlaylistItemId,
+                PlaylistId = ev.PlaylistId,
                 AddedAt = DateTime.UtcNow,
                 LocalArtistId = ev.LocalArtistId,
                 LocalReleaseFolderName = ev.LocalReleaseFolderName,

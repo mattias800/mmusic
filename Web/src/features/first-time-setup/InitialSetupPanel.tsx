@@ -189,7 +189,7 @@ export const InitialSetupPanel: React.FC<InitialSetupPanelProps> = () => {
             </div>
           )}
           <div />
-          <Button type="submit" loading={isLoading}>
+          <Button type="submit" loading={isLoading} variant={"blue"}>
             {isLoading ? "Creating User..." : "Create admin user"}
           </Button>
         </form>

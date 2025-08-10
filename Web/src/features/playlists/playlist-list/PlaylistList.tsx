@@ -22,7 +22,7 @@ const playlistListQuery = graphql(`
 `);
 
 const renamePlaylistMutation = graphql(`
-  mutation RenamePlaylist($playlistId: String!, $newPlaylistName: String!) {
+  mutation RenamePlaylist($playlistId: ID!, $newPlaylistName: String!) {
     renamePlaylist(
       input: { playlistId: $playlistId, newPlaylistName: $newPlaylistName }
     ) {
@@ -35,7 +35,7 @@ const renamePlaylistMutation = graphql(`
 `);
 
 const deletePlaylistMutation = graphql(`
-  mutation DeletePlaylist($playlistId: String!) {
+  mutation DeletePlaylist($playlistId: ID!) {
     deletePlaylist(input: { playlistId: $playlistId }) {
       __typename
       ... on DeletePlaylistSuccess {

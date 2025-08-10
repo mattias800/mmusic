@@ -54,7 +54,10 @@ public class RemoveItemFromPlaylistMutation
 }
 
 [GraphQLName("RemoveItemFromPlaylistInput")]
-public record RemoveItemFromPlaylistInput(string PlaylistId, string PlaylistItemId);
+public record RemoveItemFromPlaylistInput(
+    [property: ID] string PlaylistId,
+    [property: ID] string PlaylistItemId
+);
 
 [UnionType]
 public abstract record RemoveItemFromPlaylistResult;

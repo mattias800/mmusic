@@ -43,8 +43,8 @@ type AddTrackToPlaylistError {
 }
 
 input AddTrackToPlaylistInput {
-  artistId: String!
-  playlistId: UUID!
+  artistId: ID!
+  playlistId: ID!
   releaseFolderName: String!
   trackNumber: Int!
 }
@@ -206,7 +206,7 @@ type CreateUserSuccess {
 scalar DateTime
 
 input DeletePlaylistInput {
-  playlistId: String!
+  playlistId: ID!
 }
 
 type DeletePlaylistNoWriteAccess {
@@ -554,8 +554,8 @@ type MovePlaylistItemError {
 
 input MovePlaylistItemInput {
   newIndex: Int!
-  playlistId: UUID!
-  playlistItemId: Int!
+  playlistId: ID!
+  playlistItemId: ID!
 }
 
 union MovePlaylistItemResult = MovePlaylistItemError | MovePlaylistItemSuccess
@@ -656,17 +656,15 @@ type Playlist {
 
 type PlaylistItem {
   addedAt: DateTime!
+  artist: Artist
   artistName: String
   coverImageUrl: String
   externalAlbumId: String
   externalArtistId: String
   externalService: ExternalServiceType
   externalTrackId: String
-  id: Int!
-  isLocalAvailable: Boolean!
-  isLocalReferencePresent: Boolean!
+  id: ID!
   localCoverImageUrl: String
-  recordingId: String!
   releaseTitle: String
   releaseType: String
   title: String
@@ -675,8 +673,8 @@ type PlaylistItem {
 }
 
 type PlaylistSearchRoot {
+  byId(playlistId: ID!): Playlist
   importPlaylists: ImportPlaylistSearchRoot!
-  playlist(playlistId: ID!): Playlist
 }
 
 type Query {
@@ -792,8 +790,8 @@ type RemoveItemFromPlaylistError {
 }
 
 input RemoveItemFromPlaylistInput {
-  playlistId: UUID!
-  playlistItemId: Int!
+  playlistId: ID!
+  playlistItemId: ID!
 }
 
 union RemoveItemFromPlaylistResult = RemoveItemFromPlaylistError | RemoveItemFromPlaylistSuccess
@@ -804,7 +802,7 @@ type RemoveItemFromPlaylistSuccess {
 
 input RenamePlaylistInput {
   newPlaylistName: String!
-  playlistId: String!
+  playlistId: ID!
 }
 
 type RenamePlaylistNoWriteAccess {

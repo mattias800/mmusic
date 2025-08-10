@@ -6,14 +6,12 @@ public record PlaylistSearchRoot
 {
     public ImportPlaylistSearchRoot ImportPlaylists => new();
 
-    [GraphQLName("playlist")]
-    public async Task<Playlist?> PlaylistById(
-        [Service] MusicGQL.Db.Postgres.EventDbContext db,
+    public async Task<Playlist?> ById(
+        MusicGQL.Db.Postgres.EventDbContext db,
         [ID] string playlistId
     )
     {
-        if (!Guid.TryParse(playlistId, out var id)) return null;
-        var pl = await db.Playlists.FindAsync(id);
+        var pl = await db.Playlists.FindAsync(playlistId);
         return pl is null ? null : new Playlist(pl);
     }
 }
