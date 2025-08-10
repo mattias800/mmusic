@@ -5,6 +5,8 @@ using MusicGQL.Integration.MusicBrainz;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Path = System.IO.Path;
+using MusicGQL.Features.ServerLibrary.Cache;
+using HotChocolate.Subscriptions;
 
 namespace MusicGQL.Features.ServerLibrary.Mutation;
 
@@ -15,6 +17,8 @@ public class SetReleaseMatchOverrideMutation
         [Service] ServerLibraryJsonWriter writer,
         [Service] MusicBrainzService mbService,
         [Service] ReleaseJsonBuilder builder,
+        [Service] ServerLibraryCache cache,
+        [Service] ITopicEventSender eventSender,
         SetReleaseMatchOverrideInput input
     )
     {
@@ -88,6 +92,17 @@ public class SetReleaseMatchOverrideMutation
                 ?? await EnsureRgIdFromOverride(mbService, input.MusicBrainzReleaseId);
 
             await writer.WriteReleaseAsync(input.ArtistId, input.ReleaseFolderName, built);
+
+            // Update in-memory cache and publish metadata-updated event so clients refresh
+            await cache.UpdateReleaseFromJsonAsync(input.ArtistId, input.ReleaseFolderName);
+            var updated = await cache.GetReleaseByArtistAndFolderAsync(input.ArtistId, input.ReleaseFolderName);
+            if (updated != null)
+            {
+                await eventSender.SendAsync(
+                    Features.ServerLibrary.Subscription.LibrarySubscription.LibraryReleaseMetadataUpdatedTopic(input.ArtistId, input.ReleaseFolderName),
+                    new Features.ServerLibrary.Release(updated)
+                );
+            }
 
             return new SetReleaseMatchOverrideSuccess(true);
         }

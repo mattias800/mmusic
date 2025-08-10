@@ -9,6 +9,8 @@ interface FixMatchDialogProps {
   onOpenChange: (open: boolean) => void;
   artistId: string;
   releaseFolderName: string;
+  onBeginFix?: () => void;
+  onEndFix?: () => void;
 }
 
 // Query candidates with scores
@@ -100,6 +102,10 @@ export const FixMatchDialog: React.FC<FixMatchDialogProps> = (props) => {
   const [, setOverride] = useMutation(setOverrideMutation);
 
   const onChoose = async (mbReleaseId: string) => {
+    // start loading immediately and close dialog
+    props.onBeginFix?.();
+    props.onOpenChange(false);
+
     await setOverride({
       input: {
         artistId: props.artistId,
@@ -107,7 +113,7 @@ export const FixMatchDialog: React.FC<FixMatchDialogProps> = (props) => {
         musicBrainzReleaseId: mbReleaseId,
       },
     });
-    props.onOpenChange(false);
+    props.onEndFix?.();
   };
 
   const candidates = data?.releasesWithScores ?? [];

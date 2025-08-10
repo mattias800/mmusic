@@ -138,6 +138,7 @@ export const AlbumPanel: React.FC<AlbumPanelProps> = (props) => {
 
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [fixOpen, setFixOpen] = useState(false);
+  const [fixing, setFixing] = useState(false);
 
   const onConfirmDelete = useCallback(async () => {
     await deleteReleaseAudio({
@@ -215,7 +216,7 @@ export const AlbumPanel: React.FC<AlbumPanelProps> = (props) => {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-              {(refreshing || deleting || scanning) && <Spinner size={"sm"} />}
+              {(refreshing || deleting || scanning || fixing) && <Spinner size={"sm"} />}
               <ReleaseDownloadButton release={release} />
             </div>
           </div>
@@ -241,6 +242,8 @@ export const AlbumPanel: React.FC<AlbumPanelProps> = (props) => {
         onOpenChange={setFixOpen}
         artistId={release.artist.id}
         releaseFolderName={release.folderName}
+        onBeginFix={() => setFixing(true)}
+        onEndFix={() => setFixing(false)}
       />
     </GradientContent>
   );
