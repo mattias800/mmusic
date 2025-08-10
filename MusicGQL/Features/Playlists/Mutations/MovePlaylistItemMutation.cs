@@ -23,7 +23,13 @@ public class MovePlaylistItemMutation
         {
             return new MovePlaylistItemError("Not authenticated");
         }
-        var recordingId = $"{input.ArtistId}/{input.ReleaseFolderName}/{input.TrackNumber}";
+        var playlistItem = await db.Set<Features.Playlists.Db.DbPlaylistItem>()
+            .FirstOrDefaultAsync(i => i.Id == input.PlaylistItemId && i.PlaylistId == input.PlaylistId);
+        if (playlistItem == null)
+        {
+            return new MovePlaylistItemError("Playlist item not found");
+        }
+        var recordingId = playlistItem.RecordingId;
         db.Events.Add(
             new PlaylistItemMoved
             {
@@ -49,9 +55,7 @@ public class MovePlaylistItemMutation
 [GraphQLName("MovePlaylistItemInput")]
 public record MovePlaylistItemInput(
     Guid PlaylistId,
-    string ArtistId,
-    string ReleaseFolderName,
-    int TrackNumber,
+    int PlaylistItemId,
     int NewIndex
 );
 

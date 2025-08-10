@@ -5260,22 +5260,6 @@
         "fields": null,
         "inputFields": [
           {
-            "name": "artistId",
-            "description": null,
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "kind": "SCALAR",
-                "name": "String",
-                "ofType": null
-              }
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
             "name": "newIndex",
             "description": null,
             "type": {
@@ -5308,23 +5292,7 @@
             "deprecationReason": null
           },
           {
-            "name": "releaseFolderName",
-            "description": null,
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "kind": "SCALAR",
-                "name": "String",
-                "ofType": null
-              }
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "trackNumber",
+            "name": "playlistItemId",
             "description": null,
             "type": {
               "kind": "NON_NULL",
@@ -6477,7 +6445,7 @@
             "deprecationReason": null
           },
           {
-            "name": "removeTrackFromPlaylist",
+            "name": "removeItemFromPlaylist",
             "description": null,
             "args": [
               {
@@ -6488,7 +6456,7 @@
                   "name": null,
                   "ofType": {
                     "kind": "INPUT_OBJECT",
-                    "name": "RemoveTrackFromPlaylistInput",
+                    "name": "RemoveItemFromPlaylistInput",
                     "ofType": null
                   }
                 },
@@ -6502,7 +6470,7 @@
               "name": null,
               "ofType": {
                 "kind": "UNION",
-                "name": "RemoveTrackFromPlaylistResult",
+                "name": "RemoveItemFromPlaylistResult",
                 "ofType": null
               }
             },
@@ -8390,7 +8358,7 @@
       },
       {
         "kind": "OBJECT",
-        "name": "RemoveTrackFromPlaylistError",
+        "name": "RemoveItemFromPlaylistError",
         "description": null,
         "isOneOf": null,
         "fields": [
@@ -8418,27 +8386,11 @@
       },
       {
         "kind": "INPUT_OBJECT",
-        "name": "RemoveTrackFromPlaylistInput",
+        "name": "RemoveItemFromPlaylistInput",
         "description": null,
         "isOneOf": false,
         "fields": null,
         "inputFields": [
-          {
-            "name": "artistId",
-            "description": null,
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "kind": "SCALAR",
-                "name": "String",
-                "ofType": null
-              }
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
           {
             "name": "playlistId",
             "description": null,
@@ -8456,23 +8408,7 @@
             "deprecationReason": null
           },
           {
-            "name": "releaseFolderName",
-            "description": null,
-            "type": {
-              "kind": "NON_NULL",
-              "name": null,
-              "ofType": {
-                "kind": "SCALAR",
-                "name": "String",
-                "ofType": null
-              }
-            },
-            "defaultValue": null,
-            "isDeprecated": false,
-            "deprecationReason": null
-          },
-          {
-            "name": "trackNumber",
+            "name": "playlistItemId",
             "description": null,
             "type": {
               "kind": "NON_NULL",
@@ -8494,7 +8430,7 @@
       },
       {
         "kind": "UNION",
-        "name": "RemoveTrackFromPlaylistResult",
+        "name": "RemoveItemFromPlaylistResult",
         "description": null,
         "isOneOf": null,
         "fields": null,
@@ -8504,19 +8440,19 @@
         "possibleTypes": [
           {
             "kind": "OBJECT",
-            "name": "RemoveTrackFromPlaylistError",
+            "name": "RemoveItemFromPlaylistError",
             "ofType": null
           },
           {
             "kind": "OBJECT",
-            "name": "RemoveTrackFromPlaylistSuccess",
+            "name": "RemoveItemFromPlaylistSuccess",
             "ofType": null
           }
         ]
       },
       {
         "kind": "OBJECT",
-        "name": "RemoveTrackFromPlaylistSuccess",
+        "name": "RemoveItemFromPlaylistSuccess",
         "description": null,
         "isOneOf": null,
         "fields": [

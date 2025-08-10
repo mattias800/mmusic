@@ -1,12 +1,12 @@
 import { FragmentType, graphql, useFragment } from "@/gql";
 import * as React from "react";
-import { Link } from "react-router";
 import { TrackItem } from "@/components/track-item/TrackItem.tsx";
 import { useAppDispatch, useAppSelector } from "@/ReduxAppHooks.ts";
 import { musicPlayerSlice } from "@/features/music-players/MusicPlayerSlice.ts";
 import { TrackListHeading } from "@/components/track-item/TrackListHeading.tsx";
 import { AlbumTrackTag } from "@/features/album/AlbumTrackTag.tsx";
 import { createMusicPlayerTrack } from "@/features/music-players/MusicPlayerTrackFactory.ts";
+import { TrackCreditLinks } from "@/features/album/TrackCreditLinks.tsx";
 
 interface AlbumTrackListProps {
   releaseGroup: FragmentType<typeof albumTrackListReleaseGroupFragment>;
@@ -30,6 +30,7 @@ const albumTrackListReleaseGroupFragment = graphql(`
         audioUrl
         audioQualityLabel
       }
+      ...TrackCreditLinks_Track
       ...MusicPlayerTrackFactory_Track
       ...AlbumTrackTag_Track
       credits {
@@ -86,34 +87,7 @@ export const AlbumTrackList: React.FC<AlbumTrackListProps> = (props) => {
                       ),
                     )
             }
-            renderSubtitle={() => (
-              <>
-                {track.credits.map(
-                  ({ artist, mbArtist, artistName }, index) => (
-                    <React.Fragment key={index}>
-                      {index > 0 && ", "}
-                      {artist ? (
-                        <Link
-                          to={`/artist/${artist.id}`}
-                          className="hover:underline"
-                        >
-                          {artistName}
-                        </Link>
-                      ) : mbArtist ? (
-                        <Link
-                          to={`/mb-artist/${mbArtist.id}`}
-                          className="hover:underline"
-                        >
-                          {artistName}
-                        </Link>
-                      ) : (
-                        <span>{artistName}</span>
-                      )}
-                    </React.Fragment>
-                  ),
-                )}
-              </>
-            )}
+            renderSubtitle={() => <TrackCreditLinks track={track} />}
             renderTag={() => <AlbumTrackTag track={track} />}
             playing={isPlaying}
             draggable
@@ -126,7 +100,10 @@ export const AlbumTrackList: React.FC<AlbumTrackListProps> = (props) => {
                   trackNumber: idx + 1,
                   title: track.title,
                 };
-                ev.dataTransfer.setData("application/json", JSON.stringify(payload));
+                ev.dataTransfer.setData(
+                  "application/json",
+                  JSON.stringify(payload),
+                );
                 ev.dataTransfer.effectAllowed = "copyMove";
               } catch (err) {
                 console.error("Failed to set drag payload", err);

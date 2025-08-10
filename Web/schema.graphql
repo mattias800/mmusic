@@ -553,11 +553,9 @@ type MovePlaylistItemError {
 }
 
 input MovePlaylistItemInput {
-  artistId: String!
   newIndex: Int!
   playlistId: UUID!
-  releaseFolderName: String!
-  trackNumber: Int!
+  playlistItemId: Int!
 }
 
 union MovePlaylistItemResult = MovePlaylistItemError | MovePlaylistItemSuccess
@@ -611,7 +609,7 @@ type Mutation {
   refreshArtistMetaData(input: RefreshArtistMetaDataInput!): RefreshArtistMetaDataResult!
   refreshArtistTopTracks(input: RefreshArtistTopTracksInput!): RefreshArtistTopTracksResult!
   refreshRelease(input: RefreshReleaseInput!): RefreshReleaseResult!
-  removeTrackFromPlaylist(input: RemoveTrackFromPlaylistInput!): RemoveTrackFromPlaylistResult!
+  removeItemFromPlaylist(input: RemoveItemFromPlaylistInput!): RemoveItemFromPlaylistResult!
   renamePlaylist(input: RenamePlaylistInput!): RenamePlaylistResult!
   scanLibraryForMissingJson: ScanLibraryForMissingJsonResult!
   scanReleaseFolderForMedia(input: ScanReleaseFolderForMediaInput!): ScanReleaseFolderForMediaResult!
@@ -789,20 +787,18 @@ enum ReleaseType {
   SINGLE
 }
 
-type RemoveTrackFromPlaylistError {
+type RemoveItemFromPlaylistError {
   message: String!
 }
 
-input RemoveTrackFromPlaylistInput {
-  artistId: String!
+input RemoveItemFromPlaylistInput {
   playlistId: UUID!
-  releaseFolderName: String!
-  trackNumber: Int!
+  playlistItemId: Int!
 }
 
-union RemoveTrackFromPlaylistResult = RemoveTrackFromPlaylistError | RemoveTrackFromPlaylistSuccess
+union RemoveItemFromPlaylistResult = RemoveItemFromPlaylistError | RemoveItemFromPlaylistSuccess
 
-type RemoveTrackFromPlaylistSuccess {
+type RemoveItemFromPlaylistSuccess {
   playlist: Playlist!
 }
 

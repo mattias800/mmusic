@@ -13,6 +13,8 @@ import {
   ContextMenuItem,
   ContextMenuSeparator,
 } from "@/components/ui/context-menu.tsx";
+import { TrackCreditLinks } from "@/features/album/TrackCreditLinks.tsx";
+import { PlaylistHeader } from "@/features/playlists/PlaylistHeader.tsx";
 
 export interface PlaylistPanelProps {
   playlist: FragmentType<typeof playlistPanelPlaylistFragment>;
@@ -21,6 +23,7 @@ export interface PlaylistPanelProps {
 const playlistPanelPlaylistFragment = graphql(`
   fragment PlaylistPanel_Playlist on Playlist {
     id
+    ...PlaylistHeader_Playlist
     name
     items {
       id
@@ -29,6 +32,7 @@ const playlistPanelPlaylistFragment = graphql(`
       coverImageUrl
       trackLengthMs
       track {
+        ...TrackCreditLinks_Track
         ...AlbumTrackTag_Track
         trackLength
         trackNumber
@@ -55,47 +59,45 @@ const playlistPanelPlaylistFragment = graphql(`
 `);
 
 const removeFromPlaylistMutation = graphql(`
-  mutation RemoveTrackFromPlaylist(
-    $playlistId: UUID!
-    $artistId: String!
-    $releaseFolderName: String!
-    $trackNumber: Int!
-  ) {
-    removeTrackFromPlaylist(
-      input: {
-        playlistId: $playlistId
-        artistId: $artistId
-        releaseFolderName: $releaseFolderName
-        trackNumber: $trackNumber
-      }
+  mutation RemoveItemFromPlaylist($playlistId: UUID!, $playlistItemId: Int!) {
+    removeItemFromPlaylist(
+      input: { playlistId: $playlistId, playlistItemId: $playlistItemId }
     ) {
       __typename
-      ... on RemoveTrackFromPlaylistSuccess { playlist { id } }
-      ... on RemoveTrackFromPlaylistError { message }
+      ... on RemoveItemFromPlaylistSuccess {
+        playlist {
+          id
+        }
+      }
+      ... on RemoveItemFromPlaylistError {
+        message
+      }
     }
   }
 `);
 
 const movePlaylistItemMutation = graphql(`
   mutation MovePlaylistItem(
-    $artistId: String!
     $newIndex: Int!
     $playlistId: UUID!
-    $releaseFolderName: String!
-    $trackNumber: Int!
+    $playlistItemId: Int!
   ) {
     movePlaylistItem(
       input: {
-        artistId: $artistId
         newIndex: $newIndex
         playlistId: $playlistId
-        releaseFolderName: $releaseFolderName
-        trackNumber: $trackNumber
+        playlistItemId: $playlistItemId
       }
     ) {
       __typename
-      ... on MovePlaylistItemSuccess { playlist { id } }
-      ... on MovePlaylistItemError { message }
+      ... on MovePlaylistItemSuccess {
+        playlist {
+          id
+        }
+      }
+      ... on MovePlaylistItemError {
+        message
+      }
     }
   }
 `);
@@ -126,71 +128,23 @@ export const PlaylistPanel: React.FC<PlaylistPanelProps> = (props) => {
 
   const [dragIndex, setDragIndex] = React.useState<number | null>(null);
 
-  const uniqueCoverUrls = React.useMemo(() => {
-    const seen = new Set<string>();
-    const urls: string[] = [];
-    for (const t of playlist.items) {
-      const url = t.coverImageUrl ?? "";
-      if (url && !seen.has(url)) {
-        seen.add(url);
-        urls.push(url);
-      }
-    }
-    return urls;
-  }, [playlist.items]);
-
-  const collageUrls = React.useMemo(
-    () => uniqueCoverUrls.slice(0, 4),
-    [uniqueCoverUrls],
-  );
-
   return (
     <GradientContent>
       <MainPadding>
         <div className="flex flex-col gap-4">
-          <div className="flex items-end gap-4 mb-2">
-            <div>
-              {collageUrls.length >= 4 ? (
-                <div className="grid grid-cols-2 grid-rows-2 w-28 h-28 overflow-hidden rounded-md ring-1 ring-white/10">
-                  {collageUrls.map((url, i) => (
-                    <img
-                      key={i}
-                      src={url}
-                      alt={`Cover ${i + 1}`}
-                      className="w-full h-full object-cover"
-                      draggable={false}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <div className="w-28 h-28">
-                  {uniqueCoverUrls[0] ? (
-                    <img
-                      src={uniqueCoverUrls[0]}
-                      alt="Playlist cover"
-                      className="w-28 h-28 object-cover rounded-md ring-1 ring-white/10"
-                      draggable={false}
-                    />
-                  ) : (
-                    <div className="w-28 h-28 rounded-md bg-neutral-800 ring-1 ring-white/10" />
-                  )}
-                </div>
-              )}
-            </div>
-            <div className="flex flex-col">
-              <h1 className="text-2xl font-semibold">
-                {playlist.name ?? "Playlist"}
-              </h1>
-              <div className="text-sm text-neutral-400">
-                {items.length} {items.length === 1 ? "track" : "tracks"}
-              </div>
-            </div>
-          </div>
+          <PlaylistHeader playlist={playlist} />
 
           {items.map((item, index) => (
             <TrackItem
               key={item.id}
               title={item.title ?? ""}
+              renderSubtitle={() =>
+                item.track ? (
+                  <TrackCreditLinks track={item.track} />
+                ) : (
+                  <span>{item.artistName}</span>
+                )
+              }
               trackNumber={index}
               playCount={0}
               trackLength={item.trackLengthMs}
@@ -218,9 +172,7 @@ export const PlaylistPanel: React.FC<PlaylistPanelProps> = (props) => {
                     setItems((prev) => prev.filter((t) => t.id !== item.id));
                     await removeFromPlaylist({
                       playlistId: playlist.id,
-                      artistId: item.track?.release.artist.id,
-                      releaseFolderName: item.track?.release.folderName,
-                      trackNumber: item.track?.trackNumber,
+                      playlistItemId: item.id,
                     });
                   }}
                 >
@@ -261,11 +213,9 @@ export const PlaylistPanel: React.FC<PlaylistPanelProps> = (props) => {
                 });
                 if (viewerData?.viewer?.id) {
                   await movePlaylistItem({
-                    artistId: item.track?.release.artist.id,
                     newIndex: index,
                     playlistId: playlist.id,
-                    releaseFolderName: item.track?.release.folderName,
-                    trackNumber: item.track?.trackNumber,
+                    playlistItemId: item.id,
                   });
                 }
                 setDragIndex(null);

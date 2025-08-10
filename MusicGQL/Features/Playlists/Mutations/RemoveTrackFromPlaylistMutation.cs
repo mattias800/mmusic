@@ -6,10 +6,10 @@ using MusicGQL.Types;
 namespace MusicGQL.Features.Playlists.Mutations;
 
 [ExtendObjectType(typeof(Mutation))]
-public class RemoveTrackFromPlaylistMutation
+public class RemoveItemFromPlaylistMutation
 {
-    public async Task<RemoveTrackFromPlaylistResult> RemoveTrackFromPlaylist(
-        RemoveTrackFromPlaylistInput input,
+    public async Task<RemoveItemFromPlaylistResult> RemoveItemFromPlaylist(
+        RemoveItemFromPlaylistInput input,
         [Service] EventDbContext db,
         [Service] EventProcessor.EventProcessorWorker eventProcessor,
         [Service] IHttpContextAccessor httpContextAccessor
@@ -21,9 +21,15 @@ public class RemoveTrackFromPlaylistMutation
             ?.Value;
         if (userIdClaim == null || !Guid.TryParse(userIdClaim, out var actorUserId))
         {
-            return new RemoveTrackFromPlaylistError("Not authenticated");
+            return new RemoveItemFromPlaylistError("Not authenticated");
         }
-        var recordingId = $"{input.ArtistId}/{input.ReleaseFolderName}/{input.TrackNumber}";
+        var playlistItem = await db.Set<Features.Playlists.Db.DbPlaylistItem>()
+            .FirstOrDefaultAsync(i => i.Id == input.PlaylistItemId && i.PlaylistId == input.PlaylistId);
+        if (playlistItem == null)
+        {
+            return new RemoveItemFromPlaylistError("Playlist item not found");
+        }
+        var recordingId = playlistItem.RecordingId;
         db.Events.Add(
             new SongRemovedFromPlaylist
             {
@@ -38,24 +44,22 @@ public class RemoveTrackFromPlaylistMutation
         var playlistModel = await db.Playlists.FirstOrDefaultAsync(p => p.Id == input.PlaylistId);
         if (playlistModel == null)
         {
-            return new RemoveTrackFromPlaylistError("Playlist not found after update");
+            return new RemoveItemFromPlaylistError("Playlist not found after update");
         }
 
-        return new RemoveTrackFromPlaylistSuccess(new Playlist(playlistModel));
+        return new RemoveItemFromPlaylistSuccess(new Playlist(playlistModel));
     }
 }
 
-[GraphQLName("RemoveTrackFromPlaylistInput")]
-public record RemoveTrackFromPlaylistInput(
+[GraphQLName("RemoveItemFromPlaylistInput")]
+public record RemoveItemFromPlaylistInput(
     Guid PlaylistId,
-    string ArtistId,
-    string ReleaseFolderName,
-    int TrackNumber
+    int PlaylistItemId
 );
 
 [UnionType]
-public abstract record RemoveTrackFromPlaylistResult;
+public abstract record RemoveItemFromPlaylistResult;
 
-public record RemoveTrackFromPlaylistSuccess(Playlist Playlist) : RemoveTrackFromPlaylistResult;
+public record RemoveItemFromPlaylistSuccess(Playlist Playlist) : RemoveItemFromPlaylistResult;
 
-public record RemoveTrackFromPlaylistError(string Message) : RemoveTrackFromPlaylistResult;
+public record RemoveItemFromPlaylistError(string Message) : RemoveItemFromPlaylistResult;
