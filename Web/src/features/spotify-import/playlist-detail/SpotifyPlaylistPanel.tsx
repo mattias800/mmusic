@@ -1,5 +1,4 @@
-import React from "react";
-import { useQuery } from "urql";
+import React, { useEffect } from "react";
 import { GradientContent } from "@/components/page-body/GradientContent.tsx";
 import { MainPadding } from "@/components/layout/MainPadding.tsx";
 import { SectionList } from "@/components/page-body/SectionList.tsx";
@@ -7,65 +6,52 @@ import { Section } from "@/components/page-body/Section.tsx";
 import { SectionHeading } from "@/components/headings/SectionHeading.tsx";
 import { TrackItem } from "@/components/track-item/TrackItem.tsx";
 import { Button } from "@/components/ui/button.tsx";
-import { Play, Download, CheckSquare, Square } from "lucide-react";
+import { CheckSquare, Download, Play, Square } from "lucide-react";
 import { PlaylistSummaryHeader } from "@/common/PlaylistSummaryHeader.tsx";
+import { FragmentType, graphql, useFragment } from "@/gql";
 
 export interface SpotifyPlaylistPanelProps {
-  playlistId: string;
+  playlist: FragmentType<typeof spotifyPlaylistPanelPlaylistFragment>;
 }
 
-const spotifyPlaylistDetailsQuery = `
-  query SpotifyPlaylistDetails($playlistId: String!) {
-    playlist {
-      importPlaylists {
-        spotify {
-          byId: spotifyPlaylistById(id: $playlistId) {
-            id
-            name
-            description
-            coverImageUrl
-            totalTracks
-            tracks {
-              id
-              title
-              durationMs
-              artistNames
-              albumCoverImageUrl
-              previewUrl
-            }
-          }
-        }
-      }
+const spotifyPlaylistPanelPlaylistFragment = graphql(`
+  fragment SpotifyPlaylistPanel_SpotifyPlaylist on SpotifyPlaylist {
+    id
+    name
+    description
+    coverImageUrl
+    totalTracks
+    tracks {
+      id
+      title
+      durationMs
+      artistNames
+      albumCoverImageUrl
+      previewUrl
     }
   }
-` as any;
+`);
 
 type TrackSelectionState = Record<string, boolean>;
 
-export const SpotifyPlaylistPanel: React.FC<SpotifyPlaylistPanelProps> = ({
-  playlistId,
-}) => {
-  const [{ data, fetching, error }] = useQuery<any, { playlistId: string }>({
-    query: spotifyPlaylistDetailsQuery,
-    variables: { playlistId },
-    requestPolicy: "network-only",
-  });
+export const SpotifyPlaylistPanel: React.FC<SpotifyPlaylistPanelProps> = (
+  props,
+) => {
+  const playlist = useFragment(
+    spotifyPlaylistPanelPlaylistFragment,
+    props.playlist,
+  );
 
   const [selected, setSelected] = React.useState<TrackSelectionState>({});
   const [selectAll, setSelectAll] = React.useState(false);
 
-  React.useEffect(() => {
-    const tracks = data?.playlist?.importPlaylists?.spotify?.byId?.tracks ?? [];
+  useEffect(() => {
+    const tracks = playlist.tracks ?? [];
     const next: TrackSelectionState = {};
     tracks.forEach((t) => (next[t.id] = selectAll));
     setSelected(next);
-  }, [data?.playlist?.importPlaylists?.spotify?.byId?.id, selectAll]);
+  }, [playlist.id, playlist.tracks, selectAll]);
 
-  if (fetching) return null;
-  if (error)
-    return <div className="p-4 text-red-400">Error: {error.message}</div>;
-
-  const playlist = data?.playlist?.importPlaylists?.spotify?.byId;
   if (!playlist) return <div className="p-4">Playlist not found.</div>;
 
   const tracks = playlist.tracks ?? [];
@@ -88,7 +74,12 @@ export const SpotifyPlaylistPanel: React.FC<SpotifyPlaylistPanelProps> = ({
                   <Button size="sm" iconLeft={Play} disabled>
                     Play (Spotify)
                   </Button>
-                  <Button size="sm" variant="secondary" iconLeft={Download} disabled>
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    iconLeft={Download}
+                    disabled
+                  >
                     Import selected ({selectedCount})
                   </Button>
                   <Button
@@ -112,9 +103,12 @@ export const SpotifyPlaylistPanel: React.FC<SpotifyPlaylistPanelProps> = ({
                   <input
                     type="checkbox"
                     className="mr-3 ml-4"
-                    checked={!!selected[t.id]}
+                    checked={selected[t.id]}
                     onChange={(e) =>
-                      setSelected((prev) => ({ ...prev, [t.id]: e.target.checked }))
+                      setSelected((prev) => ({
+                        ...prev,
+                        [t.id]: e.target.checked,
+                      }))
                     }
                   />
                   <TrackItem
@@ -130,7 +124,9 @@ export const SpotifyPlaylistPanel: React.FC<SpotifyPlaylistPanelProps> = ({
                         className="h-12 w-12 rounded"
                       />
                     )}
-                    renderSubtitle={() => <span>{t.artistNames.join(", ")}</span>}
+                    renderSubtitle={() => (
+                      <span>{t.artistNames.join(", ")}</span>
+                    )}
                   />
                 </div>
               ))}
@@ -141,5 +137,3 @@ export const SpotifyPlaylistPanel: React.FC<SpotifyPlaylistPanelProps> = ({
     </GradientContent>
   );
 };
-
-

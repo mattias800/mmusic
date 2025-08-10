@@ -5,7 +5,7 @@ import { LikedSongsPage } from "@/app/LikedSongsPage.tsx";
 import { AlbumPage } from "@/app/AlbumPage.tsx";
 import { ArtistPage } from "@/app/ArtistPage.tsx";
 import { ImportSpotifyPlaylistPage } from "@/app/ImportSpotifyPlaylistPage.tsx";
-import { SpotifyPlaylistDetailPage } from "@/features/spotify-import/playlist-detail/SpotifyPlaylistDetailPage.tsx";
+import { SpotifyPlaylistDetailPage } from "@/app/SpotifyPlaylistDetailPage.tsx";
 import { UserProfilePage } from "@/app/UserProfilePage.tsx";
 import { SettingsPage } from "@/app/SettingsPage.tsx";
 import { ArtistListPage } from "@/app/ArtistListPage.tsx";

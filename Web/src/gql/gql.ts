@@ -23,6 +23,7 @@ type Documents = {
     "\n  query MbArtistQuery($mbArtistId: ID!) {\n    musicBrainz {\n      artist {\n        byId(id: $mbArtistId) {\n          id\n          name\n          ...ArtistNotInLibraryPanel_MbArtist\n        }\n      }\n    }\n  }\n": typeof types.MbArtistQueryDocument,
     "\n  query PlaylistQuery($playlistId: ID!) {\n    playlist {\n      playlist(playlistId: $playlistId) {\n        id\n        name\n        ...PlaylistPanel_Playlist\n      }\n    }\n  }\n": typeof types.PlaylistQueryDocument,
     "\n  query SettingsPage {\n    serverSettings {\n      ...LibraryPathForm_ServerSettings\n      ...DownloadPathForm_ServerSettings\n    }\n  }\n": typeof types.SettingsPageDocument,
+    "\n  query SpotifyPlaylistDetails($playlistId: String!) {\n    playlist {\n      importPlaylists {\n        spotify {\n          byId: spotifyPlaylistById(id: $playlistId) {\n            id\n            ...SpotifyPlaylistPanel_SpotifyPlaylist\n          }\n        }\n      }\n    }\n  }\n": typeof types.SpotifyPlaylistDetailsDocument,
     "\n  query ProfilePage {\n    viewer {\n      id\n      username\n      ...UserProfilePanel_User\n    }\n  }\n": typeof types.ProfilePageDocument,
     "\n  fragment Playlist_User on User {\n    id\n    likedSongs {\n      id\n      ...LikedSongRow_LikedSong\n    }\n  }\n": typeof types.Playlist_UserFragmentDoc,
     "\n  fragment LikedSongRow_Track on Track {\n    id\n    title\n    trackLength\n  }\n": typeof types.LikedSongRow_TrackFragmentDoc,
@@ -100,6 +101,7 @@ type Documents = {
     "\n  mutation ImportSpotifyPlaylistById($playlistId: String!, $userId: UUID!) {\n    importSpotifyPlaylistById(playlistId: $playlistId, userId: $userId) {\n      __typename\n      ... on ImportSpotifyPlaylistSuccess {\n        success\n      }\n      ... on ImportSpotifyPlaylistError {\n        message\n      }\n    }\n  }\n": typeof types.ImportSpotifyPlaylistByIdDocument,
     "\n  fragment SpotifyPlaylistsList_SpotifyPlaylist on SpotifyPlaylist {\n    id\n    description\n    name\n    coverImageUrl\n  }\n": typeof types.SpotifyPlaylistsList_SpotifyPlaylistFragmentDoc,
     "\n  query UserPlaylistsLoader_Query($spotifyUsername: String!) {\n    playlist {\n      importPlaylists {\n        spotify {\n          spotifyPlaylistsForUser(username: $spotifyUsername) {\n            id\n            ...SpotifyPlaylistsList_SpotifyPlaylist\n          }\n        }\n      }\n    }\n  }\n": typeof types.UserPlaylistsLoader_QueryDocument,
+    "\n  fragment SpotifyPlaylistPanel_SpotifyPlaylist on SpotifyPlaylist {\n    id\n    name\n    description\n    coverImageUrl\n    totalTracks\n    tracks {\n      id\n      title\n      durationMs\n      artistNames\n      albumCoverImageUrl\n      previewUrl\n    }\n  }\n": typeof types.SpotifyPlaylistPanel_SpotifyPlaylistFragmentDoc,
     "\n  fragment UserProfilePanel_User on User {\n    id\n    username\n    createdAt\n    updatedAt\n    likedSongs {\n      id\n    }\n  }\n": typeof types.UserProfilePanel_UserFragmentDoc,
     "\n  query UserProfileWidget {\n    viewer {\n      id\n      username\n    }\n  }\n": typeof types.UserProfileWidgetDocument,
 };
@@ -113,6 +115,7 @@ const documents: Documents = {
     "\n  query MbArtistQuery($mbArtistId: ID!) {\n    musicBrainz {\n      artist {\n        byId(id: $mbArtistId) {\n          id\n          name\n          ...ArtistNotInLibraryPanel_MbArtist\n        }\n      }\n    }\n  }\n": types.MbArtistQueryDocument,
     "\n  query PlaylistQuery($playlistId: ID!) {\n    playlist {\n      playlist(playlistId: $playlistId) {\n        id\n        name\n        ...PlaylistPanel_Playlist\n      }\n    }\n  }\n": types.PlaylistQueryDocument,
     "\n  query SettingsPage {\n    serverSettings {\n      ...LibraryPathForm_ServerSettings\n      ...DownloadPathForm_ServerSettings\n    }\n  }\n": types.SettingsPageDocument,
+    "\n  query SpotifyPlaylistDetails($playlistId: String!) {\n    playlist {\n      importPlaylists {\n        spotify {\n          byId: spotifyPlaylistById(id: $playlistId) {\n            id\n            ...SpotifyPlaylistPanel_SpotifyPlaylist\n          }\n        }\n      }\n    }\n  }\n": types.SpotifyPlaylistDetailsDocument,
     "\n  query ProfilePage {\n    viewer {\n      id\n      username\n      ...UserProfilePanel_User\n    }\n  }\n": types.ProfilePageDocument,
     "\n  fragment Playlist_User on User {\n    id\n    likedSongs {\n      id\n      ...LikedSongRow_LikedSong\n    }\n  }\n": types.Playlist_UserFragmentDoc,
     "\n  fragment LikedSongRow_Track on Track {\n    id\n    title\n    trackLength\n  }\n": types.LikedSongRow_TrackFragmentDoc,
@@ -190,6 +193,7 @@ const documents: Documents = {
     "\n  mutation ImportSpotifyPlaylistById($playlistId: String!, $userId: UUID!) {\n    importSpotifyPlaylistById(playlistId: $playlistId, userId: $userId) {\n      __typename\n      ... on ImportSpotifyPlaylistSuccess {\n        success\n      }\n      ... on ImportSpotifyPlaylistError {\n        message\n      }\n    }\n  }\n": types.ImportSpotifyPlaylistByIdDocument,
     "\n  fragment SpotifyPlaylistsList_SpotifyPlaylist on SpotifyPlaylist {\n    id\n    description\n    name\n    coverImageUrl\n  }\n": types.SpotifyPlaylistsList_SpotifyPlaylistFragmentDoc,
     "\n  query UserPlaylistsLoader_Query($spotifyUsername: String!) {\n    playlist {\n      importPlaylists {\n        spotify {\n          spotifyPlaylistsForUser(username: $spotifyUsername) {\n            id\n            ...SpotifyPlaylistsList_SpotifyPlaylist\n          }\n        }\n      }\n    }\n  }\n": types.UserPlaylistsLoader_QueryDocument,
+    "\n  fragment SpotifyPlaylistPanel_SpotifyPlaylist on SpotifyPlaylist {\n    id\n    name\n    description\n    coverImageUrl\n    totalTracks\n    tracks {\n      id\n      title\n      durationMs\n      artistNames\n      albumCoverImageUrl\n      previewUrl\n    }\n  }\n": types.SpotifyPlaylistPanel_SpotifyPlaylistFragmentDoc,
     "\n  fragment UserProfilePanel_User on User {\n    id\n    username\n    createdAt\n    updatedAt\n    likedSongs {\n      id\n    }\n  }\n": types.UserProfilePanel_UserFragmentDoc,
     "\n  query UserProfileWidget {\n    viewer {\n      id\n      username\n    }\n  }\n": types.UserProfileWidgetDocument,
 };
@@ -244,6 +248,10 @@ export function graphql(source: "\n  query PlaylistQuery($playlistId: ID!) {\n  
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  query SettingsPage {\n    serverSettings {\n      ...LibraryPathForm_ServerSettings\n      ...DownloadPathForm_ServerSettings\n    }\n  }\n"): (typeof documents)["\n  query SettingsPage {\n    serverSettings {\n      ...LibraryPathForm_ServerSettings\n      ...DownloadPathForm_ServerSettings\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query SpotifyPlaylistDetails($playlistId: String!) {\n    playlist {\n      importPlaylists {\n        spotify {\n          byId: spotifyPlaylistById(id: $playlistId) {\n            id\n            ...SpotifyPlaylistPanel_SpotifyPlaylist\n          }\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  query SpotifyPlaylistDetails($playlistId: String!) {\n    playlist {\n      importPlaylists {\n        spotify {\n          byId: spotifyPlaylistById(id: $playlistId) {\n            id\n            ...SpotifyPlaylistPanel_SpotifyPlaylist\n          }\n        }\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -552,6 +560,10 @@ export function graphql(source: "\n  fragment SpotifyPlaylistsList_SpotifyPlayli
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  query UserPlaylistsLoader_Query($spotifyUsername: String!) {\n    playlist {\n      importPlaylists {\n        spotify {\n          spotifyPlaylistsForUser(username: $spotifyUsername) {\n            id\n            ...SpotifyPlaylistsList_SpotifyPlaylist\n          }\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  query UserPlaylistsLoader_Query($spotifyUsername: String!) {\n    playlist {\n      importPlaylists {\n        spotify {\n          spotifyPlaylistsForUser(username: $spotifyUsername) {\n            id\n            ...SpotifyPlaylistsList_SpotifyPlaylist\n          }\n        }\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  fragment SpotifyPlaylistPanel_SpotifyPlaylist on SpotifyPlaylist {\n    id\n    name\n    description\n    coverImageUrl\n    totalTracks\n    tracks {\n      id\n      title\n      durationMs\n      artistNames\n      albumCoverImageUrl\n      previewUrl\n    }\n  }\n"): (typeof documents)["\n  fragment SpotifyPlaylistPanel_SpotifyPlaylist on SpotifyPlaylist {\n    id\n    name\n    description\n    coverImageUrl\n    totalTracks\n    tracks {\n      id\n      title\n      durationMs\n      artistNames\n      albumCoverImageUrl\n      previewUrl\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
