@@ -605,7 +605,6 @@ type Playlist {
   items: [PlaylistItem!]!
   modifiedAt: DateTime
   name: String
-  tracks: [Track!]!
 }
 
 type PlaylistItem {
@@ -620,11 +619,11 @@ type PlaylistItem {
   isLocalAvailable: Boolean!
   isLocalReferencePresent: Boolean!
   localCoverImageUrl: String
-  localTrack: Track
   recordingId: String!
   releaseTitle: String
   releaseType: String
   title: String
+  track: Track
   trackLengthMs: Int
 }
 

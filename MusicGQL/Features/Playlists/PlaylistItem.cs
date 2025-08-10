@@ -1,8 +1,8 @@
+using Microsoft.EntityFrameworkCore;
 using MusicGQL.Db.Postgres;
 using MusicGQL.Features.Playlists.Events;
 using MusicGQL.Features.ServerLibrary;
 using MusicGQL.Features.ServerLibrary.Cache;
-using Microsoft.EntityFrameworkCore;
 
 namespace MusicGQL.Features.Playlists;
 
@@ -15,17 +15,25 @@ public record PlaylistItem([property: GraphQLIgnore] Db.DbPlaylistItem Model)
     public DateTime AddedAt() => Model.AddedAt;
 
     public ExternalServiceType? ExternalService() => Model.ExternalService;
+
     public string? ExternalTrackId() => Model.ExternalTrackId;
+
     public string? ExternalAlbumId() => Model.ExternalAlbumId;
+
     public string? ExternalArtistId() => Model.ExternalArtistId;
 
     public string? Title() => Model.SongTitle;
+
     public string? ArtistName() => Model.ArtistName;
+
     public string? ReleaseTitle() => Model.ReleaseTitle;
+
     public string? ReleaseType() => Model.ReleaseType;
+
     public int? TrackLengthMs() => Model.TrackLengthMs;
 
     public string? CoverImageUrl() => Model.LocalCoverImageUrl ?? Model.CoverImageUrl;
+
     public string? LocalCoverImageUrl() => Model.LocalCoverImageUrl;
 
     public bool IsLocalReferencePresent() =>
@@ -63,9 +71,7 @@ public record PlaylistItem([property: GraphQLIgnore] Db.DbPlaylistItem Model)
         return false;
     }
 
-    public async Task<Track?> LocalTrack(
-        [Service] ServerLibraryCache cache
-    )
+    public async Task<Track?> Track([Service] ServerLibraryCache cache)
     {
         // Prefer explicit local reference
         if (IsLocalReferencePresent())
@@ -96,5 +102,3 @@ public record PlaylistItem([property: GraphQLIgnore] Db.DbPlaylistItem Model)
         return null;
     }
 }
-
-

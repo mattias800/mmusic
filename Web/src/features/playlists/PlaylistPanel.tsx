@@ -1,4 +1,5 @@
 import * as React from "react";
+import { useEffect, useState } from "react";
 import { FragmentType, graphql, useFragment } from "@/gql";
 import { MainPadding } from "@/components/layout/MainPadding.tsx";
 import { GradientContent } from "@/components/page-body/GradientContent";
@@ -8,8 +9,10 @@ import { ReleaseCoverArt } from "@/components/images/ReleaseCoverArt.tsx";
 import { useAppDispatch } from "@/ReduxAppHooks.ts";
 import { musicPlayerSlice } from "@/features/music-players/MusicPlayerSlice.ts";
 import { useMutation, useQuery } from "urql";
-import { ContextMenuItem, ContextMenuSeparator } from "@/components/ui/context-menu.tsx";
-// import { formatTrackLength } from "@/common/TrackLengthFormatter.ts";
+import {
+  ContextMenuItem,
+  ContextMenuSeparator,
+} from "@/components/ui/context-menu.tsx";
 
 export interface PlaylistPanelProps {
   playlist: FragmentType<typeof playlistPanelPlaylistFragment>;
@@ -19,28 +22,86 @@ const playlistPanelPlaylistFragment = graphql(`
   fragment PlaylistPanel_Playlist on Playlist {
     id
     name
-    tracks {
+    items {
       id
       title
-      trackLength
-      trackNumber
-      media {
-        id
-        audioQualityLabel
-      }
-      release {
-        id
-        folderName
-        coverArtUrl
-        artist {
+      artistName
+      coverImageUrl
+      trackLengthMs
+      track {
+        ...AlbumTrackTag_Track
+        trackLength
+        trackNumber
+        media {
           id
-          name
-          images {
-            thumbs
+          audioQualityLabel
+        }
+        title
+        release {
+          id
+          folderName
+          coverArtUrl
+          artist {
+            id
+            name
+            images {
+              thumbs
+            }
           }
         }
       }
-      ...AlbumTrackTag_Track
+    }
+  }
+`);
+
+const removeFromPlaylistMutation = graphql(`
+  mutation RemoveTrackFromPlaylist(
+    $playlistId: UUID!
+    $artistId: String!
+    $releaseFolderName: String!
+    $trackNumber: Int!
+  ) {
+    removeTrackFromPlaylist(
+      playlistId: $playlistId
+      artistId: $artistId
+      releaseFolderName: $releaseFolderName
+      trackNumber: $trackNumber
+    ) {
+      __typename
+      ... on RemoveTrackFromPlaylistSuccess {
+        success
+      }
+      ... on RemoveTrackFromPlaylistError {
+        message
+      }
+    }
+  }
+`);
+
+const movePlaylistItemMutation = graphql(`
+  mutation MovePlaylistItem(
+    $actorUserId: UUID!
+    $artistId: String!
+    $newIndex: Int!
+    $playlistId: UUID!
+    $releaseFolderName: String!
+    $trackNumber: Int!
+  ) {
+    movePlaylistItem(
+      actorUserId: $actorUserId
+      artistId: $artistId
+      newIndex: $newIndex
+      playlistId: $playlistId
+      releaseFolderName: $releaseFolderName
+      trackNumber: $trackNumber
+    ) {
+      __typename
+      ... on MovePlaylistItemSuccess {
+        success
+      }
+      ... on MovePlaylistItemError {
+        message
+      }
     }
   }
 `);
@@ -49,80 +110,45 @@ export const PlaylistPanel: React.FC<PlaylistPanelProps> = (props) => {
   const playlist = useFragment(playlistPanelPlaylistFragment, props.playlist);
   const dispatch = useAppDispatch();
 
-  const [tracks, setTracks] = React.useState(() => playlist.tracks);
-  React.useEffect(() => {
-    setTracks(playlist.tracks);
-  }, [playlist.id, playlist.tracks]);
+  const [items, setItems] = useState(() => playlist.items);
+
+  useEffect(() => {
+    setItems(playlist.items);
+  }, [playlist.id, playlist.items]);
 
   // Fetch viewer id for move mutation
   const viewerIdQuery = graphql(`
     query Bootstrap {
       areThereAnyUsers
-      viewer { id }
+      viewer {
+        id
+      }
     }
   `);
   const [{ data: viewerData }] = useQuery({ query: viewerIdQuery });
 
-  // Mutations (cast to any to avoid codegen typings requirement during build)
-  const [, removeFromPlaylist] = useMutation(`
-    mutation RemoveTrackFromPlaylist(
-      $playlistId: UUID!
-      $artistId: String!
-      $releaseFolderName: String!
-      $trackNumber: Int!
-    ) {
-      removeTrackFromPlaylist(
-        playlistId: $playlistId
-        artistId: $artistId
-        releaseFolderName: $releaseFolderName
-        trackNumber: $trackNumber
-      ) {
-        __typename
-        ... on RemoveTrackFromPlaylistSuccess { success }
-        ... on RemoveTrackFromPlaylistError { message }
-      }
-    }
-  `);
-  const [, movePlaylistItem] = useMutation(`
-    mutation MovePlaylistItem(
-      $actorUserId: UUID!
-      $artistId: String!
-      $newIndex: Int!
-      $playlistId: UUID!
-      $releaseFolderName: String!
-      $trackNumber: Int!
-    ) {
-      movePlaylistItem(
-        actorUserId: $actorUserId
-        artistId: $artistId
-        newIndex: $newIndex
-        playlistId: $playlistId
-        releaseFolderName: $releaseFolderName
-        trackNumber: $trackNumber
-      ) {
-        __typename
-        ... on MovePlaylistItemSuccess { success }
-        ... on MovePlaylistItemError { message }
-      }
-    }
-  `);
+  const [, removeFromPlaylist] = useMutation(removeFromPlaylistMutation);
+  const [, movePlaylistItem] = useMutation(movePlaylistItemMutation);
 
   const [dragIndex, setDragIndex] = React.useState<number | null>(null);
 
   const uniqueCoverUrls = React.useMemo(() => {
     const seen = new Set<string>();
     const urls: string[] = [];
-    for (const t of playlist.tracks) {
-      const url = t.release.coverArtUrl ?? "";
+    for (const t of playlist.items) {
+      const url = t.coverImageUrl ?? "";
       if (url && !seen.has(url)) {
         seen.add(url);
         urls.push(url);
       }
     }
     return urls;
-  }, [playlist.tracks]);
+  }, [playlist.items]);
 
-  const collageUrls = React.useMemo(() => uniqueCoverUrls.slice(0, 4), [uniqueCoverUrls]);
+  const collageUrls = React.useMemo(
+    () => uniqueCoverUrls.slice(0, 4),
+    [uniqueCoverUrls],
+  );
 
   return (
     <GradientContent>
@@ -158,41 +184,49 @@ export const PlaylistPanel: React.FC<PlaylistPanelProps> = (props) => {
               )}
             </div>
             <div className="flex flex-col">
-              <h1 className="text-2xl font-semibold">{playlist.name ?? "Playlist"}</h1>
+              <h1 className="text-2xl font-semibold">
+                {playlist.name ?? "Playlist"}
+              </h1>
               <div className="text-sm text-neutral-400">
-                {tracks.length} {tracks.length === 1 ? "track" : "tracks"}
+                {items.length} {items.length === 1 ? "track" : "tracks"}
               </div>
             </div>
           </div>
 
-          {tracks.map((track, index) => (
+          {items.map((item, index) => (
             <TrackItem
-              key={track.id}
-              title={track.title}
-              trackNumber={track.trackNumber}
+              key={item.id}
+              title={item.title ?? ""}
+              trackNumber={index}
               playCount={0}
-              trackLength={track.trackLength}
+              trackLength={item.trackLengthMs}
               showCoverArt
               renderCoverArt={() => (
                 <ReleaseCoverArt
                   className="h-12 w-12"
-                  srcUrl={track.release.coverArtUrl}
-                  artistThumbUrl={track.release.artist.images?.thumbs?.[0]}
-                  titleForPlaceholder={track.release.artist.name}
-                  alt={track.title}
+                  srcUrl={
+                    item.coverImageUrl ?? item.track?.release?.coverArtUrl
+                  }
+                  artistThumbUrl={
+                    item.track?.release.artist.images?.thumbs?.[0]
+                  }
+                  titleForPlaceholder={
+                    item.track?.release.artist.name ?? item.artistName ?? ""
+                  }
+                  alt={item.title ?? item.track?.title ?? ""}
                 />
               )}
-              renderTag={() => <AlbumTrackTag track={track} />}
+              renderTag={() => <AlbumTrackTag track={item.track} />}
               contextMenuItems={[
                 <ContextMenuItem
                   key="remove"
                   onClick={async () => {
-                    setTracks((prev) => prev.filter((t) => t.id !== track.id));
+                    setItems((prev) => prev.filter((t) => t.id !== item.id));
                     await removeFromPlaylist({
                       playlistId: playlist.id,
-                      artistId: track.release.artist.id,
-                      releaseFolderName: track.release.folderName,
-                      trackNumber: track.trackNumber,
+                      artistId: item.track?.release.artist.id,
+                      releaseFolderName: item.track?.release.folderName,
+                      trackNumber: item.track?.trackNumber,
                     });
                   }}
                 >
@@ -201,17 +235,21 @@ export const PlaylistPanel: React.FC<PlaylistPanelProps> = (props) => {
                 <ContextMenuSeparator key="sep" />,
               ]}
               onClick={() => {
+                if (!item.track) {
+                  return;
+                }
                 dispatch(
                   musicPlayerSlice.actions.enqueueAndPlay([
                     {
-                      artistId: track.release.artist.id,
-                      releaseFolderName: track.release.folderName,
-                      trackNumber: track.trackNumber,
-                      title: track.title,
-                      artistName: track.release.artist.name,
-                      coverArtUrl: track.release.coverArtUrl,
-                      trackLengthMs: track.trackLength ?? 0,
-                      qualityLabel: track.media?.audioQualityLabel ?? undefined,
+                      artistId: item.track.release.artist.id,
+                      releaseFolderName: item.track.release.folderName,
+                      trackNumber: item.track.trackNumber,
+                      title: item.title ?? "",
+                      artistName: item.track.release.artist.name,
+                      coverArtUrl: item.track.release.coverArtUrl,
+                      trackLengthMs: item.track.trackLength ?? 0,
+                      qualityLabel:
+                        item.track.media?.audioQualityLabel ?? undefined,
                     },
                   ]),
                 );
@@ -221,7 +259,7 @@ export const PlaylistPanel: React.FC<PlaylistPanelProps> = (props) => {
               onDragOver={(ev) => ev.preventDefault()}
               onDrop={async () => {
                 if (dragIndex == null || dragIndex === index) return;
-                setTracks((prev) => {
+                setItems((prev) => {
                   const next = prev.slice();
                   const [moved] = next.splice(dragIndex, 1);
                   next.splice(index, 0, moved);
@@ -230,11 +268,11 @@ export const PlaylistPanel: React.FC<PlaylistPanelProps> = (props) => {
                 if (viewerData?.viewer?.id) {
                   await movePlaylistItem({
                     actorUserId: viewerData.viewer.id,
-                    artistId: track.release.artist.id,
+                    artistId: item.track?.release.artist.id,
                     newIndex: index,
                     playlistId: playlist.id,
-                    releaseFolderName: track.release.folderName,
-                    trackNumber: track.trackNumber,
+                    releaseFolderName: item.track?.release.folderName,
+                    trackNumber: item.track?.trackNumber,
                   });
                 }
                 setDragIndex(null);
