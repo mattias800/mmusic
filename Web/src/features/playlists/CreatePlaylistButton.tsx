@@ -8,17 +8,10 @@ export interface CreatePlaylistButtonProps {}
 
 const mutation = graphql(`
   mutation CreatePlaylist {
-    createPlaylist {
+    createPlaylist(input: {}) {
       __typename
       ... on CreatePlaylistSuccess {
-        viewer {
-          id
-          playlists {
-            id
-            name
-            createdAt
-          }
-        }
+        playlist { id name createdAt }
       }
     }
   }

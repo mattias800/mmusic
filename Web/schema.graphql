@@ -42,10 +42,17 @@ type AddTrackToPlaylistError {
   message: String!
 }
 
+input AddTrackToPlaylistInput {
+  artistId: String!
+  playlistId: UUID!
+  releaseFolderName: String!
+  trackNumber: Int!
+}
+
 union AddTrackToPlaylistResult = AddTrackToPlaylistError | AddTrackToPlaylistSuccess
 
 type AddTrackToPlaylistSuccess {
-  success: Boolean!
+  playlist: Playlist!
 }
 
 """Defines when a policy shall be executed."""
@@ -155,10 +162,29 @@ type CacheStatistics {
   trackCount: Int!
 }
 
+type CreateDirectoryError {
+  message: String!
+}
+
+input CreateDirectoryInput {
+  path: String!
+}
+
+union CreateDirectoryResult = CreateDirectoryError | CreateDirectorySuccess
+
+type CreateDirectorySuccess {
+  entry: FileSystemEntry!
+}
+
+input CreatePlaylistInput {
+  description: String
+  name: String
+}
+
 union CreatePlaylistResult = CreatePlaylistSuccess
 
 type CreatePlaylistSuccess {
-  viewer: User!
+  playlist: Playlist!
 }
 
 type CreateUserError {
@@ -190,7 +216,7 @@ type DeletePlaylistNoWriteAccess {
 union DeletePlaylistResult = DeletePlaylistNoWriteAccess | DeletePlaylistSuccess
 
 type DeletePlaylistSuccess {
-  viewer: User!
+  deletedPlaylistId: UUID!
 }
 
 type DeleteReleaseAudioError {
@@ -249,10 +275,20 @@ type ImportArtistSuccess {
   artist: Artist!
 }
 
-type ImportArtistsFromSpotifyPlaylistResult {
+type ImportArtistsFromSpotifyPlaylistError {
+  message: String!
+}
+
+input ImportArtistsFromSpotifyPlaylistInput {
+  playlistId: String!
+}
+
+union ImportArtistsFromSpotifyPlaylistResult = ImportArtistsFromSpotifyPlaylistError | ImportArtistsFromSpotifyPlaylistSuccess
+
+type ImportArtistsFromSpotifyPlaylistSuccess {
+  artists: [Artist!]!
   failedArtists: [String!]!
   importedArtists: Int!
-  success: Boolean!
   totalArtists: Int!
 }
 
@@ -274,10 +310,15 @@ type ImportSpotifyPlaylistError {
   message: String!
 }
 
+input ImportSpotifyPlaylistInput {
+  playlistId: String!
+  userId: UUID!
+}
+
 union ImportSpotifyPlaylistResult = ImportSpotifyPlaylistError | ImportSpotifyPlaylistSuccess
 
 type ImportSpotifyPlaylistSuccess {
-  success: Boolean!
+  playlist: Playlist!
 }
 
 type ImportedRelease {
@@ -511,10 +552,18 @@ type MovePlaylistItemError {
   message: String!
 }
 
+input MovePlaylistItemInput {
+  artistId: String!
+  newIndex: Int!
+  playlistId: UUID!
+  releaseFolderName: String!
+  trackNumber: Int!
+}
+
 union MovePlaylistItemResult = MovePlaylistItemError | MovePlaylistItemSuccess
 
 type MovePlaylistItemSuccess {
-  success: Boolean!
+  playlist: Playlist!
 }
 
 type MusicBrainzArtistSearchRoot {
@@ -545,32 +594,32 @@ type MusicBrainzSearchRoot {
 }
 
 type Mutation {
-  addTrackToPlaylist(artistId: String!, playlistId: UUID!, releaseFolderName: String!, trackNumber: Int!): AddTrackToPlaylistResult!
-  createDirectory(path: String!): FileSystemEntry!
-  createPlaylist: CreatePlaylistResult!
+  addTrackToPlaylist(input: AddTrackToPlaylistInput!): AddTrackToPlaylistResult!
+  createDirectory(input: CreateDirectoryInput!): CreateDirectoryResult!
+  createPlaylist(input: CreatePlaylistInput!): CreatePlaylistResult!
   createUser(input: CreateUserInput!): CreateUserResult!
   deletePlaylist(input: DeletePlaylistInput!): DeletePlaylistResult!
   deleteReleaseAudio(input: DeleteReleaseAudioInput!): DeleteReleaseAudioResult!
   importArtist(input: ImportArtistInput!): ImportArtistResult!
   importArtistReleases(artistId: String!): ImportReleasesResult!
-  importArtistsFromSpotifyPlaylist(playlistId: String!): ImportArtistsFromSpotifyPlaylistResult!
-  importSpotifyPlaylistById(playlistId: String!, userId: UUID!): ImportSpotifyPlaylistResult!
+  importArtistsFromSpotifyPlaylist(input: ImportArtistsFromSpotifyPlaylistInput!): ImportArtistsFromSpotifyPlaylistResult!
+  importSpotifyPlaylist(input: ImportSpotifyPlaylistInput!): ImportSpotifyPlaylistResult!
   likeSong(input: LikeSongInput!): LikeSongResult!
-  movePlaylistItem(actorUserId: UUID!, artistId: String!, newIndex: Int!, playlistId: UUID!, releaseFolderName: String!, trackNumber: Int!): MovePlaylistItemResult!
+  movePlaylistItem(input: MovePlaylistItemInput!): MovePlaylistItemResult!
   ping: Boolean!
-  redownloadRelease(artistId: String!, releaseFolderName: String!): RedownloadReleaseResult!
+  redownloadRelease(input: RedownloadReleaseInput!): RedownloadReleaseResult!
   refreshArtistMetaData(input: RefreshArtistMetaDataInput!): RefreshArtistMetaDataResult!
   refreshArtistTopTracks(input: RefreshArtistTopTracksInput!): RefreshArtistTopTracksResult!
   refreshRelease(input: RefreshReleaseInput!): RefreshReleaseResult!
-  removeTrackFromPlaylist(artistId: String!, playlistId: UUID!, releaseFolderName: String!, trackNumber: Int!): RemoveTrackFromPlaylistResult!
+  removeTrackFromPlaylist(input: RemoveTrackFromPlaylistInput!): RemoveTrackFromPlaylistResult!
   renamePlaylist(input: RenamePlaylistInput!): RenamePlaylistResult!
   scanLibraryForMissingJson: ScanLibraryForMissingJsonResult!
   scanReleaseFolderForMedia(input: ScanReleaseFolderForMediaInput!): ScanReleaseFolderForMediaResult!
   setReleaseMatchOverride(input: SetReleaseMatchOverrideInput!): SetReleaseMatchOverrideResult!
   signIn(input: SignInInput!): SignInResult!
-  signOut: SignOutResult!
+  signOut(input: SignOutInput!): SignOutResult!
   startDownloadRelease(input: StartDownloadReleaseInput!): StartDownloadReleaseResult!
-  unlikeSong(input: UnlikedSongInput!): UnlikedSongPayload!
+  unlikeSong(input: UnlikedSongInput!): UnlikeSongResult!
   updateDownloadPath(input: UpdateDownloadPathInput!): UpdateDownloadPathResult!
   updateLibraryPath(input: UpdateLibraryPathInput!): UpdateLibraryPathResult!
 }
@@ -656,10 +705,15 @@ type RedownloadReleaseError {
   message: String!
 }
 
+input RedownloadReleaseInput {
+  artistId: String!
+  releaseFolderName: String!
+}
+
 union RedownloadReleaseResult = RedownloadReleaseError | RedownloadReleaseSuccess
 
 type RedownloadReleaseSuccess {
-  success: Boolean!
+  release: Release!
 }
 
 type RefreshArtistMetaDataError {
@@ -739,10 +793,17 @@ type RemoveTrackFromPlaylistError {
   message: String!
 }
 
+input RemoveTrackFromPlaylistInput {
+  artistId: String!
+  playlistId: UUID!
+  releaseFolderName: String!
+  trackNumber: Int!
+}
+
 union RemoveTrackFromPlaylistResult = RemoveTrackFromPlaylistError | RemoveTrackFromPlaylistSuccess
 
 type RemoveTrackFromPlaylistSuccess {
-  success: Boolean!
+  playlist: Playlist!
 }
 
 input RenamePlaylistInput {
@@ -757,7 +818,7 @@ type RenamePlaylistNoWriteAccess {
 union RenamePlaylistResult = RenamePlaylistNoWriteAccess | RenamePlaylistSuccess
 
 type RenamePlaylistSuccess {
-  viewer: User!
+  playlist: Playlist!
 }
 
 union ScanLibraryForMissingJsonResult = ScanLibraryForMissingJsonSuccess
@@ -825,7 +886,7 @@ input SetReleaseMatchOverrideInput {
 union SetReleaseMatchOverrideResult = SetReleaseMatchOverrideError | SetReleaseMatchOverrideSuccess
 
 type SetReleaseMatchOverrideSuccess {
-  ok: Boolean!
+  release: Release!
 }
 
 type SignInError {
@@ -845,6 +906,10 @@ type SignInSuccess {
 
 type SignOutError {
   message: String!
+}
+
+input SignOutInput {
+  confirm: Boolean!
 }
 
 union SignOutResult = SignOutError | SignOutSuccess
@@ -892,15 +957,20 @@ type SpotifyTrack {
   title: String!
 }
 
+type StartDownloadReleaseAccepted {
+  artistId: String!
+  releaseFolderName: String!
+}
+
 input StartDownloadReleaseInput {
   artistId: String!
   releaseFolderName: String!
 }
 
-union StartDownloadReleaseResult = StartDownloadReleaseSuccess | StartDownloadReleaseUnknownError
+union StartDownloadReleaseResult = StartDownloadReleaseAccepted | StartDownloadReleaseSuccess | StartDownloadReleaseUnknownError
 
 type StartDownloadReleaseSuccess {
-  success: Boolean!
+  release: Release!
 }
 
 type StartDownloadReleaseUnknownError {
@@ -954,12 +1024,18 @@ type TrackStatistics {
 
 scalar UUID
 
-input UnlikedSongInput {
-  recordingId: String!
+type UnlikeSongAlreadyNotLiked {
+  message: String!
 }
 
-type UnlikedSongPayload {
-  success: Boolean!
+union UnlikeSongResult = UnlikeSongAlreadyNotLiked | UnlikeSongSuccess
+
+type UnlikeSongSuccess {
+  viewer: User!
+}
+
+input UnlikedSongInput {
+  recordingId: String!
 }
 
 input UpdateDownloadPathInput {

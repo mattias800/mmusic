@@ -25,6 +25,7 @@ using MusicGQL.Features.Import.Services;
 using MusicGQL.Features.Likes.Commands;
 using MusicGQL.Features.Likes.Events;
 using MusicGQL.Features.Likes.Mutations;
+using MusicGQL.Features.MusicBrainz.ReleaseGroup;
 using MusicGQL.Features.Playlists.Aggregate;
 using MusicGQL.Features.Playlists.Commands;
 using MusicGQL.Features.Playlists.Import.Spotify;
@@ -42,7 +43,6 @@ using MusicGQL.Features.Users.Aggregate;
 using MusicGQL.Features.Users.Handlers;
 using MusicGQL.Features.Users.Mutations;
 using MusicGQL.Integration.MusicBrainz;
-using MusicGQL.Features.MusicBrainz.ReleaseGroup;
 using MusicGQL.Integration.Spotify;
 using MusicGQL.Integration.Spotify.Configuration;
 using MusicGQL.Integration.Youtube.Configuration;
@@ -168,7 +168,9 @@ builder.Services.AddSingleton<SpotifyClient>(serviceProvider =>
 
     var spotifyConfig = SpotifyClientConfig
         .CreateDefault()
-        .WithAuthenticator(new ClientCredentialsAuthenticator(options.ClientId!, options.ClientSecret!));
+        .WithAuthenticator(
+            new ClientCredentialsAuthenticator(options.ClientId!, options.ClientSecret!)
+        );
 
     return new SpotifyClient(spotifyConfig);
 });
@@ -245,26 +247,31 @@ builder
     .AddMutationType<Mutation>()
     .AddSubscriptionType<Subscription>()
     .AddTypeExtension<SpotifyPlaylistSearchRoot>()
-    .AddType<MusicGQL.Features.Playlists.Import.Spotify.SpotifyTrack>()
+    .AddType<SpotifyTrack>()
     .AddTypeExtension<ImportSpotifyPlaylistMutation>()
     .AddType<ImportSpotifyPlaylistSuccess>()
     .AddType<ImportSpotifyPlaylistError>()
-    .AddTypeExtension<MusicGQL.Features.Playlists.Import.Spotify.Mutations.ImportSpotifyPlaylistArtistsMutation>()
+    .AddTypeExtension<ImportSpotifyPlaylistArtistsMutation>()
+    .AddType<ImportArtistsFromSpotifyPlaylistSuccess>()
+    .AddType<ImportArtistsFromSpotifyPlaylistError>()
     .AddTypeExtension<SoulSeekSubscription>()
     .AddTypeExtension<LibrarySubscription>()
     .AddTypeExtension<ArtistServerStatusSubscription>()
     .AddTypeExtension<StartDownloadReleaseMutation>()
     .AddType<StartDownloadReleaseSuccess>()
     .AddType<StartDownloadReleaseUnknownError>()
+    .AddType<StartDownloadReleaseAccepted>()
     .AddTypeExtension<UnlikeSongMutation>()
+    .AddType<UnlikeSongSuccess>()
+    .AddType<UnlikeSongAlreadyNotLiked>()
     .AddTypeExtension<LikeSongMutation>()
     .AddTypeExtension<ImportArtistMutation>()
     .AddType<IArtistBase>()
     .AddType<ImportArtistSuccess>()
     .AddType<ImportArtistError>()
-    .AddType<LikeSongResult.LikeSongSuccess>()
-    .AddType<LikeSongResult.LikeSongAlreadyLiked>()
-    .AddType<LikeSongResult.LikeSongSongDoesNotExist>()
+    .AddType<LikeSongSuccess>()
+    .AddType<LikeSongAlreadyLiked>()
+    .AddType<LikeSongSongDoesNotExist>()
     .AddTypeExtension<UpdateLibraryPathMutation>()
     .AddTypeExtension<UpdateDownloadPathMutation>()
     .AddTypeExtension<ScanLibraryForMissingJsonMutation>()
@@ -328,7 +335,9 @@ builder
     .AddType<ArtistServerStatusNotInLibrary>()
     .AddType<IArtistServerStatusResult>()
     .AddTypeExtension<FileSystemSearchRoot>()
-    .AddTypeExtension<CreateDirectoryMutation>();
+    .AddTypeExtension<CreateDirectoryMutation>()
+    .AddType<CreateDirectorySuccess>()
+    .AddType<CreateDirectoryError>();
 
 builder.Services.Configure<LastfmOptions>(builder.Configuration.GetSection("Lastfm"));
 

@@ -8,16 +8,15 @@ namespace MusicGQL.Features.Playlists.Import.Spotify.Mutations;
 [ExtendObjectType(typeof(Mutation))]
 public class ImportSpotifyPlaylistMutation
 {
-    public async Task<ImportSpotifyPlaylistResult> ImportSpotifyPlaylistById(
+    public async Task<ImportSpotifyPlaylistResult> ImportSpotifyPlaylist(
+        ImportSpotifyPlaylistInput input,
         [Service] SpotifyService spotifyService,
         [Service] EventDbContext db,
         [Service] IHttpClientFactory httpClientFactory,
-        [Service] MusicGQL.Features.Assets.ExternalAssetStorage assetStorage,
-        string playlistId,
-        Guid userId
+        [Service] Assets.ExternalAssetStorage assetStorage
     )
     {
-        var spotifyPlaylist = await spotifyService.GetPlaylistDetailsAsync(playlistId);
+        var spotifyPlaylist = await spotifyService.GetPlaylistDetailsAsync(input.PlaylistId);
         if (spotifyPlaylist == null)
         {
             return new ImportSpotifyPlaylistError("Spotify playlist not found");
@@ -28,7 +27,7 @@ public class ImportSpotifyPlaylistMutation
         var createdPlaylistEvent = new CreatedPlaylist
         {
             PlaylistId = playlistGuid,
-            ActorUserId = userId,
+            ActorUserId = input.UserId,
             Name = spotifyPlaylist.Name ?? string.Empty,
             Description = spotifyPlaylist.Description,
             CoverImageUrl = spotifyPlaylist.Images?.FirstOrDefault()?.Url,
@@ -41,14 +40,14 @@ public class ImportSpotifyPlaylistMutation
             new ConnectPlaylistToExternalPlaylist
             {
                 PlaylistId = playlistGuid,
-                ActorUserId = userId,
+                ActorUserId = input.UserId,
                 ExternalService = ExternalServiceType.Spotify,
-                ExternalPlaylistId = playlistId,
+                ExternalPlaylistId = input.PlaylistId,
             }
         );
 
         // 2. Fetch tracks from Spotify
-        var tracks = await spotifyService.GetTracksFromPlaylist(playlistId) ?? [];
+        var tracks = await spotifyService.GetTracksFromPlaylist(input.PlaylistId) ?? [];
 
         foreach (var track in tracks)
         {
@@ -72,7 +71,7 @@ public class ImportSpotifyPlaylistMutation
                 {
                     PlaylistId = playlistGuid,
                     RecordingId = track.Id, // Keep original RecordingId for backward compat
-                    ActorUserId = userId,
+                    ActorUserId = input.UserId,
                     Position = null, // Null means append to the end
                     ExternalService = ExternalServiceType.Spotify,
                     ExternalTrackId = track.Id,
@@ -90,13 +89,28 @@ public class ImportSpotifyPlaylistMutation
         }
 
         await db.SaveChangesAsync();
-        return new ImportSpotifyPlaylistSuccess(true);
+
+        // Return the created playlist projection
+        var created = new Db.DbPlaylist
+        {
+            Id = playlistGuid,
+            UserId = input.UserId,
+            Name = spotifyPlaylist.Name,
+            Description = spotifyPlaylist.Description,
+            CoverImageUrl = spotifyPlaylist.Images?.FirstOrDefault()?.Url,
+            CreatedAt = DateTime.UtcNow,
+            ModifiedAt = DateTime.UtcNow,
+        };
+        // Note: We don't have a post-projection read here; we construct a minimal model for return.
+        return new ImportSpotifyPlaylistSuccess(new Playlist(created));
     }
 }
 
 [UnionType]
 public abstract record ImportSpotifyPlaylistResult;
 
-public record ImportSpotifyPlaylistSuccess(bool Success) : ImportSpotifyPlaylistResult;
+public record ImportSpotifyPlaylistSuccess(Playlist Playlist) : ImportSpotifyPlaylistResult;
 
 public record ImportSpotifyPlaylistError(string Message) : ImportSpotifyPlaylistResult;
+
+public record ImportSpotifyPlaylistInput(string PlaylistId, Guid UserId);

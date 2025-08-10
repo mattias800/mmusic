@@ -9,7 +9,7 @@ export interface SignOutButtonProps {}
 
 const signOutMutation = graphql(`
   mutation SignOut {
-    signOut {
+    signOut(input: { confirm: true }) {
       __typename
 
       ... on SignOutSuccess {

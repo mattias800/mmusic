@@ -33,8 +33,9 @@ const startDownloadReleaseMutation = graphql(`
     ) {
       __typename
       ... on StartDownloadReleaseSuccess {
-        success
+        release { id }
       }
+      ... on StartDownloadReleaseAccepted { artistId releaseFolderName }
     }
   }
 `);

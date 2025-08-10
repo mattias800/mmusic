@@ -50,26 +50,26 @@ const viewerQuery = graphql(`
 `);
 
 const importSpotifyPlaylistByIdMutation = graphql(`
-  mutation ImportSpotifyPlaylistById($playlistId: String!, $userId: UUID!) {
-    importSpotifyPlaylistById(playlistId: $playlistId, userId: $userId) {
+  mutation ImportSpotifyPlaylist($playlistId: String!, $userId: UUID!) {
+    importSpotifyPlaylist(input: { playlistId: $playlistId, userId: $userId }) {
       __typename
-      ... on ImportSpotifyPlaylistSuccess {
-        success
-      }
-      ... on ImportSpotifyPlaylistError {
-        message
-      }
+      ... on ImportSpotifyPlaylistSuccess { playlist { id name } }
+      ... on ImportSpotifyPlaylistError { message }
     }
   }
 `);
 
 const importArtistsFromSpotifyPlaylistMutation = graphql(`
   mutation ImportArtistsFromSpotifyPlaylist($playlistId: String!) {
-    importArtistsFromSpotifyPlaylist(playlistId: $playlistId) {
-      success
-      totalArtists
-      importedArtists
-      failedArtists
+    importArtistsFromSpotifyPlaylist(input: { playlistId: $playlistId }) {
+      __typename
+      ... on ImportArtistsFromSpotifyPlaylistSuccess {
+        artists { id name }
+        totalArtists
+        importedArtists
+        failedArtists
+      }
+      ... on ImportArtistsFromSpotifyPlaylistError { message }
     }
   }
 `);

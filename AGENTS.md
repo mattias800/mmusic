@@ -50,6 +50,64 @@ Please refer to the specific guidelines relevant to the part of the codebase you
 - **Type Extensions:** Extend the root `Query`, `Mutation`, or `Subscription` types by creating classes that use `[ExtendObjectType(typeof(Query))]`.
 - **Registration:** Ensure new Query/Mutation/Subscription type extensions are registered in `Program.cs` (e.g., `.AddTypeExtension<MyNewQueries>()`).
 
+#### GraphQL Mutation Pattern (Mandatory)
+
+- **Single input object parameter**: Every mutation must accept exactly one argument named `input` of an input record/class specific to that mutation.
+  - Example: `public Task<SignInResult> SignIn(SignInInput input, ...)`.
+- **Naming convention (use the SignIn pattern):**
+  - **Class**: `OperationNameMutation` (e.g., `SignInMutation`, `AddTrackToPlaylistMutation`).
+  - **Method**: `OperationName` (e.g., `SignIn`, `AddTrackToPlaylist`).
+  - **Input**: `OperationNameInput` (e.g., `SignInInput`).
+  - **Union Result**: `OperationNameResult` with `[UnionType]`.
+  - **Success Record**: `OperationNameSuccess`.
+  - **Other Result Records**: `OperationNameError` or other specific variants as needed.
+- **One file per mutation**: Each mutation must live in its own `.cs` file under its feature's `Mutations/` folder.
+- **Example (reference pattern from `SignInMutation`):**
+
+```csharp
+[ExtendObjectType(typeof(Mutation))]
+public class SignInMutation
+{
+    public async Task<SignInResult> SignIn(SignInInput input, [Service] ...)
+    {
+        // ... implementation ...
+        return new SignInSuccess(new(user));
+    }
+}
+
+public record SignInInput(string Username, string Password);
+
+[UnionType]
+public abstract record SignInResult;
+public record SignInSuccess(User User) : SignInResult;
+public record SignInError(string Message) : SignInResult;
+```
+
+- When converting existing mutations, replace multiple scalar parameters with a single `OperationNameInput` parameter and update all references accordingly (backend and frontend). See the "Recent Lessons" section for additional context.
+
+#### Mutation Success Payload Rule
+
+- **Success unions must return the modified entity (or entities)**: On success, include the domain object that was changed so clients can update caches without refetching.
+  - Examples:
+    - Add/remove/move track in playlist → return the updated `Playlist`.
+    - Create/rename/delete playlist → return `Playlist` (or `deletedPlaylistId` for deletions).
+    - Refresh artist metadata → return the updated `Artist`.
+    - Import Spotify playlist → return the created `Playlist`.
+    - Refresh/rescan/redownload release → return the updated `Release`.
+  - Returning multiple related entities is allowed but should be avoided when one is a parent/child of the other.
+  - For destructive actions (e.g., delete), return the parent entity that changed or at minimum the identifier(s) of what was deleted so the client can reconcile state.
+
+#### GraphQL Type Naming for Mutations (No Nested Records)
+
+- Do NOT nest success/error record types inside the union record for mutations. Nested records inherit the parent type name in C#, which leads to confusing or duplicate GraphQL type names. Always declare each mutation result record at the top level with clear names:
+  - Good:
+    - `public abstract record RenamePlaylistResult;`
+    - `public record RenamePlaylistSuccess(Playlist Playlist) : RenamePlaylistResult;`
+    - `public record RenamePlaylistError(string Message) : RenamePlaylistResult;`
+  - Avoid:
+    - `public abstract record RenamePlaylistResult { public record Success(...) : RenamePlaylistResult; }`
+  - Rationale: GraphQL uses the C# type name (or explicit `[UnionType("...")]`) for schema names. Nested types often produce ambiguous or undesirable names and complicate registration.
+
 ## 4. State Management (Frontend)
 
 - **Local State:** Use `useState` for component-local state.

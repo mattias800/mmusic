@@ -1,21 +1,24 @@
 using MusicGQL.Features.Import;
+using MusicGQL.Features.ServerLibrary;
+using MusicGQL.Features.ServerLibrary.Cache;
 using MusicGQL.Integration.MusicBrainz;
 using MusicGQL.Integration.Spotify;
 using MusicGQL.Types;
 
 namespace MusicGQL.Features.Playlists.Import.Spotify.Mutations;
 
-[ExtendObjectType(typeof(MusicGQL.Types.Mutation))]
+[ExtendObjectType(typeof(Mutation))]
 public class ImportSpotifyPlaylistArtistsMutation
 {
     public async Task<ImportArtistsFromSpotifyPlaylistResult> ImportArtistsFromSpotifyPlaylist(
+        ImportArtistsFromSpotifyPlaylistInput input,
         [Service] SpotifyService spotifyService,
         [Service] MusicBrainzService musicBrainzService,
         [Service] LibraryImportService libraryImportService,
-        string playlistId
+        [Service] ServerLibraryCache cache
     )
     {
-        var tracks = await spotifyService.GetTracksFromPlaylist(playlistId) ?? [];
+        var tracks = await spotifyService.GetTracksFromPlaylist(input.PlaylistId) ?? [];
         var uniqueArtistNames = tracks
             .SelectMany(t => t.Artists?.Select(a => a.Name) ?? [])
             .Where(n => !string.IsNullOrWhiteSpace(n))
@@ -24,6 +27,7 @@ public class ImportSpotifyPlaylistArtistsMutation
             .ToList();
 
         var imported = 0;
+        var importedArtistIds = new List<string>();
         var failed = new List<string>();
 
         foreach (var artistName in uniqueArtistNames)
@@ -31,7 +35,11 @@ public class ImportSpotifyPlaylistArtistsMutation
             try
             {
                 // Strategy: search by artist name and pick best-scored result
-                var candidates = await musicBrainzService.SearchArtistByNameAsync(artistName, 10, 0);
+                var candidates = await musicBrainzService.SearchArtistByNameAsync(
+                    artistName,
+                    10,
+                    0
+                );
                 var mbArtist = candidates.FirstOrDefault();
                 if (mbArtist is null)
                 {
@@ -43,6 +51,10 @@ public class ImportSpotifyPlaylistArtistsMutation
                 if (string.IsNullOrWhiteSpace(res.ErrorMessage))
                 {
                     imported++;
+                    if (!string.IsNullOrWhiteSpace(res.ArtistJson?.Id))
+                    {
+                        importedArtistIds.Add(res.ArtistJson!.Id!);
+                    }
                 }
                 else
                 {
@@ -55,22 +67,36 @@ public class ImportSpotifyPlaylistArtistsMutation
             }
         }
 
-        return new ImportArtistsFromSpotifyPlaylistResult
+        var artists = new List<Artist>();
+        foreach (var id in importedArtistIds.Distinct(StringComparer.OrdinalIgnoreCase))
         {
-            Success = true,
-            TotalArtists = uniqueArtistNames.Count,
-            ImportedArtists = imported,
-            FailedArtists = failed,
-        };
+            var cached = await cache.GetArtistByIdAsync(id);
+            if (cached != null)
+            {
+                artists.Add(new Artist(cached));
+            }
+        }
+
+        return new ImportArtistsFromSpotifyPlaylistSuccess(
+            artists,
+            uniqueArtistNames.Count,
+            imported,
+            failed
+        );
     }
 }
 
-public class ImportArtistsFromSpotifyPlaylistResult
-{
-    public bool Success { get; set; }
-    public int TotalArtists { get; set; }
-    public int ImportedArtists { get; set; }
-    public List<string> FailedArtists { get; set; } = new();
-}
+public record ImportArtistsFromSpotifyPlaylistInput(string PlaylistId);
 
+[UnionType("ImportArtistsFromSpotifyPlaylistResult")]
+public abstract record ImportArtistsFromSpotifyPlaylistResult;
 
+public record ImportArtistsFromSpotifyPlaylistSuccess(
+    List<Artist> Artists,
+    int TotalArtists,
+    int ImportedArtists,
+    List<string> FailedArtists
+) : ImportArtistsFromSpotifyPlaylistResult;
+
+public record ImportArtistsFromSpotifyPlaylistError(string Message)
+    : ImportArtistsFromSpotifyPlaylistResult;

@@ -62,25 +62,22 @@ const removeFromPlaylistMutation = graphql(`
     $trackNumber: Int!
   ) {
     removeTrackFromPlaylist(
-      playlistId: $playlistId
-      artistId: $artistId
-      releaseFolderName: $releaseFolderName
-      trackNumber: $trackNumber
+      input: {
+        playlistId: $playlistId
+        artistId: $artistId
+        releaseFolderName: $releaseFolderName
+        trackNumber: $trackNumber
+      }
     ) {
       __typename
-      ... on RemoveTrackFromPlaylistSuccess {
-        success
-      }
-      ... on RemoveTrackFromPlaylistError {
-        message
-      }
+      ... on RemoveTrackFromPlaylistSuccess { playlist { id } }
+      ... on RemoveTrackFromPlaylistError { message }
     }
   }
 `);
 
 const movePlaylistItemMutation = graphql(`
   mutation MovePlaylistItem(
-    $actorUserId: UUID!
     $artistId: String!
     $newIndex: Int!
     $playlistId: UUID!
@@ -88,20 +85,17 @@ const movePlaylistItemMutation = graphql(`
     $trackNumber: Int!
   ) {
     movePlaylistItem(
-      actorUserId: $actorUserId
-      artistId: $artistId
-      newIndex: $newIndex
-      playlistId: $playlistId
-      releaseFolderName: $releaseFolderName
-      trackNumber: $trackNumber
+      input: {
+        artistId: $artistId
+        newIndex: $newIndex
+        playlistId: $playlistId
+        releaseFolderName: $releaseFolderName
+        trackNumber: $trackNumber
+      }
     ) {
       __typename
-      ... on MovePlaylistItemSuccess {
-        success
-      }
-      ... on MovePlaylistItemError {
-        message
-      }
+      ... on MovePlaylistItemSuccess { playlist { id } }
+      ... on MovePlaylistItemError { message }
     }
   }
 `);
@@ -267,7 +261,6 @@ export const PlaylistPanel: React.FC<PlaylistPanelProps> = (props) => {
                 });
                 if (viewerData?.viewer?.id) {
                   await movePlaylistItem({
-                    actorUserId: viewerData.viewer.id,
                     artistId: item.track?.release.artist.id,
                     newIndex: index,
                     playlistId: playlist.id,

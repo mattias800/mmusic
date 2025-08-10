@@ -28,14 +28,7 @@ const renamePlaylistMutation = graphql(`
     ) {
       __typename
       ... on RenamePlaylistSuccess {
-        viewer {
-          id
-          playlists {
-            id
-            name
-            createdAt
-          }
-        }
+        playlist { id name createdAt }
       }
     }
   }
@@ -46,14 +39,7 @@ const deletePlaylistMutation = graphql(`
     deletePlaylist(input: { playlistId: $playlistId }) {
       __typename
       ... on DeletePlaylistSuccess {
-        viewer {
-          id
-          playlists {
-            id
-            name
-            createdAt
-          }
-        }
+        deletedPlaylistId
       }
     }
   }

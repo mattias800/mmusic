@@ -50,7 +50,7 @@ const setOverrideMutation = graphql(`
     setReleaseMatchOverride(input: $input) {
       __typename
       ... on SetReleaseMatchOverrideSuccess {
-        ok
+        release { id }
       }
       ... on SetReleaseMatchOverrideError {
         message
