@@ -109,6 +109,19 @@ public class ServerLibrarySearchRoot
     }
 
     /// <summary>
+    /// Convenience helper to get a single release for an artist by the folder name.
+    /// </summary>
+    public async Task<Release?> ReleaseForArtistByFolderName(
+        [Service] ServerLibraryCache cache,
+        [ID] string artistId,
+        string releaseFolderName
+    )
+    {
+        var release = await cache.GetReleaseByArtistAndFolderAsync(artistId, releaseFolderName);
+        return release is null ? null : new Release(release);
+    }
+
+    /// <summary>
     /// Get tracks for a specific artist by artist ID
     /// </summary>
     public async Task<IEnumerable<Track>> TracksForArtist(

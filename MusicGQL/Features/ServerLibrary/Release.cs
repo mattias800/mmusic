@@ -67,4 +67,13 @@ public record Release([property: GraphQLIgnore] CachedRelease Model)
         if (tracks.Count == 0) return true;
         return tracks.All(t => string.IsNullOrWhiteSpace(t.JsonTrack.AudioFilePath));
     }
+
+    /// <summary>
+    /// MusicBrainz connections for this release. These are persisted in the underlying JSON.
+    /// </summary>
+    public string? MusicBrainzReleaseGroupId() => Model.JsonRelease.Connections?.MusicBrainzReleaseGroupId;
+
+    public string? MusicBrainzSelectedReleaseId() => Model.JsonRelease.Connections?.MusicBrainzSelectedReleaseId;
+
+    public string? MusicBrainzReleaseIdOverride() => Model.JsonRelease.Connections?.MusicBrainzReleaseIdOverride;
 };

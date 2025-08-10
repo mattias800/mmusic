@@ -42,6 +42,7 @@ using MusicGQL.Features.Users.Aggregate;
 using MusicGQL.Features.Users.Handlers;
 using MusicGQL.Features.Users.Mutations;
 using MusicGQL.Integration.MusicBrainz;
+using MusicGQL.Features.MusicBrainz.ReleaseGroup;
 using MusicGQL.Integration.Spotify;
 using MusicGQL.Integration.Spotify.Configuration;
 using MusicGQL.Integration.Youtube.Configuration;
@@ -314,6 +315,11 @@ builder
     .AddTypeExtension<DeleteReleaseAudioMutation>()
     .AddType<DeleteReleaseAudioSuccess>()
     .AddType<DeleteReleaseAudioError>()
+    // Release match override + MB release scoring
+    .AddTypeExtension<SetReleaseMatchOverrideMutation>()
+    .AddType<SetReleaseMatchOverrideSuccess>()
+    .AddType<SetReleaseMatchOverrideError>()
+    .AddTypeExtension<ReleasesWithScoresQuery>()
     .AddType<ArtistServerStatusReady>()
     .AddType<ArtistServerStatusImportingArtist>()
     .AddType<ArtistServerStatusUpdatingArtist>()

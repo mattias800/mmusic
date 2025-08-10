@@ -549,6 +549,7 @@ type Mutation {
   renamePlaylist(input: RenamePlaylistInput!): RenamePlaylistResult!
   scanLibraryForMissingJson: ScanLibraryForMissingJsonResult!
   scanReleaseFolderForMedia(input: ScanReleaseFolderForMediaInput!): ScanReleaseFolderForMediaResult!
+  setReleaseMatchOverride(input: SetReleaseMatchOverrideInput!): SetReleaseMatchOverrideResult!
   signIn(input: SignInInput!): SignInResult!
   signOut: SignOutResult!
   startDownloadRelease(input: StartDownloadReleaseInput!): StartDownloadReleaseResult!
@@ -601,6 +602,7 @@ type Query {
   musicBrainz: MusicBrainzSearchRoot!
   playlist: PlaylistSearchRoot!
   recommendations: RecommendationsSearchRoot!
+  releasesWithScores(artistId: String!, releaseFolderName: String!, releaseGroupId: String!): [ScoredRelease!]!
   serverLibrary: ServerLibrarySearchRoot!
   serverSettings: ServerSettings!
   user: UserSearchRoot!
@@ -675,6 +677,9 @@ type Release {
   folderName: String!
   id: ID!
   isFullyMissing: Boolean!
+  musicBrainzReleaseGroupId: String
+  musicBrainzReleaseIdOverride: String
+  musicBrainzSelectedReleaseId: String
   title: String!
   tracks: [Track!]!
   type: ReleaseType
@@ -743,12 +748,19 @@ type ScanReleaseFolderForMediaSuccess {
   release: Release!
 }
 
+type ScoredRelease {
+  reasons: [String!]!
+  release: MbRelease!
+  score: Int!
+}
+
 type ServerLibrarySearchRoot {
   allArtists: [Artist!]!
   allReleases: [Release!]!
   allTracks: [Track!]!
   artistById(id: ID!): Artist
   libraryStatistics: CacheStatistics!
+  releaseForArtistByFolderName(artistId: ID!, releaseFolderName: String!): Release
   releasesForArtist(artistId: ID!): [Release!]!
   searchArtists(limit: Int! = 20, searchTerm: String!): [Artist!]!
   searchReleases(limit: Int! = 20, searchTerm: String!): [Release!]!
@@ -761,6 +773,22 @@ type ServerSettings {
   downloadPath: String!
   id: ID!
   libraryPath: String!
+}
+
+type SetReleaseMatchOverrideError {
+  message: String!
+}
+
+input SetReleaseMatchOverrideInput {
+  artistId: String!
+  musicBrainzReleaseId: String
+  releaseFolderName: String!
+}
+
+union SetReleaseMatchOverrideResult = SetReleaseMatchOverrideError | SetReleaseMatchOverrideSuccess
+
+type SetReleaseMatchOverrideSuccess {
+  ok: Boolean!
 }
 
 type SignInError {

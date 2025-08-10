@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu.tsx";
 import { Spinner } from "@/components/spinner/Spinner.tsx";
 import { useMutation, useSubscription } from "urql";
-import { toast } from "sonner";
+// import { toast } from "sonner";
 import { FixMatchDialog } from "@/features/album/components/FixMatchDialog.tsx";
 import { LargeLikeButton } from "@/components/buttons/LargeLikeButton.tsx";
 import { AlbumHeader } from "@/features/album/AlbumHeader.tsx";
@@ -163,12 +163,6 @@ export const AlbumPanel: React.FC<AlbumPanelProps> = (props) => {
     variables: {
       artistId: release.artist.id,
       releaseFolderName: release.folderName,
-    },
-    handler: (_prev, data) => {
-      if (data?.libraryReleaseMetadataUpdated?.id) {
-        toast.success("Album metadata updated");
-      }
-      return data;
     },
   });
 
