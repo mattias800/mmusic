@@ -12,6 +12,7 @@ public class EventProcessorWorker(
     EventDbContext dbContext,
     ILogger<EventProcessorWorker> logger,
     LikedSongsEventProcessor likedSongsEventProcessor,
+    MusicGQL.Features.PlayCounts.PlayCountsEventProcessor playCountsEventProcessor,
     UserEventProcessor userEventProcessor,
     PlaylistsEventProcessor playlistsEventProcessor,
     ServerSettingsEventProcessor serverSettingsEventProcessor
@@ -40,6 +41,7 @@ public class EventProcessorWorker(
             await likedSongsEventProcessor.ProcessEvent(ev, dbContext);
             await userEventProcessor.ProcessEvent(ev, dbContext);
             await playlistsEventProcessor.ProcessEvent(ev, dbContext);
+            await playCountsEventProcessor.ProcessEvent(ev, dbContext);
             await serverSettingsEventProcessor.ProcessEvent(ev, dbContext);
         }
 

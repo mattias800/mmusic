@@ -80,6 +80,20 @@ public class ServerLibrarySearchRoot
     }
 
     /// <summary>
+    /// Get a single track by stable ID: artistId/releaseFolderName/trackNumber
+    /// </summary>
+    public async Task<Track?> TrackById([Service] ServerLibraryCache cache, [ID] string id)
+    {
+        if (string.IsNullOrWhiteSpace(id))
+            return null;
+        var parts = id.Split('/', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        if (parts.Length != 3 || !int.TryParse(parts[2], out var trackNumber))
+            return null;
+        var cached = await cache.GetTrackByArtistReleaseAndNumberAsync(parts[0], parts[1], trackNumber);
+        return cached is null ? null : new Track(cached);
+    }
+
+    /// <summary>
     /// Get releases for a specific artist by artist ID
     /// </summary>
     public async Task<IEnumerable<Release>> ReleasesForArtist(

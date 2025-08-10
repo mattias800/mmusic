@@ -115,7 +115,9 @@ public class LibraryAssetsController(ServerLibraryAssetReader assetReader) : Con
     public async Task<IActionResult> GetTrackAudio(
         string artistId,
         string releaseFolderName,
-        int trackNumber
+        int trackNumber,
+        [FromServices] MusicGQL.Db.Postgres.EventDbContext dbContext,
+        [FromServices] EventProcessor.EventProcessorWorker eventProcessor
     )
     {
         var (stream, contentType, fileName) = await assetReader.GetTrackAudioAsync(
@@ -129,6 +131,26 @@ public class LibraryAssetsController(ServerLibraryAssetReader assetReader) : Con
             return NotFound(
                 $"Audio file not found for track {trackNumber} in release '{releaseFolderName}' by artist '{artistId}'"
             );
+        }
+
+        // Increment play-count in release.json and refresh the cache.
+        // Emit a TrackPlayed event and process (projection will be updated by the event processor)
+        var userIdClaim = HttpContext.User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        Guid? subjectUserId = null;
+        if (Guid.TryParse(userIdClaim, out var parsed)) subjectUserId = parsed;
+
+        if (subjectUserId.HasValue)
+        {
+            var ev = new MusicGQL.Features.PlayCounts.Events.TrackPlayed
+            {
+                ArtistId = artistId,
+                ReleaseFolderName = releaseFolderName,
+                TrackNumber = trackNumber,
+                SubjectUserId = subjectUserId.Value,
+            };
+            dbContext.Events.Add(ev);
+            await dbContext.SaveChangesAsync();
+            await eventProcessor.ProcessEvents();
         }
 
         // Enable HTTP Range processing so the <audio> element can seek without restarting

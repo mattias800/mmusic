@@ -22,6 +22,9 @@ public class EventDbContext(DbContextOptions<EventDbContext> options) : DbContex
     public DbSet<DbPlaylist> Playlists { get; set; }
     public DbSet<DbUser> Users { get; set; }
 
+    public DbSet<MusicGQL.Features.PlayCounts.Db.DbTrackPlayCount> TrackPlayCounts { get; set; }
+    public DbSet<MusicGQL.Features.PlayCounts.Db.DbUserTrackPlayCount> UserTrackPlayCounts { get; set; }
+
     public DbSet<DbServerSettings> ServerSettings { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -37,6 +40,26 @@ public class EventDbContext(DbContextOptions<EventDbContext> options) : DbContex
             .HasValue<UserCreated>("UserCreated")
             .HasValue<UserPasswordHashUpdated>("UserPasswordHashUpdated")
             .HasValue<LibraryPathUpdated>("LibraryPathUpdated");
+        modelBuilder.Entity<MusicGQL.Features.PlayCounts.Db.DbTrackPlayCount>(b =>
+        {
+            b.ToTable("TrackPlayCounts");
+            b.HasKey(x => x.Id);
+            b.Property(x => x.ArtistId).IsRequired();
+            b.Property(x => x.ReleaseFolderName).IsRequired();
+            b.Property(x => x.TrackNumber).IsRequired();
+            b.HasIndex(x => new { x.ArtistId, x.ReleaseFolderName, x.TrackNumber }).IsUnique();
+        });
+
+        modelBuilder.Entity<MusicGQL.Features.PlayCounts.Db.DbUserTrackPlayCount>(b =>
+        {
+            b.ToTable("UserTrackPlayCounts");
+            b.HasKey(x => x.Id);
+            b.Property(x => x.UserId).IsRequired();
+            b.Property(x => x.ArtistId).IsRequired();
+            b.Property(x => x.ReleaseFolderName).IsRequired();
+            b.Property(x => x.TrackNumber).IsRequired();
+            b.HasIndex(x => new { x.UserId, x.ArtistId, x.ReleaseFolderName, x.TrackNumber }).IsUnique();
+        });
 
         modelBuilder.Entity<DbUser>().ToTable("Users").HasKey(u => u.UserId);
 

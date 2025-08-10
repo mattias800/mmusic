@@ -127,6 +127,7 @@ builder
     .AddScoped<LikedSongsEventProcessor>()
     .AddScoped<UserEventProcessor>()
     .AddScoped<PlaylistsEventProcessor>()
+    .AddScoped<MusicGQL.Features.PlayCounts.PlayCountsEventProcessor>()
     .AddScoped<ServerSettingsEventProcessor>()
     .AddScoped<EventProcessorWorker>()
     // Register new Handlers

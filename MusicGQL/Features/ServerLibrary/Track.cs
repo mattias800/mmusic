@@ -2,13 +2,14 @@ using MusicGQL.Features.Downloads;
 using MusicGQL.Features.ServerLibrary.Cache;
 using MusicGQL.Features.ServerLibrary.Utils;
 using IO = System.IO;
+using Microsoft.EntityFrameworkCore;
 
 namespace MusicGQL.Features.ServerLibrary;
 
 public record Track([property: GraphQLIgnore] CachedTrack Model)
 {
     [ID]
-    public string Id() => Model.ArtistId + "/" + Model.ReleaseFolderName + "/" + Model.Title;
+    public string Id() => Model.ArtistId + "/" + Model.ReleaseFolderName + "/" + Model.TrackNumber;
 
     public string Title() => Model.Title;
 
@@ -16,7 +17,37 @@ public record Track([property: GraphQLIgnore] CachedTrack Model)
 
     public int? TrackLength() => Model.JsonTrack.TrackLength;
 
-    public long? PlayCount() => Model.JsonTrack.PlayCount;
+    public async Task<long?> PlayCount([Service] MusicGQL.Db.Postgres.EventDbContext db)
+    {
+        var row = await db.Set<MusicGQL.Features.PlayCounts.Db.DbTrackPlayCount>()
+            .FirstOrDefaultAsync(x =>
+                x.ArtistId == Model.ArtistId
+                && x.ReleaseFolderName == Model.ReleaseFolderName
+                && x.TrackNumber == Model.TrackNumber
+            );
+        return row?.PlayCount ?? 0;
+    }
+
+    public async Task<long?> PlayCountForViewer(
+        [Service] IHttpContextAccessor httpContextAccessor,
+        [Service] MusicGQL.Db.Postgres.EventDbContext db
+    )
+    {
+        var httpContext = httpContextAccessor.HttpContext;
+        if (httpContext?.User?.Identity == null || !httpContext.User.Identity.IsAuthenticated)
+            return 0;
+        var userIdClaim = httpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
+        if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
+            return 0;
+        var row = await db.Set<MusicGQL.Features.PlayCounts.Db.DbUserTrackPlayCount>()
+            .FirstOrDefaultAsync(x =>
+                x.UserId == userId
+                && x.ArtistId == Model.ArtistId
+                && x.ReleaseFolderName == Model.ReleaseFolderName
+                && x.TrackNumber == Model.TrackNumber
+            );
+        return row?.PlayCount ?? 0;
+    }
 
     public bool IsMissing() => string.IsNullOrWhiteSpace(Model.JsonTrack.AudioFilePath);
 
