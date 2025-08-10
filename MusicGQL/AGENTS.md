@@ -2,6 +2,17 @@
 
 This document provides guidelines for AI agents assisting with the development of the MusicGQL backend.
 
+## Updating this document
+
+If you learn any architectural patterns or best practices from the user, maybe the user corrects you are suggests
+improvements,
+make sure to learn from them and update this document accordingly.
+
+These updates could be domain knowledge about the application, but also patterns, best code practices that are used
+in this project, etc. Feel free to add your own suggestions.
+
+Update this document at any time as you learn more about the project.
+
 ## 1. Understanding the Backend
 
 - **Familiarize Yourself:** Before making changes, try to understand the relevant parts of the project structure,
@@ -12,12 +23,14 @@ This document provides guidelines for AI agents assisting with the development o
 ## Libraries
 
 This project uses several libraries and frameworks. Familiarize yourself with them:
+
 - ASP.NET Core
 - HotChocolate (GraphQL)
 - Entity Framework Core
 - Neo4j
 
 This project does NOT use:
+
 - MediatR
 
 ## 2. Code Style and Conventions (C# & ASP.NET Core)
@@ -120,7 +133,7 @@ All mutation classes should use the `[ExtendObjectType(typeof(Mutation))]` annot
 
 GraphQL entities are records.
 The GraphQL entities typically take one argument, the API model or database DTO model.  
-The GraphQL entity is then responsible for mapping the API model to the database model. 
+The GraphQL entity is then responsible for mapping the API model to the database model.
 This allows for a clean separation of concerns and makes it easier to maintain the codebase.
 The incoming model is never exposed in the API, always add GraphQLIgnore.
 We should never expose projection models in the GraphQL API, always use GraphQL entities.
