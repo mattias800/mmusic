@@ -18,3 +18,12 @@ public record SpotifyPlaylist([property: GraphQLIgnore] FullPlaylist Model)
 
     public int? TotalTracks() => Model.Tracks?.Total;
 }
+
+public record SpotifyPlaylistLight([property: GraphQLIgnore] SpotifyPlaylistModel Model)
+{
+    public string Id => Model.Id;
+    public string Name => Model.Name;
+    public string? Description => Model.Description;
+    public string? CoverImageUrl => Model.CoverImageUrl;
+    public int? TotalTracks => Model.TotalTracks;
+}

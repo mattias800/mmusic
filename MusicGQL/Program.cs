@@ -157,24 +157,20 @@ builder
         );
     });
 
-// Add Spotify Client
+// Add Spotify Client with automatic client credentials auth
 builder.Services.AddSingleton<SpotifyClient>(serviceProvider =>
 {
     var options = serviceProvider.GetRequiredService<IOptions<SpotifyClientOptions>>().Value;
-
     if (string.IsNullOrEmpty(options.ClientId) || string.IsNullOrEmpty(options.ClientSecret))
     {
         throw new InvalidOperationException("Spotify ClientId or ClientSecret is not configured.");
     }
 
-    var spotifyConfig = SpotifyClientConfig.CreateDefault();
-    var request = new ClientCredentialsRequest(options.ClientId, options.ClientSecret);
-    // It's generally not recommended to block on async calls in this manner in a synchronous context.
-    // However, during application startup, this is often acceptable.
-    // Consider if a fully async setup is possible or more appropriate for your application's needs.
-    var response = new OAuthClient(spotifyConfig).RequestToken(request).GetAwaiter().GetResult();
+    var spotifyConfig = SpotifyClientConfig
+        .CreateDefault()
+        .WithAuthenticator(new ClientCredentialsAuthenticator(options.ClientId!, options.ClientSecret!));
 
-    return new SpotifyClient(spotifyConfig.WithToken(response.AccessToken));
+    return new SpotifyClient(spotifyConfig);
 });
 
 builder.Services.AddDbContextFactory<EventDbContext>(options =>

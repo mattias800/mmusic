@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Caching.Hybrid;
 using SpotifyAPI.Web;
+using MusicGQL.Features.Playlists.Import.Spotify;
 
 namespace MusicGQL.Integration.Spotify;
 
@@ -7,23 +8,33 @@ public class SpotifyService(SpotifyClient client, HybridCache cache) : CachedSer
 {
     public async Task<FullPlaylist?> GetPlaylistDetailsAsync(string playlistId)
     {
-        return await ExecuteThrottledAsync(
-            $"spotify:playlist:{playlistId}:details",
-            TimeSpan.FromDays(1),
-            async () => await client.Playlists.Get(playlistId)
-        );
+        // Do not cache FullPlaylist; it contains interface graphs (IPlayableItem) that HybridCache cannot deserialize
+        return await client.Playlists.Get(playlistId);
     }
 
     public async Task<IEnumerable<FullTrack>?> GetTracksFromPlaylist(string playlistId)
     {
+        var fullPlaylist = await client.Playlists.Get(playlistId);
+        return fullPlaylist.Tracks?.Items?.Select(item => item.Track).OfType<FullTrack>() ?? [];
+    }
+
+    public async Task<SpotifyPlaylistModel?> GetPlaylistLightAsync(string playlistId)
+    {
         return await ExecuteThrottledAsync(
-            $"spotify:playlist:{playlistId}:tracks",
+            $"spotify:v2:playlist:{playlistId}:light",
             TimeSpan.FromDays(1),
             async () =>
             {
                 var fullPlaylist = await client.Playlists.Get(playlistId);
-                return fullPlaylist.Tracks?.Items?.Select(item => item.Track).OfType<FullTrack>()
-                    ?? [];
+                if (fullPlaylist == null) return null;
+                return new SpotifyPlaylistModel
+                {
+                    Id = fullPlaylist.Id ?? string.Empty,
+                    Name = fullPlaylist.Name ?? string.Empty,
+                    Description = fullPlaylist.Description,
+                    CoverImageUrl = fullPlaylist.Images?.FirstOrDefault()?.Url,
+                    TotalTracks = fullPlaylist.Tracks?.Total,
+                };
             }
         );
     }

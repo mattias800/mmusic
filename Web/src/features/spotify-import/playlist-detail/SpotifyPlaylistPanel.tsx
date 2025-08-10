@@ -4,11 +4,12 @@ import { MainPadding } from "@/components/layout/MainPadding.tsx";
 import { SectionList } from "@/components/page-body/SectionList.tsx";
 import { Section } from "@/components/page-body/Section.tsx";
 import { SectionHeading } from "@/components/headings/SectionHeading.tsx";
-import { TrackItem } from "@/components/track-item/TrackItem.tsx";
 import { Button } from "@/components/ui/button.tsx";
 import { CheckSquare, Download, Play, Square } from "lucide-react";
 import { PlaylistSummaryHeader } from "@/common/PlaylistSummaryHeader.tsx";
 import { FragmentType, graphql, useFragment } from "@/gql";
+import { ExternalPlaylistTrackListHeading } from "@/features/spotify-import/playlist-detail/ExternalPlaylistTrackListHeading.tsx";
+import { ExternalPlaylistTrackItem } from "@/features/spotify-import/playlist-detail/ExternalPlaylistTrackItem.tsx";
 
 export interface SpotifyPlaylistPanelProps {
   playlist: FragmentType<typeof spotifyPlaylistPanelPlaylistFragment>;
@@ -98,37 +99,37 @@ export const SpotifyPlaylistPanel: React.FC<SpotifyPlaylistPanelProps> = (
           <Section>
             <SectionHeading>Tracks</SectionHeading>
             <div className="mt-2">
+              <ExternalPlaylistTrackListHeading showCoverArt />
               {tracks.map((t, index) => (
-                <div key={t.id} className="flex items-center">
-                  <input
-                    type="checkbox"
-                    className="mr-3 ml-4"
-                    checked={selected[t.id]}
-                    onChange={(e) =>
-                      setSelected((prev) => ({
-                        ...prev,
-                        [t.id]: e.target.checked,
-                      }))
-                    }
-                  />
-                  <TrackItem
-                    title={t.title}
-                    trackNumber={index + 1}
-                    playCount={0}
-                    trackLength={Math.round((t.durationMs ?? 0) / 1000)}
-                    showCoverArt
-                    renderCoverArt={() => (
-                      <img
-                        src={t.albumCoverImageUrl ?? ""}
-                        alt={t.title}
-                        className="h-12 w-12 rounded"
-                      />
-                    )}
-                    renderSubtitle={() => (
-                      <span>{t.artistNames.join(", ")}</span>
-                    )}
-                  />
-                </div>
+                <ExternalPlaylistTrackItem
+                  key={t.id}
+                  title={t.title}
+                  trackNumber={index + 1}
+                  playCount={0}
+                  trackLength={Math.round((t.durationMs ?? 0) / 1000)}
+                  showCoverArt
+                  renderCoverArt={() => (
+                    <img
+                      src={t.albumCoverImageUrl ?? ""}
+                      alt={t.title}
+                      className="h-12 w-12 rounded"
+                    />
+                  )}
+                  renderSubtitle={() => <span>{t.artistNames.join(", ")}</span>}
+                  renderCheckbox={() => (
+                    <input
+                      type="checkbox"
+                      className="mr-3 ml-4"
+                      checked={selected[t.id]}
+                      onChange={(e) =>
+                        setSelected((prev) => ({
+                          ...prev,
+                          [t.id]: e.target.checked,
+                        }))
+                      }
+                    />
+                  )}
+                />
               ))}
             </div>
           </Section>
