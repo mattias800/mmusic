@@ -156,7 +156,25 @@ public class PlaylistsEventProcessor(ILogger<PlaylistsEventProcessor> logger)
         }
 
         playlist.Items.Add(
-            new DbPlaylistItem { RecordingId = ev.RecordingId, AddedAt = DateTime.UtcNow }
+            new DbPlaylistItem
+            {
+                RecordingId = ev.RecordingId,
+                AddedAt = DateTime.UtcNow,
+                LocalArtistId = ev.LocalArtistId,
+                LocalReleaseFolderName = ev.LocalReleaseFolderName,
+                LocalTrackNumber = ev.LocalTrackNumber,
+                ExternalService = ev.ExternalService,
+                ExternalTrackId = ev.ExternalTrackId,
+                ExternalAlbumId = ev.ExternalAlbumId,
+                ExternalArtistId = ev.ExternalArtistId,
+                SongTitle = ev.SongTitle,
+                ArtistName = ev.ArtistName,
+                ReleaseTitle = ev.ReleaseTitle,
+                ReleaseType = ev.ReleaseType,
+                TrackLengthMs = ev.TrackLengthMs,
+                CoverImageUrl = ev.CoverImageUrl,
+                LocalCoverImageUrl = ev.LocalCoverImageUrl,
+            }
         );
 
         await dbContext.SaveChangesAsync();

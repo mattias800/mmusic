@@ -12,6 +12,21 @@ public record Playlist([property: GraphQLIgnore] Db.DbPlaylist Model)
 
     public string? Name() => Model.Name;
 
+    public async Task<IEnumerable<PlaylistItem>> Items(
+        [Service] IDbContextFactory<EventDbContext> dbFactory
+    )
+    {
+        await using var db = await dbFactory.CreateDbContextAsync();
+        var items = await db
+            .Set<Db.DbPlaylistItem>()
+            .Where(i => i.PlaylistId == Model.Id)
+            .OrderBy(i => i.AddedAt)
+            .ToListAsync();
+
+        return items.Select(i => new PlaylistItem(i));
+    }
+
+    // Backward-compatible field that returns only local library tracks from the playlist
     public async Task<IEnumerable<Track>> Tracks(
         [Service] IDbContextFactory<EventDbContext> dbFactory,
         [Service] ServerLibraryCache cache
@@ -22,18 +37,42 @@ public record Playlist([property: GraphQLIgnore] Db.DbPlaylist Model)
             .Set<Db.DbPlaylistItem>()
             .Where(i => i.PlaylistId == Model.Id)
             .OrderBy(i => i.AddedAt)
-            .Select(i => i.RecordingId)
             .ToListAsync();
 
-        // RecordingId is currently a platform-specific external ID (e.g., Spotify);
-        // We only include local library tracks that match our stable Track ID format: artistId/folder/trackNumber
         var tracks = new List<Track>();
-        foreach (var recId in items)
+        foreach (var item in items)
         {
-            var parts = recId.Split('/', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            // Prefer explicit local reference
+            if (
+                !string.IsNullOrWhiteSpace(item.LocalArtistId)
+                && !string.IsNullOrWhiteSpace(item.LocalReleaseFolderName)
+                && item.LocalTrackNumber.HasValue
+            )
+            {
+                var cached = await cache.GetTrackByArtistReleaseAndNumberAsync(
+                    item.LocalArtistId!,
+                    item.LocalReleaseFolderName!,
+                    item.LocalTrackNumber!.Value
+                );
+                if (cached != null)
+                {
+                    tracks.Add(new Track(cached));
+                    continue;
+                }
+            }
+
+            // Fallback: parse recording id
+            var parts = item.RecordingId.Split(
+                '/',
+                StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries
+            );
             if (parts.Length == 3 && int.TryParse(parts[2], out var trackNumber))
             {
-                var cached = await cache.GetTrackByArtistReleaseAndNumberAsync(parts[0], parts[1], trackNumber);
+                var cached = await cache.GetTrackByArtistReleaseAndNumberAsync(
+                    parts[0],
+                    parts[1],
+                    trackNumber
+                );
                 if (cached != null)
                 {
                     tracks.Add(new Track(cached));

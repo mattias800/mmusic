@@ -221,6 +221,8 @@ builder.Services.AddSingleton<
 
 builder.Services.AddAutoMapper(typeof(Program));
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddHttpClient();
+builder.Services.AddSingleton<MusicGQL.Features.Assets.ExternalAssetStorage>();
 
 // Add MVC controllers for asset endpoints
 builder.Services.AddControllers();

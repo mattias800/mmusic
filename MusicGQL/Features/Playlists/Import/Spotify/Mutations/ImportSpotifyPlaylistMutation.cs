@@ -11,6 +11,8 @@ public class ImportSpotifyPlaylistMutation
     public async Task<ImportSpotifyPlaylistResult> ImportSpotifyPlaylistById(
         [Service] SpotifyService spotifyService,
         [Service] EventDbContext db,
+        [Service] IHttpClientFactory httpClientFactory,
+        [Service] MusicGQL.Features.Assets.ExternalAssetStorage assetStorage,
         string playlistId,
         Guid userId
     )
@@ -42,13 +44,36 @@ public class ImportSpotifyPlaylistMutation
             if (track == null || string.IsNullOrEmpty(track.Id))
                 continue; // Skip if track or track.Id is null
 
+            var coverUrl = track.Album?.Images?.FirstOrDefault()?.Url;
+            string? localCoverUrl = null;
+            if (!string.IsNullOrWhiteSpace(coverUrl))
+            {
+                // Attempt to cache cover art locally for portability
+                localCoverUrl = await assetStorage.SaveCoverImageForPlaylistTrackAsync(
+                    playlistGuid,
+                    track.Id,
+                    coverUrl
+                );
+            }
+
             db.Events.Add(
                 new SongAddedToPlaylist
                 {
                     PlaylistId = playlistGuid,
-                    RecordingId = track.Id, // Spotify Track ID
+                    RecordingId = track.Id, // Keep original RecordingId for backward compat
                     ActorUserId = userId,
                     Position = null, // Null means append to the end
+                    ExternalService = ExternalServiceType.Spotify,
+                    ExternalTrackId = track.Id,
+                    ExternalAlbumId = track.Album?.Id,
+                    ExternalArtistId = track.Artists?.FirstOrDefault()?.Id,
+                    SongTitle = track.Name,
+                    ArtistName = track.Artists?.FirstOrDefault()?.Name,
+                    ReleaseTitle = track.Album?.Name,
+                    ReleaseType = track.Album?.AlbumType?.ToString(),
+                    TrackLengthMs = track.DurationMs,
+                    CoverImageUrl = coverUrl,
+                    LocalCoverImageUrl = localCoverUrl,
                 }
             );
         }

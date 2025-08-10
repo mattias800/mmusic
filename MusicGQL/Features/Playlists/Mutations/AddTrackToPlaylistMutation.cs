@@ -30,6 +30,9 @@ public class AddTrackToPlaylistMutation
                 PlaylistId = playlistId,
                 RecordingId = recordingId,
                 ActorUserId = actorUserId,
+                LocalArtistId = artistId,
+                LocalReleaseFolderName = releaseFolderName,
+                LocalTrackNumber = trackNumber,
             }
         );
         await db.SaveChangesAsync();

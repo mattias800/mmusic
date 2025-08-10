@@ -46,6 +46,7 @@ export default defineConfig({
     proxy: {
       "/graphql": proxyOptions,
       "/library": proxyOptions,
+      "/assets": proxyOptions,
     },
   },
 });
