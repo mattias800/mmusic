@@ -237,32 +237,40 @@ The `src/gql` folder is generated, and should never be modified manually.
 
 ## Page components
 
-All pages should be placed in app/pages/.
-They must be named with the suffix "Page" and should be exported as default.
-They should be added to AppRouter so the user can navigate to them.
+- Location: place all pages in `src/app/`.
+- Naming: pages must use the suffix `Page` and are exported as named exports (e.g., `export const AlbumPage = …`).
+- Routing: add pages to `AppRouter` so the user can navigate to them.
+
+### Page vs Feature responsibilities
+
+- Pages (in `src/app/`) own routing and data fetching. They execute GraphQL queries and pass data down as props.
+- Feature components (in `src/features/**`) are presentational/interactive and must not run queries directly.
+- Feature components define their own GraphQL fragments next to the component and consume data with `useFragment`.
+
+Example flow:
+- Page executes a query that spreads the feature fragment and passes the result to the feature component:
+  - Page: spreads `...Feature_Panel_Fragment` in its query
+  - Feature panel: `useFragment(featurePanelFragment, props.panel)`
 
 ## Data dependencies
 
 ### Fragments
 
-The application uses fragment co-location, which means that fragments for a component should be placed together with the components.
-All components that rely on data from GraphQL should define its own dependencies in GraphQL fragments. 
-Please the fragment documents in the same file.
-The data should then be sent to the component as props.
-Use the `useFragment` function from @/gql to unmask the fragment.
-Use the `FragmentType<typeof fragmentVariable>` to define the type of the props.
-The name of the fragment should be the same as the component, but with GraphQL type and "Fragment" as suffixes.
-For example, UserList that uses the User type would have a fragment named `UserListUser_Fragment` and
-the variable would be named `userListUserFragment`.
+- Co-locate fragments with their components in `src/features/**`.
+- Components relying on GraphQL data must declare a fragment and accept a prop typed as `FragmentType<typeof fragment>`.
+- Use `useFragment` from `@/gql` inside the component to unmask the data.
+- Naming convention: `<ComponentName>_<GraphQLType>` as the fragment name, e.g. `SpotifyPlaylistPanel_SpotifyPlaylist`.
 
 ### Queries
 
-Any component that sends a GraphQL query should have "Fetcher" as suffix in its name.
-The query should be named like the component, but with "Query" as suffix.
-For example, the component AlbumPanelFetcher would have a query named AlbumPanelQuery,
-and the query variable should be named albumPanelQuery.
+- Place queries in page components (in `src/app/`).
+- Name queries after the page or use-case with a `Query` suffix (e.g., `SpotifyPlaylistDetails` → `SpotifyPlaylistDetailsQuery`).
+- No manual TypeScript typings needed; the `graphql` tag provides types.
 
-There is no need to manually specify types for queries, they are inferred from the generated types.
+### Component state
+
+- Keep ephemeral UI selections (like per-page track selection) in local React state.
+- Avoid Redux for purely local, transient selections.
 
 Here is an example of useQuery:
 
