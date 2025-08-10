@@ -1,26 +1,15 @@
-import { FragmentType, graphql, useFragment } from "@/gql";
 import * as React from "react";
 import { ProgressIndicator } from "@/components/progress/ProgressIndicator.tsx";
 
-export interface DownloadStatusProps {
-  downloadStatus: FragmentType<typeof downloadStatusDownloadStatusFragment>;
-}
+export interface DownloadStatusProps {}
 
-const downloadStatusDownloadStatusFragment = graphql(`
-  fragment DownloadStatus_DownloadStatus on Query {
-    areThereAnyUsers
-  }
-`);
-
-export const DownloadStatus: React.FC<DownloadStatusProps> = (props) => {
-  const downloadStatus = useFragment(
-    downloadStatusDownloadStatusFragment,
-    props.downloadStatus,
-  );
-
-  const release = downloadStatus.release;
-  const totalTracks = downloadStatus.numberOfTracks;
-  const downloadedTracks = downloadStatus.tracksDownloaded ?? 0;
+export const DownloadStatus: React.FC<DownloadStatusProps> = () => {
+  // Minimal mocked values until real fragment is wired up
+  const release = undefined as unknown as
+    | { title: string; artists: Array<{ name: string }>; year?: number }
+    | undefined;
+  const totalTracks = undefined as unknown as number | undefined;
+  const downloadedTracks = 0;
 
   const progressPercent =
     totalTracks == null
@@ -41,9 +30,7 @@ export const DownloadStatus: React.FC<DownloadStatusProps> = (props) => {
 
       <ProgressIndicator progressPercent={progressPercent} />
 
-      <p className="text-sm text-zinc-300">
-        {downloadStatus?.statusDescription}
-      </p>
+      <p className="text-sm text-zinc-300">&nbsp;</p>
     </div>
   );
 };

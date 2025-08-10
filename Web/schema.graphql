@@ -38,6 +38,16 @@ directive @listSize(
   slicingArguments: [String!]
 ) on FIELD_DEFINITION
 
+type AddTrackToPlaylistError {
+  message: String!
+}
+
+union AddTrackToPlaylistResult = AddTrackToPlaylistError | AddTrackToPlaylistSuccess
+
+type AddTrackToPlaylistSuccess {
+  success: Boolean!
+}
+
 """Defines when a policy shall be executed."""
 enum ApplyPolicy {
   """After the resolver was executed."""
@@ -481,6 +491,16 @@ enum MediaAvailabilityStatus {
   UNKNOWN
 }
 
+type MovePlaylistItemError {
+  message: String!
+}
+
+union MovePlaylistItemResult = MovePlaylistItemError | MovePlaylistItemSuccess
+
+type MovePlaylistItemSuccess {
+  success: Boolean!
+}
+
 type MusicBrainzArtistSearchRoot {
   byId(id: ID!): MbArtist
   searchByName(limit: Int! = 25, name: String!, offset: Int! = 0): [MbArtist!]!
@@ -509,6 +529,7 @@ type MusicBrainzSearchRoot {
 }
 
 type Mutation {
+  addTrackToPlaylist(artistId: String!, playlistId: UUID!, releaseFolderName: String!, trackNumber: Int!): AddTrackToPlaylistResult!
   createDirectory(path: String!): FileSystemEntry!
   createPlaylist: CreatePlaylistResult!
   createUser(input: CreateUserInput!): CreateUserResult!
@@ -518,11 +539,13 @@ type Mutation {
   importArtistReleases(artistId: String!): ImportReleasesResult!
   importSpotifyPlaylistById(playlistId: String!, userId: UUID!): ImportSpotifyPlaylistResult!
   likeSong(input: LikeSongInput!): LikeSongResult!
+  movePlaylistItem(actorUserId: UUID!, artistId: String!, newIndex: Int!, playlistId: UUID!, releaseFolderName: String!, trackNumber: Int!): MovePlaylistItemResult!
   ping: Boolean!
   redownloadRelease(artistId: String!, releaseFolderName: String!): RedownloadReleaseResult!
   refreshArtistMetaData(input: RefreshArtistMetaDataInput!): RefreshArtistMetaDataResult!
   refreshArtistTopTracks(input: RefreshArtistTopTracksInput!): RefreshArtistTopTracksResult!
   refreshRelease(input: RefreshReleaseInput!): RefreshReleaseResult!
+  removeTrackFromPlaylist(artistId: String!, playlistId: UUID!, releaseFolderName: String!, trackNumber: Int!): RemoveTrackFromPlaylistResult!
   renamePlaylist(input: RenamePlaylistInput!): RenamePlaylistResult!
   scanLibraryForMissingJson: ScanLibraryForMissingJsonResult!
   scanReleaseFolderForMedia(input: ScanReleaseFolderForMediaInput!): ScanReleaseFolderForMediaResult!
@@ -568,6 +591,7 @@ type Playlist {
 
 type PlaylistSearchRoot {
   importPlaylists: ImportPlaylistSearchRoot!
+  playlist(playlistId: ID!): Playlist
 }
 
 type Query {
@@ -669,6 +693,16 @@ enum ReleaseType {
   SINGLE
 }
 
+type RemoveTrackFromPlaylistError {
+  message: String!
+}
+
+union RemoveTrackFromPlaylistResult = RemoveTrackFromPlaylistError | RemoveTrackFromPlaylistSuccess
+
+type RemoveTrackFromPlaylistSuccess {
+  success: Boolean!
+}
+
 input RenamePlaylistInput {
   newPlaylistName: String!
   playlistId: String!
@@ -719,6 +753,7 @@ type ServerLibrarySearchRoot {
   searchArtists(limit: Int! = 20, searchTerm: String!): [Artist!]!
   searchReleases(limit: Int! = 20, searchTerm: String!): [Release!]!
   searchTracks(limit: Int! = 20, searchTerm: String!): [Track!]!
+  trackById(id: ID!): Track
   tracksForArtist(artistId: ID!): [Track!]!
 }
 
@@ -811,6 +846,7 @@ type Track {
   media: TrackMedia
   mediaAvailabilityStatus: MediaAvailabilityStatus!
   playCount: Long
+  playCountForViewer: Long
   release: Release!
   statistics: TrackStatistics
   title: String!

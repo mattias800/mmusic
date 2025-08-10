@@ -1,7 +1,8 @@
 import * as React from "react";
 import { buildCoverArtPlaceholder } from "@/components/images/placeholderCoverArt.ts";
 
-export interface ReleaseCoverArtProps extends React.ImgHTMLAttributes<HTMLImageElement> {
+export interface ReleaseCoverArtProps
+  extends React.ImgHTMLAttributes<HTMLImageElement> {
   // Primary cover art URL if available
   srcUrl?: string | null | undefined;
   // Optional artist thumbnail URL to use as fallback
@@ -68,4 +69,3 @@ export const ReleaseCoverArt: React.FC<ReleaseCoverArtProps> = ({
     />
   );
 };
-

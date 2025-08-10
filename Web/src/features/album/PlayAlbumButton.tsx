@@ -48,7 +48,7 @@ export const PlayAlbumButton: React.FC<PlayAlbumButtonProps> = (props) => {
         title: track.title,
         artistName: release.artist?.name,
         coverArtUrl: release.coverArtUrl,
-        trackLengthMs: track.trackLength ?? undefined,
+        trackLengthMs: track.trackLength ?? 0,
         qualityLabel: track.media?.audioQualityLabel ?? undefined,
       }));
 

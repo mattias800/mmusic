@@ -21,7 +21,7 @@ public record Playlist([property: GraphQLIgnore] Db.DbPlaylist Model)
         var items = await db
             .Set<Db.DbPlaylistItem>()
             .Where(i => i.PlaylistId == Model.Id)
-            .OrderBy(i => i.Id)
+            .OrderBy(i => i.AddedAt)
             .Select(i => i.RecordingId)
             .ToListAsync();
 

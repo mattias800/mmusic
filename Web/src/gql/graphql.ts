@@ -1,6 +1,5 @@
 /* eslint-disable */
 import { TypedDocumentNode as DocumentNode } from "@graphql-typed-document-node/core";
-
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
 export type Exact<T extends { [key: string]: unknown }> = {
@@ -33,6 +32,20 @@ export type Scalars = {
   /** The `Long` scalar type represents non-fractional signed whole 64-bit numeric values. Long can represent values between -(2^63) and 2^63 - 1. */
   Long: { input: any; output: any };
   UUID: { input: any; output: any };
+};
+
+export type AddTrackToPlaylistError = {
+  __typename?: "AddTrackToPlaylistError";
+  message: Scalars["String"]["output"];
+};
+
+export type AddTrackToPlaylistResult =
+  | AddTrackToPlaylistError
+  | AddTrackToPlaylistSuccess;
+
+export type AddTrackToPlaylistSuccess = {
+  __typename?: "AddTrackToPlaylistSuccess";
+  success: Scalars["Boolean"]["output"];
 };
 
 /** Defines when a policy shall be executed. */
@@ -546,6 +559,20 @@ export enum MediaAvailabilityStatus {
   Unknown = "UNKNOWN",
 }
 
+export type MovePlaylistItemError = {
+  __typename?: "MovePlaylistItemError";
+  message: Scalars["String"]["output"];
+};
+
+export type MovePlaylistItemResult =
+  | MovePlaylistItemError
+  | MovePlaylistItemSuccess;
+
+export type MovePlaylistItemSuccess = {
+  __typename?: "MovePlaylistItemSuccess";
+  success: Scalars["Boolean"]["output"];
+};
+
 export type MusicBrainzArtistSearchRoot = {
   __typename?: "MusicBrainzArtistSearchRoot";
   byId?: Maybe<MbArtist>;
@@ -620,6 +647,7 @@ export type MusicBrainzSearchRoot = {
 
 export type Mutation = {
   __typename?: "Mutation";
+  addTrackToPlaylist: AddTrackToPlaylistResult;
   createDirectory: FileSystemEntry;
   createPlaylist: CreatePlaylistResult;
   createUser: CreateUserResult;
@@ -629,11 +657,13 @@ export type Mutation = {
   importArtistReleases: ImportReleasesResult;
   importSpotifyPlaylistById: ImportSpotifyPlaylistResult;
   likeSong: LikeSongResult;
+  movePlaylistItem: MovePlaylistItemResult;
   ping: Scalars["Boolean"]["output"];
   redownloadRelease: RedownloadReleaseResult;
   refreshArtistMetaData: RefreshArtistMetaDataResult;
   refreshArtistTopTracks: RefreshArtistTopTracksResult;
   refreshRelease: RefreshReleaseResult;
+  removeTrackFromPlaylist: RemoveTrackFromPlaylistResult;
   renamePlaylist: RenamePlaylistResult;
   scanLibraryForMissingJson: ScanLibraryForMissingJsonResult;
   scanReleaseFolderForMedia: ScanReleaseFolderForMediaResult;
@@ -643,6 +673,13 @@ export type Mutation = {
   unlikeSong: UnlikedSongPayload;
   updateDownloadPath: UpdateDownloadPathResult;
   updateLibraryPath: UpdateLibraryPathResult;
+};
+
+export type MutationAddTrackToPlaylistArgs = {
+  artistId: Scalars["String"]["input"];
+  playlistId: Scalars["UUID"]["input"];
+  releaseFolderName: Scalars["String"]["input"];
+  trackNumber: Scalars["Int"]["input"];
 };
 
 export type MutationCreateDirectoryArgs = {
@@ -678,6 +715,15 @@ export type MutationLikeSongArgs = {
   input: LikeSongInput;
 };
 
+export type MutationMovePlaylistItemArgs = {
+  actorUserId: Scalars["UUID"]["input"];
+  artistId: Scalars["String"]["input"];
+  newIndex: Scalars["Int"]["input"];
+  playlistId: Scalars["UUID"]["input"];
+  releaseFolderName: Scalars["String"]["input"];
+  trackNumber: Scalars["Int"]["input"];
+};
+
 export type MutationRedownloadReleaseArgs = {
   artistId: Scalars["String"]["input"];
   releaseFolderName: Scalars["String"]["input"];
@@ -693,6 +739,13 @@ export type MutationRefreshArtistTopTracksArgs = {
 
 export type MutationRefreshReleaseArgs = {
   input: RefreshReleaseInput;
+};
+
+export type MutationRemoveTrackFromPlaylistArgs = {
+  artistId: Scalars["String"]["input"];
+  playlistId: Scalars["UUID"]["input"];
+  releaseFolderName: Scalars["String"]["input"];
+  trackNumber: Scalars["Int"]["input"];
 };
 
 export type MutationRenamePlaylistArgs = {
@@ -754,6 +807,11 @@ export type Playlist = {
 export type PlaylistSearchRoot = {
   __typename?: "PlaylistSearchRoot";
   importPlaylists: ImportPlaylistSearchRoot;
+  playlist?: Maybe<Playlist>;
+};
+
+export type PlaylistSearchRootPlaylistArgs = {
+  playlistId: Scalars["ID"]["input"];
 };
 
 export type Query = {
@@ -872,6 +930,20 @@ export enum ReleaseType {
   Single = "SINGLE",
 }
 
+export type RemoveTrackFromPlaylistError = {
+  __typename?: "RemoveTrackFromPlaylistError";
+  message: Scalars["String"]["output"];
+};
+
+export type RemoveTrackFromPlaylistResult =
+  | RemoveTrackFromPlaylistError
+  | RemoveTrackFromPlaylistSuccess;
+
+export type RemoveTrackFromPlaylistSuccess = {
+  __typename?: "RemoveTrackFromPlaylistSuccess";
+  success: Scalars["Boolean"]["output"];
+};
+
 export type RenamePlaylistInput = {
   newPlaylistName: Scalars["String"]["input"];
   playlistId: Scalars["String"]["input"];
@@ -932,6 +1004,7 @@ export type ServerLibrarySearchRoot = {
   searchArtists: Array<Artist>;
   searchReleases: Array<Release>;
   searchTracks: Array<Track>;
+  trackById?: Maybe<Track>;
   tracksForArtist: Array<Track>;
 };
 
@@ -956,6 +1029,10 @@ export type ServerLibrarySearchRootSearchReleasesArgs = {
 export type ServerLibrarySearchRootSearchTracksArgs = {
   limit?: Scalars["Int"]["input"];
   searchTerm: Scalars["String"]["input"];
+};
+
+export type ServerLibrarySearchRootTrackByIdArgs = {
+  id: Scalars["ID"]["input"];
 };
 
 export type ServerLibrarySearchRootTracksForArtistArgs = {
@@ -1090,6 +1167,7 @@ export type Track = {
   media?: Maybe<TrackMedia>;
   mediaAvailabilityStatus: MediaAvailabilityStatus;
   playCount?: Maybe<Scalars["Long"]["output"]>;
+  playCountForViewer?: Maybe<Scalars["Long"]["output"]>;
   release: Release;
   statistics?: Maybe<TrackStatistics>;
   title: Scalars["String"]["output"];
@@ -1312,6 +1390,24 @@ export type MbArtistQueryQuery = {
           })
         | null;
     };
+  };
+};
+
+export type PlaylistQueryQueryVariables = Exact<{
+  playlistId: Scalars["ID"]["input"];
+}>;
+
+export type PlaylistQueryQuery = {
+  __typename?: "Query";
+  playlist: {
+    __typename?: "PlaylistSearchRoot";
+    playlist?:
+      | ({ __typename?: "Playlist"; id: string; name?: string | null } & {
+          " $fragmentRefs"?: {
+            PlaylistPanel_PlaylistFragment: PlaylistPanel_PlaylistFragment;
+          };
+        })
+      | null;
   };
 };
 
@@ -2094,11 +2190,6 @@ export type SignOutMutation = {
     | { __typename: "SignOutSuccess"; success: boolean };
 };
 
-export type DownloadOverview_DownloadStatusFragment = {
-  __typename?: "Query";
-  areThereAnyUsers: boolean;
-} & { " $fragmentName"?: "DownloadOverview_DownloadStatusFragment" };
-
 export type DownloadOverviewQueryQueryVariables = Exact<{
   [key: string]: never;
 }>;
@@ -2116,11 +2207,6 @@ export type DownloadOverviewSubscriptionSubscription = {
   __typename?: "Subscription";
   ping: { __typename?: "Ping"; id: string };
 };
-
-export type DownloadStatus_DownloadStatusFragment = {
-  __typename?: "Query";
-  areThereAnyUsers: boolean;
-} & { " $fragmentName"?: "DownloadStatus_DownloadStatusFragment" };
 
 export type ReleaseDownloadButton_ReleaseFragment = {
   __typename?: "Release";
@@ -2245,6 +2331,45 @@ export type CreatePlaylistMutation = {
     };
   };
 };
+
+export type PlaylistPanel_PlaylistFragment = {
+  __typename?: "Playlist";
+  id: string;
+  name?: string | null;
+  tracks: Array<
+    {
+      __typename?: "Track";
+      id: string;
+      title: string;
+      trackLength?: number | null;
+      trackNumber: number;
+      media?: {
+        __typename?: "TrackMedia";
+        id: string;
+        audioQualityLabel: string;
+      } | null;
+      release: {
+        __typename?: "Release";
+        id: string;
+        folderName: string;
+        coverArtUrl: string;
+        artist: {
+          __typename?: "Artist";
+          id: string;
+          name: string;
+          images?: {
+            __typename?: "ArtistImages";
+            thumbs: Array<string>;
+          } | null;
+        };
+      };
+    } & {
+      " $fragmentRefs"?: {
+        AlbumTrackTag_TrackFragment: AlbumTrackTag_TrackFragment;
+      };
+    }
+  >;
+} & { " $fragmentName"?: "PlaylistPanel_PlaylistFragment" };
 
 export type PlaylistListQueryVariables = Exact<{ [key: string]: never }>;
 
@@ -4534,44 +4659,6 @@ export const TopArtistTrackItem_ArtistTopTrackFragmentDoc = {
   TopArtistTrackItem_ArtistTopTrackFragment,
   unknown
 >;
-export const DownloadOverview_DownloadStatusFragmentDoc = {
-  kind: "Document",
-  definitions: [
-    {
-      kind: "FragmentDefinition",
-      name: { kind: "Name", value: "DownloadOverview_DownloadStatus" },
-      typeCondition: {
-        kind: "NamedType",
-        name: { kind: "Name", value: "Query" },
-      },
-      selectionSet: {
-        kind: "SelectionSet",
-        selections: [
-          { kind: "Field", name: { kind: "Name", value: "areThereAnyUsers" } },
-        ],
-      },
-    },
-  ],
-} as unknown as DocumentNode<DownloadOverview_DownloadStatusFragment, unknown>;
-export const DownloadStatus_DownloadStatusFragmentDoc = {
-  kind: "Document",
-  definitions: [
-    {
-      kind: "FragmentDefinition",
-      name: { kind: "Name", value: "DownloadStatus_DownloadStatus" },
-      typeCondition: {
-        kind: "NamedType",
-        name: { kind: "Name", value: "Query" },
-      },
-      selectionSet: {
-        kind: "SelectionSet",
-        selections: [
-          { kind: "Field", name: { kind: "Name", value: "areThereAnyUsers" } },
-        ],
-      },
-    },
-  ],
-} as unknown as DocumentNode<DownloadStatus_DownloadStatusFragment, unknown>;
 export const LikedSongsList_UserFragmentDoc = {
   kind: "Document",
   definitions: [
@@ -4670,6 +4757,124 @@ export const LikedSongsList_UserFragmentDoc = {
     },
   ],
 } as unknown as DocumentNode<LikedSongsList_UserFragment, unknown>;
+export const PlaylistPanel_PlaylistFragmentDoc = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "PlaylistPanel_Playlist" },
+      typeCondition: {
+        kind: "NamedType",
+        name: { kind: "Name", value: "Playlist" },
+      },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "id" } },
+          { kind: "Field", name: { kind: "Name", value: "name" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "tracks" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "id" } },
+                { kind: "Field", name: { kind: "Name", value: "title" } },
+                { kind: "Field", name: { kind: "Name", value: "trackLength" } },
+                { kind: "Field", name: { kind: "Name", value: "trackNumber" } },
+                {
+                  kind: "Field",
+                  name: { kind: "Name", value: "media" },
+                  selectionSet: {
+                    kind: "SelectionSet",
+                    selections: [
+                      { kind: "Field", name: { kind: "Name", value: "id" } },
+                      {
+                        kind: "Field",
+                        name: { kind: "Name", value: "audioQualityLabel" },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: "Field",
+                  name: { kind: "Name", value: "release" },
+                  selectionSet: {
+                    kind: "SelectionSet",
+                    selections: [
+                      { kind: "Field", name: { kind: "Name", value: "id" } },
+                      {
+                        kind: "Field",
+                        name: { kind: "Name", value: "folderName" },
+                      },
+                      {
+                        kind: "Field",
+                        name: { kind: "Name", value: "coverArtUrl" },
+                      },
+                      {
+                        kind: "Field",
+                        name: { kind: "Name", value: "artist" },
+                        selectionSet: {
+                          kind: "SelectionSet",
+                          selections: [
+                            {
+                              kind: "Field",
+                              name: { kind: "Name", value: "id" },
+                            },
+                            {
+                              kind: "Field",
+                              name: { kind: "Name", value: "name" },
+                            },
+                            {
+                              kind: "Field",
+                              name: { kind: "Name", value: "images" },
+                              selectionSet: {
+                                kind: "SelectionSet",
+                                selections: [
+                                  {
+                                    kind: "Field",
+                                    name: { kind: "Name", value: "thumbs" },
+                                  },
+                                ],
+                              },
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: "FragmentSpread",
+                  name: { kind: "Name", value: "AlbumTrackTag_Track" },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "AlbumTrackTag_Track" },
+      typeCondition: {
+        kind: "NamedType",
+        name: { kind: "Name", value: "Track" },
+      },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "id" } },
+          { kind: "Field", name: { kind: "Name", value: "isMissing" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "mediaAvailabilityStatus" },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<PlaylistPanel_PlaylistFragment, unknown>;
 export const TopTrackCard_LastFmTrackFragmentDoc = {
   kind: "Document",
   definitions: [
@@ -6146,6 +6351,181 @@ export const MbArtistQueryDocument = {
     },
   ],
 } as unknown as DocumentNode<MbArtistQueryQuery, MbArtistQueryQueryVariables>;
+export const PlaylistQueryDocument = {
+  kind: "Document",
+  definitions: [
+    {
+      kind: "OperationDefinition",
+      operation: "query",
+      name: { kind: "Name", value: "PlaylistQuery" },
+      variableDefinitions: [
+        {
+          kind: "VariableDefinition",
+          variable: {
+            kind: "Variable",
+            name: { kind: "Name", value: "playlistId" },
+          },
+          type: {
+            kind: "NonNullType",
+            type: { kind: "NamedType", name: { kind: "Name", value: "ID" } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "playlist" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                {
+                  kind: "Field",
+                  name: { kind: "Name", value: "playlist" },
+                  arguments: [
+                    {
+                      kind: "Argument",
+                      name: { kind: "Name", value: "playlistId" },
+                      value: {
+                        kind: "Variable",
+                        name: { kind: "Name", value: "playlistId" },
+                      },
+                    },
+                  ],
+                  selectionSet: {
+                    kind: "SelectionSet",
+                    selections: [
+                      { kind: "Field", name: { kind: "Name", value: "id" } },
+                      { kind: "Field", name: { kind: "Name", value: "name" } },
+                      {
+                        kind: "FragmentSpread",
+                        name: { kind: "Name", value: "PlaylistPanel_Playlist" },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "AlbumTrackTag_Track" },
+      typeCondition: {
+        kind: "NamedType",
+        name: { kind: "Name", value: "Track" },
+      },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "id" } },
+          { kind: "Field", name: { kind: "Name", value: "isMissing" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "mediaAvailabilityStatus" },
+          },
+        ],
+      },
+    },
+    {
+      kind: "FragmentDefinition",
+      name: { kind: "Name", value: "PlaylistPanel_Playlist" },
+      typeCondition: {
+        kind: "NamedType",
+        name: { kind: "Name", value: "Playlist" },
+      },
+      selectionSet: {
+        kind: "SelectionSet",
+        selections: [
+          { kind: "Field", name: { kind: "Name", value: "id" } },
+          { kind: "Field", name: { kind: "Name", value: "name" } },
+          {
+            kind: "Field",
+            name: { kind: "Name", value: "tracks" },
+            selectionSet: {
+              kind: "SelectionSet",
+              selections: [
+                { kind: "Field", name: { kind: "Name", value: "id" } },
+                { kind: "Field", name: { kind: "Name", value: "title" } },
+                { kind: "Field", name: { kind: "Name", value: "trackLength" } },
+                { kind: "Field", name: { kind: "Name", value: "trackNumber" } },
+                {
+                  kind: "Field",
+                  name: { kind: "Name", value: "media" },
+                  selectionSet: {
+                    kind: "SelectionSet",
+                    selections: [
+                      { kind: "Field", name: { kind: "Name", value: "id" } },
+                      {
+                        kind: "Field",
+                        name: { kind: "Name", value: "audioQualityLabel" },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: "Field",
+                  name: { kind: "Name", value: "release" },
+                  selectionSet: {
+                    kind: "SelectionSet",
+                    selections: [
+                      { kind: "Field", name: { kind: "Name", value: "id" } },
+                      {
+                        kind: "Field",
+                        name: { kind: "Name", value: "folderName" },
+                      },
+                      {
+                        kind: "Field",
+                        name: { kind: "Name", value: "coverArtUrl" },
+                      },
+                      {
+                        kind: "Field",
+                        name: { kind: "Name", value: "artist" },
+                        selectionSet: {
+                          kind: "SelectionSet",
+                          selections: [
+                            {
+                              kind: "Field",
+                              name: { kind: "Name", value: "id" },
+                            },
+                            {
+                              kind: "Field",
+                              name: { kind: "Name", value: "name" },
+                            },
+                            {
+                              kind: "Field",
+                              name: { kind: "Name", value: "images" },
+                              selectionSet: {
+                                kind: "SelectionSet",
+                                selections: [
+                                  {
+                                    kind: "Field",
+                                    name: { kind: "Name", value: "thumbs" },
+                                  },
+                                ],
+                              },
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: "FragmentSpread",
+                  name: { kind: "Name", value: "AlbumTrackTag_Track" },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<PlaylistQueryQuery, PlaylistQueryQueryVariables>;
 export const SettingsPageDocument = {
   kind: "Document",
   definitions: [

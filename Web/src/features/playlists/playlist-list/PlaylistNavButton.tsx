@@ -37,15 +37,29 @@ export const PlaylistNavButton: React.FC<PlaylistNavButtonProps> = ({
     setIsDeletePromptOpen(false);
   };
 
+  const onDrop = React.useCallback((ev: React.DragEvent<HTMLDivElement>) => {
+    ev.preventDefault();
+    const data = ev.dataTransfer.getData("application/json");
+    if (!data) return;
+    try {
+      const parsed = JSON.parse(data);
+      void parsed; // placeholder to avoid unused var until integrated
+    } catch {
+      // ignore for now
+    }
+  }, []);
+
   return (
     <>
       <ContextMenu>
         <ContextMenuTrigger>
-          <SidebarNavButton
-            path={"/playlist/" + playlistId}
-            label={playlistName ?? "New playlist"}
-            icon={ListMusic}
-          />
+          <div onDragOver={(e) => e.preventDefault()} onDrop={onDrop}>
+            <SidebarNavButton
+              path={"/playlist/" + playlistId}
+              label={playlistName ?? "New playlist"}
+              icon={ListMusic}
+            />
+          </div>
         </ContextMenuTrigger>
         <ContextMenuContent className="w-40">
           <ContextMenuItem onClick={() => setIsRenamePromptOpen(true)}>

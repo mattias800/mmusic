@@ -1,6 +1,6 @@
 /* eslint-disable */
-import * as types from './graphql';
-import { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
+import * as types from "./graphql";
+import { TypedDocumentNode as DocumentNode } from "@graphql-typed-document-node/core";
 
 /**
  * Map of all GraphQL operations in the project.
@@ -14,174 +14,257 @@ import { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/
  * Learn more about it here: https://the-guild.dev/graphql/codegen/plugins/presets/preset-client#reducing-bundle-size
  */
 type Documents = {
-    "\n  query Bootstrap {\n    areThereAnyUsers\n    viewer {\n      id\n    }\n  }\n": typeof types.BootstrapDocument,
-    "\n  query AlbumListQuery {\n    serverLibrary {\n      allReleases {\n        id\n        ...AlbumList_Release\n      }\n    }\n  }\n": typeof types.AlbumListQueryDocument,
-    "\n  query AlbumQuery($artistId: ID!, $releaseFolderName: String!) {\n    serverLibrary {\n      artistById(id: $artistId) {\n        id\n        name\n        releaseByFolderName(releaseFolderName: $releaseFolderName) {\n          id\n          title\n          ...AlbumPanel_Release\n        }\n      }\n    }\n  }\n": typeof types.AlbumQueryDocument,
-    "\n  query ArtistListQuery {\n    serverLibrary {\n      allArtists {\n        id\n        ...ArtistList_Artist\n      }\n    }\n  }\n": typeof types.ArtistListQueryDocument,
-    "\n  query ArtistQuery($artistId: ID!) {\n    serverLibrary {\n      artistById(id: $artistId) {\n        id\n        name\n        ...ArtistPanel_Artist\n      }\n    }\n  }\n": typeof types.ArtistQueryDocument,
-    "\n  query LikedSongsQuery {\n    viewer {\n      id\n      ...LikedSongsList_User\n    }\n  }\n": typeof types.LikedSongsQueryDocument,
-    "\n  query MbArtistQuery($mbArtistId: ID!) {\n    musicBrainz {\n      artist {\n        byId(id: $mbArtistId) {\n          id\n          name\n          ...ArtistNotInLibraryPanel_MbArtist\n        }\n      }\n    }\n  }\n": typeof types.MbArtistQueryDocument,
-    "\n  query SettingsPage {\n    serverSettings {\n      ...LibraryPathForm_ServerSettings\n      ...DownloadPathForm_ServerSettings\n    }\n  }\n": typeof types.SettingsPageDocument,
-    "\n  query ProfilePage {\n    viewer {\n      id\n      username\n      ...UserProfilePanel_User\n    }\n  }\n": typeof types.ProfilePageDocument,
-    "\n  fragment Playlist_User on User {\n    id\n    likedSongs {\n      id\n      ...LikedSongRow_LikedSong\n    }\n  }\n": typeof types.Playlist_UserFragmentDoc,
-    "\n  fragment LikedSongRow_Track on Track {\n    id\n    title\n    trackLength\n  }\n": typeof types.LikedSongRow_TrackFragmentDoc,
-    "\n  mutation ImportArtist($musicBrainzArtistId: String!) {\n    importArtist(input: { musicBrainzArtistId: $musicBrainzArtistId }) {\n      __typename\n      ... on ImportArtistSuccess {\n        artist {\n          id\n          name\n        }\n      }\n      ... on ImportArtistError {\n        message\n      }\n    }\n  }\n": typeof types.ImportArtistDocument,
-    "\n  fragment AlbumCard_Release on Release {\n    id\n    title\n    firstReleaseYear\n    coverArtUrl\n    folderName\n    isFullyMissing\n    artist {\n      id\n      images {\n        thumbs\n      }\n    }\n  }\n": typeof types.AlbumCard_ReleaseFragmentDoc,
-    "\n  fragment AlbumHeader_Release on Release {\n    id\n    title\n    type\n    coverArtUrl\n    firstReleaseYear\n    artist {\n      id\n      name\n      images {\n        thumbs\n      }\n    }\n    tracks {\n      id\n      trackLength\n    }\n  }\n": typeof types.AlbumHeader_ReleaseFragmentDoc,
-    "\n  fragment AlbumPanel_Release on Release {\n    id\n    folderName\n    isFullyMissing\n    ...PlayAlbumButton_Release\n    ...ReleaseDownloadButton_Release\n    ...AlbumHeader_Release\n    ...AlbumTrackList_Release\n    firstReleaseYear\n    artist {\n      id\n    }\n  }\n": typeof types.AlbumPanel_ReleaseFragmentDoc,
-    "\n  subscription AlbumPanelUpdates(\n    $artistId: String!\n    $releaseFolderName: String!\n  ) {\n    libraryCacheTracksInReleaseUpdated(\n      artistId: $artistId\n      releaseFolderName: $releaseFolderName\n    ) {\n      track {\n        id\n        isMissing\n        mediaAvailabilityStatus\n      }\n    }\n  }\n": typeof types.AlbumPanelUpdatesDocument,
-    "\n  mutation RefreshRelease($input: RefreshReleaseInput!) {\n    refreshRelease(input: $input) {\n      ... on RefreshReleaseSuccess {\n        release {\n          id\n          ...AlbumPanel_Release\n        }\n      }\n      ... on RefreshReleaseError {\n        message\n      }\n    }\n  }\n": typeof types.RefreshReleaseDocument,
-    "\n  mutation DeleteReleaseAudio($input: DeleteReleaseAudioInput!) {\n    deleteReleaseAudio(input: $input) {\n      ... on DeleteReleaseAudioSuccess {\n        release {\n          id\n          ...AlbumPanel_Release\n        }\n      }\n      ... on DeleteReleaseAudioError {\n        message\n      }\n    }\n  }\n": typeof types.DeleteReleaseAudioDocument,
-    "\n  mutation ScanReleaseFolderForMedia($input: ScanReleaseFolderForMediaInput!) {\n    scanReleaseFolderForMedia(input: $input) {\n      ... on ScanReleaseFolderForMediaSuccess {\n        release {\n          id\n          ...AlbumPanel_Release\n        }\n      }\n      ... on ScanReleaseFolderForMediaError {\n        message\n      }\n    }\n  }\n": typeof types.ScanReleaseFolderForMediaDocument,
-    "\n  fragment AlbumTrackList_Release on Release {\n    id\n    title\n    folderName\n    artist {\n      id\n    }\n    tracks {\n      id\n      title\n      trackLength\n      isMissing\n      media {\n        id\n        audioUrl\n        audioQualityLabel\n      }\n      ...MusicPlayerTrackFactory_Track\n      ...AlbumTrackTag_Track\n      credits {\n        artistName\n        artist {\n          id\n        }\n        mbArtist {\n          id\n        }\n      }\n      statistics {\n        listeners\n        playCount\n      }\n    }\n  }\n": typeof types.AlbumTrackList_ReleaseFragmentDoc,
-    "\n  fragment AlbumTrackTag_Track on Track {\n    id\n    isMissing\n    mediaAvailabilityStatus\n  }\n": typeof types.AlbumTrackTag_TrackFragmentDoc,
-    "\n  fragment MbReleaseGroupCard_MbReleaseGroup on MbReleaseGroup {\n    id\n    title\n    firstReleaseYear\n    coverArtUri\n  }\n": typeof types.MbReleaseGroupCard_MbReleaseGroupFragmentDoc,
-    "\n  fragment PlayAlbumButton_Release on Release {\n    id\n    folderName\n    coverArtUrl\n    artist {\n      id\n      name\n    }\n    tracks {\n      id\n      title\n      isMissing\n      trackLength\n      media {\n        id\n        audioQualityLabel\n      }\n    }\n  }\n": typeof types.PlayAlbumButton_ReleaseFragmentDoc,
-    "\n  fragment AlbumList_Release on Release {\n    id\n    ...AlbumCard_Release\n  }\n": typeof types.AlbumList_ReleaseFragmentDoc,
-    "\n  fragment ArtistCard_Artist on Artist {\n    id\n    name\n    listeners\n    images {\n      thumbs\n    }\n  }\n": typeof types.ArtistCard_ArtistFragmentDoc,
-    "\n  fragment MbArtistCard_MbArtist on MbArtist {\n    id\n    name\n    listeners\n    images {\n      artistThumb\n    }\n  }\n": typeof types.MbArtistCard_MbArtistFragmentDoc,
-    "\n  fragment TopArtistCard_Artist on LastFmArtist {\n    id\n    name\n    musicBrainzArtist {\n      id\n      name\n      images {\n        artistThumb\n      }\n    }\n    statistics {\n      listeners\n    }\n  }\n": typeof types.TopArtistCard_ArtistFragmentDoc,
-    "\n  fragment ArtistList_Artist on Artist {\n    id\n    ...ArtistCard_Artist\n  }\n": typeof types.ArtistList_ArtistFragmentDoc,
-    "\n  fragment ArtistNotInLibraryPanel_MbArtist on MbArtist {\n    id\n    name\n    images {\n      artistBackground\n    }\n    listeners\n    lastFmArtist {\n      id\n      ...ArtistNotInLibraryTopTracks_LastFmArtist\n    }\n  }\n": typeof types.ArtistNotInLibraryPanel_MbArtistFragmentDoc,
-    "\n  fragment ArtistNotInLibraryTopTracks_LastFmArtist on LastFmArtist {\n    id\n    topTracks {\n      id\n      name\n      statistics {\n        listeners\n      }\n    }\n  }\n": typeof types.ArtistNotInLibraryTopTracks_LastFmArtistFragmentDoc,
-    "\n  query ArtistAlbumList($artistId: ID!) {\n    serverLibrary {\n      artistById(id: $artistId) {\n        id\n        albums {\n          id\n          firstReleaseDate\n          ...AlbumCard_Release\n        }\n      }\n    }\n  }\n": typeof types.ArtistAlbumListDocument,
-    "\n  query ArtistEpList($artistId: ID!) {\n    serverLibrary {\n      artistById(id: $artistId) {\n        id\n        eps {\n          id\n          firstReleaseDate\n          ...AlbumCard_Release\n        }\n      }\n    }\n  }\n": typeof types.ArtistEpListDocument,
-    "\n  fragment ArtistPanel_Artist on Artist {\n    id\n    name\n    listeners\n    albums {\n      id\n      firstReleaseDate\n      isFullyMissing\n      ...AlbumCard_Release\n    }\n    eps {\n      id\n      firstReleaseDate\n      isFullyMissing\n      ...AlbumCard_Release\n    }\n    singles {\n      id\n      firstReleaseDate\n      isFullyMissing\n      ...AlbumCard_Release\n    }\n    images {\n      backgrounds\n    }\n    serverStatus {\n      id\n      result {\n        __typename\n        ... on ArtistServerStatusResultBase {\n          topTracksVisible\n          releasesVisible\n        }\n        ... on ArtistServerStatusImportingArtistReleases {\n          numReleaseGroupsFinishedImporting\n          totalNumReleaseGroupsBeingImported\n        }\n      }\n    }\n  }\n": typeof types.ArtistPanel_ArtistFragmentDoc,
-    "\n  mutation PanelRefreshTopTracks($input: RefreshArtistTopTracksInput!) {\n    refreshArtistTopTracks(input: $input) {\n      __typename\n      ... on RefreshArtistTopTracksSuccess {\n        artist {\n          id\n          topTracks {\n            ...TopArtistTrackItem_ArtistTopTrack\n          }\n        }\n      }\n    }\n  }\n": typeof types.PanelRefreshTopTracksDocument,
-    "\n  mutation PanelRefreshArtistMetaData($artistId: String!) {\n    refreshArtistMetaData(input: { artistId: $artistId }) {\n      __typename\n      ... on RefreshArtistMetaDataSuccess {\n        artist {\n          id\n          ...ArtistPanel_Artist\n        }\n      }\n    }\n  }\n": typeof types.PanelRefreshArtistMetaDataDocument,
-    "\n  query ArtistSingleList($artistId: ID!) {\n    serverLibrary {\n      artistById(id: $artistId) {\n        id\n        singles {\n          id\n          firstReleaseDate\n          ...AlbumCard_Release\n        }\n      }\n    }\n  }\n": typeof types.ArtistSingleListDocument,
-    "\n  fragment TopArtistTrackItem_ArtistTopTrack on ArtistTopTrack {\n    title\n    releaseTitle\n    playCount\n    coverArtUrl\n    track {\n      id\n      ...MusicPlayerTrackFactory_Track\n      ...AlbumTrackTag_Track\n      trackLength\n      trackNumber\n      isMissing\n      release {\n        id\n        folderName\n        artist {\n          id\n          images {\n            thumbs\n          }\n        }\n      }\n    }\n  }\n": typeof types.TopArtistTrackItem_ArtistTopTrackFragmentDoc,
-    "\n  query TopArtistTracks($artistId: ID!) {\n    serverLibrary {\n      artistById(id: $artistId) {\n        id\n        topTracks {\n          ...TopArtistTrackItem_ArtistTopTrack\n        }\n      }\n    }\n  }\n": typeof types.TopArtistTracksDocument,
-    "\n  query ArtistTopTracksForQueue($artistId: ID!) {\n    serverLibrary {\n      artistById(id: $artistId) {\n        id\n        topTracks {\n          title\n          coverArtUrl\n          track {\n            trackNumber\n            trackLength\n            release {\n              folderName\n              artist {\n                id\n                name\n              }\n            }\n          }\n        }\n      }\n    }\n  }\n": typeof types.ArtistTopTracksForQueueDocument,
-    "\n  query ArtistServerStatus($artistId: ID!) {\n    serverLibrary {\n      artistById(id: $artistId) {\n        id\n        serverStatus {\n          id\n          result {\n            __typename\n            ... on ArtistServerStatusResultBase {\n              releasesVisible\n              topTracksVisible\n            }\n            ... on ArtistServerStatusImportingArtistReleases {\n              totalNumReleaseGroupsBeingImported\n              numReleaseGroupsFinishedImporting\n            }\n          }\n        }\n      }\n    }\n  }\n": typeof types.ArtistServerStatusDocument,
-    "\n  subscription ArtistServerStatusSub($artistId: ID!) {\n    artistServerStatusUpdated(artistId: $artistId) {\n      id\n      result {\n        __typename\n        ... on ArtistServerStatusResultBase {\n          releasesVisible\n          topTracksVisible\n        }\n        ... on ArtistServerStatusImportingArtistReleases {\n          totalNumReleaseGroupsBeingImported\n          numReleaseGroupsFinishedImporting\n          artist {\n            id\n            albums {\n              id\n              firstReleaseDate\n              ...AlbumCard_Release\n            }\n            eps {\n              id\n              firstReleaseDate\n              ...AlbumCard_Release\n            }\n            singles {\n              id\n              firstReleaseDate\n              ...AlbumCard_Release\n            }\n          }\n        }\n      }\n    }\n  }\n": typeof types.ArtistServerStatusSubDocument,
-    "\n  mutation SignIn($username: String!, $password: String!) {\n    signIn(input: { username: $username, password: $password }) {\n      __typename\n      ... on SignInSuccess {\n        user {\n          id\n          username\n        }\n      }\n      ... on SignInError {\n        message\n      }\n    }\n  }\n": typeof types.SignInDocument,
-    "\n  mutation SignOut {\n    signOut {\n      __typename\n\n      ... on SignOutSuccess {\n        success\n      }\n      ... on SignOutError {\n        message\n      }\n    }\n  }\n": typeof types.SignOutDocument,
-    "\n  fragment DownloadOverview_DownloadStatus on Query {\n    areThereAnyUsers\n  }\n": typeof types.DownloadOverview_DownloadStatusFragmentDoc,
-    "\n  query DownloadOverviewQuery {\n    areThereAnyUsers\n  }\n": typeof types.DownloadOverviewQueryDocument,
-    "\n  subscription DownloadOverviewSubscription {\n    ping {\n      id\n    }\n  }\n": typeof types.DownloadOverviewSubscriptionDocument,
-    "\n  fragment DownloadStatus_DownloadStatus on Query {\n    areThereAnyUsers\n  }\n": typeof types.DownloadStatus_DownloadStatusFragmentDoc,
-    "\n  fragment ReleaseDownloadButton_Release on Release {\n    id\n    isFullyMissing\n    folderName\n    downloadStatus\n    artist {\n      id\n    }\n  }\n": typeof types.ReleaseDownloadButton_ReleaseFragmentDoc,
-    "\n  mutation AlbumPanel_StartDownloadRelease(\n    $artistId: String!\n    $releaseFolderName: String!\n  ) {\n    startDownloadRelease(\n      input: { artistId: $artistId, releaseFolderName: $releaseFolderName }\n    ) {\n      __typename\n      ... on StartDownloadReleaseSuccess {\n        success\n      }\n    }\n  }\n": typeof types.AlbumPanel_StartDownloadReleaseDocument,
-    "\n  subscription ReleaseDownloadButton(\n    $artistId: String!\n    $releaseFolderName: String!\n  ) {\n    libraryReleaseDownloadStatusUpdated(\n      artistId: $artistId\n      releaseFolderName: $releaseFolderName\n    ) {\n      release {\n        id\n        downloadStatus\n        isFullyMissing\n      }\n    }\n  }\n": typeof types.ReleaseDownloadButtonDocument,
-    "\n  mutation CreateUser($username: String!, $password: String!) {\n    createUser(input: { username: $username, password: $password }) {\n      __typename\n      ... on CreateUserSuccess {\n        # Assuming a similar success payload\n        user {\n          id\n          username\n        }\n      }\n      ... on CreateUserError {\n        # Assuming a similar error payload\n        message\n      }\n    }\n  }\n": typeof types.CreateUserDocument,
-    "\n  fragment LikedSongRow_LikedSong on LikedSong {\n    id\n    recording {\n      id\n      title\n      length\n      artists {\n        id\n        name\n      }\n      mainAlbum {\n        id\n        title\n        coverArtUri\n        artists {\n          id\n        }\n      }\n    }\n  }\n": typeof types.LikedSongRow_LikedSongFragmentDoc,
-    "\n  fragment LikedSongsList_User on User {\n    id\n    likedSongs {\n      id\n      ...LikedSongRow_LikedSong\n    }\n  }\n": typeof types.LikedSongsList_UserFragmentDoc,
-    "\n  fragment MusicPlayerTrackFactory_Track on Track {\n    id\n    title\n    trackLength\n    trackNumber\n    media {\n      id\n      audioQualityLabel\n    }\n    release {\n      id\n      folderName\n      coverArtUrl\n      artist {\n        id\n        name\n      }\n    }\n    trackNumber\n  }\n": typeof types.MusicPlayerTrackFactory_TrackFragmentDoc,
-    "\n  mutation CreatePlaylist {\n    createPlaylist {\n      __typename\n      ... on CreatePlaylistSuccess {\n        viewer {\n          id\n          playlists {\n            id\n            name\n            createdAt\n          }\n        }\n      }\n    }\n  }\n": typeof types.CreatePlaylistDocument,
-    "\n  query PlaylistList {\n    viewer {\n      id\n      playlists {\n        id\n        name\n        createdAt\n      }\n    }\n  }\n": typeof types.PlaylistListDocument,
-    "\n  mutation RenamePlaylist($playlistId: String!, $newPlaylistName: String!) {\n    renamePlaylist(\n      input: { playlistId: $playlistId, newPlaylistName: $newPlaylistName }\n    ) {\n      __typename\n      ... on RenamePlaylistSuccess {\n        viewer {\n          id\n          playlists {\n            id\n            name\n            createdAt\n          }\n        }\n      }\n    }\n  }\n": typeof types.RenamePlaylistDocument,
-    "\n  mutation DeletePlaylist($playlistId: String!) {\n    deletePlaylist(input: { playlistId: $playlistId }) {\n      __typename\n      ... on DeletePlaylistSuccess {\n        viewer {\n          id\n          playlists {\n            id\n            name\n            createdAt\n          }\n        }\n      }\n    }\n  }\n": typeof types.DeletePlaylistDocument,
-    "\n  query TopArtistRecommendations {\n    recommendations {\n      topArtists {\n        id\n        ...TopArtistCard_Artist\n      }\n    }\n  }\n": typeof types.TopArtistRecommendationsDocument,
-    "\n  fragment TopTrackCard_LastFmTrack on LastFmTrack {\n    id\n    playCount\n    name\n    artist {\n      id\n      musicBrainzArtist {\n        id\n        name\n        images {\n          artistThumb\n        }\n      }\n    }\n    album {\n      id\n      imageUrl\n    }\n    images {\n      thumbs\n    }\n  }\n": typeof types.TopTrackCard_LastFmTrackFragmentDoc,
-    "\n  query TopTrackRecommendations {\n    recommendations {\n      topTracks {\n        id\n        ...TopTrackCard_LastFmTrack\n      }\n    }\n  }\n": typeof types.TopTrackRecommendationsDocument,
-    "\n  query AlbumSearchResultsSearch($text: String!, $limit: Int!) {\n    musicBrainz {\n      releaseGroup {\n        searchByName(name: $text, limit: $limit) {\n          id\n          title\n          ...MbReleaseGroupCard_MbReleaseGroup\n        }\n      }\n    }\n  }\n": typeof types.AlbumSearchResultsSearchDocument,
-    "\n  query ArtistSearchResultsSearch($searchText: String!, $limit: Int!) {\n    musicBrainz {\n      artist {\n        searchByName(name: $searchText, limit: $limit) {\n          id\n          name\n          ...MbArtistCard_MbArtist\n          images {\n            artistThumb\n          }\n        }\n      }\n    }\n  }\n": typeof types.ArtistSearchResultsSearchDocument,
-    "\n  query RecordingSearchResultsSearch($text: String!, $limit: Int!) {\n    musicBrainz {\n      recording {\n        searchByName(name: $text, limit: $limit) {\n          id\n          title\n          length\n          nameCredits {\n            artist {\n              id\n              name\n            }\n          }\n          mainAlbum {\n            id\n            title\n            coverArtUri\n          }\n        }\n      }\n    }\n  }\n": typeof types.RecordingSearchResultsSearchDocument,
-    "\n  query SearchResultArtistSearch($text: String!) {\n    serverLibrary {\n      searchArtists(searchTerm: $text, limit: 5) {\n        id\n        name\n        images {\n          thumbs\n        }\n      }\n    }\n  }\n": typeof types.SearchResultArtistSearchDocument,
-    "\n  query SearchResultReleaseSearch($text: String!) {\n    serverLibrary {\n      searchReleases(searchTerm: $text, limit: 5) {\n        id\n        title\n        coverArtUrl\n      }\n    }\n  }\n": typeof types.SearchResultReleaseSearchDocument,
-    "\n  query SearchResultTrackSearch($text: String!) {\n    serverLibrary {\n      searchTracks(searchTerm: $text, limit: 5) {\n        id\n        title\n        trackLength\n        release {\n          id\n          title\n          coverArtUrl\n          folderName\n          artist {\n            id\n            name\n          }\n        }\n      }\n    }\n  }\n": typeof types.SearchResultTrackSearchDocument,
-    "\n  fragment DownloadPathForm_ServerSettings on ServerSettings {\n    id\n    downloadPath\n  }\n": typeof types.DownloadPathForm_ServerSettingsFragmentDoc,
-    "\n  mutation UpdateDownloadPath($newDownloadPath: String!) {\n    updateDownloadPath(input: { newDownloadPath: $newDownloadPath }) {\n      ... on UpdateDownloadPathSuccess {\n        serverSettings {\n          id\n          downloadPath\n        }\n      }\n    }\n  }\n": typeof types.UpdateDownloadPathDocument,
-    "\n  fragment LibraryPathForm_ServerSettings on ServerSettings {\n    id\n    libraryPath\n  }\n": typeof types.LibraryPathForm_ServerSettingsFragmentDoc,
-    "\n  mutation UpdateLibraryPath($newLibraryPath: String!) {\n    updateLibraryPath(input: { newLibraryPath: $newLibraryPath }) {\n      ... on UpdateLibraryPathSuccess {\n        serverSettings {\n          id\n          libraryPath\n        }\n      }\n    }\n  }\n": typeof types.UpdateLibraryPathDocument,
-    "\n  fragment DirectoryTreeItem_FileSystemEntry on FileSystemEntry {\n    id\n    name\n    path\n    isDirectory\n    hasChildren\n    isAccessible\n  }\n": typeof types.DirectoryTreeItem_FileSystemEntryFragmentDoc,
-    "\n  query DirectoryTreeItem($path: String) {\n    fileSystem {\n      browseFileSystem(path: $path) {\n        id\n        isDirectory\n        path\n        ...DirectoryTreeItem_FileSystemEntry\n      }\n    }\n  }\n": typeof types.DirectoryTreeItemDocument,
-    "\n  query BrowseFileSystem($path: String) {\n    fileSystem {\n      browseFileSystem(path: $path) {\n        path\n        isDirectory\n        ...DirectoryTreeItem_FileSystemEntry\n      }\n    }\n  }\n": typeof types.BrowseFileSystemDocument,
-    "\n  query Sidebar {\n    viewer {\n      id\n      username\n    }\n  }\n": typeof types.SidebarDocument,
-    "\n  fragment SoulSeekNetworkStatus_SoulSeekStatus on SoulSeekStatus {\n    id\n    status\n  }\n": typeof types.SoulSeekNetworkStatus_SoulSeekStatusFragmentDoc,
-    "\n  subscription SoulSeekNetworkStatusSubscription {\n    soulSeekStatusUpdated {\n      ...SoulSeekNetworkStatus_SoulSeekStatus\n    }\n  }\n": typeof types.SoulSeekNetworkStatusSubscriptionDocument,
-    "\n  query SoulSeekNetworkStatusQuery {\n    external {\n      id\n      soulSeek {\n        id\n        status {\n          ...SoulSeekNetworkStatus_SoulSeekStatus\n        }\n      }\n    }\n  }\n": typeof types.SoulSeekNetworkStatusQueryDocument,
-    "\n  mutation ImportSpotifyPlaylistById($playlistId: String!, $userId: UUID!) {\n    importSpotifyPlaylistById(playlistId: $playlistId, userId: $userId) {\n      __typename\n      ... on ImportSpotifyPlaylistSuccess {\n        success\n      }\n      ... on ImportSpotifyPlaylistError {\n        message\n      }\n    }\n  }\n": typeof types.ImportSpotifyPlaylistByIdDocument,
-    "\n  fragment SpotifyPlaylistsList_SpotifyPlaylist on SpotifyPlaylist {\n    id\n    description\n    name\n    coverImageUrl\n  }\n": typeof types.SpotifyPlaylistsList_SpotifyPlaylistFragmentDoc,
-    "\n  query UserPlaylistsLoader_Query($spotifyUsername: String!) {\n    playlist {\n      importPlaylists {\n        spotify {\n          spotifyPlaylistsForUser(username: $spotifyUsername) {\n            id\n            ...SpotifyPlaylistsList_SpotifyPlaylist\n          }\n        }\n      }\n    }\n  }\n": typeof types.UserPlaylistsLoader_QueryDocument,
-    "\n  fragment UserProfilePanel_User on User {\n    id\n    username\n    createdAt\n    updatedAt\n    likedSongs {\n      id\n    }\n  }\n": typeof types.UserProfilePanel_UserFragmentDoc,
-    "\n  query UserProfileWidget {\n    viewer {\n      id\n      username\n    }\n  }\n": typeof types.UserProfileWidgetDocument,
+  "\n  query Bootstrap {\n    areThereAnyUsers\n    viewer {\n      id\n    }\n  }\n": typeof types.BootstrapDocument;
+  "\n  query AlbumListQuery {\n    serverLibrary {\n      allReleases {\n        id\n        ...AlbumList_Release\n      }\n    }\n  }\n": typeof types.AlbumListQueryDocument;
+  "\n  query AlbumQuery($artistId: ID!, $releaseFolderName: String!) {\n    serverLibrary {\n      artistById(id: $artistId) {\n        id\n        name\n        releaseByFolderName(releaseFolderName: $releaseFolderName) {\n          id\n          title\n          ...AlbumPanel_Release\n        }\n      }\n    }\n  }\n": typeof types.AlbumQueryDocument;
+  "\n  query ArtistListQuery {\n    serverLibrary {\n      allArtists {\n        id\n        ...ArtistList_Artist\n      }\n    }\n  }\n": typeof types.ArtistListQueryDocument;
+  "\n  query ArtistQuery($artistId: ID!) {\n    serverLibrary {\n      artistById(id: $artistId) {\n        id\n        name\n        ...ArtistPanel_Artist\n      }\n    }\n  }\n": typeof types.ArtistQueryDocument;
+  "\n  query LikedSongsQuery {\n    viewer {\n      id\n      ...LikedSongsList_User\n    }\n  }\n": typeof types.LikedSongsQueryDocument;
+  "\n  query MbArtistQuery($mbArtistId: ID!) {\n    musicBrainz {\n      artist {\n        byId(id: $mbArtistId) {\n          id\n          name\n          ...ArtistNotInLibraryPanel_MbArtist\n        }\n      }\n    }\n  }\n": typeof types.MbArtistQueryDocument;
+  "\n  query PlaylistQuery($playlistId: ID!) {\n    playlist {\n      playlist(playlistId: $playlistId) {\n        id\n        name\n        ...PlaylistPanel_Playlist\n      }\n    }\n  }\n": typeof types.PlaylistQueryDocument;
+  "\n  query SettingsPage {\n    serverSettings {\n      ...LibraryPathForm_ServerSettings\n      ...DownloadPathForm_ServerSettings\n    }\n  }\n": typeof types.SettingsPageDocument;
+  "\n  query ProfilePage {\n    viewer {\n      id\n      username\n      ...UserProfilePanel_User\n    }\n  }\n": typeof types.ProfilePageDocument;
+  "\n  fragment Playlist_User on User {\n    id\n    likedSongs {\n      id\n      ...LikedSongRow_LikedSong\n    }\n  }\n": typeof types.Playlist_UserFragmentDoc;
+  "\n  fragment LikedSongRow_Track on Track {\n    id\n    title\n    trackLength\n  }\n": typeof types.LikedSongRow_TrackFragmentDoc;
+  "\n  mutation ImportArtist($musicBrainzArtistId: String!) {\n    importArtist(input: { musicBrainzArtistId: $musicBrainzArtistId }) {\n      __typename\n      ... on ImportArtistSuccess {\n        artist {\n          id\n          name\n        }\n      }\n      ... on ImportArtistError {\n        message\n      }\n    }\n  }\n": typeof types.ImportArtistDocument;
+  "\n  fragment AlbumCard_Release on Release {\n    id\n    title\n    firstReleaseYear\n    coverArtUrl\n    folderName\n    isFullyMissing\n    artist {\n      id\n      images {\n        thumbs\n      }\n    }\n  }\n": typeof types.AlbumCard_ReleaseFragmentDoc;
+  "\n  fragment AlbumHeader_Release on Release {\n    id\n    title\n    type\n    coverArtUrl\n    firstReleaseYear\n    artist {\n      id\n      name\n      images {\n        thumbs\n      }\n    }\n    tracks {\n      id\n      trackLength\n    }\n  }\n": typeof types.AlbumHeader_ReleaseFragmentDoc;
+  "\n  fragment AlbumPanel_Release on Release {\n    id\n    folderName\n    isFullyMissing\n    ...PlayAlbumButton_Release\n    ...ReleaseDownloadButton_Release\n    ...AlbumHeader_Release\n    ...AlbumTrackList_Release\n    firstReleaseYear\n    artist {\n      id\n    }\n  }\n": typeof types.AlbumPanel_ReleaseFragmentDoc;
+  "\n  subscription AlbumPanelUpdates(\n    $artistId: String!\n    $releaseFolderName: String!\n  ) {\n    libraryCacheTracksInReleaseUpdated(\n      artistId: $artistId\n      releaseFolderName: $releaseFolderName\n    ) {\n      track {\n        id\n        isMissing\n        mediaAvailabilityStatus\n      }\n    }\n  }\n": typeof types.AlbumPanelUpdatesDocument;
+  "\n  mutation RefreshRelease($input: RefreshReleaseInput!) {\n    refreshRelease(input: $input) {\n      ... on RefreshReleaseSuccess {\n        release {\n          id\n          ...AlbumPanel_Release\n        }\n      }\n      ... on RefreshReleaseError {\n        message\n      }\n    }\n  }\n": typeof types.RefreshReleaseDocument;
+  "\n  mutation DeleteReleaseAudio($input: DeleteReleaseAudioInput!) {\n    deleteReleaseAudio(input: $input) {\n      ... on DeleteReleaseAudioSuccess {\n        release {\n          id\n          ...AlbumPanel_Release\n        }\n      }\n      ... on DeleteReleaseAudioError {\n        message\n      }\n    }\n  }\n": typeof types.DeleteReleaseAudioDocument;
+  "\n  mutation ScanReleaseFolderForMedia($input: ScanReleaseFolderForMediaInput!) {\n    scanReleaseFolderForMedia(input: $input) {\n      ... on ScanReleaseFolderForMediaSuccess {\n        release {\n          id\n          ...AlbumPanel_Release\n        }\n      }\n      ... on ScanReleaseFolderForMediaError {\n        message\n      }\n    }\n  }\n": typeof types.ScanReleaseFolderForMediaDocument;
+  "\n  fragment AlbumTrackList_Release on Release {\n    id\n    title\n    folderName\n    artist {\n      id\n    }\n    tracks {\n      id\n      title\n      trackLength\n      isMissing\n      media {\n        id\n        audioUrl\n        audioQualityLabel\n      }\n      ...MusicPlayerTrackFactory_Track\n      ...AlbumTrackTag_Track\n      credits {\n        artistName\n        artist {\n          id\n        }\n        mbArtist {\n          id\n        }\n      }\n      statistics {\n        listeners\n        playCount\n      }\n    }\n  }\n": typeof types.AlbumTrackList_ReleaseFragmentDoc;
+  "\n  fragment AlbumTrackTag_Track on Track {\n    id\n    isMissing\n    mediaAvailabilityStatus\n  }\n": typeof types.AlbumTrackTag_TrackFragmentDoc;
+  "\n  fragment MbReleaseGroupCard_MbReleaseGroup on MbReleaseGroup {\n    id\n    title\n    firstReleaseYear\n    coverArtUri\n  }\n": typeof types.MbReleaseGroupCard_MbReleaseGroupFragmentDoc;
+  "\n  fragment PlayAlbumButton_Release on Release {\n    id\n    folderName\n    coverArtUrl\n    artist {\n      id\n      name\n    }\n    tracks {\n      id\n      title\n      isMissing\n      trackLength\n      media {\n        id\n        audioQualityLabel\n      }\n    }\n  }\n": typeof types.PlayAlbumButton_ReleaseFragmentDoc;
+  "\n  fragment AlbumList_Release on Release {\n    id\n    ...AlbumCard_Release\n  }\n": typeof types.AlbumList_ReleaseFragmentDoc;
+  "\n  fragment ArtistCard_Artist on Artist {\n    id\n    name\n    listeners\n    images {\n      thumbs\n    }\n  }\n": typeof types.ArtistCard_ArtistFragmentDoc;
+  "\n  fragment MbArtistCard_MbArtist on MbArtist {\n    id\n    name\n    listeners\n    images {\n      artistThumb\n    }\n  }\n": typeof types.MbArtistCard_MbArtistFragmentDoc;
+  "\n  fragment TopArtistCard_Artist on LastFmArtist {\n    id\n    name\n    musicBrainzArtist {\n      id\n      name\n      images {\n        artistThumb\n      }\n    }\n    statistics {\n      listeners\n    }\n  }\n": typeof types.TopArtistCard_ArtistFragmentDoc;
+  "\n  fragment ArtistList_Artist on Artist {\n    id\n    ...ArtistCard_Artist\n  }\n": typeof types.ArtistList_ArtistFragmentDoc;
+  "\n  fragment ArtistNotInLibraryPanel_MbArtist on MbArtist {\n    id\n    name\n    images {\n      artistBackground\n    }\n    listeners\n    lastFmArtist {\n      id\n      ...ArtistNotInLibraryTopTracks_LastFmArtist\n    }\n  }\n": typeof types.ArtistNotInLibraryPanel_MbArtistFragmentDoc;
+  "\n  fragment ArtistNotInLibraryTopTracks_LastFmArtist on LastFmArtist {\n    id\n    topTracks {\n      id\n      name\n      statistics {\n        listeners\n      }\n    }\n  }\n": typeof types.ArtistNotInLibraryTopTracks_LastFmArtistFragmentDoc;
+  "\n  query ArtistAlbumList($artistId: ID!) {\n    serverLibrary {\n      artistById(id: $artistId) {\n        id\n        albums {\n          id\n          firstReleaseDate\n          ...AlbumCard_Release\n        }\n      }\n    }\n  }\n": typeof types.ArtistAlbumListDocument;
+  "\n  query ArtistEpList($artistId: ID!) {\n    serverLibrary {\n      artistById(id: $artistId) {\n        id\n        eps {\n          id\n          firstReleaseDate\n          ...AlbumCard_Release\n        }\n      }\n    }\n  }\n": typeof types.ArtistEpListDocument;
+  "\n  fragment ArtistPanel_Artist on Artist {\n    id\n    name\n    listeners\n    albums {\n      id\n      firstReleaseDate\n      isFullyMissing\n      ...AlbumCard_Release\n    }\n    eps {\n      id\n      firstReleaseDate\n      isFullyMissing\n      ...AlbumCard_Release\n    }\n    singles {\n      id\n      firstReleaseDate\n      isFullyMissing\n      ...AlbumCard_Release\n    }\n    images {\n      backgrounds\n    }\n    serverStatus {\n      id\n      result {\n        __typename\n        ... on ArtistServerStatusResultBase {\n          topTracksVisible\n          releasesVisible\n        }\n        ... on ArtistServerStatusImportingArtistReleases {\n          numReleaseGroupsFinishedImporting\n          totalNumReleaseGroupsBeingImported\n        }\n      }\n    }\n  }\n": typeof types.ArtistPanel_ArtistFragmentDoc;
+  "\n  mutation PanelRefreshTopTracks($input: RefreshArtistTopTracksInput!) {\n    refreshArtistTopTracks(input: $input) {\n      __typename\n      ... on RefreshArtistTopTracksSuccess {\n        artist {\n          id\n          topTracks {\n            ...TopArtistTrackItem_ArtistTopTrack\n          }\n        }\n      }\n    }\n  }\n": typeof types.PanelRefreshTopTracksDocument;
+  "\n  mutation PanelRefreshArtistMetaData($artistId: String!) {\n    refreshArtistMetaData(input: { artistId: $artistId }) {\n      __typename\n      ... on RefreshArtistMetaDataSuccess {\n        artist {\n          id\n          ...ArtistPanel_Artist\n        }\n      }\n    }\n  }\n": typeof types.PanelRefreshArtistMetaDataDocument;
+  "\n  query ArtistSingleList($artistId: ID!) {\n    serverLibrary {\n      artistById(id: $artistId) {\n        id\n        singles {\n          id\n          firstReleaseDate\n          ...AlbumCard_Release\n        }\n      }\n    }\n  }\n": typeof types.ArtistSingleListDocument;
+  "\n  fragment TopArtistTrackItem_ArtistTopTrack on ArtistTopTrack {\n    title\n    releaseTitle\n    playCount\n    coverArtUrl\n    track {\n      id\n      ...MusicPlayerTrackFactory_Track\n      ...AlbumTrackTag_Track\n      trackLength\n      trackNumber\n      isMissing\n      release {\n        id\n        folderName\n        artist {\n          id\n          images {\n            thumbs\n          }\n        }\n      }\n    }\n  }\n": typeof types.TopArtistTrackItem_ArtistTopTrackFragmentDoc;
+  "\n  query TopArtistTracks($artistId: ID!) {\n    serverLibrary {\n      artistById(id: $artistId) {\n        id\n        topTracks {\n          ...TopArtistTrackItem_ArtistTopTrack\n        }\n      }\n    }\n  }\n": typeof types.TopArtistTracksDocument;
+  "\n  query ArtistTopTracksForQueue($artistId: ID!) {\n    serverLibrary {\n      artistById(id: $artistId) {\n        id\n        topTracks {\n          title\n          coverArtUrl\n          track {\n            trackNumber\n            trackLength\n            release {\n              folderName\n              artist {\n                id\n                name\n              }\n            }\n          }\n        }\n      }\n    }\n  }\n": typeof types.ArtistTopTracksForQueueDocument;
+  "\n  query ArtistServerStatus($artistId: ID!) {\n    serverLibrary {\n      artistById(id: $artistId) {\n        id\n        serverStatus {\n          id\n          result {\n            __typename\n            ... on ArtistServerStatusResultBase {\n              releasesVisible\n              topTracksVisible\n            }\n            ... on ArtistServerStatusImportingArtistReleases {\n              totalNumReleaseGroupsBeingImported\n              numReleaseGroupsFinishedImporting\n            }\n          }\n        }\n      }\n    }\n  }\n": typeof types.ArtistServerStatusDocument;
+  "\n  subscription ArtistServerStatusSub($artistId: ID!) {\n    artistServerStatusUpdated(artistId: $artistId) {\n      id\n      result {\n        __typename\n        ... on ArtistServerStatusResultBase {\n          releasesVisible\n          topTracksVisible\n        }\n        ... on ArtistServerStatusImportingArtistReleases {\n          totalNumReleaseGroupsBeingImported\n          numReleaseGroupsFinishedImporting\n          artist {\n            id\n            albums {\n              id\n              firstReleaseDate\n              ...AlbumCard_Release\n            }\n            eps {\n              id\n              firstReleaseDate\n              ...AlbumCard_Release\n            }\n            singles {\n              id\n              firstReleaseDate\n              ...AlbumCard_Release\n            }\n          }\n        }\n      }\n    }\n  }\n": typeof types.ArtistServerStatusSubDocument;
+  "\n  mutation SignIn($username: String!, $password: String!) {\n    signIn(input: { username: $username, password: $password }) {\n      __typename\n      ... on SignInSuccess {\n        user {\n          id\n          username\n        }\n      }\n      ... on SignInError {\n        message\n      }\n    }\n  }\n": typeof types.SignInDocument;
+  "\n  mutation SignOut {\n    signOut {\n      __typename\n\n      ... on SignOutSuccess {\n        success\n      }\n      ... on SignOutError {\n        message\n      }\n    }\n  }\n": typeof types.SignOutDocument;
+  "\n  query DownloadOverviewQuery {\n    areThereAnyUsers\n  }\n": typeof types.DownloadOverviewQueryDocument;
+  "\n  subscription DownloadOverviewSubscription {\n    ping {\n      id\n    }\n  }\n": typeof types.DownloadOverviewSubscriptionDocument;
+  "\n  fragment ReleaseDownloadButton_Release on Release {\n    id\n    isFullyMissing\n    folderName\n    downloadStatus\n    artist {\n      id\n    }\n  }\n": typeof types.ReleaseDownloadButton_ReleaseFragmentDoc;
+  "\n  mutation AlbumPanel_StartDownloadRelease(\n    $artistId: String!\n    $releaseFolderName: String!\n  ) {\n    startDownloadRelease(\n      input: { artistId: $artistId, releaseFolderName: $releaseFolderName }\n    ) {\n      __typename\n      ... on StartDownloadReleaseSuccess {\n        success\n      }\n    }\n  }\n": typeof types.AlbumPanel_StartDownloadReleaseDocument;
+  "\n  subscription ReleaseDownloadButton(\n    $artistId: String!\n    $releaseFolderName: String!\n  ) {\n    libraryReleaseDownloadStatusUpdated(\n      artistId: $artistId\n      releaseFolderName: $releaseFolderName\n    ) {\n      release {\n        id\n        downloadStatus\n        isFullyMissing\n      }\n    }\n  }\n": typeof types.ReleaseDownloadButtonDocument;
+  "\n  mutation CreateUser($username: String!, $password: String!) {\n    createUser(input: { username: $username, password: $password }) {\n      __typename\n      ... on CreateUserSuccess {\n        # Assuming a similar success payload\n        user {\n          id\n          username\n        }\n      }\n      ... on CreateUserError {\n        # Assuming a similar error payload\n        message\n      }\n    }\n  }\n": typeof types.CreateUserDocument;
+  "\n  fragment LikedSongRow_LikedSong on LikedSong {\n    id\n    recording {\n      id\n      title\n      length\n      artists {\n        id\n        name\n      }\n      mainAlbum {\n        id\n        title\n        coverArtUri\n        artists {\n          id\n        }\n      }\n    }\n  }\n": typeof types.LikedSongRow_LikedSongFragmentDoc;
+  "\n  fragment LikedSongsList_User on User {\n    id\n    likedSongs {\n      id\n      ...LikedSongRow_LikedSong\n    }\n  }\n": typeof types.LikedSongsList_UserFragmentDoc;
+  "\n  fragment MusicPlayerTrackFactory_Track on Track {\n    id\n    title\n    trackLength\n    trackNumber\n    media {\n      id\n      audioQualityLabel\n    }\n    release {\n      id\n      folderName\n      coverArtUrl\n      artist {\n        id\n        name\n      }\n    }\n    trackNumber\n  }\n": typeof types.MusicPlayerTrackFactory_TrackFragmentDoc;
+  "\n  mutation CreatePlaylist {\n    createPlaylist {\n      __typename\n      ... on CreatePlaylistSuccess {\n        viewer {\n          id\n          playlists {\n            id\n            name\n            createdAt\n          }\n        }\n      }\n    }\n  }\n": typeof types.CreatePlaylistDocument;
+  "\n  fragment PlaylistPanel_Playlist on Playlist {\n    id\n    name\n    tracks {\n      id\n      title\n      trackLength\n      trackNumber\n      media {\n        id\n        audioQualityLabel\n      }\n      release {\n        id\n        folderName\n        coverArtUrl\n        artist {\n          id\n          name\n          images {\n            thumbs\n          }\n        }\n      }\n      ...AlbumTrackTag_Track\n    }\n  }\n": typeof types.PlaylistPanel_PlaylistFragmentDoc;
+  "\n  query PlaylistList {\n    viewer {\n      id\n      playlists {\n        id\n        name\n        createdAt\n      }\n    }\n  }\n": typeof types.PlaylistListDocument;
+  "\n  mutation RenamePlaylist($playlistId: String!, $newPlaylistName: String!) {\n    renamePlaylist(\n      input: { playlistId: $playlistId, newPlaylistName: $newPlaylistName }\n    ) {\n      __typename\n      ... on RenamePlaylistSuccess {\n        viewer {\n          id\n          playlists {\n            id\n            name\n            createdAt\n          }\n        }\n      }\n    }\n  }\n": typeof types.RenamePlaylistDocument;
+  "\n  mutation DeletePlaylist($playlistId: String!) {\n    deletePlaylist(input: { playlistId: $playlistId }) {\n      __typename\n      ... on DeletePlaylistSuccess {\n        viewer {\n          id\n          playlists {\n            id\n            name\n            createdAt\n          }\n        }\n      }\n    }\n  }\n": typeof types.DeletePlaylistDocument;
+  "\n  query TopArtistRecommendations {\n    recommendations {\n      topArtists {\n        id\n        ...TopArtistCard_Artist\n      }\n    }\n  }\n": typeof types.TopArtistRecommendationsDocument;
+  "\n  fragment TopTrackCard_LastFmTrack on LastFmTrack {\n    id\n    playCount\n    name\n    artist {\n      id\n      musicBrainzArtist {\n        id\n        name\n        images {\n          artistThumb\n        }\n      }\n    }\n    album {\n      id\n      imageUrl\n    }\n    images {\n      thumbs\n    }\n  }\n": typeof types.TopTrackCard_LastFmTrackFragmentDoc;
+  "\n  query TopTrackRecommendations {\n    recommendations {\n      topTracks {\n        id\n        ...TopTrackCard_LastFmTrack\n      }\n    }\n  }\n": typeof types.TopTrackRecommendationsDocument;
+  "\n  query AlbumSearchResultsSearch($text: String!, $limit: Int!) {\n    musicBrainz {\n      releaseGroup {\n        searchByName(name: $text, limit: $limit) {\n          id\n          title\n          ...MbReleaseGroupCard_MbReleaseGroup\n        }\n      }\n    }\n  }\n": typeof types.AlbumSearchResultsSearchDocument;
+  "\n  query ArtistSearchResultsSearch($searchText: String!, $limit: Int!) {\n    musicBrainz {\n      artist {\n        searchByName(name: $searchText, limit: $limit) {\n          id\n          name\n          ...MbArtistCard_MbArtist\n          images {\n            artistThumb\n          }\n        }\n      }\n    }\n  }\n": typeof types.ArtistSearchResultsSearchDocument;
+  "\n  query RecordingSearchResultsSearch($text: String!, $limit: Int!) {\n    musicBrainz {\n      recording {\n        searchByName(name: $text, limit: $limit) {\n          id\n          title\n          length\n          nameCredits {\n            artist {\n              id\n              name\n            }\n          }\n          mainAlbum {\n            id\n            title\n            coverArtUri\n          }\n        }\n      }\n    }\n  }\n": typeof types.RecordingSearchResultsSearchDocument;
+  "\n  query SearchResultArtistSearch($text: String!) {\n    serverLibrary {\n      searchArtists(searchTerm: $text, limit: 5) {\n        id\n        name\n        images {\n          thumbs\n        }\n      }\n    }\n  }\n": typeof types.SearchResultArtistSearchDocument;
+  "\n  query SearchResultReleaseSearch($text: String!) {\n    serverLibrary {\n      searchReleases(searchTerm: $text, limit: 5) {\n        id\n        title\n        coverArtUrl\n      }\n    }\n  }\n": typeof types.SearchResultReleaseSearchDocument;
+  "\n  query SearchResultTrackSearch($text: String!) {\n    serverLibrary {\n      searchTracks(searchTerm: $text, limit: 5) {\n        id\n        title\n        trackLength\n        release {\n          id\n          title\n          coverArtUrl\n          folderName\n          artist {\n            id\n            name\n          }\n        }\n      }\n    }\n  }\n": typeof types.SearchResultTrackSearchDocument;
+  "\n  fragment DownloadPathForm_ServerSettings on ServerSettings {\n    id\n    downloadPath\n  }\n": typeof types.DownloadPathForm_ServerSettingsFragmentDoc;
+  "\n  mutation UpdateDownloadPath($newDownloadPath: String!) {\n    updateDownloadPath(input: { newDownloadPath: $newDownloadPath }) {\n      ... on UpdateDownloadPathSuccess {\n        serverSettings {\n          id\n          downloadPath\n        }\n      }\n    }\n  }\n": typeof types.UpdateDownloadPathDocument;
+  "\n  fragment LibraryPathForm_ServerSettings on ServerSettings {\n    id\n    libraryPath\n  }\n": typeof types.LibraryPathForm_ServerSettingsFragmentDoc;
+  "\n  mutation UpdateLibraryPath($newLibraryPath: String!) {\n    updateLibraryPath(input: { newLibraryPath: $newLibraryPath }) {\n      ... on UpdateLibraryPathSuccess {\n        serverSettings {\n          id\n          libraryPath\n        }\n      }\n    }\n  }\n": typeof types.UpdateLibraryPathDocument;
+  "\n  fragment DirectoryTreeItem_FileSystemEntry on FileSystemEntry {\n    id\n    name\n    path\n    isDirectory\n    hasChildren\n    isAccessible\n  }\n": typeof types.DirectoryTreeItem_FileSystemEntryFragmentDoc;
+  "\n  query DirectoryTreeItem($path: String) {\n    fileSystem {\n      browseFileSystem(path: $path) {\n        id\n        isDirectory\n        path\n        ...DirectoryTreeItem_FileSystemEntry\n      }\n    }\n  }\n": typeof types.DirectoryTreeItemDocument;
+  "\n  query BrowseFileSystem($path: String) {\n    fileSystem {\n      browseFileSystem(path: $path) {\n        path\n        isDirectory\n        ...DirectoryTreeItem_FileSystemEntry\n      }\n    }\n  }\n": typeof types.BrowseFileSystemDocument;
+  "\n  query Sidebar {\n    viewer {\n      id\n      username\n    }\n  }\n": typeof types.SidebarDocument;
+  "\n  fragment SoulSeekNetworkStatus_SoulSeekStatus on SoulSeekStatus {\n    id\n    status\n  }\n": typeof types.SoulSeekNetworkStatus_SoulSeekStatusFragmentDoc;
+  "\n  subscription SoulSeekNetworkStatusSubscription {\n    soulSeekStatusUpdated {\n      ...SoulSeekNetworkStatus_SoulSeekStatus\n    }\n  }\n": typeof types.SoulSeekNetworkStatusSubscriptionDocument;
+  "\n  query SoulSeekNetworkStatusQuery {\n    external {\n      id\n      soulSeek {\n        id\n        status {\n          ...SoulSeekNetworkStatus_SoulSeekStatus\n        }\n      }\n    }\n  }\n": typeof types.SoulSeekNetworkStatusQueryDocument;
+  "\n  mutation ImportSpotifyPlaylistById($playlistId: String!, $userId: UUID!) {\n    importSpotifyPlaylistById(playlistId: $playlistId, userId: $userId) {\n      __typename\n      ... on ImportSpotifyPlaylistSuccess {\n        success\n      }\n      ... on ImportSpotifyPlaylistError {\n        message\n      }\n    }\n  }\n": typeof types.ImportSpotifyPlaylistByIdDocument;
+  "\n  fragment SpotifyPlaylistsList_SpotifyPlaylist on SpotifyPlaylist {\n    id\n    description\n    name\n    coverImageUrl\n  }\n": typeof types.SpotifyPlaylistsList_SpotifyPlaylistFragmentDoc;
+  "\n  query UserPlaylistsLoader_Query($spotifyUsername: String!) {\n    playlist {\n      importPlaylists {\n        spotify {\n          spotifyPlaylistsForUser(username: $spotifyUsername) {\n            id\n            ...SpotifyPlaylistsList_SpotifyPlaylist\n          }\n        }\n      }\n    }\n  }\n": typeof types.UserPlaylistsLoader_QueryDocument;
+  "\n  fragment UserProfilePanel_User on User {\n    id\n    username\n    createdAt\n    updatedAt\n    likedSongs {\n      id\n    }\n  }\n": typeof types.UserProfilePanel_UserFragmentDoc;
+  "\n  query UserProfileWidget {\n    viewer {\n      id\n      username\n    }\n  }\n": typeof types.UserProfileWidgetDocument;
 };
 const documents: Documents = {
-    "\n  query Bootstrap {\n    areThereAnyUsers\n    viewer {\n      id\n    }\n  }\n": types.BootstrapDocument,
-    "\n  query AlbumListQuery {\n    serverLibrary {\n      allReleases {\n        id\n        ...AlbumList_Release\n      }\n    }\n  }\n": types.AlbumListQueryDocument,
-    "\n  query AlbumQuery($artistId: ID!, $releaseFolderName: String!) {\n    serverLibrary {\n      artistById(id: $artistId) {\n        id\n        name\n        releaseByFolderName(releaseFolderName: $releaseFolderName) {\n          id\n          title\n          ...AlbumPanel_Release\n        }\n      }\n    }\n  }\n": types.AlbumQueryDocument,
-    "\n  query ArtistListQuery {\n    serverLibrary {\n      allArtists {\n        id\n        ...ArtistList_Artist\n      }\n    }\n  }\n": types.ArtistListQueryDocument,
-    "\n  query ArtistQuery($artistId: ID!) {\n    serverLibrary {\n      artistById(id: $artistId) {\n        id\n        name\n        ...ArtistPanel_Artist\n      }\n    }\n  }\n": types.ArtistQueryDocument,
-    "\n  query LikedSongsQuery {\n    viewer {\n      id\n      ...LikedSongsList_User\n    }\n  }\n": types.LikedSongsQueryDocument,
-    "\n  query MbArtistQuery($mbArtistId: ID!) {\n    musicBrainz {\n      artist {\n        byId(id: $mbArtistId) {\n          id\n          name\n          ...ArtistNotInLibraryPanel_MbArtist\n        }\n      }\n    }\n  }\n": types.MbArtistQueryDocument,
-    "\n  query SettingsPage {\n    serverSettings {\n      ...LibraryPathForm_ServerSettings\n      ...DownloadPathForm_ServerSettings\n    }\n  }\n": types.SettingsPageDocument,
-    "\n  query ProfilePage {\n    viewer {\n      id\n      username\n      ...UserProfilePanel_User\n    }\n  }\n": types.ProfilePageDocument,
-    "\n  fragment Playlist_User on User {\n    id\n    likedSongs {\n      id\n      ...LikedSongRow_LikedSong\n    }\n  }\n": types.Playlist_UserFragmentDoc,
-    "\n  fragment LikedSongRow_Track on Track {\n    id\n    title\n    trackLength\n  }\n": types.LikedSongRow_TrackFragmentDoc,
-    "\n  mutation ImportArtist($musicBrainzArtistId: String!) {\n    importArtist(input: { musicBrainzArtistId: $musicBrainzArtistId }) {\n      __typename\n      ... on ImportArtistSuccess {\n        artist {\n          id\n          name\n        }\n      }\n      ... on ImportArtistError {\n        message\n      }\n    }\n  }\n": types.ImportArtistDocument,
-    "\n  fragment AlbumCard_Release on Release {\n    id\n    title\n    firstReleaseYear\n    coverArtUrl\n    folderName\n    isFullyMissing\n    artist {\n      id\n      images {\n        thumbs\n      }\n    }\n  }\n": types.AlbumCard_ReleaseFragmentDoc,
-    "\n  fragment AlbumHeader_Release on Release {\n    id\n    title\n    type\n    coverArtUrl\n    firstReleaseYear\n    artist {\n      id\n      name\n      images {\n        thumbs\n      }\n    }\n    tracks {\n      id\n      trackLength\n    }\n  }\n": types.AlbumHeader_ReleaseFragmentDoc,
-    "\n  fragment AlbumPanel_Release on Release {\n    id\n    folderName\n    isFullyMissing\n    ...PlayAlbumButton_Release\n    ...ReleaseDownloadButton_Release\n    ...AlbumHeader_Release\n    ...AlbumTrackList_Release\n    firstReleaseYear\n    artist {\n      id\n    }\n  }\n": types.AlbumPanel_ReleaseFragmentDoc,
-    "\n  subscription AlbumPanelUpdates(\n    $artistId: String!\n    $releaseFolderName: String!\n  ) {\n    libraryCacheTracksInReleaseUpdated(\n      artistId: $artistId\n      releaseFolderName: $releaseFolderName\n    ) {\n      track {\n        id\n        isMissing\n        mediaAvailabilityStatus\n      }\n    }\n  }\n": types.AlbumPanelUpdatesDocument,
-    "\n  mutation RefreshRelease($input: RefreshReleaseInput!) {\n    refreshRelease(input: $input) {\n      ... on RefreshReleaseSuccess {\n        release {\n          id\n          ...AlbumPanel_Release\n        }\n      }\n      ... on RefreshReleaseError {\n        message\n      }\n    }\n  }\n": types.RefreshReleaseDocument,
-    "\n  mutation DeleteReleaseAudio($input: DeleteReleaseAudioInput!) {\n    deleteReleaseAudio(input: $input) {\n      ... on DeleteReleaseAudioSuccess {\n        release {\n          id\n          ...AlbumPanel_Release\n        }\n      }\n      ... on DeleteReleaseAudioError {\n        message\n      }\n    }\n  }\n": types.DeleteReleaseAudioDocument,
-    "\n  mutation ScanReleaseFolderForMedia($input: ScanReleaseFolderForMediaInput!) {\n    scanReleaseFolderForMedia(input: $input) {\n      ... on ScanReleaseFolderForMediaSuccess {\n        release {\n          id\n          ...AlbumPanel_Release\n        }\n      }\n      ... on ScanReleaseFolderForMediaError {\n        message\n      }\n    }\n  }\n": types.ScanReleaseFolderForMediaDocument,
-    "\n  fragment AlbumTrackList_Release on Release {\n    id\n    title\n    folderName\n    artist {\n      id\n    }\n    tracks {\n      id\n      title\n      trackLength\n      isMissing\n      media {\n        id\n        audioUrl\n        audioQualityLabel\n      }\n      ...MusicPlayerTrackFactory_Track\n      ...AlbumTrackTag_Track\n      credits {\n        artistName\n        artist {\n          id\n        }\n        mbArtist {\n          id\n        }\n      }\n      statistics {\n        listeners\n        playCount\n      }\n    }\n  }\n": types.AlbumTrackList_ReleaseFragmentDoc,
-    "\n  fragment AlbumTrackTag_Track on Track {\n    id\n    isMissing\n    mediaAvailabilityStatus\n  }\n": types.AlbumTrackTag_TrackFragmentDoc,
-    "\n  fragment MbReleaseGroupCard_MbReleaseGroup on MbReleaseGroup {\n    id\n    title\n    firstReleaseYear\n    coverArtUri\n  }\n": types.MbReleaseGroupCard_MbReleaseGroupFragmentDoc,
-    "\n  fragment PlayAlbumButton_Release on Release {\n    id\n    folderName\n    coverArtUrl\n    artist {\n      id\n      name\n    }\n    tracks {\n      id\n      title\n      isMissing\n      trackLength\n      media {\n        id\n        audioQualityLabel\n      }\n    }\n  }\n": types.PlayAlbumButton_ReleaseFragmentDoc,
-    "\n  fragment AlbumList_Release on Release {\n    id\n    ...AlbumCard_Release\n  }\n": types.AlbumList_ReleaseFragmentDoc,
-    "\n  fragment ArtistCard_Artist on Artist {\n    id\n    name\n    listeners\n    images {\n      thumbs\n    }\n  }\n": types.ArtistCard_ArtistFragmentDoc,
-    "\n  fragment MbArtistCard_MbArtist on MbArtist {\n    id\n    name\n    listeners\n    images {\n      artistThumb\n    }\n  }\n": types.MbArtistCard_MbArtistFragmentDoc,
-    "\n  fragment TopArtistCard_Artist on LastFmArtist {\n    id\n    name\n    musicBrainzArtist {\n      id\n      name\n      images {\n        artistThumb\n      }\n    }\n    statistics {\n      listeners\n    }\n  }\n": types.TopArtistCard_ArtistFragmentDoc,
-    "\n  fragment ArtistList_Artist on Artist {\n    id\n    ...ArtistCard_Artist\n  }\n": types.ArtistList_ArtistFragmentDoc,
-    "\n  fragment ArtistNotInLibraryPanel_MbArtist on MbArtist {\n    id\n    name\n    images {\n      artistBackground\n    }\n    listeners\n    lastFmArtist {\n      id\n      ...ArtistNotInLibraryTopTracks_LastFmArtist\n    }\n  }\n": types.ArtistNotInLibraryPanel_MbArtistFragmentDoc,
-    "\n  fragment ArtistNotInLibraryTopTracks_LastFmArtist on LastFmArtist {\n    id\n    topTracks {\n      id\n      name\n      statistics {\n        listeners\n      }\n    }\n  }\n": types.ArtistNotInLibraryTopTracks_LastFmArtistFragmentDoc,
-    "\n  query ArtistAlbumList($artistId: ID!) {\n    serverLibrary {\n      artistById(id: $artistId) {\n        id\n        albums {\n          id\n          firstReleaseDate\n          ...AlbumCard_Release\n        }\n      }\n    }\n  }\n": types.ArtistAlbumListDocument,
-    "\n  query ArtistEpList($artistId: ID!) {\n    serverLibrary {\n      artistById(id: $artistId) {\n        id\n        eps {\n          id\n          firstReleaseDate\n          ...AlbumCard_Release\n        }\n      }\n    }\n  }\n": types.ArtistEpListDocument,
-    "\n  fragment ArtistPanel_Artist on Artist {\n    id\n    name\n    listeners\n    albums {\n      id\n      firstReleaseDate\n      isFullyMissing\n      ...AlbumCard_Release\n    }\n    eps {\n      id\n      firstReleaseDate\n      isFullyMissing\n      ...AlbumCard_Release\n    }\n    singles {\n      id\n      firstReleaseDate\n      isFullyMissing\n      ...AlbumCard_Release\n    }\n    images {\n      backgrounds\n    }\n    serverStatus {\n      id\n      result {\n        __typename\n        ... on ArtistServerStatusResultBase {\n          topTracksVisible\n          releasesVisible\n        }\n        ... on ArtistServerStatusImportingArtistReleases {\n          numReleaseGroupsFinishedImporting\n          totalNumReleaseGroupsBeingImported\n        }\n      }\n    }\n  }\n": types.ArtistPanel_ArtistFragmentDoc,
-    "\n  mutation PanelRefreshTopTracks($input: RefreshArtistTopTracksInput!) {\n    refreshArtistTopTracks(input: $input) {\n      __typename\n      ... on RefreshArtistTopTracksSuccess {\n        artist {\n          id\n          topTracks {\n            ...TopArtistTrackItem_ArtistTopTrack\n          }\n        }\n      }\n    }\n  }\n": types.PanelRefreshTopTracksDocument,
-    "\n  mutation PanelRefreshArtistMetaData($artistId: String!) {\n    refreshArtistMetaData(input: { artistId: $artistId }) {\n      __typename\n      ... on RefreshArtistMetaDataSuccess {\n        artist {\n          id\n          ...ArtistPanel_Artist\n        }\n      }\n    }\n  }\n": types.PanelRefreshArtistMetaDataDocument,
-    "\n  query ArtistSingleList($artistId: ID!) {\n    serverLibrary {\n      artistById(id: $artistId) {\n        id\n        singles {\n          id\n          firstReleaseDate\n          ...AlbumCard_Release\n        }\n      }\n    }\n  }\n": types.ArtistSingleListDocument,
-    "\n  fragment TopArtistTrackItem_ArtistTopTrack on ArtistTopTrack {\n    title\n    releaseTitle\n    playCount\n    coverArtUrl\n    track {\n      id\n      ...MusicPlayerTrackFactory_Track\n      ...AlbumTrackTag_Track\n      trackLength\n      trackNumber\n      isMissing\n      release {\n        id\n        folderName\n        artist {\n          id\n          images {\n            thumbs\n          }\n        }\n      }\n    }\n  }\n": types.TopArtistTrackItem_ArtistTopTrackFragmentDoc,
-    "\n  query TopArtistTracks($artistId: ID!) {\n    serverLibrary {\n      artistById(id: $artistId) {\n        id\n        topTracks {\n          ...TopArtistTrackItem_ArtistTopTrack\n        }\n      }\n    }\n  }\n": types.TopArtistTracksDocument,
-    "\n  query ArtistTopTracksForQueue($artistId: ID!) {\n    serverLibrary {\n      artistById(id: $artistId) {\n        id\n        topTracks {\n          title\n          coverArtUrl\n          track {\n            trackNumber\n            trackLength\n            release {\n              folderName\n              artist {\n                id\n                name\n              }\n            }\n          }\n        }\n      }\n    }\n  }\n": types.ArtistTopTracksForQueueDocument,
-    "\n  query ArtistServerStatus($artistId: ID!) {\n    serverLibrary {\n      artistById(id: $artistId) {\n        id\n        serverStatus {\n          id\n          result {\n            __typename\n            ... on ArtistServerStatusResultBase {\n              releasesVisible\n              topTracksVisible\n            }\n            ... on ArtistServerStatusImportingArtistReleases {\n              totalNumReleaseGroupsBeingImported\n              numReleaseGroupsFinishedImporting\n            }\n          }\n        }\n      }\n    }\n  }\n": types.ArtistServerStatusDocument,
-    "\n  subscription ArtistServerStatusSub($artistId: ID!) {\n    artistServerStatusUpdated(artistId: $artistId) {\n      id\n      result {\n        __typename\n        ... on ArtistServerStatusResultBase {\n          releasesVisible\n          topTracksVisible\n        }\n        ... on ArtistServerStatusImportingArtistReleases {\n          totalNumReleaseGroupsBeingImported\n          numReleaseGroupsFinishedImporting\n          artist {\n            id\n            albums {\n              id\n              firstReleaseDate\n              ...AlbumCard_Release\n            }\n            eps {\n              id\n              firstReleaseDate\n              ...AlbumCard_Release\n            }\n            singles {\n              id\n              firstReleaseDate\n              ...AlbumCard_Release\n            }\n          }\n        }\n      }\n    }\n  }\n": types.ArtistServerStatusSubDocument,
-    "\n  mutation SignIn($username: String!, $password: String!) {\n    signIn(input: { username: $username, password: $password }) {\n      __typename\n      ... on SignInSuccess {\n        user {\n          id\n          username\n        }\n      }\n      ... on SignInError {\n        message\n      }\n    }\n  }\n": types.SignInDocument,
-    "\n  mutation SignOut {\n    signOut {\n      __typename\n\n      ... on SignOutSuccess {\n        success\n      }\n      ... on SignOutError {\n        message\n      }\n    }\n  }\n": types.SignOutDocument,
-    "\n  fragment DownloadOverview_DownloadStatus on Query {\n    areThereAnyUsers\n  }\n": types.DownloadOverview_DownloadStatusFragmentDoc,
-    "\n  query DownloadOverviewQuery {\n    areThereAnyUsers\n  }\n": types.DownloadOverviewQueryDocument,
-    "\n  subscription DownloadOverviewSubscription {\n    ping {\n      id\n    }\n  }\n": types.DownloadOverviewSubscriptionDocument,
-    "\n  fragment DownloadStatus_DownloadStatus on Query {\n    areThereAnyUsers\n  }\n": types.DownloadStatus_DownloadStatusFragmentDoc,
-    "\n  fragment ReleaseDownloadButton_Release on Release {\n    id\n    isFullyMissing\n    folderName\n    downloadStatus\n    artist {\n      id\n    }\n  }\n": types.ReleaseDownloadButton_ReleaseFragmentDoc,
-    "\n  mutation AlbumPanel_StartDownloadRelease(\n    $artistId: String!\n    $releaseFolderName: String!\n  ) {\n    startDownloadRelease(\n      input: { artistId: $artistId, releaseFolderName: $releaseFolderName }\n    ) {\n      __typename\n      ... on StartDownloadReleaseSuccess {\n        success\n      }\n    }\n  }\n": types.AlbumPanel_StartDownloadReleaseDocument,
-    "\n  subscription ReleaseDownloadButton(\n    $artistId: String!\n    $releaseFolderName: String!\n  ) {\n    libraryReleaseDownloadStatusUpdated(\n      artistId: $artistId\n      releaseFolderName: $releaseFolderName\n    ) {\n      release {\n        id\n        downloadStatus\n        isFullyMissing\n      }\n    }\n  }\n": types.ReleaseDownloadButtonDocument,
-    "\n  mutation CreateUser($username: String!, $password: String!) {\n    createUser(input: { username: $username, password: $password }) {\n      __typename\n      ... on CreateUserSuccess {\n        # Assuming a similar success payload\n        user {\n          id\n          username\n        }\n      }\n      ... on CreateUserError {\n        # Assuming a similar error payload\n        message\n      }\n    }\n  }\n": types.CreateUserDocument,
-    "\n  fragment LikedSongRow_LikedSong on LikedSong {\n    id\n    recording {\n      id\n      title\n      length\n      artists {\n        id\n        name\n      }\n      mainAlbum {\n        id\n        title\n        coverArtUri\n        artists {\n          id\n        }\n      }\n    }\n  }\n": types.LikedSongRow_LikedSongFragmentDoc,
-    "\n  fragment LikedSongsList_User on User {\n    id\n    likedSongs {\n      id\n      ...LikedSongRow_LikedSong\n    }\n  }\n": types.LikedSongsList_UserFragmentDoc,
-    "\n  fragment MusicPlayerTrackFactory_Track on Track {\n    id\n    title\n    trackLength\n    trackNumber\n    media {\n      id\n      audioQualityLabel\n    }\n    release {\n      id\n      folderName\n      coverArtUrl\n      artist {\n        id\n        name\n      }\n    }\n    trackNumber\n  }\n": types.MusicPlayerTrackFactory_TrackFragmentDoc,
-    "\n  mutation CreatePlaylist {\n    createPlaylist {\n      __typename\n      ... on CreatePlaylistSuccess {\n        viewer {\n          id\n          playlists {\n            id\n            name\n            createdAt\n          }\n        }\n      }\n    }\n  }\n": types.CreatePlaylistDocument,
-    "\n  query PlaylistList {\n    viewer {\n      id\n      playlists {\n        id\n        name\n        createdAt\n      }\n    }\n  }\n": types.PlaylistListDocument,
-    "\n  mutation RenamePlaylist($playlistId: String!, $newPlaylistName: String!) {\n    renamePlaylist(\n      input: { playlistId: $playlistId, newPlaylistName: $newPlaylistName }\n    ) {\n      __typename\n      ... on RenamePlaylistSuccess {\n        viewer {\n          id\n          playlists {\n            id\n            name\n            createdAt\n          }\n        }\n      }\n    }\n  }\n": types.RenamePlaylistDocument,
-    "\n  mutation DeletePlaylist($playlistId: String!) {\n    deletePlaylist(input: { playlistId: $playlistId }) {\n      __typename\n      ... on DeletePlaylistSuccess {\n        viewer {\n          id\n          playlists {\n            id\n            name\n            createdAt\n          }\n        }\n      }\n    }\n  }\n": types.DeletePlaylistDocument,
-    "\n  query TopArtistRecommendations {\n    recommendations {\n      topArtists {\n        id\n        ...TopArtistCard_Artist\n      }\n    }\n  }\n": types.TopArtistRecommendationsDocument,
-    "\n  fragment TopTrackCard_LastFmTrack on LastFmTrack {\n    id\n    playCount\n    name\n    artist {\n      id\n      musicBrainzArtist {\n        id\n        name\n        images {\n          artistThumb\n        }\n      }\n    }\n    album {\n      id\n      imageUrl\n    }\n    images {\n      thumbs\n    }\n  }\n": types.TopTrackCard_LastFmTrackFragmentDoc,
-    "\n  query TopTrackRecommendations {\n    recommendations {\n      topTracks {\n        id\n        ...TopTrackCard_LastFmTrack\n      }\n    }\n  }\n": types.TopTrackRecommendationsDocument,
-    "\n  query AlbumSearchResultsSearch($text: String!, $limit: Int!) {\n    musicBrainz {\n      releaseGroup {\n        searchByName(name: $text, limit: $limit) {\n          id\n          title\n          ...MbReleaseGroupCard_MbReleaseGroup\n        }\n      }\n    }\n  }\n": types.AlbumSearchResultsSearchDocument,
-    "\n  query ArtistSearchResultsSearch($searchText: String!, $limit: Int!) {\n    musicBrainz {\n      artist {\n        searchByName(name: $searchText, limit: $limit) {\n          id\n          name\n          ...MbArtistCard_MbArtist\n          images {\n            artistThumb\n          }\n        }\n      }\n    }\n  }\n": types.ArtistSearchResultsSearchDocument,
-    "\n  query RecordingSearchResultsSearch($text: String!, $limit: Int!) {\n    musicBrainz {\n      recording {\n        searchByName(name: $text, limit: $limit) {\n          id\n          title\n          length\n          nameCredits {\n            artist {\n              id\n              name\n            }\n          }\n          mainAlbum {\n            id\n            title\n            coverArtUri\n          }\n        }\n      }\n    }\n  }\n": types.RecordingSearchResultsSearchDocument,
-    "\n  query SearchResultArtistSearch($text: String!) {\n    serverLibrary {\n      searchArtists(searchTerm: $text, limit: 5) {\n        id\n        name\n        images {\n          thumbs\n        }\n      }\n    }\n  }\n": types.SearchResultArtistSearchDocument,
-    "\n  query SearchResultReleaseSearch($text: String!) {\n    serverLibrary {\n      searchReleases(searchTerm: $text, limit: 5) {\n        id\n        title\n        coverArtUrl\n      }\n    }\n  }\n": types.SearchResultReleaseSearchDocument,
-    "\n  query SearchResultTrackSearch($text: String!) {\n    serverLibrary {\n      searchTracks(searchTerm: $text, limit: 5) {\n        id\n        title\n        trackLength\n        release {\n          id\n          title\n          coverArtUrl\n          folderName\n          artist {\n            id\n            name\n          }\n        }\n      }\n    }\n  }\n": types.SearchResultTrackSearchDocument,
-    "\n  fragment DownloadPathForm_ServerSettings on ServerSettings {\n    id\n    downloadPath\n  }\n": types.DownloadPathForm_ServerSettingsFragmentDoc,
-    "\n  mutation UpdateDownloadPath($newDownloadPath: String!) {\n    updateDownloadPath(input: { newDownloadPath: $newDownloadPath }) {\n      ... on UpdateDownloadPathSuccess {\n        serverSettings {\n          id\n          downloadPath\n        }\n      }\n    }\n  }\n": types.UpdateDownloadPathDocument,
-    "\n  fragment LibraryPathForm_ServerSettings on ServerSettings {\n    id\n    libraryPath\n  }\n": types.LibraryPathForm_ServerSettingsFragmentDoc,
-    "\n  mutation UpdateLibraryPath($newLibraryPath: String!) {\n    updateLibraryPath(input: { newLibraryPath: $newLibraryPath }) {\n      ... on UpdateLibraryPathSuccess {\n        serverSettings {\n          id\n          libraryPath\n        }\n      }\n    }\n  }\n": types.UpdateLibraryPathDocument,
-    "\n  fragment DirectoryTreeItem_FileSystemEntry on FileSystemEntry {\n    id\n    name\n    path\n    isDirectory\n    hasChildren\n    isAccessible\n  }\n": types.DirectoryTreeItem_FileSystemEntryFragmentDoc,
-    "\n  query DirectoryTreeItem($path: String) {\n    fileSystem {\n      browseFileSystem(path: $path) {\n        id\n        isDirectory\n        path\n        ...DirectoryTreeItem_FileSystemEntry\n      }\n    }\n  }\n": types.DirectoryTreeItemDocument,
-    "\n  query BrowseFileSystem($path: String) {\n    fileSystem {\n      browseFileSystem(path: $path) {\n        path\n        isDirectory\n        ...DirectoryTreeItem_FileSystemEntry\n      }\n    }\n  }\n": types.BrowseFileSystemDocument,
-    "\n  query Sidebar {\n    viewer {\n      id\n      username\n    }\n  }\n": types.SidebarDocument,
-    "\n  fragment SoulSeekNetworkStatus_SoulSeekStatus on SoulSeekStatus {\n    id\n    status\n  }\n": types.SoulSeekNetworkStatus_SoulSeekStatusFragmentDoc,
-    "\n  subscription SoulSeekNetworkStatusSubscription {\n    soulSeekStatusUpdated {\n      ...SoulSeekNetworkStatus_SoulSeekStatus\n    }\n  }\n": types.SoulSeekNetworkStatusSubscriptionDocument,
-    "\n  query SoulSeekNetworkStatusQuery {\n    external {\n      id\n      soulSeek {\n        id\n        status {\n          ...SoulSeekNetworkStatus_SoulSeekStatus\n        }\n      }\n    }\n  }\n": types.SoulSeekNetworkStatusQueryDocument,
-    "\n  mutation ImportSpotifyPlaylistById($playlistId: String!, $userId: UUID!) {\n    importSpotifyPlaylistById(playlistId: $playlistId, userId: $userId) {\n      __typename\n      ... on ImportSpotifyPlaylistSuccess {\n        success\n      }\n      ... on ImportSpotifyPlaylistError {\n        message\n      }\n    }\n  }\n": types.ImportSpotifyPlaylistByIdDocument,
-    "\n  fragment SpotifyPlaylistsList_SpotifyPlaylist on SpotifyPlaylist {\n    id\n    description\n    name\n    coverImageUrl\n  }\n": types.SpotifyPlaylistsList_SpotifyPlaylistFragmentDoc,
-    "\n  query UserPlaylistsLoader_Query($spotifyUsername: String!) {\n    playlist {\n      importPlaylists {\n        spotify {\n          spotifyPlaylistsForUser(username: $spotifyUsername) {\n            id\n            ...SpotifyPlaylistsList_SpotifyPlaylist\n          }\n        }\n      }\n    }\n  }\n": types.UserPlaylistsLoader_QueryDocument,
-    "\n  fragment UserProfilePanel_User on User {\n    id\n    username\n    createdAt\n    updatedAt\n    likedSongs {\n      id\n    }\n  }\n": types.UserProfilePanel_UserFragmentDoc,
-    "\n  query UserProfileWidget {\n    viewer {\n      id\n      username\n    }\n  }\n": types.UserProfileWidgetDocument,
+  "\n  query Bootstrap {\n    areThereAnyUsers\n    viewer {\n      id\n    }\n  }\n":
+    types.BootstrapDocument,
+  "\n  query AlbumListQuery {\n    serverLibrary {\n      allReleases {\n        id\n        ...AlbumList_Release\n      }\n    }\n  }\n":
+    types.AlbumListQueryDocument,
+  "\n  query AlbumQuery($artistId: ID!, $releaseFolderName: String!) {\n    serverLibrary {\n      artistById(id: $artistId) {\n        id\n        name\n        releaseByFolderName(releaseFolderName: $releaseFolderName) {\n          id\n          title\n          ...AlbumPanel_Release\n        }\n      }\n    }\n  }\n":
+    types.AlbumQueryDocument,
+  "\n  query ArtistListQuery {\n    serverLibrary {\n      allArtists {\n        id\n        ...ArtistList_Artist\n      }\n    }\n  }\n":
+    types.ArtistListQueryDocument,
+  "\n  query ArtistQuery($artistId: ID!) {\n    serverLibrary {\n      artistById(id: $artistId) {\n        id\n        name\n        ...ArtistPanel_Artist\n      }\n    }\n  }\n":
+    types.ArtistQueryDocument,
+  "\n  query LikedSongsQuery {\n    viewer {\n      id\n      ...LikedSongsList_User\n    }\n  }\n":
+    types.LikedSongsQueryDocument,
+  "\n  query MbArtistQuery($mbArtistId: ID!) {\n    musicBrainz {\n      artist {\n        byId(id: $mbArtistId) {\n          id\n          name\n          ...ArtistNotInLibraryPanel_MbArtist\n        }\n      }\n    }\n  }\n":
+    types.MbArtistQueryDocument,
+  "\n  query PlaylistQuery($playlistId: ID!) {\n    playlist {\n      playlist(playlistId: $playlistId) {\n        id\n        name\n        ...PlaylistPanel_Playlist\n      }\n    }\n  }\n":
+    types.PlaylistQueryDocument,
+  "\n  query SettingsPage {\n    serverSettings {\n      ...LibraryPathForm_ServerSettings\n      ...DownloadPathForm_ServerSettings\n    }\n  }\n":
+    types.SettingsPageDocument,
+  "\n  query ProfilePage {\n    viewer {\n      id\n      username\n      ...UserProfilePanel_User\n    }\n  }\n":
+    types.ProfilePageDocument,
+  "\n  fragment Playlist_User on User {\n    id\n    likedSongs {\n      id\n      ...LikedSongRow_LikedSong\n    }\n  }\n":
+    types.Playlist_UserFragmentDoc,
+  "\n  fragment LikedSongRow_Track on Track {\n    id\n    title\n    trackLength\n  }\n":
+    types.LikedSongRow_TrackFragmentDoc,
+  "\n  mutation ImportArtist($musicBrainzArtistId: String!) {\n    importArtist(input: { musicBrainzArtistId: $musicBrainzArtistId }) {\n      __typename\n      ... on ImportArtistSuccess {\n        artist {\n          id\n          name\n        }\n      }\n      ... on ImportArtistError {\n        message\n      }\n    }\n  }\n":
+    types.ImportArtistDocument,
+  "\n  fragment AlbumCard_Release on Release {\n    id\n    title\n    firstReleaseYear\n    coverArtUrl\n    folderName\n    isFullyMissing\n    artist {\n      id\n      images {\n        thumbs\n      }\n    }\n  }\n":
+    types.AlbumCard_ReleaseFragmentDoc,
+  "\n  fragment AlbumHeader_Release on Release {\n    id\n    title\n    type\n    coverArtUrl\n    firstReleaseYear\n    artist {\n      id\n      name\n      images {\n        thumbs\n      }\n    }\n    tracks {\n      id\n      trackLength\n    }\n  }\n":
+    types.AlbumHeader_ReleaseFragmentDoc,
+  "\n  fragment AlbumPanel_Release on Release {\n    id\n    folderName\n    isFullyMissing\n    ...PlayAlbumButton_Release\n    ...ReleaseDownloadButton_Release\n    ...AlbumHeader_Release\n    ...AlbumTrackList_Release\n    firstReleaseYear\n    artist {\n      id\n    }\n  }\n":
+    types.AlbumPanel_ReleaseFragmentDoc,
+  "\n  subscription AlbumPanelUpdates(\n    $artistId: String!\n    $releaseFolderName: String!\n  ) {\n    libraryCacheTracksInReleaseUpdated(\n      artistId: $artistId\n      releaseFolderName: $releaseFolderName\n    ) {\n      track {\n        id\n        isMissing\n        mediaAvailabilityStatus\n      }\n    }\n  }\n":
+    types.AlbumPanelUpdatesDocument,
+  "\n  mutation RefreshRelease($input: RefreshReleaseInput!) {\n    refreshRelease(input: $input) {\n      ... on RefreshReleaseSuccess {\n        release {\n          id\n          ...AlbumPanel_Release\n        }\n      }\n      ... on RefreshReleaseError {\n        message\n      }\n    }\n  }\n":
+    types.RefreshReleaseDocument,
+  "\n  mutation DeleteReleaseAudio($input: DeleteReleaseAudioInput!) {\n    deleteReleaseAudio(input: $input) {\n      ... on DeleteReleaseAudioSuccess {\n        release {\n          id\n          ...AlbumPanel_Release\n        }\n      }\n      ... on DeleteReleaseAudioError {\n        message\n      }\n    }\n  }\n":
+    types.DeleteReleaseAudioDocument,
+  "\n  mutation ScanReleaseFolderForMedia($input: ScanReleaseFolderForMediaInput!) {\n    scanReleaseFolderForMedia(input: $input) {\n      ... on ScanReleaseFolderForMediaSuccess {\n        release {\n          id\n          ...AlbumPanel_Release\n        }\n      }\n      ... on ScanReleaseFolderForMediaError {\n        message\n      }\n    }\n  }\n":
+    types.ScanReleaseFolderForMediaDocument,
+  "\n  fragment AlbumTrackList_Release on Release {\n    id\n    title\n    folderName\n    artist {\n      id\n    }\n    tracks {\n      id\n      title\n      trackLength\n      isMissing\n      media {\n        id\n        audioUrl\n        audioQualityLabel\n      }\n      ...MusicPlayerTrackFactory_Track\n      ...AlbumTrackTag_Track\n      credits {\n        artistName\n        artist {\n          id\n        }\n        mbArtist {\n          id\n        }\n      }\n      statistics {\n        listeners\n        playCount\n      }\n    }\n  }\n":
+    types.AlbumTrackList_ReleaseFragmentDoc,
+  "\n  fragment AlbumTrackTag_Track on Track {\n    id\n    isMissing\n    mediaAvailabilityStatus\n  }\n":
+    types.AlbumTrackTag_TrackFragmentDoc,
+  "\n  fragment MbReleaseGroupCard_MbReleaseGroup on MbReleaseGroup {\n    id\n    title\n    firstReleaseYear\n    coverArtUri\n  }\n":
+    types.MbReleaseGroupCard_MbReleaseGroupFragmentDoc,
+  "\n  fragment PlayAlbumButton_Release on Release {\n    id\n    folderName\n    coverArtUrl\n    artist {\n      id\n      name\n    }\n    tracks {\n      id\n      title\n      isMissing\n      trackLength\n      media {\n        id\n        audioQualityLabel\n      }\n    }\n  }\n":
+    types.PlayAlbumButton_ReleaseFragmentDoc,
+  "\n  fragment AlbumList_Release on Release {\n    id\n    ...AlbumCard_Release\n  }\n":
+    types.AlbumList_ReleaseFragmentDoc,
+  "\n  fragment ArtistCard_Artist on Artist {\n    id\n    name\n    listeners\n    images {\n      thumbs\n    }\n  }\n":
+    types.ArtistCard_ArtistFragmentDoc,
+  "\n  fragment MbArtistCard_MbArtist on MbArtist {\n    id\n    name\n    listeners\n    images {\n      artistThumb\n    }\n  }\n":
+    types.MbArtistCard_MbArtistFragmentDoc,
+  "\n  fragment TopArtistCard_Artist on LastFmArtist {\n    id\n    name\n    musicBrainzArtist {\n      id\n      name\n      images {\n        artistThumb\n      }\n    }\n    statistics {\n      listeners\n    }\n  }\n":
+    types.TopArtistCard_ArtistFragmentDoc,
+  "\n  fragment ArtistList_Artist on Artist {\n    id\n    ...ArtistCard_Artist\n  }\n":
+    types.ArtistList_ArtistFragmentDoc,
+  "\n  fragment ArtistNotInLibraryPanel_MbArtist on MbArtist {\n    id\n    name\n    images {\n      artistBackground\n    }\n    listeners\n    lastFmArtist {\n      id\n      ...ArtistNotInLibraryTopTracks_LastFmArtist\n    }\n  }\n":
+    types.ArtistNotInLibraryPanel_MbArtistFragmentDoc,
+  "\n  fragment ArtistNotInLibraryTopTracks_LastFmArtist on LastFmArtist {\n    id\n    topTracks {\n      id\n      name\n      statistics {\n        listeners\n      }\n    }\n  }\n":
+    types.ArtistNotInLibraryTopTracks_LastFmArtistFragmentDoc,
+  "\n  query ArtistAlbumList($artistId: ID!) {\n    serverLibrary {\n      artistById(id: $artistId) {\n        id\n        albums {\n          id\n          firstReleaseDate\n          ...AlbumCard_Release\n        }\n      }\n    }\n  }\n":
+    types.ArtistAlbumListDocument,
+  "\n  query ArtistEpList($artistId: ID!) {\n    serverLibrary {\n      artistById(id: $artistId) {\n        id\n        eps {\n          id\n          firstReleaseDate\n          ...AlbumCard_Release\n        }\n      }\n    }\n  }\n":
+    types.ArtistEpListDocument,
+  "\n  fragment ArtistPanel_Artist on Artist {\n    id\n    name\n    listeners\n    albums {\n      id\n      firstReleaseDate\n      isFullyMissing\n      ...AlbumCard_Release\n    }\n    eps {\n      id\n      firstReleaseDate\n      isFullyMissing\n      ...AlbumCard_Release\n    }\n    singles {\n      id\n      firstReleaseDate\n      isFullyMissing\n      ...AlbumCard_Release\n    }\n    images {\n      backgrounds\n    }\n    serverStatus {\n      id\n      result {\n        __typename\n        ... on ArtistServerStatusResultBase {\n          topTracksVisible\n          releasesVisible\n        }\n        ... on ArtistServerStatusImportingArtistReleases {\n          numReleaseGroupsFinishedImporting\n          totalNumReleaseGroupsBeingImported\n        }\n      }\n    }\n  }\n":
+    types.ArtistPanel_ArtistFragmentDoc,
+  "\n  mutation PanelRefreshTopTracks($input: RefreshArtistTopTracksInput!) {\n    refreshArtistTopTracks(input: $input) {\n      __typename\n      ... on RefreshArtistTopTracksSuccess {\n        artist {\n          id\n          topTracks {\n            ...TopArtistTrackItem_ArtistTopTrack\n          }\n        }\n      }\n    }\n  }\n":
+    types.PanelRefreshTopTracksDocument,
+  "\n  mutation PanelRefreshArtistMetaData($artistId: String!) {\n    refreshArtistMetaData(input: { artistId: $artistId }) {\n      __typename\n      ... on RefreshArtistMetaDataSuccess {\n        artist {\n          id\n          ...ArtistPanel_Artist\n        }\n      }\n    }\n  }\n":
+    types.PanelRefreshArtistMetaDataDocument,
+  "\n  query ArtistSingleList($artistId: ID!) {\n    serverLibrary {\n      artistById(id: $artistId) {\n        id\n        singles {\n          id\n          firstReleaseDate\n          ...AlbumCard_Release\n        }\n      }\n    }\n  }\n":
+    types.ArtistSingleListDocument,
+  "\n  fragment TopArtistTrackItem_ArtistTopTrack on ArtistTopTrack {\n    title\n    releaseTitle\n    playCount\n    coverArtUrl\n    track {\n      id\n      ...MusicPlayerTrackFactory_Track\n      ...AlbumTrackTag_Track\n      trackLength\n      trackNumber\n      isMissing\n      release {\n        id\n        folderName\n        artist {\n          id\n          images {\n            thumbs\n          }\n        }\n      }\n    }\n  }\n":
+    types.TopArtistTrackItem_ArtistTopTrackFragmentDoc,
+  "\n  query TopArtistTracks($artistId: ID!) {\n    serverLibrary {\n      artistById(id: $artistId) {\n        id\n        topTracks {\n          ...TopArtistTrackItem_ArtistTopTrack\n        }\n      }\n    }\n  }\n":
+    types.TopArtistTracksDocument,
+  "\n  query ArtistTopTracksForQueue($artistId: ID!) {\n    serverLibrary {\n      artistById(id: $artistId) {\n        id\n        topTracks {\n          title\n          coverArtUrl\n          track {\n            trackNumber\n            trackLength\n            release {\n              folderName\n              artist {\n                id\n                name\n              }\n            }\n          }\n        }\n      }\n    }\n  }\n":
+    types.ArtistTopTracksForQueueDocument,
+  "\n  query ArtistServerStatus($artistId: ID!) {\n    serverLibrary {\n      artistById(id: $artistId) {\n        id\n        serverStatus {\n          id\n          result {\n            __typename\n            ... on ArtistServerStatusResultBase {\n              releasesVisible\n              topTracksVisible\n            }\n            ... on ArtistServerStatusImportingArtistReleases {\n              totalNumReleaseGroupsBeingImported\n              numReleaseGroupsFinishedImporting\n            }\n          }\n        }\n      }\n    }\n  }\n":
+    types.ArtistServerStatusDocument,
+  "\n  subscription ArtistServerStatusSub($artistId: ID!) {\n    artistServerStatusUpdated(artistId: $artistId) {\n      id\n      result {\n        __typename\n        ... on ArtistServerStatusResultBase {\n          releasesVisible\n          topTracksVisible\n        }\n        ... on ArtistServerStatusImportingArtistReleases {\n          totalNumReleaseGroupsBeingImported\n          numReleaseGroupsFinishedImporting\n          artist {\n            id\n            albums {\n              id\n              firstReleaseDate\n              ...AlbumCard_Release\n            }\n            eps {\n              id\n              firstReleaseDate\n              ...AlbumCard_Release\n            }\n            singles {\n              id\n              firstReleaseDate\n              ...AlbumCard_Release\n            }\n          }\n        }\n      }\n    }\n  }\n":
+    types.ArtistServerStatusSubDocument,
+  "\n  mutation SignIn($username: String!, $password: String!) {\n    signIn(input: { username: $username, password: $password }) {\n      __typename\n      ... on SignInSuccess {\n        user {\n          id\n          username\n        }\n      }\n      ... on SignInError {\n        message\n      }\n    }\n  }\n":
+    types.SignInDocument,
+  "\n  mutation SignOut {\n    signOut {\n      __typename\n\n      ... on SignOutSuccess {\n        success\n      }\n      ... on SignOutError {\n        message\n      }\n    }\n  }\n":
+    types.SignOutDocument,
+  "\n  query DownloadOverviewQuery {\n    areThereAnyUsers\n  }\n":
+    types.DownloadOverviewQueryDocument,
+  "\n  subscription DownloadOverviewSubscription {\n    ping {\n      id\n    }\n  }\n":
+    types.DownloadOverviewSubscriptionDocument,
+  "\n  fragment ReleaseDownloadButton_Release on Release {\n    id\n    isFullyMissing\n    folderName\n    downloadStatus\n    artist {\n      id\n    }\n  }\n":
+    types.ReleaseDownloadButton_ReleaseFragmentDoc,
+  "\n  mutation AlbumPanel_StartDownloadRelease(\n    $artistId: String!\n    $releaseFolderName: String!\n  ) {\n    startDownloadRelease(\n      input: { artistId: $artistId, releaseFolderName: $releaseFolderName }\n    ) {\n      __typename\n      ... on StartDownloadReleaseSuccess {\n        success\n      }\n    }\n  }\n":
+    types.AlbumPanel_StartDownloadReleaseDocument,
+  "\n  subscription ReleaseDownloadButton(\n    $artistId: String!\n    $releaseFolderName: String!\n  ) {\n    libraryReleaseDownloadStatusUpdated(\n      artistId: $artistId\n      releaseFolderName: $releaseFolderName\n    ) {\n      release {\n        id\n        downloadStatus\n        isFullyMissing\n      }\n    }\n  }\n":
+    types.ReleaseDownloadButtonDocument,
+  "\n  mutation CreateUser($username: String!, $password: String!) {\n    createUser(input: { username: $username, password: $password }) {\n      __typename\n      ... on CreateUserSuccess {\n        # Assuming a similar success payload\n        user {\n          id\n          username\n        }\n      }\n      ... on CreateUserError {\n        # Assuming a similar error payload\n        message\n      }\n    }\n  }\n":
+    types.CreateUserDocument,
+  "\n  fragment LikedSongRow_LikedSong on LikedSong {\n    id\n    recording {\n      id\n      title\n      length\n      artists {\n        id\n        name\n      }\n      mainAlbum {\n        id\n        title\n        coverArtUri\n        artists {\n          id\n        }\n      }\n    }\n  }\n":
+    types.LikedSongRow_LikedSongFragmentDoc,
+  "\n  fragment LikedSongsList_User on User {\n    id\n    likedSongs {\n      id\n      ...LikedSongRow_LikedSong\n    }\n  }\n":
+    types.LikedSongsList_UserFragmentDoc,
+  "\n  fragment MusicPlayerTrackFactory_Track on Track {\n    id\n    title\n    trackLength\n    trackNumber\n    media {\n      id\n      audioQualityLabel\n    }\n    release {\n      id\n      folderName\n      coverArtUrl\n      artist {\n        id\n        name\n      }\n    }\n    trackNumber\n  }\n":
+    types.MusicPlayerTrackFactory_TrackFragmentDoc,
+  "\n  mutation CreatePlaylist {\n    createPlaylist {\n      __typename\n      ... on CreatePlaylistSuccess {\n        viewer {\n          id\n          playlists {\n            id\n            name\n            createdAt\n          }\n        }\n      }\n    }\n  }\n":
+    types.CreatePlaylistDocument,
+  "\n  fragment PlaylistPanel_Playlist on Playlist {\n    id\n    name\n    tracks {\n      id\n      title\n      trackLength\n      trackNumber\n      media {\n        id\n        audioQualityLabel\n      }\n      release {\n        id\n        folderName\n        coverArtUrl\n        artist {\n          id\n          name\n          images {\n            thumbs\n          }\n        }\n      }\n      ...AlbumTrackTag_Track\n    }\n  }\n":
+    types.PlaylistPanel_PlaylistFragmentDoc,
+  "\n  query PlaylistList {\n    viewer {\n      id\n      playlists {\n        id\n        name\n        createdAt\n      }\n    }\n  }\n":
+    types.PlaylistListDocument,
+  "\n  mutation RenamePlaylist($playlistId: String!, $newPlaylistName: String!) {\n    renamePlaylist(\n      input: { playlistId: $playlistId, newPlaylistName: $newPlaylistName }\n    ) {\n      __typename\n      ... on RenamePlaylistSuccess {\n        viewer {\n          id\n          playlists {\n            id\n            name\n            createdAt\n          }\n        }\n      }\n    }\n  }\n":
+    types.RenamePlaylistDocument,
+  "\n  mutation DeletePlaylist($playlistId: String!) {\n    deletePlaylist(input: { playlistId: $playlistId }) {\n      __typename\n      ... on DeletePlaylistSuccess {\n        viewer {\n          id\n          playlists {\n            id\n            name\n            createdAt\n          }\n        }\n      }\n    }\n  }\n":
+    types.DeletePlaylistDocument,
+  "\n  query TopArtistRecommendations {\n    recommendations {\n      topArtists {\n        id\n        ...TopArtistCard_Artist\n      }\n    }\n  }\n":
+    types.TopArtistRecommendationsDocument,
+  "\n  fragment TopTrackCard_LastFmTrack on LastFmTrack {\n    id\n    playCount\n    name\n    artist {\n      id\n      musicBrainzArtist {\n        id\n        name\n        images {\n          artistThumb\n        }\n      }\n    }\n    album {\n      id\n      imageUrl\n    }\n    images {\n      thumbs\n    }\n  }\n":
+    types.TopTrackCard_LastFmTrackFragmentDoc,
+  "\n  query TopTrackRecommendations {\n    recommendations {\n      topTracks {\n        id\n        ...TopTrackCard_LastFmTrack\n      }\n    }\n  }\n":
+    types.TopTrackRecommendationsDocument,
+  "\n  query AlbumSearchResultsSearch($text: String!, $limit: Int!) {\n    musicBrainz {\n      releaseGroup {\n        searchByName(name: $text, limit: $limit) {\n          id\n          title\n          ...MbReleaseGroupCard_MbReleaseGroup\n        }\n      }\n    }\n  }\n":
+    types.AlbumSearchResultsSearchDocument,
+  "\n  query ArtistSearchResultsSearch($searchText: String!, $limit: Int!) {\n    musicBrainz {\n      artist {\n        searchByName(name: $searchText, limit: $limit) {\n          id\n          name\n          ...MbArtistCard_MbArtist\n          images {\n            artistThumb\n          }\n        }\n      }\n    }\n  }\n":
+    types.ArtistSearchResultsSearchDocument,
+  "\n  query RecordingSearchResultsSearch($text: String!, $limit: Int!) {\n    musicBrainz {\n      recording {\n        searchByName(name: $text, limit: $limit) {\n          id\n          title\n          length\n          nameCredits {\n            artist {\n              id\n              name\n            }\n          }\n          mainAlbum {\n            id\n            title\n            coverArtUri\n          }\n        }\n      }\n    }\n  }\n":
+    types.RecordingSearchResultsSearchDocument,
+  "\n  query SearchResultArtistSearch($text: String!) {\n    serverLibrary {\n      searchArtists(searchTerm: $text, limit: 5) {\n        id\n        name\n        images {\n          thumbs\n        }\n      }\n    }\n  }\n":
+    types.SearchResultArtistSearchDocument,
+  "\n  query SearchResultReleaseSearch($text: String!) {\n    serverLibrary {\n      searchReleases(searchTerm: $text, limit: 5) {\n        id\n        title\n        coverArtUrl\n      }\n    }\n  }\n":
+    types.SearchResultReleaseSearchDocument,
+  "\n  query SearchResultTrackSearch($text: String!) {\n    serverLibrary {\n      searchTracks(searchTerm: $text, limit: 5) {\n        id\n        title\n        trackLength\n        release {\n          id\n          title\n          coverArtUrl\n          folderName\n          artist {\n            id\n            name\n          }\n        }\n      }\n    }\n  }\n":
+    types.SearchResultTrackSearchDocument,
+  "\n  fragment DownloadPathForm_ServerSettings on ServerSettings {\n    id\n    downloadPath\n  }\n":
+    types.DownloadPathForm_ServerSettingsFragmentDoc,
+  "\n  mutation UpdateDownloadPath($newDownloadPath: String!) {\n    updateDownloadPath(input: { newDownloadPath: $newDownloadPath }) {\n      ... on UpdateDownloadPathSuccess {\n        serverSettings {\n          id\n          downloadPath\n        }\n      }\n    }\n  }\n":
+    types.UpdateDownloadPathDocument,
+  "\n  fragment LibraryPathForm_ServerSettings on ServerSettings {\n    id\n    libraryPath\n  }\n":
+    types.LibraryPathForm_ServerSettingsFragmentDoc,
+  "\n  mutation UpdateLibraryPath($newLibraryPath: String!) {\n    updateLibraryPath(input: { newLibraryPath: $newLibraryPath }) {\n      ... on UpdateLibraryPathSuccess {\n        serverSettings {\n          id\n          libraryPath\n        }\n      }\n    }\n  }\n":
+    types.UpdateLibraryPathDocument,
+  "\n  fragment DirectoryTreeItem_FileSystemEntry on FileSystemEntry {\n    id\n    name\n    path\n    isDirectory\n    hasChildren\n    isAccessible\n  }\n":
+    types.DirectoryTreeItem_FileSystemEntryFragmentDoc,
+  "\n  query DirectoryTreeItem($path: String) {\n    fileSystem {\n      browseFileSystem(path: $path) {\n        id\n        isDirectory\n        path\n        ...DirectoryTreeItem_FileSystemEntry\n      }\n    }\n  }\n":
+    types.DirectoryTreeItemDocument,
+  "\n  query BrowseFileSystem($path: String) {\n    fileSystem {\n      browseFileSystem(path: $path) {\n        path\n        isDirectory\n        ...DirectoryTreeItem_FileSystemEntry\n      }\n    }\n  }\n":
+    types.BrowseFileSystemDocument,
+  "\n  query Sidebar {\n    viewer {\n      id\n      username\n    }\n  }\n":
+    types.SidebarDocument,
+  "\n  fragment SoulSeekNetworkStatus_SoulSeekStatus on SoulSeekStatus {\n    id\n    status\n  }\n":
+    types.SoulSeekNetworkStatus_SoulSeekStatusFragmentDoc,
+  "\n  subscription SoulSeekNetworkStatusSubscription {\n    soulSeekStatusUpdated {\n      ...SoulSeekNetworkStatus_SoulSeekStatus\n    }\n  }\n":
+    types.SoulSeekNetworkStatusSubscriptionDocument,
+  "\n  query SoulSeekNetworkStatusQuery {\n    external {\n      id\n      soulSeek {\n        id\n        status {\n          ...SoulSeekNetworkStatus_SoulSeekStatus\n        }\n      }\n    }\n  }\n":
+    types.SoulSeekNetworkStatusQueryDocument,
+  "\n  mutation ImportSpotifyPlaylistById($playlistId: String!, $userId: UUID!) {\n    importSpotifyPlaylistById(playlistId: $playlistId, userId: $userId) {\n      __typename\n      ... on ImportSpotifyPlaylistSuccess {\n        success\n      }\n      ... on ImportSpotifyPlaylistError {\n        message\n      }\n    }\n  }\n":
+    types.ImportSpotifyPlaylistByIdDocument,
+  "\n  fragment SpotifyPlaylistsList_SpotifyPlaylist on SpotifyPlaylist {\n    id\n    description\n    name\n    coverImageUrl\n  }\n":
+    types.SpotifyPlaylistsList_SpotifyPlaylistFragmentDoc,
+  "\n  query UserPlaylistsLoader_Query($spotifyUsername: String!) {\n    playlist {\n      importPlaylists {\n        spotify {\n          spotifyPlaylistsForUser(username: $spotifyUsername) {\n            id\n            ...SpotifyPlaylistsList_SpotifyPlaylist\n          }\n        }\n      }\n    }\n  }\n":
+    types.UserPlaylistsLoader_QueryDocument,
+  "\n  fragment UserProfilePanel_User on User {\n    id\n    username\n    createdAt\n    updatedAt\n    likedSongs {\n      id\n    }\n  }\n":
+    types.UserProfilePanel_UserFragmentDoc,
+  "\n  query UserProfileWidget {\n    viewer {\n      id\n      username\n    }\n  }\n":
+    types.UserProfileWidgetDocument,
 };
 
 /**
@@ -201,338 +284,505 @@ export function graphql(source: string): unknown;
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query Bootstrap {\n    areThereAnyUsers\n    viewer {\n      id\n    }\n  }\n"): (typeof documents)["\n  query Bootstrap {\n    areThereAnyUsers\n    viewer {\n      id\n    }\n  }\n"];
+export function graphql(
+  source: "\n  query Bootstrap {\n    areThereAnyUsers\n    viewer {\n      id\n    }\n  }\n",
+): (typeof documents)["\n  query Bootstrap {\n    areThereAnyUsers\n    viewer {\n      id\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query AlbumListQuery {\n    serverLibrary {\n      allReleases {\n        id\n        ...AlbumList_Release\n      }\n    }\n  }\n"): (typeof documents)["\n  query AlbumListQuery {\n    serverLibrary {\n      allReleases {\n        id\n        ...AlbumList_Release\n      }\n    }\n  }\n"];
+export function graphql(
+  source: "\n  query AlbumListQuery {\n    serverLibrary {\n      allReleases {\n        id\n        ...AlbumList_Release\n      }\n    }\n  }\n",
+): (typeof documents)["\n  query AlbumListQuery {\n    serverLibrary {\n      allReleases {\n        id\n        ...AlbumList_Release\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query AlbumQuery($artistId: ID!, $releaseFolderName: String!) {\n    serverLibrary {\n      artistById(id: $artistId) {\n        id\n        name\n        releaseByFolderName(releaseFolderName: $releaseFolderName) {\n          id\n          title\n          ...AlbumPanel_Release\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  query AlbumQuery($artistId: ID!, $releaseFolderName: String!) {\n    serverLibrary {\n      artistById(id: $artistId) {\n        id\n        name\n        releaseByFolderName(releaseFolderName: $releaseFolderName) {\n          id\n          title\n          ...AlbumPanel_Release\n        }\n      }\n    }\n  }\n"];
+export function graphql(
+  source: "\n  query AlbumQuery($artistId: ID!, $releaseFolderName: String!) {\n    serverLibrary {\n      artistById(id: $artistId) {\n        id\n        name\n        releaseByFolderName(releaseFolderName: $releaseFolderName) {\n          id\n          title\n          ...AlbumPanel_Release\n        }\n      }\n    }\n  }\n",
+): (typeof documents)["\n  query AlbumQuery($artistId: ID!, $releaseFolderName: String!) {\n    serverLibrary {\n      artistById(id: $artistId) {\n        id\n        name\n        releaseByFolderName(releaseFolderName: $releaseFolderName) {\n          id\n          title\n          ...AlbumPanel_Release\n        }\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query ArtistListQuery {\n    serverLibrary {\n      allArtists {\n        id\n        ...ArtistList_Artist\n      }\n    }\n  }\n"): (typeof documents)["\n  query ArtistListQuery {\n    serverLibrary {\n      allArtists {\n        id\n        ...ArtistList_Artist\n      }\n    }\n  }\n"];
+export function graphql(
+  source: "\n  query ArtistListQuery {\n    serverLibrary {\n      allArtists {\n        id\n        ...ArtistList_Artist\n      }\n    }\n  }\n",
+): (typeof documents)["\n  query ArtistListQuery {\n    serverLibrary {\n      allArtists {\n        id\n        ...ArtistList_Artist\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query ArtistQuery($artistId: ID!) {\n    serverLibrary {\n      artistById(id: $artistId) {\n        id\n        name\n        ...ArtistPanel_Artist\n      }\n    }\n  }\n"): (typeof documents)["\n  query ArtistQuery($artistId: ID!) {\n    serverLibrary {\n      artistById(id: $artistId) {\n        id\n        name\n        ...ArtistPanel_Artist\n      }\n    }\n  }\n"];
+export function graphql(
+  source: "\n  query ArtistQuery($artistId: ID!) {\n    serverLibrary {\n      artistById(id: $artistId) {\n        id\n        name\n        ...ArtistPanel_Artist\n      }\n    }\n  }\n",
+): (typeof documents)["\n  query ArtistQuery($artistId: ID!) {\n    serverLibrary {\n      artistById(id: $artistId) {\n        id\n        name\n        ...ArtistPanel_Artist\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query LikedSongsQuery {\n    viewer {\n      id\n      ...LikedSongsList_User\n    }\n  }\n"): (typeof documents)["\n  query LikedSongsQuery {\n    viewer {\n      id\n      ...LikedSongsList_User\n    }\n  }\n"];
+export function graphql(
+  source: "\n  query LikedSongsQuery {\n    viewer {\n      id\n      ...LikedSongsList_User\n    }\n  }\n",
+): (typeof documents)["\n  query LikedSongsQuery {\n    viewer {\n      id\n      ...LikedSongsList_User\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query MbArtistQuery($mbArtistId: ID!) {\n    musicBrainz {\n      artist {\n        byId(id: $mbArtistId) {\n          id\n          name\n          ...ArtistNotInLibraryPanel_MbArtist\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  query MbArtistQuery($mbArtistId: ID!) {\n    musicBrainz {\n      artist {\n        byId(id: $mbArtistId) {\n          id\n          name\n          ...ArtistNotInLibraryPanel_MbArtist\n        }\n      }\n    }\n  }\n"];
+export function graphql(
+  source: "\n  query MbArtistQuery($mbArtistId: ID!) {\n    musicBrainz {\n      artist {\n        byId(id: $mbArtistId) {\n          id\n          name\n          ...ArtistNotInLibraryPanel_MbArtist\n        }\n      }\n    }\n  }\n",
+): (typeof documents)["\n  query MbArtistQuery($mbArtistId: ID!) {\n    musicBrainz {\n      artist {\n        byId(id: $mbArtistId) {\n          id\n          name\n          ...ArtistNotInLibraryPanel_MbArtist\n        }\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query SettingsPage {\n    serverSettings {\n      ...LibraryPathForm_ServerSettings\n      ...DownloadPathForm_ServerSettings\n    }\n  }\n"): (typeof documents)["\n  query SettingsPage {\n    serverSettings {\n      ...LibraryPathForm_ServerSettings\n      ...DownloadPathForm_ServerSettings\n    }\n  }\n"];
+export function graphql(
+  source: "\n  query PlaylistQuery($playlistId: ID!) {\n    playlist {\n      playlist(playlistId: $playlistId) {\n        id\n        name\n        ...PlaylistPanel_Playlist\n      }\n    }\n  }\n",
+): (typeof documents)["\n  query PlaylistQuery($playlistId: ID!) {\n    playlist {\n      playlist(playlistId: $playlistId) {\n        id\n        name\n        ...PlaylistPanel_Playlist\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query ProfilePage {\n    viewer {\n      id\n      username\n      ...UserProfilePanel_User\n    }\n  }\n"): (typeof documents)["\n  query ProfilePage {\n    viewer {\n      id\n      username\n      ...UserProfilePanel_User\n    }\n  }\n"];
+export function graphql(
+  source: "\n  query SettingsPage {\n    serverSettings {\n      ...LibraryPathForm_ServerSettings\n      ...DownloadPathForm_ServerSettings\n    }\n  }\n",
+): (typeof documents)["\n  query SettingsPage {\n    serverSettings {\n      ...LibraryPathForm_ServerSettings\n      ...DownloadPathForm_ServerSettings\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment Playlist_User on User {\n    id\n    likedSongs {\n      id\n      ...LikedSongRow_LikedSong\n    }\n  }\n"): (typeof documents)["\n  fragment Playlist_User on User {\n    id\n    likedSongs {\n      id\n      ...LikedSongRow_LikedSong\n    }\n  }\n"];
+export function graphql(
+  source: "\n  query ProfilePage {\n    viewer {\n      id\n      username\n      ...UserProfilePanel_User\n    }\n  }\n",
+): (typeof documents)["\n  query ProfilePage {\n    viewer {\n      id\n      username\n      ...UserProfilePanel_User\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment LikedSongRow_Track on Track {\n    id\n    title\n    trackLength\n  }\n"): (typeof documents)["\n  fragment LikedSongRow_Track on Track {\n    id\n    title\n    trackLength\n  }\n"];
+export function graphql(
+  source: "\n  fragment Playlist_User on User {\n    id\n    likedSongs {\n      id\n      ...LikedSongRow_LikedSong\n    }\n  }\n",
+): (typeof documents)["\n  fragment Playlist_User on User {\n    id\n    likedSongs {\n      id\n      ...LikedSongRow_LikedSong\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  mutation ImportArtist($musicBrainzArtistId: String!) {\n    importArtist(input: { musicBrainzArtistId: $musicBrainzArtistId }) {\n      __typename\n      ... on ImportArtistSuccess {\n        artist {\n          id\n          name\n        }\n      }\n      ... on ImportArtistError {\n        message\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation ImportArtist($musicBrainzArtistId: String!) {\n    importArtist(input: { musicBrainzArtistId: $musicBrainzArtistId }) {\n      __typename\n      ... on ImportArtistSuccess {\n        artist {\n          id\n          name\n        }\n      }\n      ... on ImportArtistError {\n        message\n      }\n    }\n  }\n"];
+export function graphql(
+  source: "\n  fragment LikedSongRow_Track on Track {\n    id\n    title\n    trackLength\n  }\n",
+): (typeof documents)["\n  fragment LikedSongRow_Track on Track {\n    id\n    title\n    trackLength\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment AlbumCard_Release on Release {\n    id\n    title\n    firstReleaseYear\n    coverArtUrl\n    folderName\n    isFullyMissing\n    artist {\n      id\n      images {\n        thumbs\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment AlbumCard_Release on Release {\n    id\n    title\n    firstReleaseYear\n    coverArtUrl\n    folderName\n    isFullyMissing\n    artist {\n      id\n      images {\n        thumbs\n      }\n    }\n  }\n"];
+export function graphql(
+  source: "\n  mutation ImportArtist($musicBrainzArtistId: String!) {\n    importArtist(input: { musicBrainzArtistId: $musicBrainzArtistId }) {\n      __typename\n      ... on ImportArtistSuccess {\n        artist {\n          id\n          name\n        }\n      }\n      ... on ImportArtistError {\n        message\n      }\n    }\n  }\n",
+): (typeof documents)["\n  mutation ImportArtist($musicBrainzArtistId: String!) {\n    importArtist(input: { musicBrainzArtistId: $musicBrainzArtistId }) {\n      __typename\n      ... on ImportArtistSuccess {\n        artist {\n          id\n          name\n        }\n      }\n      ... on ImportArtistError {\n        message\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment AlbumHeader_Release on Release {\n    id\n    title\n    type\n    coverArtUrl\n    firstReleaseYear\n    artist {\n      id\n      name\n      images {\n        thumbs\n      }\n    }\n    tracks {\n      id\n      trackLength\n    }\n  }\n"): (typeof documents)["\n  fragment AlbumHeader_Release on Release {\n    id\n    title\n    type\n    coverArtUrl\n    firstReleaseYear\n    artist {\n      id\n      name\n      images {\n        thumbs\n      }\n    }\n    tracks {\n      id\n      trackLength\n    }\n  }\n"];
+export function graphql(
+  source: "\n  fragment AlbumCard_Release on Release {\n    id\n    title\n    firstReleaseYear\n    coverArtUrl\n    folderName\n    isFullyMissing\n    artist {\n      id\n      images {\n        thumbs\n      }\n    }\n  }\n",
+): (typeof documents)["\n  fragment AlbumCard_Release on Release {\n    id\n    title\n    firstReleaseYear\n    coverArtUrl\n    folderName\n    isFullyMissing\n    artist {\n      id\n      images {\n        thumbs\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment AlbumPanel_Release on Release {\n    id\n    folderName\n    isFullyMissing\n    ...PlayAlbumButton_Release\n    ...ReleaseDownloadButton_Release\n    ...AlbumHeader_Release\n    ...AlbumTrackList_Release\n    firstReleaseYear\n    artist {\n      id\n    }\n  }\n"): (typeof documents)["\n  fragment AlbumPanel_Release on Release {\n    id\n    folderName\n    isFullyMissing\n    ...PlayAlbumButton_Release\n    ...ReleaseDownloadButton_Release\n    ...AlbumHeader_Release\n    ...AlbumTrackList_Release\n    firstReleaseYear\n    artist {\n      id\n    }\n  }\n"];
+export function graphql(
+  source: "\n  fragment AlbumHeader_Release on Release {\n    id\n    title\n    type\n    coverArtUrl\n    firstReleaseYear\n    artist {\n      id\n      name\n      images {\n        thumbs\n      }\n    }\n    tracks {\n      id\n      trackLength\n    }\n  }\n",
+): (typeof documents)["\n  fragment AlbumHeader_Release on Release {\n    id\n    title\n    type\n    coverArtUrl\n    firstReleaseYear\n    artist {\n      id\n      name\n      images {\n        thumbs\n      }\n    }\n    tracks {\n      id\n      trackLength\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  subscription AlbumPanelUpdates(\n    $artistId: String!\n    $releaseFolderName: String!\n  ) {\n    libraryCacheTracksInReleaseUpdated(\n      artistId: $artistId\n      releaseFolderName: $releaseFolderName\n    ) {\n      track {\n        id\n        isMissing\n        mediaAvailabilityStatus\n      }\n    }\n  }\n"): (typeof documents)["\n  subscription AlbumPanelUpdates(\n    $artistId: String!\n    $releaseFolderName: String!\n  ) {\n    libraryCacheTracksInReleaseUpdated(\n      artistId: $artistId\n      releaseFolderName: $releaseFolderName\n    ) {\n      track {\n        id\n        isMissing\n        mediaAvailabilityStatus\n      }\n    }\n  }\n"];
+export function graphql(
+  source: "\n  fragment AlbumPanel_Release on Release {\n    id\n    folderName\n    isFullyMissing\n    ...PlayAlbumButton_Release\n    ...ReleaseDownloadButton_Release\n    ...AlbumHeader_Release\n    ...AlbumTrackList_Release\n    firstReleaseYear\n    artist {\n      id\n    }\n  }\n",
+): (typeof documents)["\n  fragment AlbumPanel_Release on Release {\n    id\n    folderName\n    isFullyMissing\n    ...PlayAlbumButton_Release\n    ...ReleaseDownloadButton_Release\n    ...AlbumHeader_Release\n    ...AlbumTrackList_Release\n    firstReleaseYear\n    artist {\n      id\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  mutation RefreshRelease($input: RefreshReleaseInput!) {\n    refreshRelease(input: $input) {\n      ... on RefreshReleaseSuccess {\n        release {\n          id\n          ...AlbumPanel_Release\n        }\n      }\n      ... on RefreshReleaseError {\n        message\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation RefreshRelease($input: RefreshReleaseInput!) {\n    refreshRelease(input: $input) {\n      ... on RefreshReleaseSuccess {\n        release {\n          id\n          ...AlbumPanel_Release\n        }\n      }\n      ... on RefreshReleaseError {\n        message\n      }\n    }\n  }\n"];
+export function graphql(
+  source: "\n  subscription AlbumPanelUpdates(\n    $artistId: String!\n    $releaseFolderName: String!\n  ) {\n    libraryCacheTracksInReleaseUpdated(\n      artistId: $artistId\n      releaseFolderName: $releaseFolderName\n    ) {\n      track {\n        id\n        isMissing\n        mediaAvailabilityStatus\n      }\n    }\n  }\n",
+): (typeof documents)["\n  subscription AlbumPanelUpdates(\n    $artistId: String!\n    $releaseFolderName: String!\n  ) {\n    libraryCacheTracksInReleaseUpdated(\n      artistId: $artistId\n      releaseFolderName: $releaseFolderName\n    ) {\n      track {\n        id\n        isMissing\n        mediaAvailabilityStatus\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  mutation DeleteReleaseAudio($input: DeleteReleaseAudioInput!) {\n    deleteReleaseAudio(input: $input) {\n      ... on DeleteReleaseAudioSuccess {\n        release {\n          id\n          ...AlbumPanel_Release\n        }\n      }\n      ... on DeleteReleaseAudioError {\n        message\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation DeleteReleaseAudio($input: DeleteReleaseAudioInput!) {\n    deleteReleaseAudio(input: $input) {\n      ... on DeleteReleaseAudioSuccess {\n        release {\n          id\n          ...AlbumPanel_Release\n        }\n      }\n      ... on DeleteReleaseAudioError {\n        message\n      }\n    }\n  }\n"];
+export function graphql(
+  source: "\n  mutation RefreshRelease($input: RefreshReleaseInput!) {\n    refreshRelease(input: $input) {\n      ... on RefreshReleaseSuccess {\n        release {\n          id\n          ...AlbumPanel_Release\n        }\n      }\n      ... on RefreshReleaseError {\n        message\n      }\n    }\n  }\n",
+): (typeof documents)["\n  mutation RefreshRelease($input: RefreshReleaseInput!) {\n    refreshRelease(input: $input) {\n      ... on RefreshReleaseSuccess {\n        release {\n          id\n          ...AlbumPanel_Release\n        }\n      }\n      ... on RefreshReleaseError {\n        message\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  mutation ScanReleaseFolderForMedia($input: ScanReleaseFolderForMediaInput!) {\n    scanReleaseFolderForMedia(input: $input) {\n      ... on ScanReleaseFolderForMediaSuccess {\n        release {\n          id\n          ...AlbumPanel_Release\n        }\n      }\n      ... on ScanReleaseFolderForMediaError {\n        message\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation ScanReleaseFolderForMedia($input: ScanReleaseFolderForMediaInput!) {\n    scanReleaseFolderForMedia(input: $input) {\n      ... on ScanReleaseFolderForMediaSuccess {\n        release {\n          id\n          ...AlbumPanel_Release\n        }\n      }\n      ... on ScanReleaseFolderForMediaError {\n        message\n      }\n    }\n  }\n"];
+export function graphql(
+  source: "\n  mutation DeleteReleaseAudio($input: DeleteReleaseAudioInput!) {\n    deleteReleaseAudio(input: $input) {\n      ... on DeleteReleaseAudioSuccess {\n        release {\n          id\n          ...AlbumPanel_Release\n        }\n      }\n      ... on DeleteReleaseAudioError {\n        message\n      }\n    }\n  }\n",
+): (typeof documents)["\n  mutation DeleteReleaseAudio($input: DeleteReleaseAudioInput!) {\n    deleteReleaseAudio(input: $input) {\n      ... on DeleteReleaseAudioSuccess {\n        release {\n          id\n          ...AlbumPanel_Release\n        }\n      }\n      ... on DeleteReleaseAudioError {\n        message\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment AlbumTrackList_Release on Release {\n    id\n    title\n    folderName\n    artist {\n      id\n    }\n    tracks {\n      id\n      title\n      trackLength\n      isMissing\n      media {\n        id\n        audioUrl\n        audioQualityLabel\n      }\n      ...MusicPlayerTrackFactory_Track\n      ...AlbumTrackTag_Track\n      credits {\n        artistName\n        artist {\n          id\n        }\n        mbArtist {\n          id\n        }\n      }\n      statistics {\n        listeners\n        playCount\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment AlbumTrackList_Release on Release {\n    id\n    title\n    folderName\n    artist {\n      id\n    }\n    tracks {\n      id\n      title\n      trackLength\n      isMissing\n      media {\n        id\n        audioUrl\n        audioQualityLabel\n      }\n      ...MusicPlayerTrackFactory_Track\n      ...AlbumTrackTag_Track\n      credits {\n        artistName\n        artist {\n          id\n        }\n        mbArtist {\n          id\n        }\n      }\n      statistics {\n        listeners\n        playCount\n      }\n    }\n  }\n"];
+export function graphql(
+  source: "\n  mutation ScanReleaseFolderForMedia($input: ScanReleaseFolderForMediaInput!) {\n    scanReleaseFolderForMedia(input: $input) {\n      ... on ScanReleaseFolderForMediaSuccess {\n        release {\n          id\n          ...AlbumPanel_Release\n        }\n      }\n      ... on ScanReleaseFolderForMediaError {\n        message\n      }\n    }\n  }\n",
+): (typeof documents)["\n  mutation ScanReleaseFolderForMedia($input: ScanReleaseFolderForMediaInput!) {\n    scanReleaseFolderForMedia(input: $input) {\n      ... on ScanReleaseFolderForMediaSuccess {\n        release {\n          id\n          ...AlbumPanel_Release\n        }\n      }\n      ... on ScanReleaseFolderForMediaError {\n        message\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment AlbumTrackTag_Track on Track {\n    id\n    isMissing\n    mediaAvailabilityStatus\n  }\n"): (typeof documents)["\n  fragment AlbumTrackTag_Track on Track {\n    id\n    isMissing\n    mediaAvailabilityStatus\n  }\n"];
+export function graphql(
+  source: "\n  fragment AlbumTrackList_Release on Release {\n    id\n    title\n    folderName\n    artist {\n      id\n    }\n    tracks {\n      id\n      title\n      trackLength\n      isMissing\n      media {\n        id\n        audioUrl\n        audioQualityLabel\n      }\n      ...MusicPlayerTrackFactory_Track\n      ...AlbumTrackTag_Track\n      credits {\n        artistName\n        artist {\n          id\n        }\n        mbArtist {\n          id\n        }\n      }\n      statistics {\n        listeners\n        playCount\n      }\n    }\n  }\n",
+): (typeof documents)["\n  fragment AlbumTrackList_Release on Release {\n    id\n    title\n    folderName\n    artist {\n      id\n    }\n    tracks {\n      id\n      title\n      trackLength\n      isMissing\n      media {\n        id\n        audioUrl\n        audioQualityLabel\n      }\n      ...MusicPlayerTrackFactory_Track\n      ...AlbumTrackTag_Track\n      credits {\n        artistName\n        artist {\n          id\n        }\n        mbArtist {\n          id\n        }\n      }\n      statistics {\n        listeners\n        playCount\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment MbReleaseGroupCard_MbReleaseGroup on MbReleaseGroup {\n    id\n    title\n    firstReleaseYear\n    coverArtUri\n  }\n"): (typeof documents)["\n  fragment MbReleaseGroupCard_MbReleaseGroup on MbReleaseGroup {\n    id\n    title\n    firstReleaseYear\n    coverArtUri\n  }\n"];
+export function graphql(
+  source: "\n  fragment AlbumTrackTag_Track on Track {\n    id\n    isMissing\n    mediaAvailabilityStatus\n  }\n",
+): (typeof documents)["\n  fragment AlbumTrackTag_Track on Track {\n    id\n    isMissing\n    mediaAvailabilityStatus\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment PlayAlbumButton_Release on Release {\n    id\n    folderName\n    coverArtUrl\n    artist {\n      id\n      name\n    }\n    tracks {\n      id\n      title\n      isMissing\n      trackLength\n      media {\n        id\n        audioQualityLabel\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment PlayAlbumButton_Release on Release {\n    id\n    folderName\n    coverArtUrl\n    artist {\n      id\n      name\n    }\n    tracks {\n      id\n      title\n      isMissing\n      trackLength\n      media {\n        id\n        audioQualityLabel\n      }\n    }\n  }\n"];
+export function graphql(
+  source: "\n  fragment MbReleaseGroupCard_MbReleaseGroup on MbReleaseGroup {\n    id\n    title\n    firstReleaseYear\n    coverArtUri\n  }\n",
+): (typeof documents)["\n  fragment MbReleaseGroupCard_MbReleaseGroup on MbReleaseGroup {\n    id\n    title\n    firstReleaseYear\n    coverArtUri\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment AlbumList_Release on Release {\n    id\n    ...AlbumCard_Release\n  }\n"): (typeof documents)["\n  fragment AlbumList_Release on Release {\n    id\n    ...AlbumCard_Release\n  }\n"];
+export function graphql(
+  source: "\n  fragment PlayAlbumButton_Release on Release {\n    id\n    folderName\n    coverArtUrl\n    artist {\n      id\n      name\n    }\n    tracks {\n      id\n      title\n      isMissing\n      trackLength\n      media {\n        id\n        audioQualityLabel\n      }\n    }\n  }\n",
+): (typeof documents)["\n  fragment PlayAlbumButton_Release on Release {\n    id\n    folderName\n    coverArtUrl\n    artist {\n      id\n      name\n    }\n    tracks {\n      id\n      title\n      isMissing\n      trackLength\n      media {\n        id\n        audioQualityLabel\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment ArtistCard_Artist on Artist {\n    id\n    name\n    listeners\n    images {\n      thumbs\n    }\n  }\n"): (typeof documents)["\n  fragment ArtistCard_Artist on Artist {\n    id\n    name\n    listeners\n    images {\n      thumbs\n    }\n  }\n"];
+export function graphql(
+  source: "\n  fragment AlbumList_Release on Release {\n    id\n    ...AlbumCard_Release\n  }\n",
+): (typeof documents)["\n  fragment AlbumList_Release on Release {\n    id\n    ...AlbumCard_Release\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment MbArtistCard_MbArtist on MbArtist {\n    id\n    name\n    listeners\n    images {\n      artistThumb\n    }\n  }\n"): (typeof documents)["\n  fragment MbArtistCard_MbArtist on MbArtist {\n    id\n    name\n    listeners\n    images {\n      artistThumb\n    }\n  }\n"];
+export function graphql(
+  source: "\n  fragment ArtistCard_Artist on Artist {\n    id\n    name\n    listeners\n    images {\n      thumbs\n    }\n  }\n",
+): (typeof documents)["\n  fragment ArtistCard_Artist on Artist {\n    id\n    name\n    listeners\n    images {\n      thumbs\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment TopArtistCard_Artist on LastFmArtist {\n    id\n    name\n    musicBrainzArtist {\n      id\n      name\n      images {\n        artistThumb\n      }\n    }\n    statistics {\n      listeners\n    }\n  }\n"): (typeof documents)["\n  fragment TopArtistCard_Artist on LastFmArtist {\n    id\n    name\n    musicBrainzArtist {\n      id\n      name\n      images {\n        artistThumb\n      }\n    }\n    statistics {\n      listeners\n    }\n  }\n"];
+export function graphql(
+  source: "\n  fragment MbArtistCard_MbArtist on MbArtist {\n    id\n    name\n    listeners\n    images {\n      artistThumb\n    }\n  }\n",
+): (typeof documents)["\n  fragment MbArtistCard_MbArtist on MbArtist {\n    id\n    name\n    listeners\n    images {\n      artistThumb\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment ArtistList_Artist on Artist {\n    id\n    ...ArtistCard_Artist\n  }\n"): (typeof documents)["\n  fragment ArtistList_Artist on Artist {\n    id\n    ...ArtistCard_Artist\n  }\n"];
+export function graphql(
+  source: "\n  fragment TopArtistCard_Artist on LastFmArtist {\n    id\n    name\n    musicBrainzArtist {\n      id\n      name\n      images {\n        artistThumb\n      }\n    }\n    statistics {\n      listeners\n    }\n  }\n",
+): (typeof documents)["\n  fragment TopArtistCard_Artist on LastFmArtist {\n    id\n    name\n    musicBrainzArtist {\n      id\n      name\n      images {\n        artistThumb\n      }\n    }\n    statistics {\n      listeners\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment ArtistNotInLibraryPanel_MbArtist on MbArtist {\n    id\n    name\n    images {\n      artistBackground\n    }\n    listeners\n    lastFmArtist {\n      id\n      ...ArtistNotInLibraryTopTracks_LastFmArtist\n    }\n  }\n"): (typeof documents)["\n  fragment ArtistNotInLibraryPanel_MbArtist on MbArtist {\n    id\n    name\n    images {\n      artistBackground\n    }\n    listeners\n    lastFmArtist {\n      id\n      ...ArtistNotInLibraryTopTracks_LastFmArtist\n    }\n  }\n"];
+export function graphql(
+  source: "\n  fragment ArtistList_Artist on Artist {\n    id\n    ...ArtistCard_Artist\n  }\n",
+): (typeof documents)["\n  fragment ArtistList_Artist on Artist {\n    id\n    ...ArtistCard_Artist\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment ArtistNotInLibraryTopTracks_LastFmArtist on LastFmArtist {\n    id\n    topTracks {\n      id\n      name\n      statistics {\n        listeners\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment ArtistNotInLibraryTopTracks_LastFmArtist on LastFmArtist {\n    id\n    topTracks {\n      id\n      name\n      statistics {\n        listeners\n      }\n    }\n  }\n"];
+export function graphql(
+  source: "\n  fragment ArtistNotInLibraryPanel_MbArtist on MbArtist {\n    id\n    name\n    images {\n      artistBackground\n    }\n    listeners\n    lastFmArtist {\n      id\n      ...ArtistNotInLibraryTopTracks_LastFmArtist\n    }\n  }\n",
+): (typeof documents)["\n  fragment ArtistNotInLibraryPanel_MbArtist on MbArtist {\n    id\n    name\n    images {\n      artistBackground\n    }\n    listeners\n    lastFmArtist {\n      id\n      ...ArtistNotInLibraryTopTracks_LastFmArtist\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query ArtistAlbumList($artistId: ID!) {\n    serverLibrary {\n      artistById(id: $artistId) {\n        id\n        albums {\n          id\n          firstReleaseDate\n          ...AlbumCard_Release\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  query ArtistAlbumList($artistId: ID!) {\n    serverLibrary {\n      artistById(id: $artistId) {\n        id\n        albums {\n          id\n          firstReleaseDate\n          ...AlbumCard_Release\n        }\n      }\n    }\n  }\n"];
+export function graphql(
+  source: "\n  fragment ArtistNotInLibraryTopTracks_LastFmArtist on LastFmArtist {\n    id\n    topTracks {\n      id\n      name\n      statistics {\n        listeners\n      }\n    }\n  }\n",
+): (typeof documents)["\n  fragment ArtistNotInLibraryTopTracks_LastFmArtist on LastFmArtist {\n    id\n    topTracks {\n      id\n      name\n      statistics {\n        listeners\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query ArtistEpList($artistId: ID!) {\n    serverLibrary {\n      artistById(id: $artistId) {\n        id\n        eps {\n          id\n          firstReleaseDate\n          ...AlbumCard_Release\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  query ArtistEpList($artistId: ID!) {\n    serverLibrary {\n      artistById(id: $artistId) {\n        id\n        eps {\n          id\n          firstReleaseDate\n          ...AlbumCard_Release\n        }\n      }\n    }\n  }\n"];
+export function graphql(
+  source: "\n  query ArtistAlbumList($artistId: ID!) {\n    serverLibrary {\n      artistById(id: $artistId) {\n        id\n        albums {\n          id\n          firstReleaseDate\n          ...AlbumCard_Release\n        }\n      }\n    }\n  }\n",
+): (typeof documents)["\n  query ArtistAlbumList($artistId: ID!) {\n    serverLibrary {\n      artistById(id: $artistId) {\n        id\n        albums {\n          id\n          firstReleaseDate\n          ...AlbumCard_Release\n        }\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment ArtistPanel_Artist on Artist {\n    id\n    name\n    listeners\n    albums {\n      id\n      firstReleaseDate\n      isFullyMissing\n      ...AlbumCard_Release\n    }\n    eps {\n      id\n      firstReleaseDate\n      isFullyMissing\n      ...AlbumCard_Release\n    }\n    singles {\n      id\n      firstReleaseDate\n      isFullyMissing\n      ...AlbumCard_Release\n    }\n    images {\n      backgrounds\n    }\n    serverStatus {\n      id\n      result {\n        __typename\n        ... on ArtistServerStatusResultBase {\n          topTracksVisible\n          releasesVisible\n        }\n        ... on ArtistServerStatusImportingArtistReleases {\n          numReleaseGroupsFinishedImporting\n          totalNumReleaseGroupsBeingImported\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment ArtistPanel_Artist on Artist {\n    id\n    name\n    listeners\n    albums {\n      id\n      firstReleaseDate\n      isFullyMissing\n      ...AlbumCard_Release\n    }\n    eps {\n      id\n      firstReleaseDate\n      isFullyMissing\n      ...AlbumCard_Release\n    }\n    singles {\n      id\n      firstReleaseDate\n      isFullyMissing\n      ...AlbumCard_Release\n    }\n    images {\n      backgrounds\n    }\n    serverStatus {\n      id\n      result {\n        __typename\n        ... on ArtistServerStatusResultBase {\n          topTracksVisible\n          releasesVisible\n        }\n        ... on ArtistServerStatusImportingArtistReleases {\n          numReleaseGroupsFinishedImporting\n          totalNumReleaseGroupsBeingImported\n        }\n      }\n    }\n  }\n"];
+export function graphql(
+  source: "\n  query ArtistEpList($artistId: ID!) {\n    serverLibrary {\n      artistById(id: $artistId) {\n        id\n        eps {\n          id\n          firstReleaseDate\n          ...AlbumCard_Release\n        }\n      }\n    }\n  }\n",
+): (typeof documents)["\n  query ArtistEpList($artistId: ID!) {\n    serverLibrary {\n      artistById(id: $artistId) {\n        id\n        eps {\n          id\n          firstReleaseDate\n          ...AlbumCard_Release\n        }\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  mutation PanelRefreshTopTracks($input: RefreshArtistTopTracksInput!) {\n    refreshArtistTopTracks(input: $input) {\n      __typename\n      ... on RefreshArtistTopTracksSuccess {\n        artist {\n          id\n          topTracks {\n            ...TopArtistTrackItem_ArtistTopTrack\n          }\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation PanelRefreshTopTracks($input: RefreshArtistTopTracksInput!) {\n    refreshArtistTopTracks(input: $input) {\n      __typename\n      ... on RefreshArtistTopTracksSuccess {\n        artist {\n          id\n          topTracks {\n            ...TopArtistTrackItem_ArtistTopTrack\n          }\n        }\n      }\n    }\n  }\n"];
+export function graphql(
+  source: "\n  fragment ArtistPanel_Artist on Artist {\n    id\n    name\n    listeners\n    albums {\n      id\n      firstReleaseDate\n      isFullyMissing\n      ...AlbumCard_Release\n    }\n    eps {\n      id\n      firstReleaseDate\n      isFullyMissing\n      ...AlbumCard_Release\n    }\n    singles {\n      id\n      firstReleaseDate\n      isFullyMissing\n      ...AlbumCard_Release\n    }\n    images {\n      backgrounds\n    }\n    serverStatus {\n      id\n      result {\n        __typename\n        ... on ArtistServerStatusResultBase {\n          topTracksVisible\n          releasesVisible\n        }\n        ... on ArtistServerStatusImportingArtistReleases {\n          numReleaseGroupsFinishedImporting\n          totalNumReleaseGroupsBeingImported\n        }\n      }\n    }\n  }\n",
+): (typeof documents)["\n  fragment ArtistPanel_Artist on Artist {\n    id\n    name\n    listeners\n    albums {\n      id\n      firstReleaseDate\n      isFullyMissing\n      ...AlbumCard_Release\n    }\n    eps {\n      id\n      firstReleaseDate\n      isFullyMissing\n      ...AlbumCard_Release\n    }\n    singles {\n      id\n      firstReleaseDate\n      isFullyMissing\n      ...AlbumCard_Release\n    }\n    images {\n      backgrounds\n    }\n    serverStatus {\n      id\n      result {\n        __typename\n        ... on ArtistServerStatusResultBase {\n          topTracksVisible\n          releasesVisible\n        }\n        ... on ArtistServerStatusImportingArtistReleases {\n          numReleaseGroupsFinishedImporting\n          totalNumReleaseGroupsBeingImported\n        }\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  mutation PanelRefreshArtistMetaData($artistId: String!) {\n    refreshArtistMetaData(input: { artistId: $artistId }) {\n      __typename\n      ... on RefreshArtistMetaDataSuccess {\n        artist {\n          id\n          ...ArtistPanel_Artist\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation PanelRefreshArtistMetaData($artistId: String!) {\n    refreshArtistMetaData(input: { artistId: $artistId }) {\n      __typename\n      ... on RefreshArtistMetaDataSuccess {\n        artist {\n          id\n          ...ArtistPanel_Artist\n        }\n      }\n    }\n  }\n"];
+export function graphql(
+  source: "\n  mutation PanelRefreshTopTracks($input: RefreshArtistTopTracksInput!) {\n    refreshArtistTopTracks(input: $input) {\n      __typename\n      ... on RefreshArtistTopTracksSuccess {\n        artist {\n          id\n          topTracks {\n            ...TopArtistTrackItem_ArtistTopTrack\n          }\n        }\n      }\n    }\n  }\n",
+): (typeof documents)["\n  mutation PanelRefreshTopTracks($input: RefreshArtistTopTracksInput!) {\n    refreshArtistTopTracks(input: $input) {\n      __typename\n      ... on RefreshArtistTopTracksSuccess {\n        artist {\n          id\n          topTracks {\n            ...TopArtistTrackItem_ArtistTopTrack\n          }\n        }\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query ArtistSingleList($artistId: ID!) {\n    serverLibrary {\n      artistById(id: $artistId) {\n        id\n        singles {\n          id\n          firstReleaseDate\n          ...AlbumCard_Release\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  query ArtistSingleList($artistId: ID!) {\n    serverLibrary {\n      artistById(id: $artistId) {\n        id\n        singles {\n          id\n          firstReleaseDate\n          ...AlbumCard_Release\n        }\n      }\n    }\n  }\n"];
+export function graphql(
+  source: "\n  mutation PanelRefreshArtistMetaData($artistId: String!) {\n    refreshArtistMetaData(input: { artistId: $artistId }) {\n      __typename\n      ... on RefreshArtistMetaDataSuccess {\n        artist {\n          id\n          ...ArtistPanel_Artist\n        }\n      }\n    }\n  }\n",
+): (typeof documents)["\n  mutation PanelRefreshArtistMetaData($artistId: String!) {\n    refreshArtistMetaData(input: { artistId: $artistId }) {\n      __typename\n      ... on RefreshArtistMetaDataSuccess {\n        artist {\n          id\n          ...ArtistPanel_Artist\n        }\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment TopArtistTrackItem_ArtistTopTrack on ArtistTopTrack {\n    title\n    releaseTitle\n    playCount\n    coverArtUrl\n    track {\n      id\n      ...MusicPlayerTrackFactory_Track\n      ...AlbumTrackTag_Track\n      trackLength\n      trackNumber\n      isMissing\n      release {\n        id\n        folderName\n        artist {\n          id\n          images {\n            thumbs\n          }\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment TopArtistTrackItem_ArtistTopTrack on ArtistTopTrack {\n    title\n    releaseTitle\n    playCount\n    coverArtUrl\n    track {\n      id\n      ...MusicPlayerTrackFactory_Track\n      ...AlbumTrackTag_Track\n      trackLength\n      trackNumber\n      isMissing\n      release {\n        id\n        folderName\n        artist {\n          id\n          images {\n            thumbs\n          }\n        }\n      }\n    }\n  }\n"];
+export function graphql(
+  source: "\n  query ArtistSingleList($artistId: ID!) {\n    serverLibrary {\n      artistById(id: $artistId) {\n        id\n        singles {\n          id\n          firstReleaseDate\n          ...AlbumCard_Release\n        }\n      }\n    }\n  }\n",
+): (typeof documents)["\n  query ArtistSingleList($artistId: ID!) {\n    serverLibrary {\n      artistById(id: $artistId) {\n        id\n        singles {\n          id\n          firstReleaseDate\n          ...AlbumCard_Release\n        }\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query TopArtistTracks($artistId: ID!) {\n    serverLibrary {\n      artistById(id: $artistId) {\n        id\n        topTracks {\n          ...TopArtistTrackItem_ArtistTopTrack\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  query TopArtistTracks($artistId: ID!) {\n    serverLibrary {\n      artistById(id: $artistId) {\n        id\n        topTracks {\n          ...TopArtistTrackItem_ArtistTopTrack\n        }\n      }\n    }\n  }\n"];
+export function graphql(
+  source: "\n  fragment TopArtistTrackItem_ArtistTopTrack on ArtistTopTrack {\n    title\n    releaseTitle\n    playCount\n    coverArtUrl\n    track {\n      id\n      ...MusicPlayerTrackFactory_Track\n      ...AlbumTrackTag_Track\n      trackLength\n      trackNumber\n      isMissing\n      release {\n        id\n        folderName\n        artist {\n          id\n          images {\n            thumbs\n          }\n        }\n      }\n    }\n  }\n",
+): (typeof documents)["\n  fragment TopArtistTrackItem_ArtistTopTrack on ArtistTopTrack {\n    title\n    releaseTitle\n    playCount\n    coverArtUrl\n    track {\n      id\n      ...MusicPlayerTrackFactory_Track\n      ...AlbumTrackTag_Track\n      trackLength\n      trackNumber\n      isMissing\n      release {\n        id\n        folderName\n        artist {\n          id\n          images {\n            thumbs\n          }\n        }\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query ArtistTopTracksForQueue($artistId: ID!) {\n    serverLibrary {\n      artistById(id: $artistId) {\n        id\n        topTracks {\n          title\n          coverArtUrl\n          track {\n            trackNumber\n            trackLength\n            release {\n              folderName\n              artist {\n                id\n                name\n              }\n            }\n          }\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  query ArtistTopTracksForQueue($artistId: ID!) {\n    serverLibrary {\n      artistById(id: $artistId) {\n        id\n        topTracks {\n          title\n          coverArtUrl\n          track {\n            trackNumber\n            trackLength\n            release {\n              folderName\n              artist {\n                id\n                name\n              }\n            }\n          }\n        }\n      }\n    }\n  }\n"];
+export function graphql(
+  source: "\n  query TopArtistTracks($artistId: ID!) {\n    serverLibrary {\n      artistById(id: $artistId) {\n        id\n        topTracks {\n          ...TopArtistTrackItem_ArtistTopTrack\n        }\n      }\n    }\n  }\n",
+): (typeof documents)["\n  query TopArtistTracks($artistId: ID!) {\n    serverLibrary {\n      artistById(id: $artistId) {\n        id\n        topTracks {\n          ...TopArtistTrackItem_ArtistTopTrack\n        }\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query ArtistServerStatus($artistId: ID!) {\n    serverLibrary {\n      artistById(id: $artistId) {\n        id\n        serverStatus {\n          id\n          result {\n            __typename\n            ... on ArtistServerStatusResultBase {\n              releasesVisible\n              topTracksVisible\n            }\n            ... on ArtistServerStatusImportingArtistReleases {\n              totalNumReleaseGroupsBeingImported\n              numReleaseGroupsFinishedImporting\n            }\n          }\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  query ArtistServerStatus($artistId: ID!) {\n    serverLibrary {\n      artistById(id: $artistId) {\n        id\n        serverStatus {\n          id\n          result {\n            __typename\n            ... on ArtistServerStatusResultBase {\n              releasesVisible\n              topTracksVisible\n            }\n            ... on ArtistServerStatusImportingArtistReleases {\n              totalNumReleaseGroupsBeingImported\n              numReleaseGroupsFinishedImporting\n            }\n          }\n        }\n      }\n    }\n  }\n"];
+export function graphql(
+  source: "\n  query ArtistTopTracksForQueue($artistId: ID!) {\n    serverLibrary {\n      artistById(id: $artistId) {\n        id\n        topTracks {\n          title\n          coverArtUrl\n          track {\n            trackNumber\n            trackLength\n            release {\n              folderName\n              artist {\n                id\n                name\n              }\n            }\n          }\n        }\n      }\n    }\n  }\n",
+): (typeof documents)["\n  query ArtistTopTracksForQueue($artistId: ID!) {\n    serverLibrary {\n      artistById(id: $artistId) {\n        id\n        topTracks {\n          title\n          coverArtUrl\n          track {\n            trackNumber\n            trackLength\n            release {\n              folderName\n              artist {\n                id\n                name\n              }\n            }\n          }\n        }\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  subscription ArtistServerStatusSub($artistId: ID!) {\n    artistServerStatusUpdated(artistId: $artistId) {\n      id\n      result {\n        __typename\n        ... on ArtistServerStatusResultBase {\n          releasesVisible\n          topTracksVisible\n        }\n        ... on ArtistServerStatusImportingArtistReleases {\n          totalNumReleaseGroupsBeingImported\n          numReleaseGroupsFinishedImporting\n          artist {\n            id\n            albums {\n              id\n              firstReleaseDate\n              ...AlbumCard_Release\n            }\n            eps {\n              id\n              firstReleaseDate\n              ...AlbumCard_Release\n            }\n            singles {\n              id\n              firstReleaseDate\n              ...AlbumCard_Release\n            }\n          }\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  subscription ArtistServerStatusSub($artistId: ID!) {\n    artistServerStatusUpdated(artistId: $artistId) {\n      id\n      result {\n        __typename\n        ... on ArtistServerStatusResultBase {\n          releasesVisible\n          topTracksVisible\n        }\n        ... on ArtistServerStatusImportingArtistReleases {\n          totalNumReleaseGroupsBeingImported\n          numReleaseGroupsFinishedImporting\n          artist {\n            id\n            albums {\n              id\n              firstReleaseDate\n              ...AlbumCard_Release\n            }\n            eps {\n              id\n              firstReleaseDate\n              ...AlbumCard_Release\n            }\n            singles {\n              id\n              firstReleaseDate\n              ...AlbumCard_Release\n            }\n          }\n        }\n      }\n    }\n  }\n"];
+export function graphql(
+  source: "\n  query ArtistServerStatus($artistId: ID!) {\n    serverLibrary {\n      artistById(id: $artistId) {\n        id\n        serverStatus {\n          id\n          result {\n            __typename\n            ... on ArtistServerStatusResultBase {\n              releasesVisible\n              topTracksVisible\n            }\n            ... on ArtistServerStatusImportingArtistReleases {\n              totalNumReleaseGroupsBeingImported\n              numReleaseGroupsFinishedImporting\n            }\n          }\n        }\n      }\n    }\n  }\n",
+): (typeof documents)["\n  query ArtistServerStatus($artistId: ID!) {\n    serverLibrary {\n      artistById(id: $artistId) {\n        id\n        serverStatus {\n          id\n          result {\n            __typename\n            ... on ArtistServerStatusResultBase {\n              releasesVisible\n              topTracksVisible\n            }\n            ... on ArtistServerStatusImportingArtistReleases {\n              totalNumReleaseGroupsBeingImported\n              numReleaseGroupsFinishedImporting\n            }\n          }\n        }\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  mutation SignIn($username: String!, $password: String!) {\n    signIn(input: { username: $username, password: $password }) {\n      __typename\n      ... on SignInSuccess {\n        user {\n          id\n          username\n        }\n      }\n      ... on SignInError {\n        message\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation SignIn($username: String!, $password: String!) {\n    signIn(input: { username: $username, password: $password }) {\n      __typename\n      ... on SignInSuccess {\n        user {\n          id\n          username\n        }\n      }\n      ... on SignInError {\n        message\n      }\n    }\n  }\n"];
+export function graphql(
+  source: "\n  subscription ArtistServerStatusSub($artistId: ID!) {\n    artistServerStatusUpdated(artistId: $artistId) {\n      id\n      result {\n        __typename\n        ... on ArtistServerStatusResultBase {\n          releasesVisible\n          topTracksVisible\n        }\n        ... on ArtistServerStatusImportingArtistReleases {\n          totalNumReleaseGroupsBeingImported\n          numReleaseGroupsFinishedImporting\n          artist {\n            id\n            albums {\n              id\n              firstReleaseDate\n              ...AlbumCard_Release\n            }\n            eps {\n              id\n              firstReleaseDate\n              ...AlbumCard_Release\n            }\n            singles {\n              id\n              firstReleaseDate\n              ...AlbumCard_Release\n            }\n          }\n        }\n      }\n    }\n  }\n",
+): (typeof documents)["\n  subscription ArtistServerStatusSub($artistId: ID!) {\n    artistServerStatusUpdated(artistId: $artistId) {\n      id\n      result {\n        __typename\n        ... on ArtistServerStatusResultBase {\n          releasesVisible\n          topTracksVisible\n        }\n        ... on ArtistServerStatusImportingArtistReleases {\n          totalNumReleaseGroupsBeingImported\n          numReleaseGroupsFinishedImporting\n          artist {\n            id\n            albums {\n              id\n              firstReleaseDate\n              ...AlbumCard_Release\n            }\n            eps {\n              id\n              firstReleaseDate\n              ...AlbumCard_Release\n            }\n            singles {\n              id\n              firstReleaseDate\n              ...AlbumCard_Release\n            }\n          }\n        }\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  mutation SignOut {\n    signOut {\n      __typename\n\n      ... on SignOutSuccess {\n        success\n      }\n      ... on SignOutError {\n        message\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation SignOut {\n    signOut {\n      __typename\n\n      ... on SignOutSuccess {\n        success\n      }\n      ... on SignOutError {\n        message\n      }\n    }\n  }\n"];
+export function graphql(
+  source: "\n  mutation SignIn($username: String!, $password: String!) {\n    signIn(input: { username: $username, password: $password }) {\n      __typename\n      ... on SignInSuccess {\n        user {\n          id\n          username\n        }\n      }\n      ... on SignInError {\n        message\n      }\n    }\n  }\n",
+): (typeof documents)["\n  mutation SignIn($username: String!, $password: String!) {\n    signIn(input: { username: $username, password: $password }) {\n      __typename\n      ... on SignInSuccess {\n        user {\n          id\n          username\n        }\n      }\n      ... on SignInError {\n        message\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment DownloadOverview_DownloadStatus on Query {\n    areThereAnyUsers\n  }\n"): (typeof documents)["\n  fragment DownloadOverview_DownloadStatus on Query {\n    areThereAnyUsers\n  }\n"];
+export function graphql(
+  source: "\n  mutation SignOut {\n    signOut {\n      __typename\n\n      ... on SignOutSuccess {\n        success\n      }\n      ... on SignOutError {\n        message\n      }\n    }\n  }\n",
+): (typeof documents)["\n  mutation SignOut {\n    signOut {\n      __typename\n\n      ... on SignOutSuccess {\n        success\n      }\n      ... on SignOutError {\n        message\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query DownloadOverviewQuery {\n    areThereAnyUsers\n  }\n"): (typeof documents)["\n  query DownloadOverviewQuery {\n    areThereAnyUsers\n  }\n"];
+export function graphql(
+  source: "\n  query DownloadOverviewQuery {\n    areThereAnyUsers\n  }\n",
+): (typeof documents)["\n  query DownloadOverviewQuery {\n    areThereAnyUsers\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  subscription DownloadOverviewSubscription {\n    ping {\n      id\n    }\n  }\n"): (typeof documents)["\n  subscription DownloadOverviewSubscription {\n    ping {\n      id\n    }\n  }\n"];
+export function graphql(
+  source: "\n  subscription DownloadOverviewSubscription {\n    ping {\n      id\n    }\n  }\n",
+): (typeof documents)["\n  subscription DownloadOverviewSubscription {\n    ping {\n      id\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment DownloadStatus_DownloadStatus on Query {\n    areThereAnyUsers\n  }\n"): (typeof documents)["\n  fragment DownloadStatus_DownloadStatus on Query {\n    areThereAnyUsers\n  }\n"];
+export function graphql(
+  source: "\n  fragment ReleaseDownloadButton_Release on Release {\n    id\n    isFullyMissing\n    folderName\n    downloadStatus\n    artist {\n      id\n    }\n  }\n",
+): (typeof documents)["\n  fragment ReleaseDownloadButton_Release on Release {\n    id\n    isFullyMissing\n    folderName\n    downloadStatus\n    artist {\n      id\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment ReleaseDownloadButton_Release on Release {\n    id\n    isFullyMissing\n    folderName\n    downloadStatus\n    artist {\n      id\n    }\n  }\n"): (typeof documents)["\n  fragment ReleaseDownloadButton_Release on Release {\n    id\n    isFullyMissing\n    folderName\n    downloadStatus\n    artist {\n      id\n    }\n  }\n"];
+export function graphql(
+  source: "\n  mutation AlbumPanel_StartDownloadRelease(\n    $artistId: String!\n    $releaseFolderName: String!\n  ) {\n    startDownloadRelease(\n      input: { artistId: $artistId, releaseFolderName: $releaseFolderName }\n    ) {\n      __typename\n      ... on StartDownloadReleaseSuccess {\n        success\n      }\n    }\n  }\n",
+): (typeof documents)["\n  mutation AlbumPanel_StartDownloadRelease(\n    $artistId: String!\n    $releaseFolderName: String!\n  ) {\n    startDownloadRelease(\n      input: { artistId: $artistId, releaseFolderName: $releaseFolderName }\n    ) {\n      __typename\n      ... on StartDownloadReleaseSuccess {\n        success\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  mutation AlbumPanel_StartDownloadRelease(\n    $artistId: String!\n    $releaseFolderName: String!\n  ) {\n    startDownloadRelease(\n      input: { artistId: $artistId, releaseFolderName: $releaseFolderName }\n    ) {\n      __typename\n      ... on StartDownloadReleaseSuccess {\n        success\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation AlbumPanel_StartDownloadRelease(\n    $artistId: String!\n    $releaseFolderName: String!\n  ) {\n    startDownloadRelease(\n      input: { artistId: $artistId, releaseFolderName: $releaseFolderName }\n    ) {\n      __typename\n      ... on StartDownloadReleaseSuccess {\n        success\n      }\n    }\n  }\n"];
+export function graphql(
+  source: "\n  subscription ReleaseDownloadButton(\n    $artistId: String!\n    $releaseFolderName: String!\n  ) {\n    libraryReleaseDownloadStatusUpdated(\n      artistId: $artistId\n      releaseFolderName: $releaseFolderName\n    ) {\n      release {\n        id\n        downloadStatus\n        isFullyMissing\n      }\n    }\n  }\n",
+): (typeof documents)["\n  subscription ReleaseDownloadButton(\n    $artistId: String!\n    $releaseFolderName: String!\n  ) {\n    libraryReleaseDownloadStatusUpdated(\n      artistId: $artistId\n      releaseFolderName: $releaseFolderName\n    ) {\n      release {\n        id\n        downloadStatus\n        isFullyMissing\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  subscription ReleaseDownloadButton(\n    $artistId: String!\n    $releaseFolderName: String!\n  ) {\n    libraryReleaseDownloadStatusUpdated(\n      artistId: $artistId\n      releaseFolderName: $releaseFolderName\n    ) {\n      release {\n        id\n        downloadStatus\n        isFullyMissing\n      }\n    }\n  }\n"): (typeof documents)["\n  subscription ReleaseDownloadButton(\n    $artistId: String!\n    $releaseFolderName: String!\n  ) {\n    libraryReleaseDownloadStatusUpdated(\n      artistId: $artistId\n      releaseFolderName: $releaseFolderName\n    ) {\n      release {\n        id\n        downloadStatus\n        isFullyMissing\n      }\n    }\n  }\n"];
+export function graphql(
+  source: "\n  mutation CreateUser($username: String!, $password: String!) {\n    createUser(input: { username: $username, password: $password }) {\n      __typename\n      ... on CreateUserSuccess {\n        # Assuming a similar success payload\n        user {\n          id\n          username\n        }\n      }\n      ... on CreateUserError {\n        # Assuming a similar error payload\n        message\n      }\n    }\n  }\n",
+): (typeof documents)["\n  mutation CreateUser($username: String!, $password: String!) {\n    createUser(input: { username: $username, password: $password }) {\n      __typename\n      ... on CreateUserSuccess {\n        # Assuming a similar success payload\n        user {\n          id\n          username\n        }\n      }\n      ... on CreateUserError {\n        # Assuming a similar error payload\n        message\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  mutation CreateUser($username: String!, $password: String!) {\n    createUser(input: { username: $username, password: $password }) {\n      __typename\n      ... on CreateUserSuccess {\n        # Assuming a similar success payload\n        user {\n          id\n          username\n        }\n      }\n      ... on CreateUserError {\n        # Assuming a similar error payload\n        message\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation CreateUser($username: String!, $password: String!) {\n    createUser(input: { username: $username, password: $password }) {\n      __typename\n      ... on CreateUserSuccess {\n        # Assuming a similar success payload\n        user {\n          id\n          username\n        }\n      }\n      ... on CreateUserError {\n        # Assuming a similar error payload\n        message\n      }\n    }\n  }\n"];
+export function graphql(
+  source: "\n  fragment LikedSongRow_LikedSong on LikedSong {\n    id\n    recording {\n      id\n      title\n      length\n      artists {\n        id\n        name\n      }\n      mainAlbum {\n        id\n        title\n        coverArtUri\n        artists {\n          id\n        }\n      }\n    }\n  }\n",
+): (typeof documents)["\n  fragment LikedSongRow_LikedSong on LikedSong {\n    id\n    recording {\n      id\n      title\n      length\n      artists {\n        id\n        name\n      }\n      mainAlbum {\n        id\n        title\n        coverArtUri\n        artists {\n          id\n        }\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment LikedSongRow_LikedSong on LikedSong {\n    id\n    recording {\n      id\n      title\n      length\n      artists {\n        id\n        name\n      }\n      mainAlbum {\n        id\n        title\n        coverArtUri\n        artists {\n          id\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment LikedSongRow_LikedSong on LikedSong {\n    id\n    recording {\n      id\n      title\n      length\n      artists {\n        id\n        name\n      }\n      mainAlbum {\n        id\n        title\n        coverArtUri\n        artists {\n          id\n        }\n      }\n    }\n  }\n"];
+export function graphql(
+  source: "\n  fragment LikedSongsList_User on User {\n    id\n    likedSongs {\n      id\n      ...LikedSongRow_LikedSong\n    }\n  }\n",
+): (typeof documents)["\n  fragment LikedSongsList_User on User {\n    id\n    likedSongs {\n      id\n      ...LikedSongRow_LikedSong\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment LikedSongsList_User on User {\n    id\n    likedSongs {\n      id\n      ...LikedSongRow_LikedSong\n    }\n  }\n"): (typeof documents)["\n  fragment LikedSongsList_User on User {\n    id\n    likedSongs {\n      id\n      ...LikedSongRow_LikedSong\n    }\n  }\n"];
+export function graphql(
+  source: "\n  fragment MusicPlayerTrackFactory_Track on Track {\n    id\n    title\n    trackLength\n    trackNumber\n    media {\n      id\n      audioQualityLabel\n    }\n    release {\n      id\n      folderName\n      coverArtUrl\n      artist {\n        id\n        name\n      }\n    }\n    trackNumber\n  }\n",
+): (typeof documents)["\n  fragment MusicPlayerTrackFactory_Track on Track {\n    id\n    title\n    trackLength\n    trackNumber\n    media {\n      id\n      audioQualityLabel\n    }\n    release {\n      id\n      folderName\n      coverArtUrl\n      artist {\n        id\n        name\n      }\n    }\n    trackNumber\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment MusicPlayerTrackFactory_Track on Track {\n    id\n    title\n    trackLength\n    trackNumber\n    media {\n      id\n      audioQualityLabel\n    }\n    release {\n      id\n      folderName\n      coverArtUrl\n      artist {\n        id\n        name\n      }\n    }\n    trackNumber\n  }\n"): (typeof documents)["\n  fragment MusicPlayerTrackFactory_Track on Track {\n    id\n    title\n    trackLength\n    trackNumber\n    media {\n      id\n      audioQualityLabel\n    }\n    release {\n      id\n      folderName\n      coverArtUrl\n      artist {\n        id\n        name\n      }\n    }\n    trackNumber\n  }\n"];
+export function graphql(
+  source: "\n  mutation CreatePlaylist {\n    createPlaylist {\n      __typename\n      ... on CreatePlaylistSuccess {\n        viewer {\n          id\n          playlists {\n            id\n            name\n            createdAt\n          }\n        }\n      }\n    }\n  }\n",
+): (typeof documents)["\n  mutation CreatePlaylist {\n    createPlaylist {\n      __typename\n      ... on CreatePlaylistSuccess {\n        viewer {\n          id\n          playlists {\n            id\n            name\n            createdAt\n          }\n        }\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  mutation CreatePlaylist {\n    createPlaylist {\n      __typename\n      ... on CreatePlaylistSuccess {\n        viewer {\n          id\n          playlists {\n            id\n            name\n            createdAt\n          }\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation CreatePlaylist {\n    createPlaylist {\n      __typename\n      ... on CreatePlaylistSuccess {\n        viewer {\n          id\n          playlists {\n            id\n            name\n            createdAt\n          }\n        }\n      }\n    }\n  }\n"];
+export function graphql(
+  source: "\n  fragment PlaylistPanel_Playlist on Playlist {\n    id\n    name\n    tracks {\n      id\n      title\n      trackLength\n      trackNumber\n      media {\n        id\n        audioQualityLabel\n      }\n      release {\n        id\n        folderName\n        coverArtUrl\n        artist {\n          id\n          name\n          images {\n            thumbs\n          }\n        }\n      }\n      ...AlbumTrackTag_Track\n    }\n  }\n",
+): (typeof documents)["\n  fragment PlaylistPanel_Playlist on Playlist {\n    id\n    name\n    tracks {\n      id\n      title\n      trackLength\n      trackNumber\n      media {\n        id\n        audioQualityLabel\n      }\n      release {\n        id\n        folderName\n        coverArtUrl\n        artist {\n          id\n          name\n          images {\n            thumbs\n          }\n        }\n      }\n      ...AlbumTrackTag_Track\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query PlaylistList {\n    viewer {\n      id\n      playlists {\n        id\n        name\n        createdAt\n      }\n    }\n  }\n"): (typeof documents)["\n  query PlaylistList {\n    viewer {\n      id\n      playlists {\n        id\n        name\n        createdAt\n      }\n    }\n  }\n"];
+export function graphql(
+  source: "\n  query PlaylistList {\n    viewer {\n      id\n      playlists {\n        id\n        name\n        createdAt\n      }\n    }\n  }\n",
+): (typeof documents)["\n  query PlaylistList {\n    viewer {\n      id\n      playlists {\n        id\n        name\n        createdAt\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  mutation RenamePlaylist($playlistId: String!, $newPlaylistName: String!) {\n    renamePlaylist(\n      input: { playlistId: $playlistId, newPlaylistName: $newPlaylistName }\n    ) {\n      __typename\n      ... on RenamePlaylistSuccess {\n        viewer {\n          id\n          playlists {\n            id\n            name\n            createdAt\n          }\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation RenamePlaylist($playlistId: String!, $newPlaylistName: String!) {\n    renamePlaylist(\n      input: { playlistId: $playlistId, newPlaylistName: $newPlaylistName }\n    ) {\n      __typename\n      ... on RenamePlaylistSuccess {\n        viewer {\n          id\n          playlists {\n            id\n            name\n            createdAt\n          }\n        }\n      }\n    }\n  }\n"];
+export function graphql(
+  source: "\n  mutation RenamePlaylist($playlistId: String!, $newPlaylistName: String!) {\n    renamePlaylist(\n      input: { playlistId: $playlistId, newPlaylistName: $newPlaylistName }\n    ) {\n      __typename\n      ... on RenamePlaylistSuccess {\n        viewer {\n          id\n          playlists {\n            id\n            name\n            createdAt\n          }\n        }\n      }\n    }\n  }\n",
+): (typeof documents)["\n  mutation RenamePlaylist($playlistId: String!, $newPlaylistName: String!) {\n    renamePlaylist(\n      input: { playlistId: $playlistId, newPlaylistName: $newPlaylistName }\n    ) {\n      __typename\n      ... on RenamePlaylistSuccess {\n        viewer {\n          id\n          playlists {\n            id\n            name\n            createdAt\n          }\n        }\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  mutation DeletePlaylist($playlistId: String!) {\n    deletePlaylist(input: { playlistId: $playlistId }) {\n      __typename\n      ... on DeletePlaylistSuccess {\n        viewer {\n          id\n          playlists {\n            id\n            name\n            createdAt\n          }\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation DeletePlaylist($playlistId: String!) {\n    deletePlaylist(input: { playlistId: $playlistId }) {\n      __typename\n      ... on DeletePlaylistSuccess {\n        viewer {\n          id\n          playlists {\n            id\n            name\n            createdAt\n          }\n        }\n      }\n    }\n  }\n"];
+export function graphql(
+  source: "\n  mutation DeletePlaylist($playlistId: String!) {\n    deletePlaylist(input: { playlistId: $playlistId }) {\n      __typename\n      ... on DeletePlaylistSuccess {\n        viewer {\n          id\n          playlists {\n            id\n            name\n            createdAt\n          }\n        }\n      }\n    }\n  }\n",
+): (typeof documents)["\n  mutation DeletePlaylist($playlistId: String!) {\n    deletePlaylist(input: { playlistId: $playlistId }) {\n      __typename\n      ... on DeletePlaylistSuccess {\n        viewer {\n          id\n          playlists {\n            id\n            name\n            createdAt\n          }\n        }\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query TopArtistRecommendations {\n    recommendations {\n      topArtists {\n        id\n        ...TopArtistCard_Artist\n      }\n    }\n  }\n"): (typeof documents)["\n  query TopArtistRecommendations {\n    recommendations {\n      topArtists {\n        id\n        ...TopArtistCard_Artist\n      }\n    }\n  }\n"];
+export function graphql(
+  source: "\n  query TopArtistRecommendations {\n    recommendations {\n      topArtists {\n        id\n        ...TopArtistCard_Artist\n      }\n    }\n  }\n",
+): (typeof documents)["\n  query TopArtistRecommendations {\n    recommendations {\n      topArtists {\n        id\n        ...TopArtistCard_Artist\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment TopTrackCard_LastFmTrack on LastFmTrack {\n    id\n    playCount\n    name\n    artist {\n      id\n      musicBrainzArtist {\n        id\n        name\n        images {\n          artistThumb\n        }\n      }\n    }\n    album {\n      id\n      imageUrl\n    }\n    images {\n      thumbs\n    }\n  }\n"): (typeof documents)["\n  fragment TopTrackCard_LastFmTrack on LastFmTrack {\n    id\n    playCount\n    name\n    artist {\n      id\n      musicBrainzArtist {\n        id\n        name\n        images {\n          artistThumb\n        }\n      }\n    }\n    album {\n      id\n      imageUrl\n    }\n    images {\n      thumbs\n    }\n  }\n"];
+export function graphql(
+  source: "\n  fragment TopTrackCard_LastFmTrack on LastFmTrack {\n    id\n    playCount\n    name\n    artist {\n      id\n      musicBrainzArtist {\n        id\n        name\n        images {\n          artistThumb\n        }\n      }\n    }\n    album {\n      id\n      imageUrl\n    }\n    images {\n      thumbs\n    }\n  }\n",
+): (typeof documents)["\n  fragment TopTrackCard_LastFmTrack on LastFmTrack {\n    id\n    playCount\n    name\n    artist {\n      id\n      musicBrainzArtist {\n        id\n        name\n        images {\n          artistThumb\n        }\n      }\n    }\n    album {\n      id\n      imageUrl\n    }\n    images {\n      thumbs\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query TopTrackRecommendations {\n    recommendations {\n      topTracks {\n        id\n        ...TopTrackCard_LastFmTrack\n      }\n    }\n  }\n"): (typeof documents)["\n  query TopTrackRecommendations {\n    recommendations {\n      topTracks {\n        id\n        ...TopTrackCard_LastFmTrack\n      }\n    }\n  }\n"];
+export function graphql(
+  source: "\n  query TopTrackRecommendations {\n    recommendations {\n      topTracks {\n        id\n        ...TopTrackCard_LastFmTrack\n      }\n    }\n  }\n",
+): (typeof documents)["\n  query TopTrackRecommendations {\n    recommendations {\n      topTracks {\n        id\n        ...TopTrackCard_LastFmTrack\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query AlbumSearchResultsSearch($text: String!, $limit: Int!) {\n    musicBrainz {\n      releaseGroup {\n        searchByName(name: $text, limit: $limit) {\n          id\n          title\n          ...MbReleaseGroupCard_MbReleaseGroup\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  query AlbumSearchResultsSearch($text: String!, $limit: Int!) {\n    musicBrainz {\n      releaseGroup {\n        searchByName(name: $text, limit: $limit) {\n          id\n          title\n          ...MbReleaseGroupCard_MbReleaseGroup\n        }\n      }\n    }\n  }\n"];
+export function graphql(
+  source: "\n  query AlbumSearchResultsSearch($text: String!, $limit: Int!) {\n    musicBrainz {\n      releaseGroup {\n        searchByName(name: $text, limit: $limit) {\n          id\n          title\n          ...MbReleaseGroupCard_MbReleaseGroup\n        }\n      }\n    }\n  }\n",
+): (typeof documents)["\n  query AlbumSearchResultsSearch($text: String!, $limit: Int!) {\n    musicBrainz {\n      releaseGroup {\n        searchByName(name: $text, limit: $limit) {\n          id\n          title\n          ...MbReleaseGroupCard_MbReleaseGroup\n        }\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query ArtistSearchResultsSearch($searchText: String!, $limit: Int!) {\n    musicBrainz {\n      artist {\n        searchByName(name: $searchText, limit: $limit) {\n          id\n          name\n          ...MbArtistCard_MbArtist\n          images {\n            artistThumb\n          }\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  query ArtistSearchResultsSearch($searchText: String!, $limit: Int!) {\n    musicBrainz {\n      artist {\n        searchByName(name: $searchText, limit: $limit) {\n          id\n          name\n          ...MbArtistCard_MbArtist\n          images {\n            artistThumb\n          }\n        }\n      }\n    }\n  }\n"];
+export function graphql(
+  source: "\n  query ArtistSearchResultsSearch($searchText: String!, $limit: Int!) {\n    musicBrainz {\n      artist {\n        searchByName(name: $searchText, limit: $limit) {\n          id\n          name\n          ...MbArtistCard_MbArtist\n          images {\n            artistThumb\n          }\n        }\n      }\n    }\n  }\n",
+): (typeof documents)["\n  query ArtistSearchResultsSearch($searchText: String!, $limit: Int!) {\n    musicBrainz {\n      artist {\n        searchByName(name: $searchText, limit: $limit) {\n          id\n          name\n          ...MbArtistCard_MbArtist\n          images {\n            artistThumb\n          }\n        }\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query RecordingSearchResultsSearch($text: String!, $limit: Int!) {\n    musicBrainz {\n      recording {\n        searchByName(name: $text, limit: $limit) {\n          id\n          title\n          length\n          nameCredits {\n            artist {\n              id\n              name\n            }\n          }\n          mainAlbum {\n            id\n            title\n            coverArtUri\n          }\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  query RecordingSearchResultsSearch($text: String!, $limit: Int!) {\n    musicBrainz {\n      recording {\n        searchByName(name: $text, limit: $limit) {\n          id\n          title\n          length\n          nameCredits {\n            artist {\n              id\n              name\n            }\n          }\n          mainAlbum {\n            id\n            title\n            coverArtUri\n          }\n        }\n      }\n    }\n  }\n"];
+export function graphql(
+  source: "\n  query RecordingSearchResultsSearch($text: String!, $limit: Int!) {\n    musicBrainz {\n      recording {\n        searchByName(name: $text, limit: $limit) {\n          id\n          title\n          length\n          nameCredits {\n            artist {\n              id\n              name\n            }\n          }\n          mainAlbum {\n            id\n            title\n            coverArtUri\n          }\n        }\n      }\n    }\n  }\n",
+): (typeof documents)["\n  query RecordingSearchResultsSearch($text: String!, $limit: Int!) {\n    musicBrainz {\n      recording {\n        searchByName(name: $text, limit: $limit) {\n          id\n          title\n          length\n          nameCredits {\n            artist {\n              id\n              name\n            }\n          }\n          mainAlbum {\n            id\n            title\n            coverArtUri\n          }\n        }\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query SearchResultArtistSearch($text: String!) {\n    serverLibrary {\n      searchArtists(searchTerm: $text, limit: 5) {\n        id\n        name\n        images {\n          thumbs\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  query SearchResultArtistSearch($text: String!) {\n    serverLibrary {\n      searchArtists(searchTerm: $text, limit: 5) {\n        id\n        name\n        images {\n          thumbs\n        }\n      }\n    }\n  }\n"];
+export function graphql(
+  source: "\n  query SearchResultArtistSearch($text: String!) {\n    serverLibrary {\n      searchArtists(searchTerm: $text, limit: 5) {\n        id\n        name\n        images {\n          thumbs\n        }\n      }\n    }\n  }\n",
+): (typeof documents)["\n  query SearchResultArtistSearch($text: String!) {\n    serverLibrary {\n      searchArtists(searchTerm: $text, limit: 5) {\n        id\n        name\n        images {\n          thumbs\n        }\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query SearchResultReleaseSearch($text: String!) {\n    serverLibrary {\n      searchReleases(searchTerm: $text, limit: 5) {\n        id\n        title\n        coverArtUrl\n      }\n    }\n  }\n"): (typeof documents)["\n  query SearchResultReleaseSearch($text: String!) {\n    serverLibrary {\n      searchReleases(searchTerm: $text, limit: 5) {\n        id\n        title\n        coverArtUrl\n      }\n    }\n  }\n"];
+export function graphql(
+  source: "\n  query SearchResultReleaseSearch($text: String!) {\n    serverLibrary {\n      searchReleases(searchTerm: $text, limit: 5) {\n        id\n        title\n        coverArtUrl\n      }\n    }\n  }\n",
+): (typeof documents)["\n  query SearchResultReleaseSearch($text: String!) {\n    serverLibrary {\n      searchReleases(searchTerm: $text, limit: 5) {\n        id\n        title\n        coverArtUrl\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query SearchResultTrackSearch($text: String!) {\n    serverLibrary {\n      searchTracks(searchTerm: $text, limit: 5) {\n        id\n        title\n        trackLength\n        release {\n          id\n          title\n          coverArtUrl\n          folderName\n          artist {\n            id\n            name\n          }\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  query SearchResultTrackSearch($text: String!) {\n    serverLibrary {\n      searchTracks(searchTerm: $text, limit: 5) {\n        id\n        title\n        trackLength\n        release {\n          id\n          title\n          coverArtUrl\n          folderName\n          artist {\n            id\n            name\n          }\n        }\n      }\n    }\n  }\n"];
+export function graphql(
+  source: "\n  query SearchResultTrackSearch($text: String!) {\n    serverLibrary {\n      searchTracks(searchTerm: $text, limit: 5) {\n        id\n        title\n        trackLength\n        release {\n          id\n          title\n          coverArtUrl\n          folderName\n          artist {\n            id\n            name\n          }\n        }\n      }\n    }\n  }\n",
+): (typeof documents)["\n  query SearchResultTrackSearch($text: String!) {\n    serverLibrary {\n      searchTracks(searchTerm: $text, limit: 5) {\n        id\n        title\n        trackLength\n        release {\n          id\n          title\n          coverArtUrl\n          folderName\n          artist {\n            id\n            name\n          }\n        }\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment DownloadPathForm_ServerSettings on ServerSettings {\n    id\n    downloadPath\n  }\n"): (typeof documents)["\n  fragment DownloadPathForm_ServerSettings on ServerSettings {\n    id\n    downloadPath\n  }\n"];
+export function graphql(
+  source: "\n  fragment DownloadPathForm_ServerSettings on ServerSettings {\n    id\n    downloadPath\n  }\n",
+): (typeof documents)["\n  fragment DownloadPathForm_ServerSettings on ServerSettings {\n    id\n    downloadPath\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  mutation UpdateDownloadPath($newDownloadPath: String!) {\n    updateDownloadPath(input: { newDownloadPath: $newDownloadPath }) {\n      ... on UpdateDownloadPathSuccess {\n        serverSettings {\n          id\n          downloadPath\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation UpdateDownloadPath($newDownloadPath: String!) {\n    updateDownloadPath(input: { newDownloadPath: $newDownloadPath }) {\n      ... on UpdateDownloadPathSuccess {\n        serverSettings {\n          id\n          downloadPath\n        }\n      }\n    }\n  }\n"];
+export function graphql(
+  source: "\n  mutation UpdateDownloadPath($newDownloadPath: String!) {\n    updateDownloadPath(input: { newDownloadPath: $newDownloadPath }) {\n      ... on UpdateDownloadPathSuccess {\n        serverSettings {\n          id\n          downloadPath\n        }\n      }\n    }\n  }\n",
+): (typeof documents)["\n  mutation UpdateDownloadPath($newDownloadPath: String!) {\n    updateDownloadPath(input: { newDownloadPath: $newDownloadPath }) {\n      ... on UpdateDownloadPathSuccess {\n        serverSettings {\n          id\n          downloadPath\n        }\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment LibraryPathForm_ServerSettings on ServerSettings {\n    id\n    libraryPath\n  }\n"): (typeof documents)["\n  fragment LibraryPathForm_ServerSettings on ServerSettings {\n    id\n    libraryPath\n  }\n"];
+export function graphql(
+  source: "\n  fragment LibraryPathForm_ServerSettings on ServerSettings {\n    id\n    libraryPath\n  }\n",
+): (typeof documents)["\n  fragment LibraryPathForm_ServerSettings on ServerSettings {\n    id\n    libraryPath\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  mutation UpdateLibraryPath($newLibraryPath: String!) {\n    updateLibraryPath(input: { newLibraryPath: $newLibraryPath }) {\n      ... on UpdateLibraryPathSuccess {\n        serverSettings {\n          id\n          libraryPath\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation UpdateLibraryPath($newLibraryPath: String!) {\n    updateLibraryPath(input: { newLibraryPath: $newLibraryPath }) {\n      ... on UpdateLibraryPathSuccess {\n        serverSettings {\n          id\n          libraryPath\n        }\n      }\n    }\n  }\n"];
+export function graphql(
+  source: "\n  mutation UpdateLibraryPath($newLibraryPath: String!) {\n    updateLibraryPath(input: { newLibraryPath: $newLibraryPath }) {\n      ... on UpdateLibraryPathSuccess {\n        serverSettings {\n          id\n          libraryPath\n        }\n      }\n    }\n  }\n",
+): (typeof documents)["\n  mutation UpdateLibraryPath($newLibraryPath: String!) {\n    updateLibraryPath(input: { newLibraryPath: $newLibraryPath }) {\n      ... on UpdateLibraryPathSuccess {\n        serverSettings {\n          id\n          libraryPath\n        }\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment DirectoryTreeItem_FileSystemEntry on FileSystemEntry {\n    id\n    name\n    path\n    isDirectory\n    hasChildren\n    isAccessible\n  }\n"): (typeof documents)["\n  fragment DirectoryTreeItem_FileSystemEntry on FileSystemEntry {\n    id\n    name\n    path\n    isDirectory\n    hasChildren\n    isAccessible\n  }\n"];
+export function graphql(
+  source: "\n  fragment DirectoryTreeItem_FileSystemEntry on FileSystemEntry {\n    id\n    name\n    path\n    isDirectory\n    hasChildren\n    isAccessible\n  }\n",
+): (typeof documents)["\n  fragment DirectoryTreeItem_FileSystemEntry on FileSystemEntry {\n    id\n    name\n    path\n    isDirectory\n    hasChildren\n    isAccessible\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query DirectoryTreeItem($path: String) {\n    fileSystem {\n      browseFileSystem(path: $path) {\n        id\n        isDirectory\n        path\n        ...DirectoryTreeItem_FileSystemEntry\n      }\n    }\n  }\n"): (typeof documents)["\n  query DirectoryTreeItem($path: String) {\n    fileSystem {\n      browseFileSystem(path: $path) {\n        id\n        isDirectory\n        path\n        ...DirectoryTreeItem_FileSystemEntry\n      }\n    }\n  }\n"];
+export function graphql(
+  source: "\n  query DirectoryTreeItem($path: String) {\n    fileSystem {\n      browseFileSystem(path: $path) {\n        id\n        isDirectory\n        path\n        ...DirectoryTreeItem_FileSystemEntry\n      }\n    }\n  }\n",
+): (typeof documents)["\n  query DirectoryTreeItem($path: String) {\n    fileSystem {\n      browseFileSystem(path: $path) {\n        id\n        isDirectory\n        path\n        ...DirectoryTreeItem_FileSystemEntry\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query BrowseFileSystem($path: String) {\n    fileSystem {\n      browseFileSystem(path: $path) {\n        path\n        isDirectory\n        ...DirectoryTreeItem_FileSystemEntry\n      }\n    }\n  }\n"): (typeof documents)["\n  query BrowseFileSystem($path: String) {\n    fileSystem {\n      browseFileSystem(path: $path) {\n        path\n        isDirectory\n        ...DirectoryTreeItem_FileSystemEntry\n      }\n    }\n  }\n"];
+export function graphql(
+  source: "\n  query BrowseFileSystem($path: String) {\n    fileSystem {\n      browseFileSystem(path: $path) {\n        path\n        isDirectory\n        ...DirectoryTreeItem_FileSystemEntry\n      }\n    }\n  }\n",
+): (typeof documents)["\n  query BrowseFileSystem($path: String) {\n    fileSystem {\n      browseFileSystem(path: $path) {\n        path\n        isDirectory\n        ...DirectoryTreeItem_FileSystemEntry\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query Sidebar {\n    viewer {\n      id\n      username\n    }\n  }\n"): (typeof documents)["\n  query Sidebar {\n    viewer {\n      id\n      username\n    }\n  }\n"];
+export function graphql(
+  source: "\n  query Sidebar {\n    viewer {\n      id\n      username\n    }\n  }\n",
+): (typeof documents)["\n  query Sidebar {\n    viewer {\n      id\n      username\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment SoulSeekNetworkStatus_SoulSeekStatus on SoulSeekStatus {\n    id\n    status\n  }\n"): (typeof documents)["\n  fragment SoulSeekNetworkStatus_SoulSeekStatus on SoulSeekStatus {\n    id\n    status\n  }\n"];
+export function graphql(
+  source: "\n  fragment SoulSeekNetworkStatus_SoulSeekStatus on SoulSeekStatus {\n    id\n    status\n  }\n",
+): (typeof documents)["\n  fragment SoulSeekNetworkStatus_SoulSeekStatus on SoulSeekStatus {\n    id\n    status\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  subscription SoulSeekNetworkStatusSubscription {\n    soulSeekStatusUpdated {\n      ...SoulSeekNetworkStatus_SoulSeekStatus\n    }\n  }\n"): (typeof documents)["\n  subscription SoulSeekNetworkStatusSubscription {\n    soulSeekStatusUpdated {\n      ...SoulSeekNetworkStatus_SoulSeekStatus\n    }\n  }\n"];
+export function graphql(
+  source: "\n  subscription SoulSeekNetworkStatusSubscription {\n    soulSeekStatusUpdated {\n      ...SoulSeekNetworkStatus_SoulSeekStatus\n    }\n  }\n",
+): (typeof documents)["\n  subscription SoulSeekNetworkStatusSubscription {\n    soulSeekStatusUpdated {\n      ...SoulSeekNetworkStatus_SoulSeekStatus\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query SoulSeekNetworkStatusQuery {\n    external {\n      id\n      soulSeek {\n        id\n        status {\n          ...SoulSeekNetworkStatus_SoulSeekStatus\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  query SoulSeekNetworkStatusQuery {\n    external {\n      id\n      soulSeek {\n        id\n        status {\n          ...SoulSeekNetworkStatus_SoulSeekStatus\n        }\n      }\n    }\n  }\n"];
+export function graphql(
+  source: "\n  query SoulSeekNetworkStatusQuery {\n    external {\n      id\n      soulSeek {\n        id\n        status {\n          ...SoulSeekNetworkStatus_SoulSeekStatus\n        }\n      }\n    }\n  }\n",
+): (typeof documents)["\n  query SoulSeekNetworkStatusQuery {\n    external {\n      id\n      soulSeek {\n        id\n        status {\n          ...SoulSeekNetworkStatus_SoulSeekStatus\n        }\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  mutation ImportSpotifyPlaylistById($playlistId: String!, $userId: UUID!) {\n    importSpotifyPlaylistById(playlistId: $playlistId, userId: $userId) {\n      __typename\n      ... on ImportSpotifyPlaylistSuccess {\n        success\n      }\n      ... on ImportSpotifyPlaylistError {\n        message\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation ImportSpotifyPlaylistById($playlistId: String!, $userId: UUID!) {\n    importSpotifyPlaylistById(playlistId: $playlistId, userId: $userId) {\n      __typename\n      ... on ImportSpotifyPlaylistSuccess {\n        success\n      }\n      ... on ImportSpotifyPlaylistError {\n        message\n      }\n    }\n  }\n"];
+export function graphql(
+  source: "\n  mutation ImportSpotifyPlaylistById($playlistId: String!, $userId: UUID!) {\n    importSpotifyPlaylistById(playlistId: $playlistId, userId: $userId) {\n      __typename\n      ... on ImportSpotifyPlaylistSuccess {\n        success\n      }\n      ... on ImportSpotifyPlaylistError {\n        message\n      }\n    }\n  }\n",
+): (typeof documents)["\n  mutation ImportSpotifyPlaylistById($playlistId: String!, $userId: UUID!) {\n    importSpotifyPlaylistById(playlistId: $playlistId, userId: $userId) {\n      __typename\n      ... on ImportSpotifyPlaylistSuccess {\n        success\n      }\n      ... on ImportSpotifyPlaylistError {\n        message\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment SpotifyPlaylistsList_SpotifyPlaylist on SpotifyPlaylist {\n    id\n    description\n    name\n    coverImageUrl\n  }\n"): (typeof documents)["\n  fragment SpotifyPlaylistsList_SpotifyPlaylist on SpotifyPlaylist {\n    id\n    description\n    name\n    coverImageUrl\n  }\n"];
+export function graphql(
+  source: "\n  fragment SpotifyPlaylistsList_SpotifyPlaylist on SpotifyPlaylist {\n    id\n    description\n    name\n    coverImageUrl\n  }\n",
+): (typeof documents)["\n  fragment SpotifyPlaylistsList_SpotifyPlaylist on SpotifyPlaylist {\n    id\n    description\n    name\n    coverImageUrl\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query UserPlaylistsLoader_Query($spotifyUsername: String!) {\n    playlist {\n      importPlaylists {\n        spotify {\n          spotifyPlaylistsForUser(username: $spotifyUsername) {\n            id\n            ...SpotifyPlaylistsList_SpotifyPlaylist\n          }\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  query UserPlaylistsLoader_Query($spotifyUsername: String!) {\n    playlist {\n      importPlaylists {\n        spotify {\n          spotifyPlaylistsForUser(username: $spotifyUsername) {\n            id\n            ...SpotifyPlaylistsList_SpotifyPlaylist\n          }\n        }\n      }\n    }\n  }\n"];
+export function graphql(
+  source: "\n  query UserPlaylistsLoader_Query($spotifyUsername: String!) {\n    playlist {\n      importPlaylists {\n        spotify {\n          spotifyPlaylistsForUser(username: $spotifyUsername) {\n            id\n            ...SpotifyPlaylistsList_SpotifyPlaylist\n          }\n        }\n      }\n    }\n  }\n",
+): (typeof documents)["\n  query UserPlaylistsLoader_Query($spotifyUsername: String!) {\n    playlist {\n      importPlaylists {\n        spotify {\n          spotifyPlaylistsForUser(username: $spotifyUsername) {\n            id\n            ...SpotifyPlaylistsList_SpotifyPlaylist\n          }\n        }\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment UserProfilePanel_User on User {\n    id\n    username\n    createdAt\n    updatedAt\n    likedSongs {\n      id\n    }\n  }\n"): (typeof documents)["\n  fragment UserProfilePanel_User on User {\n    id\n    username\n    createdAt\n    updatedAt\n    likedSongs {\n      id\n    }\n  }\n"];
+export function graphql(
+  source: "\n  fragment UserProfilePanel_User on User {\n    id\n    username\n    createdAt\n    updatedAt\n    likedSongs {\n      id\n    }\n  }\n",
+): (typeof documents)["\n  fragment UserProfilePanel_User on User {\n    id\n    username\n    createdAt\n    updatedAt\n    likedSongs {\n      id\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query UserProfileWidget {\n    viewer {\n      id\n      username\n    }\n  }\n"): (typeof documents)["\n  query UserProfileWidget {\n    viewer {\n      id\n      username\n    }\n  }\n"];
+export function graphql(
+  source: "\n  query UserProfileWidget {\n    viewer {\n      id\n      username\n    }\n  }\n",
+): (typeof documents)["\n  query UserProfileWidget {\n    viewer {\n      id\n      username\n    }\n  }\n"];
 
 export function graphql(source: string) {
   return (documents as any)[source] ?? {};
 }
 
-export type DocumentType<TDocumentNode extends DocumentNode<any, any>> = TDocumentNode extends DocumentNode<  infer TType,  any>  ? TType  : never;
+export type DocumentType<TDocumentNode extends DocumentNode<any, any>> =
+  TDocumentNode extends DocumentNode<infer TType, any> ? TType : never;

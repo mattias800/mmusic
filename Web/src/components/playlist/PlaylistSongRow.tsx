@@ -1,8 +1,8 @@
 import * as React from "react";
 import { FragmentType, graphql, useFragment } from "@/gql";
 import { formatTrackLength } from "@/common/TrackLengthFormatter.ts";
-import { Link } from "react-router";
-import { ReleaseCoverArt } from "@/components/images/ReleaseCoverArt.tsx";
+// import { Link } from "react-router";
+// import { ReleaseCoverArt } from "@/components/images/ReleaseCoverArt.tsx";
 
 export interface PlaylistSongRowProps {
   song: FragmentType<typeof playlistSongRowFragment>;
@@ -24,31 +24,16 @@ export const PlaylistSongRow: React.FC<PlaylistSongRowProps> = (props) => {
     <div className="grid grid-cols-[40px_48px_1fr_1fr_150px_48px] gap-4 items-center px-4 py-3 hover:bg-neutral-800 rounded">
       <span className="text-neutral-400 text-right">{props.index}</span>
 
-      {recording?.mainAlbum && (
-        <ReleaseCoverArt
-          srcUrl={recording.mainAlbum.coverArtUri ?? undefined}
-          titleForPlaceholder={recording.mainAlbum.title}
-          alt="Cover"
-          className="w-12 h-12 rounded"
-        />
-      )}
+      {/* Minimal placeholder cover art not backed by schema yet */}
+      <div className="w-12 h-12 rounded bg-neutral-700" />
 
       <div className="min-w-0">
         <p className="text-white truncate">{recording?.title}</p>
-        <p className="text-sm text-neutral-400 truncate">
-          {recording?.nameCredits.map((a) => a.artist.name).join(", ")}
-        </p>
+        <p className="text-sm text-neutral-400 truncate">&nbsp;</p>
       </div>
 
       <div className="text-neutral-400 truncate hidden md:block">
-        {recording.mainAlbum && (
-          <Link
-            to={"/album/" + recording.mainAlbum.id}
-            className="hover:underline"
-          >
-            {recording?.mainAlbum.title}
-          </Link>
-        )}
+        {/* Album link not available in minimal fragment */}
       </div>
 
       <span className="text-sm text-neutral-400 whitespace-nowrap hidden sm:inline">
@@ -56,7 +41,7 @@ export const PlaylistSongRow: React.FC<PlaylistSongRowProps> = (props) => {
       </span>
 
       <span className="text-sm text-neutral-400 text-right whitespace-nowrap">
-        {recording?.length ? formatTrackLength(recording.length) : ""}
+        {recording?.trackLength ? formatTrackLength(recording.trackLength) : ""}
       </span>
     </div>
   );

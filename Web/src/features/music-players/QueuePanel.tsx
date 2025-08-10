@@ -47,7 +47,9 @@ export const QueuePanel: React.FC<QueuePanelProps> = ({
                     {item.title ?? `#${item.trackNumber}`}
                   </div>
                   <div className="shrink-0 text-xs tabular-nums text-muted-foreground">
-                    {item.trackLengthMs ? formatTrackLength(item.trackLengthMs) : "-"}
+                    {item.trackLengthMs
+                      ? formatTrackLength(item.trackLengthMs)
+                      : "-"}
                   </div>
                 </div>
                 <div className="truncate text-muted-foreground text-xs">
@@ -61,4 +63,3 @@ export const QueuePanel: React.FC<QueuePanelProps> = ({
     </ul>
   );
 };
-

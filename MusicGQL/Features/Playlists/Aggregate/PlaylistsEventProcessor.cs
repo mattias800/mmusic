@@ -24,6 +24,14 @@ public class PlaylistsEventProcessor(ILogger<PlaylistsEventProcessor> logger)
                 await HandleEvent(e, dbContext);
                 break;
 
+            case SongRemovedFromPlaylist e:
+                await HandleEvent(e, dbContext);
+                break;
+
+            case PlaylistItemMoved e:
+                await HandleEvent(e, dbContext);
+                break;
+
             case DeletedPlaylist e:
                 await HandleEvent(e, dbContext);
                 break;
@@ -160,5 +168,65 @@ public class PlaylistsEventProcessor(ILogger<PlaylistsEventProcessor> logger)
             ev.Position,
             userId
         );
+    }
+
+    private async Task HandleEvent(SongRemovedFromPlaylist ev, EventDbContext dbContext)
+    {
+        if (!ev.ActorUserId.HasValue)
+            return;
+
+        var userId = ev.ActorUserId.Value;
+
+        var playlist = await dbContext
+            .Playlists.Include(p => p.Items)
+            .FirstOrDefaultAsync(p => p.Id == ev.PlaylistId && p.UserId == userId);
+
+        if (playlist is null)
+        {
+            logger.LogWarning(
+                "Playlist {PlaylistId} not found for User {UserId}",
+                ev.PlaylistId,
+                userId
+            );
+            return;
+        }
+
+        var item = playlist.Items.FirstOrDefault(i => i.RecordingId == ev.RecordingId);
+        if (item != null)
+        {
+            dbContext.Remove(item);
+            await dbContext.SaveChangesAsync();
+        }
+    }
+
+    private async Task HandleEvent(PlaylistItemMoved ev, EventDbContext dbContext)
+    {
+        if (!ev.ActorUserId.HasValue)
+            return;
+
+        var userId = ev.ActorUserId.Value;
+
+        var playlist = await dbContext
+            .Playlists.Include(p => p.Items)
+            .FirstOrDefaultAsync(p => p.Id == ev.PlaylistId && p.UserId == userId);
+
+        if (playlist is null)
+        {
+            logger.LogWarning(
+                "Playlist {PlaylistId} not found for User {UserId}",
+                ev.PlaylistId,
+                userId
+            );
+            return;
+        }
+
+        // Simple reorder: remove all, then insert recording at new index maintaining order
+        var item = playlist.Items.FirstOrDefault(i => i.RecordingId == ev.RecordingId);
+        if (item == null)
+            return;
+        playlist.Items.Remove(item);
+        var newIndex = Math.Clamp(ev.NewIndex, 0, playlist.Items.Count);
+        playlist.Items.Insert(newIndex, item);
+        await dbContext.SaveChangesAsync();
     }
 }

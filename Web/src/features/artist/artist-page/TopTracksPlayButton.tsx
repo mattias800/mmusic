@@ -55,8 +55,8 @@ export const TopTracksPlayButton: React.FC<TopTracksPlayButtonProps> = ({
         trackNumber: t.track!.trackNumber,
         title: t.title,
         artistName: t.track!.release.artist.name,
-        coverArtUrl: t.coverArtUrl ?? undefined,
-        trackLengthMs: t.track!.trackLength ?? undefined,
+        coverArtUrl: t.coverArtUrl ?? "",
+        trackLengthMs: t.track!.trackLength ?? 0,
       }));
 
     if (queue.length > 0) {

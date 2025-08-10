@@ -24,7 +24,9 @@ export const ConfirmDeleteReleaseAudioDialog: React.FC<
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            {hasAnyAudio ? "Delete all audio files?" : "No audio files to delete"}
+            {hasAnyAudio
+              ? "Delete all audio files?"
+              : "No audio files to delete"}
           </DialogTitle>
           <DialogDescription>
             {hasAnyAudio
@@ -52,4 +54,3 @@ export const ConfirmDeleteReleaseAudioDialog: React.FC<
     </Dialog>
   );
 };
-
