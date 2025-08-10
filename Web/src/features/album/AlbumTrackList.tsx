@@ -116,6 +116,22 @@ export const AlbumTrackList: React.FC<AlbumTrackListProps> = (props) => {
             )}
             renderTag={() => <AlbumTrackTag track={track} />}
             playing={isPlaying}
+            draggable
+            onDragStart={(ev) => {
+              try {
+                const payload = {
+                  type: "track",
+                  artistId: release?.artist.id,
+                  releaseFolderName: release?.folderName,
+                  trackNumber: idx + 1,
+                  title: track.title,
+                };
+                ev.dataTransfer.setData("application/json", JSON.stringify(payload));
+                ev.dataTransfer.effectAllowed = "copyMove";
+              } catch (err) {
+                console.error("Failed to set drag payload", err);
+              }
+            }}
           />
         );
       })}

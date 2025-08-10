@@ -105,6 +105,23 @@ export const TopArtistTrackItem: React.FC<TopArtistTrackItemProps> = (
           )}
         </>
       }
+      draggable={!!artistTopTrack.track}
+      onDragStart={(ev) => {
+        if (!artistTopTrack.track) return;
+        try {
+          const payload = {
+            type: "track",
+            artistId: artistTopTrack.track.release.artist.id,
+            releaseFolderName: artistTopTrack.track.release.folderName,
+            trackNumber: artistTopTrack.track.trackNumber,
+            title: artistTopTrack.title,
+          };
+          ev.dataTransfer.setData("application/json", JSON.stringify(payload));
+          ev.dataTransfer.effectAllowed = "copyMove";
+        } catch {
+          // ignore drag payload error
+        }
+      }}
     />
   );
 };

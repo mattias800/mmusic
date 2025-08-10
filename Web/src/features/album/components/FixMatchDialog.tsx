@@ -114,11 +114,11 @@ export const FixMatchDialog: React.FC<FixMatchDialogProps> = (props) => {
 
   return (
     <Dialog open={props.open} onOpenChange={props.onOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl overflow-hidden">
         <DialogHeader>
           <DialogTitle>Fix match</DialogTitle>
         </DialogHeader>
-        <div className="space-y-4">
+        <div className="space-y-4 overflow-hidden">
           {!releaseGroupId && (
             <p className="text-sm text-white/70">
               Missing MusicBrainz release group connection for this album.
@@ -132,11 +132,11 @@ export const FixMatchDialog: React.FC<FixMatchDialogProps> = (props) => {
             <p className="text-sm text-white/70">No candidates found.</p>
           )}
 
-          <div className="space-y-2 max-h-96 overflow-auto pr-2">
+          <div className="space-y-2 max-h-96 overflow-y-auto overflow-x-hidden pr-2">
             {candidates.map((c) => (
               <div
                 key={c.release.id}
-                className="flex items-start gap-3 rounded-md border border-white/10 p-2 hover:bg-white/5"
+                className="flex w-full items-start gap-3 rounded-md border border-white/10 p-2 hover:bg-white/5"
               >
                 <img
                   src={c.release.coverArtUri}
@@ -160,7 +160,7 @@ export const FixMatchDialog: React.FC<FixMatchDialogProps> = (props) => {
                     </div>
                   )}
                 </div>
-                <Button size="sm" onClick={() => onChoose(c.release.id)}>Select</Button>
+                <Button size="sm" className="shrink-0" onClick={() => onChoose(c.release.id)}>Select</Button>
               </div>
             ))}
           </div>
