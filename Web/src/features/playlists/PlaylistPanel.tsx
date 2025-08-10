@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/context-menu.tsx";
 import { TrackCreditLinks } from "@/features/album/TrackCreditLinks.tsx";
 import { PlaylistHeader } from "@/features/playlists/PlaylistHeader.tsx";
+import { Tag } from "@/components/text/Tag.tsx";
 
 export interface PlaylistPanelProps {
   playlist: FragmentType<typeof playlistPanelPlaylistFragment>;
@@ -145,7 +146,7 @@ export const PlaylistPanel: React.FC<PlaylistPanelProps> = (props) => {
                   <span>{item.artistName}</span>
                 )
               }
-              trackNumber={index}
+              trackNumber={index + 1}
               playCount={0}
               trackLength={item.trackLengthMs}
               showCoverArt
@@ -164,7 +165,13 @@ export const PlaylistPanel: React.FC<PlaylistPanelProps> = (props) => {
                   alt={item.title ?? item.track?.title ?? ""}
                 />
               )}
-              renderTag={() => <AlbumTrackTag track={item.track} />}
+              renderTag={() =>
+                item.track ? (
+                  <AlbumTrackTag track={item.track} />
+                ) : (
+                  <Tag variant={"error"}>Missing</Tag>
+                )
+              }
               contextMenuItems={[
                 <ContextMenuItem
                   key="remove"
