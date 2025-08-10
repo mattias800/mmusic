@@ -27,6 +27,7 @@ export const PlaylistNavButton: React.FC<PlaylistNavButtonProps> = ({
 }) => {
   const [isRenamePromptOpen, setIsRenamePromptOpen] = useState(false);
   const [isDeletePromptOpen, setIsDeletePromptOpen] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false);
 
   const [, addTrackToPlaylist] = useMutation(`
     mutation AddTrackToPlaylist(
@@ -61,6 +62,7 @@ export const PlaylistNavButton: React.FC<PlaylistNavButtonProps> = ({
   const onDrop = React.useCallback(
     async (ev: React.DragEvent<HTMLDivElement>) => {
       ev.preventDefault();
+      setIsDragOver(false);
       const data = ev.dataTransfer.getData("application/json");
       if (!data) return;
       try {
@@ -88,11 +90,8 @@ export const PlaylistNavButton: React.FC<PlaylistNavButtonProps> = ({
         if (result.error) {
           console.error("Failed to add track to playlist:", result.error);
         } else if (result.data?.addTrackToPlaylist?.__typename === "AddTrackToPlaylistError") {
-          console.error(
-            "AddTrackToPlaylist error:",
-            // @ts-expect-error accessing union field without codegen types
-            result.data.addTrackToPlaylist.message,
-          );
+          const msg = (result.data.addTrackToPlaylist as { __typename: string; message?: string }).message;
+          console.error("AddTrackToPlaylist error:", msg ?? "unknown error");
         } else {
           console.log("Track added to playlist", {
             playlistId,
@@ -112,7 +111,20 @@ export const PlaylistNavButton: React.FC<PlaylistNavButtonProps> = ({
     <>
       <ContextMenu>
         <ContextMenuTrigger>
-          <div onDragOver={(e) => e.preventDefault()} onDrop={onDrop}>
+          <div
+            onDragEnter={() => setIsDragOver(true)}
+            onDragOver={(e) => {
+              e.preventDefault();
+              if (!isDragOver) setIsDragOver(true);
+            }}
+            onDragLeave={() => setIsDragOver(false)}
+            onDrop={onDrop}
+            className={
+              isDragOver
+                ? "rounded-md ring-2 ring-green-500/70 bg-green-500/10"
+                : ""
+            }
+         >
             <SidebarNavButton
               path={"/playlist/" + playlistId}
               label={playlistName ?? "New playlist"}

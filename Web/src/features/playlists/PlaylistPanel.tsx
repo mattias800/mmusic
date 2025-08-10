@@ -9,6 +9,7 @@ import { useAppDispatch } from "@/ReduxAppHooks.ts";
 import { musicPlayerSlice } from "@/features/music-players/MusicPlayerSlice.ts";
 import { useMutation, useQuery } from "urql";
 import { ContextMenuItem, ContextMenuSeparator } from "@/components/ui/context-menu.tsx";
+// import { formatTrackLength } from "@/common/TrackLengthFormatter.ts";
 
 export interface PlaylistPanelProps {
   playlist: FragmentType<typeof playlistPanelPlaylistFragment>;
@@ -108,13 +109,61 @@ export const PlaylistPanel: React.FC<PlaylistPanelProps> = (props) => {
 
   const [dragIndex, setDragIndex] = React.useState<number | null>(null);
 
+  const uniqueCoverUrls = React.useMemo(() => {
+    const seen = new Set<string>();
+    const urls: string[] = [];
+    for (const t of playlist.tracks) {
+      const url = t.release.coverArtUrl ?? "";
+      if (url && !seen.has(url)) {
+        seen.add(url);
+        urls.push(url);
+      }
+    }
+    return urls;
+  }, [playlist.tracks]);
+
+  const collageUrls = React.useMemo(() => uniqueCoverUrls.slice(0, 4), [uniqueCoverUrls]);
+
   return (
     <GradientContent>
       <MainPadding>
-        <div className="flex flex-col gap-2">
-          <h1 className="text-2xl font-semibold mb-4">
-            {playlist.name ?? "Playlist"}
-          </h1>
+        <div className="flex flex-col gap-4">
+          <div className="flex items-end gap-4 mb-2">
+            <div>
+              {collageUrls.length >= 4 ? (
+                <div className="grid grid-cols-2 grid-rows-2 w-28 h-28 overflow-hidden rounded-md ring-1 ring-white/10">
+                  {collageUrls.map((url, i) => (
+                    <img
+                      key={i}
+                      src={url}
+                      alt={`Cover ${i + 1}`}
+                      className="w-full h-full object-cover"
+                      draggable={false}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="w-28 h-28">
+                  {uniqueCoverUrls[0] ? (
+                    <img
+                      src={uniqueCoverUrls[0]}
+                      alt="Playlist cover"
+                      className="w-28 h-28 object-cover rounded-md ring-1 ring-white/10"
+                      draggable={false}
+                    />
+                  ) : (
+                    <div className="w-28 h-28 rounded-md bg-neutral-800 ring-1 ring-white/10" />
+                  )}
+                </div>
+              )}
+            </div>
+            <div className="flex flex-col">
+              <h1 className="text-2xl font-semibold">{playlist.name ?? "Playlist"}</h1>
+              <div className="text-sm text-neutral-400">
+                {tracks.length} {tracks.length === 1 ? "track" : "tracks"}
+              </div>
+            </div>
+          </div>
 
           {tracks.map((track, index) => (
             <TrackItem
