@@ -27,7 +27,7 @@ public interface IImportExecutor
 
 public sealed class MusicBrainzImportExecutor(
     MusicBrainzService musicBrainzService,
-    FanArtDownloadService fanArtDownloadService,
+    CoverArtDownloadService coverArtDownloadService,
     LastfmClient lastfmClient,
     Integration.Spotify.SpotifyService spotifyService,
     ILogger<MusicBrainzImportExecutor> logger,
@@ -99,7 +99,7 @@ public sealed class MusicBrainzImportExecutor(
         if (!File.Exists(artistJsonPath))
         {
             logger.LogInformation("[ImportArtist] Creating new artist.json for '{Artist}' (MBID {MbId}) at {Path}", artistDisplayName, mbArtistId, artistJsonPath);
-            var photos = await fanArtDownloadService.DownloadArtistPhotosAsync(
+            var photos = await coverArtDownloadService.DownloadArtistPhotosAsync(
                 mbArtistId,
                 artistDir
             );

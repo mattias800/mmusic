@@ -118,6 +118,7 @@ builder
     .AddScoped<MusicBrainzImportService>()
     .AddScoped<SpotifyImportService>()
     .AddScoped<FanArtDownloadService>()
+    .AddScoped<CoverArtDownloadService>()
     .AddScoped<IFolderIdentityService, FolderIdentityService>()
     .AddScoped<IImportExecutor, MusicBrainzImportExecutor>()
     .AddScoped<LibraryMaintenanceCoordinator>()

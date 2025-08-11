@@ -14,7 +14,7 @@ namespace MusicGQL.Features.Import.Services;
 /// </summary>
 public class ReleaseJsonBuilder(
     MusicBrainzService musicBrainzService,
-    FanArtDownloadService fanArtDownloadService,
+    CoverArtDownloadService coverArtDownloadService,
     LastfmClient lastfmClient
 )
 {
@@ -177,7 +177,7 @@ public class ReleaseJsonBuilder(
         }
 
         // Cover art
-        string? coverArtRelPath = await fanArtDownloadService.DownloadReleaseCoverArtAsync(
+        string? coverArtRelPath = await coverArtDownloadService.DownloadReleaseCoverArtAsync(
             releaseGroupId,
             releaseDir
         );
