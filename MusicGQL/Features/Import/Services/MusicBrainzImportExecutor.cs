@@ -95,6 +95,7 @@ public sealed class MusicBrainzImportExecutor(
 
         if (!File.Exists(artistJsonPath))
         {
+            logger.LogInformation("[ImportArtist] Creating new artist.json for '{Artist}' (MBID {MbId}) at {Path}", artistDisplayName, mbArtistId, artistJsonPath);
             var photos = await fanArtDownloadService.DownloadArtistPhotosAsync(
                 mbArtistId,
                 artistDir
@@ -116,6 +117,7 @@ public sealed class MusicBrainzImportExecutor(
         }
         else
         {
+            logger.LogInformation("[ImportArtist] Enriching existing artist.json for '{Artist}' (MBID {MbId}) at {Path}", artistDisplayName, mbArtistId, artistJsonPath);
             try
             {
                 var text = await File.ReadAllTextAsync(artistJsonPath);
@@ -250,6 +252,7 @@ public sealed class MusicBrainzImportExecutor(
 
         var artistJson = JsonSerializer.Serialize(jsonArtist, GetJsonOptions());
         await File.WriteAllTextAsync(artistJsonPath, artistJson);
+        logger.LogInformation("[ImportArtist] Wrote artist.json for '{Artist}' at {Path}", jsonArtist.Name, artistJsonPath);
     }
 
     public async Task<int> ImportEligibleReleaseGroupsAsync(string artistDir, string mbArtistId)
@@ -277,6 +280,7 @@ public sealed class MusicBrainzImportExecutor(
                 if (File.Exists(releaseJsonPath))
                 {
                     // already imported (possibly from audio present)
+                    logger.LogDebug("[ImportRG] Release '{Title}' already present at {Path}", rg.Title, releaseJsonPath);
                     continue;
                 }
 
@@ -290,6 +294,7 @@ public sealed class MusicBrainzImportExecutor(
                 if (File.Exists(releaseJsonPath))
                 {
                     created++;
+                    logger.LogInformation("[ImportRG] Created release.json for '{Title}' at {Path}", rg.Title, releaseJsonPath);
                 }
             }
             catch
@@ -298,6 +303,7 @@ public sealed class MusicBrainzImportExecutor(
             }
         }
 
+        logger.LogInformation("[ImportRG] Completed import of eligible release groups. Created {Count} new releases.", created);
         return created;
     }
 
@@ -340,6 +346,7 @@ public sealed class MusicBrainzImportExecutor(
             built
         );
         await EnsureAudioFilePathsAsync(releaseDir, releaseJsonPath);
+        logger.LogDebug("[ImportRelease] Wrote release.json for '{Title}' at {Path}", built.Title, releaseJsonPath);
     }
 
     private static async Task EnsureAudioFilePathsAsync(string releaseDir, string releaseJsonPath)

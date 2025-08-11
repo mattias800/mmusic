@@ -65,6 +65,14 @@ public class ArtistImportWorker(
                     continue;
                 }
 
+                logger.LogInformation(
+                    "Processing artist import: {Artist} (song='{Song}', extId='{Ext}', mb='{Mb}')",
+                    item.ArtistName,
+                    item.SongTitle ?? string.Empty,
+                    item.ExternalArtistId ?? string.Empty,
+                    item.MusicBrainzArtistId ?? string.Empty
+                );
+
                 progress.Set(new ArtistImportProgress
                 {
                     ArtistName = item.ArtistName,
@@ -74,12 +82,19 @@ public class ArtistImportWorker(
                     CompletedReleases = 0,
                 });
 
-                // Resolve MBID (prefer provided, else try by name; if SongTitle provided, bias search by recording)
-                string? mbArtistId = item.MusicBrainzArtistId ?? item.ExternalArtistId;
+                // Resolve MBID (prefer provided MusicBrainz id; otherwise try by song/artist name)
+                string? mbArtistId = item.MusicBrainzArtistId;
                 try
                 {
+                    if (string.IsNullOrWhiteSpace(mbArtistId) && !string.IsNullOrWhiteSpace(item.ExternalArtistId))
+                    {
+                        // ExternalArtistId is typically a Spotify artist id; do not treat it as a MusicBrainz id.
+                        logger.LogDebug("External artist id present for '{Artist}' (extId='{ExtId}'). Will resolve MBID via search instead of using external id.", item.ArtistName, item.ExternalArtistId);
+                    }
+
                     if (string.IsNullOrWhiteSpace(mbArtistId) && !string.IsNullOrWhiteSpace(item.SongTitle))
                     {
+                        logger.LogDebug("Attempting to resolve MBID via recording search for song '{Song}'", item.SongTitle);
                         var recs = await mb.SearchRecordingByNameAsync(item.SongTitle!);
                         var artists = recs.SelectMany(r => r.Credits?.Select(c => c.Artist)?.Where(a => a != null) ?? []).ToList();
                         var targetNorm = NormalizeArtistName(item.ArtistName);
@@ -89,6 +104,7 @@ public class ArtistImportWorker(
 
                     if (string.IsNullOrWhiteSpace(mbArtistId))
                     {
+                        logger.LogDebug("Attempting to resolve MBID via artist search for '{Artist}'", item.ArtistName);
                         var candidates = await mb.SearchArtistByNameAsync(item.ArtistName, 10, 0);
                         var targetNorm = NormalizeArtistName(item.ArtistName);
                         var exact = candidates.FirstOrDefault(c => NormalizeArtistName(c.Name) == targetNorm);
@@ -100,6 +116,7 @@ public class ArtistImportWorker(
                             var alt = SwapAmpersandAnd(item.ArtistName);
                             if (!string.Equals(alt, item.ArtistName, StringComparison.OrdinalIgnoreCase))
                             {
+                                logger.LogDebug("Retrying MBID resolution with alt name '{AltName}'", alt);
                                 var altCandidates = await mb.SearchArtistByNameAsync(alt, 10, 0);
                                 var altExact = altCandidates.FirstOrDefault(c => NormalizeArtistName(c.Name) == targetNorm);
                                 mbArtistId = altExact?.Id ?? altCandidates.FirstOrDefault()?.Id;
@@ -114,6 +131,7 @@ public class ArtistImportWorker(
 
                 if (string.IsNullOrWhiteSpace(mbArtistId))
                 {
+                    logger.LogWarning("Could not resolve MusicBrainz artist id for '{Artist}' - skipping", item.ArtistName);
                     progress.Set(new ArtistImportProgress
                     {
                         ArtistName = item.ArtistName,
@@ -124,14 +142,20 @@ public class ArtistImportWorker(
                     continue;
                 }
 
+                logger.LogInformation("Resolved MBID {MbArtistId} for artist '{Artist}'", mbArtistId, item.ArtistName);
+
                 // Pre-compute number of eligible releases for progress
                 int totalEligible = 0;
                 try
                 {
                     var rgs = await mb.GetReleaseGroupsForArtistAsync(mbArtistId);
                     totalEligible = rgs.Count(rg => LibraryDecider.ShouldBeAddedWhenAddingArtistToServerLibrary(rg));
+                    logger.LogDebug("Computed {Count} eligible release groups for artist '{Artist}'", totalEligible, item.ArtistName);
                 }
-                catch { }
+                catch (Exception ex)
+                {
+                    logger.LogWarning(ex, "Failed to pre-compute eligible release groups for '{Artist}'", item.ArtistName);
+                }
 
                 progress.Set(new ArtistImportProgress
                 {
@@ -148,6 +172,7 @@ public class ArtistImportWorker(
                     var res = await importer.ImportArtistByMusicBrainzIdAsync(mbArtistId);
                     if (!string.IsNullOrWhiteSpace(res.ErrorMessage) || res.Success == false)
                     {
+                        logger.LogError("Import failed for '{Artist}' (MBID {MbArtistId}): {Error}", item.ArtistName, mbArtistId, res.ErrorMessage ?? "Unknown error");
                         progress.Set(new ArtistImportProgress
                         {
                             ArtistName = item.ArtistName,
@@ -159,6 +184,7 @@ public class ArtistImportWorker(
                     }
                     else
                     {
+                        logger.LogInformation("Import completed for '{Artist}' (MBID {MbArtistId}). Updating cache and notifying subscribers.", item.ArtistName, mbArtistId);
                         progress.Set(new ArtistImportProgress
                         {
                             ArtistName = item.ArtistName,
@@ -176,6 +202,7 @@ public class ArtistImportWorker(
                             var importedArtist = await cache.GetArtistByNameAsync(item.ArtistName);
                             if (importedArtist != null)
                             {
+                                logger.LogInformation("Imported artist now present in cache: {ArtistName} (Id {ArtistId})", importedArtist.Name, importedArtist.Id);
                                 await events.SendAsync(
                                     ArtistImportSubscription.ArtistImportedTopic,
                                     new Artist(importedArtist)
@@ -190,6 +217,7 @@ public class ArtistImportWorker(
                                 // Prefer updating by external artist id when available; fallback to name match
                                 if (!string.IsNullOrWhiteSpace(item.ExternalArtistId))
                                 {
+                                    logger.LogDebug("Attempting to link playlist items by external artist id {ExtId}", item.ExternalArtistId);
                                     var playlists = await db
                                         .Playlists.Include(p => p.Items)
                                         .Where(p => p.Items.Any(i => i.LocalArtistId == null && i.ExternalArtistId == item.ExternalArtistId))
@@ -200,6 +228,7 @@ public class ArtistImportWorker(
                                         foreach (var it in pl.Items.Where(i => i.LocalArtistId == null && i.ExternalArtistId == item.ExternalArtistId))
                                         {
                                             it.LocalArtistId = importedArtist.Id;
+                                            logger.LogInformation("Linked playlist item {PlaylistItemId} in playlist {PlaylistId} to artist {ArtistId}", it.Id, pl.Id, importedArtist.Id);
                                             await events.SendAsync(
                                                 PlaylistSubscription.PlaylistItemUpdatedTopic(pl.Id),
                                                 new PlaylistSubscription.PlaylistItemUpdatedMessage(pl.Id, it.Id)
@@ -219,6 +248,7 @@ public class ArtistImportWorker(
                                     if (pi is not null && string.IsNullOrWhiteSpace(pi.LocalArtistId))
                                     {
                                         pi.LocalArtistId = importedArtist.Id;
+                                        logger.LogInformation("Backfilled specific playlist item {PlaylistItemId} in playlist {PlaylistId} to artist {ArtistId}", pi.Id, playlist!.Id, importedArtist.Id);
                                         await events.SendAsync(
                                             PlaylistSubscription.PlaylistItemUpdatedTopic(playlist!.Id),
                                             new PlaylistSubscription.PlaylistItemUpdatedMessage(playlist!.Id, pi.Id)
@@ -231,8 +261,15 @@ public class ArtistImportWorker(
 
                                 await db.SaveChangesAsync();
                             }
+                            else
+                            {
+                                logger.LogWarning("Artist '{Artist}' was imported but not found in cache immediately after update.", item.ArtistName);
+                            }
                         }
-                        catch { }
+                        catch (Exception ex)
+                        {
+                            logger.LogError(ex, "Error post-processing imported artist '{Artist}'", item.ArtistName);
+                        }
                     }
                 }
                 catch (Exception ex)

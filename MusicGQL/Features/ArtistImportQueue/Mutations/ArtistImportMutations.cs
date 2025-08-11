@@ -3,6 +3,7 @@ using MusicGQL.Db.Postgres;
 using MusicGQL.Features.ArtistImportQueue.Services;
 using MusicGQL.Integration.Spotify;
 using MusicGQL.Types;
+using Microsoft.Extensions.Logging;
 
 namespace MusicGQL.Features.ArtistImportQueue.Mutations;
 
@@ -42,14 +43,17 @@ public sealed class ArtistImportMutations
         [ID] string playlistId,
         [Service] EventDbContext db,
         [Service] ArtistImportQueueService queue,
-        [Service] ServerLibrary.Cache.ServerLibraryCache cache
+        [Service] ServerLibrary.Cache.ServerLibraryCache cache,
+        [Service] ILogger<ArtistImportMutations> logger
     )
     {
+        logger.LogInformation("EnqueueMissingArtistsFromPlaylist requested for playlist {PlaylistId}", playlistId);
         var playlist = await db
             .Playlists.Include(p => p.Items)
             .FirstOrDefaultAsync(p => p.Id == playlistId);
         if (playlist is null)
         {
+            logger.LogWarning("Playlist {PlaylistId} not found when enqueuing missing artists", playlistId);
             return false;
         }
 
@@ -66,8 +70,28 @@ public sealed class ArtistImportMutations
             }
         }
 
+        logger.LogInformation(
+            "Playlist {PlaylistId} has {TotalItems} items, {MissingCount} artists missing from server library",
+            playlistId,
+            playlist.Items.Count,
+            missing.Count
+        );
+
+        if (missing.Count > 0)
+        {
+            // Log details at Debug to avoid overly chatty info logs
+            logger.LogDebug(
+                "Missing artists detail: {Missing}",
+                string.Join(
+                    "; ",
+                    missing.Select(m => $"Name='{m.ArtistName}' ExtId='{m.ExternalArtistId ?? ""}' Song='{m.SongTitle ?? ""}'")
+                )
+            );
+        }
+
         if (missing.Count == 0)
         {
+            logger.LogInformation("No missing artists to enqueue for playlist {PlaylistId}", playlistId);
             return true;
         }
 
@@ -82,7 +106,9 @@ public sealed class ArtistImportMutations
                     ExternalArtistId = string.IsNullOrWhiteSpace(any.ExternalArtistId) ? null : any.ExternalArtistId
                 };
             });
-        queue.Enqueue(items);
+        var itemList = items.ToList();
+        logger.LogInformation("Enqueuing {Count} unique artist imports for playlist {PlaylistId}", itemList.Count, playlistId);
+        queue.Enqueue(itemList);
         return true;
     }
 }
