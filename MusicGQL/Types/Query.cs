@@ -13,6 +13,7 @@ using MusicGQL.Features.ServerSettings;
 using MusicGQL.Features.ServerSettings.Db;
 using MusicGQL.Features.Users;
 using MusicGQL.Features.Artists;
+using MusicGQL.Features.Downloads;
 
 namespace MusicGQL.Types;
 
@@ -85,6 +86,8 @@ public class Query
     }
 
     public ArtistImportSearchRoot ArtistImport() => new();
+
+    public DownloadsSearchRoot Downloads() => new();
 
     public FileSystemSearchRoot FileSystem() => new();
 

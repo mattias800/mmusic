@@ -17,6 +17,7 @@ using MusicGQL.Features.Authentication.Handlers;
 using MusicGQL.Features.Authorization;
 using MusicGQL.Features.Downloads.Mutations;
 using MusicGQL.Features.Downloads.Services;
+using MusicGQL.Features.Downloads;
 using MusicGQL.Features.External.SoulSeek;
 using MusicGQL.Features.External.SoulSeek.Integration;
 using MusicGQL.Features.FileSystem;
@@ -101,6 +102,8 @@ builder
     .AddSingleton<SoulSeekService>()
     .AddSingleton<SoulSeekReleaseDownloader>()
     .AddScoped<StartDownloadReleaseService>()
+    .AddSingleton<DownloadQueueService>()
+    .AddSingleton<CurrentDownloadStateService>()
     .AddSingleton<MusicBrainzService>()
     .AddSingleton<YouTubeService>()
     .AddSingleton<SpotifyService>()
@@ -266,6 +269,8 @@ builder
     .AddTypeExtension<ArtistImportSubscription>()
     .AddTypeExtension<ArtistImportSearchRoot>()
     .AddTypeExtension<ArtistImportMutations>()
+    .AddTypeExtension<DownloadsSearchRoot>()
+    .AddTypeExtension<DownloadsSubscription>()
     .AddTypeExtension<PlaylistSubscription>()
     .AddTypeExtension<SetPlaylistItemArtistMusicBrainzMatchMutation>()
     .AddType<SetPlaylistItemArtistMusicBrainzMatchSuccess>()

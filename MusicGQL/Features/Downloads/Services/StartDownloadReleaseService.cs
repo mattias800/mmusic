@@ -1,3 +1,7 @@
+using Microsoft.EntityFrameworkCore;
+using MusicGQL.Db.Postgres;
+using MusicGQL.Features.Playlists.Db;
+using MusicGQL.Features.Playlists.Subscription;
 using MusicGQL.Features.ServerLibrary.Cache;
 using MusicGQL.Features.ServerLibrary.Writer;
 using Path = System.IO.Path;
@@ -11,7 +15,8 @@ public class StartDownloadReleaseService(
     ILogger<StartDownloadReleaseService> logger,
     Features.Import.Services.MusicBrainzImportService mbImport,
     Features.Import.Services.LibraryReleaseImportService releaseImporter,
-    HotChocolate.Subscriptions.ITopicEventSender eventSender
+    HotChocolate.Subscriptions.ITopicEventSender eventSender,
+    IDbContextFactory<EventDbContext> dbFactory
 )
 {
     public async Task<(bool Success, string? ErrorMessage)> StartAsync(
@@ -137,6 +142,21 @@ public class StartDownloadReleaseService(
                             )
                         )
                 );
+
+                // Backfill playlist items that should now reference these tracks
+                try
+                {
+                    await LinkPlaylistItemsForReleaseAsync(artistId, releaseFolderName);
+                }
+                catch (Exception backfillEx)
+                {
+                    logger.LogWarning(
+                        backfillEx,
+                        "[StartDownload] Failed linking playlist items for {ArtistId}/{Folder}",
+                        artistId,
+                        releaseFolderName
+                    );
+                }
             }
             catch (Exception ex)
             {
@@ -221,5 +241,104 @@ public class StartDownloadReleaseService(
         // Finished
         logger.LogInformation("[StartDownload] Done");
         return (true, null);
+    }
+
+    private async Task LinkPlaylistItemsForReleaseAsync(string artistId, string releaseFolderName)
+    {
+        var rel = await cache.GetReleaseByArtistAndFolderAsync(artistId, releaseFolderName);
+        if (rel == null || rel.Tracks == null || rel.Tracks.Count == 0)
+            return;
+
+        await using var db = await dbFactory.CreateDbContextAsync();
+
+        // Candidates: items already linked to this artist but missing track mapping
+        var candidates = await db
+            .Set<DbPlaylistItem>()
+            .Where(i =>
+                i.LocalArtistId == artistId
+                && (i.LocalReleaseFolderName == null || i.LocalReleaseFolderName == releaseFolderName)
+                && i.LocalTrackNumber == null
+                && i.SongTitle != null
+            )
+            .ToListAsync();
+
+        if (candidates.Count == 0)
+            return;
+
+        var updated = new List<DbPlaylistItem>();
+        foreach (var item in candidates)
+        {
+            // If item has a release title, require it to match the release title to reduce false positives
+            if (!string.IsNullOrWhiteSpace(item.ReleaseTitle)
+                && !AreTitlesEquivalent(item.ReleaseTitle!, rel.Title ?? string.Empty))
+            {
+                continue;
+            }
+
+            var title = item.SongTitle ?? string.Empty;
+            var match = rel.Tracks
+                .Where(t => !string.IsNullOrWhiteSpace(t.Title))
+                .FirstOrDefault(t => AreTitlesEquivalent(t.Title!, title));
+
+            if (match != null)
+            {
+                item.LocalReleaseFolderName = releaseFolderName;
+                item.LocalTrackNumber = match.TrackNumber;
+                updated.Add(item);
+            }
+        }
+
+        if (updated.Count == 0)
+            return;
+
+        await db.SaveChangesAsync();
+
+        // Notify subscribers for each updated item
+        foreach (var item in updated)
+        {
+            try
+            {
+                await eventSender.SendAsync(
+                    PlaylistSubscription.PlaylistItemUpdatedTopic(item.PlaylistId),
+                    new PlaylistSubscription.PlaylistItemUpdatedMessage(item.PlaylistId, item.Id)
+                );
+            }
+            catch { /* best effort */ }
+        }
+    }
+
+    private static string NormalizeTitle(string input)
+    {
+        if (string.IsNullOrWhiteSpace(input)) return string.Empty;
+        var s = input
+            .Replace("’", "'")
+            .Replace("“", "\"")
+            .Replace("”", "\"");
+        var builder = new System.Text.StringBuilder(s.Length);
+        foreach (var ch in s)
+        {
+            if (char.IsLetterOrDigit(ch) || char.IsWhiteSpace(ch))
+            {
+                builder.Append(char.ToLowerInvariant(ch));
+            }
+        }
+        var normalized = System.Text.RegularExpressions.Regex.Replace(builder.ToString(), "\\s+", " ").Trim();
+        return normalized;
+    }
+
+    private static string StripParentheses(string input)
+    {
+        return System.Text.RegularExpressions.Regex.Replace(input, "\\(.*?\\)", string.Empty).Trim();
+    }
+
+    private static bool AreTitlesEquivalent(string a, string b)
+    {
+        var na = NormalizeTitle(a);
+        var nb = NormalizeTitle(b);
+        if (na.Equals(nb, StringComparison.Ordinal)) return true;
+
+        var npa = NormalizeTitle(StripParentheses(a));
+        var npb = NormalizeTitle(StripParentheses(b));
+        return npa.Equals(npb, StringComparison.Ordinal);
     }
 }

@@ -14,6 +14,8 @@ public class SoulSeekReleaseDownloader(
     ISoulseekClient client,
     ITopicEventSender eventSender,
     ServerLibraryCache cache,
+    CurrentDownloadStateService progress,
+    DownloadQueueService downloadQueue,
     ILogger<SoulSeekReleaseDownloader> logger
 )
 {
@@ -46,6 +48,14 @@ public class SoulSeekReleaseDownloader(
         // Determine expected track count from cache (if available)
         var cachedRelease = await cache.GetReleaseByArtistAndFolderAsync(artistId, releaseFolderName);
         int expectedTrackCount = cachedRelease?.Tracks?.Count ?? 0;
+        progress.Set(new Downloads.DownloadProgress
+        {
+            ArtistId = artistId,
+            ReleaseFolderName = releaseFolderName,
+            Status = Downloads.DownloadStatus.Searching,
+            TotalTracks = expectedTrackCount,
+            CompletedTracks = 0
+        });
         int minRequiredTracks = expectedTrackCount > 0 ? Math.Max(2, Math.Min(expectedTrackCount, expectedTrackCount - 1)) : 5; // allow off-by-one if known, else require at least 5
 
         var result = await client.SearchAsync(new SearchQuery(query));
@@ -81,6 +91,7 @@ public class SoulSeekReleaseDownloader(
             releaseFolderName,
             CachedReleaseDownloadStatus.Downloading
         );
+        progress.SetStatus(Downloads.DownloadStatus.Downloading);
 
         foreach (var candidate in orderedCandidates)
         {
@@ -155,6 +166,7 @@ public class SoulSeekReleaseDownloader(
                 );
 
                 trackIndex++;
+                try { progress.SetTrackProgress(trackIndex, expectedTrackCount); } catch { }
             }
 
             if (!userFailed)
@@ -165,6 +177,15 @@ public class SoulSeekReleaseDownloader(
                     releaseTitle,
                     candidate.Username
                 );
+                progress.SetStatus(Downloads.DownloadStatus.Completed);
+                if (!downloadQueue.TryDequeue(out var nxt) || nxt is null)
+                {
+                    progress.Reset();
+                }
+                else
+                {
+                    downloadQueue.Enqueue(nxt);
+                }
                 return true;
             }
 
@@ -180,6 +201,7 @@ public class SoulSeekReleaseDownloader(
             artistName,
             releaseTitle
         );
+        progress.SetStatus(Downloads.DownloadStatus.Failed);
         return false;
     }
 

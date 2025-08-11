@@ -281,6 +281,39 @@ type DeleteReleaseAudioSuccess {
   release: Release!
 }
 
+type DownloadProgress {
+  artistId: String!
+  completedTracks: Int!
+  errorMessage: String
+  releaseFolderName: String!
+  status: DownloadStatus!
+  totalTracks: Int!
+}
+
+type DownloadQueueItem {
+  artistId: String!
+  releaseFolderName: String!
+}
+
+type DownloadQueueState {
+  items: [DownloadQueueItem!]!
+  queueLength: Int!
+}
+
+enum DownloadStatus {
+  COMPLETED
+  DOWNLOADING
+  FAILED
+  IDLE
+  PROCESSING
+  SEARCHING
+}
+
+type DownloadsSearchRoot {
+  currentDownload: DownloadProgress
+  downloadQueue: DownloadQueueState!
+}
+
 input EnqueueArtistsFromSpotifyPlaylistInput {
   playlistId: String!
 }
@@ -744,6 +777,7 @@ type Query {
   areThereAnyUsers: Boolean!
   artist: ArtistSearchRoot!
   artistImport: ArtistImportSearchRoot!
+  downloads: DownloadsSearchRoot!
   external: ExternalRoot!
   fileSystem: FileSystemSearchRoot!
   musicBrainz: MusicBrainzSearchRoot!
@@ -1077,6 +1111,8 @@ type Subscription {
   artistImported: Artist!
   artistServerStatusUpdated(artistId: ID!): ArtistServerStatus!
   currentArtistImportUpdated: ArtistImportProgress!
+  currentDownloadUpdated: DownloadProgress
+  downloadQueueUpdated: DownloadQueueState!
   libraryArtistReleaseUpdated(artistId: String!): Release!
   libraryArtistTrackUpdated(artistId: String!): Track!
   libraryArtistUpdated(artistId: String!): Artist!
