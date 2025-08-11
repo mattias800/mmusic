@@ -40,6 +40,21 @@ public class ServerLibraryJsonWriter
         await File.WriteAllTextAsync(path, json);
     }
 
+    public async Task UpdateArtistAsync(string artistId, Action<JsonArtist> update)
+    {
+        var path = GetArtistJsonPath(artistId);
+        if (!File.Exists(path)) return;
+
+        var text = await File.ReadAllTextAsync(path);
+        var artist = JsonSerializer.Deserialize<JsonArtist>(text, GetJsonOptions());
+        if (artist is null) return;
+
+        update(artist);
+
+        var json = JsonSerializer.Serialize(artist, GetJsonOptions());
+        await File.WriteAllTextAsync(path, json);
+    }
+
     public async Task WriteReleaseAsync(string artistId, string releaseFolderName, JsonRelease release)
     {
         if (string.IsNullOrWhiteSpace(artistId))
