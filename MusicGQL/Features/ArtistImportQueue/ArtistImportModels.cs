@@ -6,6 +6,17 @@ public record ArtistImportQueueItem(string ArtistName, string? SongTitle)
 {
     [GraphQLIgnore]
     public string? ExternalArtistId { get; init; }
+
+    // If known, prefer importing by MusicBrainz artist id without searching
+    [GraphQLIgnore]
+    public string? MusicBrainzArtistId { get; init; }
+
+    // Optional context to update a specific playlist item after import completes
+    [GraphQLIgnore]
+    public string? PlaylistId { get; init; }
+
+    [GraphQLIgnore]
+    public string? PlaylistItemId { get; init; }
 }
 
 public record ArtistImportQueueState

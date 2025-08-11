@@ -42,7 +42,7 @@ public sealed class SetPlaylistItemArtistMatchMutation
             queue.Enqueue(qi);
         }
 
-        return new SetPlaylistItemArtistMatchSuccess(new Features.Playlists.PlaylistItem(item));
+        return new SetPlaylistItemArtistMatchSuccess(new PlaylistItem(item));
     }
 }
 
@@ -55,7 +55,7 @@ public record SetPlaylistItemArtistMatchInput(
 [UnionType("SetPlaylistItemArtistMatchResult")]
 public abstract record SetPlaylistItemArtistMatchResult;
 
-public record SetPlaylistItemArtistMatchSuccess(Features.Playlists.PlaylistItem PlaylistItem)
+public record SetPlaylistItemArtistMatchSuccess(PlaylistItem PlaylistItem)
     : SetPlaylistItemArtistMatchResult;
 
 public record SetPlaylistItemArtistMatchNotFound(string Message) : SetPlaylistItemArtistMatchResult;

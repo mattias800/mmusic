@@ -1071,10 +1071,15 @@ type Subscription {
   artistImported: Artist!
   artistServerStatusUpdated(artistId: ID!): ArtistServerStatus!
   currentArtistImportUpdated: ArtistImportProgress!
+  libraryArtistReleaseUpdated(artistId: String!): Release!
+  libraryArtistTrackUpdated(artistId: String!): Track!
+  libraryArtistUpdated(artistId: String!): Artist!
   libraryCacheTrackUpdated(artistId: String!, releaseFolderName: String!, trackNumber: Int!): LibraryCacheTrackStatus!
   libraryCacheTracksInReleaseUpdated(artistId: String!, releaseFolderName: String!): LibraryCacheTrackStatus!
   libraryReleaseDownloadStatusUpdated(artistId: String!, releaseFolderName: String!): LibraryReleaseDownloadStatusUpdate!
   libraryReleaseMetadataUpdated(artistId: String!, releaseFolderName: String!): Release!
+  libraryReleaseUpdated(artistId: String!, releaseFolderName: String!): Release!
+  libraryTrackUpdated(artistId: String!, releaseFolderName: String!, trackNumber: Int!): Track!
   ping: Ping!
   playlistItemUpdated(playlistId: ID!): PlaylistItem!
   soulSeekStatusUpdated: SoulSeekStatus!

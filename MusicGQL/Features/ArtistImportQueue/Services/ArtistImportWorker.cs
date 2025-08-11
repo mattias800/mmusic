@@ -74,8 +74,8 @@ public class ArtistImportWorker(
                     CompletedReleases = 0,
                 });
 
-                // Resolve MBID (try by name; if SongTitle provided, bias search by recording)
-                string? mbArtistId = item.ExternalArtistId;
+                // Resolve MBID (prefer provided, else try by name; if SongTitle provided, bias search by recording)
+                string? mbArtistId = item.MusicBrainzArtistId ?? item.ExternalArtistId;
                 try
                 {
                     if (string.IsNullOrWhiteSpace(mbArtistId) && !string.IsNullOrWhiteSpace(item.SongTitle))
@@ -181,6 +181,12 @@ public class ArtistImportWorker(
                                     new Artist(importedArtist)
                                 );
 
+                                // Centralized artist-updated publication
+                                await events.SendAsync(
+                                    ServerLibrary.Subscription.LibrarySubscription.LibraryArtistUpdatedTopic(importedArtist.Id),
+                                    new Artist(importedArtist)
+                                );
+
                                 // Prefer updating by external artist id when available; fallback to name match
                                 if (!string.IsNullOrWhiteSpace(item.ExternalArtistId))
                                 {
@@ -196,9 +202,28 @@ public class ArtistImportWorker(
                                             it.LocalArtistId = importedArtist.Id;
                                             await events.SendAsync(
                                                 PlaylistSubscription.PlaylistItemUpdatedTopic(pl.Id),
-                                                new Features.Playlists.Subscription.PlaylistSubscription.PlaylistItemUpdatedMessage(pl.Id, it.Id)
+                                                new PlaylistSubscription.PlaylistItemUpdatedMessage(pl.Id, it.Id)
                                             );
                                         }
+                                    }
+                                }
+
+                                // If this queue item was enqueued from a specific playlist item and it still isn't linked,
+                                // link it now by LocalArtistId
+                                if (!string.IsNullOrWhiteSpace(item.PlaylistId) && !string.IsNullOrWhiteSpace(item.PlaylistItemId))
+                                {
+                                    var playlist = await db
+                                        .Playlists.Include(p => p.Items)
+                                        .FirstOrDefaultAsync(p => p.Id == item.PlaylistId);
+                                    var pi = playlist?.Items.FirstOrDefault(i => i.Id == item.PlaylistItemId);
+                                    if (pi is not null && string.IsNullOrWhiteSpace(pi.LocalArtistId))
+                                    {
+                                        pi.LocalArtistId = importedArtist.Id;
+                                        await events.SendAsync(
+                                            PlaylistSubscription.PlaylistItemUpdatedTopic(playlist!.Id),
+                                            new PlaylistSubscription.PlaylistItemUpdatedMessage(playlist!.Id, pi.Id)
+                                        );
+                                        await db.SaveChangesAsync();
                                     }
                                 }
                                 // If there is no external artist id on the queue item, we intentionally do not update

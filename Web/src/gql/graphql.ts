@@ -1460,10 +1460,15 @@ export type Subscription = {
   artistImported: Artist;
   artistServerStatusUpdated: ArtistServerStatus;
   currentArtistImportUpdated: ArtistImportProgress;
+  libraryArtistReleaseUpdated: Release;
+  libraryArtistTrackUpdated: Track;
+  libraryArtistUpdated: Artist;
   libraryCacheTrackUpdated: LibraryCacheTrackStatus;
   libraryCacheTracksInReleaseUpdated: LibraryCacheTrackStatus;
   libraryReleaseDownloadStatusUpdated: LibraryReleaseDownloadStatusUpdate;
   libraryReleaseMetadataUpdated: Release;
+  libraryReleaseUpdated: Release;
+  libraryTrackUpdated: Track;
   ping: Ping;
   playlistItemUpdated: PlaylistItem;
   soulSeekStatusUpdated: SoulSeekStatus;
@@ -1472,6 +1477,21 @@ export type Subscription = {
 
 export type SubscriptionArtistServerStatusUpdatedArgs = {
   artistId: Scalars['ID']['input'];
+};
+
+
+export type SubscriptionLibraryArtistReleaseUpdatedArgs = {
+  artistId: Scalars['String']['input'];
+};
+
+
+export type SubscriptionLibraryArtistTrackUpdatedArgs = {
+  artistId: Scalars['String']['input'];
+};
+
+
+export type SubscriptionLibraryArtistUpdatedArgs = {
+  artistId: Scalars['String']['input'];
 };
 
 
@@ -1497,6 +1517,19 @@ export type SubscriptionLibraryReleaseDownloadStatusUpdatedArgs = {
 export type SubscriptionLibraryReleaseMetadataUpdatedArgs = {
   artistId: Scalars['String']['input'];
   releaseFolderName: Scalars['String']['input'];
+};
+
+
+export type SubscriptionLibraryReleaseUpdatedArgs = {
+  artistId: Scalars['String']['input'];
+  releaseFolderName: Scalars['String']['input'];
+};
+
+
+export type SubscriptionLibraryTrackUpdatedArgs = {
+  artistId: Scalars['String']['input'];
+  releaseFolderName: Scalars['String']['input'];
+  trackNumber: Scalars['Int']['input'];
 };
 
 

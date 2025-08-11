@@ -216,6 +216,7 @@ public class ServerLibraryCache(ServerLibraryJsonReader reader, ITopicEventSende
     )
     {
         CachedTrack? track;
+        CachedRelease? releaseRef = null;
         lock (_lockObject)
         {
             if (
@@ -233,6 +234,7 @@ public class ServerLibraryCache(ServerLibraryJsonReader reader, ITopicEventSende
             if (track != null)
             {
                 track.CachedMediaAvailabilityStatus = status;
+                releaseRef = release;
             }
         }
 
@@ -255,6 +257,28 @@ public class ServerLibraryCache(ServerLibraryJsonReader reader, ITopicEventSende
                 ),
                 new LibraryCacheTrackStatus(artistId, releaseFolderName, trackNumber)
             );
+
+            // Publish centralized track and release updates
+            await eventSender.SendAsync(
+                LibrarySubscription.LibraryTrackUpdatedTopic(artistId, releaseFolderName, trackNumber),
+                new Track(track)
+            );
+            await eventSender.SendAsync(
+                LibrarySubscription.LibraryArtistTrackUpdatedTopic(artistId),
+                new Track(track)
+            );
+
+            if (releaseRef != null)
+            {
+                await eventSender.SendAsync(
+                    LibrarySubscription.LibraryReleaseUpdatedTopic(artistId, releaseFolderName),
+                    new Release(releaseRef)
+                );
+                await eventSender.SendAsync(
+                    LibrarySubscription.LibraryArtistReleaseUpdatedTopic(artistId),
+                    new Release(releaseRef)
+                );
+            }
         }
     }
 
@@ -376,6 +400,16 @@ public class ServerLibraryCache(ServerLibraryJsonReader reader, ITopicEventSende
             _lastUpdated = DateTime.UtcNow;
             _isInitialized = true;
         }
+
+        // Publish centralized release-updated events (scoped and artist-broadcast)
+        await eventSender.SendAsync(
+            LibrarySubscription.LibraryReleaseUpdatedTopic(artistId, releaseFolderName),
+            new Release(newRelease)
+        );
+        await eventSender.SendAsync(
+            LibrarySubscription.LibraryArtistReleaseUpdatedTopic(artistId),
+            new Release(newRelease)
+        );
     }
 
     /// <summary>

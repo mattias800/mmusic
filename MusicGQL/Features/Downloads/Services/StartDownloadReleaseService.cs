@@ -193,6 +193,21 @@ public class StartDownloadReleaseService(
                                 ),
                                 new ServerLibrary.Release(updated)
                             );
+
+                            // Centralized release and artist notifications
+                            await eventSender.SendAsync(
+                                ServerLibrary.Subscription.LibrarySubscription.LibraryReleaseUpdatedTopic(
+                                    artistId,
+                                    releaseFolderName
+                                ),
+                                new ServerLibrary.Release(updated)
+                            );
+                            await eventSender.SendAsync(
+                                ServerLibrary.Subscription.LibrarySubscription.LibraryArtistReleaseUpdatedTopic(
+                                    artistId
+                                ),
+                                new ServerLibrary.Release(updated)
+                            );
                         }
                     }
                 }

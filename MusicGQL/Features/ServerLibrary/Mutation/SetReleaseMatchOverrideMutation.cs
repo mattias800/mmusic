@@ -120,6 +120,21 @@ public class SetReleaseMatchOverrideMutation
                     ),
                     new Release(updated)
                 );
+
+                // Centralized release and artist notifications
+                await eventSender.SendAsync(
+                    Subscription.LibrarySubscription.LibraryReleaseUpdatedTopic(
+                        input.ArtistId,
+                        input.ReleaseFolderName
+                    ),
+                    new Release(updated)
+                );
+                await eventSender.SendAsync(
+                    Subscription.LibrarySubscription.LibraryArtistReleaseUpdatedTopic(
+                        input.ArtistId
+                    ),
+                    new Release(updated)
+                );
             }
 
             return new SetReleaseMatchOverrideSuccess(new Release(updated));

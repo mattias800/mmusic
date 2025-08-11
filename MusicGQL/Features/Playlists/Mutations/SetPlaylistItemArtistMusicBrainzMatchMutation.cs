@@ -1,6 +1,7 @@
 using HotChocolate.Subscriptions;
 using Microsoft.EntityFrameworkCore;
 using MusicGQL.Db.Postgres;
+using MusicGQL.Features.ArtistImportQueue;
 using MusicGQL.Features.ArtistImportQueue.Services;
 using MusicGQL.Features.Import;
 using MusicGQL.Features.ServerLibrary;
@@ -15,10 +16,7 @@ public sealed class SetPlaylistItemArtistMusicBrainzMatchMutation
     public async Task<SetPlaylistItemArtistMusicBrainzMatchResult> SetPlaylistItemArtistMusicBrainzMatch(
         SetPlaylistItemArtistMusicBrainzMatchInput input,
         [Service] EventDbContext db,
-        [Service] LibraryImportService importService,
-        [Service] ServerLibrary.Cache.ServerLibraryCache cache,
-        [Service] ITopicEventSender events,
-        [Service] ServerLibraryJsonWriter writer
+        [Service] ArtistImportQueueService queue
     )
     {
         var playlist = await db
@@ -35,74 +33,17 @@ public sealed class SetPlaylistItemArtistMusicBrainzMatchMutation
             return new SetPlaylistItemArtistMusicBrainzMatchNotFound("Playlist item not found");
         }
 
-        // Step 1: Import the artist from MusicBrainz (creates artist.json and sets MB connection)
-        var importResult = await importService.ImportArtistByMusicBrainzIdAsync(input.MusicBrainzArtistId);
-        if (!importResult.Success || string.IsNullOrWhiteSpace(importResult.ArtistJson?.Id))
+        // Enqueue import instead of importing inline
+        var queueItem = new ArtistImportQueueItem(item.ArtistName ?? string.Empty, item.SongTitle)
         {
-            return new SetPlaylistItemArtistMusicBrainzMatchError(
-                importResult.ErrorMessage ?? "Failed to import artist");
-        }
+            MusicBrainzArtistId = input.MusicBrainzArtistId,
+            ExternalArtistId = item.ExternalArtistId,
+            PlaylistId = playlist.Id,
+            PlaylistItemId = item.Id,
+        };
+        queue.Enqueue(queueItem);
 
-        var localArtistId = importResult.ArtistJson!.Id!;
-
-        // Ensure cache is updated so subsequent lookups reflect the newly imported artist
-        await cache.UpdateCacheAsync();
-
-        // Step 2: If the playlist item has an external artist id (e.g., Spotify), write that connection into artist.json
-        if (!string.IsNullOrWhiteSpace(item.ExternalArtistId) &&
-            item.ExternalService == Features.Playlists.Events.ExternalServiceType.Spotify)
-        {
-            await writer.UpdateArtistAsync(localArtistId, artist =>
-            {
-                artist.Connections ??= new Features.ServerLibrary.Json.JsonArtistServiceConnections();
-                artist.Connections.SpotifyId = item.ExternalArtistId;
-            });
-        }
-
-        // Persist any artist.json connection updates by refreshing cache
-        await cache.UpdateCacheAsync();
-
-        // Step 3: For every playlist item in the system that references that same external artist (e.g. Spotify)
-        // and is missing a local artist reference, update to the newly imported local artist
-        if (!string.IsNullOrWhiteSpace(item.ExternalArtistId) &&
-            item.ExternalService == Features.Playlists.Events.ExternalServiceType.Spotify)
-        {
-            var affectedPlaylists = await db
-                .Playlists.Include(p => p.Items)
-                .Where(p => p.Items.Any(i => i.LocalArtistId == null && i.ExternalArtistId == item.ExternalArtistId))
-                .ToListAsync();
-
-            foreach (var pl in affectedPlaylists)
-            {
-                foreach (var it in pl.Items.Where(i =>
-                             i.LocalArtistId == null && i.ExternalArtistId == item.ExternalArtistId))
-                {
-                    it.LocalArtistId = localArtistId;
-                    await events.SendAsync(
-                        Features.Playlists.Subscription.PlaylistSubscription.PlaylistItemUpdatedTopic(pl.Id),
-                        new Features.Playlists.Subscription.PlaylistSubscription.PlaylistItemUpdatedMessage(pl.Id, it.Id)
-                    );
-                }
-            }
-
-            await db.SaveChangesAsync();
-        }
-
-        // Also ensure the current item is linked if it was missing
-        if (item.LocalArtistId == null)
-        {
-            item.LocalArtistId = localArtistId;
-            await db.SaveChangesAsync();
-            await events.SendAsync(
-                Features.Playlists.Subscription.PlaylistSubscription.PlaylistItemUpdatedTopic(playlist.Id),
-                new Features.Playlists.Subscription.PlaylistSubscription.PlaylistItemUpdatedMessage(playlist.Id, item.Id)
-            );
-        }
-
-        // Step 4: Start import process of all releases for that artist (ImportArtist already imports eligible releases).
-        // If you want to force another pass, you could call ImportArtistReleasesAsync here. We rely on ImportArtistByMusicBrainzIdAsync.
-
-        return new SetPlaylistItemArtistMusicBrainzMatchSuccess(new Features.Playlists.PlaylistItem(item));
+        return new SetPlaylistItemArtistMusicBrainzMatchSuccess(new PlaylistItem(item));
     }
 }
 
@@ -115,7 +56,7 @@ public record SetPlaylistItemArtistMusicBrainzMatchInput(
 [UnionType("SetPlaylistItemArtistMusicBrainzMatchResult")]
 public abstract record SetPlaylistItemArtistMusicBrainzMatchResult;
 
-public record SetPlaylistItemArtistMusicBrainzMatchSuccess(Features.Playlists.PlaylistItem PlaylistItem)
+public record SetPlaylistItemArtistMusicBrainzMatchSuccess(PlaylistItem PlaylistItem)
     : SetPlaylistItemArtistMusicBrainzMatchResult;
 
 public record SetPlaylistItemArtistMusicBrainzMatchNotFound(string Message)
