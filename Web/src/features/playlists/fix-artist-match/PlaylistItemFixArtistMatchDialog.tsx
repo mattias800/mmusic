@@ -1,5 +1,5 @@
 import * as React from "react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -12,6 +12,7 @@ import { graphql } from "@/gql";
 import { useMutation, useQuery } from "urql";
 import { Spinner } from "@/components/spinner/Spinner.tsx";
 import { ReleaseCoverArt } from "@/components/images/ReleaseCoverArt.tsx";
+import { SpinnerSpacing } from "@/components/spinner/SpinnerSpacing.tsx";
 
 const mbArtistSearchQuery = graphql(`
   query FixArtist_MbArtistSearch($artistName: String!, $trackName: String!) {
@@ -72,39 +73,46 @@ export interface PlaylistItemFixArtistMatchDialogProps {
 
 export const PlaylistItemFixArtistMatchDialog: React.FC<
   PlaylistItemFixArtistMatchDialogProps
-> = (props) => {
-  const [artistQuery, setArtistQuery] = useState(
-    props.initialArtistQuery ?? "",
-  );
-  const [trackQuery, setTrackQuery] = useState<string>(
-    props.initialTrackQuery ?? "",
-  );
-  const [searchVars, setSearchVars] = useState<{
+> = ({
+  initialArtistQuery,
+  initialTrackQuery,
+  onOpenChange,
+  open,
+  playlistId,
+  playlistItemId,
+}) => {
+  const [artistQuery, setArtistQuery] = useState(initialArtistQuery ?? "");
+  const [trackQuery, setTrackQuery] = useState(initialTrackQuery ?? "");
+
+  const [variables, setVariables] = useState<{
     artistName: string;
     trackName: string;
-  } | null>(null);
+  }>({
+    trackName: initialArtistQuery ?? "",
+    artistName: initialTrackQuery ?? "",
+  });
+
   const [{ data, fetching }] = useQuery({
     query: mbArtistSearchQuery,
-    variables: searchVars ?? { artistName: "", trackName: "" },
-    pause:
-      !props.open || !searchVars || searchVars.artistName.trim().length === 0,
+    variables,
+    pause: !variables.artistName,
   });
   const [, setMbMatch] = useMutation(setMbMatchMutation);
 
-  const search = () =>
-    setSearchVars({
-      artistName: artistQuery,
-      trackName: trackQuery || artistQuery,
-    });
+  const updateVariables = useCallback(() => {
+    setVariables({ trackName: trackQuery, artistName: artistQuery });
+  }, [artistQuery, trackQuery]);
 
-  // Auto-trigger search once when dialog opens, using current input values
-  useEffect(() => {
-    if (!props.open) return;
-    const artist = (artistQuery || "").trim();
-    if (artist.length === 0) return;
-    setSearchVars({ artistName: artist, trackName: trackQuery || artist });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [props.open]);
+  // Initialize fields and optionally run a search when the dialog content mounts/opens
+  const onDialogOpenAutoFocus = useCallback(() => {
+    const initialArtist = (initialArtistQuery ?? "").trim();
+    const initialTrack = (initialTrackQuery ?? "").trim();
+    setArtistQuery(initialArtist);
+    setTrackQuery(initialTrack);
+    if (initialArtist.length > 0) {
+      updateVariables();
+    }
+  }, [initialArtistQuery, initialTrackQuery, updateVariables]);
 
   // If track query present, bias artist list to those appearing on matching recordings
   const biasedArtistIds = useMemo(() => {
@@ -127,17 +135,17 @@ export const PlaylistItemFixArtistMatchDialog: React.FC<
   const chooseMb = async (musicBrainzArtistId: string) => {
     await setMbMatch({
       input: {
-        playlistId: props.playlistId,
-        playlistItemId: props.playlistItemId,
+        playlistId: playlistId,
+        playlistItemId: playlistItemId,
         musicBrainzArtistId,
       },
     });
-    props.onOpenChange(false);
+    onOpenChange(false);
   };
 
   return (
-    <Dialog open={props.open} onOpenChange={props.onOpenChange}>
-      <DialogContent>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent onOpenAutoFocus={onDialogOpenAutoFocus}>
         <DialogHeader>
           <DialogTitle>Fix artist match</DialogTitle>
         </DialogHeader>
@@ -157,10 +165,17 @@ export const PlaylistItemFixArtistMatchDialog: React.FC<
               value={trackQuery}
               onChange={(e) => setTrackQuery(e.target.value)}
             />
-            <Button onClick={search}>Find</Button>
+            <Button
+              onClick={updateVariables}
+              disabled={(artistQuery || "").trim().length === 0}
+            >
+              Find
+            </Button>
           </div>
           {fetching ? (
-            <Spinner />
+            <SpinnerSpacing>
+              <Spinner />
+            </SpinnerSpacing>
           ) : (
             <div className="grid grid-cols-1 gap-2 max-h-96 overflow-y-auto pr-1">
               {(artists?.length ?? 0) === 0 && (

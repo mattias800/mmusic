@@ -19,7 +19,6 @@ import { Tag } from "@/components/text/Tag.tsx";
 import { TrackListHeading } from "@/components/track-item/TrackListHeading.tsx";
 import { Button } from "@/components/ui/button.tsx";
 import { Users } from "lucide-react";
-import { graphql as g } from "@/gql";
 import { PlaylistItemFixArtistMatchDialog } from "@/features/playlists/fix-artist-match/PlaylistItemFixArtistMatchDialog.tsx";
 
 export interface PlaylistPanelProps {
@@ -112,7 +111,7 @@ const movePlaylistItemMutation = graphql(`
   }
 `);
 
-const enqueueMissingArtistsMutation = g(`
+const enqueueMissingArtistsMutation = graphql(`
   mutation EnqueueMissingArtistsFromPlaylist($playlistId: ID!) {
     enqueueMissingArtistsFromPlaylist(playlistId: $playlistId)
   }
@@ -148,7 +147,9 @@ export const PlaylistPanel: React.FC<PlaylistPanelProps> = (props) => {
   };
 
   const [dragIndex, setDragIndex] = React.useState<number | null>(null);
-  const [fixOpenForItemId, setFixOpenForItemId] = React.useState<string | null>(null);
+  const [fixOpenForItemId, setFixOpenForItemId] = React.useState<string | null>(
+    null,
+  );
 
   return (
     <GradientContent>
@@ -157,7 +158,9 @@ export const PlaylistPanel: React.FC<PlaylistPanelProps> = (props) => {
         <div className="mt-4 p-4 rounded-md border bg-muted/30 flex items-center justify-between">
           <div>
             <div className="font-medium">Missing artists detected</div>
-            <div className="text-sm text-zinc-400">Queue all missing artists from this playlist for import.</div>
+            <div className="text-sm text-zinc-400">
+              Queue all missing artists from this playlist for import.
+            </div>
           </div>
           <Button size="sm" iconLeft={Users} onClick={enqueueAllMissing}>
             Enqueue missing artists
@@ -270,14 +273,21 @@ export const PlaylistPanel: React.FC<PlaylistPanelProps> = (props) => {
             }}
           />
         ))}
-        <PlaylistItemFixArtistMatchDialog
-          open={!!fixOpenForItemId}
-          onOpenChange={(open) => !open && setFixOpenForItemId(null)}
-          playlistId={playlist.id}
-          playlistItemId={fixOpenForItemId ?? ""}
-          initialArtistQuery={items.find(i => i.id === fixOpenForItemId)?.artistName ?? undefined}
-          initialTrackQuery={items.find(i => i.id === fixOpenForItemId)?.title ?? undefined}
-        />
+        {fixOpenForItemId && (
+          <PlaylistItemFixArtistMatchDialog
+            open={!!fixOpenForItemId}
+            onOpenChange={(open) => !open && setFixOpenForItemId(null)}
+            playlistId={playlist.id}
+            playlistItemId={fixOpenForItemId ?? ""}
+            initialArtistQuery={
+              items.find((i) => i.id === fixOpenForItemId)?.artistName ??
+              undefined
+            }
+            initialTrackQuery={
+              items.find((i) => i.id === fixOpenForItemId)?.title ?? undefined
+            }
+          />
+        )}
       </MainPadding>
     </GradientContent>
   );
