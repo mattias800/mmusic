@@ -13,6 +13,36 @@ public class ArtistImportWorker(
     ILogger<ArtistImportWorker> logger
 ) : BackgroundService
 {
+    private static string NormalizeArtistName(string? input)
+    {
+        if (string.IsNullOrWhiteSpace(input)) return string.Empty;
+        var s = input
+            .Replace("’", "'")
+            .Replace("“", "\"")
+            .Replace("”", "\"");
+        // Normalize ampersand vs 'and' to a single comparable form
+        s = s.Replace("&", " and ");
+        // Collapse whitespace and lowercase
+        var normalized = System.Text.RegularExpressions.Regex.Replace(s, "\\s+", " ")
+            .Trim()
+            .ToLowerInvariant();
+        return normalized;
+    }
+
+    private static string SwapAmpersandAnd(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return name;
+        if (name.Contains('&'))
+        {
+            return System.Text.RegularExpressions.Regex.Replace(name, "\\s*&\\s*", " and ", System.Text.RegularExpressions.RegexOptions.CultureInvariant);
+        }
+        if (System.Text.RegularExpressions.Regex.IsMatch(name, @"\\band\\b", System.Text.RegularExpressions.RegexOptions.IgnoreCase))
+        {
+            return System.Text.RegularExpressions.Regex.Replace(name, @"\\band\\b", "&", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+        }
+        return name;
+    }
+
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         logger.LogInformation("Artist import worker started");
@@ -52,14 +82,29 @@ public class ArtistImportWorker(
                     {
                         var recs = await mb.SearchRecordingByNameAsync(item.SongTitle!);
                         var artists = recs.SelectMany(r => r.Credits?.Select(c => c.Artist)?.Where(a => a != null) ?? []).ToList();
-                        var match = artists.FirstOrDefault(a => string.Equals(a!.Name, item.ArtistName, StringComparison.OrdinalIgnoreCase));
+                        var targetNorm = NormalizeArtistName(item.ArtistName);
+                        var match = artists.FirstOrDefault(a => NormalizeArtistName(a!.Name) == targetNorm);
                         mbArtistId = match?.Id;
                     }
 
                     if (string.IsNullOrWhiteSpace(mbArtistId))
                     {
                         var candidates = await mb.SearchArtistByNameAsync(item.ArtistName, 10, 0);
-                        mbArtistId = candidates.FirstOrDefault()?.Id;
+                        var targetNorm = NormalizeArtistName(item.ArtistName);
+                        var exact = candidates.FirstOrDefault(c => NormalizeArtistName(c.Name) == targetNorm);
+                        mbArtistId = exact?.Id ?? candidates.FirstOrDefault()?.Id;
+
+                        // Fallback: try swapping '&' and 'and'
+                        if (string.IsNullOrWhiteSpace(mbArtistId))
+                        {
+                            var alt = SwapAmpersandAnd(item.ArtistName);
+                            if (!string.Equals(alt, item.ArtistName, StringComparison.OrdinalIgnoreCase))
+                            {
+                                var altCandidates = await mb.SearchArtistByNameAsync(alt, 10, 0);
+                                var altExact = altCandidates.FirstOrDefault(c => NormalizeArtistName(c.Name) == targetNorm);
+                                mbArtistId = altExact?.Id ?? altCandidates.FirstOrDefault()?.Id;
+                            }
+                        }
                     }
                 }
                 catch (Exception ex)
@@ -151,7 +196,7 @@ public class ArtistImportWorker(
                                             it.LocalArtistId = importedArtist.Id;
                                             await events.SendAsync(
                                                 PlaylistSubscription.PlaylistItemUpdatedTopic(pl.Id),
-                                                new Playlists.PlaylistItem(it)
+                                                new Features.Playlists.Subscription.PlaylistSubscription.PlaylistItemUpdatedMessage(pl.Id, it.Id)
                                             );
                                         }
                                     }

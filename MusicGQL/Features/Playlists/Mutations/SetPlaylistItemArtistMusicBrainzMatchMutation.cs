@@ -80,7 +80,7 @@ public sealed class SetPlaylistItemArtistMusicBrainzMatchMutation
                     it.LocalArtistId = localArtistId;
                     await events.SendAsync(
                         Features.Playlists.Subscription.PlaylistSubscription.PlaylistItemUpdatedTopic(pl.Id),
-                        new Features.Playlists.PlaylistItem(it)
+                        new Features.Playlists.Subscription.PlaylistSubscription.PlaylistItemUpdatedMessage(pl.Id, it.Id)
                     );
                 }
             }
@@ -95,7 +95,7 @@ public sealed class SetPlaylistItemArtistMusicBrainzMatchMutation
             await db.SaveChangesAsync();
             await events.SendAsync(
                 Features.Playlists.Subscription.PlaylistSubscription.PlaylistItemUpdatedTopic(playlist.Id),
-                new Features.Playlists.PlaylistItem(item)
+                new Features.Playlists.Subscription.PlaylistSubscription.PlaylistItemUpdatedMessage(playlist.Id, item.Id)
             );
         }
 

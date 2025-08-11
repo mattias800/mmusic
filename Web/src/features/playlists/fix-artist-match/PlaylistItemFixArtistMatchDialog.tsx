@@ -41,8 +41,8 @@ const mbArtistSearchQuery = graphql(`
   }
 `);
 
-const setMbMatchMutation = graphql(`
-  mutation FixArtist_SetPlaylistItemArtistMusicBrainzMatch(
+const setPlaylistItemArtistMusicBrainzMatchMutation = graphql(`
+  mutation SetPlaylistItemArtistMusicBrainzMatch(
     $input: SetPlaylistItemArtistMusicBrainzMatchInput!
   ) {
     setPlaylistItemArtistMusicBrainzMatch(input: $input) {
@@ -67,8 +67,8 @@ export interface PlaylistItemFixArtistMatchDialogProps {
   onOpenChange: (open: boolean) => void;
   playlistId: string;
   playlistItemId: string;
-  initialArtistQuery?: string;
-  initialTrackQuery?: string;
+  initialArtistQuery?: string | undefined | null;
+  initialTrackQuery?: string | undefined | null;
 }
 
 export const PlaylistItemFixArtistMatchDialog: React.FC<
@@ -88,8 +88,8 @@ export const PlaylistItemFixArtistMatchDialog: React.FC<
     artistName: string;
     trackName: string;
   }>({
-    trackName: initialArtistQuery ?? "",
-    artistName: initialTrackQuery ?? "",
+    artistName: initialArtistQuery ?? "",
+    trackName: initialTrackQuery ?? "",
   });
 
   const [{ data, fetching }] = useQuery({
@@ -97,7 +97,9 @@ export const PlaylistItemFixArtistMatchDialog: React.FC<
     variables,
     pause: !variables.artistName,
   });
-  const [, setMbMatch] = useMutation(setMbMatchMutation);
+  const [, setMbMatch] = useMutation(
+    setPlaylistItemArtistMusicBrainzMatchMutation,
+  );
 
   const updateVariables = useCallback(() => {
     setVariables({ trackName: trackQuery, artistName: artistQuery });
