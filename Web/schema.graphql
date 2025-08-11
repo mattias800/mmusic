@@ -101,6 +101,7 @@ type ArtistImportProgress {
   errorMessage: String
   songTitle: String
   status: ArtistImportStatus!
+  statusInfo: ArtistImportStatusInfo!
   totalReleases: Int!
 }
 
@@ -116,7 +117,7 @@ type ArtistImportQueueState {
 
 type ArtistImportSearchRoot {
   artistImportQueue: ArtistImportQueueState!
-  currentArtistImport: ArtistImportProgress!
+  currentArtistImport: ArtistImportProgress
 }
 
 enum ArtistImportStatus {
@@ -126,6 +127,11 @@ enum ArtistImportStatus {
   IMPORTING_ARTIST
   IMPORTING_RELEASES
   RESOLVING_ARTIST
+}
+
+type ArtistImportStatusInfo {
+  id: ArtistImportStatus!
+  text: String!
 }
 
 type ArtistSearchRoot {

@@ -7,13 +7,13 @@ public class CurrentArtistImportStateService(
     ILogger<CurrentArtistImportStateService> logger
 )
 {
-    private ArtistImportProgress _state = new();
+    private ArtistImportProgress? _state = null;
 
-    public ArtistImportProgress Get() => _state;
+    public ArtistImportProgress? Get() => _state;
 
     public void Reset()
     {
-        _state = new ArtistImportProgress();
+        _state = null;
         Publish();
     }
 
@@ -25,19 +25,19 @@ public class CurrentArtistImportStateService(
 
     public void SetStatus(ArtistImportStatus status)
     {
-        _state = _state with { Status = status };
+        _state = (_state ?? new ArtistImportProgress()) with { Status = status };
         Publish();
     }
 
     public void SetReleaseProgress(int completed, int total)
     {
-        _state = _state with { CompletedReleases = completed, TotalReleases = total };
+        _state = (_state ?? new ArtistImportProgress()) with { CompletedReleases = completed, TotalReleases = total };
         Publish();
     }
 
     public void SetError(string error)
     {
-        _state = _state with { Status = ArtistImportStatus.Failed, ErrorMessage = error };
+        _state = (_state ?? new ArtistImportProgress()) with { Status = ArtistImportStatus.Failed, ErrorMessage = error };
         Publish();
     }
 

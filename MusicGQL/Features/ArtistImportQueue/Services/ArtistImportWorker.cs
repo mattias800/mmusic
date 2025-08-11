@@ -270,6 +270,21 @@ public class ArtistImportWorker(
                         {
                             logger.LogError(ex, "Error post-processing imported artist '{Artist}'", item.ArtistName);
                         }
+
+                        // If queue is empty, clear the current progress state so UI shows Idle
+                        try
+                        {
+                            if (!queue.TryDequeue(out var next) || next is null)
+                            {
+                                progress.Reset();
+                            }
+                            else
+                            {
+                                // If we dequeued something to check emptiness, put it back at front by re-enqueueing
+                                queue.Enqueue(next);
+                            }
+                        }
+                        catch { }
                     }
                 }
                 catch (Exception ex)

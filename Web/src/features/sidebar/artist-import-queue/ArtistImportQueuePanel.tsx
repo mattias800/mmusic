@@ -16,7 +16,10 @@ const query = graphql(`
       currentArtistImport {
         artistName
         songTitle
-        status
+        statusInfo {
+          id
+          text
+        }
         totalReleases
         completedReleases
         errorMessage
@@ -42,7 +45,10 @@ const currentSub = graphql(`
     currentArtistImportUpdated {
       artistName
       songTitle
-      status
+      statusInfo {
+        id
+        text
+      }
       totalReleases
       completedReleases
       errorMessage
@@ -86,9 +92,9 @@ export const ArtistImportQueuePanel: React.FC = () => {
         {current ? (
           <div className="text-zinc-300">
             <div>{current.artistName || "Idle"}</div>
-            {current.status && (
+            {current.statusInfo && (
               <div className="text-xs text-zinc-400">
-                {current.status} {current.completedReleases}/
+                {current.statusInfo.text} {current.completedReleases}/
                 {current.totalReleases}
               </div>
             )}

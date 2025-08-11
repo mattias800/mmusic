@@ -45,4 +45,31 @@ public record ArtistImportProgress
     public int TotalReleases { get; init; }
     public int CompletedReleases { get; init; }
     public string? ErrorMessage { get; init; }
+
+    // Human-friendly wrapper for Status for UI consumption
+    public ArtistImportStatusInfo StatusInfo => ArtistImportStatusInfo.From(Status);
+}
+
+public record ArtistImportStatusInfo
+{
+    public required ArtistImportStatus Id { get; init; }
+    public required string Text { get; init; }
+
+    public static ArtistImportStatusInfo From(ArtistImportStatus status)
+    {
+        return new ArtistImportStatusInfo
+        {
+            Id = status,
+            Text = status switch
+            {
+                ArtistImportStatus.Idle => "Idle",
+                ArtistImportStatus.ResolvingArtist => "Resolving artist…",
+                ArtistImportStatus.ImportingArtist => "Importing artist…",
+                ArtistImportStatus.ImportingReleases => "Importing releases…",
+                ArtistImportStatus.Completed => "Completed",
+                ArtistImportStatus.Failed => "Failed",
+                _ => status.ToString()
+            }
+        };
+    }
 }
