@@ -2,6 +2,7 @@ import { graphql } from "@/gql";
 import { useQuery, useSubscription } from "urql";
 import React from "react";
 import { Spinner } from "@/components/spinner/Spinner.tsx";
+import { ArtistImportStatus } from "@/gql/graphql.ts";
 
 const query = graphql(`
   query ArtistImportQueuePanel_Query {
@@ -89,7 +90,7 @@ export const ArtistImportQueuePanel: React.FC = () => {
     <div className="space-y-3 text-sm">
       <div>
         <div className="font-medium text-zinc-200">Current</div>
-        {current ? (
+        {current && current.statusInfo.id !== ArtistImportStatus.Idle ? (
           <div className="text-zinc-300">
             <div>{current.artistName || "Idle"}</div>
             {current.statusInfo && (

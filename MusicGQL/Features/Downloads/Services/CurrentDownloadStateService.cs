@@ -7,9 +7,9 @@ public class CurrentDownloadStateService(
     ILogger<CurrentDownloadStateService> logger
 )
 {
-    private Downloads.DownloadProgress? _state = null;
+    private DownloadProgress? _state = null;
 
-    public Downloads.DownloadProgress? Get() => _state;
+    public DownloadProgress? Get() => _state;
 
     public void Reset()
     {
@@ -17,27 +17,27 @@ public class CurrentDownloadStateService(
         Publish();
     }
 
-    public void Set(Downloads.DownloadProgress progress)
+    public void Set(DownloadProgress progress)
     {
         _state = progress;
         Publish();
     }
 
-    public void SetStatus(Downloads.DownloadStatus status)
+    public void SetStatus(DownloadStatus status)
     {
-        _state = (_state ?? new Downloads.DownloadProgress()) with { Status = status };
+        _state = (_state ?? new DownloadProgress()) with { Status = status };
         Publish();
     }
 
     public void SetTrackProgress(int completed, int total)
     {
-        _state = (_state ?? new Downloads.DownloadProgress()) with { CompletedTracks = completed, TotalTracks = total };
+        _state = (_state ?? new DownloadProgress()) with { CompletedTracks = completed, TotalTracks = total };
         Publish();
     }
 
     public void SetError(string error)
     {
-        _state = (_state ?? new Downloads.DownloadProgress()) with { Status = Downloads.DownloadStatus.Failed, ErrorMessage = error };
+        _state = (_state ?? new DownloadProgress()) with { Status = DownloadStatus.Failed, ErrorMessage = error };
         Publish();
     }
 

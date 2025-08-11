@@ -98,7 +98,7 @@ export const DownloadOverviewFetcher: React.FC<
     <div className="space-y-3 text-sm">
       <div>
         <div className="font-medium text-zinc-200">Current</div>
-        {current ? (
+        {current && current.status !== DownloadStatus.Idle ? (
           <div className="text-zinc-300">
             <div>
               {current.artistId}/{current.releaseFolderName}

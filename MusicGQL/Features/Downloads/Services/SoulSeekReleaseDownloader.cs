@@ -1,4 +1,6 @@
 using System.Text.RegularExpressions;
+using System.Globalization;
+using System.Text;
 using HotChocolate.Subscriptions;
 using MusicGQL.Features.Downloads.Util;
 using MusicGQL.Features.External.SoulSeek.Integration;
@@ -48,15 +50,17 @@ public class SoulSeekReleaseDownloader(
         // Determine expected track count from cache (if available)
         var cachedRelease = await cache.GetReleaseByArtistAndFolderAsync(artistId, releaseFolderName);
         int expectedTrackCount = cachedRelease?.Tracks?.Count ?? 0;
-        progress.Set(new Downloads.DownloadProgress
+        progress.Set(new DownloadProgress
         {
             ArtistId = artistId,
             ReleaseFolderName = releaseFolderName,
-            Status = Downloads.DownloadStatus.Searching,
+            Status = DownloadStatus.Searching,
             TotalTracks = expectedTrackCount,
             CompletedTracks = 0
         });
-        int minRequiredTracks = expectedTrackCount > 0 ? Math.Max(2, Math.Min(expectedTrackCount, expectedTrackCount - 1)) : 5; // allow off-by-one if known, else require at least 5
+        int minRequiredTracks = expectedTrackCount > 0
+            ? Math.Max(2, Math.Min(expectedTrackCount, expectedTrackCount - 1))
+            : 5; // allow off-by-one if known, else require at least 5
 
         // Discover (optional) year for ranking (we already have expectedTrackCount above)
         var expectedYear = cachedRelease?.JsonRelease?.FirstReleaseYear;
@@ -65,11 +69,29 @@ public class SoulSeekReleaseDownloader(
         var queries = new List<string> { baseQuery };
         queries.Add($"{normArtist}\\{normTitle}");
         queries.Add($"{normArtist}/{normTitle}");
+
+        // Accent-insensitive alternatives (e.g., Skeletá -> Skeleta)
+        string foldArtist = RemoveDiacritics(normArtist);
+        string foldTitle = RemoveDiacritics(normTitle);
+        var baseQueryFold = $"{foldArtist} - {foldTitle}".Trim();
+        if (!string.Equals(baseQueryFold, baseQuery, StringComparison.Ordinal))
+        {
+            queries.Add(baseQueryFold);
+            queries.Add($"{foldArtist}\\{foldTitle}");
+            queries.Add($"{foldArtist}/{foldTitle}");
+        }
         if (!string.IsNullOrWhiteSpace(expectedYear))
         {
             queries.Add($"{normArtist} - {normTitle} ({expectedYear})");
             queries.Add($"{normArtist}\\{normTitle} ({expectedYear})");
             queries.Add($"{normArtist}/{normTitle} ({expectedYear})");
+
+            if (!string.Equals(baseQueryFold, baseQuery, StringComparison.Ordinal))
+            {
+                queries.Add($"{foldArtist} - {foldTitle} ({expectedYear})");
+                queries.Add($"{foldArtist}\\{foldTitle} ({expectedYear})");
+                queries.Add($"{foldArtist}/{foldTitle} ({expectedYear})");
+            }
         }
 
         List<SearchResponse> rankedCandidates = new();
@@ -85,10 +107,13 @@ public class SoulSeekReleaseDownloader(
                 .Select(r => new
                 {
                     Response = r,
-                    Audio320Files = r.Files.Where(f => f.Extension.Equals("mp3", StringComparison.OrdinalIgnoreCase) && f.BitRate == 320).ToList(),
+                    Audio320Files = r.Files.Where(f =>
+                        f.Extension.Equals("mp3", StringComparison.OrdinalIgnoreCase) && f.BitRate == 320).ToList(),
                     Score = ComputeCandidateScore(r, artistName, releaseTitle, expectedYear)
                 })
-                .Where(x => x.Audio320Files.Count >= (expectedTrackCount > 0 ? Math.Max(2, Math.Min(expectedTrackCount, expectedTrackCount - 1)) : 5))
+                .Where(x => x.Audio320Files.Count >= (expectedTrackCount > 0
+                    ? Math.Max(2, Math.Min(expectedTrackCount, expectedTrackCount - 1))
+                    : 5))
                 .OrderByDescending(x => x.Score)
                 .ThenBy(x => x.Response.QueueLength)
                 .ThenBy(x => x.Response.HasFreeUploadSlot)
@@ -123,7 +148,7 @@ public class SoulSeekReleaseDownloader(
             releaseFolderName,
             CachedReleaseDownloadStatus.Downloading
         );
-        progress.SetStatus(Downloads.DownloadStatus.Downloading);
+        progress.SetStatus(DownloadStatus.Downloading);
 
         foreach (var candidate in orderedCandidates)
         {
@@ -198,7 +223,13 @@ public class SoulSeekReleaseDownloader(
                 );
 
                 trackIndex++;
-                try { progress.SetTrackProgress(trackIndex, expectedTrackCount); } catch { }
+                try
+                {
+                    progress.SetTrackProgress(trackIndex, expectedTrackCount);
+                }
+                catch
+                {
+                }
             }
 
             if (!userFailed)
@@ -209,7 +240,7 @@ public class SoulSeekReleaseDownloader(
                     releaseTitle,
                     candidate.Username
                 );
-                progress.SetStatus(Downloads.DownloadStatus.Completed);
+                progress.SetStatus(DownloadStatus.Completed);
                 if (!downloadQueue.TryDequeue(out var nxt) || nxt is null)
                 {
                     progress.Reset();
@@ -218,6 +249,7 @@ public class SoulSeekReleaseDownloader(
                 {
                     downloadQueue.Enqueue(nxt);
                 }
+
                 return true;
             }
 
@@ -233,7 +265,7 @@ public class SoulSeekReleaseDownloader(
             artistName,
             releaseTitle
         );
-        progress.SetStatus(Downloads.DownloadStatus.Failed);
+        progress.SetStatus(DownloadStatus.Failed);
         return false;
     }
 
@@ -247,7 +279,8 @@ public class SoulSeekReleaseDownloader(
         return Regex.Replace(alnumSpaceOnly, @"\s+", " ").Trim();
     }
 
-    private static int ComputeCandidateScore(SearchResponse response, string artistName, string releaseTitle, string? expectedYear)
+    private static int ComputeCandidateScore(SearchResponse response, string artistName, string releaseTitle,
+        string? expectedYear)
     {
         // Heuristic: prefer responses whose file paths look like .../<Artist>/<Album (Year)>/Track
         // Also reward when album segment matches release title and appears after artist segment
@@ -279,7 +312,8 @@ public class SoulSeekReleaseDownloader(
             {
                 for (int i = idxArtist + 1; i < normSegs.Count; i++)
                 {
-                    if (normSegs[i].Contains(nTitle, StringComparison.OrdinalIgnoreCase) || nTitle.Contains(normSegs[i], StringComparison.OrdinalIgnoreCase))
+                    if (normSegs[i].Contains(nTitle, StringComparison.OrdinalIgnoreCase) ||
+                        nTitle.Contains(normSegs[i], StringComparison.OrdinalIgnoreCase))
                     {
                         idxAlbum = i;
                         break;
@@ -298,7 +332,8 @@ public class SoulSeekReleaseDownloader(
                 if (albumSeg.Contains(nTitle, StringComparison.OrdinalIgnoreCase)) score += 10;
 
                 // Reward matching year inside the album segment
-                if (!string.IsNullOrWhiteSpace(nYear) && segments[idxAlbum].Contains(nYear!, StringComparison.OrdinalIgnoreCase))
+                if (!string.IsNullOrWhiteSpace(nYear) &&
+                    segments[idxAlbum].Contains(nYear!, StringComparison.OrdinalIgnoreCase))
                 {
                     score += 10;
                 }
@@ -327,7 +362,8 @@ public class SoulSeekReleaseDownloader(
         return score;
     }
 
-    private static bool HasAlbumFolderMatch(SearchResponse response, string artistName, string releaseTitle, string? expectedYear)
+    private static bool HasAlbumFolderMatch(SearchResponse response, string artistName, string releaseTitle,
+        string? expectedYear)
     {
         if (response.Files == null || response.Files.Count == 0) return false;
         string nArtist = NormalizeForCompare(artistName);
@@ -346,12 +382,14 @@ public class SoulSeekReleaseDownloader(
             int idxAlbum = -1;
             for (int i = idxArtist + 1; i < normSegs.Count; i++)
             {
-                if (normSegs[i].Contains(nTitle, StringComparison.OrdinalIgnoreCase) || nTitle.Contains(normSegs[i], StringComparison.OrdinalIgnoreCase))
+                if (normSegs[i].Contains(nTitle, StringComparison.OrdinalIgnoreCase) ||
+                    nTitle.Contains(normSegs[i], StringComparison.OrdinalIgnoreCase))
                 {
                     idxAlbum = i;
                     break;
                 }
             }
+
             if (idxAlbum > idxArtist)
             {
                 // Optional: reinforce with year presence when known
@@ -376,9 +414,26 @@ public class SoulSeekReleaseDownloader(
     private static string NormalizeForCompare(string input)
     {
         if (string.IsNullOrWhiteSpace(input)) return string.Empty;
-        var s = input.ToLowerInvariant();
-        // keep letters, digits and spaces
-        var filtered = Regex.Replace(s, @"[^\p{L}\p{N}\s]", " ");
+        // Lowercase and remove diacritics to compare accent-insensitively
+        var lowered = input.ToLowerInvariant();
+        var folded = RemoveDiacritics(lowered);
+        var filtered = Regex.Replace(folded, @"[^\p{L}\p{N}\s]", " ");
         return Regex.Replace(filtered, @"\s+", " ").Trim();
+    }
+
+    private static string RemoveDiacritics(string input)
+    {
+        if (string.IsNullOrEmpty(input)) return string.Empty;
+        var normalized = input.Normalize(NormalizationForm.FormD);
+        var builder = new StringBuilder(input.Length);
+        for (int i = 0; i < normalized.Length; i++)
+        {
+            var unicodeCategory = CharUnicodeInfo.GetUnicodeCategory(normalized[i]);
+            if (unicodeCategory != UnicodeCategory.NonSpacingMark)
+            {
+                builder.Append(normalized[i]);
+            }
+        }
+        return builder.ToString().Normalize(NormalizationForm.FormC);
     }
 }

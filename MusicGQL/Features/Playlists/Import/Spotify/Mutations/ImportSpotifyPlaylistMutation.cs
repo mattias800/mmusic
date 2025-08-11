@@ -129,7 +129,7 @@ public class ImportSpotifyPlaylistMutation
                     {
                         var any = g.First();
                         var chosenSong = g.Select(x => x.SongTitle).FirstOrDefault(s => !string.IsNullOrWhiteSpace(s));
-                        return new MusicGQL.Features.ArtistImportQueue.ArtistImportQueueItem(any.ArtistName, chosenSong)
+                        return new ArtistImportQueue.ArtistImportQueueItem(any.ArtistName, chosenSong)
                         {
                             ExternalArtistId = string.IsNullOrWhiteSpace(any.ExternalArtistId) ? null : any.ExternalArtistId
                         };

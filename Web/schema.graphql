@@ -157,6 +157,13 @@ type ArtistTopTrack {
   trackLength: Int
 }
 
+enum BulkDownloadScope {
+  ALBUMS
+  ALL
+  EPS
+  SINGLES
+}
+
 type CacheStatistics {
   artistCount: Int!
   isInitialized: Boolean!
@@ -683,6 +690,7 @@ type Mutation {
   setReleaseMatchOverride(input: SetReleaseMatchOverrideInput!): SetReleaseMatchOverrideResult!
   signIn(input: SignInInput!): SignInResult!
   signOut(input: SignOutInput!): SignOutResult!
+  startBulkDownloadForArtist(input: StartBulkDownloadForArtistInput!): StartBulkDownloadForArtistResult!
   startDownloadRelease(input: StartDownloadReleaseInput!): StartDownloadReleaseResult!
   unlikeSong(input: UnlikedSongInput!): UnlikeSongResult!
   updateDownloadPath(input: UpdateDownloadPathInput!): UpdateDownloadPathResult!
@@ -1118,6 +1126,22 @@ type SpotifyTrack {
   id: String!
   previewUrl: String
   title: String!
+}
+
+type StartBulkDownloadForArtistError {
+  message: String!
+}
+
+input StartBulkDownloadForArtistInput {
+  artistId: String!
+  scope: BulkDownloadScope!
+}
+
+union StartBulkDownloadForArtistResult = StartBulkDownloadForArtistError | StartBulkDownloadForArtistSuccess
+
+type StartBulkDownloadForArtistSuccess {
+  artistId: String!
+  queuedCount: Int!
 }
 
 type StartDownloadReleaseAccepted {

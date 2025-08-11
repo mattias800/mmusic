@@ -179,6 +179,13 @@ export type ArtistTopTrack = {
   trackLength?: Maybe<Scalars['Int']['output']>;
 };
 
+export enum BulkDownloadScope {
+  Albums = 'ALBUMS',
+  All = 'ALL',
+  Eps = 'EPS',
+  Singles = 'SINGLES'
+}
+
 export type CacheStatistics = {
   __typename?: 'CacheStatistics';
   artistCount: Scalars['Int']['output'];
@@ -825,6 +832,7 @@ export type Mutation = {
   setReleaseMatchOverride: SetReleaseMatchOverrideResult;
   signIn: SignInResult;
   signOut: SignOutResult;
+  startBulkDownloadForArtist: StartBulkDownloadForArtistResult;
   startDownloadRelease: StartDownloadReleaseResult;
   unlikeSong: UnlikeSongResult;
   updateDownloadPath: UpdateDownloadPathResult;
@@ -980,6 +988,11 @@ export type MutationSignInArgs = {
 
 export type MutationSignOutArgs = {
   input: SignOutInput;
+};
+
+
+export type MutationStartBulkDownloadForArtistArgs = {
+  input: StartBulkDownloadForArtistInput;
 };
 
 
@@ -1555,6 +1568,24 @@ export type SpotifyTrack = {
   title: Scalars['String']['output'];
 };
 
+export type StartBulkDownloadForArtistError = {
+  __typename?: 'StartBulkDownloadForArtistError';
+  message: Scalars['String']['output'];
+};
+
+export type StartBulkDownloadForArtistInput = {
+  artistId: Scalars['String']['input'];
+  scope: BulkDownloadScope;
+};
+
+export type StartBulkDownloadForArtistResult = StartBulkDownloadForArtistError | StartBulkDownloadForArtistSuccess;
+
+export type StartBulkDownloadForArtistSuccess = {
+  __typename?: 'StartBulkDownloadForArtistSuccess';
+  artistId: Scalars['String']['output'];
+  queuedCount: Scalars['Int']['output'];
+};
+
 export type StartDownloadReleaseAccepted = {
   __typename?: 'StartDownloadReleaseAccepted';
   artistId: Scalars['String']['output'];
@@ -2032,6 +2063,13 @@ export type ArtistAlbumListQuery = { __typename?: 'Query', serverLibrary: { __ty
       )> } | null } };
 
 export type ArtistDownloadAllReleasesButton_ArtistFragment = { __typename?: 'Artist', id: string } & { ' $fragmentName'?: 'ArtistDownloadAllReleasesButton_ArtistFragment' };
+
+export type ArtistDownloadAll_StartBulkMutationVariables = Exact<{
+  input: StartBulkDownloadForArtistInput;
+}>;
+
+
+export type ArtistDownloadAll_StartBulkMutation = { __typename?: 'Mutation', startBulkDownloadForArtist: { __typename: 'StartBulkDownloadForArtistError', message: string } | { __typename: 'StartBulkDownloadForArtistSuccess', queuedCount: number } };
 
 export type ArtistEpListQueryVariables = Exact<{
   artistId: Scalars['ID']['input'];
@@ -2549,6 +2587,7 @@ export const FixMatch_SetReleaseGroupDocument = {"kind":"Document","definitions"
 export const FixMatch_ReleaseConnectionsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"FixMatch_ReleaseConnections"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"artistId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"releaseFolderName"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"serverLibrary"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"releaseForArtistByFolderName"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"artistId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"artistId"}}},{"kind":"Argument","name":{"kind":"Name","value":"releaseFolderName"},"value":{"kind":"Variable","name":{"kind":"Name","value":"releaseFolderName"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"musicBrainzReleaseGroupId"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"artist"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}}]}}]}}]}}]} as unknown as DocumentNode<FixMatch_ReleaseConnectionsQuery, FixMatch_ReleaseConnectionsQueryVariables>;
 export const FixMatch_SearchReleaseGroupsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"FixMatch_SearchReleaseGroups"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"name"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"artistName"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"limit"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"offset"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"musicBrainz"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"releaseGroup"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"searchByNameAndArtistName"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"name"},"value":{"kind":"Variable","name":{"kind":"Name","value":"name"}}},{"kind":"Argument","name":{"kind":"Name","value":"artistName"},"value":{"kind":"Variable","name":{"kind":"Name","value":"artistName"}}},{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"limit"}}},{"kind":"Argument","name":{"kind":"Name","value":"offset"},"value":{"kind":"Variable","name":{"kind":"Name","value":"offset"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"primaryType"}},{"kind":"Field","name":{"kind":"Name","value":"secondaryTypes"}},{"kind":"Field","name":{"kind":"Name","value":"firstReleaseDate"}}]}}]}}]}}]}}]} as unknown as DocumentNode<FixMatch_SearchReleaseGroupsQuery, FixMatch_SearchReleaseGroupsQueryVariables>;
 export const ArtistAlbumListDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"ArtistAlbumList"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"artistId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"serverLibrary"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"artistById"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"artistId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"albums"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"firstReleaseDate"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"AlbumCard_Release"}}]}}]}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"AlbumCard_Release"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Release"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"firstReleaseYear"}},{"kind":"Field","name":{"kind":"Name","value":"coverArtUrl"}},{"kind":"Field","name":{"kind":"Name","value":"folderName"}},{"kind":"Field","name":{"kind":"Name","value":"isFullyMissing"}},{"kind":"Field","name":{"kind":"Name","value":"artist"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"images"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"thumbs"}}]}}]}}]}}]} as unknown as DocumentNode<ArtistAlbumListQuery, ArtistAlbumListQueryVariables>;
+export const ArtistDownloadAll_StartBulkDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"ArtistDownloadAll_StartBulk"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"StartBulkDownloadForArtistInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"startBulkDownloadForArtist"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"__typename"}},{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"StartBulkDownloadForArtistSuccess"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"queuedCount"}}]}},{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"StartBulkDownloadForArtistError"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"message"}}]}}]}}]}}]} as unknown as DocumentNode<ArtistDownloadAll_StartBulkMutation, ArtistDownloadAll_StartBulkMutationVariables>;
 export const ArtistEpListDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"ArtistEpList"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"artistId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"serverLibrary"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"artistById"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"artistId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"eps"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"firstReleaseDate"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"AlbumCard_Release"}}]}}]}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"AlbumCard_Release"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Release"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"firstReleaseYear"}},{"kind":"Field","name":{"kind":"Name","value":"coverArtUrl"}},{"kind":"Field","name":{"kind":"Name","value":"folderName"}},{"kind":"Field","name":{"kind":"Name","value":"isFullyMissing"}},{"kind":"Field","name":{"kind":"Name","value":"artist"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"images"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"thumbs"}}]}}]}}]}}]} as unknown as DocumentNode<ArtistEpListQuery, ArtistEpListQueryVariables>;
 export const ArtistPanel_CurrentImportDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"ArtistPanel_CurrentImport"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"artistImport"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"currentArtistImport"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"status"}},{"kind":"Field","name":{"kind":"Name","value":"completedReleases"}},{"kind":"Field","name":{"kind":"Name","value":"totalReleases"}},{"kind":"Field","name":{"kind":"Name","value":"errorMessage"}},{"kind":"Field","name":{"kind":"Name","value":"artistName"}}]}}]}}]}}]} as unknown as DocumentNode<ArtistPanel_CurrentImportQuery, ArtistPanel_CurrentImportQueryVariables>;
 export const ArtistImportStatusInfo_SubDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"subscription","name":{"kind":"Name","value":"ArtistImportStatusInfo_Sub"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"currentArtistImportUpdated"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"status"}},{"kind":"Field","name":{"kind":"Name","value":"completedReleases"}},{"kind":"Field","name":{"kind":"Name","value":"totalReleases"}},{"kind":"Field","name":{"kind":"Name","value":"errorMessage"}},{"kind":"Field","name":{"kind":"Name","value":"artistName"}}]}}]}}]} as unknown as DocumentNode<ArtistImportStatusInfo_SubSubscription, ArtistImportStatusInfo_SubSubscriptionVariables>;

@@ -53,6 +53,7 @@ type Documents = {
     "\n  fragment ArtistNotInLibraryTopTracks_LastFmArtist on LastFmArtist {\n    id\n    topTracks {\n      id\n      name\n      statistics {\n        listeners\n      }\n    }\n  }\n": typeof types.ArtistNotInLibraryTopTracks_LastFmArtistFragmentDoc,
     "\n  query ArtistAlbumList($artistId: ID!) {\n    serverLibrary {\n      artistById(id: $artistId) {\n        id\n        albums {\n          id\n          firstReleaseDate\n          ...AlbumCard_Release\n        }\n      }\n    }\n  }\n": typeof types.ArtistAlbumListDocument,
     "\n  fragment ArtistDownloadAllReleasesButton_Artist on Artist {\n    id\n  }\n": typeof types.ArtistDownloadAllReleasesButton_ArtistFragmentDoc,
+    "\n  mutation ArtistDownloadAll_StartBulk(\n    $input: StartBulkDownloadForArtistInput!\n  ) {\n    startBulkDownloadForArtist(input: $input) {\n      __typename\n      ... on StartBulkDownloadForArtistSuccess {\n        queuedCount\n      }\n      ... on StartBulkDownloadForArtistError {\n        message\n      }\n    }\n  }\n": typeof types.ArtistDownloadAll_StartBulkDocument,
     "\n  query ArtistEpList($artistId: ID!) {\n    serverLibrary {\n      artistById(id: $artistId) {\n        id\n        eps {\n          id\n          firstReleaseDate\n          ...AlbumCard_Release\n        }\n      }\n    }\n  }\n": typeof types.ArtistEpListDocument,
     "\n  fragment ArtistImportStatusInfo_Artist on Artist {\n    id\n    name\n  }\n": typeof types.ArtistImportStatusInfo_ArtistFragmentDoc,
     "\n  query ArtistPanel_CurrentImport {\n    artistImport {\n      currentArtistImport {\n        status\n        completedReleases\n        totalReleases\n        errorMessage\n        artistName\n      }\n    }\n  }\n": typeof types.ArtistPanel_CurrentImportDocument,
@@ -167,6 +168,7 @@ const documents: Documents = {
     "\n  fragment ArtistNotInLibraryTopTracks_LastFmArtist on LastFmArtist {\n    id\n    topTracks {\n      id\n      name\n      statistics {\n        listeners\n      }\n    }\n  }\n": types.ArtistNotInLibraryTopTracks_LastFmArtistFragmentDoc,
     "\n  query ArtistAlbumList($artistId: ID!) {\n    serverLibrary {\n      artistById(id: $artistId) {\n        id\n        albums {\n          id\n          firstReleaseDate\n          ...AlbumCard_Release\n        }\n      }\n    }\n  }\n": types.ArtistAlbumListDocument,
     "\n  fragment ArtistDownloadAllReleasesButton_Artist on Artist {\n    id\n  }\n": types.ArtistDownloadAllReleasesButton_ArtistFragmentDoc,
+    "\n  mutation ArtistDownloadAll_StartBulk(\n    $input: StartBulkDownloadForArtistInput!\n  ) {\n    startBulkDownloadForArtist(input: $input) {\n      __typename\n      ... on StartBulkDownloadForArtistSuccess {\n        queuedCount\n      }\n      ... on StartBulkDownloadForArtistError {\n        message\n      }\n    }\n  }\n": types.ArtistDownloadAll_StartBulkDocument,
     "\n  query ArtistEpList($artistId: ID!) {\n    serverLibrary {\n      artistById(id: $artistId) {\n        id\n        eps {\n          id\n          firstReleaseDate\n          ...AlbumCard_Release\n        }\n      }\n    }\n  }\n": types.ArtistEpListDocument,
     "\n  fragment ArtistImportStatusInfo_Artist on Artist {\n    id\n    name\n  }\n": types.ArtistImportStatusInfo_ArtistFragmentDoc,
     "\n  query ArtistPanel_CurrentImport {\n    artistImport {\n      currentArtistImport {\n        status\n        completedReleases\n        totalReleases\n        errorMessage\n        artistName\n      }\n    }\n  }\n": types.ArtistPanel_CurrentImportDocument,
@@ -412,6 +414,10 @@ export function graphql(source: "\n  query ArtistAlbumList($artistId: ID!) {\n  
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  fragment ArtistDownloadAllReleasesButton_Artist on Artist {\n    id\n  }\n"): (typeof documents)["\n  fragment ArtistDownloadAllReleasesButton_Artist on Artist {\n    id\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  mutation ArtistDownloadAll_StartBulk(\n    $input: StartBulkDownloadForArtistInput!\n  ) {\n    startBulkDownloadForArtist(input: $input) {\n      __typename\n      ... on StartBulkDownloadForArtistSuccess {\n        queuedCount\n      }\n      ... on StartBulkDownloadForArtistError {\n        message\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation ArtistDownloadAll_StartBulk(\n    $input: StartBulkDownloadForArtistInput!\n  ) {\n    startBulkDownloadForArtist(input: $input) {\n      __typename\n      ... on StartBulkDownloadForArtistSuccess {\n        queuedCount\n      }\n      ... on StartBulkDownloadForArtistError {\n        message\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

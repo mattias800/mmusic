@@ -8,9 +8,9 @@ public class DownloadQueueService(
     ILogger<DownloadQueueService> logger
 )
 {
-    private readonly ConcurrentQueue<Downloads.DownloadQueueItem> _queue = new();
+    private readonly ConcurrentQueue<DownloadQueueItem> _queue = new();
 
-    public void Enqueue(IEnumerable<Downloads.DownloadQueueItem> items)
+    public void Enqueue(IEnumerable<DownloadQueueItem> items)
     {
         int count = 0;
         foreach (var item in items)
@@ -22,13 +22,13 @@ public class DownloadQueueService(
         PublishQueueUpdated();
     }
 
-    public void Enqueue(Downloads.DownloadQueueItem item)
+    public void Enqueue(DownloadQueueItem item)
     {
         _queue.Enqueue(item);
         PublishQueueUpdated();
     }
 
-    public bool TryDequeue(out Downloads.DownloadQueueItem? item)
+    public bool TryDequeue(out DownloadQueueItem? item)
     {
         var ok = _queue.TryDequeue(out var dequeued);
         item = dequeued;
@@ -39,10 +39,10 @@ public class DownloadQueueService(
         return ok;
     }
 
-    public Downloads.DownloadQueueState Snapshot()
+    public DownloadQueueState Snapshot()
     {
         var items = _queue.ToArray();
-        return new Downloads.DownloadQueueState
+        return new DownloadQueueState
         {
             QueueLength = items.Length,
             Items = items.Take(25).ToList(),

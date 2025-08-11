@@ -30,7 +30,7 @@ public class DeleteReleaseAudioMutation
             { ".mp3", ".flac", ".wav", ".m4a", ".ogg" };
 
             var releaseRoot = Path.GetFullPath(release.ReleasePath);
-            var files = System.IO.Directory
+            var files = Directory
                 .EnumerateFiles(releaseRoot, "*.*", SearchOption.AllDirectories)
                 .Where(f => audioExts.Contains(Path.GetExtension(f)));
 
