@@ -355,7 +355,7 @@ public class ReleaseJsonBuilder(
             Connections = new ReleaseServiceConnections
             {
                 MusicBrainzReleaseGroupId = releaseGroupId,
-                MusicBrainzSelectedReleaseId = selected.Id,
+                MusicBrainzSelectedReleaseId = selected?.Id,
                 // If an explicit override was used, keep it; otherwise leave null
                 MusicBrainzReleaseIdOverride = existingOverrideId,
             },
