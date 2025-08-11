@@ -334,6 +334,9 @@ builder
     .AddTypeExtension<DeleteReleaseAudioMutation>()
     .AddType<DeleteReleaseAudioSuccess>()
     .AddType<DeleteReleaseAudioError>()
+    .AddTypeExtension<SetReleaseGroupMutation>()
+    .AddType<SetReleaseGroupSuccess>()
+    .AddType<SetReleaseGroupError>()
     // Release match override + MB release scoring
     .AddTypeExtension<SetReleaseMatchOverrideMutation>()
     .AddType<SetReleaseMatchOverrideSuccess>()

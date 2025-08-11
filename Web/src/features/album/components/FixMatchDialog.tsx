@@ -1,8 +1,14 @@
 import * as React from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog.tsx";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog.tsx";
 import { Button } from "@/components/ui/button.tsx";
 import { useQuery, useMutation } from "urql";
 import { graphql } from "@/gql";
+import { SpinnerSpacing } from "@/components/spinner/SpinnerSpacing.tsx";
 
 interface FixMatchDialogProps {
   open: boolean;
@@ -46,11 +52,15 @@ const releasesWithScoresQuery = graphql(`
 
 // Mutation to set override
 const setOverrideMutation = graphql(`
-  mutation FixMatch_SetReleaseMatchOverride($input: SetReleaseMatchOverrideInput!) {
+  mutation FixMatch_SetReleaseMatchOverride(
+    $input: SetReleaseMatchOverrideInput!
+  ) {
     setReleaseMatchOverride(input: $input) {
       __typename
       ... on SetReleaseMatchOverrideSuccess {
-        release { id }
+        release {
+          id
+        }
       }
       ... on SetReleaseMatchOverrideError {
         message
@@ -59,10 +69,29 @@ const setOverrideMutation = graphql(`
   }
 `);
 
-// We need the release's MusicBrainz releaseGroupId from the Release object.
-// Add a tiny helper query to fetch it via the AlbumPanel fragment constraints.
+const setReleaseGroupMutation = graphql(`
+  mutation FixMatch_SetReleaseGroup($input: SetReleaseGroupInput!) {
+    setReleaseGroup(input: $input) {
+      __typename
+      ... on SetReleaseGroupSuccess {
+        release {
+          id
+        }
+      }
+      ... on SetReleaseGroupError {
+        message
+      }
+    }
+  }
+`);
+
+// We need the release's MusicBrainz releaseGroupId from the Release object,
+// and also the artist/release titles for auto-searching other release groups.
 const releaseConnectionsQuery = graphql(`
-  query FixMatch_ReleaseConnections($artistId: ID!, $releaseFolderName: String!) {
+  query FixMatch_ReleaseConnections(
+    $artistId: ID!
+    $releaseFolderName: String!
+  ) {
     serverLibrary {
       releaseForArtistByFolderName(
         artistId: $artistId
@@ -70,6 +99,11 @@ const releaseConnectionsQuery = graphql(`
       ) {
         id
         musicBrainzReleaseGroupId
+        title
+        artist {
+          id
+          name
+        }
       }
     }
   }
@@ -78,6 +112,7 @@ const releaseConnectionsQuery = graphql(`
 // types are generated via codegen
 
 export const FixMatchDialog: React.FC<FixMatchDialogProps> = (props) => {
+  const [mode, setMode] = React.useState<"inGroup" | "searchRg">("inGroup");
   const [{ data: connectionsData }] = useQuery({
     query: releaseConnectionsQuery,
     variables: {
@@ -87,7 +122,14 @@ export const FixMatchDialog: React.FC<FixMatchDialogProps> = (props) => {
     pause: !props.open,
   });
 
-  const releaseGroupId = connectionsData?.serverLibrary?.releaseForArtistByFolderName?.musicBrainzReleaseGroupId as string | undefined;
+  const releaseGroupId = connectionsData?.serverLibrary
+    ?.releaseForArtistByFolderName?.musicBrainzReleaseGroupId as
+    | string
+    | undefined;
+  const releaseTitle = connectionsData?.serverLibrary
+    ?.releaseForArtistByFolderName?.title as string | undefined;
+  const artistName = connectionsData?.serverLibrary
+    ?.releaseForArtistByFolderName?.artist?.name as string | undefined;
 
   const [{ data, fetching, error }] = useQuery({
     query: releasesWithScoresQuery,
@@ -100,6 +142,7 @@ export const FixMatchDialog: React.FC<FixMatchDialogProps> = (props) => {
   });
 
   const [, setOverride] = useMutation(setOverrideMutation);
+  const [, setReleaseGroup] = useMutation(setReleaseGroupMutation);
 
   const onChoose = async (mbReleaseId: string) => {
     // start loading immediately and close dialog
@@ -116,6 +159,47 @@ export const FixMatchDialog: React.FC<FixMatchDialogProps> = (props) => {
     props.onEndFix?.();
   };
 
+  const releaseGroupSearchQuery = graphql(`
+    query FixMatch_SearchReleaseGroups(
+      $name: String!
+      $artistName: String!
+      $limit: Int!
+      $offset: Int!
+    ) {
+      musicBrainz {
+        releaseGroup {
+          searchByNameAndArtistName(
+            name: $name
+            artistName: $artistName
+            limit: $limit
+            offset: $offset
+          ) {
+            id
+            title
+            primaryType
+            secondaryTypes
+            firstReleaseDate
+          }
+        }
+      }
+    }
+  `);
+
+  const [{ data: rgData, fetching: rgFetching, error: rgError }] = useQuery({
+    query: releaseGroupSearchQuery,
+    variables: {
+      name: releaseTitle || "",
+      artistName: artistName || "",
+      limit: 25,
+      offset: 0,
+    },
+    pause:
+      !props.open ||
+      mode !== "searchRg" ||
+      !artistName?.trim() ||
+      !releaseTitle?.trim(),
+  });
+
   const candidates = data?.releasesWithScores ?? [];
 
   return (
@@ -125,54 +209,155 @@ export const FixMatchDialog: React.FC<FixMatchDialogProps> = (props) => {
           <DialogTitle>Fix match</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 overflow-hidden">
-          {!releaseGroupId && (
+          <div className="flex gap-2 text-xs">
+            <Button
+              variant={mode === "inGroup" ? "default" : "ghost"}
+              size="sm"
+              onClick={() => setMode("inGroup")}
+            >
+              In this release group
+            </Button>
+            <Button
+              variant={mode === "searchRg" ? "default" : "ghost"}
+              size="sm"
+              onClick={() => setMode("searchRg")}
+            >
+              Search other release groups
+            </Button>
+          </div>
+
+          {mode === "searchRg" && (
+            <div className="space-y-2">
+              {rgFetching && (
+                <SpinnerSpacing>
+                  <SpinnerSpacing />
+                </SpinnerSpacing>
+              )}
+              {rgError && !rgFetching && (
+                <p className="text-sm text-red/70">{rgError.message}</p>
+              )}
+              {!rgFetching &&
+                (rgData?.musicBrainz?.releaseGroup?.searchByNameAndArtistName
+                  ?.length ?? 0) === 0 && (
+                  <p className="text-sm text-white/70">
+                    No release groups found.
+                  </p>
+                )}
+              <div className="space-y-2 max-h-80 overflow-y-auto pr-2">
+                {rgData?.musicBrainz?.releaseGroup?.searchByNameAndArtistName?.map(
+                  (rg) => (
+                    <div
+                      key={rg.id}
+                      className="flex items-center justify-between gap-3 rounded-md border border-white/10 p-2 hover:bg-white/5"
+                    >
+                      <div className="min-w-0">
+                        <div className="font-medium truncate">{rg.title}</div>
+                        <div className="text-xs text-white/60 truncate">
+                          {rg.primaryType}
+                          {rg.secondaryTypes?.length
+                            ? ` • ${rg.secondaryTypes.join(", ")}`
+                            : ""}
+                          {rg.firstReleaseDate
+                            ? ` • ${rg.firstReleaseDate}`
+                            : ""}
+                        </div>
+                      </div>
+                      <Button
+                        size="sm"
+                        className="shrink-0"
+                        onClick={async () => {
+                          props.onBeginFix?.();
+                          props.onOpenChange(false);
+                          await setReleaseGroup({
+                            input: {
+                              artistId: props.artistId,
+                              releaseFolderName: props.releaseFolderName,
+                              musicBrainzReleaseGroupId: rg.id,
+                            },
+                          });
+                          props.onEndFix?.();
+                        }}
+                      >
+                        Use this release group
+                      </Button>
+                    </div>
+                  ),
+                )}
+              </div>
+            </div>
+          )}
+
+          {mode === "inGroup" && !releaseGroupId && (
             <p className="text-sm text-white/70">
               Missing MusicBrainz release group connection for this album.
             </p>
           )}
-          {fetching && <p className="text-sm text-white/70">Loading candidates…</p>}
-          {error && (
+          {mode === "inGroup" && fetching && (
+            <p className="text-sm text-white/70">Loading candidates…</p>
+          )}
+          {mode === "inGroup" && error && (
             <p className="text-sm text-red-400">{error.message}</p>
           )}
-          {!fetching && releaseGroupId && candidates.length === 0 && (
-            <p className="text-sm text-white/70">No candidates found.</p>
-          )}
+          {mode === "inGroup" &&
+            !fetching &&
+            releaseGroupId &&
+            candidates.length === 0 && (
+              <p className="text-sm text-white/70">No candidates found.</p>
+            )}
 
-          <div className="space-y-2 max-h-96 overflow-y-auto overflow-x-hidden pr-2">
-            {candidates.map((c) => (
-              <div
-                key={c.release.id}
-                className="flex w-full items-start gap-3 rounded-md border border-white/10 p-2 hover:bg-white/5"
-              >
-                <img
-                  src={c.release.coverArtUri}
-                  className="h-14 w-14 rounded object-cover"
-                  alt="cover"
-                />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="truncate">
-                      <div className="font-medium truncate">{c.release.title}</div>
-                      <div className="text-xs text-white/60">
-                        {c.release.year ?? ""} {c.release.country ? `• ${c.release.country}` : ""} {c.release.status ? `• ${c.release.status}` : ""}
-                        {" "}• {c.release.media?.[0]?.tracks?.length ?? 0} tracks
+          {mode === "inGroup" && (
+            <div className="space-y-2 max-h-96 overflow-y-auto overflow-x-hidden pr-2">
+              {candidates.map((c) => (
+                <div
+                  key={c.release.id}
+                  className="flex w-full items-start gap-3 rounded-md border border-white/10 p-2 hover:bg-white/5"
+                >
+                  <img
+                    src={c.release.coverArtUri}
+                    className="h-14 w-14 rounded object-cover"
+                    alt="cover"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="truncate">
+                        <div className="font-medium truncate">
+                          {c.release.title}
+                        </div>
+                        <div className="text-xs text-white/60">
+                          {c.release.year ?? ""}{" "}
+                          {c.release.country ? `• ${c.release.country}` : ""}{" "}
+                          {c.release.status ? `• ${c.release.status}` : ""} •{" "}
+                          {c.release.media?.[0]?.tracks?.length ?? 0} tracks
+                        </div>
+                      </div>
+                      <div className="text-xs text-white/70">
+                        Score: {c.score}
                       </div>
                     </div>
-                    <div className="text-xs text-white/70">Score: {c.score}</div>
+                    {c.reasons?.length > 0 && (
+                      <div className="mt-1 text-[11px] text-white/50 truncate">
+                        {c.reasons.join(" • ")}
+                      </div>
+                    )}
                   </div>
-                  {c.reasons?.length > 0 && (
-                    <div className="mt-1 text-[11px] text-white/50 truncate">
-                      {c.reasons.join(" • ")}
-                    </div>
-                  )}
+                  <Button
+                    size="sm"
+                    className="shrink-0"
+                    onClick={() => onChoose(c.release.id)}
+                  >
+                    Select
+                  </Button>
                 </div>
-                <Button size="sm" className="shrink-0" onClick={() => onChoose(c.release.id)}>Select</Button>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
 
           <div className="flex justify-end gap-2">
-            <Button variant="ghost" size="sm" onClick={() => props.onOpenChange(false)}>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => props.onOpenChange(false)}
+            >
               Close
             </Button>
           </div>
@@ -181,4 +366,3 @@ export const FixMatchDialog: React.FC<FixMatchDialogProps> = (props) => {
     </Dialog>
   );
 };
-

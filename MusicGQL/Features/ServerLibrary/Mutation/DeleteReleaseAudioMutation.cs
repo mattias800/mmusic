@@ -22,35 +22,27 @@ public class DeleteReleaseAudioMutation
             return new DeleteReleaseAudioError("Release not found");
         }
 
-        // Delete all audio files referenced by tracks (best-effort)
+        // Delete ALL audio files under the release folder (regardless of references in release.json)
         var errors = new List<string>();
-        if (release.JsonRelease.Tracks != null)
+        try
         {
-            foreach (var t in release.JsonRelease.Tracks)
+            var audioExts = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            { ".mp3", ".flac", ".wav", ".m4a", ".ogg" };
+
+            var releaseRoot = Path.GetFullPath(release.ReleasePath);
+            var files = System.IO.Directory
+                .EnumerateFiles(releaseRoot, "*.*", SearchOption.AllDirectories)
+                .Where(f => audioExts.Contains(Path.GetExtension(f)));
+
+            foreach (var file in files)
             {
                 try
                 {
-                    if (!string.IsNullOrWhiteSpace(t.AudioFilePath))
+                    var normalized = Path.GetFullPath(file);
+                    if (normalized.StartsWith(releaseRoot, StringComparison.OrdinalIgnoreCase)
+                        && File.Exists(normalized))
                     {
-                        var rel = t.AudioFilePath!.StartsWith("./")
-                            ? t.AudioFilePath![2..]
-                            : t.AudioFilePath!;
-                        var fullPath = Path.Combine(release.ReleasePath, rel);
-                        // Ensure the path resides under the release directory
-                        var fullPathNormalized = Path.GetFullPath(fullPath);
-                        var releasePathNormalized = Path.GetFullPath(release.ReleasePath);
-                        if (
-                            fullPathNormalized.StartsWith(
-                                releasePathNormalized,
-                                StringComparison.OrdinalIgnoreCase
-                            )
-                        )
-                        {
-                            if (File.Exists(fullPathNormalized))
-                            {
-                                File.Delete(fullPathNormalized);
-                            }
-                        }
+                        File.Delete(normalized);
                     }
                 }
                 catch (Exception ex)
@@ -58,6 +50,10 @@ public class DeleteReleaseAudioMutation
                     errors.Add(ex.Message);
                 }
             }
+        }
+        catch (Exception ex)
+        {
+            errors.Add(ex.Message);
         }
 
         // Clear AudioFilePath from release.json

@@ -30,6 +30,10 @@ public class ReleaseJsonBuilder(
     {
         // Fetch candidate releases for the RG
         var releases = await musicBrainzService.GetReleasesForReleaseGroupAsync(releaseGroupId);
+        // Filter out demo release groups entirely
+        releases = releases
+            .Where(r => r.ReleaseGroup != null && !r.ReleaseGroup.IsDemo())
+            .ToList();
 
         // Evaluate local audio files (if any) to influence selection
         var releaseDir = Path.Combine(artistDir, releaseFolderName);

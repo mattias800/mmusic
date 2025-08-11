@@ -15,7 +15,7 @@ public record MbReleaseGroup([property: GraphQLIgnore] Hqub.MusicBrainz.Entities
 
     public string? PrimaryType() => Model.PrimaryType;
 
-    public IEnumerable<string> SecondaryTypes() => Model.SecondaryTypes;
+    public IEnumerable<string> SecondaryTypes() => Model.SecondaryTypes ?? [];
 
     public IEnumerable<MbNameCredit> Credits() =>
         Model.Credits?.Select(c => new MbNameCredit(c)) ?? [];

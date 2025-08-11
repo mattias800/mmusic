@@ -633,6 +633,7 @@ type MusicBrainzRecordingSearchRoot {
 type MusicBrainzReleaseGroupSearchRoot {
   byId(id: ID!): MbReleaseGroup
   searchByName(limit: Int! = 25, name: String!, offset: Int! = 0): [MbReleaseGroup!]!
+  searchByNameAndArtistName(artistName: String!, limit: Int! = 25, name: String!, offset: Int! = 0): [MbReleaseGroup!]!
 }
 
 type MusicBrainzReleaseSearchRoot {
@@ -674,6 +675,7 @@ type Mutation {
   scanReleaseFolderForMedia(input: ScanReleaseFolderForMediaInput!): ScanReleaseFolderForMediaResult!
   setPlaylistItemArtistMatch(input: SetPlaylistItemArtistMatchInput!): SetPlaylistItemArtistMatchResult!
   setPlaylistItemArtistMusicBrainzMatch(input: SetPlaylistItemArtistMusicBrainzMatchInput!): SetPlaylistItemArtistMusicBrainzMatchResult!
+  setReleaseGroup(input: SetReleaseGroupInput!): SetReleaseGroupResult!
   setReleaseMatchOverride(input: SetReleaseMatchOverrideInput!): SetReleaseMatchOverrideResult!
   signIn(input: SignInInput!): SignInResult!
   signOut(input: SignOutInput!): SignOutResult!
@@ -966,6 +968,22 @@ union SetPlaylistItemArtistMusicBrainzMatchResult = SetPlaylistItemArtistMusicBr
 
 type SetPlaylistItemArtistMusicBrainzMatchSuccess {
   playlistItem: PlaylistItem!
+}
+
+type SetReleaseGroupError {
+  message: String!
+}
+
+input SetReleaseGroupInput {
+  artistId: String!
+  musicBrainzReleaseGroupId: String!
+  releaseFolderName: String!
+}
+
+union SetReleaseGroupResult = SetReleaseGroupError | SetReleaseGroupSuccess
+
+type SetReleaseGroupSuccess {
+  release: Release!
 }
 
 type SetReleaseMatchOverrideError {

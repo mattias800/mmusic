@@ -16,7 +16,11 @@ public static class LibraryDecider
     public static MbRelease? GetMainReleaseInReleaseGroup(List<MbRelease> releases)
     {
         // Prefer an "ordinary" official release that represents the original album/ep/single
-        var official = releases.Where(r => r.Status == "Official").ToList();
+        var official = releases
+            .Where(r => r.Status == "Official")
+            // Exclude demos entirely
+            .Where(r => r.ReleaseGroup != null && !r.ReleaseGroup.IsDemo())
+            .ToList();
 
         if (official.Count == 0)
         {
