@@ -2,6 +2,7 @@ using System.Security.Claims;
 using HotChocolate.Authorization;
 using Microsoft.EntityFrameworkCore;
 using MusicGQL.Db.Postgres;
+using MusicGQL.Features.Artists;
 using MusicGQL.Features.Import.Services;
 using MusicGQL.Features.Playlists.Commands;
 using MusicGQL.Features.ServerLibrary.Cache;

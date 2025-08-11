@@ -1,6 +1,12 @@
+using HotChocolate;
+
 namespace MusicGQL.Features.ArtistImportQueue;
 
-public record ArtistImportQueueItem(string ArtistName, string? SongTitle);
+public record ArtistImportQueueItem(string ArtistName, string? SongTitle)
+{
+    [GraphQLIgnore]
+    public string? ExternalArtistId { get; init; }
+}
 
 public record ArtistImportQueueState
 {

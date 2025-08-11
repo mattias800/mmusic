@@ -1,3 +1,4 @@
+using MusicGQL.Features.Artists;
 using MusicGQL.Features.MusicBrainz.Recording;
 using MusicGQL.Features.ServerLibrary;
 using MusicGQL.Features.ServerLibrary.Cache;

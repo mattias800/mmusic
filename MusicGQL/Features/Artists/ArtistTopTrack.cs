@@ -1,7 +1,8 @@
+using MusicGQL.Features.ServerLibrary;
 using MusicGQL.Features.ServerLibrary.Cache;
 using MusicGQL.Features.ServerLibrary.Json;
 
-namespace MusicGQL.Features.ServerLibrary;
+namespace MusicGQL.Features.Artists;
 
 public record ArtistTopTrack(
     [property: GraphQLIgnore] string ArtistId,

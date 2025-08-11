@@ -1,3 +1,4 @@
+using MusicGQL.Features.Artists;
 using MusicGQL.Features.Import.Services;
 using MusicGQL.Features.ServerLibrary.Cache;
 using Path = System.IO.Path;

@@ -43,7 +43,7 @@ public class EventDbContext(DbContextOptions<EventDbContext> options) : DbContex
             .HasValue<UserCreated>("UserCreated")
             .HasValue<UserPasswordHashUpdated>("UserPasswordHashUpdated")
             .HasValue<LibraryPathUpdated>("LibraryPathUpdated");
-        modelBuilder.Entity<MusicGQL.Features.PlayCounts.Db.DbTrackPlayCount>(b =>
+        modelBuilder.Entity<DbTrackPlayCount>(b =>
         {
             b.ToTable("TrackPlayCounts");
             b.HasKey(x => x.Id);
@@ -59,7 +59,7 @@ public class EventDbContext(DbContextOptions<EventDbContext> options) : DbContex
                 .IsUnique();
         });
 
-        modelBuilder.Entity<MusicGQL.Features.PlayCounts.Db.DbUserTrackPlayCount>(b =>
+        modelBuilder.Entity<DbUserTrackPlayCount>(b =>
         {
             b.ToTable("UserTrackPlayCounts");
             b.HasKey(x => x.Id);

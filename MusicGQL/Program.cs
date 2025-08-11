@@ -34,6 +34,7 @@ using MusicGQL.Features.Playlists.Commands;
 using MusicGQL.Features.Playlists.Import.Spotify;
 using MusicGQL.Features.Playlists.Import.Spotify.Mutations;
 using MusicGQL.Features.Playlists.Mutations;
+using MusicGQL.Features.Playlists.Subscription;
 using MusicGQL.Features.ServerLibrary.Cache;
 using MusicGQL.Features.ServerLibrary.Json;
 using MusicGQL.Features.ServerLibrary.Mutation;
@@ -265,6 +266,10 @@ builder
     .AddTypeExtension<ArtistImportSubscription>()
     .AddTypeExtension<ArtistImportSearchRoot>()
     .AddTypeExtension<ArtistImportMutations>()
+    .AddTypeExtension<PlaylistSubscription>()
+    .AddTypeExtension<SetPlaylistItemArtistMatchMutation>()
+    .AddType<SetPlaylistItemArtistMatchSuccess>()
+    .AddType<SetPlaylistItemArtistMatchNotFound>()
     .AddTypeExtension<StartDownloadReleaseMutation>()
     .AddType<StartDownloadReleaseSuccess>()
     .AddType<StartDownloadReleaseUnknownError>()

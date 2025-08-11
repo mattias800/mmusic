@@ -1,3 +1,4 @@
+using MusicGQL.Features.Artists;
 using MusicGQL.Features.ArtistServerStatus.Services;
 using MusicGQL.Features.ServerLibrary;
 using MusicGQL.Features.ServerLibrary.Cache;

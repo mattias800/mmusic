@@ -1,7 +1,7 @@
 using MusicGQL.Features.ServerLibrary.Json;
 using MusicGQL.Features.ServerLibrary.Utils;
 
-namespace MusicGQL.Features.ServerLibrary;
+namespace MusicGQL.Features.Artists;
 
 public record ArtistImages(
     [property: GraphQLIgnore] JsonArtistPhotos Model,

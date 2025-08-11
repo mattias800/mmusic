@@ -17,6 +17,10 @@ import { TrackCreditLinks } from "@/features/album/TrackCreditLinks.tsx";
 import { PlaylistHeader } from "@/features/playlists/PlaylistHeader.tsx";
 import { Tag } from "@/components/text/Tag.tsx";
 import { TrackListHeading } from "@/components/track-item/TrackListHeading.tsx";
+import { Button } from "@/components/ui/button.tsx";
+import { Users } from "lucide-react";
+import { graphql as g } from "@/gql";
+import { PlaylistItemFixArtistMatchDialog } from "@/features/playlists/fix-artist-match/PlaylistItemFixArtistMatchDialog.tsx";
 
 export interface PlaylistPanelProps {
   playlist: FragmentType<typeof playlistPanelPlaylistFragment>;
@@ -108,6 +112,12 @@ const movePlaylistItemMutation = graphql(`
   }
 `);
 
+const enqueueMissingArtistsMutation = g(`
+  mutation EnqueueMissingArtistsFromPlaylist($playlistId: ID!) {
+    enqueueMissingArtistsFromPlaylist(playlistId: $playlistId)
+  }
+`);
+
 export const PlaylistPanel: React.FC<PlaylistPanelProps> = (props) => {
   const playlist = useFragment(playlistPanelPlaylistFragment, props.playlist);
   const dispatch = useAppDispatch();
@@ -131,13 +141,28 @@ export const PlaylistPanel: React.FC<PlaylistPanelProps> = (props) => {
 
   const [, removeFromPlaylist] = useMutation(removeFromPlaylistMutation);
   const [, movePlaylistItem] = useMutation(movePlaylistItemMutation);
+  const [, enqueueMissing] = useMutation(enqueueMissingArtistsMutation);
+
+  const enqueueAllMissing = async () => {
+    await enqueueMissing({ playlistId: playlist.id });
+  };
 
   const [dragIndex, setDragIndex] = React.useState<number | null>(null);
+  const [fixOpenForItemId, setFixOpenForItemId] = React.useState<string | null>(null);
 
   return (
     <GradientContent>
       <MainPadding>
         <PlaylistHeader playlist={playlist} />
+        <div className="mt-4 p-4 rounded-md border bg-muted/30 flex items-center justify-between">
+          <div>
+            <div className="font-medium">Missing artists detected</div>
+            <div className="text-sm text-zinc-400">Queue all missing artists from this playlist for import.</div>
+          </div>
+          <Button size="sm" iconLeft={Users} onClick={enqueueAllMissing}>
+            Enqueue missing artists
+          </Button>
+        </div>
         <div className="mb-12" />
 
         <TrackListHeading showCoverArt />
@@ -172,10 +197,18 @@ export const PlaylistPanel: React.FC<PlaylistPanelProps> = (props) => {
               item.track ? (
                 <AlbumTrackTag track={item.track} />
               ) : (
-                <div className={"flex gap-2"}>
+                <div className={"flex gap-2 items-center"}>
                   <Tag variant={"error"}>Missing track</Tag>
                   {item.artist == null ? (
-                    <Tag variant={"error"}>Missing artist</Tag>
+                    <>
+                      <Tag variant={"error"}>Missing artist</Tag>
+                      <button
+                        className="text-xs px-2 py-1 rounded bg-secondary text-secondary-foreground"
+                        onClick={() => setFixOpenForItemId(item.id)}
+                      >
+                        Fix match
+                      </button>
+                    </>
                   ) : null}
                 </div>
               )
@@ -237,6 +270,13 @@ export const PlaylistPanel: React.FC<PlaylistPanelProps> = (props) => {
             }}
           />
         ))}
+        <PlaylistItemFixArtistMatchDialog
+          open={!!fixOpenForItemId}
+          onOpenChange={(open) => !open && setFixOpenForItemId(null)}
+          playlistId={playlist.id}
+          playlistItemId={fixOpenForItemId ?? ""}
+          initialArtistQuery={items.find(i => i.id === fixOpenForItemId)?.artistName ?? undefined}
+        />
       </MainPadding>
     </GradientContent>
   );

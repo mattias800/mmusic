@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 using MusicGQL.Db.Postgres;
 using MusicGQL.Features.ArtistImportQueue;
+using MusicGQL.Features.Artists;
 using MusicGQL.Features.External;
 using MusicGQL.Features.FileSystem;
 using MusicGQL.Features.MusicBrainz;
@@ -11,11 +12,14 @@ using MusicGQL.Features.ServerLibrary;
 using MusicGQL.Features.ServerSettings;
 using MusicGQL.Features.ServerSettings.Db;
 using MusicGQL.Features.Users;
+using MusicGQL.Features.Artists;
 
 namespace MusicGQL.Types;
 
 public class Query
 {
+    public ArtistSearchRoot Artist() => new();
+    
     public ServerLibrarySearchRoot ServerLibrary() => new();
 
     public MusicBrainzSearchRoot MusicBrainz() => new();
@@ -81,7 +85,7 @@ public class Query
     }
 
     public ArtistImportSearchRoot ArtistImport() => new();
-    
+
     public FileSystemSearchRoot FileSystem() => new();
 
     public async Task<ServerSettings> ServerSettings(EventDbContext dbContext) =>

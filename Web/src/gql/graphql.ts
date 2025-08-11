@@ -122,6 +122,39 @@ export enum ArtistImportStatus {
   ResolvingArtist = 'RESOLVING_ARTIST'
 }
 
+export type ArtistSearchRoot = {
+  __typename?: 'ArtistSearchRoot';
+  all: Array<Artist>;
+  byId?: Maybe<Artist>;
+  externalArtistById?: Maybe<ExternalArtist>;
+  searchArtists: Array<Artist>;
+  searchExternalArtists: Array<ExternalArtist>;
+};
+
+
+export type ArtistSearchRootByIdArgs = {
+  artistId: Scalars['ID']['input'];
+};
+
+
+export type ArtistSearchRootExternalArtistByIdArgs = {
+  artistId: Scalars['ID']['input'];
+  serviceType: ExternalServiceType;
+};
+
+
+export type ArtistSearchRootSearchArtistsArgs = {
+  limit?: Scalars['Int']['input'];
+  searchTerm: Scalars['String']['input'];
+};
+
+
+export type ArtistSearchRootSearchExternalArtistsArgs = {
+  limit?: Scalars['Int']['input'];
+  searchTerm: Scalars['String']['input'];
+  serviceType: ExternalServiceType;
+};
+
 export type ArtistServerStatus = {
   __typename?: 'ArtistServerStatus';
   id: Scalars['ID']['output'];
@@ -278,6 +311,14 @@ export type DeleteReleaseAudioSuccess = {
 
 export type EnqueueArtistsFromSpotifyPlaylistInput = {
   playlistId: Scalars['String']['input'];
+};
+
+export type ExternalArtist = {
+  __typename?: 'ExternalArtist';
+  artistId: Scalars['String']['output'];
+  artistName: Scalars['String']['output'];
+  id: Scalars['ID']['output'];
+  service: ExternalServiceType;
 };
 
 export type ExternalRoot = {
@@ -739,6 +780,7 @@ export type Mutation = {
   deleteReleaseAudio: DeleteReleaseAudioResult;
   enqueueArtist: Scalars['Boolean']['output'];
   enqueueArtistsFromSpotifyPlaylist: Scalars['Boolean']['output'];
+  enqueueMissingArtistsFromPlaylist: Scalars['Boolean']['output'];
   importArtist: ImportArtistResult;
   importArtistReleases: ImportReleasesResult;
   importArtistsFromSpotifyPlaylist: ImportArtistsFromSpotifyPlaylistResult;
@@ -754,6 +796,7 @@ export type Mutation = {
   renamePlaylist: RenamePlaylistResult;
   scanLibraryForMissingJson: ScanLibraryForMissingJsonResult;
   scanReleaseFolderForMedia: ScanReleaseFolderForMediaResult;
+  setPlaylistItemArtistMatch: SetPlaylistItemArtistMatchResult;
   setReleaseMatchOverride: SetReleaseMatchOverrideResult;
   signIn: SignInResult;
   signOut: SignOutResult;
@@ -802,6 +845,11 @@ export type MutationEnqueueArtistArgs = {
 
 export type MutationEnqueueArtistsFromSpotifyPlaylistArgs = {
   input: EnqueueArtistsFromSpotifyPlaylistInput;
+};
+
+
+export type MutationEnqueueMissingArtistsFromPlaylistArgs = {
+  playlistId: Scalars['ID']['input'];
 };
 
 
@@ -867,6 +915,11 @@ export type MutationRenamePlaylistArgs = {
 
 export type MutationScanReleaseFolderForMediaArgs = {
   input: ScanReleaseFolderForMediaInput;
+};
+
+
+export type MutationSetPlaylistItemArtistMatchArgs = {
+  input: SetPlaylistItemArtistMatchInput;
 };
 
 
@@ -965,6 +1018,7 @@ export type PlaylistSearchRootByIdArgs = {
 export type Query = {
   __typename?: 'Query';
   areThereAnyUsers: Scalars['Boolean']['output'];
+  artist: ArtistSearchRoot;
   artistImport: ArtistImportSearchRoot;
   external: ExternalRoot;
   fileSystem: FileSystemSearchRoot;
@@ -1225,6 +1279,24 @@ export type ServerSettings = {
   libraryPath: Scalars['String']['output'];
 };
 
+export type SetPlaylistItemArtistMatchInput = {
+  externalArtistId: Scalars['String']['input'];
+  playlistId: Scalars['ID']['input'];
+  playlistItemId: Scalars['ID']['input'];
+};
+
+export type SetPlaylistItemArtistMatchNotFound = {
+  __typename?: 'SetPlaylistItemArtistMatchNotFound';
+  message: Scalars['String']['output'];
+};
+
+export type SetPlaylistItemArtistMatchResult = SetPlaylistItemArtistMatchNotFound | SetPlaylistItemArtistMatchSuccess;
+
+export type SetPlaylistItemArtistMatchSuccess = {
+  __typename?: 'SetPlaylistItemArtistMatchSuccess';
+  playlistItem: PlaylistItem;
+};
+
 export type SetReleaseMatchOverrideError = {
   __typename?: 'SetReleaseMatchOverrideError';
   message: Scalars['String']['output'];
@@ -1356,6 +1428,7 @@ export type StartDownloadReleaseUnknownError = {
 export type Subscription = {
   __typename?: 'Subscription';
   artistImportQueueUpdated: ArtistImportQueueState;
+  artistImported: Artist;
   artistServerStatusUpdated: ArtistServerStatus;
   currentArtistImportUpdated: ArtistImportProgress;
   libraryCacheTrackUpdated: LibraryCacheTrackStatus;
@@ -1363,6 +1436,7 @@ export type Subscription = {
   libraryReleaseDownloadStatusUpdated: LibraryReleaseDownloadStatusUpdate;
   libraryReleaseMetadataUpdated: Release;
   ping: Ping;
+  playlistItemUpdated: PlaylistItem;
   soulSeekStatusUpdated: SoulSeekStatus;
 };
 
@@ -1394,6 +1468,11 @@ export type SubscriptionLibraryReleaseDownloadStatusUpdatedArgs = {
 export type SubscriptionLibraryReleaseMetadataUpdatedArgs = {
   artistId: Scalars['String']['input'];
   releaseFolderName: Scalars['String']['input'];
+};
+
+
+export type SubscriptionPlaylistItemUpdatedArgs = {
+  playlistId: Scalars['ID']['input'];
 };
 
 export type Track = {
@@ -1939,6 +2018,21 @@ export type MovePlaylistItemMutationVariables = Exact<{
 
 export type MovePlaylistItemMutation = { __typename?: 'Mutation', movePlaylistItem: { __typename: 'MovePlaylistItemError', message: string } | { __typename: 'MovePlaylistItemSuccess', playlist: { __typename?: 'Playlist', id: string } } };
 
+export type SetPlaylistItemArtistMatchMutationVariables = Exact<{
+  input: SetPlaylistItemArtistMatchInput;
+}>;
+
+
+export type SetPlaylistItemArtistMatchMutation = { __typename?: 'Mutation', setPlaylistItemArtistMatch: { __typename: 'SetPlaylistItemArtistMatchNotFound', message: string } | { __typename: 'SetPlaylistItemArtistMatchSuccess', playlistItem: { __typename?: 'PlaylistItem', id: string } } };
+
+export type FixArtist_ExternalArtistSearchQueryVariables = Exact<{
+  searchTerm: Scalars['String']['input'];
+  service: ExternalServiceType;
+}>;
+
+
+export type FixArtist_ExternalArtistSearchQuery = { __typename?: 'Query', artist: { __typename?: 'ArtistSearchRoot', searchExternalArtists: Array<{ __typename?: 'ExternalArtist', artistId: string, artistName: string, service: ExternalServiceType }> } };
+
 export type PlaylistListQueryVariables = Exact<{ [key: string]: never; }>;
 
 
@@ -2217,6 +2311,8 @@ export const CreateUserDocument = {"kind":"Document","definitions":[{"kind":"Ope
 export const CreatePlaylistDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"CreatePlaylist"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"createPlaylist"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"ObjectValue","fields":[]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"__typename"}},{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"CreatePlaylistSuccess"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"playlist"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}}]}}]}}]}}]}}]} as unknown as DocumentNode<CreatePlaylistMutation, CreatePlaylistMutationVariables>;
 export const RemoveItemFromPlaylistDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"RemoveItemFromPlaylist"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"playlistId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"playlistItemId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"removeItemFromPlaylist"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"playlistId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"playlistId"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"playlistItemId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"playlistItemId"}}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"__typename"}},{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"RemoveItemFromPlaylistSuccess"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"playlist"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}}]}},{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"RemoveItemFromPlaylistError"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"message"}}]}}]}}]}}]} as unknown as DocumentNode<RemoveItemFromPlaylistMutation, RemoveItemFromPlaylistMutationVariables>;
 export const MovePlaylistItemDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"MovePlaylistItem"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"newIndex"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"playlistId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"playlistItemId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"movePlaylistItem"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"newIndex"},"value":{"kind":"Variable","name":{"kind":"Name","value":"newIndex"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"playlistId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"playlistId"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"playlistItemId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"playlistItemId"}}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"__typename"}},{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"MovePlaylistItemSuccess"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"playlist"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}}]}},{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"MovePlaylistItemError"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"message"}}]}}]}}]}}]} as unknown as DocumentNode<MovePlaylistItemMutation, MovePlaylistItemMutationVariables>;
+export const SetPlaylistItemArtistMatchDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"SetPlaylistItemArtistMatch"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"SetPlaylistItemArtistMatchInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"setPlaylistItemArtistMatch"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"__typename"}},{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"SetPlaylistItemArtistMatchSuccess"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"playlistItem"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}}]}},{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"SetPlaylistItemArtistMatchNotFound"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"message"}}]}}]}}]}}]} as unknown as DocumentNode<SetPlaylistItemArtistMatchMutation, SetPlaylistItemArtistMatchMutationVariables>;
+export const FixArtist_ExternalArtistSearchDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"FixArtist_ExternalArtistSearch"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"searchTerm"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"service"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ExternalServiceType"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"artist"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"searchExternalArtists"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"searchTerm"},"value":{"kind":"Variable","name":{"kind":"Name","value":"searchTerm"}}},{"kind":"Argument","name":{"kind":"Name","value":"serviceType"},"value":{"kind":"Variable","name":{"kind":"Name","value":"service"}}},{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"IntValue","value":"10"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"artistId"}},{"kind":"Field","name":{"kind":"Name","value":"artistName"}},{"kind":"Field","name":{"kind":"Name","value":"service"}}]}}]}}]}}]} as unknown as DocumentNode<FixArtist_ExternalArtistSearchQuery, FixArtist_ExternalArtistSearchQueryVariables>;
 export const PlaylistListDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"PlaylistList"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"viewer"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"playlists"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}}]}}]}}]}}]} as unknown as DocumentNode<PlaylistListQuery, PlaylistListQueryVariables>;
 export const RenamePlaylistDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"RenamePlaylist"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"playlistId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"newPlaylistName"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"renamePlaylist"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"playlistId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"playlistId"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"newPlaylistName"},"value":{"kind":"Variable","name":{"kind":"Name","value":"newPlaylistName"}}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"__typename"}},{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"RenamePlaylistSuccess"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"playlist"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}}]}}]}}]}}]}}]} as unknown as DocumentNode<RenamePlaylistMutation, RenamePlaylistMutationVariables>;
 export const DeletePlaylistDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"DeletePlaylist"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"playlistId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"deletePlaylist"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"playlistId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"playlistId"}}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"__typename"}},{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"DeletePlaylistSuccess"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"deletedPlaylistId"}}]}}]}}]}}]} as unknown as DocumentNode<DeletePlaylistMutation, DeletePlaylistMutationVariables>;

@@ -1,9 +1,8 @@
+using MusicGQL.Features.ServerLibrary;
 using MusicGQL.Features.ServerLibrary.Cache;
 using MusicGQL.Features.ServerLibrary.Json;
 
-using MusicGQL.Features.Artists;
-
-namespace MusicGQL.Features.ServerLibrary;
+namespace MusicGQL.Features.Artists;
 
 public record Artist([property: GraphQLIgnore] CachedArtist Model) : IArtistBase
 {

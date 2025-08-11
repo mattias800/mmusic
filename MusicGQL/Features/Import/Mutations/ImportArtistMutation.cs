@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using MusicGQL.Features.Artists;
 using MusicGQL.Features.ServerLibrary;
 using MusicGQL.Features.ServerLibrary.Cache;
 using MusicGQL.Types;
