@@ -4,6 +4,8 @@ using Hqub.Lastfm;
 using MusicGQL.Features.ServerLibrary.Json;
 using MusicGQL.Features.ServerLibrary.Utils;
 using MusicGQL.Integration.MusicBrainz;
+using MusicGQL.Features.ArtistImportQueue;
+using MusicGQL.Features.ArtistImportQueue.Services;
 using Path = System.IO.Path;
 
 namespace MusicGQL.Features.Import.Services;
@@ -30,7 +32,8 @@ public sealed class MusicBrainzImportExecutor(
     Integration.Spotify.SpotifyService spotifyService,
     ILogger<MusicBrainzImportExecutor> logger,
     ReleaseJsonBuilder releaseJsonBuilder,
-    ServerLibrary.Writer.ServerLibraryJsonWriter writer
+    ServerLibrary.Writer.ServerLibraryJsonWriter writer,
+    CurrentArtistImportStateService progressService
 ) : IImportExecutor
 {
     private static readonly string[] AudioExtensions = [".mp3", ".flac", ".wav", ".m4a", ".ogg"];
@@ -258,20 +261,29 @@ public sealed class MusicBrainzImportExecutor(
     public async Task<int> ImportEligibleReleaseGroupsAsync(string artistDir, string mbArtistId)
     {
         var releaseGroups = await musicBrainzService.GetReleaseGroupsForArtistAsync(mbArtistId);
+        var eligible = releaseGroups.Where(rg => LibraryDecider.ShouldBeAddedWhenAddingArtistToServerLibrary(rg)).ToList();
+        int totalEligible = eligible.Count;
         int created = 0;
+        int processed = 0;
 
-        foreach (var rg in releaseGroups)
+        // Update state to indicate we are now importing releases
+        try
+        {
+            progressService.SetStatus(ArtistImportStatus.ImportingReleases);
+            // Initialize total if not set already
+            progressService.SetReleaseProgress(processed, totalEligible);
+        }
+        catch { }
+
+        foreach (var rg in eligible)
         {
             try
             {
-                if (!LibraryDecider.ShouldBeAddedWhenAddingArtistToServerLibrary(rg))
-                {
-                    continue;
-                }
-
                 var folderName = SanitizeFolderName(rg.Title ?? "");
                 if (string.IsNullOrWhiteSpace(folderName))
                 {
+                    processed++;
+                    try { progressService.SetReleaseProgress(processed, totalEligible); } catch { }
                     continue;
                 }
 
@@ -281,6 +293,8 @@ public sealed class MusicBrainzImportExecutor(
                 {
                     // already imported (possibly from audio present)
                     logger.LogDebug("[ImportRG] Release '{Title}' already present at {Path}", rg.Title, releaseJsonPath);
+                    processed++;
+                    try { progressService.SetReleaseProgress(processed, totalEligible); } catch { }
                     continue;
                 }
 
@@ -296,10 +310,14 @@ public sealed class MusicBrainzImportExecutor(
                     created++;
                     logger.LogInformation("[ImportRG] Created release.json for '{Title}' at {Path}", rg.Title, releaseJsonPath);
                 }
+                processed++;
+                try { progressService.SetReleaseProgress(processed, totalEligible); } catch { }
             }
             catch
             {
                 // ignore single RG failures
+                processed++;
+                try { progressService.SetReleaseProgress(processed, totalEligible); } catch { }
             }
         }
 
