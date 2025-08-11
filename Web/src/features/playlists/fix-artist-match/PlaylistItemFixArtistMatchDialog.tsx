@@ -97,7 +97,7 @@ export const PlaylistItemFixArtistMatchDialog: React.FC<
     variables,
     pause: !variables.artistName,
   });
-  const [, setMbMatch] = useMutation(
+  const [{ fetching: submitting }, setMbMatch] = useMutation(
     setPlaylistItemArtistMusicBrainzMatchMutation,
   );
 
@@ -151,7 +151,7 @@ export const PlaylistItemFixArtistMatchDialog: React.FC<
         <DialogHeader>
           <DialogTitle>Fix artist match</DialogTitle>
         </DialogHeader>
-        <div className="space-y-3">
+        <div className="relative space-y-3">
           <div className="text-sm text-zinc-400">
             Search MusicBrainz for the correct artist. Optionally provide the
             track title to improve precision.
@@ -161,15 +161,17 @@ export const PlaylistItemFixArtistMatchDialog: React.FC<
               placeholder="Artist name"
               value={artistQuery}
               onChange={(e) => setArtistQuery(e.target.value)}
+              disabled={submitting}
             />
             <Input
               placeholder="Track title (optional)"
               value={trackQuery}
               onChange={(e) => setTrackQuery(e.target.value)}
+              disabled={submitting}
             />
             <Button
               onClick={updateVariables}
-              disabled={(artistQuery || "").trim().length === 0}
+              disabled={submitting || (artistQuery || "").trim().length === 0}
             >
               Find
             </Button>
@@ -206,11 +208,19 @@ export const PlaylistItemFixArtistMatchDialog: React.FC<
                       )}
                     </div>
                   </div>
-                  <Button size="sm" onClick={() => chooseMb(a.id)}>
+                  <Button size="sm" onClick={() => chooseMb(a.id)} disabled={submitting}>
                     Select
                   </Button>
                 </div>
               ))}
+            </div>
+          )}
+          {submitting && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-[2px] rounded-md">
+              <div className="flex items-center gap-3 text-sm text-white/90">
+                <Spinner />
+                <span>Linking artist…</span>
+              </div>
             </div>
           )}
         </div>
