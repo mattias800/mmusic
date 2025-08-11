@@ -53,9 +53,9 @@ public record Artist([property: GraphQLIgnore] CachedArtist Model) : IArtistBase
         Model.JsonArtist.TopTracks?
             .Select((t, index) => new ArtistTopTrack(Model.Id, t, index)) ?? [];
 
-    public IEnumerable<ConnectedExternalService> ConnectedExternalServices()
+    public IEnumerable<ArtistConnectedExternalService> ConnectedExternalServices()
     {
-        IEnumerable<ConnectedExternalService> connectedExternalServices =
+        IEnumerable<ArtistConnectedExternalService> connectedExternalServices =
         [
             new(ExternalServiceCatalog.Musicbrainz(), Model.JsonArtist.Connections?.MusicBrainzArtistId != null),
             new(ExternalServiceCatalog.Spotify(), Model.JsonArtist.Connections?.SpotifyId != null),

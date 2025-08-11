@@ -121,6 +121,7 @@ export const ArtistPanel: React.FC<ArtistPanelProps> = (props) => {
       >
         <ArtistActionButtons
           artistId={artist.id}
+          artistName={artist.name}
           loadingTopTracks={loadingTopTracks}
           loadingMetaData={loadingLastFm}
           onRefreshTopTracks={onRefreshTopTracks}

@@ -6,6 +6,7 @@ using MusicGQL.Features.Artists;
 using MusicGQL.Features.External;
 using MusicGQL.Features.FileSystem;
 using MusicGQL.Features.MusicBrainz;
+using MusicGQL.Features.Spotify;
 using MusicGQL.Features.Playlists;
 using MusicGQL.Features.Recommendations;
 using MusicGQL.Features.ServerLibrary;
@@ -24,6 +25,7 @@ public class Query
     public ServerLibrarySearchRoot ServerLibrary() => new();
 
     public MusicBrainzSearchRoot MusicBrainz() => new();
+    public SpotifyArtistSearchRoot Spotify() => new();
 
     // Implemented Viewer field
     // This method will be resolved by HotChocolate as the 'viewer' field in the GraphQL schema.

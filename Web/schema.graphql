@@ -69,7 +69,7 @@ enum ApplyPolicy {
 
 type Artist implements ArtistBase {
   albums: [Release!]!
-  connectedExternalServices: [ConnectedExternalService!]!
+  connectedExternalServices: [ArtistConnectedExternalService!]!
   eps: [Release!]!
   id: ID!
   images: ArtistImages
@@ -86,6 +86,12 @@ interface ArtistBase {
   id: ID!
   name: String!
   sortName: String!
+}
+
+type ArtistConnectedExternalService {
+  artistPageUrl: String!
+  externalService: ExternalService!
+  isConnected: Boolean!
 }
 
 type ArtistImages {
@@ -157,11 +163,6 @@ type CacheStatistics {
   lastUpdated: DateTime!
   releaseCount: Int!
   trackCount: Int!
-}
-
-type ConnectedExternalService {
-  externalService: ExternalService!
-  isConnected: Boolean!
 }
 
 type CreateDirectoryError {
@@ -474,6 +475,7 @@ type MbAlbumImages {
 
 type MbArtist implements ArtistBase {
   albums: [MbReleaseGroup!]!
+  country: String
   disambiguation: String
   id: ID!
   images: MbArtistImages
@@ -673,6 +675,8 @@ type Mutation {
   renamePlaylist(input: RenamePlaylistInput!): RenamePlaylistResult!
   scanLibraryForMissingJson: ScanLibraryForMissingJsonResult!
   scanReleaseFolderForMedia(input: ScanReleaseFolderForMediaInput!): ScanReleaseFolderForMediaResult!
+  setArtistMusicBrainzMatch(input: SetArtistMusicBrainzMatchInput!): SetArtistMusicBrainzMatchResult!
+  setArtistSpotifyMatch(input: SetArtistSpotifyMatchInput!): SetArtistSpotifyMatchResult!
   setPlaylistItemArtistMatch(input: SetPlaylistItemArtistMatchInput!): SetPlaylistItemArtistMatchResult!
   setPlaylistItemArtistMusicBrainzMatch(input: SetPlaylistItemArtistMusicBrainzMatchInput!): SetPlaylistItemArtistMusicBrainzMatchResult!
   setReleaseGroup(input: SetReleaseGroupInput!): SetReleaseGroupResult!
@@ -754,6 +758,7 @@ type Query {
   releasesWithScores(artistId: String!, releaseFolderName: String!, releaseGroupId: String!): [ScoredRelease!]!
   serverLibrary: ServerLibrarySearchRoot!
   serverSettings: ServerSettings!
+  spotify: SpotifyArtistSearchRoot!
   user: UserSearchRoot!
   viewer: User
 }
@@ -934,6 +939,36 @@ type ServerSettings {
   libraryPath: String!
 }
 
+type SetArtistMusicBrainzMatchError {
+  message: String!
+}
+
+input SetArtistMusicBrainzMatchInput {
+  artistId: String!
+  musicBrainzArtistId: String!
+}
+
+union SetArtistMusicBrainzMatchResult = SetArtistMusicBrainzMatchError | SetArtistMusicBrainzMatchSuccess
+
+type SetArtistMusicBrainzMatchSuccess {
+  artist: Artist!
+}
+
+type SetArtistSpotifyMatchError {
+  message: String!
+}
+
+input SetArtistSpotifyMatchInput {
+  artistId: String!
+  spotifyArtistId: String!
+}
+
+union SetArtistSpotifyMatchResult = SetArtistSpotifyMatchError | SetArtistSpotifyMatchSuccess
+
+type SetArtistSpotifyMatchSuccess {
+  artist: Artist!
+}
+
 input SetPlaylistItemArtistMatchInput {
   externalArtistId: String!
   playlistId: ID!
@@ -1045,6 +1080,21 @@ enum SoulSeekStatusType {
   CONNECTING
   OFFLINE
   ONLINE
+}
+
+type SpotifyArtist {
+  id: String!
+  images: [SpotifyImage!]!
+  name: String!
+}
+
+type SpotifyArtistSearchRoot {
+  byId(id: ID!): SpotifyArtist
+  searchByName(limit: Int! = 25, name: String!, offset: Int! = 0): [SpotifyArtist!]!
+}
+
+type SpotifyImage {
+  url: String!
 }
 
 type SpotifyPlaylist {

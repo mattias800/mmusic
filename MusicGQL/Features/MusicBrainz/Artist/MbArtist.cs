@@ -17,8 +17,10 @@ public record MbArtist([property: GraphQLIgnore] Hqub.MusicBrainz.Entities.Artis
 
     public string SortName() => Model.SortName;
 
-    public string? Disambiguation => Model.Disambiguation;
-    public string? Type => Model.Type;
+    public string? Disambiguation() => Model.Disambiguation;
+    public string? Type() => Model.Type;
+
+    public string? Country() => Model.Country;
 
     public async Task<IEnumerable<Release.MbRelease>> Releases(MusicBrainzService mbService)
     {

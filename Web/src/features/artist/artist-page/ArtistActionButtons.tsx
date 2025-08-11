@@ -11,9 +11,11 @@ import {
 } from "@/components/ui/dropdown-menu.tsx";
 import { Spinner } from "@/components/spinner/Spinner.tsx";
 import { TopTracksPlayButton } from "@/features/artist/artist-page/TopTracksPlayButton.tsx";
+import { FixArtistMatchDialog } from "@/features/artist/components/FixArtistMatchDialog.tsx";
 
 export interface ArtistActionButtonsProps {
   artistId: string;
+  artistName?: string;
   loadingTopTracks: boolean;
   loadingMetaData: boolean;
   onRefreshTopTracks: () => void;
@@ -22,11 +24,13 @@ export interface ArtistActionButtonsProps {
 
 export const ArtistActionButtons: React.FC<ArtistActionButtonsProps> = ({
   artistId,
+  artistName,
   loadingTopTracks,
   loadingMetaData,
   onRefreshTopTracks,
   onRefreshMetaData,
 }) => {
+  const [fixOpen, setFixOpen] = React.useState(false);
   const anyLoading = loadingTopTracks || loadingMetaData;
 
   return (
@@ -46,9 +50,19 @@ export const ArtistActionButtons: React.FC<ArtistActionButtonsProps> = ({
           <DropdownMenuItem onSelect={onRefreshMetaData}>
             Refresh artist metadata
           </DropdownMenuItem>
+          <DropdownMenuLabel>Fix</DropdownMenuLabel>
+          <DropdownMenuItem onSelect={() => setFixOpen(true)}>
+            Fix artist match
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
       {anyLoading && <Spinner size={"sm"} />}
+      <FixArtistMatchDialog
+        open={fixOpen}
+        onOpenChange={setFixOpen}
+        artistId={artistId}
+        artistName={artistName ?? ""}
+      />
     </div>
   );
 };

@@ -53,7 +53,7 @@ export enum ApplyPolicy {
 export type Artist = ArtistBase & {
   __typename?: 'Artist';
   albums: Array<Release>;
-  connectedExternalServices: Array<ConnectedExternalService>;
+  connectedExternalServices: Array<ArtistConnectedExternalService>;
   eps: Array<Release>;
   id: Scalars['ID']['output'];
   images?: Maybe<ArtistImages>;
@@ -75,6 +75,13 @@ export type ArtistBase = {
   id: Scalars['ID']['output'];
   name: Scalars['String']['output'];
   sortName: Scalars['String']['output'];
+};
+
+export type ArtistConnectedExternalService = {
+  __typename?: 'ArtistConnectedExternalService';
+  artistPageUrl: Scalars['String']['output'];
+  externalService: ExternalService;
+  isConnected: Scalars['Boolean']['output'];
 };
 
 export type ArtistImages = {
@@ -179,12 +186,6 @@ export type CacheStatistics = {
   lastUpdated: Scalars['DateTime']['output'];
   releaseCount: Scalars['Int']['output'];
   trackCount: Scalars['Int']['output'];
-};
-
-export type ConnectedExternalService = {
-  __typename?: 'ConnectedExternalService';
-  externalService: ExternalService;
-  isConnected: Scalars['Boolean']['output'];
 };
 
 export type CreateDirectoryError = {
@@ -540,6 +541,7 @@ export type MbAlbumImages = {
 export type MbArtist = ArtistBase & {
   __typename?: 'MbArtist';
   albums: Array<MbReleaseGroup>;
+  country?: Maybe<Scalars['String']['output']>;
   disambiguation?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   images?: Maybe<MbArtistImages>;
@@ -815,6 +817,8 @@ export type Mutation = {
   renamePlaylist: RenamePlaylistResult;
   scanLibraryForMissingJson: ScanLibraryForMissingJsonResult;
   scanReleaseFolderForMedia: ScanReleaseFolderForMediaResult;
+  setArtistMusicBrainzMatch: SetArtistMusicBrainzMatchResult;
+  setArtistSpotifyMatch: SetArtistSpotifyMatchResult;
   setPlaylistItemArtistMatch: SetPlaylistItemArtistMatchResult;
   setPlaylistItemArtistMusicBrainzMatch: SetPlaylistItemArtistMusicBrainzMatchResult;
   setReleaseGroup: SetReleaseGroupResult;
@@ -936,6 +940,16 @@ export type MutationRenamePlaylistArgs = {
 
 export type MutationScanReleaseFolderForMediaArgs = {
   input: ScanReleaseFolderForMediaInput;
+};
+
+
+export type MutationSetArtistMusicBrainzMatchArgs = {
+  input: SetArtistMusicBrainzMatchInput;
+};
+
+
+export type MutationSetArtistSpotifyMatchArgs = {
+  input: SetArtistSpotifyMatchInput;
 };
 
 
@@ -1061,6 +1075,7 @@ export type Query = {
   releasesWithScores: Array<ScoredRelease>;
   serverLibrary: ServerLibrarySearchRoot;
   serverSettings: ServerSettings;
+  spotify: SpotifyArtistSearchRoot;
   user: UserSearchRoot;
   viewer?: Maybe<User>;
 };
@@ -1312,6 +1327,40 @@ export type ServerSettings = {
   libraryPath: Scalars['String']['output'];
 };
 
+export type SetArtistMusicBrainzMatchError = {
+  __typename?: 'SetArtistMusicBrainzMatchError';
+  message: Scalars['String']['output'];
+};
+
+export type SetArtistMusicBrainzMatchInput = {
+  artistId: Scalars['String']['input'];
+  musicBrainzArtistId: Scalars['String']['input'];
+};
+
+export type SetArtistMusicBrainzMatchResult = SetArtistMusicBrainzMatchError | SetArtistMusicBrainzMatchSuccess;
+
+export type SetArtistMusicBrainzMatchSuccess = {
+  __typename?: 'SetArtistMusicBrainzMatchSuccess';
+  artist: Artist;
+};
+
+export type SetArtistSpotifyMatchError = {
+  __typename?: 'SetArtistSpotifyMatchError';
+  message: Scalars['String']['output'];
+};
+
+export type SetArtistSpotifyMatchInput = {
+  artistId: Scalars['String']['input'];
+  spotifyArtistId: Scalars['String']['input'];
+};
+
+export type SetArtistSpotifyMatchResult = SetArtistSpotifyMatchError | SetArtistSpotifyMatchSuccess;
+
+export type SetArtistSpotifyMatchSuccess = {
+  __typename?: 'SetArtistSpotifyMatchSuccess';
+  artist: Artist;
+};
+
 export type SetPlaylistItemArtistMatchInput = {
   externalArtistId: Scalars['String']['input'];
   playlistId: Scalars['ID']['input'];
@@ -1439,6 +1488,36 @@ export enum SoulSeekStatusType {
   Offline = 'OFFLINE',
   Online = 'ONLINE'
 }
+
+export type SpotifyArtist = {
+  __typename?: 'SpotifyArtist';
+  id: Scalars['String']['output'];
+  images: Array<SpotifyImage>;
+  name: Scalars['String']['output'];
+};
+
+export type SpotifyArtistSearchRoot = {
+  __typename?: 'SpotifyArtistSearchRoot';
+  byId?: Maybe<SpotifyArtist>;
+  searchByName: Array<SpotifyArtist>;
+};
+
+
+export type SpotifyArtistSearchRootByIdArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type SpotifyArtistSearchRootSearchByNameArgs = {
+  limit?: Scalars['Int']['input'];
+  name: Scalars['String']['input'];
+  offset?: Scalars['Int']['input'];
+};
+
+export type SpotifyImage = {
+  __typename?: 'SpotifyImage';
+  url: Scalars['String']['output'];
+};
 
 export type SpotifyPlaylist = {
   __typename?: 'SpotifyPlaylist';
@@ -1967,7 +2046,7 @@ export type ArtistEpListQuery = { __typename?: 'Query', serverLibrary: { __typen
 export type ArtistNumReleasesAvailableIndicator_ArtistFragment = { __typename?: 'Artist', id: string, albums: Array<{ __typename?: 'Release', id: string, isFullyMissing: boolean }>, eps: Array<{ __typename?: 'Release', id: string, isFullyMissing: boolean }>, singles: Array<{ __typename?: 'Release', id: string, isFullyMissing: boolean }> } & { ' $fragmentName'?: 'ArtistNumReleasesAvailableIndicator_ArtistFragment' };
 
 export type ArtistPanel_ArtistFragment = (
-  { __typename?: 'Artist', id: string, name: string, listeners?: any | null, connectedExternalServices: Array<{ __typename?: 'ConnectedExternalService', isConnected: boolean, externalService: { __typename?: 'ExternalService', id: string, name: string } }>, albums: Array<(
+  { __typename?: 'Artist', id: string, name: string, listeners?: any | null, connectedExternalServices: Array<{ __typename?: 'ArtistConnectedExternalService', isConnected: boolean, externalService: { __typename?: 'ExternalService', id: string, name: string } }>, albums: Array<(
     { __typename?: 'Release', id: string, firstReleaseDate?: string | null, isFullyMissing: boolean }
     & { ' $fragmentRefs'?: { 'AlbumCard_ReleaseFragment': AlbumCard_ReleaseFragment } }
   )>, eps: Array<(
@@ -2000,7 +2079,7 @@ export type PanelRefreshArtistMetaDataMutation = { __typename?: 'Mutation', refr
       & { ' $fragmentRefs'?: { 'ArtistPanel_ArtistFragment': ArtistPanel_ArtistFragment } }
     ) } };
 
-export type ArtistServiceConnections_ArtistFragment = { __typename?: 'Artist', id: string, connectedExternalServices: Array<{ __typename?: 'ConnectedExternalService', isConnected: boolean, externalService: { __typename?: 'ExternalService', id: string, name: string } }> } & { ' $fragmentName'?: 'ArtistServiceConnections_ArtistFragment' };
+export type ArtistServiceConnections_ArtistFragment = { __typename?: 'Artist', id: string, connectedExternalServices: Array<{ __typename?: 'ArtistConnectedExternalService', isConnected: boolean, externalService: { __typename?: 'ExternalService', id: string, name: string } }> } & { ' $fragmentName'?: 'ArtistServiceConnections_ArtistFragment' };
 
 export type ArtistSingleListQueryVariables = Exact<{
   artistId: Scalars['ID']['input'];
@@ -2033,6 +2112,38 @@ export type ArtistTopTracksForQueueQueryVariables = Exact<{
 
 
 export type ArtistTopTracksForQueueQuery = { __typename?: 'Query', serverLibrary: { __typename?: 'ServerLibrarySearchRoot', artistById?: { __typename?: 'Artist', id: string, topTracks: Array<{ __typename?: 'ArtistTopTrack', title: string, coverArtUrl?: string | null, track?: { __typename?: 'Track', trackNumber: number, trackLength?: number | null, release: { __typename?: 'Release', folderName: string, artist: { __typename?: 'Artist', id: string, name: string } } } | null }> } | null } };
+
+export type FixArtistMatch_SearchMbArtistsQueryVariables = Exact<{
+  name: Scalars['String']['input'];
+  limit: Scalars['Int']['input'];
+  offset: Scalars['Int']['input'];
+}>;
+
+
+export type FixArtistMatch_SearchMbArtistsQuery = { __typename?: 'Query', musicBrainz: { __typename?: 'MusicBrainzSearchRoot', artist: { __typename?: 'MusicBrainzArtistSearchRoot', searchByName: Array<{ __typename?: 'MbArtist', id: string, name: string, country?: string | null, type?: string | null }> } } };
+
+export type FixArtistMatch_SetMbMutationVariables = Exact<{
+  input: SetArtistMusicBrainzMatchInput;
+}>;
+
+
+export type FixArtistMatch_SetMbMutation = { __typename?: 'Mutation', setArtistMusicBrainzMatch: { __typename: 'SetArtistMusicBrainzMatchError', message: string } | { __typename: 'SetArtistMusicBrainzMatchSuccess', artist: { __typename?: 'Artist', id: string } } };
+
+export type FixArtistMatch_SetSpotifyMutationVariables = Exact<{
+  input: SetArtistSpotifyMatchInput;
+}>;
+
+
+export type FixArtistMatch_SetSpotifyMutation = { __typename?: 'Mutation', setArtistSpotifyMatch: { __typename: 'SetArtistSpotifyMatchError', message: string } | { __typename: 'SetArtistSpotifyMatchSuccess', artist: { __typename?: 'Artist', id: string } } };
+
+export type FixArtistMatch_SearchSpotifyQueryVariables = Exact<{
+  name: Scalars['String']['input'];
+  limit: Scalars['Int']['input'];
+  offset: Scalars['Int']['input'];
+}>;
+
+
+export type FixArtistMatch_SearchSpotifyQuery = { __typename?: 'Query', spotify: { __typename?: 'SpotifyArtistSearchRoot', searchByName: Array<{ __typename?: 'SpotifyArtist', id: string, name: string, images: Array<{ __typename?: 'SpotifyImage', url: string }> }> } };
 
 export type SignInMutationVariables = Exact<{
   username: Scalars['String']['input'];
@@ -2431,6 +2542,10 @@ export const PanelRefreshArtistMetaDataDocument = {"kind":"Document","definition
 export const ArtistSingleListDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"ArtistSingleList"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"artistId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"serverLibrary"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"artistById"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"artistId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"singles"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"firstReleaseDate"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"AlbumCard_Release"}}]}}]}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"AlbumCard_Release"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Release"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"firstReleaseYear"}},{"kind":"Field","name":{"kind":"Name","value":"coverArtUrl"}},{"kind":"Field","name":{"kind":"Name","value":"folderName"}},{"kind":"Field","name":{"kind":"Name","value":"isFullyMissing"}},{"kind":"Field","name":{"kind":"Name","value":"artist"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"images"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"thumbs"}}]}}]}}]}}]} as unknown as DocumentNode<ArtistSingleListQuery, ArtistSingleListQueryVariables>;
 export const TopArtistTracksDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"TopArtistTracks"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"artistId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"serverLibrary"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"artistById"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"artistId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"topTracks"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"TopArtistTrackItem_ArtistTopTrack"}}]}}]}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"MusicPlayerTrackFactory_Track"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Track"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"trackLength"}},{"kind":"Field","name":{"kind":"Name","value":"trackNumber"}},{"kind":"Field","name":{"kind":"Name","value":"media"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"audioQualityLabel"}}]}},{"kind":"Field","name":{"kind":"Name","value":"release"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"folderName"}},{"kind":"Field","name":{"kind":"Name","value":"coverArtUrl"}},{"kind":"Field","name":{"kind":"Name","value":"artist"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"trackNumber"}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"AlbumTrackTag_Track"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Track"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"isMissing"}},{"kind":"Field","name":{"kind":"Name","value":"mediaAvailabilityStatus"}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"TopArtistTrackItem_ArtistTopTrack"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"ArtistTopTrack"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"releaseTitle"}},{"kind":"Field","name":{"kind":"Name","value":"playCount"}},{"kind":"Field","name":{"kind":"Name","value":"coverArtUrl"}},{"kind":"Field","name":{"kind":"Name","value":"track"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"MusicPlayerTrackFactory_Track"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"AlbumTrackTag_Track"}},{"kind":"Field","name":{"kind":"Name","value":"trackLength"}},{"kind":"Field","name":{"kind":"Name","value":"trackNumber"}},{"kind":"Field","name":{"kind":"Name","value":"isMissing"}},{"kind":"Field","name":{"kind":"Name","value":"release"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"folderName"}},{"kind":"Field","name":{"kind":"Name","value":"artist"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"images"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"thumbs"}}]}}]}}]}}]}}]}}]} as unknown as DocumentNode<TopArtistTracksQuery, TopArtistTracksQueryVariables>;
 export const ArtistTopTracksForQueueDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"ArtistTopTracksForQueue"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"artistId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"serverLibrary"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"artistById"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"artistId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"topTracks"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"coverArtUrl"}},{"kind":"Field","name":{"kind":"Name","value":"track"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"trackNumber"}},{"kind":"Field","name":{"kind":"Name","value":"trackLength"}},{"kind":"Field","name":{"kind":"Name","value":"release"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"folderName"}},{"kind":"Field","name":{"kind":"Name","value":"artist"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}}]}}]}}]}}]}}]}}]}}]} as unknown as DocumentNode<ArtistTopTracksForQueueQuery, ArtistTopTracksForQueueQueryVariables>;
+export const FixArtistMatch_SearchMbArtistsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"FixArtistMatch_SearchMbArtists"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"name"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"limit"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"offset"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"musicBrainz"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"artist"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"searchByName"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"name"},"value":{"kind":"Variable","name":{"kind":"Name","value":"name"}}},{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"limit"}}},{"kind":"Argument","name":{"kind":"Name","value":"offset"},"value":{"kind":"Variable","name":{"kind":"Name","value":"offset"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"country"}},{"kind":"Field","name":{"kind":"Name","value":"type"}}]}}]}}]}}]}}]} as unknown as DocumentNode<FixArtistMatch_SearchMbArtistsQuery, FixArtistMatch_SearchMbArtistsQueryVariables>;
+export const FixArtistMatch_SetMbDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"FixArtistMatch_SetMb"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"SetArtistMusicBrainzMatchInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"setArtistMusicBrainzMatch"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"__typename"}},{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"SetArtistMusicBrainzMatchSuccess"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"artist"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}}]}},{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"SetArtistMusicBrainzMatchError"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"message"}}]}}]}}]}}]} as unknown as DocumentNode<FixArtistMatch_SetMbMutation, FixArtistMatch_SetMbMutationVariables>;
+export const FixArtistMatch_SetSpotifyDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"FixArtistMatch_SetSpotify"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"SetArtistSpotifyMatchInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"setArtistSpotifyMatch"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"__typename"}},{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"SetArtistSpotifyMatchSuccess"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"artist"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}}]}},{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"SetArtistSpotifyMatchError"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"message"}}]}}]}}]}}]} as unknown as DocumentNode<FixArtistMatch_SetSpotifyMutation, FixArtistMatch_SetSpotifyMutationVariables>;
+export const FixArtistMatch_SearchSpotifyDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"FixArtistMatch_SearchSpotify"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"name"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"limit"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"offset"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"spotify"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"searchByName"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"name"},"value":{"kind":"Variable","name":{"kind":"Name","value":"name"}}},{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"limit"}}},{"kind":"Argument","name":{"kind":"Name","value":"offset"},"value":{"kind":"Variable","name":{"kind":"Name","value":"offset"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"images"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"url"}}]}}]}}]}}]}}]} as unknown as DocumentNode<FixArtistMatch_SearchSpotifyQuery, FixArtistMatch_SearchSpotifyQueryVariables>;
 export const SignInDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"SignIn"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"username"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"password"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"signIn"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"username"},"value":{"kind":"Variable","name":{"kind":"Name","value":"username"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"password"},"value":{"kind":"Variable","name":{"kind":"Name","value":"password"}}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"__typename"}},{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"SignInSuccess"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"user"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"username"}}]}}]}},{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"SignInError"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"message"}}]}}]}}]}}]} as unknown as DocumentNode<SignInMutation, SignInMutationVariables>;
 export const SignOutDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"SignOut"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"signOut"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"confirm"},"value":{"kind":"BooleanValue","value":true}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"__typename"}},{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"SignOutSuccess"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"success"}}]}},{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"SignOutError"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"message"}}]}}]}}]}}]} as unknown as DocumentNode<SignOutMutation, SignOutMutationVariables>;
 export const DownloadOverviewQueryDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"DownloadOverviewQuery"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"downloads"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"downloadQueue"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"queueLength"}},{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"artistId"}},{"kind":"Field","name":{"kind":"Name","value":"releaseFolderName"}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"currentDownload"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"artistId"}},{"kind":"Field","name":{"kind":"Name","value":"releaseFolderName"}},{"kind":"Field","name":{"kind":"Name","value":"status"}},{"kind":"Field","name":{"kind":"Name","value":"totalTracks"}},{"kind":"Field","name":{"kind":"Name","value":"completedTracks"}},{"kind":"Field","name":{"kind":"Name","value":"errorMessage"}}]}}]}}]}}]} as unknown as DocumentNode<DownloadOverviewQueryQuery, DownloadOverviewQueryQueryVariables>;
