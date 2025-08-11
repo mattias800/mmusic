@@ -1,5 +1,5 @@
 import * as React from "react";
-import { useQuery } from "urql";
+import { useQuery, useSubscription } from "urql";
 import { FragmentType, graphql, useFragment } from "@/gql";
 import { Spinner } from "@/components/spinner/Spinner.tsx";
 import { ArtistImportStatus } from "@/gql/graphql.ts";
@@ -30,6 +30,18 @@ const currentArtistImportQuery = graphql(`
   }
 `);
 
+const currentArtistImportSubscription = graphql(`
+  subscription ArtistImportStatusInfo_Sub {
+    currentArtistImportUpdated {
+      status
+      completedReleases
+      totalReleases
+      errorMessage
+      artistName
+    }
+  }
+`);
+
 export const ArtistImportStatusInfo: React.FC<ArtistImportStatusProps> = ({
   renderWhenNoInfo,
   ...props
@@ -38,8 +50,14 @@ export const ArtistImportStatusInfo: React.FC<ArtistImportStatusProps> = ({
     artistImportStatusInfoArtistFragment,
     props.artist,
   );
-  const [{ data }] = useQuery({
+  const [{ data }, reexec] = useQuery({
     query: currentArtistImportQuery,
+  });
+
+  useSubscription({ query: currentArtistImportSubscription }, () => {
+    // On any progress event, refetch to update counters
+    reexec({ requestPolicy: "network-only" });
+    return null;
   });
 
   const st = data?.artistImport?.currentArtistImport;
