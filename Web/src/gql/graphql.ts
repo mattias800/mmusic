@@ -53,6 +53,7 @@ export enum ApplyPolicy {
 export type Artist = ArtistBase & {
   __typename?: 'Artist';
   albums: Array<Release>;
+  connectedExternalServices: Array<ConnectedExternalService>;
   eps: Array<Release>;
   id: Scalars['ID']['output'];
   images?: Maybe<ArtistImages>;
@@ -64,6 +65,18 @@ export type Artist = ArtistBase & {
   singles: Array<Release>;
   sortName: Scalars['String']['output'];
   topTracks: Array<ArtistTopTrack>;
+};
+
+export type ConnectedExternalService = {
+  __typename?: 'ConnectedExternalService';
+  externalService: ExternalService;
+  isConnected: Scalars['Boolean']['output'];
+};
+
+export type ExternalService = {
+  __typename?: 'ExternalService';
+  id: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
 };
 
 

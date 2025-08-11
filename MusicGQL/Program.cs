@@ -8,8 +8,6 @@ using Microsoft.Extensions.Options;
 using MusicGQL.Db.Postgres;
 using MusicGQL.EventProcessor;
 using MusicGQL.Features.Artists;
-using MusicGQL.Features.ArtistServerStatus;
-using MusicGQL.Features.ArtistServerStatus.Services;
 using MusicGQL.Features.ArtistImportQueue;
 using MusicGQL.Features.ArtistImportQueue.Mutations;
 using MusicGQL.Features.ArtistImportQueue.Services;
@@ -23,7 +21,6 @@ using MusicGQL.Features.External.SoulSeek.Integration;
 using MusicGQL.Features.FileSystem;
 using MusicGQL.Features.FileSystem.Mutations;
 using MusicGQL.Features.Import;
-using MusicGQL.Features.Import.Handlers;
 using MusicGQL.Features.Import.Mutations;
 using MusicGQL.Features.Import.Services;
 using MusicGQL.Features.Likes.Commands;
@@ -107,7 +104,7 @@ builder
     .AddSingleton<MusicBrainzService>()
     .AddSingleton<YouTubeService>()
     .AddSingleton<SpotifyService>()
-    .AddSingleton<ArtistServerStatusService>()
+    
     .AddSingleton<ArtistImportQueueService>()
     .AddSingleton<CurrentArtistImportStateService>()
     .AddSingleton<ServerLibraryJsonReader>()
@@ -131,9 +128,6 @@ builder
     .AddScoped<UnlikeSongHandler>()
     .AddScoped<UpdateLibraryPathHandler>()
     .AddScoped<UpdateDownloadPathHandler>()
-    .AddScoped<ImportArtistToServerLibraryHandler>()
-    .AddScoped<ImportArtistReleaseGroupsToServerLibraryHandler>()
-    .AddScoped<ImportReleaseGroupToServerLibraryHandler>()
     // Event processors
     .AddScoped<LikedSongsEventProcessor>()
     .AddScoped<UserEventProcessor>()
@@ -266,7 +260,7 @@ builder
     .AddType<ImportArtistsFromSpotifyPlaylistError>()
     .AddTypeExtension<SoulSeekSubscription>()
     .AddTypeExtension<LibrarySubscription>()
-    .AddTypeExtension<ArtistServerStatusSubscription>()
+    
     .AddTypeExtension<ArtistImportSubscription>()
     .AddTypeExtension<ArtistImportSearchRoot>()
     .AddTypeExtension<ArtistImportMutations>()
@@ -350,17 +344,12 @@ builder
     .AddType<SetReleaseMatchOverrideSuccess>()
     .AddType<SetReleaseMatchOverrideError>()
     .AddTypeExtension<ReleasesWithScoresQuery>()
-    .AddType<ArtistServerStatusReady>()
-    .AddType<ArtistServerStatusImportingArtist>()
-    .AddType<ArtistServerStatusUpdatingArtist>()
-    .AddType<ArtistServerStatusImportingArtistReleases>()
-    .AddType<ArtistServerStatusUpdatingArtistReleases>()
-    .AddType<ArtistServerStatusNotInLibrary>()
-    .AddType<IArtistServerStatusResult>()
+    
     .AddTypeExtension<FileSystemSearchRoot>()
     .AddTypeExtension<CreateDirectoryMutation>()
     .AddType<CreateDirectorySuccess>()
-    .AddType<CreateDirectoryError>();
+    .AddType<CreateDirectoryError>()
+    .AddType<MusicGQL.Features.External.ExternalServiceGql>();
 
 builder.Services.Configure<LastfmOptions>(builder.Configuration.GetSection("Lastfm"));
 

@@ -35,4 +35,10 @@ public class JsonArtistServiceConnections
     public string? MusicBrainzArtistId { get; set; }
     public string? SpotifyId { get; set; }
     public string? YoutubeChannelUrl { get; set; }
+    public string? AppleMusicArtistId { get; set; }
+    public string? DeezerArtistId { get; set; }
+    public string? TidalArtistId { get; set; }
+    public string? SoundcloudUrl { get; set; }
+    public string? BandcampUrl { get; set; }
+    public string? DiscogsUrl { get; set; }
 }

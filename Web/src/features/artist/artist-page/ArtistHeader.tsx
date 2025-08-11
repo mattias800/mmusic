@@ -10,6 +10,7 @@ export interface ArtistHeaderProps {
   renderServerStatus?: () => ReactNode;
   availableNumReleases: number;
   totalNumReleases?: number;
+  renderConnections?: () => ReactNode;
 }
 
 export const ArtistHeader: React.FC<ArtistHeaderProps> = ({
@@ -19,6 +20,7 @@ export const ArtistHeader: React.FC<ArtistHeaderProps> = ({
   listeners,
   availableNumReleases,
   totalNumReleases,
+  renderConnections,
 }) => {
   return (
     <div className="relative">
@@ -51,7 +53,10 @@ export const ArtistHeader: React.FC<ArtistHeaderProps> = ({
               </div>
             )}
           </div>
-          <div className={"flex items-end"}>{renderServerStatus?.()}</div>
+          <div className={"flex items-end gap-4"}>
+            {renderConnections?.()}
+            {renderServerStatus?.()}
+          </div>
         </div>
       </div>
 

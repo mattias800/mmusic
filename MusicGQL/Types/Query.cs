@@ -73,6 +73,8 @@ public class Query
 
     public ExternalRoot External() => new();
 
+    public ExternalServicesSearchRoot ExternalServices() => new();
+
     public PlaylistSearchRoot Playlist() => new();
 
     public RecommendationsSearchRoot Recommendations() => new();

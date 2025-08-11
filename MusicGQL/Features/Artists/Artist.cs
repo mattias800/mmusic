@@ -13,8 +13,6 @@ public record Artist([property: GraphQLIgnore] CachedArtist Model) : IArtistBase
 
     public string SortName() => Model.SortName ?? Model.Name;
 
-    public ArtistServerStatus.ArtistServerStatus ServerStatus() => new(Model.Id);
-
     public async Task<IEnumerable<Release>> Releases(ServerLibraryCache cache)
     {
         var releases = await cache.GetAllReleasesForArtistAsync(Model.Id);
@@ -53,6 +51,26 @@ public record Artist([property: GraphQLIgnore] CachedArtist Model) : IArtistBase
     public IEnumerable<ArtistTopTrack> TopTracks() =>
         Model.JsonArtist.TopTracks?
             .Select((t, index) => new ArtistTopTrack(Model.Id, t, index)) ?? [];
+
+    public IEnumerable<ConnectedExternalService> ConnectedExternalServices()
+    {
+        var c = Model.JsonArtist.Connections;
+        if (c is null) yield break;
+
+        if (!string.IsNullOrWhiteSpace(c.MusicBrainzArtistId))
+            yield return new ConnectedExternalService("musicbrainz", true);
+        else
+            yield return new ConnectedExternalService("musicbrainz", false);
+
+        yield return new ConnectedExternalService("spotify", !string.IsNullOrWhiteSpace(c.SpotifyId));
+        yield return new ConnectedExternalService("apple-music", !string.IsNullOrWhiteSpace(c.AppleMusicArtistId));
+        yield return new ConnectedExternalService("youtube", !string.IsNullOrWhiteSpace(c.YoutubeChannelUrl));
+        yield return new ConnectedExternalService("tidal", !string.IsNullOrWhiteSpace(c.TidalArtistId));
+        yield return new ConnectedExternalService("deezer", !string.IsNullOrWhiteSpace(c.DeezerArtistId));
+        yield return new ConnectedExternalService("soundcloud", !string.IsNullOrWhiteSpace(c.SoundcloudUrl));
+        yield return new ConnectedExternalService("bandcamp", !string.IsNullOrWhiteSpace(c.BandcampUrl));
+        yield return new ConnectedExternalService("discogs", !string.IsNullOrWhiteSpace(c.DiscogsUrl));
+    }
 
     public ArtistImages? Images()
     {

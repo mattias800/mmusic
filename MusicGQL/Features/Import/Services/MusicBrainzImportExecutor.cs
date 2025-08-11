@@ -253,6 +253,82 @@ public sealed class MusicBrainzImportExecutor(
             // ignore Last.fm failures
         }
 
+        // Try to enrich external service connections using MusicBrainz relations and Spotify fallback
+        try
+        {
+            jsonArtist.Connections ??= new JsonArtistServiceConnections();
+            var mbArtist = await musicBrainzService.GetArtistByIdAsync(mbArtistId);
+            var rels = mbArtist?.Relations;
+            if (rels != null)
+            {
+                foreach (var rel in rels)
+                {
+                    var url = rel?.Url?.Resource;
+                    if (string.IsNullOrWhiteSpace(url)) continue;
+                    if (url.Contains("open.spotify.com/artist/", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var parts = new Uri(url).Segments;
+                        var id = parts.LastOrDefault()?.Trim('/');
+                        if (!string.IsNullOrWhiteSpace(id)) jsonArtist.Connections.SpotifyId ??= id;
+                    }
+                    else if (url.Contains("music.apple.com", StringComparison.OrdinalIgnoreCase))
+                    {
+                        // Apple Music artist URLs often include /artist/<name>/<id>
+                        var segments = new Uri(url).Segments.Select(s => s.Trim('/')).ToArray();
+                        var maybeId = segments.LastOrDefault();
+                        if (!string.IsNullOrWhiteSpace(maybeId) && maybeId.All(char.IsDigit))
+                            jsonArtist.Connections.AppleMusicArtistId ??= maybeId;
+                    }
+                    else if (url.Contains("youtube.com", StringComparison.OrdinalIgnoreCase) || url.Contains("youtu.be", StringComparison.OrdinalIgnoreCase))
+                    {
+                        // Prefer channel URLs
+                        if (url.Contains("/channel/") || url.Contains("/c/") || url.Contains("/@"))
+                            jsonArtist.Connections.YoutubeChannelUrl ??= url;
+                    }
+                    else if (url.Contains("tidal.com", StringComparison.OrdinalIgnoreCase))
+                    {
+                        // Not always standardized; keep as id when possible
+                        jsonArtist.Connections.TidalArtistId ??= url;
+                    }
+                    else if (url.Contains("deezer.com", StringComparison.OrdinalIgnoreCase))
+                    {
+                        jsonArtist.Connections.DeezerArtistId ??= url.Split('/').LastOrDefault();
+                    }
+                    else if (url.Contains("soundcloud.com", StringComparison.OrdinalIgnoreCase))
+                    {
+                        jsonArtist.Connections.SoundcloudUrl ??= url;
+                    }
+                    else if (url.Contains("bandcamp.com", StringComparison.OrdinalIgnoreCase))
+                    {
+                        jsonArtist.Connections.BandcampUrl ??= url;
+                    }
+                    else if (url.Contains("discogs.com", StringComparison.OrdinalIgnoreCase))
+                    {
+                        jsonArtist.Connections.DiscogsUrl ??= url;
+                    }
+                }
+            }
+
+            // If SpotifyId still missing, try to search by name as a fallback
+            if (string.IsNullOrWhiteSpace(jsonArtist.Connections.SpotifyId))
+            {
+                try
+                {
+                    var spotifyMatches = await spotifyService.SearchArtistsAsync(artistDisplayName, 1);
+                    var match = spotifyMatches?.FirstOrDefault();
+                    if (match?.Id != null)
+                    {
+                        jsonArtist.Connections.SpotifyId = match.Id;
+                    }
+                }
+                catch { }
+            }
+        }
+        catch
+        {
+            // ignore enrich errors
+        }
+
         var artistJson = JsonSerializer.Serialize(jsonArtist, GetJsonOptions());
         await File.WriteAllTextAsync(artistJsonPath, artistJson);
         logger.LogInformation("[ImportArtist] Wrote artist.json for '{Artist}' at {Path}", jsonArtist.Name, artistJsonPath);

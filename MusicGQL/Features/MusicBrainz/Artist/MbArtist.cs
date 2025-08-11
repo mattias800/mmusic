@@ -94,7 +94,12 @@ public record MbArtist([property: GraphQLIgnore] Hqub.MusicBrainz.Entities.Artis
         }
     }
 
-    public ArtistServerStatus.ArtistServerStatus ServerStatus() => new(Model.Id);
+    // Artist server status removed
+
+    public IEnumerable<Common.MbRelation> Relations()
+    {
+        return Model.Relations?.Select(r => new Common.MbRelation(r)) ?? [];
+    }
 
     public async Task<LastFmArtist?> LastFmArtist(LastfmClient lastfmClient)
     {
@@ -107,5 +112,39 @@ public record MbArtist([property: GraphQLIgnore] Hqub.MusicBrainz.Entities.Artis
         {
             return null;
         }
+    }
+
+    public IEnumerable<Artists.ConnectedExternalService> ConnectedExternalServices()
+    {
+        // Build map of detected connections from relations
+        var rels = Model.Relations ?? [];
+        bool hasMb = !string.IsNullOrWhiteSpace(Model.Id);
+        bool hasSpotify = false, hasApple = false, hasYoutube = false, hasTidal = false,
+            hasDeezer = false, hasSoundcloud = false, hasBandcamp = false, hasDiscogs = false;
+
+        foreach (var r in rels)
+        {
+            var url = r?.Url?.Resource;
+            if (string.IsNullOrWhiteSpace(url)) continue;
+            var u = url.ToLowerInvariant();
+            if (!hasSpotify && u.Contains("open.spotify.com/artist/")) hasSpotify = true;
+            else if (!hasApple && u.Contains("music.apple.com")) hasApple = true;
+            else if (!hasYoutube && (u.Contains("youtube.com") || u.Contains("youtu.be"))) hasYoutube = true;
+            else if (!hasTidal && u.Contains("tidal.com")) hasTidal = true;
+            else if (!hasDeezer && u.Contains("deezer.com")) hasDeezer = true;
+            else if (!hasSoundcloud && u.Contains("soundcloud.com")) hasSoundcloud = true;
+            else if (!hasBandcamp && u.Contains("bandcamp.com")) hasBandcamp = true;
+            else if (!hasDiscogs && u.Contains("discogs.com")) hasDiscogs = true;
+        }
+
+        yield return new Artists.ConnectedExternalService("musicbrainz", hasMb);
+        yield return new Artists.ConnectedExternalService("spotify", hasSpotify);
+        yield return new Artists.ConnectedExternalService("apple-music", hasApple);
+        yield return new Artists.ConnectedExternalService("youtube", hasYoutube);
+        yield return new Artists.ConnectedExternalService("tidal", hasTidal);
+        yield return new Artists.ConnectedExternalService("deezer", hasDeezer);
+        yield return new Artists.ConnectedExternalService("soundcloud", hasSoundcloud);
+        yield return new Artists.ConnectedExternalService("bandcamp", hasBandcamp);
+        yield return new Artists.ConnectedExternalService("discogs", hasDiscogs);
     }
 }

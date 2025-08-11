@@ -16,7 +16,7 @@ public class MusicBrainzService(MusicBrainzClient client, HybridCache cache)
         ExecuteThrottledAsync(
             $"{cacheKeyPrefix}:artist:{id}",
             TimeSpan.FromDays(1),
-            () => client.Artists.GetAsync(id)
+            () => client.Artists.GetAsync(id, "url-rels")
         );
 
     public async Task<List<Artist>> GetArtistsForRecordingAsync(string recordingId)

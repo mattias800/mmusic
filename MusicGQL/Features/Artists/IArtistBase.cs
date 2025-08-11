@@ -9,4 +9,6 @@ public interface IArtistBase
     string Name();
 
     string SortName();
+
+    IEnumerable<ConnectedExternalService> ConnectedExternalServices();
 }

@@ -6,7 +6,7 @@ import { GradientContent } from "@/components/page-body/GradientContent.tsx";
 import { SectionHeading } from "@/components/headings/SectionHeading.tsx";
 import { Section } from "@/components/page-body/Section.tsx";
 import { SectionList } from "@/components/page-body/SectionList.tsx";
-import { ArtistServerStatus } from "@/features/artist/artist-server-status/ArtistServerStatus.tsx";
+// removed server status widget (legacy)
 import { MainPadding } from "@/components/layout/MainPadding.tsx";
 import { ArtistActionButtons } from "@/features/artist/artist-page/ArtistActionButtons.tsx";
 import { CardFlexList } from "@/components/page-body/CardFlexList.tsx";
@@ -23,6 +23,10 @@ const artistPanelArtistFragment = graphql(`
     id
     name
     listeners
+    connectedExternalServices {
+      isConnected
+      externalService { id name }
+    }
     albums {
       id
       firstReleaseDate
@@ -43,20 +47,6 @@ const artistPanelArtistFragment = graphql(`
     }
     images {
       backgrounds
-    }
-    serverStatus {
-      id
-      result {
-        __typename
-        ... on ArtistServerStatusResultBase {
-          topTracksVisible
-          releasesVisible
-        }
-        ... on ArtistServerStatusImportingArtistReleases {
-          numReleaseGroupsFinishedImporting
-          totalNumReleaseGroupsBeingImported
-        }
-      }
     }
   }
 `);
@@ -96,7 +86,8 @@ const refreshArtistMetaDataMutation = graphql(`
 export const ArtistPanel: React.FC<ArtistPanelProps> = (props) => {
   const artist = useFragment(artistPanelArtistFragment, props.artist);
 
-  const { releasesVisible, topTracksVisible } = artist.serverStatus.result;
+  const releasesVisible = true;
+  const topTracksVisible = true;
 
   const totalNumReleases =
     artist.albums.length + artist.eps.length + artist.singles.length;
@@ -126,7 +117,24 @@ export const ArtistPanel: React.FC<ArtistPanelProps> = (props) => {
         listeners={artist.listeners}
         availableNumReleases={availableCount}
         totalNumReleases={totalNumReleases}
-        renderServerStatus={() => <ArtistServerStatus artistId={artist.id} />}
+        renderConnections={() => (
+          <div className="flex gap-2 items-center">
+            {artist.connectedExternalServices.map((c) => (
+              <span
+                key={c.externalService.id}
+                className={
+                  "px-2 py-1 rounded text-xs font-medium border " +
+                  (c.isConnected
+                    ? "bg-green-500/20 text-green-200 border-green-400/40"
+                    : "bg-white/10 text-white/70 border-white/20")
+                }
+                title={c.externalService.name}
+              >
+                {c.externalService.name}
+              </span>
+            ))}
+          </div>
+        )}
       />
 
       <ArtistActionButtons
