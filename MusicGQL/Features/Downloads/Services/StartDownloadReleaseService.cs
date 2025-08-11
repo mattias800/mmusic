@@ -185,16 +185,37 @@ public class StartDownloadReleaseService(
             if (!string.IsNullOrWhiteSpace(mbArtistId) && rel != null)
             {
                 var rgs = await mbImport.GetArtistReleaseGroupsAsync(mbArtistId!);
-                var match = rgs.FirstOrDefault(rg =>
-                    string.Equals(rg.Title, rel.Title, StringComparison.OrdinalIgnoreCase)
-                );
-                if (match != null)
+
+                // Prefer RGs whose titles are equivalent, exclude demos, prefer Album primary type, then earliest date
+                var candidates = rgs
+                    .Where(rg => AreTitlesEquivalent(rg.Title, rel.Title ?? string.Empty))
+                    .Where(rg => !(rg.SecondaryTypes?.Any(t => t.Equals("Demo", StringComparison.OrdinalIgnoreCase)) ?? false))
+                    .ToList();
+
+                if (candidates.Count == 0)
                 {
-                    var importResult = await releaseImporter.ImportReleaseGroupAsync(
-                        match,
-                        Path.GetDirectoryName(rel.ReleasePath)
-                            ?? Path.Combine("./Library", artistId),
-                        artistId
+                    // Fallback: loose contains check
+                    candidates = rgs
+                        .Where(rg => (rg.Title ?? string.Empty).IndexOf(rel.Title ?? string.Empty, StringComparison.OrdinalIgnoreCase) >= 0)
+                        .Where(rg => !(rg.SecondaryTypes?.Any(t => t.Equals("Demo", StringComparison.OrdinalIgnoreCase)) ?? false))
+                        .ToList();
+                }
+
+                var match = candidates
+                    .OrderByDescending(rg => string.Equals(rg.PrimaryType, "Album", StringComparison.OrdinalIgnoreCase))
+                    .ThenBy(rg => SafeDateKey(rg.FirstReleaseDate))
+                    .FirstOrDefault();
+
+                if (match is not null)
+                {
+                    // Rebuild using this RG; builder will pick the best matching release considering local audio files
+                    var importResult = await releaseImporter.ImportReleaseGroupInPlaceAsync(
+                        match.Id,
+                        match.Title,
+                        match.PrimaryType,
+                        Path.GetDirectoryName(rel.ReleasePath) ?? Path.Combine("./Library", artistId),
+                        artistId,
+                        rel.FolderName
                     );
                     if (importResult.Success)
                     {
@@ -340,5 +361,15 @@ public class StartDownloadReleaseService(
         var npa = NormalizeTitle(StripParentheses(a));
         var npb = NormalizeTitle(StripParentheses(b));
         return npa.Equals(npb, StringComparison.Ordinal);
+    }
+
+    private static int SafeDateKey(string? iso)
+    {
+        if (string.IsNullOrWhiteSpace(iso)) return int.MaxValue;
+        var parts = iso.Split('-');
+        int y = parts.Length > 0 && int.TryParse(parts[0], out var yy) ? yy : 9999;
+        int m = parts.Length > 1 && int.TryParse(parts[1], out var mm) ? mm : 12;
+        int d = parts.Length > 2 && int.TryParse(parts[2], out var dd) ? dd : 31;
+        return y * 372 + m * 31 + d;
     }
 }

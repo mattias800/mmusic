@@ -87,6 +87,58 @@ public class LibraryReleaseImportService(
         return result;
     }
 
+    // Rebuilds a specific release.json in-place for an existing folder using a known release group id
+    public async Task<SingleReleaseImportResult> ImportReleaseGroupInPlaceAsync(
+        string releaseGroupId,
+        string releaseTitle,
+        string? primaryType,
+        string artistFolderPath,
+        string artistId,
+        string releaseFolderName
+    )
+    {
+        var result = new SingleReleaseImportResult
+        {
+            ReleaseGroupId = releaseGroupId,
+            Title = releaseTitle,
+        };
+
+        var releaseFolderPath = Path.Combine(artistFolderPath, releaseFolderName);
+        if (!Directory.Exists(releaseFolderPath))
+        {
+            Directory.CreateDirectory(releaseFolderPath);
+        }
+
+        try
+        {
+            var built = await releaseJsonBuilder.BuildAsync(
+                artistFolderPath,
+                releaseGroupId,
+                releaseFolderName,
+                releaseTitle,
+                primaryType
+            );
+
+            if (built is null)
+            {
+                result.ErrorMessage = "No suitable release found for release group";
+                return result;
+            }
+
+            await writer.WriteReleaseAsync(artistId, releaseFolderName, built);
+
+            result.Success = true;
+            result.ReleaseFolderPath = releaseFolderPath;
+            result.ReleaseJson = built;
+        }
+        catch (Exception ex)
+        {
+            result.ErrorMessage = ex.Message;
+        }
+
+        return result;
+    }
+
     private static string SanitizeFolderName(string name)
     {
         var invalidChars = Path.GetInvalidFileNameChars();
