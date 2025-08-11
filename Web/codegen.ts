@@ -3,9 +3,7 @@ import { resolve } from "path";
 
 const config: CodegenConfig = {
   schema: [
-    "http://localhost:5095/graphql",
-    // Include local extensions so codegen works before backend restart
-    "schema.local-extensions.graphql",
+    "http://localhost:5095/graphql"
   ],
   documents: ["src/**/*.{ts,tsx}"],
   generates: {

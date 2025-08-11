@@ -69,6 +69,7 @@ enum ApplyPolicy {
 
 type Artist implements ArtistBase {
   albums: [Release!]!
+  connectedExternalServices: [ConnectedExternalService!]!
   eps: [Release!]!
   id: ID!
   images: ArtistImages
@@ -76,7 +77,6 @@ type Artist implements ArtistBase {
   name: String!
   releaseByFolderName(releaseFolderName: String!): Release
   releases: [Release!]!
-  serverStatus: ArtistServerStatus!
   singles: [Release!]!
   sortName: String!
   topTracks: [ArtistTopTrack!]!
@@ -142,56 +142,6 @@ type ArtistSearchRoot {
   searchExternalArtists(limit: Int! = 10, searchTerm: String!, serviceType: ExternalServiceType!): [ExternalArtist!]!
 }
 
-type ArtistServerStatus {
-  id: ID!
-  result: ArtistServerStatusResult!
-}
-
-type ArtistServerStatusImportingArtist implements ArtistServerStatusResultBase {
-  artistMbId: String!
-  releasesVisible: Boolean!
-  topTracksVisible: Boolean!
-}
-
-type ArtistServerStatusImportingArtistReleases implements ArtistServerStatusResultBase {
-  artist: Artist!
-  numReleaseGroupsFinishedImporting: Int!
-  releasesVisible: Boolean!
-  topTracksVisible: Boolean!
-  totalNumReleaseGroupsBeingImported: Int!
-}
-
-type ArtistServerStatusNotInLibrary implements ArtistServerStatusResultBase {
-  artistMbId: String!
-  releasesVisible: Boolean!
-  topTracksVisible: Boolean!
-}
-
-type ArtistServerStatusReady implements ArtistServerStatusResultBase {
-  artistMbId: String!
-  releasesVisible: Boolean!
-  topTracksVisible: Boolean!
-}
-
-union ArtistServerStatusResult = ArtistServerStatusImportingArtist | ArtistServerStatusImportingArtistReleases | ArtistServerStatusNotInLibrary | ArtistServerStatusReady | ArtistServerStatusUpdatingArtist | ArtistServerStatusUpdatingArtistReleases
-
-interface ArtistServerStatusResultBase {
-  releasesVisible: Boolean!
-  topTracksVisible: Boolean!
-}
-
-type ArtistServerStatusUpdatingArtist implements ArtistServerStatusResultBase {
-  artistMbId: String!
-  releasesVisible: Boolean!
-  topTracksVisible: Boolean!
-}
-
-type ArtistServerStatusUpdatingArtistReleases implements ArtistServerStatusResultBase {
-  artistMbId: String!
-  releasesVisible: Boolean!
-  topTracksVisible: Boolean!
-}
-
 type ArtistTopTrack {
   coverArtUrl: String
   playCount: Long
@@ -207,6 +157,11 @@ type CacheStatistics {
   lastUpdated: DateTime!
   releaseCount: Int!
   trackCount: Int!
+}
+
+type ConnectedExternalService {
+  externalService: ExternalService!
+  isConnected: Boolean!
 }
 
 type CreateDirectoryError {
@@ -330,6 +285,11 @@ type ExternalRoot {
   soulSeek: SoulSeekRoot!
 }
 
+type ExternalService {
+  id: ID!
+  name: String!
+}
+
 enum ExternalServiceType {
   APPLE_MUSIC
   DEEZER
@@ -337,6 +297,11 @@ enum ExternalServiceType {
   SPOTIFY
   TIDAL
   YOU_TUBE_MUSIC
+}
+
+type ExternalServicesSearchRoot {
+  all: [ExternalService!]!
+  byId(id: ID!): ExternalService
 }
 
 type FileSystemEntry {
@@ -515,9 +480,9 @@ type MbArtist implements ArtistBase {
   lastFmArtist: LastFmArtist
   listeners: Long
   name: String!
+  relations: [MbRelation!]!
   releaseGroups: [MbReleaseGroup!]!
   releases: [MbRelease!]!
-  serverStatus: ArtistServerStatus!
   singles: [MbReleaseGroup!]!
   sortName: String!
   topTracks: [LastFmTrack!]!
@@ -779,6 +744,7 @@ type Query {
   artistImport: ArtistImportSearchRoot!
   downloads: DownloadsSearchRoot!
   external: ExternalRoot!
+  externalServices: ExternalServicesSearchRoot!
   fileSystem: FileSystemSearchRoot!
   musicBrainz: MusicBrainzSearchRoot!
   playlist: PlaylistSearchRoot!
@@ -1109,7 +1075,6 @@ type StartDownloadReleaseUnknownError {
 type Subscription {
   artistImportQueueUpdated: ArtistImportQueueState!
   artistImported: Artist!
-  artistServerStatusUpdated(artistId: ID!): ArtistServerStatus!
   currentArtistImportUpdated: ArtistImportProgress!
   currentDownloadUpdated: DownloadProgress
   downloadQueueUpdated: DownloadQueueState!

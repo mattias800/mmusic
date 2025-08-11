@@ -13,6 +13,9 @@ import { CardFlexList } from "@/components/page-body/CardFlexList.tsx";
 import { byStringField } from "@/common/sorting/Comparators.ts";
 import { AlbumCard } from "@/features/album/AlbumCard.tsx";
 import { useMutation } from "urql";
+import { ArtistServiceConnections } from "@/features/artist/artist-page/ArtistServiceConnections.tsx";
+import { ArtistNumReleasesAvailableIndicator } from "@/features/artist/artist-page/ArtistNumReleasesAvailableIndicator.tsx";
+import { ArtistDownloadAllReleasesButton } from "@/features/artist/artist-page/ArtistDownloadAllReleasesButton.tsx";
 
 interface ArtistPanelProps {
   artist: FragmentType<typeof artistPanelArtistFragment>;
@@ -21,11 +24,17 @@ interface ArtistPanelProps {
 const artistPanelArtistFragment = graphql(`
   fragment ArtistPanel_Artist on Artist {
     id
+    ...ArtistNumReleasesAvailableIndicator_Artist
+    ...ArtistServiceConnections_Artist
+    ...ArtistDownloadAllReleasesButton_Artist
     name
     listeners
     connectedExternalServices {
       isConnected
-      externalService { id name }
+      externalService {
+        id
+        name
+      }
     }
     albums {
       id
@@ -86,17 +95,6 @@ const refreshArtistMetaDataMutation = graphql(`
 export const ArtistPanel: React.FC<ArtistPanelProps> = (props) => {
   const artist = useFragment(artistPanelArtistFragment, props.artist);
 
-  const releasesVisible = true;
-  const topTracksVisible = true;
-
-  const totalNumReleases =
-    artist.albums.length + artist.eps.length + artist.singles.length;
-
-  const availableCount =
-    artist.albums.filter((r) => !r.isFullyMissing).length +
-    artist.eps.filter((r) => !r.isFullyMissing).length +
-    artist.singles.filter((r) => !r.isFullyMissing).length;
-
   const [{ fetching: loadingTopTracks }, refreshTopTracks] = useMutation(
     refreshTopTracksMutation,
   );
@@ -115,51 +113,52 @@ export const ArtistPanel: React.FC<ArtistPanelProps> = (props) => {
         artistName={artist.name}
         artistBackgroundUrl={artist.images?.backgrounds?.[0] ?? ""}
         listeners={artist.listeners}
-        availableNumReleases={availableCount}
-        totalNumReleases={totalNumReleases}
-        renderConnections={() => (
-          <div className="flex gap-2 items-center">
-            {artist.connectedExternalServices.map((c) => (
-              <span
-                key={c.externalService.id}
-                className={
-                  "px-2 py-1 rounded text-xs font-medium border " +
-                  (c.isConnected
-                    ? "bg-green-500/20 text-green-200 border-green-400/40"
-                    : "bg-white/10 text-white/70 border-white/20")
-                }
-                title={c.externalService.name}
-              >
-                {c.externalService.name}
-              </span>
-            ))}
-          </div>
-        )}
+        renderConnections={() => <ArtistServiceConnections artist={artist} />}
       />
 
-      <ArtistActionButtons
-        artistId={artist.id}
-        loadingTopTracks={loadingTopTracks}
-        loadingMetaData={loadingLastFm}
-        onRefreshTopTracks={onRefreshTopTracks}
-        onRefreshMetaData={onRefreshLastFm}
-      />
+      <div
+        className={"flex justify-between items-center gap-4 px-6 md:px-10 py-6"}
+      >
+        <ArtistActionButtons
+          artistId={artist.id}
+          loadingTopTracks={loadingTopTracks}
+          loadingMetaData={loadingLastFm}
+          onRefreshTopTracks={onRefreshTopTracks}
+          onRefreshMetaData={onRefreshLastFm}
+        />
+        <ArtistNumReleasesAvailableIndicator
+          artist={artist}
+          renderDownloadAllReleasesButton={() => (
+            <ArtistDownloadAllReleasesButton artist={artist} />
+          )}
+        />
+      </div>
 
       <MainPadding>
         <SectionList>
-          {topTracksVisible && (
-            <TopArtistTracks
-              artistId={artist.id}
-              loadingTopTracks={loadingTopTracks}
-            />
-          )}
+          <TopArtistTracks
+            artistId={artist.id}
+            loadingTopTracks={loadingTopTracks}
+          />
 
-          {releasesVisible && (
-            <>
+          <>
+            <Section>
+              <SectionHeading>Albums</SectionHeading>
+              <CardFlexList>
+                {artist.albums
+                  .toSorted(byStringField((a) => a.firstReleaseDate ?? ""))
+                  .toReversed()
+                  .map((release) => (
+                    <AlbumCard release={release} key={release.id} />
+                  ))}
+              </CardFlexList>
+            </Section>
+
+            {artist.eps.length > 0 && (
               <Section>
-                <SectionHeading>Albums</SectionHeading>
+                <SectionHeading>EPs</SectionHeading>
                 <CardFlexList>
-                  {artist.albums
+                  {artist.eps
                     .toSorted(byStringField((a) => a.firstReleaseDate ?? ""))
                     .toReversed()
                     .map((release) => (
@@ -167,36 +166,22 @@ export const ArtistPanel: React.FC<ArtistPanelProps> = (props) => {
                     ))}
                 </CardFlexList>
               </Section>
+            )}
 
-              {artist.eps.length > 0 && (
-                <Section>
-                  <SectionHeading>EPs</SectionHeading>
-                  <CardFlexList>
-                    {artist.eps
-                      .toSorted(byStringField((a) => a.firstReleaseDate ?? ""))
-                      .toReversed()
-                      .map((release) => (
-                        <AlbumCard release={release} key={release.id} />
-                      ))}
-                  </CardFlexList>
-                </Section>
-              )}
-
-              {artist.singles.length > 0 && (
-                <Section>
-                  <SectionHeading>Singles</SectionHeading>
-                  <CardFlexList>
-                    {artist.singles
-                      .toSorted(byStringField((a) => a.firstReleaseDate ?? ""))
-                      .toReversed()
-                      .map((release) => (
-                        <AlbumCard release={release} key={release.id} />
-                      ))}
-                  </CardFlexList>
-                </Section>
-              )}
-            </>
-          )}
+            {artist.singles.length > 0 && (
+              <Section>
+                <SectionHeading>Singles</SectionHeading>
+                <CardFlexList>
+                  {artist.singles
+                    .toSorted(byStringField((a) => a.firstReleaseDate ?? ""))
+                    .toReversed()
+                    .map((release) => (
+                      <AlbumCard release={release} key={release.id} />
+                    ))}
+                </CardFlexList>
+              </Section>
+            )}
+          </>
         </SectionList>
       </MainPadding>
     </GradientContent>

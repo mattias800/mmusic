@@ -1,3 +1,4 @@
+using MusicGQL.Features.External;
 using MusicGQL.Features.ServerLibrary;
 using MusicGQL.Features.ServerLibrary.Cache;
 using MusicGQL.Features.ServerLibrary.Json;
@@ -54,22 +55,20 @@ public record Artist([property: GraphQLIgnore] CachedArtist Model) : IArtistBase
 
     public IEnumerable<ConnectedExternalService> ConnectedExternalServices()
     {
-        var c = Model.JsonArtist.Connections;
-        if (c is null) yield break;
-
-        if (!string.IsNullOrWhiteSpace(c.MusicBrainzArtistId))
-            yield return new ConnectedExternalService("musicbrainz", true);
-        else
-            yield return new ConnectedExternalService("musicbrainz", false);
-
-        yield return new ConnectedExternalService("spotify", !string.IsNullOrWhiteSpace(c.SpotifyId));
-        yield return new ConnectedExternalService("apple-music", !string.IsNullOrWhiteSpace(c.AppleMusicArtistId));
-        yield return new ConnectedExternalService("youtube", !string.IsNullOrWhiteSpace(c.YoutubeChannelUrl));
-        yield return new ConnectedExternalService("tidal", !string.IsNullOrWhiteSpace(c.TidalArtistId));
-        yield return new ConnectedExternalService("deezer", !string.IsNullOrWhiteSpace(c.DeezerArtistId));
-        yield return new ConnectedExternalService("soundcloud", !string.IsNullOrWhiteSpace(c.SoundcloudUrl));
-        yield return new ConnectedExternalService("bandcamp", !string.IsNullOrWhiteSpace(c.BandcampUrl));
-        yield return new ConnectedExternalService("discogs", !string.IsNullOrWhiteSpace(c.DiscogsUrl));
+        IEnumerable<ConnectedExternalService> connectedExternalServices =
+        [
+            new(ExternalServiceCatalog.Musicbrainz(), Model.JsonArtist.Connections?.MusicBrainzArtistId != null),
+            new(ExternalServiceCatalog.Spotify(), Model.JsonArtist.Connections?.SpotifyId != null),
+            new(ExternalServiceCatalog.Apple(), Model.JsonArtist.Connections?.AppleMusicArtistId != null),
+            new(ExternalServiceCatalog.Youtube(), Model.JsonArtist.Connections?.YoutubeChannelUrl != null),
+            new(ExternalServiceCatalog.Tidal(), Model.JsonArtist.Connections?.TidalArtistId != null),
+            new(ExternalServiceCatalog.Deezer(), Model.JsonArtist.Connections?.DeezerArtistId != null),
+            new(ExternalServiceCatalog.Soundcloud(), Model.JsonArtist.Connections?.SoundcloudUrl != null),
+            new(ExternalServiceCatalog.Bandcamp(), Model.JsonArtist.Connections?.BandcampUrl != null),
+            new(ExternalServiceCatalog.Discogs(), Model.JsonArtist.Connections?.DiscogsUrl != null),
+        ];
+        
+        return connectedExternalServices.Where(p => p.Model.Enabled);
     }
 
     public ArtistImages? Images()

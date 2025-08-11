@@ -11,7 +11,6 @@ const artistQuery = graphql(`
       artistById(id: $artistId) {
         id
         name
-        connectedExternalServices { isConnected externalService { id name } }
         ...ArtistPanel_Artist
       }
     }

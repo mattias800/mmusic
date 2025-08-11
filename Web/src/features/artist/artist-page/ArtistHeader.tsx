@@ -8,8 +8,6 @@ export interface ArtistHeaderProps {
   listeners: number;
   artistBackgroundUrl: string | undefined;
   renderServerStatus?: () => ReactNode;
-  availableNumReleases: number;
-  totalNumReleases?: number;
   renderConnections?: () => ReactNode;
 }
 
@@ -18,8 +16,6 @@ export const ArtistHeader: React.FC<ArtistHeaderProps> = ({
   artistName,
   artistBackgroundUrl,
   listeners,
-  availableNumReleases,
-  totalNumReleases,
   renderConnections,
 }) => {
   return (
@@ -38,20 +34,6 @@ export const ArtistHeader: React.FC<ArtistHeaderProps> = ({
             <p className="text-white text-sm">
               {formatLargeNumber(listeners)} monthly listeners
             </p>
-            {totalNumReleases != null && totalNumReleases > 0 && (
-              <div className="text-white text-sm flex items-center gap-2">
-                {availableNumReleases === totalNumReleases ? (
-                  <>
-                    <CheckCircle className="w-4 h-4 text-green-400" />
-                    <span>Available</span>
-                  </>
-                ) : (
-                  <span>
-                    {availableNumReleases}/{totalNumReleases} available
-                  </span>
-                )}
-              </div>
-            )}
           </div>
           <div className={"flex items-end gap-4"}>
             {renderConnections?.()}

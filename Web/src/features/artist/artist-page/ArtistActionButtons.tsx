@@ -30,7 +30,7 @@ export const ArtistActionButtons: React.FC<ArtistActionButtonsProps> = ({
   const anyLoading = loadingTopTracks || loadingMetaData;
 
   return (
-    <div className="px-6 md:px-10 py-6 flex items-center gap-4">
+    <div className="flex items-center gap-4">
       <TopTracksPlayButton artistId={artistId} />
       <ShuffleButton />
       <FollowButton />

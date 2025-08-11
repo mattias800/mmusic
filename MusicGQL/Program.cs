@@ -104,7 +104,6 @@ builder
     .AddSingleton<MusicBrainzService>()
     .AddSingleton<YouTubeService>()
     .AddSingleton<SpotifyService>()
-    
     .AddSingleton<ArtistImportQueueService>()
     .AddSingleton<CurrentArtistImportStateService>()
     .AddSingleton<ServerLibraryJsonReader>()
@@ -237,10 +236,7 @@ builder.Services.AddStackExchangeRedisCache(options =>
 builder
     .AddGraphQL()
     .AddAuthorization()
-    .ModifyRequestOptions(o =>
-    {
-        o.ExecutionTimeout = TimeSpan.FromSeconds(60);
-    })
+    .ModifyRequestOptions(o => { o.ExecutionTimeout = TimeSpan.FromSeconds(60); })
     .AddRedisSubscriptions(_ =>
         ConnectionMultiplexer.Connect(
             builder.Configuration.GetConnectionString("Redis") ?? string.Empty
@@ -260,7 +256,6 @@ builder
     .AddType<ImportArtistsFromSpotifyPlaylistError>()
     .AddTypeExtension<SoulSeekSubscription>()
     .AddTypeExtension<LibrarySubscription>()
-    
     .AddTypeExtension<ArtistImportSubscription>()
     .AddTypeExtension<ArtistImportSearchRoot>()
     .AddTypeExtension<ArtistImportMutations>()
@@ -344,12 +339,10 @@ builder
     .AddType<SetReleaseMatchOverrideSuccess>()
     .AddType<SetReleaseMatchOverrideError>()
     .AddTypeExtension<ReleasesWithScoresQuery>()
-    
     .AddTypeExtension<FileSystemSearchRoot>()
     .AddTypeExtension<CreateDirectoryMutation>()
     .AddType<CreateDirectorySuccess>()
-    .AddType<CreateDirectoryError>()
-    .AddType<MusicGQL.Features.External.ExternalServiceGql>();
+    .AddType<CreateDirectoryError>();
 
 builder.Services.Configure<LastfmOptions>(builder.Configuration.GetSection("Lastfm"));
 
