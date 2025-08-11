@@ -95,6 +95,34 @@ type ArtistImages {
   thumbs: [String!]!
 }
 
+type ArtistImportProgress {
+  artistName: String!
+  completedReleases: Int!
+  errorMessage: String
+  songTitle: String
+  status: ArtistImportStatus!
+  totalReleases: Int!
+}
+
+type ArtistImportQueueItem {
+  artistName: String!
+  songTitle: String
+}
+
+type ArtistImportQueueState {
+  items: [ArtistImportQueueItem!]!
+  queueLength: Int!
+}
+
+enum ArtistImportStatus {
+  COMPLETED
+  FAILED
+  IDLE
+  IMPORTING_ARTIST
+  IMPORTING_RELEASES
+  RESOLVING_ARTIST
+}
+
 type ArtistServerStatus {
   id: ID!
   result: ArtistServerStatusResult!
@@ -232,6 +260,10 @@ union DeleteReleaseAudioResult = DeleteReleaseAudioError | DeleteReleaseAudioSuc
 
 type DeleteReleaseAudioSuccess {
   release: Release!
+}
+
+input EnqueueArtistsFromSpotifyPlaylistInput {
+  playlistId: String!
 }
 
 type ExternalRoot {
@@ -598,6 +630,8 @@ type Mutation {
   createUser(input: CreateUserInput!): CreateUserResult!
   deletePlaylist(input: DeletePlaylistInput!): DeletePlaylistResult!
   deleteReleaseAudio(input: DeleteReleaseAudioInput!): DeleteReleaseAudioResult!
+  enqueueArtist(artistName: String!, songTitle: String): Boolean!
+  enqueueArtistsFromSpotifyPlaylist(input: EnqueueArtistsFromSpotifyPlaylistInput!): Boolean!
   importArtist(input: ImportArtistInput!): ImportArtistResult!
   importArtistReleases(artistId: String!): ImportReleasesResult!
   importArtistsFromSpotifyPlaylist(input: ImportArtistsFromSpotifyPlaylistInput!): ImportArtistsFromSpotifyPlaylistResult!
@@ -679,6 +713,8 @@ type PlaylistSearchRoot {
 
 type Query {
   areThereAnyUsers: Boolean!
+  artistImportQueue: ArtistImportQueueState!
+  currentArtistImport: ArtistImportProgress!
   external: ExternalRoot!
   fileSystem: FileSystemSearchRoot!
   musicBrainz: MusicBrainzSearchRoot!
@@ -972,7 +1008,9 @@ type StartDownloadReleaseUnknownError {
 }
 
 type Subscription {
+  artistImportQueueUpdated: ArtistImportQueueState!
   artistServerStatusUpdated(artistId: ID!): ArtistServerStatus!
+  currentArtistImportUpdated: ArtistImportProgress!
   libraryCacheTrackUpdated(artistId: String!, releaseFolderName: String!, trackNumber: Int!): LibraryCacheTrackStatus!
   libraryCacheTracksInReleaseUpdated(artistId: String!, releaseFolderName: String!): LibraryCacheTrackStatus!
   libraryReleaseDownloadStatusUpdated(artistId: String!, releaseFolderName: String!): LibraryReleaseDownloadStatusUpdate!

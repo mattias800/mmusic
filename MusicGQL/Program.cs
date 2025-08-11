@@ -10,6 +10,7 @@ using MusicGQL.EventProcessor;
 using MusicGQL.Features.Artists;
 using MusicGQL.Features.ArtistServerStatus;
 using MusicGQL.Features.ArtistServerStatus.Services;
+using MusicGQL.Features.ArtistImportQueue;
 using MusicGQL.Features.Authentication.Handlers;
 using MusicGQL.Features.Authorization;
 using MusicGQL.Features.Downloads.Mutations;
@@ -101,6 +102,8 @@ builder
     .AddSingleton<YouTubeService>()
     .AddSingleton<SpotifyService>()
     .AddSingleton<ArtistServerStatusService>()
+    .AddSingleton<ArtistImportQueueService>()
+    .AddSingleton<CurrentArtistImportStateService>()
     .AddSingleton<ServerLibraryJsonReader>()
     .AddSingleton<ServerLibraryAssetReader>()
     .AddSingleton<ServerLibraryFileSystemScanner>()
@@ -257,6 +260,10 @@ builder
     .AddTypeExtension<SoulSeekSubscription>()
     .AddTypeExtension<LibrarySubscription>()
     .AddTypeExtension<ArtistServerStatusSubscription>()
+    .AddTypeExtension<ArtistImportSubscription>()
+    .AddTypeExtension<ArtistImportQueries>()
+    .AddTypeExtension<ArtistImportMutations>()
+    .AddType<ArtistImportStatusType>()
     .AddTypeExtension<StartDownloadReleaseMutation>()
     .AddType<StartDownloadReleaseSuccess>()
     .AddType<StartDownloadReleaseUnknownError>()
@@ -365,6 +372,7 @@ builder.Services.AddFanArtTVClient(options =>
 });
 
 builder.Services.AddHostedService<ScheduledTaskPublisher>();
+builder.Services.AddHostedService<ArtistImportWorker>();
 
 var app = builder.Build();
 app.UseCors("AllowFrontend");

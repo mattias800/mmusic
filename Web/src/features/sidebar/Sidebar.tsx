@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils.ts";
 import { SidebarNavButton } from "@/features/sidebar/SidebarNavButton.tsx";
 import { SidebarSection } from "@/features/sidebar/SidebarSection.tsx";
 import { SoulSeekNetworkStatusFetcher } from "@/features/soul-seek-network-status/SoulSeekNetworkStatusFetcher.tsx";
+import { ArtistImportQueuePanel } from "@/features/sidebar/artist-import-queue/ArtistImportQueuePanel.tsx";
 import { MmusicLogo } from "@/components/logo/MmusicLogo.tsx";
 import { PlaylistList } from "@/features/playlists/playlist-list/PlaylistList.tsx";
 import { RootState } from "@/Store.ts";
@@ -91,13 +92,18 @@ export const Sidebar = ({ className }: SidebarProps) => {
           <PlaylistList />
         </SidebarSection>
 
-        <SidebarSection
-          heading={"Downloads"}
-          right={<SoulSeekNetworkStatusFetcher />}
-        >
+        <SidebarSection heading={"Downloads"} right={<SoulSeekNetworkStatusFetcher />}>
           <ScrollArea className="h-[300px] px-1">
             <div className="pt-4 px-6">
               <DownloadOverviewFetcher />
+            </div>
+          </ScrollArea>
+        </SidebarSection>
+
+        <SidebarSection heading={"Import queue"}>
+          <ScrollArea className="h-[200px] px-1">
+            <div className="pt-4 px-6">
+              <ArtistImportQueuePanel />
             </div>
           </ScrollArea>
         </SidebarSection>

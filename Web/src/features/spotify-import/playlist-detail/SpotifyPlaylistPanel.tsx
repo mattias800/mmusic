@@ -18,6 +18,7 @@ import { FragmentType, graphql, useFragment } from "@/gql";
 import { useMutation, useQuery } from "urql";
 import { ExternalPlaylistTrackListHeading } from "@/features/spotify-import/playlist-detail/ExternalPlaylistTrackListHeading.tsx";
 import { ExternalPlaylistTrackItem } from "@/features/spotify-import/playlist-detail/ExternalPlaylistTrackItem.tsx";
+import { graphql as g } from "@/gql";
 
 export interface SpotifyPlaylistPanelProps {
   playlist: FragmentType<typeof spotifyPlaylistPanelPlaylistFragment>;
@@ -74,6 +75,12 @@ const importArtistsFromSpotifyPlaylistMutation = graphql(`
   }
 `);
 
+const enqueueArtistsFromPlaylistMutation = g(`
+  mutation EnqueueArtistsFromSpotifyPlaylist($playlistId: String!) {
+    enqueueArtistsFromSpotifyPlaylist(input: { playlistId: $playlistId })
+  }
+`);
+
 type TrackSelectionState = Record<string, boolean>;
 
 export const SpotifyPlaylistPanel: React.FC<SpotifyPlaylistPanelProps> = (
@@ -100,6 +107,7 @@ export const SpotifyPlaylistPanel: React.FC<SpotifyPlaylistPanelProps> = (
   const [, importArtists] = useMutation(
     importArtistsFromSpotifyPlaylistMutation,
   );
+  const [, enqueueArtists] = useMutation(enqueueArtistsFromPlaylistMutation);
 
   const handleImportPlaylist = async () => {
     if (!viewerData?.viewer?.id) return;
@@ -111,6 +119,10 @@ export const SpotifyPlaylistPanel: React.FC<SpotifyPlaylistPanelProps> = (
 
   const handleImportArtists = async () => {
     await importArtists({ playlistId: playlist.id });
+  };
+
+  const handleEnqueueArtists = async () => {
+    await enqueueArtists({ playlistId: playlist.id });
   };
 
   if (!playlist) return <div className="p-4">Playlist not found.</div>;
@@ -165,6 +177,14 @@ export const SpotifyPlaylistPanel: React.FC<SpotifyPlaylistPanelProps> = (
                     onClick={handleImportArtists}
                   >
                     Import artists
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    iconLeft={Users}
+                    onClick={handleEnqueueArtists}
+                  >
+                    Enqueue artists
                   </Button>
                 </>
               }

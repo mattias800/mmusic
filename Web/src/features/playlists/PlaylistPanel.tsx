@@ -33,6 +33,10 @@ const playlistPanelPlaylistFragment = graphql(`
       artistName
       coverImageUrl
       trackLengthMs
+      artist {
+        id
+        name
+      }
       track {
         ...TrackCreditLinks_Track
         ...AlbumTrackTag_Track
@@ -168,7 +172,12 @@ export const PlaylistPanel: React.FC<PlaylistPanelProps> = (props) => {
               item.track ? (
                 <AlbumTrackTag track={item.track} />
               ) : (
-                <Tag variant={"error"}>Missing</Tag>
+                <div className={"flex gap-2"}>
+                  <Tag variant={"error"}>Missing track</Tag>
+                  {item.artist == null ? (
+                    <Tag variant={"error"}>Missing artist</Tag>
+                  ) : null}
+                </div>
               )
             }
             contextMenuItems={[
