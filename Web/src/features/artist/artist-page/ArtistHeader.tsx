@@ -7,12 +7,10 @@ export interface ArtistHeaderProps {
   artistName: string;
   listeners: number;
   artistBackgroundUrl: string | undefined;
-  renderServerStatus?: () => ReactNode;
   renderConnections?: () => ReactNode;
 }
 
 export const ArtistHeader: React.FC<ArtistHeaderProps> = ({
-  renderServerStatus,
   artistName,
   artistBackgroundUrl,
   listeners,
@@ -35,10 +33,7 @@ export const ArtistHeader: React.FC<ArtistHeaderProps> = ({
               {formatLargeNumber(listeners)} monthly listeners
             </p>
           </div>
-          <div className={"flex items-end gap-4"}>
-            {renderConnections?.()}
-            {renderServerStatus?.()}
-          </div>
+          <div className={"flex items-end gap-4"}>{renderConnections?.()}</div>
         </div>
       </div>
 

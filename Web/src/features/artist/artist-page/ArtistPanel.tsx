@@ -16,6 +16,7 @@ import { useMutation } from "urql";
 import { ArtistServiceConnections } from "@/features/artist/artist-page/ArtistServiceConnections.tsx";
 import { ArtistNumReleasesAvailableIndicator } from "@/features/artist/artist-page/ArtistNumReleasesAvailableIndicator.tsx";
 import { ArtistDownloadAllReleasesButton } from "@/features/artist/artist-page/ArtistDownloadAllReleasesButton.tsx";
+import { ArtistImportStatusInfo } from "@/features/artist/artist-page/ArtistImportStatusInfo.tsx";
 
 interface ArtistPanelProps {
   artist: FragmentType<typeof artistPanelArtistFragment>;
@@ -24,6 +25,7 @@ interface ArtistPanelProps {
 const artistPanelArtistFragment = graphql(`
   fragment ArtistPanel_Artist on Artist {
     id
+    ...ArtistImportStatusInfo_Artist
     ...ArtistNumReleasesAvailableIndicator_Artist
     ...ArtistServiceConnections_Artist
     ...ArtistDownloadAllReleasesButton_Artist
@@ -127,10 +129,16 @@ export const ArtistPanel: React.FC<ArtistPanelProps> = (props) => {
           onRefreshTopTracks={onRefreshTopTracks}
           onRefreshMetaData={onRefreshLastFm}
         />
-        <ArtistNumReleasesAvailableIndicator
+
+        <ArtistImportStatusInfo
           artist={artist}
-          renderDownloadAllReleasesButton={() => (
-            <ArtistDownloadAllReleasesButton artist={artist} />
+          renderWhenNoInfo={() => (
+            <ArtistNumReleasesAvailableIndicator
+              artist={artist}
+              renderDownloadAllReleasesButton={() => (
+                <ArtistDownloadAllReleasesButton artist={artist} />
+              )}
+            />
           )}
         />
       </div>

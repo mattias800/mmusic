@@ -58,6 +58,19 @@ public class SetArtistMatchMutation
         }
         catch { }
 
+        // Since MBID is our source of truth for releases, clear all existing release folders and re-import
+        try
+        {
+            var subDirs = Directory.GetDirectories(artistDir);
+            foreach (var dir in subDirs)
+            {
+                try { Directory.Delete(dir, true); } catch { /* best effort */ }
+            }
+            // Re-import all eligible release groups for this artist
+            try { await importExecutor.ImportEligibleReleaseGroupsAsync(artistDir, input.MusicBrainzArtistId); } catch { }
+        }
+        catch { }
+
         await cache.UpdateCacheAsync();
 
         var updatedArtist = await cache.GetArtistByIdAsync(input.ArtistId);
