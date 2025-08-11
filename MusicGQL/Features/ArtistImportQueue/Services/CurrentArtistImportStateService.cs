@@ -1,6 +1,6 @@
 using HotChocolate.Subscriptions;
 
-namespace MusicGQL.Features.ArtistImportQueue;
+namespace MusicGQL.Features.ArtistImportQueue.Services;
 
 public class CurrentArtistImportStateService(
     ITopicEventSender eventSender,

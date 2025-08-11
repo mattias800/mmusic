@@ -1,8 +1,8 @@
 using MusicGQL.Features.Import;
-using MusicGQL.Integration.MusicBrainz;
 using MusicGQL.Features.ServerLibrary.Utils;
+using MusicGQL.Integration.MusicBrainz;
 
-namespace MusicGQL.Features.ArtistImportQueue;
+namespace MusicGQL.Features.ArtistImportQueue.Services;
 
 public class ArtistImportWorker(
     IServiceScopeFactory scopeFactory,

@@ -114,6 +114,11 @@ type ArtistImportQueueState {
   queueLength: Int!
 }
 
+type ArtistImportSearchRoot {
+  artistImportQueue: ArtistImportQueueState!
+  currentArtistImport: ArtistImportProgress!
+}
+
 enum ArtistImportStatus {
   COMPLETED
   FAILED
@@ -713,8 +718,7 @@ type PlaylistSearchRoot {
 
 type Query {
   areThereAnyUsers: Boolean!
-  artistImportQueue: ArtistImportQueueState!
-  currentArtistImport: ArtistImportProgress!
+  artistImport: ArtistImportSearchRoot!
   external: ExternalRoot!
   fileSystem: FileSystemSearchRoot!
   musicBrainz: MusicBrainzSearchRoot!

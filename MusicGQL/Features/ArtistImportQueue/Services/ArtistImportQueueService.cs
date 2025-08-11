@@ -1,8 +1,7 @@
 using System.Collections.Concurrent;
 using HotChocolate.Subscriptions;
-using MusicGQL.Integration.MusicBrainz;
 
-namespace MusicGQL.Features.ArtistImportQueue;
+namespace MusicGQL.Features.ArtistImportQueue.Services;
 
 public class ArtistImportQueueService(
     ITopicEventSender eventSender,

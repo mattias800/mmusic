@@ -1,5 +1,3 @@
-using HotChocolate;
-
 namespace MusicGQL.Features.ArtistImportQueue;
 
 public record ArtistImportQueueItem(string ArtistName, string? SongTitle);
@@ -22,8 +20,7 @@ public enum ArtistImportStatus
 
 public record ArtistImportProgress
 {
-    [GraphQLIgnore]
-    public string? MusicBrainzArtistId { get; init; }
+    [GraphQLIgnore] public string? MusicBrainzArtistId { get; init; }
 
     public string ArtistName { get; init; } = string.Empty;
     public string? SongTitle { get; init; }
@@ -32,5 +29,3 @@ public record ArtistImportProgress
     public int CompletedReleases { get; init; }
     public string? ErrorMessage { get; init; }
 }
-
-

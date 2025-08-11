@@ -1,8 +1,8 @@
-using MusicGQL.Features.Playlists.Import.Spotify;
+using MusicGQL.Features.ArtistImportQueue.Services;
 using MusicGQL.Integration.Spotify;
 using MusicGQL.Types;
 
-namespace MusicGQL.Features.ArtistImportQueue;
+namespace MusicGQL.Features.ArtistImportQueue.Mutations;
 
 public record EnqueueArtistsFromSpotifyPlaylistInput(string PlaylistId);
 

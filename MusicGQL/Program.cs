@@ -11,6 +11,8 @@ using MusicGQL.Features.Artists;
 using MusicGQL.Features.ArtistServerStatus;
 using MusicGQL.Features.ArtistServerStatus.Services;
 using MusicGQL.Features.ArtistImportQueue;
+using MusicGQL.Features.ArtistImportQueue.Mutations;
+using MusicGQL.Features.ArtistImportQueue.Services;
 using MusicGQL.Features.Authentication.Handlers;
 using MusicGQL.Features.Authorization;
 using MusicGQL.Features.Downloads.Mutations;
@@ -261,9 +263,8 @@ builder
     .AddTypeExtension<LibrarySubscription>()
     .AddTypeExtension<ArtistServerStatusSubscription>()
     .AddTypeExtension<ArtistImportSubscription>()
-    .AddTypeExtension<ArtistImportQueries>()
+    .AddTypeExtension<ArtistImportSearchRoot>()
     .AddTypeExtension<ArtistImportMutations>()
-    .AddType<ArtistImportStatusType>()
     .AddTypeExtension<StartDownloadReleaseMutation>()
     .AddType<StartDownloadReleaseSuccess>()
     .AddType<StartDownloadReleaseUnknownError>()

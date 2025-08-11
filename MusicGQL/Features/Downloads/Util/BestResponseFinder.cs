@@ -1,6 +1,6 @@
 using Soulseek;
 
-namespace MusicGQL.Features.Downloads.Sagas.Util;
+namespace MusicGQL.Features.Downloads.Util;
 
 public static class BestResponseFinder
 {

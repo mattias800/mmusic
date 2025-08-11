@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 using MusicGQL.Db.Postgres;
+using MusicGQL.Features.ArtistImportQueue;
 using MusicGQL.Features.External;
 using MusicGQL.Features.FileSystem;
 using MusicGQL.Features.MusicBrainz;
@@ -79,6 +80,8 @@ public class Query
         return await dbContext.Users.AnyAsync();
     }
 
+    public ArtistImportSearchRoot ArtistImport() => new();
+    
     public FileSystemSearchRoot FileSystem() => new();
 
     public async Task<ServerSettings> ServerSettings(EventDbContext dbContext) =>
