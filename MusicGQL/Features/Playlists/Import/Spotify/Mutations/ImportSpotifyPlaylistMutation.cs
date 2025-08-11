@@ -3,6 +3,8 @@ using MusicGQL.Db.Postgres;
 using MusicGQL.Features.Playlists.Events;
 using MusicGQL.Integration.Spotify;
 using MusicGQL.Types;
+using MusicGQL.Features.ArtistImportQueue.Services;
+using Microsoft.Extensions.Logging;
 
 namespace MusicGQL.Features.Playlists.Import.Spotify.Mutations;
 
@@ -14,6 +16,9 @@ public class ImportSpotifyPlaylistMutation
         EventDbContext db,
         Assets.ExternalAssetStorage assetStorage,
         EventProcessor.EventProcessorWorker eventProcessorWorker,
+        ArtistImportQueueService artistImportQueue,
+        ServerLibrary.Cache.ServerLibraryCache cache,
+        ILogger<ImportSpotifyPlaylistMutation> logger,
         ImportSpotifyPlaylistInput input
     )
     {
@@ -93,11 +98,55 @@ public class ImportSpotifyPlaylistMutation
 
         await eventProcessorWorker.ProcessEvents();
 
-        var playlist = await db.Playlists.FirstOrDefaultAsync(p => p.Id == playlistId);
+        var playlist = await db.Playlists.Include(p => p.Items).FirstOrDefaultAsync(p => p.Id == playlistId);
 
         if (playlist is null)
         {
             return new ImportSpotifyPlaylistError("Playlist not found after update");
+        }
+
+        // Auto-enqueue missing artists from this imported playlist
+        try
+        {
+            var missing = new List<(string ArtistName, string? ExternalArtistId, string? SongTitle)>();
+            foreach (var it in playlist.Items)
+            {
+                if (!string.IsNullOrWhiteSpace(it.ArtistName))
+                {
+                    var exists = await cache.GetArtistByNameAsync(it.ArtistName);
+                    if (exists is null)
+                    {
+                        missing.Add((it.ArtistName, it.ExternalArtistId, it.SongTitle));
+                    }
+                }
+            }
+
+            if (missing.Count > 0)
+            {
+                var items = missing
+                    .GroupBy(x => (NameLower: x.ArtistName.ToLowerInvariant(), ExternalId: x.ExternalArtistId ?? string.Empty))
+                    .Select(g =>
+                    {
+                        var any = g.First();
+                        var chosenSong = g.Select(x => x.SongTitle).FirstOrDefault(s => !string.IsNullOrWhiteSpace(s));
+                        return new MusicGQL.Features.ArtistImportQueue.ArtistImportQueueItem(any.ArtistName, chosenSong)
+                        {
+                            ExternalArtistId = string.IsNullOrWhiteSpace(any.ExternalArtistId) ? null : any.ExternalArtistId
+                        };
+                    })
+                    .ToList();
+
+                logger.LogInformation(
+                    "Auto-enqueuing {Count} missing artists for imported Spotify playlist {PlaylistId}",
+                    items.Count,
+                    playlist.Id
+                );
+                artistImportQueue.Enqueue(items);
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to auto-enqueue missing artists for imported Spotify playlist {PlaylistId}", playlist.Id);
         }
 
         return new ImportSpotifyPlaylistSuccess(new Playlist(playlist));
