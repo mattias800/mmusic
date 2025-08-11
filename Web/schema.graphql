@@ -669,6 +669,7 @@ type Mutation {
   scanLibraryForMissingJson: ScanLibraryForMissingJsonResult!
   scanReleaseFolderForMedia(input: ScanReleaseFolderForMediaInput!): ScanReleaseFolderForMediaResult!
   setPlaylistItemArtistMatch(input: SetPlaylistItemArtistMatchInput!): SetPlaylistItemArtistMatchResult!
+  setPlaylistItemArtistMusicBrainzMatch(input: SetPlaylistItemArtistMusicBrainzMatchInput!): SetPlaylistItemArtistMusicBrainzMatchResult!
   setReleaseMatchOverride(input: SetReleaseMatchOverrideInput!): SetReleaseMatchOverrideResult!
   signIn(input: SignInInput!): SignInResult!
   signOut(input: SignOutInput!): SignOutResult!
@@ -938,6 +939,26 @@ type SetPlaylistItemArtistMatchNotFound {
 union SetPlaylistItemArtistMatchResult = SetPlaylistItemArtistMatchNotFound | SetPlaylistItemArtistMatchSuccess
 
 type SetPlaylistItemArtistMatchSuccess {
+  playlistItem: PlaylistItem!
+}
+
+type SetPlaylistItemArtistMusicBrainzMatchError {
+  message: String!
+}
+
+input SetPlaylistItemArtistMusicBrainzMatchInput {
+  musicBrainzArtistId: String!
+  playlistId: ID!
+  playlistItemId: ID!
+}
+
+type SetPlaylistItemArtistMusicBrainzMatchNotFound {
+  message: String!
+}
+
+union SetPlaylistItemArtistMusicBrainzMatchResult = SetPlaylistItemArtistMusicBrainzMatchError | SetPlaylistItemArtistMusicBrainzMatchNotFound | SetPlaylistItemArtistMusicBrainzMatchSuccess
+
+type SetPlaylistItemArtistMusicBrainzMatchSuccess {
   playlistItem: PlaylistItem!
 }
 

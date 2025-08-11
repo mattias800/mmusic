@@ -15,7 +15,11 @@ const scalarConfig = {
 };
 
 const config: CodegenConfig = {
-  schema: "http://localhost:5095/graphql",
+  schema: [
+    "http://localhost:5095/graphql",
+    // Include local extensions so codegen works before backend restart
+    "schema.local-extensions.graphql",
+  ],
   generates: {
     "./schema.graphql": {
       config: scalarConfig,

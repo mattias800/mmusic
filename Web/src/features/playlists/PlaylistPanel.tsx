@@ -276,6 +276,7 @@ export const PlaylistPanel: React.FC<PlaylistPanelProps> = (props) => {
           playlistId={playlist.id}
           playlistItemId={fixOpenForItemId ?? ""}
           initialArtistQuery={items.find(i => i.id === fixOpenForItemId)?.artistName ?? undefined}
+          initialTrackQuery={items.find(i => i.id === fixOpenForItemId)?.title ?? undefined}
         />
       </MainPadding>
     </GradientContent>

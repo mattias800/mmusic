@@ -2,7 +2,11 @@ import type { CodegenConfig } from "@graphql-codegen/cli";
 import { resolve } from "path";
 
 const config: CodegenConfig = {
-  schema: "http://localhost:5095/graphql",
+  schema: [
+    "http://localhost:5095/graphql",
+    // Include local extensions so codegen works before backend restart
+    "schema.local-extensions.graphql",
+  ],
   documents: ["src/**/*.{ts,tsx}"],
   generates: {
     "./src/gql/": {
