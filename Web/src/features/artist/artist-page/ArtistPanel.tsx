@@ -86,6 +86,9 @@ const refreshArtistMetaDataMutation = graphql(`
           ...ArtistPanel_Artist
         }
       }
+      ... on RefreshArtistMetaDataError {
+        message
+      }
     }
   }
 `);

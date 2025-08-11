@@ -3,6 +3,11 @@ import { TypesWithNoId } from "@/gql/types-with-no-id.ts";
 
 export const cacheKeys: Record<TypesWithNoId, KeyGenerator> = {
   ArtistImages: () => null,
+  ArtistImportProgress: () => null,
+  ArtistImportQueueItem: () => null,
+  ArtistImportQueueState: () => null,
+  ArtistImportSearchRoot: () => null,
+  ArtistSearchRoot: () => null,
   ArtistServerStatusImportingArtist: () => null,
   ArtistServerStatusImportingArtistReleases: () => null,
   ArtistServerStatusNotInLibrary: () => null,
@@ -11,6 +16,10 @@ export const cacheKeys: Record<TypesWithNoId, KeyGenerator> = {
   ArtistServerStatusUpdatingArtistReleases: () => null,
   ArtistTopTrack: () => null,
   CacheStatistics: () => null,
+  DownloadProgress: () => null,
+  DownloadQueueItem: () => null,
+  DownloadQueueState: () => null,
+  DownloadsSearchRoot: () => null,
   FileSystemSearchRoot: () => null,
   ImportPlaylistSearchRoot: () => null,
   ImportedRelease: () => null,
