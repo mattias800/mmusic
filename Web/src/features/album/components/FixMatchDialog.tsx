@@ -1,10 +1,6 @@
 import * as React from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog.tsx";
+import { Dialog, DialogHeader, DialogTitle } from "@/components/ui/dialog.tsx";
+import { LargeDialogContent } from "@/components/ui/large-dialog-content.tsx";
 import { Button } from "@/components/ui/button.tsx";
 import { useQuery, useMutation } from "urql";
 import { graphql } from "@/gql";
@@ -204,11 +200,13 @@ export const FixMatchDialog: React.FC<FixMatchDialogProps> = (props) => {
 
   return (
     <Dialog open={props.open} onOpenChange={props.onOpenChange}>
-      <DialogContent className="max-w-2xl overflow-hidden">
-        <DialogHeader>
-          <DialogTitle>Fix match</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4 overflow-hidden">
+      <LargeDialogContent>
+        <div className="px-6 pt-6">
+          <DialogHeader className="px-0 pt-0">
+            <DialogTitle>Fix match</DialogTitle>
+          </DialogHeader>
+        </div>
+        <div className="space-y-4 overflow-hidden px-6 pb-6">
           <div className="flex gap-2 text-xs">
             <Button
               variant={mode === "inGroup" ? "default" : "ghost"}
@@ -243,7 +241,7 @@ export const FixMatchDialog: React.FC<FixMatchDialogProps> = (props) => {
                     No release groups found.
                   </p>
                 )}
-              <div className="space-y-2 max-h-80 overflow-y-auto pr-2">
+              <div className="space-y-2 max-h-[70vh] overflow-y-auto pr-0">
                 {rgData?.musicBrainz?.releaseGroup?.searchByNameAndArtistName?.map(
                   (rg) => (
                     <div
@@ -306,7 +304,7 @@ export const FixMatchDialog: React.FC<FixMatchDialogProps> = (props) => {
             )}
 
           {mode === "inGroup" && (
-            <div className="space-y-2 max-h-96 overflow-y-auto overflow-x-hidden pr-2">
+            <div className="space-y-2 max-h-[70vh] overflow-y-auto overflow-x-hidden pr-0">
               {candidates.map((c) => (
                 <div
                   key={c.release.id}
@@ -362,7 +360,7 @@ export const FixMatchDialog: React.FC<FixMatchDialogProps> = (props) => {
             </Button>
           </div>
         </div>
-      </DialogContent>
+      </LargeDialogContent>
     </Dialog>
   );
 };

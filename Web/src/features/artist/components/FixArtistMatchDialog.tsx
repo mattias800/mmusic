@@ -1,10 +1,6 @@
 import * as React from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog.tsx";
+import { Dialog, DialogHeader, DialogTitle } from "@/components/ui/dialog.tsx";
+import { LargeDialogContent } from "@/components/ui/large-dialog-content.tsx";
 import { Button } from "@/components/ui/button.tsx";
 import { useMutation, useQuery } from "urql";
 import { graphql } from "@/gql";
@@ -143,12 +139,14 @@ export const FixArtistMatchDialog: React.FC<FixArtistMatchDialogProps> = (
 
   return (
     <Dialog open={props.open} onOpenChange={props.onOpenChange}>
-      <DialogContent className="max-w-2xl overflow-hidden">
-        <DialogHeader>
-          <DialogTitle>Fix artist match</DialogTitle>
-        </DialogHeader>
+      <LargeDialogContent>
+        <div className="px-6 pt-6">
+          <DialogHeader className="px-0 pt-0">
+            <DialogTitle>Fix artist match</DialogTitle>
+          </DialogHeader>
+        </div>
         <div className="space-y-4 overflow-hidden">
-          <div className="flex gap-2 text-xs">
+          <div className="flex gap-2 text-xs px-6 pb-6">
             <Button
               variant={mode === "mb" ? "default" : "ghost"}
               size="sm"
@@ -166,7 +164,7 @@ export const FixArtistMatchDialog: React.FC<FixArtistMatchDialogProps> = (
           </div>
 
           {mode === "mb" && (
-            <div className="relative space-y-2 max-h-96 overflow-y-auto pr-2">
+            <div className="relative space-y-2 max-h-[70vh] overflow-y-auto px-6 pb-6">
               {mbFetching && (
                 <p className="text-sm text-white/70">Searching…</p>
               )}
@@ -208,8 +206,11 @@ export const FixArtistMatchDialog: React.FC<FixArtistMatchDialogProps> = (
                           </div>
                         )}
                         <div className="text-xs text-white/60 truncate">
-                          {(a.type ?? "").toString()} {a.country ? `• ${a.country}` : ""}
-                          {typeof a.listeners === "number" ? ` • ${a.listeners.toLocaleString()} listeners` : ""}
+                          {(a.type ?? "").toString()}{" "}
+                          {a.country ? `• ${a.country}` : ""}
+                          {typeof a.listeners === "number"
+                            ? ` • ${a.listeners.toLocaleString()} listeners`
+                            : ""}
                         </div>
                         {a.lastFmArtist?.summary && (
                           <div className="text-[11px] text-white/60 line-clamp-2">
@@ -241,7 +242,7 @@ export const FixArtistMatchDialog: React.FC<FixArtistMatchDialogProps> = (
           )}
 
           {mode === "spotify" && (
-            <div className="relative space-y-2 max-h-96 overflow-y-auto pr-2">
+            <div className="relative space-y-2 max-h-[70vh] overflow-y-auto px-6 pb-6">
               {spFetching && (
                 <p className="text-sm text-white/70">Searching…</p>
               )}
@@ -300,7 +301,7 @@ export const FixArtistMatchDialog: React.FC<FixArtistMatchDialogProps> = (
             </div>
           )}
 
-          <div className="flex justify-end gap-2">
+          <div className="flex justify-end gap-2 px-6 pb-4">
             <Button
               variant="ghost"
               size="sm"
@@ -310,7 +311,7 @@ export const FixArtistMatchDialog: React.FC<FixArtistMatchDialogProps> = (
             </Button>
           </div>
         </div>
-      </DialogContent>
+      </LargeDialogContent>
     </Dialog>
   );
 };

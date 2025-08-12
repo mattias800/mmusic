@@ -1,11 +1,7 @@
 import * as React from "react";
 import { useCallback, useMemo, useState } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog.tsx";
+import { Dialog, DialogHeader, DialogTitle } from "@/components/ui/dialog.tsx";
+import { LargeDialogContent } from "@/components/ui/large-dialog-content.tsx";
 import { Input } from "@/components/ui/input.tsx";
 import { Button } from "@/components/ui/button.tsx";
 import { graphql } from "@/gql";
@@ -163,11 +159,13 @@ export const PlaylistItemFixArtistMatchDialog: React.FC<
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent onOpenAutoFocus={onDialogOpenAutoFocus}>
-        <DialogHeader>
-          <DialogTitle>Fix artist match</DialogTitle>
-        </DialogHeader>
-        <div className="relative space-y-3">
+      <LargeDialogContent onOpenAutoFocus={onDialogOpenAutoFocus}>
+        <div className="px-6 pt-6">
+          <DialogHeader className="px-0 pt-0">
+            <DialogTitle>Fix artist match</DialogTitle>
+          </DialogHeader>
+        </div>
+        <div className="relative space-y-3 px-6 pb-6">
           <div className="text-sm text-zinc-400">
             Search MusicBrainz for the correct artist. Optionally provide the
             track title to improve precision.
@@ -197,7 +195,7 @@ export const PlaylistItemFixArtistMatchDialog: React.FC<
               <Spinner />
             </SpinnerSpacing>
           ) : (
-            <div className="grid grid-cols-1 gap-2 max-h-96 overflow-y-auto pr-1">
+            <div className="grid grid-cols-1 gap-2 max-h-[70vh] overflow-y-auto pr-0">
               {(artists?.length ?? 0) === 0 && (
                 <div className="text-xs text-zinc-500">
                   No results. Try a different spelling.
@@ -264,7 +262,7 @@ export const PlaylistItemFixArtistMatchDialog: React.FC<
             </div>
           )}
         </div>
-      </DialogContent>
+      </LargeDialogContent>
     </Dialog>
   );
 };
