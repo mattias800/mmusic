@@ -11,6 +11,7 @@ export const optimisticCacheExchange = cacheExchange({
       // With normalized ids in place, subscriptions auto-merge.
       // Only special-case null transitions for currentDownload.
       currentDownloadUpdated: (result, _args, cache) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         if ((result as any)?.currentDownloadUpdated !== null) return;
         cache.updateQuery({ query: DownloadOverviewQueryDocument }, (data) => {
           if (!data) return data;

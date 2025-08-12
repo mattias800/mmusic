@@ -64,9 +64,9 @@ export const DownloadOverviewFetcher: React.FC<
     query: downloadOverviewFetcherQuery,
   });
 
-  useSubscription({ query: downloadQueueUpdatedSub }, () => null);
+  useSubscription({ query: downloadQueueUpdatedSub });
 
-  useSubscription({ query: currentDownloadUpdatedSub }, () => null);
+  useSubscription({ query: currentDownloadUpdatedSub });
 
   if (fetching) return <Spinner />;
   if (error || !data) return null;
@@ -118,7 +118,9 @@ export const DownloadOverviewFetcher: React.FC<
 
       <div>
         <div className="font-medium text-zinc-200">
-          {queue?.queueLength ? `${queue.queueLength} in queue` : "Queue is empty"}
+          {queue?.queueLength
+            ? `${queue.queueLength} in queue`
+            : "Queue is empty"}
         </div>
       </div>
     </div>

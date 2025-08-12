@@ -9,6 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu.tsx";
 import { useMutation } from "urql";
+import { BulkDownloadScope } from "@/gql/graphql";
 
 export interface ArtistDownloadAllReleasesButtonProps {
   artist: FragmentType<typeof artistDownloadAllReleasesButtonArtistFragment>;
@@ -57,28 +58,28 @@ export const ArtistDownloadAllReleasesButton: React.FC<
       <DropdownMenuContent>
         <DropdownMenuItem
           onSelect={() =>
-            startBulk({ input: { artistId: artist.id, scope: "ALL" } })
+            startBulk({ input: { artistId: artist.id, scope: BulkDownloadScope.All } })
           }
         >
           Download all releases
         </DropdownMenuItem>
         <DropdownMenuItem
           onSelect={() =>
-            startBulk({ input: { artistId: artist.id, scope: "ALBUMS" } })
+            startBulk({ input: { artistId: artist.id, scope: BulkDownloadScope.Albums } })
           }
         >
           Download all albums
         </DropdownMenuItem>
         <DropdownMenuItem
           onSelect={() =>
-            startBulk({ input: { artistId: artist.id, scope: "SINGLES" } })
+            startBulk({ input: { artistId: artist.id, scope: BulkDownloadScope.Singles } })
           }
         >
           Download all singles
         </DropdownMenuItem>
         <DropdownMenuItem
           onSelect={() =>
-            startBulk({ input: { artistId: artist.id, scope: "EPS" } })
+            startBulk({ input: { artistId: artist.id, scope: BulkDownloadScope.Eps } })
           }
         >
           Download all EPs

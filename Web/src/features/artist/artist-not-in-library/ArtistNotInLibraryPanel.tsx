@@ -40,7 +40,6 @@ export const ArtistNotInLibraryPanel: React.FC<ArtistNotInLibraryPanelProps> = (
         artistName={artist.name}
         artistBackgroundUrl={artist.images?.artistBackground ?? ""}
         listeners={artist.listeners}
-        availableNumReleases={0}
       />
       <MainPadding>
         <ArtistNotInLibrarySectionList

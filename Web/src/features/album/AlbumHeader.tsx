@@ -6,6 +6,7 @@ import { formatAlbumLength } from "@/common/AlbumLengthFormatter.ts";
 import { ReleaseType } from "@/gql/graphql.ts";
 import { getRouteToArtist } from "@/AppRoutes.ts";
 import { ReleaseCoverArt } from "@/components/images/ReleaseCoverArt.tsx";
+import { Tag } from "@/components/text/Tag.tsx";
 
 export interface AlbumHeaderProps {
   release: FragmentType<typeof albumHeaderReleaseFragment>;
@@ -56,7 +57,11 @@ export const AlbumHeader: React.FC<AlbumHeaderProps> = (props) => {
         className="w-64 h-64 rounded shadow-lg object-cover"
       />
       <div className={"flex flex-col gap-3"}>
-        <p className="text-sm">{getReleaseType(release.type)}</p>
+        {getReleaseType(release.type) && (
+          <div>
+            <Tag>{getReleaseType(release.type)}</Tag>
+          </div>
+        )}
         <h1 className="text-4xl sm:text-7xl font-bold">{release.title}</h1>
         <div className={"flex gap-2"}>
           <Link
@@ -77,7 +82,7 @@ export const AlbumHeader: React.FC<AlbumHeaderProps> = (props) => {
 const getReleaseType = (
   releaseType: ReleaseType | null | undefined,
 ): string | undefined => {
-  switch (releaseType?.toLowerCase()) {
+  switch (releaseType) {
     case ReleaseType.Album:
       return "Album";
     case ReleaseType.Ep:
