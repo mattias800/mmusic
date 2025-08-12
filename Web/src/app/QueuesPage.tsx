@@ -69,25 +69,54 @@ const query = graphql(`
 
 const subDlQ = graphql(`
   subscription QueuesPage_DownloadQueueUpdated {
-    downloadQueueUpdated { queueLength }
+    downloadQueueUpdated {
+      queueLength
+      items {
+        artistId
+        releaseFolderName
+        queueKey
+      }
+    }
   }
 `);
 
 const subDlCur = graphql(`
   subscription QueuesPage_CurrentDownloadUpdated {
-    currentDownloadUpdated { status }
+    currentDownloadUpdated {
+      artistId
+      releaseFolderName
+      status
+      totalTracks
+      completedTracks
+      errorMessage
+      artistName
+      releaseTitle
+      coverArtUrl
+      currentTrackProgressPercent
+      currentDownloadSpeedKbps
+    }
   }
 `);
 
 const subImportQ = graphql(`
   subscription QueuesPage_ArtistImportQueueUpdated {
-    artistImportQueueUpdated { queueLength }
+    artistImportQueueUpdated {
+      queueLength
+      items { artistName songTitle queueKey }
+    }
   }
 `);
 
 const subImportCur = graphql(`
   subscription QueuesPage_CurrentArtistImportUpdated {
-    currentArtistImportUpdated { status }
+    currentArtistImportUpdated {
+      artistName
+      songTitle
+      statusInfo { id text }
+      totalReleases
+      completedReleases
+      errorMessage
+    }
   }
 `);
 
@@ -104,11 +133,11 @@ const removeImportMutation = graphql(`
 `);
 
 export const QueuesPage: React.FC = () => {
-  const [{ data, fetching, error }, reexec] = useQuery({ query });
-  useSubscription({ query: subDlQ }, () => { reexec({ requestPolicy: "network-only" }); return null; });
-  useSubscription({ query: subDlCur }, () => { reexec({ requestPolicy: "network-only" }); return null; });
-  useSubscription({ query: subImportQ }, () => { reexec({ requestPolicy: "network-only" }); return null; });
-  useSubscription({ query: subImportCur }, () => { reexec({ requestPolicy: "network-only" }); return null; });
+  const [{ data, fetching, error }] = useQuery({ query });
+  useSubscription({ query: subDlQ }, () => null);
+  useSubscription({ query: subDlCur }, () => null);
+  useSubscription({ query: subImportQ }, () => null);
+  useSubscription({ query: subImportCur }, () => null);
 
   const [, removeDownload] = useMutation(removeDownloadMutation);
   const [, removeImport] = useMutation(removeImportMutation);
