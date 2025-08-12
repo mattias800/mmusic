@@ -16,6 +16,9 @@ public class ServerSettingsEventProcessor
             case DownloadPathUpdated downloadPathUpdated:
                 await HandleDownloadPathUpdated(downloadPathUpdated, dbContext);
                 break;
+            case SoulSeekSearchTimeLimitUpdated timeLimitUpdated:
+                await HandleSoulSeekSearchTimeLimitUpdated(timeLimitUpdated, dbContext);
+                break;
         }
     }
 
@@ -54,6 +57,25 @@ public class ServerSettingsEventProcessor
         }
 
         serverSettings.DownloadPath = downloadPathUpdated.NewPath;
+        await dbContext.SaveChangesAsync();
+    }
+
+    private async Task HandleSoulSeekSearchTimeLimitUpdated(
+        SoulSeekSearchTimeLimitUpdated updated,
+        EventDbContext dbContext
+    )
+    {
+        var serverSettings = dbContext.ServerSettings.FirstOrDefault(s =>
+            s.Id == DefaultDbServerSettingsProvider.ServerSettingsSingletonId
+        );
+
+        if (serverSettings is null)
+        {
+            serverSettings = DefaultDbServerSettingsProvider.GetDefault();
+            dbContext.ServerSettings.Add(serverSettings);
+        }
+
+        serverSettings.SoulSeekSearchTimeLimitSeconds = updated.NewSeconds;
         await dbContext.SaveChangesAsync();
     }
 }

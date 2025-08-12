@@ -101,6 +101,23 @@ type ArtistImages {
   thumbs: [String!]!
 }
 
+type ArtistImportHistoryItem {
+  artistName: String!
+  errorMessage: String
+  jobKind: ArtistImportJobKind!
+  localArtistId: String
+  musicBrainzArtistId: String
+  releaseFolderName: String
+  songTitle: String
+  success: Boolean!
+  timestampUtc: DateTime!
+}
+
+enum ArtistImportJobKind {
+  IMPORT_ARTIST
+  REFRESH_RELEASE_METADATA
+}
+
 type ArtistImportProgress {
   artistName: String!
   completedReleases: Int!
@@ -113,6 +130,10 @@ type ArtistImportProgress {
 
 type ArtistImportQueueItem {
   artistName: String!
+  jobKind: ArtistImportJobKind!
+  localArtistId: String
+  queueKey: String
+  releaseFolderName: String
   songTitle: String
 }
 
@@ -122,6 +143,7 @@ type ArtistImportQueueState {
 }
 
 type ArtistImportSearchRoot {
+  artistImportHistory: [ArtistImportHistoryItem!]!
   artistImportQueue: ArtistImportQueueState!
   currentArtistImport: ArtistImportProgress
 }
@@ -244,6 +266,16 @@ type DeleteReleaseAudioSuccess {
   release: Release!
 }
 
+type DownloadHistoryItem {
+  artistId: String!
+  artistName: String
+  errorMessage: String
+  releaseFolderName: String!
+  releaseTitle: String
+  success: Boolean!
+  timestampUtc: DateTime!
+}
+
 type DownloadProgress {
   artistId: String!
   completedTracks: Int!
@@ -255,6 +287,7 @@ type DownloadProgress {
 
 type DownloadQueueItem {
   artistId: String!
+  queueKey: String
   releaseFolderName: String!
 }
 
@@ -274,6 +307,7 @@ enum DownloadStatus {
 
 type DownloadsSearchRoot {
   currentDownload: DownloadProgress
+  downloadHistory: [DownloadHistoryItem!]!
   downloadQueue: DownloadQueueState!
 }
 
@@ -679,6 +713,8 @@ type Mutation {
   refreshArtistMetaData(input: RefreshArtistMetaDataInput!): RefreshArtistMetaDataResult!
   refreshArtistTopTracks(input: RefreshArtistTopTracksInput!): RefreshArtistTopTracksResult!
   refreshRelease(input: RefreshReleaseInput!): RefreshReleaseResult!
+  removeArtistImportJob(queueKey: String!): Boolean!
+  removeDownloadJob(queueKey: String!): Boolean!
   removeItemFromPlaylist(input: RemoveItemFromPlaylistInput!): RemoveItemFromPlaylistResult!
   renamePlaylist(input: RenamePlaylistInput!): RenamePlaylistResult!
   scanLibraryForMissingJson: ScanLibraryForMissingJsonResult!
@@ -696,6 +732,7 @@ type Mutation {
   unlikeSong(input: UnlikedSongInput!): UnlikeSongResult!
   updateDownloadPath(input: UpdateDownloadPathInput!): UpdateDownloadPathResult!
   updateLibraryPath(input: UpdateLibraryPathInput!): UpdateLibraryPathResult!
+  updateSoulSeekSearchTimeLimit(seconds: Int!): UpdateSoulSeekSearchTimeLimitResult!
 }
 
 """Information about pagination in a connection."""
@@ -957,6 +994,7 @@ type ServerSettings {
   downloadPath: String!
   id: ID!
   libraryPath: String!
+  soulSeekSearchTimeLimitSeconds: Int!
 }
 
 type SetArtistMusicBrainzMatchError {
@@ -1181,6 +1219,7 @@ type Subscription {
   artistImported: Artist!
   currentArtistImportUpdated: ArtistImportProgress!
   currentDownloadUpdated: DownloadProgress
+  downloadHistoryUpdated: [DownloadHistoryItem!]!
   downloadQueueUpdated: DownloadQueueState!
   libraryArtistReleaseUpdated(artistId: String!): Release!
   libraryArtistTrackUpdated(artistId: String!): Track!
@@ -1264,6 +1303,16 @@ input UpdateLibraryPathInput {
 union UpdateLibraryPathResult = UpdateLibraryPathSuccess
 
 type UpdateLibraryPathSuccess {
+  serverSettings: ServerSettings!
+}
+
+type UpdateSoulSeekSearchTimeLimitError {
+  message: String!
+}
+
+union UpdateSoulSeekSearchTimeLimitResult = UpdateSoulSeekSearchTimeLimitError | UpdateSoulSeekSearchTimeLimitSuccess
+
+type UpdateSoulSeekSearchTimeLimitSuccess {
   serverSettings: ServerSettings!
 }
 

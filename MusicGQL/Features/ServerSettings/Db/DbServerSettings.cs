@@ -6,6 +6,10 @@ public class DbServerSettings
 
     public string LibraryPath { get; set; } = string.Empty;
     public string DownloadPath { get; set; } = string.Empty;
+
+    // Max time (seconds) a SoulSeek search may run before yielding to next queued job.
+    // When queue has more items, an ongoing search exceeding this will be aborted and re-queued to the back.
+    public int SoulSeekSearchTimeLimitSeconds { get; set; } = 60;
 }
 
 public static class DefaultDbServerSettingsProvider
@@ -19,6 +23,7 @@ public static class DefaultDbServerSettingsProvider
             Id = ServerSettingsSingletonId,
             LibraryPath = "",
             DownloadPath = "",
+            SoulSeekSearchTimeLimitSeconds = 60,
         };
     }
 }

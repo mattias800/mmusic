@@ -40,7 +40,7 @@ public class UpdateDownloadPathMutation
                         s.Id == DefaultDbServerSettingsProvider.ServerSettingsSingletonId
                     ) ?? DefaultDbServerSettingsProvider.GetDefault();
 
-                return new UpdateDownloadPathResult.UpdateDownloadPathSuccess(new(serverSettings));
+                return new UpdateDownloadPathSuccess(new(serverSettings));
             default:
                 // Log error: Unhandled handler result
                 throw new ArgumentOutOfRangeException(
@@ -54,8 +54,7 @@ public class UpdateDownloadPathMutation
 public record UpdateDownloadPathInput(string NewDownloadPath);
 
 [UnionType("UpdateDownloadPathResult")]
-public abstract record UpdateDownloadPathResult
-{
-    public record UpdateDownloadPathSuccess(ServerSettings ServerSettings)
-        : UpdateDownloadPathResult;
-}
+public abstract record UpdateDownloadPathResult;
+
+public record UpdateDownloadPathSuccess(ServerSettings ServerSettings)
+    : UpdateDownloadPathResult;

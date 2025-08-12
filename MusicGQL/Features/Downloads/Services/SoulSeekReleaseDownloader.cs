@@ -19,6 +19,7 @@ public class SoulSeekReleaseDownloader(
     CurrentDownloadStateService progress,
     DownloadQueueService downloadQueue,
     DownloadHistoryService downloadHistory,
+    MusicGQL.Features.ServerSettings.ServerSettingsAccessor settingsAccessor,
     ILogger<SoulSeekReleaseDownloader> logger
 )
 {
@@ -96,9 +97,34 @@ public class SoulSeekReleaseDownloader(
         }
 
         List<SearchResponse> rankedCandidates = new();
+        // Time-slicing: if queue has waiting jobs, enforce a time limit for search to avoid blocking
+        int queueDepth = downloadQueue.Snapshot().QueueLength;
+        bool hasWaiting = queueDepth > 0;
+        // Read setting via cache of server settings through DI (access via separate resolver)
+        int timeLimitSec = 60;
+        try { var s = await settingsAccessor.GetAsync(); timeLimitSec = Math.Max(5, s.SoulSeekSearchTimeLimitSeconds); } catch { }
+        TimeSpan searchTimeout = TimeSpan.FromSeconds(timeLimitSec);
         foreach (var q in queries.Distinct(StringComparer.OrdinalIgnoreCase))
         {
-            var result = await client.SearchAsync(new SearchQuery(q));
+            var searchTask = client.SearchAsync(new SearchQuery(q));
+            try
+            {
+                if (hasWaiting)
+                {
+                    var completed = await Task.WhenAny(searchTask, Task.Delay(searchTimeout));
+                    if (completed != searchTask)
+                    {
+                        logger.LogInformation("[SoulSeek] Search timed out (yield to queue): {Query}", q);
+                        break;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "[SoulSeek] Search error on query {Query}", q);
+                continue;
+            }
+            var result = await searchTask;
             // First, require folder structure that matches Artist/<Album> patterns sufficiently
             var structurallyMatching = result.Responses
                 .Where(r => HasAlbumFolderMatch(r, artistName, releaseTitle, expectedYear))
@@ -140,6 +166,16 @@ public class SoulSeekReleaseDownloader(
                 artistName,
                 releaseTitle
             );
+            // If we had waiting items and we timed out, re-enqueue this job at the end of the queue
+            if (hasWaiting)
+            {
+                logger.LogInformation("[SoulSeek] Re-queuing {Artist}/{Release} to back of queue after timeout", artistId, releaseFolderName);
+                downloadQueue.Enqueue(new DownloadQueueItem(artistId, releaseFolderName)
+                {
+                    ArtistName = artistName,
+                    ReleaseTitle = releaseTitle,
+                });
+            }
             return false;
         }
 

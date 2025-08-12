@@ -40,7 +40,7 @@ public class UpdateLibraryPathMutation
                         s.Id == DefaultDbServerSettingsProvider.ServerSettingsSingletonId
                     ) ?? DefaultDbServerSettingsProvider.GetDefault();
 
-                return new UpdateLibraryPathResult.UpdateLibraryPathSuccess(new(serverSettings));
+                return new UpdateLibraryPathSuccess(new(serverSettings));
             default:
                 // Log error: Unhandled handler result
                 throw new ArgumentOutOfRangeException(
@@ -54,7 +54,6 @@ public class UpdateLibraryPathMutation
 public record UpdateLibraryPathInput(string NewLibraryPath);
 
 [UnionType("UpdateLibraryPathResult")]
-public abstract record UpdateLibraryPathResult
-{
-    public record UpdateLibraryPathSuccess(ServerSettings ServerSettings) : UpdateLibraryPathResult;
-}
+public abstract record UpdateLibraryPathResult;
+
+public record UpdateLibraryPathSuccess(ServerSettings ServerSettings) : UpdateLibraryPathResult;
