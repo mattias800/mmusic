@@ -207,7 +207,14 @@ export const QueuesPage: React.FC = () => {
                   <Link to={`/artist/${q.artistId}/release/${q.releaseFolderName}`} className="text-blue-400 hover:underline">{q.releaseFolderName}</Link>
                 </div>
               </div>
-              <Button variant="destructive" size="sm" onClick={() => q.queueKey && removeDownload({ queueKey: q.queueKey })}>Remove</Button>
+              <Button
+                variant="destructive"
+                size="sm"
+                className="text-black"
+                onClick={() => q.queueKey && removeDownload({ queueKey: q.queueKey })}
+              >
+                Remove
+              </Button>
             </div>
           ))}
           {dl.downloadQueue.items.length === 0 && (
@@ -285,7 +292,14 @@ export const QueuesPage: React.FC = () => {
                 </div>
               </div>
               {q.queueKey && (
-                <Button variant="destructive" size="sm" onClick={() => removeImport({ queueKey: q.queueKey! })}>Remove</Button>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  className="text-black"
+                  onClick={() => removeImport({ queueKey: q.queueKey! })}
+                >
+                  Remove
+                </Button>
               )}
             </div>
           ))}
