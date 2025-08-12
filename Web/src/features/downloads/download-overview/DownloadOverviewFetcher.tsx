@@ -56,19 +56,13 @@ const currentDownloadUpdatedSub = graphql(`
 export const DownloadOverviewFetcher: React.FC<
   DownloadOverviewFetcherProps
 > = () => {
-  const [{ data, error, fetching }, reexecute] = useQuery({
+  const [{ data, error, fetching }] = useQuery({
     query: downloadOverviewFetcherQuery,
   });
 
-  useSubscription({ query: downloadQueueUpdatedSub }, () => {
-    reexecute({ requestPolicy: "network-only" });
-    return null;
-  });
+  useSubscription({ query: downloadQueueUpdatedSub }, () => null);
 
-  useSubscription({ query: currentDownloadUpdatedSub }, () => {
-    reexecute({ requestPolicy: "network-only" });
-    return null;
-  });
+  useSubscription({ query: currentDownloadUpdatedSub }, () => null);
 
   if (fetching) return <Spinner />;
   if (error || !data) return null;
