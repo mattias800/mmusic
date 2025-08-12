@@ -12,7 +12,7 @@ import { ArtistActionButtons } from "@/features/artist/artist-page/ArtistActionB
 import { CardFlexList } from "@/components/page-body/CardFlexList.tsx";
 import { byStringField } from "@/common/sorting/Comparators.ts";
 import { AlbumCard } from "@/features/album/AlbumCard.tsx";
-import { useMutation } from "urql";
+import { useMutation, useSubscription } from "urql";
 import { ArtistServiceConnections } from "@/features/artist/artist-page/ArtistServiceConnections.tsx";
 import { ArtistNumReleasesAvailableIndicator } from "@/features/artist/artist-page/ArtistNumReleasesAvailableIndicator.tsx";
 import { ArtistDownloadAllReleasesButton } from "@/features/artist/artist-page/ArtistDownloadAllReleasesButton.tsx";
@@ -62,6 +62,15 @@ const artistPanelArtistFragment = graphql(`
   }
 `);
 
+const libraryArtistUpdatedSubscription = graphql(`
+  subscription ArtistPanel_LibraryArtistUpdated($artistId: String!) {
+    libraryArtistUpdated(artistId: $artistId) {
+      id
+      ...ArtistPanel_Artist
+    }
+  }
+`);
+
 const refreshTopTracksMutation = graphql(`
   mutation PanelRefreshTopTracks($input: RefreshArtistTopTracksInput!) {
     refreshArtistTopTracks(input: $input) {
@@ -102,6 +111,16 @@ export const ArtistPanel: React.FC<ArtistPanelProps> = (props) => {
   );
   const [{ fetching: loadingLastFm }, refreshArtistMetaData] = useMutation(
     refreshArtistMetaDataMutation,
+  );
+
+  // Live updates: merge updated artist into cache when subscription fires
+  useSubscription(
+    {
+      query: libraryArtistUpdatedSubscription,
+      variables: { artistId: artist.id },
+      pause: !artist.id,
+    },
+    (_prev, data) => data,
   );
 
   const onRefreshTopTracks = () =>

@@ -14,7 +14,8 @@ public class RefreshArtistMetaDataMutation
         [Service] ServerLibraryCache cache,
         [Service] LastFmEnrichmentService enrichment,
         [Service] MusicGQL.Features.Import.Services.IImportExecutor importExecutor,
-        [Service] ILogger<RefreshArtistMetaDataMutation> logger
+        [Service] ILogger<RefreshArtistMetaDataMutation> logger,
+        [Service] HotChocolate.Subscriptions.ITopicEventSender eventSender
     )
     {
         logger.LogInformation("[RefreshArtistMetaData] Requested refresh for artistId='{ArtistId}'", input.ArtistId);
@@ -81,6 +82,16 @@ public class RefreshArtistMetaDataMutation
             logger.LogError("[RefreshArtistMetaData] Artist not found in cache after refresh for id='{ArtistId}'", effectiveArtistId);
             return new RefreshArtistMetaDataError("Could not find artist after refresh");
         }
+
+        // Publish artist-updated so UI can refresh in realtime
+        try
+        {
+            await eventSender.SendAsync(
+                Features.ServerLibrary.Subscription.LibrarySubscription.LibraryArtistUpdatedTopic(artistAfterRefresh.Id),
+                new Artist(artistAfterRefresh)
+            );
+        }
+        catch { }
 
         logger.LogInformation("[RefreshArtistMetaData] Success for artistId='{ArtistId}'", effectiveArtistId);
         return new RefreshArtistMetaDataSuccess(new Artist(artistAfterRefresh));

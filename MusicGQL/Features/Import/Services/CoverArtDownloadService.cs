@@ -30,9 +30,10 @@ public class CoverArtDownloadService(
             artistFolderPath
         );
 
-        if (result.Thumbs.Count == 0)
+        // Spotify fallback(s) when fanart.tv misses
+        try
         {
-            try
+            if (result.Thumbs.Count == 0 || result.Backgrounds.Count == 0)
             {
                 var mbArtist = await musicBrainzService.GetArtistByIdAsync(musicBrainzId);
                 var artistName = mbArtist?.Name;
@@ -44,15 +45,34 @@ public class CoverArtDownloadService(
                     if (!string.IsNullOrWhiteSpace(imageUrl))
                     {
                         var ext = GetExtensionFromUrlOrDefault(imageUrl!, ".jpg");
-                        var fileName = $"thumb_00{ext}";
-                        var filePath = Path.Combine(artistFolderPath, fileName);
-                        var bytes = await httpClient.GetByteArrayAsync(imageUrl!);
-                        await File.WriteAllBytesAsync(filePath, bytes);
-                        result.Thumbs.Add("./" + fileName);
+
+                        if (result.Thumbs.Count == 0)
+                        {
+                            var thumbFile = $"thumb_00{ext}";
+                            var thumbPath = Path.Combine(artistFolderPath, thumbFile);
+                            var bytes = await httpClient.GetByteArrayAsync(imageUrl!);
+                            await File.WriteAllBytesAsync(thumbPath, bytes);
+                            result.Thumbs.Add("./" + thumbFile);
+                        }
+
+                        if (result.Backgrounds.Count == 0)
+                        {
+                            var bgFile = $"background_00{ext}";
+                            var bgPath = Path.Combine(artistFolderPath, bgFile);
+                            var bytes = await httpClient.GetByteArrayAsync(imageUrl!);
+                            await File.WriteAllBytesAsync(bgPath, bytes);
+                            result.Backgrounds.Add("./" + bgFile);
+                        }
                     }
                 }
             }
-            catch { }
+        }
+        catch { }
+
+        // If no banner but we have a background, reuse the background as a banner placeholder
+        if (result.Banners.Count == 0 && result.Backgrounds.Count > 0)
+        {
+            result.Banners.Add(result.Backgrounds[0]);
         }
 
         return result;
