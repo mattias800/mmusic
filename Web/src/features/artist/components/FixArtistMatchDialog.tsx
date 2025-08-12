@@ -8,6 +8,7 @@ import {
 import { Button } from "@/components/ui/button.tsx";
 import { useMutation, useQuery } from "urql";
 import { graphql } from "@/gql";
+import { Spinner } from "@/components/spinner/Spinner.tsx";
 
 interface FixArtistMatchDialogProps {
   open: boolean;
@@ -31,6 +32,14 @@ const searchMbArtistsQuery = graphql(`
           name
           country
           type
+          disambiguation
+          listeners
+          images {
+            artistThumb
+          }
+          lastFmArtist {
+            summary
+          }
         }
       }
     }
@@ -91,6 +100,8 @@ export const FixArtistMatchDialog: React.FC<FixArtistMatchDialogProps> = (
   props,
 ) => {
   const [mode, setMode] = React.useState<"mb" | "spotify">("mb");
+  const [selectedId, setSelectedId] = React.useState<string | null>(null);
+  const [submitting, setSubmitting] = React.useState(false);
 
   const [{ data: mbData, fetching: mbFetching, error: mbError }] = useQuery({
     query: searchMbArtistsQuery,
@@ -107,20 +118,26 @@ export const FixArtistMatchDialog: React.FC<FixArtistMatchDialogProps> = (
   const [, setSpMatch] = useMutation(setSpotifyMatchMutation);
 
   const onSelectMb = async (mbId: string) => {
+    setSelectedId(mbId);
+    setSubmitting(true);
     props.onBeginFix?.();
-    props.onOpenChange(false);
     await setMbMatch({
       input: { artistId: props.artistId, musicBrainzArtistId: mbId },
     });
+    setSubmitting(false);
+    props.onOpenChange(false);
     props.onEndFix?.();
   };
 
   const onSelectSpotify = async (spId: string) => {
+    setSelectedId(spId);
+    setSubmitting(true);
     props.onBeginFix?.();
-    props.onOpenChange(false);
     await setSpMatch({
       input: { artistId: props.artistId, spotifyArtistId: spId },
     });
+    setSubmitting(false);
+    props.onOpenChange(false);
     props.onEndFix?.();
   };
 
@@ -149,7 +166,7 @@ export const FixArtistMatchDialog: React.FC<FixArtistMatchDialogProps> = (
           </div>
 
           {mode === "mb" && (
-            <div className="space-y-2 max-h-96 overflow-y-auto pr-2">
+            <div className="relative space-y-2 max-h-96 overflow-y-auto pr-2">
               {mbFetching && (
                 <p className="text-sm text-white/70">Searching…</p>
               )}
@@ -163,31 +180,68 @@ export const FixArtistMatchDialog: React.FC<FixArtistMatchDialogProps> = (
                     No MusicBrainz artists found.
                   </p>
                 )}
-              {mbData?.musicBrainz?.artist?.searchByName?.map((a) => (
-                <div
-                  key={a.id}
-                  className="flex items-center justify-between gap-3 rounded-md border border-white/10 p-2 hover:bg-white/5"
-                >
-                  <div className="min-w-0">
-                    <div className="font-medium truncate">{a.name}</div>
-                    <div className="text-xs text-white/60 truncate">
-                      {a.type ?? ""} {a.country ? `• ${a.country}` : ""}
-                    </div>
-                  </div>
-                  <Button
-                    size="sm"
-                    className="shrink-0"
-                    onClick={() => onSelectMb(a.id)}
+              {mbData?.musicBrainz?.artist?.searchByName?.map((a) => {
+                const isSelected = selectedId === a.id;
+                return (
+                  <div
+                    key={a.id}
+                    className={
+                      "flex items-center justify-between gap-3 rounded-md border p-2 transition-colors " +
+                      (isSelected
+                        ? "border-white/30 bg-white/[0.07]"
+                        : "border-white/10 hover:bg-white/5")
+                    }
                   >
-                    Select
-                  </Button>
+                    <div className="flex items-center gap-3 min-w-0">
+                      {a.images?.artistThumb && (
+                        <img
+                          src={a.images.artistThumb}
+                          className="h-10 w-10 rounded object-cover"
+                          alt={a.name}
+                        />
+                      )}
+                      <div className="min-w-0">
+                        <div className="font-medium truncate">{a.name}</div>
+                        {a.disambiguation && (
+                          <div className="text-[11px] text-white/60 truncate">
+                            {a.disambiguation}
+                          </div>
+                        )}
+                        <div className="text-xs text-white/60 truncate">
+                          {(a.type ?? "").toString()} {a.country ? `• ${a.country}` : ""}
+                          {typeof a.listeners === "number" ? ` • ${a.listeners.toLocaleString()} listeners` : ""}
+                        </div>
+                        {a.lastFmArtist?.summary && (
+                          <div className="text-[11px] text-white/60 line-clamp-2">
+                            {a.lastFmArtist.summary}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <Button
+                      size="sm"
+                      className="shrink-0"
+                      onClick={() => onSelectMb(a.id)}
+                      disabled={submitting}
+                    >
+                      Select
+                    </Button>
+                  </div>
+                );
+              })}
+              {submitting && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-[2px] rounded-md">
+                  <div className="flex items-center gap-3 text-sm text-white/90">
+                    <Spinner />
+                    <span>Linking artist…</span>
+                  </div>
                 </div>
-              ))}
+              )}
             </div>
           )}
 
           {mode === "spotify" && (
-            <div className="space-y-2 max-h-96 overflow-y-auto pr-2">
+            <div className="relative space-y-2 max-h-96 overflow-y-auto pr-2">
               {spFetching && (
                 <p className="text-sm text-white/70">Searching…</p>
               )}
@@ -200,32 +254,49 @@ export const FixArtistMatchDialog: React.FC<FixArtistMatchDialogProps> = (
                     No Spotify artists found.
                   </p>
                 )}
-              {spData?.spotify?.searchByName?.map((a) => (
-                <div
-                  key={a.id}
-                  className="flex items-center justify-between gap-3 rounded-md border border-white/10 p-2 hover:bg-white/5"
-                >
-                  <div className="flex items-center gap-3 min-w-0">
-                    {a.images?.[0]?.url && (
-                      <img
-                        src={a.images[0].url}
-                        className="h-10 w-10 rounded object-cover"
-                        alt="cover"
-                      />
-                    )}
-                    <div className="min-w-0">
-                      <div className="font-medium truncate">{a.name}</div>
-                    </div>
-                  </div>
-                  <Button
-                    size="sm"
-                    className="shrink-0"
-                    onClick={() => onSelectSpotify(a.id)}
+              {spData?.spotify?.searchByName?.map((a) => {
+                const isSelected = selectedId === a.id;
+                return (
+                  <div
+                    key={a.id}
+                    className={
+                      "flex items-center justify-between gap-3 rounded-md border p-2 transition-colors " +
+                      (isSelected
+                        ? "border-white/30 bg-white/[0.07]"
+                        : "border-white/10 hover:bg-white/5")
+                    }
                   >
-                    Select
-                  </Button>
+                    <div className="flex items-center gap-3 min-w-0">
+                      {a.images?.[0]?.url && (
+                        <img
+                          src={a.images[0].url}
+                          className="h-10 w-10 rounded object-cover"
+                          alt="cover"
+                        />
+                      )}
+                      <div className="min-w-0">
+                        <div className="font-medium truncate">{a.name}</div>
+                      </div>
+                    </div>
+                    <Button
+                      size="sm"
+                      className="shrink-0"
+                      onClick={() => onSelectSpotify(a.id)}
+                      disabled={submitting}
+                    >
+                      Select
+                    </Button>
+                  </div>
+                );
+              })}
+              {submitting && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-[2px] rounded-md">
+                  <div className="flex items-center gap-3 text-sm text-white/90">
+                    <Spinner />
+                    <span>Linking artist…</span>
+                  </div>
                 </div>
-              ))}
+              )}
             </div>
           )}
 

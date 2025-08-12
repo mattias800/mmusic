@@ -4,6 +4,7 @@ import { useMutation, useQuery, useSubscription } from "urql";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { ReleaseCoverArt } from "@/components/images/ReleaseCoverArt.tsx";
+import { ProgressIndicator } from "@/components/progress/ProgressIndicator";
 
 const query = graphql(`
   query QueuesPage_Query {
@@ -15,6 +16,11 @@ const query = graphql(`
         totalTracks
         completedTracks
         errorMessage
+        artistName
+        releaseTitle
+        coverArtUrl
+        currentTrackProgressPercent
+        currentDownloadSpeedKbps
       }
       downloadQueue {
         queueLength
@@ -117,37 +123,65 @@ export const QueuesPage: React.FC = () => {
     <div className="p-6 grid grid-cols-1 lg:grid-cols-2 gap-8">
       <section>
         <h2 className="text-xl font-semibold mb-2">Current download</h2>
-        <div className="rounded border border-zinc-700 p-3">
+        <div className="rounded border border-zinc-700 p-4">
           {dl.currentDownload ? (
-            <div className="text-sm text-zinc-300">
-              <div className="flex items-center gap-3">
+            <div className="text-zinc-300">
+              <div className="flex items-center gap-4">
                 <Link to={`/artist/${dl.currentDownload.artistId}/release/${dl.currentDownload.releaseFolderName}`}>
                   <ReleaseCoverArt
-                    titleForPlaceholder={dl.currentDownload.releaseFolderName}
-                    className="w-10 h-10 rounded object-cover border border-zinc-700"
+                    srcUrl={dl.currentDownload.coverArtUrl ?? `/library/${dl.currentDownload.artistId}/releases/${dl.currentDownload.releaseFolderName}/coverart`}
+                    titleForPlaceholder={dl.currentDownload.releaseTitle ?? dl.currentDownload.releaseFolderName}
+                    className="w-24 h-24 rounded object-cover border border-zinc-700"
                   />
                 </Link>
-                <div>
-                  <Link
-                    to={`/artist/${dl.currentDownload.artistId}`}
-                    className="text-blue-400 hover:underline"
-                  >
-                    {dl.currentDownload.artistId}
-                  </Link>
-                  {"/"}
-                  <Link
-                    to={`/artist/${dl.currentDownload.artistId}/release/${dl.currentDownload.releaseFolderName}`}
-                    className="text-blue-400 hover:underline"
-                  >
-                    {dl.currentDownload.releaseFolderName}
-                  </Link>
+                <div className="flex-1 min-w-0">
+                  <div className="truncate text-lg font-semibold">
+                    <Link to={`/artist/${dl.currentDownload.artistId}`} className="text-blue-400 hover:underline">
+                      {dl.currentDownload.artistName ?? dl.currentDownload.artistId}
+                    </Link>
+                    {" / "}
+                    <Link to={`/artist/${dl.currentDownload.artistId}/release/${dl.currentDownload.releaseFolderName}`} className="text-blue-400 hover:underline">
+                      {dl.currentDownload.releaseTitle ?? dl.currentDownload.releaseFolderName}
+                    </Link>
+                  </div>
+                  <div className="text-sm text-zinc-400 mt-1">
+                    {dl.currentDownload.status} — {dl.currentDownload.completedTracks}/{dl.currentDownload.totalTracks}
+                  </div>
+                  {typeof dl.currentDownload.currentDownloadSpeedKbps === 'number' && (
+                    <div className="text-xs text-zinc-400 mt-1">
+                      Speed: {dl.currentDownload.currentDownloadSpeedKbps!.toFixed(1)} KB/s
+                    </div>
+                  )}
                 </div>
               </div>
-              <div className="text-xs text-zinc-400">
-                {dl.currentDownload.status} {dl.currentDownload.completedTracks}/{dl.currentDownload.totalTracks}
+
+              <div className="mt-3">
+                <ProgressIndicator
+                  progressPercent={
+                    dl.currentDownload.totalTracks > 0
+                      ? Math.min(
+                          100,
+                          Math.round(
+                            (dl.currentDownload.completedTracks / dl.currentDownload.totalTracks) * 100
+                          )
+                        )
+                      : 0
+                  }
+                />
               </div>
+
+              {/* Compact current track row */}
+              {typeof dl.currentDownload.currentTrackProgressPercent === 'number' && (
+                <div className="mt-3 text-xs text-zinc-400">
+                  Current track: {Math.max(1, dl.currentDownload.completedTracks)} / {dl.currentDownload.totalTracks}
+                  <div className="mt-1">
+                    <ProgressIndicator progressPercent={Math.max(0, Math.min(100, dl.currentDownload.currentTrackProgressPercent!))} />
+                  </div>
+                </div>
+              )}
+
               {dl.currentDownload.errorMessage && (
-                <div className="text-xs text-red-400">{dl.currentDownload.errorMessage}</div>
+                <div className="text-sm text-red-400 mt-2">{dl.currentDownload.errorMessage}</div>
               )}
             </div>
           ) : (
@@ -162,6 +196,7 @@ export const QueuesPage: React.FC = () => {
               <div className="flex items-center gap-3">
                 <Link to={`/artist/${q.artistId}/release/${q.releaseFolderName}`}>
                   <ReleaseCoverArt
+                    srcUrl={`/library/${q.artistId}/releases/${q.releaseFolderName}/coverart`}
                     titleForPlaceholder={q.releaseFolderName}
                     className="w-8 h-8 rounded object-cover border border-zinc-700"
                   />
@@ -188,6 +223,7 @@ export const QueuesPage: React.FC = () => {
                 {h.releaseFolderName ? (
                   <Link to={`/artist/${h.artistId}/release/${h.releaseFolderName}`}>
                     <ReleaseCoverArt
+                      srcUrl={`/library/${h.artistId}/releases/${h.releaseFolderName}/coverart`}
                       titleForPlaceholder={h.releaseTitle ?? h.releaseFolderName}
                       className="w-8 h-8 rounded object-cover border border-zinc-700"
                     />
@@ -266,6 +302,7 @@ export const QueuesPage: React.FC = () => {
                 {h.releaseFolderName ? (
                   <Link to={`/artist/${h.localArtistId ?? h.artistName}/release/${h.releaseFolderName}`}>
                     <ReleaseCoverArt
+                      srcUrl={`/library/${h.localArtistId ?? h.artistName}/releases/${h.releaseFolderName}/coverart`}
                       titleForPlaceholder={h.releaseFolderName}
                       className="w-8 h-8 rounded object-cover border border-zinc-700"
                     />

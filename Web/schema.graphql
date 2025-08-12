@@ -278,9 +278,14 @@ type DownloadHistoryItem {
 
 type DownloadProgress {
   artistId: String!
+  artistName: String
   completedTracks: Int!
+  coverArtUrl: String
+  currentDownloadSpeedKbps: Float
+  currentTrackProgressPercent: Float
   errorMessage: String
   releaseFolderName: String!
+  releaseTitle: String
   status: DownloadStatus!
   totalTracks: Int!
 }

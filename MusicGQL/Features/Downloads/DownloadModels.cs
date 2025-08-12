@@ -38,6 +38,13 @@ public record DownloadProgress
     public int TotalTracks { get; init; }
     public int CompletedTracks { get; init; }
     public string? ErrorMessage { get; init; }
+
+    // Optional rich metadata for better UI
+    public string? ArtistName { get; init; }
+    public string? ReleaseTitle { get; init; }
+    public string? CoverArtUrl { get; init; }
+    public double? CurrentTrackProgressPercent { get; init; }
+    public double? CurrentDownloadSpeedKbps { get; init; }
 }
 
 

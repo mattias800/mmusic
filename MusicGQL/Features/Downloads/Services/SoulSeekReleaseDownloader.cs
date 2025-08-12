@@ -58,7 +58,10 @@ public class SoulSeekReleaseDownloader(
             ReleaseFolderName = releaseFolderName,
             Status = DownloadStatus.Searching,
             TotalTracks = expectedTrackCount,
-            CompletedTracks = 0
+            CompletedTracks = 0,
+            ArtistName = cachedRelease?.ArtistName ?? artistName,
+            ReleaseTitle = cachedRelease?.Title ?? releaseTitle,
+            CoverArtUrl = Features.ServerLibrary.Utils.LibraryAssetUrlFactory.CreateReleaseCoverArtUrl(artistId, releaseFolderName)
         });
         int minRequiredTracks = expectedTrackCount > 0
             ? Math.Max(2, Math.Min(expectedTrackCount, expectedTrackCount - 1))
@@ -233,7 +236,71 @@ public class SoulSeekReleaseDownloader(
 
                 try
                 {
-                    await client.DownloadAsync(item.Username, item.FileName, localPath);
+                    var sw = System.Diagnostics.Stopwatch.StartNew();
+                    long lastBytes = 0;
+                    var lastTick = DateTime.UtcNow;
+                    // Wire progress callback via TransferOptions (Soulseek.NET)
+                    var options = new TransferOptions(
+                        progressUpdated: (update) =>
+                        {
+                            try
+                            {
+                                var previousBytesTransferred = update.PreviousBytesTransferred;
+                                var transfer = update.Transfer;
+                                var received = transfer.BytesTransferred;
+                                var total = transfer.Size;
+
+                                var now = DateTime.UtcNow;
+                                var seconds = Math.Max(0.001, (now - lastTick).TotalSeconds);
+                                var delta = Math.Max(0, received - previousBytesTransferred);
+                                var kbps = (delta / 1024.0) / seconds;
+                                lastTick = now;
+
+                                double percent = total > 0 ? (received * 100.0) / total : 0;
+                                progress.Set(new DownloadProgress
+                                {
+                                    ArtistId = artistId,
+                                    ReleaseFolderName = releaseFolderName,
+                                    Status = DownloadStatus.Downloading,
+                                    TotalTracks = expectedTrackCount,
+                                    CompletedTracks = trackIndex + 1,
+                                    ArtistName = cachedRelease?.ArtistName ?? artistName,
+                                    ReleaseTitle = cachedRelease?.Title ?? releaseTitle,
+                                    CoverArtUrl = Features.ServerLibrary.Utils.LibraryAssetUrlFactory.CreateReleaseCoverArtUrl(artistId, releaseFolderName),
+                                    CurrentTrackProgressPercent = percent,
+                                    CurrentDownloadSpeedKbps = kbps,
+                                });
+                            }
+                            catch { }
+                        }
+                    );
+
+                    await client.DownloadAsync(
+                        item.Username,
+                        item.FileName,
+                        localPath,
+                        options: options,
+                        cancellationToken: default
+                    );
+                    sw.Stop();
+                    // Final push on completion
+                    try
+                    {
+                        progress.Set(new DownloadProgress
+                        {
+                            ArtistId = artistId,
+                            ReleaseFolderName = releaseFolderName,
+                            Status = DownloadStatus.Downloading,
+                            TotalTracks = expectedTrackCount,
+                            CompletedTracks = trackIndex + 1,
+                            ArtistName = cachedRelease?.ArtistName ?? artistName,
+                            ReleaseTitle = cachedRelease?.Title ?? releaseTitle,
+                            CoverArtUrl = Features.ServerLibrary.Utils.LibraryAssetUrlFactory.CreateReleaseCoverArtUrl(artistId, releaseFolderName),
+                            CurrentTrackProgressPercent = 100,
+                            CurrentDownloadSpeedKbps = null,
+                        });
+                    }
+                    catch { }
                 }
                 catch (Exception ex)
                 {

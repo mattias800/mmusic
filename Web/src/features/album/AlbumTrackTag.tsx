@@ -19,7 +19,7 @@ export const AlbumTrackTag: React.FC<AlbumTrackTagProps> = (props) => {
   const track = useFragment(albumTrackTagTrackFragment, props.track);
 
   if (!track) {
-    return null;
+    return <Tag variant={"error"}>Missing</Tag>;
   }
 
   if (track.mediaAvailabilityStatus === MediaAvailabilityStatus.Downloading) {
