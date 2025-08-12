@@ -103,6 +103,21 @@ const refreshArtistMetaDataMutation = graphql(`
   }
 `);
 
+const refreshAllReleasesMutation = graphql(`
+  mutation RefreshAllReleasesForArtist($artistId: String!) {
+    refreshAllReleasesForArtist(artistId: $artistId) {
+      __typename
+      ... on RefreshAllReleasesForArtistSuccess {
+        artistId
+        refreshedCount
+      }
+      ... on RefreshAllReleasesForArtistError {
+        message
+      }
+    }
+  }
+`);
+
 export const ArtistPanel: React.FC<ArtistPanelProps> = (props) => {
   const artist = useFragment(artistPanelArtistFragment, props.artist);
 
@@ -111,6 +126,9 @@ export const ArtistPanel: React.FC<ArtistPanelProps> = (props) => {
   );
   const [{ fetching: loadingLastFm }, refreshArtistMetaData] = useMutation(
     refreshArtistMetaDataMutation,
+  );
+  const [{ fetching: loadingRefreshAll }, refreshAllReleases] = useMutation(
+    refreshAllReleasesMutation,
   );
 
   // Live updates: merge updated artist into cache when subscription fires
@@ -129,6 +147,9 @@ export const ArtistPanel: React.FC<ArtistPanelProps> = (props) => {
   const onRefreshMetaData = () =>
     refreshArtistMetaData({ artistId: artist.id });
 
+  const onRefreshAllReleases = () =>
+    refreshAllReleases({ artistId: artist.id });
+
   return (
     <GradientContent>
       <ArtistHeader
@@ -145,9 +166,10 @@ export const ArtistPanel: React.FC<ArtistPanelProps> = (props) => {
           artistId={artist.id}
           artistName={artist.name}
           loadingTopTracks={loadingTopTracks}
-          loadingMetaData={loadingLastFm}
+          loadingMetaData={loadingLastFm || loadingRefreshAll}
           onRefreshTopTracks={onRefreshTopTracks}
           onRefreshMetaData={onRefreshMetaData}
+          onRefreshAllReleaseMetadata={onRefreshAllReleases}
         />
 
         <ArtistImportStatusInfo

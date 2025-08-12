@@ -675,6 +675,7 @@ type Mutation {
   movePlaylistItem(input: MovePlaylistItemInput!): MovePlaylistItemResult!
   ping: Boolean!
   redownloadRelease(input: RedownloadReleaseInput!): RedownloadReleaseResult!
+  refreshAllReleasesForArtist(artistId: String!): RefreshAllReleasesForArtistResult!
   refreshArtistMetaData(input: RefreshArtistMetaDataInput!): RefreshArtistMetaDataResult!
   refreshArtistTopTracks(input: RefreshArtistTopTracksInput!): RefreshArtistTopTracksResult!
   refreshRelease(input: RefreshReleaseInput!): RefreshReleaseResult!
@@ -790,6 +791,17 @@ union RedownloadReleaseResult = RedownloadReleaseError | RedownloadReleaseSucces
 
 type RedownloadReleaseSuccess {
   release: Release!
+}
+
+type RefreshAllReleasesForArtistError {
+  message: String!
+}
+
+union RefreshAllReleasesForArtistResult = RefreshAllReleasesForArtistError | RefreshAllReleasesForArtistSuccess
+
+type RefreshAllReleasesForArtistSuccess {
+  artistId: String!
+  refreshedCount: Int!
 }
 
 type RefreshArtistMetaDataError {

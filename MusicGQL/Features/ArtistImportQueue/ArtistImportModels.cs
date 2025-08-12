@@ -17,6 +17,17 @@ public record ArtistImportQueueItem(string ArtistName, string? SongTitle)
 
     [GraphQLIgnore]
     public string? PlaylistItemId { get; init; }
+
+    // New: job kind to support both initial import and release refresh tasks
+    [GraphQLIgnore]
+    public ArtistImportJobKind JobKind { get; init; } = ArtistImportJobKind.ImportArtist;
+
+    // New: for release refresh jobs
+    [GraphQLIgnore]
+    public string? LocalArtistId { get; init; }
+
+    [GraphQLIgnore]
+    public string? ReleaseFolderName { get; init; }
 }
 
 public record ArtistImportQueueState
@@ -33,6 +44,12 @@ public enum ArtistImportStatus
     ImportingReleases,
     Completed,
     Failed
+}
+
+public enum ArtistImportJobKind
+{
+    ImportArtist,
+    RefreshReleaseMetadata,
 }
 
 public record ArtistImportProgress

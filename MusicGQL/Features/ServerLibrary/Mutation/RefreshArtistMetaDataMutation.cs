@@ -10,12 +10,12 @@ namespace MusicGQL.Features.ServerLibrary.Mutation;
 public class RefreshArtistMetaDataMutation
 {
     public async Task<RefreshArtistMetaDataResult> RefreshArtistMetaData(
-        RefreshArtistMetaDataInput input,
-        [Service] ServerLibraryCache cache,
-        [Service] LastFmEnrichmentService enrichment,
-        [Service] MusicGQL.Features.Import.Services.IImportExecutor importExecutor,
-        [Service] ILogger<RefreshArtistMetaDataMutation> logger,
-        [Service] HotChocolate.Subscriptions.ITopicEventSender eventSender
+        ServerLibraryCache cache,
+        LastFmEnrichmentService enrichment,
+        IImportExecutor importExecutor,
+        ILogger<RefreshArtistMetaDataMutation> logger,
+        HotChocolate.Subscriptions.ITopicEventSender eventSender,
+        RefreshArtistMetaDataInput input
     )
     {
         logger.LogInformation("[RefreshArtistMetaData] Requested refresh for artistId='{ArtistId}'", input.ArtistId);
@@ -28,16 +28,20 @@ public class RefreshArtistMetaDataMutation
             try
             {
                 var matches = await cache.SearchArtistsByNameAsync(input.ArtistId, 10);
-                var exact = matches.FirstOrDefault(a => string.Equals(a.Name, input.ArtistId, StringComparison.OrdinalIgnoreCase));
+                var exact = matches.FirstOrDefault(a =>
+                    string.Equals(a.Name, input.ArtistId, StringComparison.OrdinalIgnoreCase));
                 if (exact != null)
                 {
-                    logger.LogInformation("[RefreshArtistMetaData] Artist not found by id. Using exact name match -> id='{Id}'", exact.Id);
+                    logger.LogInformation(
+                        "[RefreshArtistMetaData] Artist not found by id. Using exact name match -> id='{Id}'",
+                        exact.Id);
                     artist = exact;
                 }
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "[RefreshArtistMetaData] Error during name fallback for '{ArtistId}'", input.ArtistId);
+                logger.LogError(ex, "[RefreshArtistMetaData] Error during name fallback for '{ArtistId}'",
+                    input.ArtistId);
             }
         }
 
@@ -62,24 +66,29 @@ public class RefreshArtistMetaDataMutation
         }
         catch (Exception ex)
         {
-            logger.LogWarning(ex, "[RefreshArtistMetaData] Import/enrich executor failed; continuing to Last.fm enrichment");
+            logger.LogWarning(ex,
+                "[RefreshArtistMetaData] Import/enrich executor failed; continuing to Last.fm enrichment");
         }
 
         var res = await enrichment.EnrichArtistAsync(dir, mbId!);
         if (!res.Success)
         {
-            logger.LogWarning("[RefreshArtistMetaData] Enrichment failed for artistId='{ArtistId}': {Error}", effectiveArtistId, res.ErrorMessage ?? "Unknown error");
+            logger.LogWarning("[RefreshArtistMetaData] Enrichment failed for artistId='{ArtistId}': {Error}",
+                effectiveArtistId, res.ErrorMessage ?? "Unknown error");
             return new RefreshArtistMetaDataError(res.ErrorMessage ?? "Unknown error");
         }
 
-        logger.LogInformation("[RefreshArtistMetaData] Enrichment complete for artistId='{ArtistId}'. Updating cache...", effectiveArtistId);
+        logger.LogInformation(
+            "[RefreshArtistMetaData] Enrichment complete for artistId='{ArtistId}'. Updating cache...",
+            effectiveArtistId);
         await cache.UpdateCacheAsync();
 
         var artistAfterRefresh = await cache.GetArtistByIdAsync(effectiveArtistId);
 
         if (artistAfterRefresh == null)
         {
-            logger.LogError("[RefreshArtistMetaData] Artist not found in cache after refresh for id='{ArtistId}'", effectiveArtistId);
+            logger.LogError("[RefreshArtistMetaData] Artist not found in cache after refresh for id='{ArtistId}'",
+                effectiveArtistId);
             return new RefreshArtistMetaDataError("Could not find artist after refresh");
         }
 
@@ -87,11 +96,13 @@ public class RefreshArtistMetaDataMutation
         try
         {
             await eventSender.SendAsync(
-                Features.ServerLibrary.Subscription.LibrarySubscription.LibraryArtistUpdatedTopic(artistAfterRefresh.Id),
+                Subscription.LibrarySubscription.LibraryArtistUpdatedTopic(artistAfterRefresh.Id),
                 new Artist(artistAfterRefresh)
             );
         }
-        catch { }
+        catch
+        {
+        }
 
         logger.LogInformation("[RefreshArtistMetaData] Success for artistId='{ArtistId}'", effectiveArtistId);
         return new RefreshArtistMetaDataSuccess(new Artist(artistAfterRefresh));

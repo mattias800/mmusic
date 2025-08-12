@@ -1,10 +1,13 @@
 using MusicGQL.Features.Import;
+using MusicGQL.Features.Import.Services;
 using MusicGQL.Features.ServerLibrary.Utils;
 using MusicGQL.Integration.MusicBrainz;
 using Microsoft.EntityFrameworkCore;
 using MusicGQL.Db.Postgres;
 using MusicGQL.Features.Artists;
 using MusicGQL.Features.Playlists.Subscription;
+using MusicGQL.Features.ServerLibrary;
+using Path = System.IO.Path;
 
 namespace MusicGQL.Features.ArtistImportQueue.Services;
 
@@ -62,6 +65,80 @@ public class ArtistImportWorker(
                 if (!queue.TryDequeue(out var item) || item is null)
                 {
                     await Task.Delay(TimeSpan.FromSeconds(2), stoppingToken);
+                    continue;
+                }
+
+                if (item.JobKind == ArtistImportJobKind.RefreshReleaseMetadata &&
+                    !string.IsNullOrWhiteSpace(item.LocalArtistId) &&
+                    !string.IsNullOrWhiteSpace(item.ReleaseFolderName))
+                {
+                    // Handle release metadata refresh as part of the same worker
+                    var artistId = item.LocalArtistId!;
+                    var releaseFolderName = item.ReleaseFolderName!;
+                    logger.LogInformation("[ArtistImportWorker] Refreshing release metadata for {Artist}/{Folder}", artistId, releaseFolderName);
+
+                    var release = await cache.GetReleaseByArtistAndFolderAsync(artistId, releaseFolderName);
+                    if (release == null)
+                    {
+                        logger.LogWarning("[ArtistImportWorker] Release not found: {Artist}/{Folder}", artistId, releaseFolderName);
+                        continue;
+                    }
+                    var artist = await cache.GetArtistByIdAsync(artistId);
+                    var mbidForRefresh = artist?.JsonArtist.Connections?.MusicBrainzArtistId;
+                    if (string.IsNullOrWhiteSpace(mbidForRefresh))
+                    {
+                        logger.LogWarning("[ArtistImportWorker] Artist missing MBID: {Artist}", artistId);
+                        continue;
+                    }
+
+                    try
+                    {
+                        var artistFolderPath = Path.GetDirectoryName(release.ReleasePath) ?? Path.Combine("./Library", artistId);
+
+                        string? releaseGroupId = release.JsonRelease.Connections?.MusicBrainzReleaseGroupId;
+                        string? primaryType = null;
+
+                        if (string.IsNullOrWhiteSpace(releaseGroupId))
+                        {
+                            var rgs = await mb.GetReleaseGroupsForArtistAsync(mbidForRefresh);
+                            var match = rgs.FirstOrDefault(rg => string.Equals(rg.Title, release.Title, StringComparison.OrdinalIgnoreCase));
+                            if (match == null)
+                            {
+                                logger.LogWarning("[ArtistImportWorker] No RG match for {Artist}/{Folder}", artistId, releaseFolderName);
+                                continue;
+                            }
+                            releaseGroupId = match.Id;
+                            primaryType = match.PrimaryType;
+                        }
+
+                        var releaseImporter = scope.ServiceProvider.GetRequiredService<LibraryReleaseImportService>();
+                        if (!string.IsNullOrWhiteSpace(releaseGroupId))
+                        {
+                            await releaseImporter.ImportReleaseGroupInPlaceAsync(
+                                releaseGroupId,
+                                release.Title,
+                                primaryType,
+                                artistFolderPath,
+                                artistId,
+                                releaseFolderName
+                            );
+                        }
+
+                        await cache.UpdateReleaseFromJsonAsync(artistId, releaseFolderName);
+                        var updated = await cache.GetReleaseByArtistAndFolderAsync(artistId, releaseFolderName);
+                        if (updated != null)
+                        {
+                            await events.SendAsync(ServerLibrary.Subscription.LibrarySubscription.LibraryReleaseMetadataUpdatedTopic(artistId, releaseFolderName), new Release(updated));
+                            await events.SendAsync(ServerLibrary.Subscription.LibrarySubscription.LibraryReleaseUpdatedTopic(artistId, releaseFolderName), new Release(updated));
+                            await events.SendAsync(ServerLibrary.Subscription.LibrarySubscription.LibraryArtistReleaseUpdatedTopic(artistId), new Release(updated));
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.LogError(ex, "[ArtistImportWorker] Error refreshing {Artist}/{Folder}", artistId, releaseFolderName);
+                    }
+
+                    // go back to next queue item
                     continue;
                 }
 

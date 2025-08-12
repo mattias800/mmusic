@@ -10,7 +10,7 @@ public class StartBulkDownloadForArtistMutation
     public async Task<StartBulkDownloadForArtistResult> StartBulkDownloadForArtist(
         [Service] StartDownloadReleaseService service,
         [Service] ServerLibraryCache cache,
-        [Service] Services.DownloadQueueService queue,
+        [Service] DownloadQueueService queue,
         StartBulkDownloadForArtistInput input
     )
     {
@@ -32,7 +32,7 @@ public class StartBulkDownloadForArtistMutation
         int queued = 0;
         foreach (var r in releases)
         {
-            try { queue.Enqueue(new Features.Downloads.DownloadQueueItem(input.ArtistId, r.FolderName)); } catch { }
+            try { queue.Enqueue(new DownloadQueueItem(input.ArtistId, r.FolderName)); } catch { }
             var (ok, _) = await service.StartAsync(input.ArtistId, r.FolderName);
             if (ok) queued++;
         }

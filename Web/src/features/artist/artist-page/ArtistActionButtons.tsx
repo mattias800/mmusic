@@ -20,6 +20,7 @@ export interface ArtistActionButtonsProps {
   loadingMetaData: boolean;
   onRefreshTopTracks: () => void;
   onRefreshMetaData: () => void;
+  onRefreshAllReleaseMetadata?: () => void;
 }
 
 export const ArtistActionButtons: React.FC<ArtistActionButtonsProps> = ({
@@ -29,6 +30,7 @@ export const ArtistActionButtons: React.FC<ArtistActionButtonsProps> = ({
   loadingMetaData,
   onRefreshTopTracks,
   onRefreshMetaData,
+  onRefreshAllReleaseMetadata,
 }) => {
   const [fixOpen, setFixOpen] = React.useState(false);
   const anyLoading = loadingTopTracks || loadingMetaData;
@@ -49,6 +51,9 @@ export const ArtistActionButtons: React.FC<ArtistActionButtonsProps> = ({
           </DropdownMenuItem>
           <DropdownMenuItem onSelect={onRefreshMetaData}>
             Refresh artist metadata
+          </DropdownMenuItem>
+          <DropdownMenuItem onSelect={onRefreshAllReleaseMetadata}>
+            Refresh all release metadata
           </DropdownMenuItem>
           <DropdownMenuLabel>Fix</DropdownMenuLabel>
           <DropdownMenuItem onSelect={() => setFixOpen(true)}>

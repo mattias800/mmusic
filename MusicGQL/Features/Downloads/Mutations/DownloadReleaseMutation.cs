@@ -11,12 +11,12 @@ public class StartDownloadReleaseMutation
     public async Task<StartDownloadReleaseResult> StartDownloadRelease(
         [Service] StartDownloadReleaseService service,
         [Service] ServerLibraryCache cache,
-        [Service] Services.DownloadQueueService queue,
+        [Service] DownloadQueueService queue,
         StartDownloadReleaseInput input
     )
     {
         // Enqueue for visibility in the downloads queue UI (best effort)
-        try { queue.Enqueue(new Features.Downloads.DownloadQueueItem(input.ArtistId, input.ReleaseFolderName)); } catch { }
+        try { queue.Enqueue(new DownloadQueueItem(input.ArtistId, input.ReleaseFolderName)); } catch { }
 
         var (success, error) = await service.StartAsync(input.ArtistId, input.ReleaseFolderName);
         if (!success)
