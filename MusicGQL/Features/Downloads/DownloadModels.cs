@@ -14,6 +14,7 @@ public enum DownloadStatus
 
 public record DownloadQueueItem(string ArtistId, string ReleaseFolderName)
 {
+    public string Id => QueueKey ?? $"{ArtistId}|{ReleaseFolderName}";
     [GraphQLIgnore]
     public string? ArtistName { get; init; }
 
@@ -26,12 +27,14 @@ public record DownloadQueueItem(string ArtistId, string ReleaseFolderName)
 
 public record DownloadQueueState
 {
+    public string Id { get; init; } = "downloadQueue";
     public int QueueLength { get; init; }
     public List<DownloadQueueItem> Items { get; init; } = [];
 }
 
 public record DownloadProgress
 {
+    public string Id => $"{ArtistId}|{ReleaseFolderName}";
     public string ArtistId { get; init; } = string.Empty;
     public string ReleaseFolderName { get; init; } = string.Empty;
     public DownloadStatus Status { get; init; } = DownloadStatus.Idle;

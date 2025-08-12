@@ -10,6 +10,7 @@ const query = graphql(`
   query QueuesPage_Query {
     downloads {
       currentDownload {
+        id
         artistId
         releaseFolderName
         status
@@ -23,8 +24,10 @@ const query = graphql(`
         currentDownloadSpeedKbps
       }
       downloadQueue {
+        id
         queueLength
         items {
+          id
           artistId
           releaseFolderName
           queueKey
@@ -42,6 +45,7 @@ const query = graphql(`
     }
     artistImport {
       currentArtistImport {
+        id
         artistName
         statusInfo { id text }
         totalReleases
@@ -49,8 +53,9 @@ const query = graphql(`
         errorMessage
       }
       artistImportQueue {
+        id
         queueLength
-        items { artistName songTitle queueKey }
+        items { id artistName songTitle queueKey }
       }
       artistImportHistory {
         timestampUtc
@@ -165,11 +170,11 @@ export const QueuesPage: React.FC = () => {
                 </Link>
                 <div className="flex-1 min-w-0">
                   <div className="truncate text-lg font-semibold">
-                    <Link to={`/artist/${dl.currentDownload.artistId}`} className="text-blue-400 hover:underline">
+                    <Link to={`/artist/${dl.currentDownload.artistId}`} className="hover:underline">
                       {dl.currentDownload.artistName ?? dl.currentDownload.artistId}
                     </Link>
-                    {" / "}
-                    <Link to={`/artist/${dl.currentDownload.artistId}/release/${dl.currentDownload.releaseFolderName}`} className="text-blue-400 hover:underline">
+                    {" - "}
+                    <Link to={`/artist/${dl.currentDownload.artistId}/release/${dl.currentDownload.releaseFolderName}`} className="hover:underline">
                       {dl.currentDownload.releaseTitle ?? dl.currentDownload.releaseFolderName}
                     </Link>
                   </div>
@@ -231,9 +236,9 @@ export const QueuesPage: React.FC = () => {
                   />
                 </Link>
                 <div>
-                  <Link to={`/artist/${q.artistId}`} className="text-blue-400 hover:underline">{q.artistId}</Link>
-                  {"/"}
-                  <Link to={`/artist/${q.artistId}/release/${q.releaseFolderName}`} className="text-blue-400 hover:underline">{q.releaseFolderName}</Link>
+                  <Link to={`/artist/${q.artistId}`} className="hover:underline">{q.artistId}</Link>
+                  {" - "}
+                  <Link to={`/artist/${q.artistId}/release/${q.releaseFolderName}`} className="hover:underline">{q.releaseFolderName}</Link>
                 </div>
               </div>
               <Button
@@ -269,11 +274,11 @@ export const QueuesPage: React.FC = () => {
                 )}
                 <div className="text-zinc-400">
                   {new Date(h.timestampUtc).toLocaleString()} — {" "}
-                  <Link to={`/artist/${h.artistId}`} className="text-blue-400 hover:underline">{h.artistName ?? h.artistId}</Link>
+                  <Link to={`/artist/${h.artistId}`} className="hover:underline">{h.artistName ?? h.artistId}</Link>
                   {h.releaseFolderName ? (
                     <>
                       {"/"}
-                      <Link to={`/artist/${h.artistId}/release/${h.releaseFolderName}`} className="text-blue-400 hover:underline">{h.releaseTitle ?? h.releaseFolderName}</Link>
+                      <Link to={`/artist/${h.artistId}/release/${h.releaseFolderName}`} className="hover:underline">{h.releaseTitle ?? h.releaseFolderName}</Link>
                     </>
                   ) : null}
                 </div>
@@ -293,7 +298,7 @@ export const QueuesPage: React.FC = () => {
           {ai.currentArtistImport ? (
             <div className="text-sm text-zinc-300">
               <div>
-                <Link to={`/artist/${ai.currentArtistImport.artistName}`} className="text-blue-400 hover:underline">
+                <Link to={`/artist/${ai.currentArtistImport.artistName}`} className="hover:underline">
                   {ai.currentArtistImport.artistName}
                 </Link>
               </div>
@@ -316,7 +321,7 @@ export const QueuesPage: React.FC = () => {
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded bg-zinc-800 border border-zinc-700" />
                 <div>
-                  <Link to={`/artist/${q.artistName}`} className="text-blue-400 hover:underline">{q.artistName}</Link>
+                  <Link to={`/artist/${q.artistName}`} className="hover:underline">{q.artistName}</Link>
                   {q.songTitle ? ` — ${q.songTitle}` : ""}
                 </div>
               </div>
@@ -355,11 +360,11 @@ export const QueuesPage: React.FC = () => {
                 )}
                 <div className="text-zinc-400">
                   {new Date(h.timestampUtc).toLocaleString()} — {" "}
-                  <Link to={`/artist/${h.localArtistId ?? h.artistName}`} className="text-blue-400 hover:underline">{h.artistName}</Link>
+                  <Link to={`/artist/${h.localArtistId ?? h.artistName}`} className="hover:underline">{h.artistName}</Link>
                   {h.releaseFolderName ? (
                     <>
                       {"/"}
-                      <Link to={`/artist/${h.localArtistId ?? h.artistName}/release/${h.releaseFolderName}`} className="text-blue-400 hover:underline">{h.releaseFolderName}</Link>
+                      <Link to={`/artist/${h.localArtistId ?? h.artistName}/release/${h.releaseFolderName}`} className="hover:underline">{h.releaseFolderName}</Link>
                     </>
                   ) : null}
                 </div>

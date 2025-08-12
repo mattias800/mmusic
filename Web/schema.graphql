@@ -123,6 +123,7 @@ type ArtistImportProgress {
   artistName: String!
   completedReleases: Int!
   errorMessage: String
+  id: String!
   songTitle: String
   status: ArtistImportStatus!
   statusInfo: ArtistImportStatusInfo!
@@ -131,6 +132,7 @@ type ArtistImportProgress {
 
 type ArtistImportQueueItem {
   artistName: String!
+  id: String!
   jobKind: ArtistImportJobKind!
   localArtistId: String
   queueKey: String
@@ -139,6 +141,7 @@ type ArtistImportQueueItem {
 }
 
 type ArtistImportQueueState {
+  id: String!
   items: [ArtistImportQueueItem!]!
   queueLength: Int!
 }
@@ -285,6 +288,7 @@ type DownloadProgress {
   currentDownloadSpeedKbps: Float
   currentTrackProgressPercent: Float
   errorMessage: String
+  id: String!
   releaseFolderName: String!
   releaseTitle: String
   status: DownloadStatus!
@@ -293,11 +297,13 @@ type DownloadProgress {
 
 type DownloadQueueItem {
   artistId: String!
+  id: String!
   queueKey: String
   releaseFolderName: String!
 }
 
 type DownloadQueueState {
+  id: String!
   items: [DownloadQueueItem!]!
   queueLength: Int!
 }

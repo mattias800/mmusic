@@ -50,7 +50,7 @@ public class MissingLibraryItemsDetectorWorker(
                 var candidates = allReleases
                     .Where(r => (r.Tracks?.Count ?? 0) > 0 && r.Tracks.All(t =>
                         t.CachedMediaAvailabilityStatus != CachedMediaAvailabilityStatus.Available))
-                    .Select(r => new { r.ArtistId, r.FolderName })
+                    .Select(r => new { r.ArtistId, r.FolderName, r.JsonRelease.Type })
                     .Distinct()
                     .ToList();
 
@@ -74,12 +74,20 @@ public class MissingLibraryItemsDetectorWorker(
                 }
 
                 // Shuffle candidates
-                var rng = new Random();
-                for (int i = candidates.Count - 1; i > 0; i--)
+                // Prioritize by type: Album > Ep > Single, then shuffle within each priority
+                int Priority(MusicGQL.Features.ServerLibrary.Json.JsonReleaseType t) => t switch
                 {
-                    int j = rng.Next(i + 1);
-                    (candidates[i], candidates[j]) = (candidates[j], candidates[i]);
-                }
+                    MusicGQL.Features.ServerLibrary.Json.JsonReleaseType.Album => 0,
+                    MusicGQL.Features.ServerLibrary.Json.JsonReleaseType.Ep => 1,
+                    MusicGQL.Features.ServerLibrary.Json.JsonReleaseType.Single => 2,
+                    _ => 3
+                };
+                var rng = new Random();
+                candidates = candidates
+                    .GroupBy(c => Priority(c.Type))
+                    .OrderBy(g => g.Key)
+                    .SelectMany(g => g.OrderBy(_ => rng.Next()))
+                    .ToList();
 
                 var take = Math.Min(opts.MaxBatchSize, deficit);
                 var toEnqueue = candidates.Take(take).Select(c => new DownloadQueueItem(c.ArtistId, c.FolderName))

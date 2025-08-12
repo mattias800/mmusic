@@ -82,6 +82,7 @@ public class DownloadQueueService(
         var items = _queue.ToArray();
         return new DownloadQueueState
         {
+            Id = "downloadQueue",
             QueueLength = items.Length,
             Items = items.Take(25).ToList(),
         };

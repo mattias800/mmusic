@@ -12,11 +12,13 @@ const downloadOverviewFetcherQuery = graphql(`
       downloadQueue {
         queueLength
         items {
+          id
           artistId
           releaseFolderName
         }
       }
       currentDownload {
+        id
         artistId
         releaseFolderName
         status
@@ -33,6 +35,7 @@ const downloadQueueUpdatedSub = graphql(`
     downloadQueueUpdated {
       queueLength
       items {
+        id
         artistId
         releaseFolderName
       }
@@ -43,6 +46,7 @@ const downloadQueueUpdatedSub = graphql(`
 const currentDownloadUpdatedSub = graphql(`
   subscription CurrentDownloadUpdatedSub {
     currentDownloadUpdated {
+      id
       artistId
       releaseFolderName
       status

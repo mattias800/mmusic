@@ -8,13 +8,16 @@ const query = graphql(`
   query ArtistImportQueuePanel_Query {
     artistImport {
       artistImportQueue {
+        id
         queueLength
         items {
+          id
           artistName
           songTitle
         }
       }
       currentArtistImport {
+        id
         artistName
         songTitle
         statusInfo {
@@ -32,8 +35,10 @@ const query = graphql(`
 const queueSub = graphql(`
   subscription ArtistImportQueueUpdatedSub {
     artistImportQueueUpdated {
+      id
       queueLength
       items {
+        id
         artistName
         songTitle
       }
@@ -44,6 +49,7 @@ const queueSub = graphql(`
 const currentSub = graphql(`
   subscription CurrentArtistImportUpdatedSub {
     currentArtistImportUpdated {
+      id
       artistName
       songTitle
       statusInfo {

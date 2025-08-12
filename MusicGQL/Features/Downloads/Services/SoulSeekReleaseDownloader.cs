@@ -190,10 +190,16 @@ public class SoulSeekReleaseDownloader(
         );
         progress.SetStatus(DownloadStatus.Downloading);
 
-        foreach (var candidate in orderedCandidates)
+            foreach (var candidate in orderedCandidates)
         {
             bool userFailed = false;
-            var queue = DownloadQueueFactory.Create(candidate);
+            var queue = DownloadQueueFactory.Create(
+                candidate,
+                artistName,
+                releaseTitle,
+                expectedTrackCount,
+                cachedRelease?.Tracks?.Where(t => !string.IsNullOrWhiteSpace(t.Title)).Select(t => t.Title!)
+            );
             int trackIndex = 0;
 
             logger.LogInformation(
