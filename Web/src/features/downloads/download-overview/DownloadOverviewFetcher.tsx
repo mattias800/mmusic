@@ -120,15 +120,8 @@ export const DownloadOverviewFetcher: React.FC<
 
       <div>
         <div className="font-medium text-zinc-200">
-          Queue ({queue?.queueLength ?? 0})
+          {queue?.queueLength ? `${queue.queueLength} in queue` : "Queue is empty"}
         </div>
-        <ul className="text-zinc-300 list-disc pl-4 space-y-1">
-          {queue?.items?.map((i, idx) => (
-            <li key={idx}>
-              {i.artistId}/{i.releaseFolderName}
-            </li>
-          ))}
-        </ul>
       </div>
     </div>
   );
