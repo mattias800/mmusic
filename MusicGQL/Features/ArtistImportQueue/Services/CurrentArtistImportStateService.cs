@@ -13,7 +13,12 @@ public class CurrentArtistImportStateService(
 
     public void Reset()
     {
-        _state = null;
+        // Publish an explicit Idle state instead of null so subscribers receive
+        // a non-null payload and UI can reliably transition to Idle.
+        _state = new ArtistImportProgress
+        {
+            Status = ArtistImportStatus.Idle,
+        };
         Publish();
     }
 
