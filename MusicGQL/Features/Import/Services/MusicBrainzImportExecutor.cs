@@ -148,6 +148,22 @@ public sealed class MusicBrainzImportExecutor(
                 jsonArtist.Name = artistDisplayName;
             if (string.IsNullOrWhiteSpace(jsonArtist.Id))
                 jsonArtist.Id = Path.GetFileName(artistDir) ?? artistDisplayName;
+            // Always refresh artist photos during enrich to keep assets up to date
+            try
+            {
+                var photos = await coverArtDownloadService.DownloadArtistPhotosAsync(
+                    mbArtistId,
+                    artistDir
+                );
+                jsonArtist.Photos = new JsonArtistPhotos
+                {
+                    Thumbs = photos.Thumbs.Any() ? photos.Thumbs : null,
+                    Backgrounds = photos.Backgrounds.Any() ? photos.Backgrounds : null,
+                    Banners = photos.Banners.Any() ? photos.Banners : null,
+                    Logos = photos.Logos.Any() ? photos.Logos : null,
+                };
+            }
+            catch { }
         }
 
         // Fetch Last.fm enrichment (only if missing or we just created)

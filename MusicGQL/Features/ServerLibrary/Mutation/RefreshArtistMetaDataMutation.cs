@@ -13,6 +13,7 @@ public class RefreshArtistMetaDataMutation
         RefreshArtistMetaDataInput input,
         [Service] ServerLibraryCache cache,
         [Service] LastFmEnrichmentService enrichment,
+        [Service] MusicGQL.Features.Import.Services.IImportExecutor importExecutor,
         [Service] ILogger<RefreshArtistMetaDataMutation> logger
     )
     {
@@ -53,6 +54,16 @@ public class RefreshArtistMetaDataMutation
             mbId,
             Path.GetFullPath(dir)
         );
+        // First, run the unified import/enrich executor to refresh assets (photos) and core connections
+        try
+        {
+            await importExecutor.ImportOrEnrichArtistAsync(dir, mbId!, artist.Name);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "[RefreshArtistMetaData] Import/enrich executor failed; continuing to Last.fm enrichment");
+        }
+
         var res = await enrichment.EnrichArtistAsync(dir, mbId!);
         if (!res.Success)
         {
