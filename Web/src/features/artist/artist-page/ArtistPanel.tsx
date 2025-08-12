@@ -107,7 +107,8 @@ export const ArtistPanel: React.FC<ArtistPanelProps> = (props) => {
   const onRefreshTopTracks = () =>
     refreshTopTracks({ input: { artistId: artist.id } });
 
-  const onRefreshLastFm = () => refreshArtistMetaData({ artistId: artist.id });
+  const onRefreshMetaData = () =>
+    refreshArtistMetaData({ artistId: artist.id });
 
   return (
     <GradientContent>
@@ -127,7 +128,7 @@ export const ArtistPanel: React.FC<ArtistPanelProps> = (props) => {
           loadingTopTracks={loadingTopTracks}
           loadingMetaData={loadingLastFm}
           onRefreshTopTracks={onRefreshTopTracks}
-          onRefreshMetaData={onRefreshLastFm}
+          onRefreshMetaData={onRefreshMetaData}
         />
 
         <ArtistImportStatusInfo

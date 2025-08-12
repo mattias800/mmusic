@@ -55,17 +55,18 @@ public record Artist([property: GraphQLIgnore] CachedArtist Model) : IArtistBase
 
     public IEnumerable<ArtistConnectedExternalService> ConnectedExternalServices()
     {
+        var connections = Model.JsonArtist.Connections;
         IEnumerable<ArtistConnectedExternalService> connectedExternalServices =
         [
-            new(ExternalServiceCatalog.Musicbrainz(), Model.JsonArtist.Connections?.MusicBrainzArtistId != null),
-            new(ExternalServiceCatalog.Spotify(), Model.JsonArtist.Connections?.SpotifyId != null),
-            new(ExternalServiceCatalog.Apple(), Model.JsonArtist.Connections?.AppleMusicArtistId != null),
-            new(ExternalServiceCatalog.Youtube(), Model.JsonArtist.Connections?.YoutubeChannelUrl != null),
-            new(ExternalServiceCatalog.Tidal(), Model.JsonArtist.Connections?.TidalArtistId != null),
-            new(ExternalServiceCatalog.Deezer(), Model.JsonArtist.Connections?.DeezerArtistId != null),
-            new(ExternalServiceCatalog.Soundcloud(), Model.JsonArtist.Connections?.SoundcloudUrl != null),
-            new(ExternalServiceCatalog.Bandcamp(), Model.JsonArtist.Connections?.BandcampUrl != null),
-            new(ExternalServiceCatalog.Discogs(), Model.JsonArtist.Connections?.DiscogsUrl != null),
+            new(ExternalServiceCatalog.Musicbrainz(), connections?.MusicBrainzArtistId != null, connections),
+            new(ExternalServiceCatalog.Spotify(), connections?.SpotifyId != null, connections),
+            new(ExternalServiceCatalog.Apple(), connections?.AppleMusicArtistId != null, connections),
+            new(ExternalServiceCatalog.Youtube(), connections?.YoutubeChannelUrl != null, connections),
+            new(ExternalServiceCatalog.Tidal(), connections?.TidalArtistId != null, connections),
+            new(ExternalServiceCatalog.Deezer(), connections?.DeezerArtistId != null, connections),
+            new(ExternalServiceCatalog.Soundcloud(), connections?.SoundcloudUrl != null, connections),
+            new(ExternalServiceCatalog.Bandcamp(), connections?.BandcampUrl != null, connections),
+            new(ExternalServiceCatalog.Discogs(), connections?.DiscogsUrl != null, connections),
         ];
         
         return connectedExternalServices.Where(p => p.Model.Enabled);
