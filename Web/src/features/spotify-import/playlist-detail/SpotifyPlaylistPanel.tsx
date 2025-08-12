@@ -8,9 +8,9 @@ import { Button } from "@/components/ui/button.tsx";
 import {
   CheckSquare,
   Download,
+  Library,
   Play,
   Square,
-  Library,
   Users,
 } from "lucide-react";
 import { PlaylistSummaryHeader } from "@/common/PlaylistSummaryHeader.tsx";
@@ -18,7 +18,6 @@ import { FragmentType, graphql, useFragment } from "@/gql";
 import { useMutation, useQuery } from "urql";
 import { ExternalPlaylistTrackListHeading } from "@/features/spotify-import/playlist-detail/ExternalPlaylistTrackListHeading.tsx";
 import { ExternalPlaylistTrackItem } from "@/features/spotify-import/playlist-detail/ExternalPlaylistTrackItem.tsx";
-import { graphql as g } from "@/gql";
 
 export interface SpotifyPlaylistPanelProps {
   playlist: FragmentType<typeof spotifyPlaylistPanelPlaylistFragment>;
@@ -54,28 +53,20 @@ const importSpotifyPlaylistByIdMutation = graphql(`
   mutation ImportSpotifyPlaylist($playlistId: String!, $userId: UUID!) {
     importSpotifyPlaylist(input: { playlistId: $playlistId, userId: $userId }) {
       __typename
-      ... on ImportSpotifyPlaylistSuccess { playlist { id name } }
-      ... on ImportSpotifyPlaylistError { message }
-    }
-  }
-`);
-
-const importArtistsFromSpotifyPlaylistMutation = graphql(`
-  mutation ImportArtistsFromSpotifyPlaylist($playlistId: String!) {
-    importArtistsFromSpotifyPlaylist(input: { playlistId: $playlistId }) {
-      __typename
-      ... on ImportArtistsFromSpotifyPlaylistSuccess {
-        artists { id name }
-        totalArtists
-        importedArtists
-        failedArtists
+      ... on ImportSpotifyPlaylistSuccess {
+        playlist {
+          id
+          name
+        }
       }
-      ... on ImportArtistsFromSpotifyPlaylistError { message }
+      ... on ImportSpotifyPlaylistError {
+        message
+      }
     }
   }
 `);
 
-const enqueueArtistsFromPlaylistMutation = g(`
+const enqueueArtistsFromPlaylistMutation = graphql(`
   mutation EnqueueArtistsFromSpotifyPlaylist($playlistId: String!) {
     enqueueArtistsFromSpotifyPlaylist(input: { playlistId: $playlistId })
   }
@@ -104,9 +95,6 @@ export const SpotifyPlaylistPanel: React.FC<SpotifyPlaylistPanelProps> = (
   const [{ data: viewerData }] = useQuery({ query: viewerQuery });
 
   const [, importPlaylist] = useMutation(importSpotifyPlaylistByIdMutation);
-  const [, importArtists] = useMutation(
-    importArtistsFromSpotifyPlaylistMutation,
-  );
   const [, enqueueArtists] = useMutation(enqueueArtistsFromPlaylistMutation);
 
   const handleImportPlaylist = async () => {
@@ -115,10 +103,6 @@ export const SpotifyPlaylistPanel: React.FC<SpotifyPlaylistPanelProps> = (
       playlistId: playlist.id,
       userId: viewerData.viewer.id,
     });
-  };
-
-  const handleImportArtists = async () => {
-    await importArtists({ playlistId: playlist.id });
   };
 
   const handleEnqueueArtists = async () => {
@@ -144,51 +128,53 @@ export const SpotifyPlaylistPanel: React.FC<SpotifyPlaylistPanelProps> = (
               totalMinutes={totalMs / 60000}
               actions={
                 <>
-                  <Button size="sm" iconLeft={Play} disabled>
-                    Play (Spotify)
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    iconLeft={Download}
-                    disabled
-                  >
-                    Import selected ({selectedCount})
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    iconLeft={selectAll ? CheckSquare : Square}
-                    onClick={() => setSelectAll((s) => !s)}
-                  >
-                    {selectAll ? "Unselect all" : "Select all"}
-                  </Button>
-                  <Button
-                    size="sm"
-                    iconLeft={Library}
-                    onClick={handleImportPlaylist}
-                  >
-                    Import playlist
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    iconLeft={Users}
-                    onClick={handleImportArtists}
-                  >
-                    Import artists
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    iconLeft={Users}
-                    onClick={handleEnqueueArtists}
-                  >
-                    Enqueue artists
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button size="sm" iconLeft={Play} disabled>
+                      Play (Spotify)
+                    </Button>
+                  </div>
                 </>
               }
             />
+          </Section>
+
+          <Section>
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
+                <Button
+                  variant="ghost"
+                  iconLeft={selectAll ? CheckSquare : Square}
+                  onClick={() => setSelectAll((s) => !s)}
+                >
+                  {selectAll ? "Unselect all" : "Select all"}
+                </Button>
+                <Button
+                  variant="secondary"
+                  iconLeft={Download}
+                  disabled
+                  title="Create a local playlist from selected tracks (coming soon)"
+                >
+                  Create playlist with selected tracks ({selectedCount})
+                </Button>
+              </div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <Button
+                  variant="secondary"
+                  iconLeft={Users}
+                  onClick={handleEnqueueArtists}
+                  title="Adds all artists from this playlist to the Import queue"
+                >
+                  Import all artists
+                </Button>
+                <Button
+                  variant="secondary"
+                  iconLeft={Library}
+                  onClick={handleImportPlaylist}
+                >
+                  Import playlist
+                </Button>
+              </div>
+            </div>
           </Section>
 
           <Section>

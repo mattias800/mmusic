@@ -24,16 +24,7 @@ export const SidebarNavButton: React.FC<SidebarNavButtonProps> = ({
       iconLeft={icon}
       asChild
     >
-      <NavLink
-        to={path}
-        role="button" // optional for a11y
-        className={({ isActive }) =>
-          cn(
-            "flex items-center w-full",
-            isActive ? "bg-secondary text-secondary-foreground" : "",
-          )
-        }
-      >
+      <NavLink to={path} role="button" className={cn("flex items-center w-full")}>
         {label}
       </NavLink>
     </Button>

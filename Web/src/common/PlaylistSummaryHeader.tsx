@@ -30,7 +30,7 @@ export const PlaylistSummaryHeader: React.FC<PlaylistSummaryHeaderProps> = ({
         <div className="text-sm text-white/60">
           {trackCount} tracks{totalMinutes != null ? ` • ${Math.round(totalMinutes)} min` : ""}
         </div>
-        {actions ? <div className="flex gap-2 mt-2">{actions}</div> : null}
+        {actions ? <div className="flex flex-wrap gap-2 mt-2">{actions}</div> : null}
       </div>
     </div>
   );
