@@ -103,6 +103,7 @@ builder
     .AddSingleton<CurrentDownloadStateService>()
     .AddSingleton<DownloadHistoryService>()
     .AddHostedService<DownloadWorker>()
+    .AddHostedService<MissingLibraryItemsDetectorWorker>()
     .AddSingleton<MusicBrainzService>()
     .AddSingleton<YouTubeService>()
     .AddSingleton<SpotifyService>()
@@ -236,6 +237,9 @@ builder.Services.AddStackExchangeRedisCache(options =>
 {
     options.Configuration = builder.Configuration.GetConnectionString("Redis");
 });
+
+// Options for missing library detector
+builder.Services.Configure<MissingLibraryItemsDetectorOptions>(builder.Configuration.GetSection("MissingLibraryDetector"));
 
 builder
     .AddGraphQL()
