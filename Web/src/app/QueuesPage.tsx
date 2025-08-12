@@ -2,6 +2,8 @@ import React from "react";
 import { graphql } from "@/gql";
 import { useMutation, useQuery, useSubscription } from "urql";
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
+import { ReleaseCoverArt } from "@/components/images/ReleaseCoverArt.tsx";
 
 const query = graphql(`
   query QueuesPage_Query {
@@ -118,8 +120,28 @@ export const QueuesPage: React.FC = () => {
         <div className="rounded border border-zinc-700 p-3">
           {dl.currentDownload ? (
             <div className="text-sm text-zinc-300">
-              <div>
-                {dl.currentDownload.artistId}/{dl.currentDownload.releaseFolderName}
+              <div className="flex items-center gap-3">
+                <Link to={`/artist/${dl.currentDownload.artistId}/release/${dl.currentDownload.releaseFolderName}`}>
+                  <ReleaseCoverArt
+                    titleForPlaceholder={dl.currentDownload.releaseFolderName}
+                    className="w-10 h-10 rounded object-cover border border-zinc-700"
+                  />
+                </Link>
+                <div>
+                  <Link
+                    to={`/artist/${dl.currentDownload.artistId}`}
+                    className="text-blue-400 hover:underline"
+                  >
+                    {dl.currentDownload.artistId}
+                  </Link>
+                  {"/"}
+                  <Link
+                    to={`/artist/${dl.currentDownload.artistId}/release/${dl.currentDownload.releaseFolderName}`}
+                    className="text-blue-400 hover:underline"
+                  >
+                    {dl.currentDownload.releaseFolderName}
+                  </Link>
+                </div>
               </div>
               <div className="text-xs text-zinc-400">
                 {dl.currentDownload.status} {dl.currentDownload.completedTracks}/{dl.currentDownload.totalTracks}
@@ -137,7 +159,19 @@ export const QueuesPage: React.FC = () => {
         <div className="rounded border border-zinc-700 p-3 space-y-2">
           {dl.downloadQueue.items.map((q) => (
             <div key={q.queueKey} className="flex items-center justify-between text-sm text-zinc-300">
-              <div>{q.artistId}/{q.releaseFolderName}</div>
+              <div className="flex items-center gap-3">
+                <Link to={`/artist/${q.artistId}/release/${q.releaseFolderName}`}>
+                  <ReleaseCoverArt
+                    titleForPlaceholder={q.releaseFolderName}
+                    className="w-8 h-8 rounded object-cover border border-zinc-700"
+                  />
+                </Link>
+                <div>
+                  <Link to={`/artist/${q.artistId}`} className="text-blue-400 hover:underline">{q.artistId}</Link>
+                  {"/"}
+                  <Link to={`/artist/${q.artistId}/release/${q.releaseFolderName}`} className="text-blue-400 hover:underline">{q.releaseFolderName}</Link>
+                </div>
+              </div>
               <Button variant="destructive" size="sm" onClick={() => q.queueKey && removeDownload({ queueKey: q.queueKey })}>Remove</Button>
             </div>
           ))}
@@ -150,8 +184,27 @@ export const QueuesPage: React.FC = () => {
         <div className="rounded border border-zinc-700 p-3 space-y-1 text-sm">
           {dl.downloadHistory.map((h, idx) => (
             <div key={idx} className="flex items-center justify-between">
-              <div className="text-zinc-400">
-                {new Date(h.timestampUtc).toLocaleString()} — {h.artistName ?? h.artistId}/{h.releaseTitle ?? h.releaseFolderName}
+              <div className="flex items-center gap-3">
+                {h.releaseFolderName ? (
+                  <Link to={`/artist/${h.artistId}/release/${h.releaseFolderName}`}>
+                    <ReleaseCoverArt
+                      titleForPlaceholder={h.releaseTitle ?? h.releaseFolderName}
+                      className="w-8 h-8 rounded object-cover border border-zinc-700"
+                    />
+                  </Link>
+                ) : (
+                  <div className="w-8 h-8" />
+                )}
+                <div className="text-zinc-400">
+                  {new Date(h.timestampUtc).toLocaleString()} — {" "}
+                  <Link to={`/artist/${h.artistId}`} className="text-blue-400 hover:underline">{h.artistName ?? h.artistId}</Link>
+                  {h.releaseFolderName ? (
+                    <>
+                      {"/"}
+                      <Link to={`/artist/${h.artistId}/release/${h.releaseFolderName}`} className="text-blue-400 hover:underline">{h.releaseTitle ?? h.releaseFolderName}</Link>
+                    </>
+                  ) : null}
+                </div>
               </div>
               <div className={h.success ? "text-green-400" : "text-red-400"}>
                 {h.success ? "Completed" : "Failed"}
@@ -167,7 +220,11 @@ export const QueuesPage: React.FC = () => {
         <div className="rounded border border-zinc-700 p-3">
           {ai.currentArtistImport ? (
             <div className="text-sm text-zinc-300">
-              <div>{ai.currentArtistImport.artistName}</div>
+              <div>
+                <Link to={`/artist/${ai.currentArtistImport.artistName}`} className="text-blue-400 hover:underline">
+                  {ai.currentArtistImport.artistName}
+                </Link>
+              </div>
               <div className="text-xs text-zinc-400">
                 {ai.currentArtistImport.statusInfo.text} {ai.currentArtistImport.completedReleases}/{ai.currentArtistImport.totalReleases}
               </div>
@@ -184,7 +241,13 @@ export const QueuesPage: React.FC = () => {
         <div className="rounded border border-zinc-700 p-3 space-y-2">
           {ai.artistImportQueue.items.map((q, idx) => (
             <div key={q.queueKey ?? idx} className="flex items-center justify-between text-sm text-zinc-300">
-              <div>{q.artistName}{q.songTitle ? ` — ${q.songTitle}` : ""}</div>
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded bg-zinc-800 border border-zinc-700" />
+                <div>
+                  <Link to={`/artist/${q.artistName}`} className="text-blue-400 hover:underline">{q.artistName}</Link>
+                  {q.songTitle ? ` — ${q.songTitle}` : ""}
+                </div>
+              </div>
               {q.queueKey && (
                 <Button variant="destructive" size="sm" onClick={() => removeImport({ queueKey: q.queueKey! })}>Remove</Button>
               )}
@@ -199,9 +262,27 @@ export const QueuesPage: React.FC = () => {
         <div className="rounded border border-zinc-700 p-3 space-y-1 text-sm">
           {ai.artistImportHistory.map((h, idx) => (
             <div key={idx} className="flex items-center justify-between">
-              <div className="text-zinc-400">
-                {new Date(h.timestampUtc).toLocaleString()} — {h.artistName}
-                {h.releaseFolderName ? `/${h.releaseFolderName}` : ""}
+              <div className="flex items-center gap-3">
+                {h.releaseFolderName ? (
+                  <Link to={`/artist/${h.localArtistId ?? h.artistName}/release/${h.releaseFolderName}`}>
+                    <ReleaseCoverArt
+                      titleForPlaceholder={h.releaseFolderName}
+                      className="w-8 h-8 rounded object-cover border border-zinc-700"
+                    />
+                  </Link>
+                ) : (
+                  <div className="w-8 h-8" />
+                )}
+                <div className="text-zinc-400">
+                  {new Date(h.timestampUtc).toLocaleString()} — {" "}
+                  <Link to={`/artist/${h.localArtistId ?? h.artistName}`} className="text-blue-400 hover:underline">{h.artistName}</Link>
+                  {h.releaseFolderName ? (
+                    <>
+                      {"/"}
+                      <Link to={`/artist/${h.localArtistId ?? h.artistName}/release/${h.releaseFolderName}`} className="text-blue-400 hover:underline">{h.releaseFolderName}</Link>
+                    </>
+                  ) : null}
+                </div>
               </div>
               <div className={h.success ? "text-green-400" : "text-red-400"}>
                 {h.success ? "Completed" : "Failed"}

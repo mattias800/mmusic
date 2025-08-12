@@ -19,7 +19,7 @@ public class SoulSeekReleaseDownloader(
     CurrentDownloadStateService progress,
     DownloadQueueService downloadQueue,
     DownloadHistoryService downloadHistory,
-    MusicGQL.Features.ServerSettings.ServerSettingsAccessor settingsAccessor,
+    ServerSettings.ServerSettingsAccessor settingsAccessor,
     ILogger<SoulSeekReleaseDownloader> logger
 )
 {

@@ -30,12 +30,13 @@ public class StartBulkDownloadForArtistMutation
             releases = releases.Where(r => r.Type == ServerLibrary.Json.JsonReleaseType.Single).ToList();
 
         int queued = 0;
+        // Enqueue all first so they are visible immediately in the UI
         foreach (var r in releases)
         {
-            try { queue.Enqueue(new DownloadQueueItem(input.ArtistId, r.FolderName)); } catch { }
-            var (ok, _) = await service.StartAsync(input.ArtistId, r.FolderName);
-            if (ok) queued++;
+            try { queue.Enqueue(new DownloadQueueItem(input.ArtistId, r.FolderName)); queued++; } catch { }
         }
+
+        // Worker will process the queue automatically; nothing else to start here
 
         return new StartBulkDownloadForArtistSuccess(input.ArtistId, queued);
     }

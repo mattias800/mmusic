@@ -8,5 +8,5 @@ public class ArtistImportSearchRoot
 
     public ArtistImportProgress? CurrentArtistImport(CurrentArtistImportStateService state) => state.Get();
 
-    public List<Services.ArtistImportHistoryItem> ArtistImportHistory(Services.ImportHistoryService history) => history.List();
+    public List<ArtistImportHistoryItem> ArtistImportHistory(ImportHistoryService history) => history.List();
 }

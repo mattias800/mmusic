@@ -1,6 +1,6 @@
 namespace MusicGQL.Features.Downloads.Mutations;
 
-[ExtendObjectType(typeof(MusicGQL.Types.Mutation))]
+[ExtendObjectType(typeof(Types.Mutation))]
 public sealed class DownloadQueueMutations
 {
     public bool RemoveDownloadJob(

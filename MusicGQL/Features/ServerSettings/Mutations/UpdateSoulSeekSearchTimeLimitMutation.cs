@@ -28,14 +28,14 @@ public class UpdateSoulSeekSearchTimeLimitMutation
 
         // Mirror the new seconds in the instance we return
         serverSettings.SoulSeekSearchTimeLimitSeconds = seconds;
-        return new UpdateSoulSeekSearchTimeLimitSuccess(new Features.ServerSettings.ServerSettings(serverSettings));
+        return new UpdateSoulSeekSearchTimeLimitSuccess(new ServerSettings(serverSettings));
     }
 }
 
 [UnionType("UpdateSoulSeekSearchTimeLimitResult")]
 public abstract record UpdateSoulSeekSearchTimeLimitResult;
 
-public record UpdateSoulSeekSearchTimeLimitSuccess(Features.ServerSettings.ServerSettings ServerSettings) : UpdateSoulSeekSearchTimeLimitResult;
+public record UpdateSoulSeekSearchTimeLimitSuccess(ServerSettings ServerSettings) : UpdateSoulSeekSearchTimeLimitResult;
 
 public record UpdateSoulSeekSearchTimeLimitError(string Message) : UpdateSoulSeekSearchTimeLimitResult;
 
