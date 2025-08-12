@@ -90,6 +90,7 @@ interface ArtistBase {
 
 type ArtistConnectedExternalService {
   artistPageUrl: String!
+  externalArtistId: String
   externalService: ExternalService!
   isConnected: Boolean!
 }

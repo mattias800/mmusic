@@ -25,6 +25,7 @@ interface ArtistPanelProps {
 const artistPanelArtistFragment = graphql(`
   fragment ArtistPanel_Artist on Artist {
     id
+    ...ArtistActionButtons_Artist
     ...ArtistImportStatusInfo_Artist
     ...ArtistNumReleasesAvailableIndicator_Artist
     ...ArtistServiceConnections_Artist
@@ -163,8 +164,7 @@ export const ArtistPanel: React.FC<ArtistPanelProps> = (props) => {
         className={"flex justify-between items-center gap-4 px-6 md:px-10 py-6"}
       >
         <ArtistActionButtons
-          artistId={artist.id}
-          artistName={artist.name}
+          artist={artist}
           loadingTopTracks={loadingTopTracks}
           loadingMetaData={loadingLastFm || loadingRefreshAll}
           onRefreshTopTracks={onRefreshTopTracks}

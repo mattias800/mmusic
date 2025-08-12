@@ -5,15 +5,17 @@ namespace MusicGQL.Features.Artists;
 
 public record ArtistConnectedExternalService(
     [property: GraphQLIgnore] ExternalServiceModel Model,
-    bool IsConnected,
+    string? ExternalArtistId,
     [property: GraphQLIgnore] JsonArtistServiceConnections? Connections = null
 )
 {
     public ExternalService ExternalService() => new(Model);
 
+    public bool IsConnected() => !string.IsNullOrWhiteSpace(ExternalArtistId);
+
     public string ArtistPageUrl()
     {
-        if (!IsConnected || Connections == null)
+        if (string.IsNullOrEmpty(ExternalArtistId) || Connections == null)
         {
             return string.Empty;
         }

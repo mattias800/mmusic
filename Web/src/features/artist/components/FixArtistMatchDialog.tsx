@@ -3,18 +3,32 @@ import { Dialog, DialogHeader, DialogTitle } from "@/components/ui/dialog.tsx";
 import { LargeDialogContent } from "@/components/ui/large-dialog-content.tsx";
 import { Button } from "@/components/ui/button.tsx";
 import { useMutation, useQuery } from "urql";
-import { graphql } from "@/gql";
+import { FragmentType, graphql, useFragment } from "@/gql";
 import { Spinner } from "@/components/spinner/Spinner.tsx";
 import { ArtistMatchListItem } from "@/features/artist/components/ArtistMatchListItem.tsx";
 
 interface FixArtistMatchDialogProps {
+  artist: FragmentType<typeof fixArtistMatchDialogArtistFragment>;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  artistId: string; // local folder id
-  artistName: string; // current display name
   onBeginFix?: () => void;
   onEndFix?: () => void;
 }
+
+const fixArtistMatchDialogArtistFragment = graphql(`
+  fragment FixArtistMatchDialog_Artist on Artist {
+    id
+    name
+    connectedExternalServices {
+      isConnected
+      externalArtistId
+      externalService {
+        name
+        id
+      }
+    }
+  }
+`);
 
 const searchMbArtistsQuery = graphql(`
   query FixArtistMatch_SearchMbArtists(
@@ -96,30 +110,30 @@ const searchSpotifyArtistsQuery = graphql(`
 export const FixArtistMatchDialog: React.FC<FixArtistMatchDialogProps> = (
   props,
 ) => {
+  const artist = useFragment(fixArtistMatchDialogArtistFragment, props.artist);
+
   const [mode, setMode] = React.useState<"mb" | "spotify">("mb");
-  const [selectedId, setSelectedId] = React.useState<string | null>(null);
   const [submitting, setSubmitting] = React.useState(false);
 
   const [{ data: mbData, fetching: mbFetching, error: mbError }] = useQuery({
     query: searchMbArtistsQuery,
-    variables: { name: props.artistName, limit: 25, offset: 0 },
-    pause: !props.open || mode !== "mb" || !props.artistName.trim(),
+    variables: { name: artist.name, limit: 25, offset: 0 },
+    pause: !props.open || mode !== "mb" || !artist.name.trim(),
   });
   const [{ data: spData, fetching: spFetching, error: spError }] = useQuery({
     query: searchSpotifyArtistsQuery,
-    variables: { name: props.artistName, limit: 25, offset: 0 },
-    pause: !props.open || mode !== "spotify" || !props.artistName.trim(),
+    variables: { name: artist.name, limit: 25, offset: 0 },
+    pause: !props.open || mode !== "spotify" || !artist.name.trim(),
   });
 
   const [, setMbMatch] = useMutation(setMbMatchMutation);
   const [, setSpMatch] = useMutation(setSpotifyMatchMutation);
 
   const onSelectMb = async (mbId: string) => {
-    setSelectedId(mbId);
     setSubmitting(true);
     props.onBeginFix?.();
     await setMbMatch({
-      input: { artistId: props.artistId, musicBrainzArtistId: mbId },
+      input: { artistId: artist.id, musicBrainzArtistId: mbId },
     });
     setSubmitting(false);
     props.onOpenChange(false);
@@ -127,11 +141,10 @@ export const FixArtistMatchDialog: React.FC<FixArtistMatchDialogProps> = (
   };
 
   const onSelectSpotify = async (spId: string) => {
-    setSelectedId(spId);
     setSubmitting(true);
     props.onBeginFix?.();
     await setSpMatch({
-      input: { artistId: props.artistId, spotifyArtistId: spId },
+      input: { artistId: artist.id, spotifyArtistId: spId },
     });
     setSubmitting(false);
     props.onOpenChange(false);
@@ -189,7 +202,11 @@ export const FixArtistMatchDialog: React.FC<FixArtistMatchDialogProps> = (
                   country={a.country ?? undefined}
                   listeners={a.listeners}
                   summary={a.lastFmArtist?.summary ?? undefined}
-                  selected={selectedId === a.id}
+                  selected={
+                    artist.connectedExternalServices.find(
+                      (c) => c.externalService.id === "musicbrainz",
+                    )?.externalArtistId === a.id
+                  }
                   disabled={submitting}
                   onSelect={() => onSelectMb(a.id)}
                 />
@@ -224,7 +241,11 @@ export const FixArtistMatchDialog: React.FC<FixArtistMatchDialogProps> = (
                   key={a.id}
                   imageUrl={a.images?.[0]?.url ?? undefined}
                   name={a.name}
-                  selected={selectedId === a.id}
+                  selected={
+                    artist.connectedExternalServices.find(
+                      (c) => c.externalService.id === "spotify",
+                    )?.externalArtistId === a.id
+                  }
                   disabled={submitting}
                   onSelect={() => onSelectSpotify(a.id)}
                 />

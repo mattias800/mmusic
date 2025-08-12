@@ -58,17 +58,17 @@ public record Artist([property: GraphQLIgnore] CachedArtist Model) : IArtistBase
         var connections = Model.JsonArtist.Connections;
         IEnumerable<ArtistConnectedExternalService> connectedExternalServices =
         [
-            new(ExternalServiceCatalog.Musicbrainz(), connections?.MusicBrainzArtistId != null, connections),
-            new(ExternalServiceCatalog.Spotify(), connections?.SpotifyId != null, connections),
-            new(ExternalServiceCatalog.Apple(), connections?.AppleMusicArtistId != null, connections),
-            new(ExternalServiceCatalog.Youtube(), connections?.YoutubeChannelUrl != null, connections),
-            new(ExternalServiceCatalog.Tidal(), connections?.TidalArtistId != null, connections),
-            new(ExternalServiceCatalog.Deezer(), connections?.DeezerArtistId != null, connections),
-            new(ExternalServiceCatalog.Soundcloud(), connections?.SoundcloudUrl != null, connections),
-            new(ExternalServiceCatalog.Bandcamp(), connections?.BandcampUrl != null, connections),
-            new(ExternalServiceCatalog.Discogs(), connections?.DiscogsUrl != null, connections),
+            new(ExternalServiceCatalog.Musicbrainz(), connections?.MusicBrainzArtistId, connections),
+            new(ExternalServiceCatalog.Spotify(), connections?.SpotifyId, connections),
+            new(ExternalServiceCatalog.Apple(), connections?.AppleMusicArtistId, connections),
+            new(ExternalServiceCatalog.Youtube(), connections?.YoutubeChannelUrl, connections),
+            new(ExternalServiceCatalog.Tidal(), connections?.TidalArtistId, connections),
+            new(ExternalServiceCatalog.Deezer(), connections?.DeezerArtistId, connections),
+            new(ExternalServiceCatalog.Soundcloud(), connections?.SoundcloudUrl, connections),
+            new(ExternalServiceCatalog.Bandcamp(), connections?.BandcampUrl, connections),
+            new(ExternalServiceCatalog.Discogs(), connections?.DiscogsUrl, connections),
         ];
-        
+
         return connectedExternalServices.Where(p => p.Model.Enabled);
     }
 

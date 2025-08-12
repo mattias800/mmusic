@@ -1,4 +1,5 @@
 import * as React from "react";
+import { useState } from "react";
 import { ShuffleButton } from "@/components/buttons/ShuffleButton.tsx";
 import { FollowButton } from "@/components/buttons/FollowButton.tsx";
 import { DotsButton } from "@/components/buttons/DotsButton.tsx";
@@ -12,10 +13,10 @@ import {
 import { Spinner } from "@/components/spinner/Spinner.tsx";
 import { TopTracksPlayButton } from "@/features/artist/artist-page/TopTracksPlayButton.tsx";
 import { FixArtistMatchDialog } from "@/features/artist/components/FixArtistMatchDialog.tsx";
+import { FragmentType, graphql, useFragment } from "@/gql";
 
 export interface ArtistActionButtonsProps {
-  artistId: string;
-  artistName?: string;
+  artist: FragmentType<typeof artistActionButtonsArtistFragment>;
   loadingTopTracks: boolean;
   loadingMetaData: boolean;
   onRefreshTopTracks: () => void;
@@ -23,21 +24,30 @@ export interface ArtistActionButtonsProps {
   onRefreshAllReleaseMetadata?: () => void;
 }
 
+const artistActionButtonsArtistFragment = graphql(`
+  fragment ArtistActionButtons_Artist on Artist {
+    id
+    ...FixArtistMatchDialog_Artist
+    name
+  }
+`);
+
 export const ArtistActionButtons: React.FC<ArtistActionButtonsProps> = ({
-  artistId,
-  artistName,
   loadingTopTracks,
   loadingMetaData,
   onRefreshTopTracks,
   onRefreshMetaData,
   onRefreshAllReleaseMetadata,
+  ...props
 }) => {
-  const [fixOpen, setFixOpen] = React.useState(false);
+  const artist = useFragment(artistActionButtonsArtistFragment, props.artist);
+
+  const [fixOpen, setFixOpen] = useState(false);
   const anyLoading = loadingTopTracks || loadingMetaData;
 
   return (
     <div className="flex items-center gap-4">
-      <TopTracksPlayButton artistId={artistId} />
+      <TopTracksPlayButton artistId={artist.id} />
       <ShuffleButton />
       <FollowButton />
       <DropdownMenu>
@@ -63,10 +73,9 @@ export const ArtistActionButtons: React.FC<ArtistActionButtonsProps> = ({
       </DropdownMenu>
       {anyLoading && <Spinner size={"sm"} />}
       <FixArtistMatchDialog
+        artist={artist}
         open={fixOpen}
         onOpenChange={setFixOpen}
-        artistId={artistId}
-        artistName={artistName ?? ""}
       />
     </div>
   );
