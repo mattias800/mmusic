@@ -13,6 +13,7 @@ import { AlbumListPage } from "@/app/AlbumListPage.tsx";
 import { SearchResultPage } from "@/app/SearchResultPage.tsx";
 import { MbArtistPage } from "@/app/MbArtistPage.tsx";
 import { PlaylistPage } from "@/app/PlaylistPage.tsx";
+import { QueuesPage } from "@/app/QueuesPage.tsx";
 
 export interface AppRouterProps {}
 
@@ -41,6 +42,7 @@ export const AppRouter: React.FC<AppRouterProps> = () => {
       <Route path="/settings" element={<SettingsPage />} />
       <Route path="/search" element={<SearchResultPage />} />
       <Route path="/playlist/:playlistId" element={<PlaylistPage />} />
+      <Route path="/queues" element={<QueuesPage />} />
     </Routes>
   );
 };

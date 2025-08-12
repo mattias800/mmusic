@@ -39,6 +39,14 @@ public sealed class ArtistImportMutations
         return true;
     }
 
+    public bool RemoveArtistImportJob(
+        string queueKey,
+        [Service] ArtistImportQueueService queue
+    )
+    {
+        return queue.TryRemove(queueKey);
+    }
+
     public async Task<bool> EnqueueMissingArtistsFromPlaylist(
         [ID] string playlistId,
         [Service] EventDbContext db,

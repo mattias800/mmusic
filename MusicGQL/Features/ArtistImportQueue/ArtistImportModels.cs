@@ -19,15 +19,15 @@ public record ArtistImportQueueItem(string ArtistName, string? SongTitle)
     public string? PlaylistItemId { get; init; }
 
     // New: job kind to support both initial import and release refresh tasks
-    [GraphQLIgnore]
     public ArtistImportJobKind JobKind { get; init; } = ArtistImportJobKind.ImportArtist;
 
     // New: for release refresh jobs
-    [GraphQLIgnore]
     public string? LocalArtistId { get; init; }
 
-    [GraphQLIgnore]
     public string? ReleaseFolderName { get; init; }
+
+    // Opaque key used for queue management actions (de-duplication and removal)
+    public string? QueueKey { get; init; }
 }
 
 public record ArtistImportQueueState

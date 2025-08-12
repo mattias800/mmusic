@@ -101,11 +101,13 @@ builder
     .AddScoped<StartDownloadReleaseService>()
     .AddSingleton<DownloadQueueService>()
     .AddSingleton<CurrentDownloadStateService>()
+    .AddSingleton<MusicGQL.Features.Downloads.Services.DownloadHistoryService>()
     .AddSingleton<MusicBrainzService>()
     .AddSingleton<YouTubeService>()
     .AddSingleton<SpotifyService>()
     .AddSingleton<ArtistImportQueueService>()
     .AddSingleton<CurrentArtistImportStateService>()
+    .AddSingleton<MusicGQL.Features.ArtistImportQueue.Services.ImportHistoryService>()
     .AddSingleton<ServerLibraryJsonReader>()
     .AddSingleton<ServerLibraryAssetReader>()
     .AddSingleton<ServerLibraryFileSystemScanner>()
@@ -261,6 +263,7 @@ builder
     .AddTypeExtension<ArtistImportMutations>()
     .AddTypeExtension<DownloadsSearchRoot>()
     .AddTypeExtension<DownloadsSubscription>()
+    .AddTypeExtension<MusicGQL.Features.Downloads.Mutations.DownloadQueueMutations>()
     .AddTypeExtension<PlaylistSubscription>()
     .AddTypeExtension<SetPlaylistItemArtistMusicBrainzMatchMutation>()
     .AddType<SetPlaylistItemArtistMusicBrainzMatchSuccess>()
@@ -384,7 +387,7 @@ builder.Services.AddFanArtTVClient(options =>
 });
 
 builder.Services.AddHostedService<ScheduledTaskPublisher>();
-builder.Services.AddHostedService<ArtistImportWorker>();
+builder.Services.AddHostedService<LibraryImportWorker>();
 
 var app = builder.Build();
 app.UseCors("AllowFrontend");

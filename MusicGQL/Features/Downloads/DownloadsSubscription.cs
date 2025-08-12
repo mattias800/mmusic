@@ -1,6 +1,7 @@
 using HotChocolate.Execution;
 using HotChocolate.Subscriptions;
 using MusicGQL.Types;
+using MusicGQL.Features.Downloads.Services;
 
 namespace MusicGQL.Features.Downloads;
 
@@ -9,6 +10,7 @@ public record DownloadsSubscription
 {
     public const string DownloadQueueUpdatedTopic = "DownloadQueueUpdated";
     public const string CurrentDownloadUpdatedTopic = "CurrentDownloadUpdated";
+    public const string DownloadHistoryUpdatedTopic = "DownloadHistoryUpdated";
 
     public ValueTask<ISourceStream<DownloadQueueState>> SubscribeToDownloadQueueUpdated(
         [Service] ITopicEventReceiver receiver,
@@ -25,6 +27,14 @@ public record DownloadsSubscription
 
     [Subscribe(With = nameof(SubscribeToCurrentDownloadUpdated))]
     public DownloadProgress? CurrentDownloadUpdated([EventMessage] DownloadProgress? progress) => progress;
+
+    public ValueTask<ISourceStream<List<DownloadHistoryItem>>> SubscribeToDownloadHistoryUpdated(
+        [Service] ITopicEventReceiver receiver,
+        CancellationToken cancellationToken
+    ) => receiver.SubscribeAsync<List<DownloadHistoryItem>>(DownloadHistoryUpdatedTopic, cancellationToken);
+
+    [Subscribe(With = nameof(SubscribeToDownloadHistoryUpdated))]
+    public List<DownloadHistoryItem> DownloadHistoryUpdated([EventMessage] List<DownloadHistoryItem> history) => history;
 }
 
 

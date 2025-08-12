@@ -19,6 +19,9 @@ public record DownloadQueueItem(string ArtistId, string ReleaseFolderName)
 
     [GraphQLIgnore]
     public string? ReleaseTitle { get; init; }
+
+    // Opaque key used for queue management actions (de-duplication and removal)
+    public string? QueueKey { get; init; }
 }
 
 public record DownloadQueueState

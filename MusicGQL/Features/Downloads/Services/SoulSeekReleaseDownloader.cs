@@ -18,6 +18,7 @@ public class SoulSeekReleaseDownloader(
     ServerLibraryCache cache,
     CurrentDownloadStateService progress,
     DownloadQueueService downloadQueue,
+    DownloadHistoryService downloadHistory,
     ILogger<SoulSeekReleaseDownloader> logger
 )
 {
@@ -241,6 +242,19 @@ public class SoulSeekReleaseDownloader(
                     candidate.Username
                 );
                 progress.SetStatus(DownloadStatus.Completed);
+                try
+                {
+                    downloadHistory.Add(new DownloadHistoryItem(
+                        DateTime.UtcNow,
+                        artistId,
+                        releaseFolderName,
+                        artistName,
+                        releaseTitle,
+                        true,
+                        null
+                    ));
+                }
+                catch { }
                 if (!downloadQueue.TryDequeue(out var nxt) || nxt is null)
                 {
                     progress.Reset();
@@ -266,6 +280,19 @@ public class SoulSeekReleaseDownloader(
             releaseTitle
         );
         progress.SetStatus(DownloadStatus.Failed);
+        try
+        {
+            downloadHistory.Add(new DownloadHistoryItem(
+                DateTime.UtcNow,
+                artistId,
+                releaseFolderName,
+                artistName,
+                releaseTitle,
+                false,
+                "All candidates failed"
+            ));
+        }
+        catch { }
         return false;
     }
 

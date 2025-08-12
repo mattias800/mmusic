@@ -21,6 +21,7 @@ import { MmusicLogo } from "@/components/logo/MmusicLogo.tsx";
 import { PlaylistList } from "@/features/playlists/playlist-list/PlaylistList.tsx";
 import { RootState } from "@/Store.ts";
 import { useSelector } from "react-redux";
+import { ListOrdered } from "lucide-react";
 
 export interface SidebarProps {
   className?: string;
@@ -106,6 +107,10 @@ export const Sidebar = ({ className }: SidebarProps) => {
               <ArtistImportQueuePanel />
             </div>
           </ScrollArea>
+        </SidebarSection>
+
+        <SidebarSection heading={"Queues & history"}>
+          <SidebarNavButton path={"/queues"} label={"Open queues"} icon={ListOrdered} />
         </SidebarSection>
       </div>
 
