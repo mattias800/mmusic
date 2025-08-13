@@ -15,6 +15,7 @@ public class ImportArtistMutation
     public async Task<ImportArtistResult> ImportArtist(
         [Service] LibraryImportService importService,
         [Service] ServerLibraryCache cache,
+        [Service] MusicGQL.Features.ServerLibrary.Share.ArtistShareManifestService shareService,
         ImportArtistInput input,
         [Service] IHttpContextAccessor httpContextAccessor
     )
@@ -45,6 +46,8 @@ public class ImportArtistMutation
         {
             return new ImportArtistError("Artist was imported but not found in cache.");
         }
+
+        try { await shareService.GenerateForArtistAsync(artistId); } catch { }
 
         return new ImportArtistSuccess(new Artist(cached));
     }

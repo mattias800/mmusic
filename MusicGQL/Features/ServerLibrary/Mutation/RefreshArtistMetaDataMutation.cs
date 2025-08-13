@@ -15,6 +15,7 @@ public class RefreshArtistMetaDataMutation
         IImportExecutor importExecutor,
         ILogger<RefreshArtistMetaDataMutation> logger,
         HotChocolate.Subscriptions.ITopicEventSender eventSender,
+        [Service] MusicGQL.Features.ServerLibrary.Share.ArtistShareManifestService shareService,
         RefreshArtistMetaDataInput input
     )
     {
@@ -82,6 +83,9 @@ public class RefreshArtistMetaDataMutation
             "[RefreshArtistMetaData] Enrichment complete for artistId='{ArtistId}'. Updating cache...",
             effectiveArtistId);
         await cache.UpdateCacheAsync();
+
+        // After updating cache, generate share files (manifest + tag)
+        try { await shareService.GenerateForArtistAsync(effectiveArtistId); } catch { }
 
         var artistAfterRefresh = await cache.GetArtistByIdAsync(effectiveArtistId);
 

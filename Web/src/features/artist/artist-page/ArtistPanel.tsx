@@ -119,6 +119,23 @@ const refreshAllReleasesMutation = graphql(`
   }
 `);
 
+const generateArtistShareFilesMutation = graphql(`
+  mutation GenerateArtistShareFiles($input: GenerateArtistShareFilesInput!) {
+    generateArtistShareFiles(input: $input) {
+      __typename
+      ... on GenerateArtistShareFilesSuccess {
+        artistId
+        artistName
+        tagFileName
+        manifestPath
+      }
+      ... on GenerateArtistShareFilesError {
+        message
+      }
+    }
+  }
+`);
+
 export const ArtistPanel: React.FC<ArtistPanelProps> = (props) => {
   const artist = useFragment(artistPanelArtistFragment, props.artist);
 
@@ -130,6 +147,9 @@ export const ArtistPanel: React.FC<ArtistPanelProps> = (props) => {
   );
   const [{ fetching: loadingRefreshAll }, refreshAllReleases] = useMutation(
     refreshAllReleasesMutation,
+  );
+  const [{ fetching: generatingShare }, generateShareFiles] = useMutation(
+    generateArtistShareFilesMutation,
   );
 
   // Live updates: merge updated artist into cache when subscription fires
@@ -151,6 +171,9 @@ export const ArtistPanel: React.FC<ArtistPanelProps> = (props) => {
   const onRefreshAllReleases = () =>
     refreshAllReleases({ artistId: artist.id });
 
+  const onGenerateShareFiles = () =>
+    generateShareFiles({ input: { artistId: artist.id } });
+
   return (
     <GradientContent>
       <ArtistHeader
@@ -166,10 +189,11 @@ export const ArtistPanel: React.FC<ArtistPanelProps> = (props) => {
         <ArtistActionButtons
           artist={artist}
           loadingTopTracks={loadingTopTracks}
-          loadingMetaData={loadingLastFm || loadingRefreshAll}
+          loadingMetaData={loadingLastFm || loadingRefreshAll || generatingShare}
           onRefreshTopTracks={onRefreshTopTracks}
           onRefreshMetaData={onRefreshMetaData}
           onRefreshAllReleaseMetadata={onRefreshAllReleases}
+          onGenerateShareFiles={onGenerateShareFiles}
         />
 
         <ArtistImportStatusInfo

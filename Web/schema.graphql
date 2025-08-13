@@ -371,6 +371,23 @@ type FileSystemSearchRoot {
   browseFileSystem(path: String): [FileSystemEntry!]!
 }
 
+type GenerateArtistShareFilesError {
+  message: String!
+}
+
+input GenerateArtistShareFilesInput {
+  artistId: String!
+}
+
+union GenerateArtistShareFilesResult = GenerateArtistShareFilesError | GenerateArtistShareFilesSuccess
+
+type GenerateArtistShareFilesSuccess {
+  artistId: String!
+  artistName: String!
+  manifestPath: String!
+  tagFileName: String!
+}
+
 type ImportArtistError {
   message: String!
 }
@@ -713,6 +730,7 @@ type Mutation {
   enqueueArtist(artistName: String!, songTitle: String): Boolean!
   enqueueArtistsFromSpotifyPlaylist(input: EnqueueArtistsFromSpotifyPlaylistInput!): Boolean!
   enqueueMissingArtistsFromPlaylist(playlistId: ID!): Boolean!
+  generateArtistShareFiles(input: GenerateArtistShareFilesInput!): GenerateArtistShareFilesResult!
   importArtist(input: ImportArtistInput!): ImportArtistResult!
   importArtistReleases(artistId: String!): ImportReleasesResult!
   importArtistsFromSpotifyPlaylist(input: ImportArtistsFromSpotifyPlaylistInput!): ImportArtistsFromSpotifyPlaylistResult!

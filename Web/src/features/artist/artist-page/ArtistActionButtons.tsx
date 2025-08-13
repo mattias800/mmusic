@@ -22,6 +22,7 @@ export interface ArtistActionButtonsProps {
   onRefreshTopTracks: () => void;
   onRefreshMetaData: () => void;
   onRefreshAllReleaseMetadata?: () => void;
+  onGenerateShareFiles?: () => void;
 }
 
 const artistActionButtonsArtistFragment = graphql(`
@@ -38,6 +39,7 @@ export const ArtistActionButtons: React.FC<ArtistActionButtonsProps> = ({
   onRefreshTopTracks,
   onRefreshMetaData,
   onRefreshAllReleaseMetadata,
+  onGenerateShareFiles,
   ...props
 }) => {
   const artist = useFragment(artistActionButtonsArtistFragment, props.artist);
@@ -64,6 +66,10 @@ export const ArtistActionButtons: React.FC<ArtistActionButtonsProps> = ({
           </DropdownMenuItem>
           <DropdownMenuItem onSelect={onRefreshAllReleaseMetadata}>
             Refresh all release metadata
+          </DropdownMenuItem>
+          <DropdownMenuLabel>Share</DropdownMenuLabel>
+          <DropdownMenuItem onSelect={onGenerateShareFiles}>
+            Generate Soulseek share files
           </DropdownMenuItem>
           <DropdownMenuLabel>Fix</DropdownMenuLabel>
           <DropdownMenuItem onSelect={() => setFixOpen(true)}>
