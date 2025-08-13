@@ -1,3 +1,4 @@
+using MusicGQL.Features.ServerLibrary;
 using MusicGQL.Types;
 
 namespace MusicGQL.Features.ServerSettings.Mutations;
@@ -6,17 +7,21 @@ namespace MusicGQL.Features.ServerSettings.Mutations;
 public class CreateLibraryManifestMutation
 {
     public async Task<CreateLibraryManifestResult> CreateLibraryManifest(
-        CreateLibraryManifestInput input,
-        [Service] LibraryManifestService manifestService
+        ServerSettingsAccessor serverSettingsAccessor,
+        LibraryManifestService manifestService
     )
     {
-        if (string.IsNullOrWhiteSpace(input.LibraryPath))
+        var settings = await serverSettingsAccessor.GetAsync();
+
+        if (string.IsNullOrWhiteSpace(settings.LibraryPath))
+        {
             return new CreateLibraryManifestError("Library path is required");
+        }
 
         try
         {
-            await manifestService.CreateManifestAsync(input.LibraryPath);
-            return new CreateLibraryManifestSuccess(true);
+            await manifestService.CreateManifestAsync(settings.LibraryPath);
+            return new CreateLibraryManifestSuccess(new ServerLibraryManifestStatus());
         }
         catch (Exception ex)
         {
@@ -25,11 +30,10 @@ public class CreateLibraryManifestMutation
     }
 }
 
-public record CreateLibraryManifestInput(string LibraryPath);
-
 [UnionType("CreateLibraryManifestResult")]
 public abstract record CreateLibraryManifestResult;
-public record CreateLibraryManifestSuccess(bool Created) : CreateLibraryManifestResult;
+
+public record CreateLibraryManifestSuccess(ServerLibraryManifestStatus ServerLibraryManifestStatus)
+    : CreateLibraryManifestResult;
+
 public record CreateLibraryManifestError(string Message) : CreateLibraryManifestResult;
-
-

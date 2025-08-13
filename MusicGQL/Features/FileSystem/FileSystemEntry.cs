@@ -10,4 +10,18 @@ public record FileSystemEntry(
 {
     [ID]
     public string Id() => Path;
+
+    public async Task<bool> HasLibraryManifest(
+        ServerSettings.LibraryManifestService manifestService
+    )
+    {
+        try
+        {
+            return await manifestService.HasManifestAsync(Path);
+        }
+        catch
+        {
+            return false;
+        }
+    }
 }

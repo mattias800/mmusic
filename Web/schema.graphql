@@ -230,14 +230,10 @@ type CreateLibraryManifestError {
   message: String!
 }
 
-input CreateLibraryManifestInput {
-  libraryPath: String!
-}
-
 union CreateLibraryManifestResult = CreateLibraryManifestError | CreateLibraryManifestSuccess
 
 type CreateLibraryManifestSuccess {
-  created: Boolean!
+  serverLibraryManifestStatus: ServerLibraryManifestStatus!
 }
 
 input CreatePlaylistInput {
@@ -402,6 +398,7 @@ type ExternalServicesSearchRoot {
 
 type FileSystemEntry {
   hasChildren: Boolean!
+  hasLibraryManifest: Boolean!
   id: ID!
   isAccessible: Boolean!
   isDirectory: Boolean!
@@ -777,7 +774,7 @@ type Mutation {
   addTrackToPlaylist(input: AddTrackToPlaylistInput!): AddTrackToPlaylistResult!
   cancelCurrentDownload(input: CancelCurrentDownloadInput!): CancelCurrentDownloadResult!
   createDirectory(input: CreateDirectoryInput!): CreateDirectoryResult!
-  createLibraryManifest(input: CreateLibraryManifestInput!): CreateLibraryManifestResult!
+  createLibraryManifest: CreateLibraryManifestResult!
   createPlaylist(input: CreatePlaylistInput!): CreatePlaylistResult!
   createUser(input: CreateUserInput!): CreateUserResult!
   deleteArtist(input: DeleteArtistInput!): DeleteArtistResult!
@@ -1062,6 +1059,11 @@ type ScoredRelease {
   score: Int!
 }
 
+type ServerLibraryManifestStatus {
+  hasLibraryManifest: Boolean!
+  id: ID!
+}
+
 type ServerLibrarySearchRoot {
   allArtists: [Artist!]!
   allReleases: [Release!]!
@@ -1082,6 +1084,7 @@ type ServerSettings {
   hasLibraryManifest: Boolean!
   id: ID!
   libraryPath: String!
+  serverLibraryManifestStatus: ServerLibraryManifestStatus!
   soulSeekNoDataTimeoutSeconds: Int!
   soulSeekSearchTimeLimitSeconds: Int!
   storageStats: StorageStats

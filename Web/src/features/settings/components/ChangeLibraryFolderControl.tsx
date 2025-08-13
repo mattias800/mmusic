@@ -10,16 +10,27 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog.tsx";
 import { DirectoryBrowserModal } from "../components/DirectoryBrowser/DirectoryBrowserModal.tsx";
-import { graphql } from "@/gql";
+import { FragmentType, graphql, useFragment } from "@/gql";
 import { useClient, useMutation } from "urql";
 import { Label } from "@/components/ui/label.tsx";
-import { CheckCircle2 } from "lucide-react";
+import { AlertTriangle, CheckCircle2 } from "lucide-react";
+import { Alert } from "@/components/ui/Alert.tsx";
 
 export interface ChangeLibraryFolderControlProps {
-  currentPath: string | undefined | null;
-  onPathChanged: (newPath: string) => Promise<void> | void;
-  loading?: boolean;
+  serverSettings: FragmentType<
+    typeof changeLibraryFolderControlServerSettingsFragment
+  >;
 }
+
+const changeLibraryFolderControlServerSettingsFragment = graphql(`
+  fragment ChangeLibraryFolderControl_ServerSettings on ServerSettings {
+    libraryPath
+    serverLibraryManifestStatus {
+      id
+      hasLibraryManifest
+    }
+  }
+`);
 
 const hasLibraryManifestQuery = graphql(`
   query ChangeFolder_HasLibraryManifest($path: String!) {
@@ -29,11 +40,27 @@ const hasLibraryManifestQuery = graphql(`
   }
 `);
 
+const updateLibraryPathMutation = graphql(`
+  mutation UpdateLibraryPath($newLibraryPath: String!) {
+    updateLibraryPath(input: { newLibraryPath: $newLibraryPath }) {
+      ... on UpdateLibraryPathSuccess {
+        serverSettings {
+          id
+          libraryPath
+        }
+      }
+    }
+  }
+`);
+
 const createLibraryManifestMutation = graphql(`
-  mutation ChangeFolder_CreateLibraryManifest($path: String!) {
-    createLibraryManifest(input: { libraryPath: $path }) {
+  mutation CreateLibraryManifest {
+    createLibraryManifest {
       ... on CreateLibraryManifestSuccess {
-        created
+        serverLibraryManifestStatus {
+          id
+          hasLibraryManifest
+        }
       }
       ... on CreateLibraryManifestError {
         message
@@ -44,19 +71,36 @@ const createLibraryManifestMutation = graphql(`
 
 export const ChangeLibraryFolderControl: React.FC<
   ChangeLibraryFolderControlProps
-> = ({ currentPath, onPathChanged, loading }) => {
+> = (props) => {
+  const serverSettings = useFragment(
+    changeLibraryFolderControlServerSettingsFragment,
+    props.serverSettings,
+  );
+
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isCreateManifestOpen, setIsCreateManifestOpen] = useState(false);
   const [pendingPath, setPendingPath] = useState<string | null>(null);
   const [createError, setCreateError] = useState<string | null>(null);
-  const client = useClient();
-  const [, createManifest] = useMutation(createLibraryManifestMutation);
 
-  const onClick = async () => {
+  const [{ fetching: updateLibraryPathFetching }, updateLibraryPath] =
+    useMutation(updateLibraryPathMutation);
+
+  const client = useClient();
+
+  const [
+    { fetching: createManifestInCurrentFolderFetching },
+    createManifestInCurrentFolder,
+  ] = useMutation(createLibraryManifestMutation);
+
+  const selectedFolderHasManifest =
+    serverSettings.serverLibraryManifestStatus.hasLibraryManifest;
+
+  const onClickCreateManifestAndSetFolder = async () => {
     if (!pendingPath) return;
     setCreateError(null);
-    const result = await createManifest({ path: pendingPath });
+    await updateLibraryPath({ newLibraryPath: pendingPath });
+    const result = await createManifestInCurrentFolder({});
     const r = result.data?.createLibraryManifest;
 
     switch (r?.__typename) {
@@ -64,11 +108,11 @@ export const ChangeLibraryFolderControl: React.FC<
         setCreateError(r.message);
         return;
       case "CreateLibraryManifestSuccess":
-        await onPathChanged(pendingPath);
         setIsCreateManifestOpen(false);
         setPendingPath(null);
     }
   };
+
   return (
     <>
       <div className={"flex flex-col gap-4"}>
@@ -80,23 +124,50 @@ export const ChangeLibraryFolderControl: React.FC<
           <div className={"flex items-center gap-2"}>
             <div className=" flex gap-4 border border-zinc-700 rounded-md py-2 px-4">
               <span className={"text-zinc-400"}>
-                {currentPath || "(not set)"}
+                {serverSettings.libraryPath || "(not set)"}
               </span>
             </div>
-            <CheckCircle2 className="h-6 w-6 text-green-500" />
+            {selectedFolderHasManifest ? (
+              <CheckCircle2 className="h-6 w-6 text-emerald-400" />
+            ) : (
+              <AlertTriangle className="h-6 w-6 text-amber-400" />
+            )}
           </div>
         </div>
         <div>
           <Button
             variant="destructive"
-            loading={!!loading}
-            disabled={!!loading}
+            loading={updateLibraryPathFetching}
+            disabled={updateLibraryPathFetching}
             onClick={() => setIsConfirmOpen(true)}
           >
             Change...
           </Button>
         </div>
       </div>
+
+      {serverSettings.libraryPath && !selectedFolderHasManifest && (
+        <div className="max-w-lg">
+          <Alert variant="warning" title="No library manifest found">
+            The configured folder does not contain a mmusic library manifest.
+            Writing is disabled until a manifest is created, to prevent
+            accidental writing to the wrong folder, since mmusic downloads media
+            automatically.
+            <div className="mt-2">
+              <Button
+                disabled={createManifestInCurrentFolderFetching}
+                loading={createManifestInCurrentFolderFetching}
+                variant="destructive"
+                onClick={async () => {
+                  await createManifestInCurrentFolder({});
+                }}
+              >
+                Create manifest in this folder
+              </Button>
+            </div>
+          </Alert>
+        </div>
+      )}
 
       <Dialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
         <DialogContent>
@@ -136,7 +207,7 @@ export const ChangeLibraryFolderControl: React.FC<
               .toPromise();
             const has = res.data?.fileSystem?.hasLibraryManifest;
             if (has) {
-              await onPathChanged(path);
+              await updateLibraryPath({ newLibraryPath: path });
               setPendingPath(null);
             } else {
               setIsCreateManifestOpen(true);
@@ -175,7 +246,10 @@ export const ChangeLibraryFolderControl: React.FC<
             >
               Cancel
             </Button>
-            <Button variant="destructive" onClick={onClick}>
+            <Button
+              variant="destructive"
+              onClick={onClickCreateManifestAndSetFolder}
+            >
               Create manifest and set folder
             </Button>
           </DialogFooter>

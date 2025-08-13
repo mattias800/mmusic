@@ -1,6 +1,7 @@
 using MusicGQL.Features.ServerSettings.Db;
 using System.IO;
 using System.Runtime.InteropServices;
+using MusicGQL.Features.ServerLibrary;
 
 namespace MusicGQL.Features.ServerSettings;
 
@@ -16,6 +17,8 @@ public record ServerSettings([property: GraphQLIgnore] DbServerSettings Model)
     public int SoulSeekSearchTimeLimitSeconds() => Model.SoulSeekSearchTimeLimitSeconds;
 
     public int SoulSeekNoDataTimeoutSeconds() => Model.SoulSeekNoDataTimeoutSeconds;
+
+    public ServerLibraryManifestStatus ServerLibraryManifestStatus() => new();
 
     [GraphQLName("storageStats")]
     public async Task<StorageStats?> GetStorageStats([Service] ServerSettingsAccessor serverSettingsAccessor)
@@ -58,7 +61,8 @@ public record ServerSettings([property: GraphQLIgnore] DbServerSettings Model)
     }
 
     [GraphQLName("hasLibraryManifest")]
-    public async Task<bool> GetHasLibraryManifest([Service] ServerSettingsAccessor serverSettingsAccessor, [Service] LibraryManifestService manifestService)
+    public async Task<bool> GetHasLibraryManifest([Service] ServerSettingsAccessor serverSettingsAccessor,
+        [Service] LibraryManifestService manifestService)
     {
         var settings = await serverSettingsAccessor.GetAsync();
         return await manifestService.HasManifestAsync(settings.LibraryPath);
@@ -71,8 +75,15 @@ public record ServerSettings([property: GraphQLIgnore] DbServerSettings Model)
         {
             foreach (var file in Directory.EnumerateFiles(folder, "*", SearchOption.TopDirectoryOnly))
             {
-                try { size += new FileInfo(file).Length; } catch { }
+                try
+                {
+                    size += new FileInfo(file).Length;
+                }
+                catch
+                {
+                }
             }
+
             foreach (var sub in Directory.EnumerateDirectories(folder))
             {
                 size += CalculateDirectorySizeSafe(sub);
@@ -82,6 +93,7 @@ public record ServerSettings([property: GraphQLIgnore] DbServerSettings Model)
         {
             // ignore permission errors and continue best-effort
         }
+
         return size;
     }
 }

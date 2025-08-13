@@ -57,7 +57,10 @@ public class FileSystemSearchRoot
         return entries.OrderBy(e => !e.IsDirectory).ThenBy(e => e.Name);
     }
 
-    public async Task<bool> HasLibraryManifest(string path, [Service] MusicGQL.Features.ServerSettings.LibraryManifestService manifestService)
+    public async Task<bool> HasLibraryManifest(
+        string path,
+        ServerSettings.LibraryManifestService manifestService
+    )
     {
         try
         {

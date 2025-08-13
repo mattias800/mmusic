@@ -8,6 +8,7 @@ const browseFileSystemQuery = graphql(`
       browseFileSystem(path: $path) {
         path
         isDirectory
+        hasLibraryManifest
         ...DirectoryTreeItem_FileSystemEntry
       }
     }

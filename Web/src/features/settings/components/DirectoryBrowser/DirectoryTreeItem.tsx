@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "urql";
 import { FragmentType, graphql, useFragment } from "@/gql";
-import { ChevronRight, Lock } from "lucide-react";
+import { CheckCircle2, ChevronRight, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const directoryTreeItemFileSystemEntryFragment = graphql(`
@@ -12,6 +12,7 @@ const directoryTreeItemFileSystemEntryFragment = graphql(`
     isDirectory
     hasChildren
     isAccessible
+    hasLibraryManifest
   }
 `);
 
@@ -52,6 +53,7 @@ export function DirectoryTreeItem({
     query: directoryTreeItemQuery,
     variables: { path: entry.path },
     pause: true,
+    requestPolicy: "network-only",
   });
 
   const handleToggle = () => {
@@ -87,8 +89,13 @@ export function DirectoryTreeItem({
             className={`flex gap-2 cursor-pointer py-1 px-2 rounded-md ${selectedPath === entry.path ? "bg-green-800" : ""}`}
             onClick={() => onSelect(entry.path)}
           >
-            <span className={`${!entry.isAccessible ? "text-red-500" : ""}`}>
-              {entry.name}
+            <span
+              className={`${!entry.isAccessible ? "text-red-500" : ""} flex gap-2`}
+            >
+              {entry.name}{" "}
+              {entry.hasLibraryManifest && (
+                <CheckCircle2 className="h-6 w-6 text-emerald-400" />
+              )}
             </span>
           </button>
         )}
