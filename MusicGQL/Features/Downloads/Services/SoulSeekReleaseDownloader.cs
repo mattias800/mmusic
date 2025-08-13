@@ -68,8 +68,8 @@ public class SoulSeekReleaseDownloader(
             CoverArtUrl = Features.ServerLibrary.Utils.LibraryAssetUrlFactory.CreateReleaseCoverArtUrl(artistId, releaseFolderName)
         });
         int minRequiredTracks = expectedTrackCount > 0
-            ? Math.Max(2, Math.Min(expectedTrackCount, expectedTrackCount - 1))
-            : 5; // allow off-by-one if known, else require at least 5
+            ? expectedTrackCount
+            : 5; // if unknown, require at least 5 to avoid noise
         logger.LogInformation("[SoulSeek] Expected tracks={Expected}, minRequiredTracks={Min}", expectedTrackCount, minRequiredTracks);
         if (allowedOfficialCounts.Count > 0)
         {
@@ -178,10 +178,13 @@ public class SoulSeekReleaseDownloader(
                     {
                         return allowedOfficialCounts.Contains(x.Audio320Files.Count);
                     }
-                    // Otherwise fall back to loose min required logic
-                    return x.Audio320Files.Count >= (expectedTrackCount > 0
-                        ? Math.Max(2, Math.Min(expectedTrackCount, expectedTrackCount - 1))
-                        : 5);
+                    // Otherwise, require exact match to expected track count when known
+                    if (expectedTrackCount > 0)
+                    {
+                        return x.Audio320Files.Count == expectedTrackCount;
+                    }
+                    // As a last resort when nothing is known, require at least 5 tracks
+                    return x.Audio320Files.Count >= 5;
                 })
                 .OrderByDescending(x => x.Score)
                 .ThenBy(x => x.Response.QueueLength)
