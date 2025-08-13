@@ -10,6 +10,9 @@ public class JsonRelease
     public string? FirstReleaseYear { get; set; }
     public string? CoverArt { get; set; }
     public ReleaseServiceConnections? Connections { get; set; }
+    // Distinct track counts among official releases in the linked MusicBrainz release group
+    // Serialized as possibleNumberOfTracksInOfficialReleases in JSON
+    public List<int>? PossibleNumberOfTracksInOfficialReleases { get; set; }
 }
 
 public enum JsonReleaseType

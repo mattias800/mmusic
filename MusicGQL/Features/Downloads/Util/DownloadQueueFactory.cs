@@ -5,7 +5,7 @@ using Soulseek;
 
 namespace MusicGQL.Features.Downloads.Util;
 
-public record DownloadQueueItem(string Username, string FileName, string LocalFileName);
+public record DownloadQueueItem(string Username, string FileName, string LocalFileName, int? SourceTrackNumber = null);
 
 public static class DownloadQueueFactory
 {
@@ -124,25 +124,27 @@ public static class DownloadQueueFactory
             filtered = inPrimary.Count > 0 ? inPrimary : annotated;
         }
 
-        var ordered = filtered
+        var orderedAnnotated = filtered
             .Select(a => new { a, lead = ExtractLeadingTrackNumber(a.BaseNameWithoutExt) })
             .OrderBy(x => x.lead ?? int.MaxValue)
             .ThenBy(x => x.a.JustFile, StringComparer.OrdinalIgnoreCase)
-            .Select(x => x.a)
             .ToList();
+
+        var ordered = orderedAnnotated.Select(x => x.a).ToList();
 
         if (expectedTrackCount.HasValue && expectedTrackCount.Value > 0 && ordered.Count > expectedTrackCount.Value)
         {
             ordered = ordered.Take(expectedTrackCount.Value).ToList();
         }
 
-        var queueItems = ordered
+        var queueItems = orderedAnnotated
             .Select((x, i) =>
             {
-                var indexPrefix = (i + 1).ToString("D2");
-                var baseName = string.IsNullOrWhiteSpace(x.SafeBaseName) ? $"track_{i + 1}" : x.SafeBaseName;
-                var local = $"{indexPrefix} - {baseName}{x.Extension}";
-                return new DownloadQueueItem(searchResponse.Username, x.OriginalFileName, local);
+                var trackNo = x.lead ?? (i + 1);
+                var indexPrefix = trackNo.ToString("D2");
+                var baseName = string.IsNullOrWhiteSpace(x.a.SafeBaseName) ? $"track_{trackNo}" : x.a.SafeBaseName;
+                var local = $"{indexPrefix} - {baseName}{x.a.Extension}";
+                return new DownloadQueueItem(searchResponse.Username, x.a.OriginalFileName, local, x.lead);
             })
             .ToList();
 
@@ -156,20 +158,20 @@ public static class DownloadQueueFactory
             .Select(file => AnnotateFile(file.Filename))
             .ToList();
 
-        var ordered = annotated
+        var orderedAnnotated = annotated
             .Select(a => new { a, lead = ExtractLeadingTrackNumber(a.BaseNameWithoutExt) })
             .OrderBy(x => x.lead ?? int.MaxValue)
             .ThenBy(x => x.a.JustFile, StringComparer.OrdinalIgnoreCase)
-            .Select(x => x.a)
             .ToList();
 
-        var queueItems = ordered
+        var queueItems = orderedAnnotated
             .Select((x, i) =>
             {
-                var indexPrefix = (i + 1).ToString("D2");
-                var baseName = string.IsNullOrWhiteSpace(x.SafeBaseName) ? $"track_{i + 1}" : x.SafeBaseName;
-                var local = $"{indexPrefix} - {baseName}{x.Extension}";
-                return new DownloadQueueItem(searchResponse.Username, x.OriginalFileName, local);
+                var trackNo = x.lead ?? (i + 1);
+                var indexPrefix = trackNo.ToString("D2");
+                var baseName = string.IsNullOrWhiteSpace(x.a.SafeBaseName) ? $"track_{trackNo}" : x.a.SafeBaseName;
+                var local = $"{indexPrefix} - {baseName}{x.a.Extension}";
+                return new DownloadQueueItem(searchResponse.Username, x.a.OriginalFileName, local, x.lead);
             })
             .ToList();
 

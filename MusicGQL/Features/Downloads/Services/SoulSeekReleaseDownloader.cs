@@ -54,6 +54,7 @@ public class SoulSeekReleaseDownloader(
         // Determine expected track count from cache (if available)
         var cachedRelease = await cache.GetReleaseByArtistAndFolderAsync(artistId, releaseFolderName);
         int expectedTrackCount = cachedRelease?.Tracks?.Count ?? 0;
+        var allowedOfficialCounts = cachedRelease?.JsonRelease?.PossibleNumberOfTracksInOfficialReleases ?? new List<int>();
         progress.Set(new DownloadProgress
         {
             ArtistId = artistId,
@@ -69,6 +70,10 @@ public class SoulSeekReleaseDownloader(
             ? Math.Max(2, Math.Min(expectedTrackCount, expectedTrackCount - 1))
             : 5; // allow off-by-one if known, else require at least 5
         logger.LogInformation("[SoulSeek] Expected tracks={Expected}, minRequiredTracks={Min}", expectedTrackCount, minRequiredTracks);
+        if (allowedOfficialCounts.Count > 0)
+        {
+            try { logger.LogInformation("[SoulSeek] Allowed official track counts: {Counts}", string.Join(", ", allowedOfficialCounts)); } catch { }
+        }
 
         // Discover (optional) year for ranking (we already have expectedTrackCount above)
         var expectedYear = cachedRelease?.JsonRelease?.FirstReleaseYear;
@@ -147,9 +152,18 @@ public class SoulSeekReleaseDownloader(
                         f.Extension.Equals("mp3", StringComparison.OrdinalIgnoreCase) && f.BitRate == 320).ToList(),
                     Score = ComputeCandidateScore(r, artistName, releaseTitle, expectedYear)
                 })
-                .Where(x => x.Audio320Files.Count >= (expectedTrackCount > 0
-                    ? Math.Max(2, Math.Min(expectedTrackCount, expectedTrackCount - 1))
-                    : 5))
+                .Where(x =>
+                {
+                    // If we have official allowed counts, require exact match to one of them
+                    if (allowedOfficialCounts is { Count: > 0 })
+                    {
+                        return allowedOfficialCounts.Contains(x.Audio320Files.Count);
+                    }
+                    // Otherwise fall back to loose min required logic
+                    return x.Audio320Files.Count >= (expectedTrackCount > 0
+                        ? Math.Max(2, Math.Min(expectedTrackCount, expectedTrackCount - 1))
+                        : 5);
+                })
                 .OrderByDescending(x => x.Score)
                 .ThenBy(x => x.Response.QueueLength)
                 .ThenBy(x => x.Response.HasFreeUploadSlot)
@@ -235,18 +249,20 @@ public class SoulSeekReleaseDownloader(
                 var localDir = Path.GetDirectoryName(localPath);
                 if (!string.IsNullOrWhiteSpace(localDir))
                     Directory.CreateDirectory(localDir);
+                // Prefer source track number if available
+                var displayTrack = item.SourceTrackNumber ?? (trackIndex + 1);
                 logger.LogInformation(
                     "[SoulSeek] Downloading {File} to {Path} (track {Track}/{Total})",
                     item.FileName,
                     localPath,
-                    trackIndex + 1,
+                    displayTrack,
                     expectedTrackCount
                 );
 
                 await cache.UpdateMediaAvailabilityStatus(
                     artistId,
                     releaseFolderName,
-                    trackIndex + 1,
+                    displayTrack,
                     CachedMediaAvailabilityStatus.Downloading
                 );
 
@@ -280,7 +296,7 @@ public class SoulSeekReleaseDownloader(
                                     ReleaseFolderName = releaseFolderName,
                                     Status = DownloadStatus.Downloading,
                                     TotalTracks = expectedTrackCount,
-                                    CompletedTracks = trackIndex + 1,
+                                    CompletedTracks = displayTrack,
                                     ArtistName = cachedRelease?.ArtistName ?? artistName,
                                     ReleaseTitle = cachedRelease?.Title ?? releaseTitle,
                                     CoverArtUrl = Features.ServerLibrary.Utils.LibraryAssetUrlFactory.CreateReleaseCoverArtUrl(artistId, releaseFolderName),
@@ -320,7 +336,7 @@ public class SoulSeekReleaseDownloader(
                             ReleaseFolderName = releaseFolderName,
                             Status = DownloadStatus.Downloading,
                             TotalTracks = expectedTrackCount,
-                            CompletedTracks = trackIndex + 1,
+                            CompletedTracks = displayTrack,
                             ArtistName = cachedRelease?.ArtistName ?? artistName,
                             ReleaseTitle = cachedRelease?.Title ?? releaseTitle,
                             CoverArtUrl = Features.ServerLibrary.Utils.LibraryAssetUrlFactory.CreateReleaseCoverArtUrl(artistId, releaseFolderName),
@@ -333,7 +349,7 @@ public class SoulSeekReleaseDownloader(
                             var avgKbps = sizeBytes > 0 ? (sizeBytes / 1024.0) / Math.Max(0.001, sw.Elapsed.TotalSeconds) : 0;
                             logger.LogInformation(
                                 "[SoulSeek] Finished track {Track}/{Total} in {Seconds:n1}s at avg ~{AvgKbps:n0} KB/s",
-                                trackIndex + 1,
+                                displayTrack,
                                 expectedTrackCount,
                                 sw.Elapsed.TotalSeconds,
                                 avgKbps
@@ -363,15 +379,15 @@ public class SoulSeekReleaseDownloader(
                 await cache.UpdateMediaAvailabilityStatus(
                     artistId,
                     releaseFolderName,
-                    trackIndex + 1,
+                    displayTrack,
                     CachedMediaAvailabilityStatus.Processing
                 );
-                logger.LogDebug("[SoulSeek] Marked track {Track} as Processing", trackIndex + 1);
+                logger.LogDebug("[SoulSeek] Marked track {Track} as Processing", displayTrack);
 
                 trackIndex++;
                 try
                 {
-                    progress.SetTrackProgress(trackIndex, expectedTrackCount);
+                    progress.SetTrackProgress(displayTrack, expectedTrackCount);
                 }
                 catch
                 {

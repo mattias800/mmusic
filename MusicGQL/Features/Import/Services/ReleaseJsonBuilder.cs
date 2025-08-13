@@ -35,6 +35,16 @@ public class ReleaseJsonBuilder(
             .Where(r => r.ReleaseGroup != null && !r.ReleaseGroup.IsDemo())
             .ToList();
 
+        // Compute distinct possible track counts among official releases (non-bootleg/demo). Keep small set.
+        var possibleOfficialTrackCounts = releases
+            .Where(r => string.Equals(r.Status, "Official", StringComparison.OrdinalIgnoreCase))
+            .Select(r => (r.Media?.SelectMany(m => m.Tracks ?? new List<Hqub.MusicBrainz.Entities.Track>()).Count()) ?? 0)
+            .Where(c => c > 0)
+            .Distinct()
+            .OrderBy(c => c)
+            .Take(8) // safety bound
+            .ToList();
+
         // Evaluate local audio files (if any) to influence selection
         var releaseDir = Path.Combine(artistDir, releaseFolderName);
         List<string> audioFiles = [];
@@ -352,6 +362,7 @@ public class ReleaseJsonBuilder(
                     : null,
             CoverArt = coverArtRelPath,
             Tracks = tracks?.Count > 0 ? tracks : null,
+            PossibleNumberOfTracksInOfficialReleases = possibleOfficialTrackCounts.Count > 0 ? possibleOfficialTrackCounts : null,
             Connections = new ReleaseServiceConnections
             {
                 MusicBrainzReleaseGroupId = releaseGroupId,

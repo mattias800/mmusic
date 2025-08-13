@@ -116,11 +116,31 @@ public class StartDownloadReleaseService(
                     {
                         if (rel.Tracks is null)
                             return;
-                        for (int i = 0; i < rel.Tracks.Count; i++)
+                        // Build map from leading track number in filename -> filename
+                        int ExtractLeadingNumber(string? name)
                         {
-                            if (i < audioFiles.Count)
+                            if (string.IsNullOrWhiteSpace(name)) return -1;
+                            var span = name.AsSpan();
+                            int pos = 0;
+                            while (pos < span.Length && !char.IsDigit(span[pos])) pos++;
+                            int start = pos;
+                            while (pos < span.Length && char.IsDigit(span[pos])) pos++;
+                            if (pos > start && int.TryParse(span.Slice(start, pos - start), out var n)) return n;
+                            return -1;
+                        }
+
+                        var byTrackNo = new Dictionary<int, string>();
+                        foreach (var f in audioFiles)
+                        {
+                            var n = ExtractLeadingNumber(f);
+                            if (n > 0 && !byTrackNo.ContainsKey(n)) byTrackNo[n] = f;
+                        }
+
+                        foreach (var t in rel.Tracks)
+                        {
+                            if (byTrackNo.TryGetValue(t.TrackNumber, out var fname))
                             {
-                                rel.Tracks[i].AudioFilePath = "./" + audioFiles[i];
+                                t.AudioFilePath = "./" + fname;
                             }
                         }
                     }
