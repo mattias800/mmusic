@@ -31,7 +31,7 @@ type Documents = {
     "\n  mutation RemoveArtistImportJob($queueKey: String!) {\n    removeArtistImportJob(queueKey: $queueKey)\n  }\n": typeof types.RemoveArtistImportJobDocument,
     "\n  mutation CancelCurrentDownload($artistId: String!) {\n    cancelCurrentDownload(input: { artistId: $artistId }) {\n      __typename\n      ... on CancelCurrentDownloadSuccess {\n        ok\n      }\n      ... on CancelCurrentDownloadError {\n        message\n      }\n    }\n  }\n": typeof types.CancelCurrentDownloadDocument,
     "\n  mutation MoveCurrentToBack {\n    moveCurrentDownloadToBack {\n      __typename\n      ... on MoveCurrentDownloadToBackSuccess {\n        downloadQueue {\n          id\n          queueLength\n          items {\n            id\n            artistId\n            releaseFolderName\n          }\n        }\n      }\n      ... on MoveCurrentDownloadToBackError {\n        message\n      }\n    }\n  }\n": typeof types.MoveCurrentToBackDocument,
-    "\n  query SettingsPage {\n    serverSettings {\n      ...LibraryPathForm_ServerSettings\n      ...DownloadPathForm_ServerSettings\n    }\n  }\n": typeof types.SettingsPageDocument,
+    "\n  query SettingsPage {\n    serverSettings {\n      ...LibraryPathForm_ServerSettings\n    }\n  }\n": typeof types.SettingsPageDocument,
     "\n  query SpotifyPlaylistDetails($playlistId: String!) {\n    playlist {\n      importPlaylists {\n        spotify {\n          byId: spotifyPlaylistById(id: $playlistId) {\n            id\n            ...SpotifyPlaylistPanel_SpotifyPlaylist\n          }\n        }\n      }\n    }\n  }\n": typeof types.SpotifyPlaylistDetailsDocument,
     "\n  query ProfilePage {\n    viewer {\n      id\n      username\n      ...UserProfilePanel_User\n    }\n  }\n": typeof types.ProfilePageDocument,
     "\n  mutation ImportArtist($musicBrainzArtistId: String!) {\n    importArtist(input: { musicBrainzArtistId: $musicBrainzArtistId }) {\n      __typename\n      ... on ImportArtistSuccess {\n        artist {\n          id\n          name\n        }\n      }\n      ... on ImportArtistError {\n        message\n      }\n    }\n  }\n": typeof types.ImportArtistDocument,
@@ -122,8 +122,10 @@ type Documents = {
     "\n  query SearchResultTrackSearch($text: String!) {\n    serverLibrary {\n      searchTracks(searchTerm: $text, limit: 5) {\n        id\n        title\n        trackLength\n        release {\n          id\n          title\n          coverArtUrl\n          folderName\n          artist {\n            id\n            name\n          }\n        }\n      }\n    }\n  }\n": typeof types.SearchResultTrackSearchDocument,
     "\n  fragment DownloadPathForm_ServerSettings on ServerSettings {\n    id\n    downloadPath\n  }\n": typeof types.DownloadPathForm_ServerSettingsFragmentDoc,
     "\n  mutation UpdateDownloadPath($newDownloadPath: String!) {\n    updateDownloadPath(input: { newDownloadPath: $newDownloadPath }) {\n      ... on UpdateDownloadPathSuccess {\n        serverSettings {\n          id\n          downloadPath\n        }\n      }\n    }\n  }\n": typeof types.UpdateDownloadPathDocument,
-    "\n  fragment LibraryPathForm_ServerSettings on ServerSettings {\n    id\n    libraryPath\n  }\n": typeof types.LibraryPathForm_ServerSettingsFragmentDoc,
+    "\n  fragment LibraryPathForm_ServerSettings on ServerSettings {\n    id\n    libraryPath\n    storageStats {\n      totalDiskBytes\n      availableFreeBytes\n      librarySizeBytes\n    }\n  }\n": typeof types.LibraryPathForm_ServerSettingsFragmentDoc,
     "\n  mutation UpdateLibraryPath($newLibraryPath: String!) {\n    updateLibraryPath(input: { newLibraryPath: $newLibraryPath }) {\n      ... on UpdateLibraryPathSuccess {\n        serverSettings {\n          id\n          libraryPath\n        }\n      }\n    }\n  }\n": typeof types.UpdateLibraryPathDocument,
+    "\n  query ChangeFolder_HasLibraryManifest($path: String!) {\n    fileSystem {\n      hasLibraryManifest(path: $path)\n    }\n  }\n": typeof types.ChangeFolder_HasLibraryManifestDocument,
+    "\n  mutation ChangeFolder_CreateLibraryManifest($path: String!) {\n    createLibraryManifest(input: { libraryPath: $path }) {\n      ... on CreateLibraryManifestSuccess {\n        created\n      }\n      ... on CreateLibraryManifestError {\n        message\n      }\n    }\n  }\n": typeof types.ChangeFolder_CreateLibraryManifestDocument,
     "\n  fragment DirectoryTreeItem_FileSystemEntry on FileSystemEntry {\n    id\n    name\n    path\n    isDirectory\n    hasChildren\n    isAccessible\n  }\n": typeof types.DirectoryTreeItem_FileSystemEntryFragmentDoc,
     "\n  query DirectoryTreeItem($path: String) {\n    fileSystem {\n      browseFileSystem(path: $path) {\n        id\n        isDirectory\n        path\n        ...DirectoryTreeItem_FileSystemEntry\n      }\n    }\n  }\n": typeof types.DirectoryTreeItemDocument,
     "\n  query BrowseFileSystem($path: String) {\n    fileSystem {\n      browseFileSystem(path: $path) {\n        path\n        isDirectory\n        ...DirectoryTreeItem_FileSystemEntry\n      }\n    }\n  }\n": typeof types.BrowseFileSystemDocument,
@@ -162,7 +164,7 @@ const documents: Documents = {
     "\n  mutation RemoveArtistImportJob($queueKey: String!) {\n    removeArtistImportJob(queueKey: $queueKey)\n  }\n": types.RemoveArtistImportJobDocument,
     "\n  mutation CancelCurrentDownload($artistId: String!) {\n    cancelCurrentDownload(input: { artistId: $artistId }) {\n      __typename\n      ... on CancelCurrentDownloadSuccess {\n        ok\n      }\n      ... on CancelCurrentDownloadError {\n        message\n      }\n    }\n  }\n": types.CancelCurrentDownloadDocument,
     "\n  mutation MoveCurrentToBack {\n    moveCurrentDownloadToBack {\n      __typename\n      ... on MoveCurrentDownloadToBackSuccess {\n        downloadQueue {\n          id\n          queueLength\n          items {\n            id\n            artistId\n            releaseFolderName\n          }\n        }\n      }\n      ... on MoveCurrentDownloadToBackError {\n        message\n      }\n    }\n  }\n": types.MoveCurrentToBackDocument,
-    "\n  query SettingsPage {\n    serverSettings {\n      ...LibraryPathForm_ServerSettings\n      ...DownloadPathForm_ServerSettings\n    }\n  }\n": types.SettingsPageDocument,
+    "\n  query SettingsPage {\n    serverSettings {\n      ...LibraryPathForm_ServerSettings\n    }\n  }\n": types.SettingsPageDocument,
     "\n  query SpotifyPlaylistDetails($playlistId: String!) {\n    playlist {\n      importPlaylists {\n        spotify {\n          byId: spotifyPlaylistById(id: $playlistId) {\n            id\n            ...SpotifyPlaylistPanel_SpotifyPlaylist\n          }\n        }\n      }\n    }\n  }\n": types.SpotifyPlaylistDetailsDocument,
     "\n  query ProfilePage {\n    viewer {\n      id\n      username\n      ...UserProfilePanel_User\n    }\n  }\n": types.ProfilePageDocument,
     "\n  mutation ImportArtist($musicBrainzArtistId: String!) {\n    importArtist(input: { musicBrainzArtistId: $musicBrainzArtistId }) {\n      __typename\n      ... on ImportArtistSuccess {\n        artist {\n          id\n          name\n        }\n      }\n      ... on ImportArtistError {\n        message\n      }\n    }\n  }\n": types.ImportArtistDocument,
@@ -253,8 +255,10 @@ const documents: Documents = {
     "\n  query SearchResultTrackSearch($text: String!) {\n    serverLibrary {\n      searchTracks(searchTerm: $text, limit: 5) {\n        id\n        title\n        trackLength\n        release {\n          id\n          title\n          coverArtUrl\n          folderName\n          artist {\n            id\n            name\n          }\n        }\n      }\n    }\n  }\n": types.SearchResultTrackSearchDocument,
     "\n  fragment DownloadPathForm_ServerSettings on ServerSettings {\n    id\n    downloadPath\n  }\n": types.DownloadPathForm_ServerSettingsFragmentDoc,
     "\n  mutation UpdateDownloadPath($newDownloadPath: String!) {\n    updateDownloadPath(input: { newDownloadPath: $newDownloadPath }) {\n      ... on UpdateDownloadPathSuccess {\n        serverSettings {\n          id\n          downloadPath\n        }\n      }\n    }\n  }\n": types.UpdateDownloadPathDocument,
-    "\n  fragment LibraryPathForm_ServerSettings on ServerSettings {\n    id\n    libraryPath\n  }\n": types.LibraryPathForm_ServerSettingsFragmentDoc,
+    "\n  fragment LibraryPathForm_ServerSettings on ServerSettings {\n    id\n    libraryPath\n    storageStats {\n      totalDiskBytes\n      availableFreeBytes\n      librarySizeBytes\n    }\n  }\n": types.LibraryPathForm_ServerSettingsFragmentDoc,
     "\n  mutation UpdateLibraryPath($newLibraryPath: String!) {\n    updateLibraryPath(input: { newLibraryPath: $newLibraryPath }) {\n      ... on UpdateLibraryPathSuccess {\n        serverSettings {\n          id\n          libraryPath\n        }\n      }\n    }\n  }\n": types.UpdateLibraryPathDocument,
+    "\n  query ChangeFolder_HasLibraryManifest($path: String!) {\n    fileSystem {\n      hasLibraryManifest(path: $path)\n    }\n  }\n": types.ChangeFolder_HasLibraryManifestDocument,
+    "\n  mutation ChangeFolder_CreateLibraryManifest($path: String!) {\n    createLibraryManifest(input: { libraryPath: $path }) {\n      ... on CreateLibraryManifestSuccess {\n        created\n      }\n      ... on CreateLibraryManifestError {\n        message\n      }\n    }\n  }\n": types.ChangeFolder_CreateLibraryManifestDocument,
     "\n  fragment DirectoryTreeItem_FileSystemEntry on FileSystemEntry {\n    id\n    name\n    path\n    isDirectory\n    hasChildren\n    isAccessible\n  }\n": types.DirectoryTreeItem_FileSystemEntryFragmentDoc,
     "\n  query DirectoryTreeItem($path: String) {\n    fileSystem {\n      browseFileSystem(path: $path) {\n        id\n        isDirectory\n        path\n        ...DirectoryTreeItem_FileSystemEntry\n      }\n    }\n  }\n": types.DirectoryTreeItemDocument,
     "\n  query BrowseFileSystem($path: String) {\n    fileSystem {\n      browseFileSystem(path: $path) {\n        path\n        isDirectory\n        ...DirectoryTreeItem_FileSystemEntry\n      }\n    }\n  }\n": types.BrowseFileSystemDocument,
@@ -361,7 +365,7 @@ export function graphql(source: "\n  mutation MoveCurrentToBack {\n    moveCurre
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query SettingsPage {\n    serverSettings {\n      ...LibraryPathForm_ServerSettings\n      ...DownloadPathForm_ServerSettings\n    }\n  }\n"): (typeof documents)["\n  query SettingsPage {\n    serverSettings {\n      ...LibraryPathForm_ServerSettings\n      ...DownloadPathForm_ServerSettings\n    }\n  }\n"];
+export function graphql(source: "\n  query SettingsPage {\n    serverSettings {\n      ...LibraryPathForm_ServerSettings\n    }\n  }\n"): (typeof documents)["\n  query SettingsPage {\n    serverSettings {\n      ...LibraryPathForm_ServerSettings\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -725,11 +729,19 @@ export function graphql(source: "\n  mutation UpdateDownloadPath($newDownloadPat
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment LibraryPathForm_ServerSettings on ServerSettings {\n    id\n    libraryPath\n  }\n"): (typeof documents)["\n  fragment LibraryPathForm_ServerSettings on ServerSettings {\n    id\n    libraryPath\n  }\n"];
+export function graphql(source: "\n  fragment LibraryPathForm_ServerSettings on ServerSettings {\n    id\n    libraryPath\n    storageStats {\n      totalDiskBytes\n      availableFreeBytes\n      librarySizeBytes\n    }\n  }\n"): (typeof documents)["\n  fragment LibraryPathForm_ServerSettings on ServerSettings {\n    id\n    libraryPath\n    storageStats {\n      totalDiskBytes\n      availableFreeBytes\n      librarySizeBytes\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  mutation UpdateLibraryPath($newLibraryPath: String!) {\n    updateLibraryPath(input: { newLibraryPath: $newLibraryPath }) {\n      ... on UpdateLibraryPathSuccess {\n        serverSettings {\n          id\n          libraryPath\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation UpdateLibraryPath($newLibraryPath: String!) {\n    updateLibraryPath(input: { newLibraryPath: $newLibraryPath }) {\n      ... on UpdateLibraryPathSuccess {\n        serverSettings {\n          id\n          libraryPath\n        }\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query ChangeFolder_HasLibraryManifest($path: String!) {\n    fileSystem {\n      hasLibraryManifest(path: $path)\n    }\n  }\n"): (typeof documents)["\n  query ChangeFolder_HasLibraryManifest($path: String!) {\n    fileSystem {\n      hasLibraryManifest(path: $path)\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  mutation ChangeFolder_CreateLibraryManifest($path: String!) {\n    createLibraryManifest(input: { libraryPath: $path }) {\n      ... on CreateLibraryManifestSuccess {\n        created\n      }\n      ... on CreateLibraryManifestError {\n        message\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation ChangeFolder_CreateLibraryManifest($path: String!) {\n    createLibraryManifest(input: { libraryPath: $path }) {\n      ... on CreateLibraryManifestSuccess {\n        created\n      }\n      ... on CreateLibraryManifestError {\n        message\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

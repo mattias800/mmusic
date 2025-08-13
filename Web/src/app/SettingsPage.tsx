@@ -5,7 +5,7 @@ import { ScreenSpinner } from "@/components/spinner/ScreenSpinner.tsx";
 import { graphql } from "@/gql";
 import { MainPadding } from "@/components/layout/MainPadding.tsx";
 import { LibraryPathForm } from "@/features/settings/LibraryPathForm.tsx";
-import { DownloadPathForm } from "@/features/settings/DownloadPathForm.tsx";
+// Download path UI intentionally hidden for now (backend kept)
 
 export interface SettingsPageProps {}
 
@@ -13,7 +13,6 @@ const settingsPageQuery = graphql(`
   query SettingsPage {
     serverSettings {
       ...LibraryPathForm_ServerSettings
-      ...DownloadPathForm_ServerSettings
     }
   }
 `);
@@ -31,7 +30,6 @@ export const SettingsPage: React.FC<SettingsPageProps> = () => {
       <title>Settings</title>
       <ServerSettingsPanel>
         <LibraryPathForm serverSettings={data.serverSettings} />
-        <DownloadPathForm serverSettings={data.serverSettings} />
       </ServerSettingsPanel>
     </MainPadding>
   );

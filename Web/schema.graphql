@@ -226,6 +226,20 @@ type CreateDirectorySuccess {
   entry: FileSystemEntry!
 }
 
+type CreateLibraryManifestError {
+  message: String!
+}
+
+input CreateLibraryManifestInput {
+  libraryPath: String!
+}
+
+union CreateLibraryManifestResult = CreateLibraryManifestError | CreateLibraryManifestSuccess
+
+type CreateLibraryManifestSuccess {
+  created: Boolean!
+}
+
 input CreatePlaylistInput {
   description: String
   name: String
@@ -397,6 +411,7 @@ type FileSystemEntry {
 
 type FileSystemSearchRoot {
   browseFileSystem(path: String): [FileSystemEntry!]!
+  hasLibraryManifest(path: String!): Boolean!
 }
 
 type GenerateArtistShareFilesError {
@@ -762,6 +777,7 @@ type Mutation {
   addTrackToPlaylist(input: AddTrackToPlaylistInput!): AddTrackToPlaylistResult!
   cancelCurrentDownload(input: CancelCurrentDownloadInput!): CancelCurrentDownloadResult!
   createDirectory(input: CreateDirectoryInput!): CreateDirectoryResult!
+  createLibraryManifest(input: CreateLibraryManifestInput!): CreateLibraryManifestResult!
   createPlaylist(input: CreatePlaylistInput!): CreatePlaylistResult!
   createUser(input: CreateUserInput!): CreateUserResult!
   deleteArtist(input: DeleteArtistInput!): DeleteArtistResult!
@@ -1063,10 +1079,12 @@ type ServerLibrarySearchRoot {
 
 type ServerSettings {
   downloadPath: String!
+  hasLibraryManifest: Boolean!
   id: ID!
   libraryPath: String!
   soulSeekNoDataTimeoutSeconds: Int!
   soulSeekSearchTimeLimitSeconds: Int!
+  storageStats: StorageStats
 }
 
 type SetArtistMusicBrainzMatchError {
@@ -1284,6 +1302,12 @@ type StartDownloadReleaseSuccess {
 
 type StartDownloadReleaseUnknownError {
   message: String!
+}
+
+type StorageStats {
+  availableFreeBytes: Long
+  librarySizeBytes: Long!
+  totalDiskBytes: Long
 }
 
 type Subscription {

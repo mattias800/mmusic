@@ -1,11 +1,10 @@
 import * as React from "react";
-import { useState } from "react";
-import { Input } from "@/components/ui/input.tsx";
-import { Label } from "@/components/ui/label.tsx";
-import { Button } from "@/components/ui/button.tsx";
-import { DirectoryBrowserModal } from "./components/DirectoryBrowser/DirectoryBrowserModal.tsx";
+import { useCallback } from "react";
 import { FragmentType, graphql, useFragment } from "@/gql";
 import { useMutation } from "urql";
+import { Alert } from "@/components/ui/Alert.tsx";
+import { DiskUsagePanel } from "./components/DiskUsagePanel.tsx";
+import { ChangeLibraryFolderControl } from "./components/ChangeLibraryFolderControl.tsx";
 
 export interface LibraryPathFormProps {
   serverSettings: FragmentType<typeof libraryPathFormServerSettingsFragment>;
@@ -15,6 +14,11 @@ const libraryPathFormServerSettingsFragment = graphql(`
   fragment LibraryPathForm_ServerSettings on ServerSettings {
     id
     libraryPath
+    storageStats {
+      totalDiskBytes
+      availableFreeBytes
+      librarySizeBytes
+    }
   }
 `);
 
@@ -37,40 +41,40 @@ export const LibraryPathForm: React.FC<LibraryPathFormProps> = (props) => {
     props.serverSettings,
   );
 
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
   const [{ fetching }, updateServerSettings] = useMutation(
     updateLibraryPathMutation,
   );
 
+  const onPathChanged = useCallback(
+    async (path: string) => {
+      await updateServerSettings({ newLibraryPath: path });
+    },
+    [updateServerSettings],
+  );
+
   return (
-    <div>
-      <Label
-        htmlFor="library-path"
-        style={{ marginBottom: "8px", display: "block" }}
-      >
-        Library path
-      </Label>
-      <div className={"flex w-xl items-center space-x-2"}>
-        <Input
-          id={"library-path"}
-          value={serverSettings.libraryPath}
-          readOnly
-        />
-        <Button
-          loading={fetching}
-          disabled={fetching}
-          onClick={() => setIsModalOpen(true)}
-        >
-          Browse...
-        </Button>
-      </div>
-      <DirectoryBrowserModal
-        open={isModalOpen}
-        onOpenChange={setIsModalOpen}
-        onSelect={(path) => updateServerSettings({ newLibraryPath: path })}
-        heading={"Select library folder"}
+    <div className="flex flex-col gap-12">
+      <ChangeLibraryFolderControl
+        currentPath={serverSettings.libraryPath}
+        loading={fetching}
+        onPathChanged={onPathChanged}
       />
+
+      {serverSettings.storageStats && (
+        <DiskUsagePanel
+          totalBytes={serverSettings.storageStats.totalDiskBytes ?? undefined}
+          freeBytes={
+            serverSettings.storageStats.availableFreeBytes ?? undefined
+          }
+          libraryBytes={serverSettings.storageStats.librarySizeBytes}
+        />
+      )}
+
+      {!serverSettings.libraryPath && (
+        <Alert variant="warning" title="Library path not set">
+          Please set a library path to enable downloading and scanning.
+        </Alert>
+      )}
     </div>
   );
 };

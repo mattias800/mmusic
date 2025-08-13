@@ -20,6 +20,7 @@ public class SoulSeekReleaseDownloader(
     DownloadQueueService downloadQueue,
     DownloadHistoryService downloadHistory,
     ServerSettings.ServerSettingsAccessor settingsAccessor,
+    ServerSettings.LibraryManifestService manifestService,
     ILogger<SoulSeekReleaseDownloader> logger
 )
 {
@@ -41,6 +42,8 @@ public class SoulSeekReleaseDownloader(
             logger.LogInformation("[SoulSeek] Client network state after connect: {State}", service.State.NetworkState);
         }
 
+        // Guard: ensure manifest exists at library root before any write
+        try { var s = await settingsAccessor.GetAsync(); await manifestService.EnsureWritesAllowedAsync(s.LibraryPath); } catch { return false; }
         Directory.CreateDirectory(targetDirectory);
         logger.LogInformation(
             "[SoulSeek] Searching: {Artist} - {Release}",

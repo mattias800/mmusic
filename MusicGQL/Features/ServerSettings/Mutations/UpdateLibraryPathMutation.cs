@@ -14,7 +14,8 @@ public class UpdateLibraryPathMutation
         UpdateLibraryPathInput input,
         [Service] UpdateLibraryPathHandler updateLibraryPathHandler,
         [Service] IHttpContextAccessor httpContextAccessor, // Inject IHttpContextAccessor
-        [Service] EventDbContext dbContext // Inject EventDbContext to fetch viewer details
+        [Service] EventDbContext dbContext, // Inject EventDbContext to fetch viewer details
+        [Service] LibraryManifestService manifestService
     )
     {
         var userIdString = httpContextAccessor.HttpContext?.User.FindFirstValue(

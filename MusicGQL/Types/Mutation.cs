@@ -1,6 +1,7 @@
-namespace MusicGQL.Types;
-
-public class Mutation
+namespace MusicGQL.Types
 {
-    public Task<bool> Ping() => Task.FromResult(true);
+    public class Mutation
+    {
+        public Task<bool> Ping() => Task.FromResult(true);
+    }
 }
