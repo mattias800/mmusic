@@ -59,6 +59,7 @@ type Documents = {
     "\n  fragment ArtistNotInLibraryPanel_MbArtist on MbArtist {\n    id\n    name\n    images {\n      artistBackground\n    }\n    listeners\n    lastFmArtist {\n      id\n      ...ArtistNotInLibraryTopTracks_LastFmArtist\n    }\n  }\n": typeof types.ArtistNotInLibraryPanel_MbArtistFragmentDoc,
     "\n  fragment ArtistNotInLibraryTopTracks_LastFmArtist on LastFmArtist {\n    id\n    topTracks {\n      id\n      name\n      statistics {\n        listeners\n      }\n    }\n  }\n": typeof types.ArtistNotInLibraryTopTracks_LastFmArtistFragmentDoc,
     "\n  fragment ArtistActionButtons_Artist on Artist {\n    id\n    ...FixArtistMatchDialog_Artist\n    name\n  }\n": typeof types.ArtistActionButtons_ArtistFragmentDoc,
+    "\n    mutation DeleteArtist($input: DeleteArtistInput!) {\n      deleteArtist(input: $input) {\n        __typename\n        ... on DeleteArtistSuccess {\n          deletedArtistId\n        }\n        ... on DeleteArtistError {\n          message\n        }\n      }\n    }\n  ": typeof types.DeleteArtistDocument,
     "\n  query ArtistAlbumList($artistId: ID!) {\n    serverLibrary {\n      artistById(id: $artistId) {\n        id\n        albums {\n          id\n          firstReleaseDate\n          ...AlbumCard_Release\n        }\n      }\n    }\n  }\n": typeof types.ArtistAlbumListDocument,
     "\n  fragment ArtistDownloadAllReleasesButton_Artist on Artist {\n    id\n  }\n": typeof types.ArtistDownloadAllReleasesButton_ArtistFragmentDoc,
     "\n  mutation ArtistDownloadAll_StartBulk(\n    $input: StartBulkDownloadForArtistInput!\n  ) {\n    startBulkDownloadForArtist(input: $input) {\n      __typename\n      ... on StartBulkDownloadForArtistSuccess {\n        queuedCount\n      }\n      ... on StartBulkDownloadForArtistError {\n        message\n      }\n    }\n  }\n": typeof types.ArtistDownloadAll_StartBulkDocument,
@@ -187,6 +188,7 @@ const documents: Documents = {
     "\n  fragment ArtistNotInLibraryPanel_MbArtist on MbArtist {\n    id\n    name\n    images {\n      artistBackground\n    }\n    listeners\n    lastFmArtist {\n      id\n      ...ArtistNotInLibraryTopTracks_LastFmArtist\n    }\n  }\n": types.ArtistNotInLibraryPanel_MbArtistFragmentDoc,
     "\n  fragment ArtistNotInLibraryTopTracks_LastFmArtist on LastFmArtist {\n    id\n    topTracks {\n      id\n      name\n      statistics {\n        listeners\n      }\n    }\n  }\n": types.ArtistNotInLibraryTopTracks_LastFmArtistFragmentDoc,
     "\n  fragment ArtistActionButtons_Artist on Artist {\n    id\n    ...FixArtistMatchDialog_Artist\n    name\n  }\n": types.ArtistActionButtons_ArtistFragmentDoc,
+    "\n    mutation DeleteArtist($input: DeleteArtistInput!) {\n      deleteArtist(input: $input) {\n        __typename\n        ... on DeleteArtistSuccess {\n          deletedArtistId\n        }\n        ... on DeleteArtistError {\n          message\n        }\n      }\n    }\n  ": types.DeleteArtistDocument,
     "\n  query ArtistAlbumList($artistId: ID!) {\n    serverLibrary {\n      artistById(id: $artistId) {\n        id\n        albums {\n          id\n          firstReleaseDate\n          ...AlbumCard_Release\n        }\n      }\n    }\n  }\n": types.ArtistAlbumListDocument,
     "\n  fragment ArtistDownloadAllReleasesButton_Artist on Artist {\n    id\n  }\n": types.ArtistDownloadAllReleasesButton_ArtistFragmentDoc,
     "\n  mutation ArtistDownloadAll_StartBulk(\n    $input: StartBulkDownloadForArtistInput!\n  ) {\n    startBulkDownloadForArtist(input: $input) {\n      __typename\n      ... on StartBulkDownloadForArtistSuccess {\n        queuedCount\n      }\n      ... on StartBulkDownloadForArtistError {\n        message\n      }\n    }\n  }\n": types.ArtistDownloadAll_StartBulkDocument,
@@ -464,6 +466,10 @@ export function graphql(source: "\n  fragment ArtistNotInLibraryTopTracks_LastFm
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  fragment ArtistActionButtons_Artist on Artist {\n    id\n    ...FixArtistMatchDialog_Artist\n    name\n  }\n"): (typeof documents)["\n  fragment ArtistActionButtons_Artist on Artist {\n    id\n    ...FixArtistMatchDialog_Artist\n    name\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n    mutation DeleteArtist($input: DeleteArtistInput!) {\n      deleteArtist(input: $input) {\n        __typename\n        ... on DeleteArtistSuccess {\n          deletedArtistId\n        }\n        ... on DeleteArtistError {\n          message\n        }\n      }\n    }\n  "): (typeof documents)["\n    mutation DeleteArtist($input: DeleteArtistInput!) {\n      deleteArtist(input: $input) {\n        __typename\n        ... on DeleteArtistSuccess {\n          deletedArtistId\n        }\n        ... on DeleteArtistError {\n          message\n        }\n      }\n    }\n  "];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

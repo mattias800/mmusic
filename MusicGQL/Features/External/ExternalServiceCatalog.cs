@@ -12,7 +12,7 @@ public static class ExternalServiceCatalog
         new("youtube", "YouTube", true),
         new("tidal", "TIDAL", false),
         new("deezer", "Deezer", false),
-        new("soundcloud", "SoundCloud", false),
+        new("soundcloud", "SoundCloud", true),
         new("bandcamp", "Bandcamp", false),
         new("discogs", "Discogs", false)
     ];

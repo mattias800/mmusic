@@ -14,6 +14,9 @@ import { Spinner } from "@/components/spinner/Spinner.tsx";
 import { TopTracksPlayButton } from "@/features/artist/artist-page/TopTracksPlayButton.tsx";
 import { FixArtistMatchDialog } from "@/features/artist/components/FixArtistMatchDialog.tsx";
 import { FragmentType, graphql, useFragment } from "@/gql";
+import { useMutation } from "urql";
+import { useNavigate } from "react-router";
+import { ConfirmDeletePrompt } from "@/components/ui/ConfirmDeletePrompt.tsx";
 
 export interface ArtistActionButtonsProps {
   artist: FragmentType<typeof artistActionButtonsArtistFragment>;
@@ -45,7 +48,33 @@ export const ArtistActionButtons: React.FC<ArtistActionButtonsProps> = ({
   const artist = useFragment(artistActionButtonsArtistFragment, props.artist);
 
   const [fixOpen, setFixOpen] = useState(false);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const anyLoading = loadingTopTracks || loadingMetaData;
+
+  const navigate = useNavigate();
+
+  const deleteArtistMutation = graphql(`
+    mutation DeleteArtist($input: DeleteArtistInput!) {
+      deleteArtist(input: $input) {
+        __typename
+        ... on DeleteArtistSuccess {
+          deletedArtistId
+        }
+        ... on DeleteArtistError {
+          message
+        }
+      }
+    }
+  `);
+  const [, deleteArtist] = useMutation(deleteArtistMutation);
+
+  const onConfirmDeleteArtist = async () => {
+    const result = await deleteArtist({ input: { artistId: artist.id } });
+    const res = result.data?.deleteArtist;
+    if (res?.__typename === "DeleteArtistSuccess") {
+      navigate("/artists");
+    }
+  };
 
   return (
     <div className="flex items-center gap-4">
@@ -75,6 +104,13 @@ export const ArtistActionButtons: React.FC<ArtistActionButtonsProps> = ({
           <DropdownMenuItem onSelect={() => setFixOpen(true)}>
             Fix artist match
           </DropdownMenuItem>
+          <DropdownMenuLabel>Danger</DropdownMenuLabel>
+          <DropdownMenuItem
+            onSelect={() => setConfirmDeleteOpen(true)}
+            className="text-red-600 focus:text-red-600"
+          >
+            Delete artist from library
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
       {anyLoading && <Spinner size={"sm"} />}
@@ -83,6 +119,16 @@ export const ArtistActionButtons: React.FC<ArtistActionButtonsProps> = ({
         open={fixOpen}
         onOpenChange={setFixOpen}
       />
+      {confirmDeleteOpen && (
+        <ConfirmDeletePrompt
+          itemName={artist.name}
+          onClose={() => setConfirmDeleteOpen(false)}
+          onConfirmDelete={onConfirmDeleteArtist}
+          promptTitle="Delete artist"
+          confirmText="Delete"
+          cancelText="Cancel"
+        />
+      )}
     </div>
   );
 };

@@ -358,6 +358,10 @@ public sealed class MusicBrainzImportExecutor(
                         if (!string.IsNullOrWhiteSpace(maybeId) && maybeId.All(char.IsDigit))
                             jsonArtist.Connections.AppleMusicArtistId ??= maybeId;
                     }
+                    else if (url.Contains("music.youtube.com", StringComparison.OrdinalIgnoreCase))
+                    {
+                        jsonArtist.Connections.YoutubeMusicUrl ??= url;
+                    }
                     else if (url.Contains("youtube.com", StringComparison.OrdinalIgnoreCase) || url.Contains("youtu.be", StringComparison.OrdinalIgnoreCase))
                     {
                         // Prefer channel URLs
@@ -385,6 +389,16 @@ public sealed class MusicBrainzImportExecutor(
                     {
                         jsonArtist.Connections.DiscogsUrl ??= url;
                     }
+                }
+                // Normalize any previously mis-assigned YouTube Music link
+                if (!string.IsNullOrWhiteSpace(jsonArtist.Connections.YoutubeChannelUrl)
+                    && jsonArtist.Connections.YoutubeChannelUrl.Contains("music.youtube.com", StringComparison.OrdinalIgnoreCase))
+                {
+                    if (string.IsNullOrWhiteSpace(jsonArtist.Connections.YoutubeMusicUrl))
+                    {
+                        jsonArtist.Connections.YoutubeMusicUrl = jsonArtist.Connections.YoutubeChannelUrl;
+                    }
+                    jsonArtist.Connections.YoutubeChannelUrl = null;
                 }
             }
 

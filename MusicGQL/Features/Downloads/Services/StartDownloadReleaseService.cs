@@ -16,7 +16,8 @@ public class StartDownloadReleaseService(
     Features.Import.Services.MusicBrainzImportService mbImport,
     Features.Import.Services.LibraryReleaseImportService releaseImporter,
     HotChocolate.Subscriptions.ITopicEventSender eventSender,
-    IDbContextFactory<EventDbContext> dbFactory
+    IDbContextFactory<EventDbContext> dbFactory,
+    DownloadCancellationService cancellationService
 )
 {
     public async Task<(bool Success, string? ErrorMessage)> StartAsync(
@@ -118,12 +119,14 @@ public class StartDownloadReleaseService(
             artistId,
             releaseFolderName
         );
+        var token = cancellationService.CreateFor(artistId, releaseFolderName, cancellationToken);
         var ok = await soulSeekReleaseDownloader.DownloadReleaseAsync(
             artistId,
             releaseFolderName,
             artistName,
             releaseTitle,
-            targetDir
+            targetDir,
+            token
         );
         if (!ok)
         {

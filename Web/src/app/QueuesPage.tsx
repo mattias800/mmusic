@@ -2,7 +2,7 @@ import React from "react";
 import { graphql } from "@/gql";
 import { useMutation, useQuery, useSubscription } from "urql";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { ReleaseCoverArt } from "@/components/images/ReleaseCoverArt.tsx";
 import { ProgressIndicator } from "@/components/progress/ProgressIndicator";
 import { DownloadStatus } from "@/gql/graphql.ts";

@@ -139,6 +139,40 @@ public class DownloadQueueService(
         };
     }
 
+    public int RemoveAllForArtist(string artistId)
+    {
+        int removed = 0;
+        var pri = _priorityQueue.ToArray().ToList();
+        var norm = _queue.ToArray().ToList();
+        _priorityQueue.Clear();
+        _queue.Clear();
+        foreach (var q in pri)
+        {
+            if (string.Equals(q.ArtistId, artistId, StringComparison.OrdinalIgnoreCase))
+            {
+                removed++;
+                try { _dedupeKeys.TryRemove(BuildKey(q), out _); } catch { }
+                continue;
+            }
+            _priorityQueue.Enqueue(q);
+        }
+        foreach (var q in norm)
+        {
+            if (string.Equals(q.ArtistId, artistId, StringComparison.OrdinalIgnoreCase))
+            {
+                removed++;
+                try { _dedupeKeys.TryRemove(BuildKey(q), out _); } catch { }
+                continue;
+            }
+            _queue.Enqueue(q);
+        }
+        if (removed > 0)
+        {
+            PublishQueueUpdated();
+        }
+        return removed;
+    }
+
     private void PublishQueueUpdated()
     {
         _ = eventSender.SendAsync(

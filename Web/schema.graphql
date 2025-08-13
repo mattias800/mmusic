@@ -241,6 +241,20 @@ type CreateUserSuccess {
 """The `DateTime` scalar represents an ISO-8601 compliant date time type."""
 scalar DateTime
 
+type DeleteArtistError {
+  message: String!
+}
+
+input DeleteArtistInput {
+  artistId: String!
+}
+
+union DeleteArtistResult = DeleteArtistError | DeleteArtistSuccess
+
+type DeleteArtistSuccess {
+  deletedArtistId: String!
+}
+
 input DeletePlaylistInput {
   playlistId: ID!
 }
@@ -725,6 +739,7 @@ type Mutation {
   createDirectory(input: CreateDirectoryInput!): CreateDirectoryResult!
   createPlaylist(input: CreatePlaylistInput!): CreatePlaylistResult!
   createUser(input: CreateUserInput!): CreateUserResult!
+  deleteArtist(input: DeleteArtistInput!): DeleteArtistResult!
   deletePlaylist(input: DeletePlaylistInput!): DeletePlaylistResult!
   deleteReleaseAudio(input: DeleteReleaseAudioInput!): DeleteReleaseAudioResult!
   enqueueArtist(artistName: String!, songTitle: String): Boolean!

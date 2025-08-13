@@ -28,7 +28,8 @@ public class SoulSeekReleaseDownloader(
         string releaseFolderName,
         string artistName,
         string releaseTitle,
-        string targetDirectory
+        string targetDirectory,
+        CancellationToken cancellationToken = default
     )
     {
         if (service.State.NetworkState != SoulSeekNetworkState.Online)
@@ -266,6 +267,7 @@ public class SoulSeekReleaseDownloader(
 
             while (queue.Any())
             {
+                if (cancellationToken.IsCancellationRequested) { return false; }
                 var item = queue.Dequeue();
                 var localPath = Path.Combine(targetDirectory, item.LocalFileName);
                 var localDir = Path.GetDirectoryName(localPath);
@@ -356,7 +358,7 @@ public class SoulSeekReleaseDownloader(
                         item.FileName,
                         localPath,
                         options: options,
-                        cancellationToken: default
+                        cancellationToken: cancellationToken
                     );
                     sw.Stop();
                     // Final push on completion

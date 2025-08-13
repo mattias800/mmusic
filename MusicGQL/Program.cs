@@ -230,6 +230,8 @@ builder.Services.AddAutoMapper(typeof(Program));
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddHttpClient();
 builder.Services.AddSingleton<MusicGQL.Features.Assets.ExternalAssetStorage>();
+builder.Services.AddSingleton<MusicGQL.Features.Downloads.Services.DownloadCancellationService>();
+builder.Services.AddSingleton<MusicGQL.Features.ServerLibrary.Services.ArtistDeletionService>();
 
 // Add MVC controllers for asset endpoints
 builder.Services.AddControllers();
@@ -356,6 +358,9 @@ builder
     .AddTypeExtension<DeleteReleaseAudioMutation>()
     .AddType<DeleteReleaseAudioSuccess>()
     .AddType<DeleteReleaseAudioError>()
+    .AddTypeExtension<DeleteArtistMutation>()
+    .AddType<DeleteArtistSuccess>()
+    .AddType<DeleteArtistError>()
     .AddTypeExtension<SetArtistMatchMutation>()
     .AddType<SetArtistMusicBrainzMatchSuccess>()
     .AddType<SetArtistMusicBrainzMatchError>()
