@@ -10,6 +10,9 @@ public class DbServerSettings
     // Max time (seconds) a SoulSeek search may run before yielding to next queued job.
     // When queue has more items, an ongoing search exceeding this will be aborted and re-queued to the back.
     public int SoulSeekSearchTimeLimitSeconds { get; set; } = 60;
+
+    // Max seconds to wait without receiving data during a SoulSeek transfer before cancelling it
+    public int SoulSeekNoDataTimeoutSeconds { get; set; } = 20;
 }
 
 public static class DefaultDbServerSettingsProvider
@@ -24,6 +27,7 @@ public static class DefaultDbServerSettingsProvider
             LibraryPath = "",
             DownloadPath = "",
             SoulSeekSearchTimeLimitSeconds = 60,
+            SoulSeekNoDataTimeoutSeconds = 20,
         };
     }
 }

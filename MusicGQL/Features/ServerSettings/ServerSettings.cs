@@ -12,4 +12,6 @@ public record ServerSettings([property: GraphQLIgnore] DbServerSettings Model)
     public string DownloadPath() => Model.DownloadPath;
 
     public int SoulSeekSearchTimeLimitSeconds() => Model.SoulSeekSearchTimeLimitSeconds;
+
+    public int SoulSeekNoDataTimeoutSeconds() => Model.SoulSeekNoDataTimeoutSeconds;
 }

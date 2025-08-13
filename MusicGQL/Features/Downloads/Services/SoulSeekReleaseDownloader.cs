@@ -118,7 +118,8 @@ public class SoulSeekReleaseDownloader(
         bool hasWaiting = queueDepth > 0;
         // Read setting via cache of server settings through DI (access via separate resolver)
         int timeLimitSec = 60;
-        try { var s = await settingsAccessor.GetAsync(); timeLimitSec = Math.Max(5, s.SoulSeekSearchTimeLimitSeconds); } catch { }
+        int noDataTimeoutSec = 20;
+        try { var s = await settingsAccessor.GetAsync(); timeLimitSec = Math.Max(5, s.SoulSeekSearchTimeLimitSeconds); noDataTimeoutSec = Math.Max(5, s.SoulSeekNoDataTimeoutSeconds); } catch { }
         TimeSpan searchTimeout = TimeSpan.FromSeconds(timeLimitSec);
         logger.LogInformation("[SoulSeek] Starting search across {QueryForms} query forms (queueDepth={QueueDepth}, timeLimitSec={TimeLimit})", queries.Count, queueDepth, timeLimitSec);
         foreach (var q in queries.Distinct(StringComparer.OrdinalIgnoreCase))
@@ -279,6 +280,7 @@ public class SoulSeekReleaseDownloader(
                 try
                 {
                     var sw = System.Diagnostics.Stopwatch.StartNew();
+                    var noDataStopwatch = System.Diagnostics.Stopwatch.StartNew();
                     long lastBytes = 0;
                     var lastTick = DateTime.UtcNow;
                     double lastLoggedPercent = -25;
@@ -300,6 +302,15 @@ public class SoulSeekReleaseDownloader(
                                 lastTick = now;
 
                                 double percent = total > 0 ? (received * 100.0) / total : 0;
+                                if (delta > 0)
+                                {
+                                    noDataStopwatch.Restart();
+                                }
+                                else if (noDataStopwatch.Elapsed.TotalSeconds >= noDataTimeoutSec)
+                                {
+                                    // Cancel transfer: no data for too long
+                                    throw new TimeoutException($"No data received for {noDataTimeoutSec}s");
+                                }
                                 progress.Set(new DownloadProgress
                                 {
                                     ArtistId = artistId,
