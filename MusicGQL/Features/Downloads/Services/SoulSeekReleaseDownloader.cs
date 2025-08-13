@@ -294,6 +294,26 @@ public class SoulSeekReleaseDownloader(
                 {
                     var sw = System.Diagnostics.Stopwatch.StartNew();
                     var noDataStopwatch = System.Diagnostics.Stopwatch.StartNew();
+                    // Monitor for no-data outside of progress callback so we cancel even if no callbacks are fired
+                    using var perFileCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                    using var monitorCts = new CancellationTokenSource();
+                    var lastDataTick = DateTime.UtcNow;
+                    var monitorTask = Task.Run(async () =>
+                    {
+                        try
+                        {
+                            while (!monitorCts.IsCancellationRequested)
+                            {
+                                if ((DateTime.UtcNow - lastDataTick).TotalSeconds >= noDataTimeoutSec)
+                                {
+                                    try { perFileCts.Cancel(); } catch { }
+                                    break;
+                                }
+                                await Task.Delay(500, monitorCts.Token);
+                            }
+                        }
+                        catch { }
+                    }, monitorCts.Token);
                     long lastBytes = 0;
                     var lastTick = DateTime.UtcNow;
                     double lastLoggedPercent = -25;
@@ -318,11 +338,12 @@ public class SoulSeekReleaseDownloader(
                                 if (delta > 0)
                                 {
                                     noDataStopwatch.Restart();
+                                    lastDataTick = DateTime.UtcNow;
                                 }
                                 else if (noDataStopwatch.Elapsed.TotalSeconds >= noDataTimeoutSec)
                                 {
                                     // Cancel transfer: no data for too long
-                                    throw new TimeoutException($"No data received for {noDataTimeoutSec}s");
+                                    try { perFileCts.Cancel(); } catch { }
                                 }
                                 progress.Set(new DownloadProgress
                                 {
@@ -353,13 +374,21 @@ public class SoulSeekReleaseDownloader(
                         }
                     );
 
-                    await client.DownloadAsync(
+                    try
+                    {
+                        await client.DownloadAsync(
                         item.Username,
                         item.FileName,
                         localPath,
                         options: options,
-                        cancellationToken: cancellationToken
-                    );
+                        cancellationToken: perFileCts.Token
+                        );
+                    }
+                    finally
+                    {
+                        try { monitorCts.Cancel(); } catch { }
+                        try { await monitorTask; } catch { }
+                    }
                     sw.Stop();
                     // Final push on completion
                     try
@@ -392,6 +421,17 @@ public class SoulSeekReleaseDownloader(
                         catch { }
                     }
                     catch { }
+                }
+                catch (OperationCanceledException ocex)
+                {
+                    // Distinguish between external cancellation and no-data timeout
+                    if (cancellationToken.IsCancellationRequested)
+                    {
+                        logger.LogInformation("[SoulSeek] Download cancelled externally for {Artist}/{Folder}", artistId, releaseFolderName);
+                        return false;
+                    }
+                    logger.LogWarning(ocex, "[SoulSeek] Download cancelled due to no-data timeout ({Seconds}s) for file {File}", noDataTimeoutSec, item.FileName);
+                    userFailed = true;
                 }
                 catch (Exception ex)
                 {
