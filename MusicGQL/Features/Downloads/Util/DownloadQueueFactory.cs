@@ -126,7 +126,12 @@ public static class DownloadQueueFactory
         }
 
         var orderedAnnotated = filtered
-            .Select(a => new { a, lead = ExtractLeadingTrackNumber(a.BaseNameWithoutExt) })
+            .Select(a =>
+            {
+                var rawLead = ExtractLeadingTrackNumber(a.BaseNameWithoutExt);
+                var normalizedLead = NormalizeLeadingTrackNumber(rawLead, expectedTrackCount);
+                return new { a, lead = normalizedLead, rawLead };
+            })
             .OrderBy(x => x.lead ?? int.MaxValue)
             .ThenBy(x => x.a.JustFile, StringComparer.OrdinalIgnoreCase)
             .ToList();
@@ -160,7 +165,12 @@ public static class DownloadQueueFactory
             .ToList();
 
         var orderedAnnotated = annotated
-            .Select(a => new { a, lead = ExtractLeadingTrackNumber(a.BaseNameWithoutExt) })
+            .Select(a =>
+            {
+                var rawLead = ExtractLeadingTrackNumber(a.BaseNameWithoutExt);
+                var normalizedLead = NormalizeLeadingTrackNumber(rawLead, expectedTrackCount: null);
+                return new { a, lead = normalizedLead, rawLead };
+            })
             .OrderBy(x => x.lead ?? int.MaxValue)
             .ThenBy(x => x.a.JustFile, StringComparer.OrdinalIgnoreCase)
             .ToList();
@@ -259,6 +269,34 @@ public static class DownloadQueueFactory
             return span.Slice(pos).ToString();
         }
         return name;
+    }
+
+    private static int? NormalizeLeadingTrackNumber(int? rawLead, int? expectedTrackCount)
+    {
+        if (!rawLead.HasValue) return null;
+        var n = rawLead.Value;
+        if (n <= 99) return n;
+        // Handle common disc+track encodings like 103, 208, 1103 etc → use last two digits when plausible
+        int lastTwo = n % 100;
+        if (lastTwo == 0)
+        {
+            // Avoid mapping to 0; fall back to raw
+            return n;
+        }
+        if (expectedTrackCount.HasValue && expectedTrackCount.Value > 0)
+        {
+            if (lastTwo >= 1 && lastTwo <= Math.Min(99, expectedTrackCount.Value))
+            {
+                return lastTwo;
+            }
+            return n;
+        }
+        // Without expected count, assume typical album sizes; bound to 1..30 as a sane default
+        if (lastTwo >= 1 && lastTwo <= 30)
+        {
+            return lastTwo;
+        }
+        return n;
     }
 
     private static int? TryExtractDiscNumber(List<string> segments, int startIndex)

@@ -125,7 +125,16 @@ public class StartDownloadReleaseService(
                             while (pos < span.Length && !char.IsDigit(span[pos])) pos++;
                             int start = pos;
                             while (pos < span.Length && char.IsDigit(span[pos])) pos++;
-                            if (pos > start && int.TryParse(span.Slice(start, pos - start), out var n)) return n;
+                            if (pos > start && int.TryParse(span.Slice(start, pos - start), out var n))
+                            {
+                                // Normalize 3+ digit disc+track encodings (e.g., 103 -> 3)
+                                if (n > 99)
+                                {
+                                    var lastTwo = n % 100;
+                                    if (lastTwo > 0) return lastTwo;
+                                }
+                                return n;
+                            }
                             return -1;
                         }
 

@@ -1006,6 +1006,7 @@ type ServerSettings {
   downloadPath: String!
   id: ID!
   libraryPath: String!
+  soulSeekNoDataTimeoutSeconds: Int!
   soulSeekSearchTimeLimitSeconds: Int!
 }
 
