@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { ReleaseCoverArt } from "@/components/images/ReleaseCoverArt.tsx";
 import { ProgressIndicator } from "@/components/progress/ProgressIndicator";
+import { DownloadStatus } from "@/gql/graphql.ts";
 
 const query = graphql(`
   query QueuesPage_Query {
@@ -217,9 +218,14 @@ export const QueuesPage: React.FC = () => {
                     </Link>
                   </div>
                   <div className="text-sm text-zinc-400 mt-1">
-                    {dl.currentDownload.status} —{" "}
-                    {dl.currentDownload.completedTracks}/
-                    {dl.currentDownload.totalTracks}
+                    {dl.currentDownload.status}{" "}
+                    {dl.currentDownload.status ===
+                      DownloadStatus.Downloading && (
+                      <>
+                        — {dl.currentDownload.completedTracks}/
+                        {dl.currentDownload.totalTracks}
+                      </>
+                    )}
                   </div>
                   {typeof dl.currentDownload.currentDownloadSpeedKbps ===
                     "number" && (
@@ -353,25 +359,29 @@ export const QueuesPage: React.FC = () => {
                 ) : (
                   <div className="w-8 h-8" />
                 )}
-                <div className="text-zinc-400">
-                  {new Date(h.timestampUtc).toLocaleString()} —{" "}
-                  <Link
-                    to={`/artist/${h.artistId}`}
-                    className="hover:underline"
-                  >
-                    {h.artistName ?? h.artistId}
-                  </Link>
-                  {h.releaseFolderName ? (
-                    <>
-                      {"/"}
-                      <Link
-                        to={`/artist/${h.artistId}/release/${h.releaseFolderName}`}
-                        className="hover:underline"
-                      >
-                        {h.releaseTitle ?? h.releaseFolderName}
-                      </Link>
-                    </>
-                  ) : null}
+                <div className="flex flex-col">
+                  <div className="text-xs text-zinc-400">
+                    {new Date(h.timestampUtc).toLocaleString()}
+                  </div>
+                  <div className="text-zinc-400">
+                    <Link
+                      to={`/artist/${h.artistId}`}
+                      className="hover:underline"
+                    >
+                      {h.artistName ?? h.artistId}
+                    </Link>
+                    {h.releaseFolderName ? (
+                      <>
+                        {" - "}
+                        <Link
+                          to={`/artist/${h.artistId}/release/${h.releaseFolderName}`}
+                          className="hover:underline"
+                        >
+                          {h.releaseTitle ?? h.releaseFolderName}
+                        </Link>
+                      </>
+                    ) : null}
+                  </div>
                 </div>
               </div>
               <div className={h.success ? "text-green-400" : "text-red-400"}>

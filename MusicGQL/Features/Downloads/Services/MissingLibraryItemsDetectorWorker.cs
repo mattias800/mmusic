@@ -39,6 +39,7 @@ public class MissingLibraryItemsDetectorWorker(
 
                 var snapshot = queue.Snapshot();
                 var deficit = Math.Max(0, opts.TargetMinQueueLength - snapshot.QueueLength);
+                logger.LogDebug("[MissingDetector] QueueLength={QueueLength}, targetMin={Target}, deficit={Deficit}", snapshot.QueueLength, opts.TargetMinQueueLength, deficit);
                 if (deficit <= 0)
                 {
                     await Task.Delay(TimeSpan.FromSeconds(opts.ScanIntervalSeconds), stoppingToken);
@@ -53,11 +54,13 @@ public class MissingLibraryItemsDetectorWorker(
                     .Select(r => new { r.ArtistId, r.FolderName, r.JsonRelease.Type })
                     .Distinct()
                     .ToList();
+                logger.LogDebug("[MissingDetector] Found {Count} missing releases before filtering", candidates.Count);
 
                 // Exclude items currently in queue
                 var inQueue = snapshot.Items.Select(i => ($"{i.ArtistId}|{i.ReleaseFolderName}"))
                     .ToHashSet(StringComparer.OrdinalIgnoreCase);
                 candidates.RemoveAll(c => inQueue.Contains($"{c.ArtistId}|{c.FolderName}"));
+                logger.LogDebug("[MissingDetector] After excluding in-queue, {Count} candidates remain", candidates.Count);
 
                 // Exclude recent failures (cooldown)
                 var cutoff = DateTime.UtcNow.AddHours(-opts.CooldownHoursForRecentFailures);
@@ -66,6 +69,7 @@ public class MissingLibraryItemsDetectorWorker(
                     .Where(h => !h.Success && h.TimestampUtc >= cutoff)
                     .Select(h => ($"{h.ArtistId}|{h.ReleaseFolderName}")).ToHashSet(StringComparer.OrdinalIgnoreCase);
                 candidates.RemoveAll(c => recentlyFailed.Contains($"{c.ArtistId}|{c.FolderName}"));
+                logger.LogDebug("[MissingDetector] After excluding recent failures, {Count} candidates remain", candidates.Count);
 
                 if (candidates.Count == 0)
                 {
@@ -97,6 +101,10 @@ public class MissingLibraryItemsDetectorWorker(
                     logger.LogInformation("[MissingDetector] Enqueuing {Count} releases to top up queue",
                         toEnqueue.Count);
                     queue.Enqueue(toEnqueue);
+                }
+                else
+                {
+                    logger.LogInformation("[MissingDetector] Nothing to enqueue (candidates={Candidates}, deficit={Deficit})", candidates.Count, deficit);
                 }
             }
             catch (Exception ex)

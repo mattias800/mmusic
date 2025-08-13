@@ -25,6 +25,7 @@ const downloadOverviewFetcherQuery = graphql(`
         totalTracks
         completedTracks
         errorMessage
+        currentDownloadSpeedKbps
       }
     }
   }
@@ -53,6 +54,7 @@ const currentDownloadUpdatedSub = graphql(`
       totalTracks
       completedTracks
       errorMessage
+      currentDownloadSpeedKbps
     }
   }
 `);
@@ -99,13 +101,16 @@ export const DownloadOverviewFetcher: React.FC<
         {current && current.status !== DownloadStatus.Idle ? (
           <div className="text-zinc-300">
             <div>
-              {current.artistId}/{current.releaseFolderName}
+              {current.artistId} - {current.releaseFolderName}
             </div>
             {current.status && (
               <div className="text-xs text-zinc-400">
                 {statusText(current.status)} {current.completedTracks}/
                 {current.totalTracks}
               </div>
+            )}
+            {typeof current.currentDownloadSpeedKbps === "number" && (
+              <div className="text-xs text-zinc-400">Speed: {current.currentDownloadSpeedKbps!.toFixed(1)} KB/s</div>
             )}
             {current.errorMessage && (
               <div className="text-xs text-red-400">{current.errorMessage}</div>

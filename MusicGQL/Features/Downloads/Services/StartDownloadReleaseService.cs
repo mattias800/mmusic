@@ -58,6 +58,11 @@ public class StartDownloadReleaseService(
             CachedReleaseDownloadStatus.Searching
         );
 
+        logger.LogInformation(
+            "[StartDownload] Delegating to SoulSeek downloader for {Artist}/{Folder}",
+            artistId,
+            releaseFolderName
+        );
         var ok = await soulSeekReleaseDownloader.DownloadReleaseAsync(
             artistId,
             releaseFolderName,
@@ -86,6 +91,7 @@ public class StartDownloadReleaseService(
         {
             try
             {
+                logger.LogDebug("[StartDownload] release.json exists. Enumerating audio files for injection...");
                 var audioFiles = Directory
                     .GetFiles(targetDir)
                     .Where(f =>
@@ -142,6 +148,7 @@ public class StartDownloadReleaseService(
                             )
                         )
                 );
+                logger.LogInformation("[StartDownload] Marked {Count} tracks as Available", relAfterCount);
 
                 // Backfill playlist items that should now reference these tracks
                 try
@@ -168,6 +175,10 @@ public class StartDownloadReleaseService(
                 );
                 return (false, "Failed to update release.json after download");
             }
+        }
+        else
+        {
+            logger.LogWarning("[StartDownload] release.json not found at path: {Path}. Skipping JSON update.", releaseJsonPath);
         }
 
         await cache.UpdateReleaseDownloadStatus(
@@ -260,7 +271,7 @@ public class StartDownloadReleaseService(
         }
 
         // Finished
-        logger.LogInformation("[StartDownload] Done");
+        logger.LogInformation("[StartDownload] Done for {ArtistId}/{ReleaseFolder}", artistId, releaseFolderName);
         return (true, null);
     }
 

@@ -33,7 +33,9 @@ public class SoulSeekReleaseDownloader(
     {
         if (service.State.NetworkState != SoulSeekNetworkState.Online)
         {
+            logger.LogInformation("[SoulSeek] Client not online. Connecting...");
             await service.Connect();
+            logger.LogInformation("[SoulSeek] Client network state after connect: {State}", service.State.NetworkState);
         }
 
         Directory.CreateDirectory(targetDirectory);
@@ -66,6 +68,7 @@ public class SoulSeekReleaseDownloader(
         int minRequiredTracks = expectedTrackCount > 0
             ? Math.Max(2, Math.Min(expectedTrackCount, expectedTrackCount - 1))
             : 5; // allow off-by-one if known, else require at least 5
+        logger.LogInformation("[SoulSeek] Expected tracks={Expected}, minRequiredTracks={Min}", expectedTrackCount, minRequiredTracks);
 
         // Discover (optional) year for ranking (we already have expectedTrackCount above)
         var expectedYear = cachedRelease?.JsonRelease?.FirstReleaseYear;
@@ -107,6 +110,7 @@ public class SoulSeekReleaseDownloader(
         int timeLimitSec = 60;
         try { var s = await settingsAccessor.GetAsync(); timeLimitSec = Math.Max(5, s.SoulSeekSearchTimeLimitSeconds); } catch { }
         TimeSpan searchTimeout = TimeSpan.FromSeconds(timeLimitSec);
+        logger.LogInformation("[SoulSeek] Starting search across {QueryForms} query forms (queueDepth={QueueDepth}, timeLimitSec={TimeLimit})", queries.Count, queueDepth, timeLimitSec);
         foreach (var q in queries.Distinct(StringComparer.OrdinalIgnoreCase))
         {
             var searchTask = client.SearchAsync(new SearchQuery(q));
@@ -128,10 +132,12 @@ public class SoulSeekReleaseDownloader(
                 continue;
             }
             var result = await searchTask;
+            logger.LogDebug("[SoulSeek] Search completed for '{Query}'. Responses={Count}", q, result.Responses?.Count ?? 0);
             // First, require folder structure that matches Artist/<Album> patterns sufficiently
             var structurallyMatching = result.Responses
                 .Where(r => HasAlbumFolderMatch(r, artistName, releaseTitle, expectedYear))
                 .ToList();
+            logger.LogDebug("[SoulSeek] Structurally matching responses for '{Query}': {Count}", q, structurallyMatching.Count);
 
             var ranked = structurallyMatching
                 .Select(r => new
@@ -151,6 +157,7 @@ public class SoulSeekReleaseDownloader(
                 .ThenByDescending(x => x.Audio320Files.Count)
                 .Select(x => x.Response)
                 .ToList();
+            logger.LogDebug("[SoulSeek] Ranked candidates for '{Query}': {Count}", q, ranked.Count);
 
             if (ranked.Count > 0)
             {
@@ -207,6 +214,7 @@ public class SoulSeekReleaseDownloader(
                 candidate.Username,
                 queue.Count
             );
+            logger.LogDebug("[SoulSeek] Prepared download queue for user '{User}' with {Count} items (expectedTrackCount={Expected})", candidate.Username, queue.Count, expectedTrackCount);
 
             if (queue.Count < minRequiredTracks)
             {
@@ -228,9 +236,11 @@ public class SoulSeekReleaseDownloader(
                 if (!string.IsNullOrWhiteSpace(localDir))
                     Directory.CreateDirectory(localDir);
                 logger.LogInformation(
-                    "[SoulSeek] Downloading {File} to {Path}",
+                    "[SoulSeek] Downloading {File} to {Path} (track {Track}/{Total})",
                     item.FileName,
-                    localPath
+                    localPath,
+                    trackIndex + 1,
+                    expectedTrackCount
                 );
 
                 await cache.UpdateMediaAvailabilityStatus(
@@ -245,6 +255,7 @@ public class SoulSeekReleaseDownloader(
                     var sw = System.Diagnostics.Stopwatch.StartNew();
                     long lastBytes = 0;
                     var lastTick = DateTime.UtcNow;
+                    double lastLoggedPercent = -25;
                     // Wire progress callback via TransferOptions (Soulseek.NET)
                     var options = new TransferOptions(
                         progressUpdated: (update) =>
@@ -276,6 +287,17 @@ public class SoulSeekReleaseDownloader(
                                     CurrentTrackProgressPercent = percent,
                                     CurrentDownloadSpeedKbps = kbps,
                                 });
+                                if (logger.IsEnabled(LogLevel.Debug) && percent - lastLoggedPercent >= 25)
+                                {
+                                    lastLoggedPercent = percent;
+                                    logger.LogDebug(
+                                        "[SoulSeek] Progress {Percent:n0}% on track {Track}/{Total} at ~{Kbps:n0} KB/s",
+                                        percent,
+                                        trackIndex + 1,
+                                        expectedTrackCount,
+                                        kbps
+                                    );
+                                }
                             }
                             catch { }
                         }
@@ -305,6 +327,19 @@ public class SoulSeekReleaseDownloader(
                             CurrentTrackProgressPercent = 100,
                             CurrentDownloadSpeedKbps = null,
                         });
+                        try
+                        {
+                            var sizeBytes = new FileInfo(localPath).Length;
+                            var avgKbps = sizeBytes > 0 ? (sizeBytes / 1024.0) / Math.Max(0.001, sw.Elapsed.TotalSeconds) : 0;
+                            logger.LogInformation(
+                                "[SoulSeek] Finished track {Track}/{Total} in {Seconds:n1}s at avg ~{AvgKbps:n0} KB/s",
+                                trackIndex + 1,
+                                expectedTrackCount,
+                                sw.Elapsed.TotalSeconds,
+                                avgKbps
+                            );
+                        }
+                        catch { }
                     }
                     catch { }
                 }
@@ -331,6 +366,7 @@ public class SoulSeekReleaseDownloader(
                     trackIndex + 1,
                     CachedMediaAvailabilityStatus.Processing
                 );
+                logger.LogDebug("[SoulSeek] Marked track {Track} as Processing", trackIndex + 1);
 
                 trackIndex++;
                 try

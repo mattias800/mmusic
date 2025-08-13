@@ -21,6 +21,7 @@ public class DownloadWorker(
 
                 if (!queue.TryDequeue(out var job) || job is null)
                 {
+                    logger.LogTrace("[DownloadWorker] Queue empty. Sleeping...");
                     await Task.Delay(TimeSpan.FromSeconds(2), stoppingToken);
                     continue;
                 }
@@ -28,7 +29,9 @@ public class DownloadWorker(
                 // Start the download for this queued release
                 try
                 {
+                    logger.LogInformation("[DownloadWorker] Starting job {Artist}/{Folder}", job.ArtistId, job.ReleaseFolderName);
                     await starter.StartAsync(job.ArtistId, job.ReleaseFolderName, stoppingToken);
+                    logger.LogInformation("[DownloadWorker] Finished job {Artist}/{Folder}", job.ArtistId, job.ReleaseFolderName);
                 }
                 catch (Exception ex)
                 {

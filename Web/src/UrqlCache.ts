@@ -8,19 +8,37 @@ export const optimisticCacheExchange = cacheExchange({
   keys: cacheKeys,
   updates: {
     Subscription: {
-      // With normalized ids in place, subscriptions auto-merge.
-      // Only special-case null transitions for currentDownload.
+      // With normalized ids in place, subscriptions auto-merge updates.
+      // We still ensure the link flips to null, and also re-point the link
+      // when a new release starts (different id).
       currentDownloadUpdated: (result, _args, cache) => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        if ((result as any)?.currentDownloadUpdated !== null) return;
+        const payload = (result as any)?.currentDownloadUpdated ?? null;
+        if (payload === null) {
+          cache.updateQuery({ query: DownloadOverviewQueryDocument }, (data) => {
+            if (!data) return data;
+            data.downloads.currentDownload = null;
+            return data;
+          });
+          cache.updateQuery({ query: QueuesPage_QueryDocument }, (data) => {
+            if (!data) return data;
+            data.downloads.currentDownload = null;
+            return data;
+          });
+          return;
+        }
+
+        // Ensure the link points to the latest entity (new id when moving to next release)
         cache.updateQuery({ query: DownloadOverviewQueryDocument }, (data) => {
           if (!data) return data;
-          data.downloads.currentDownload = null;
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          data.downloads.currentDownload = payload as any;
           return data;
         });
         cache.updateQuery({ query: QueuesPage_QueryDocument }, (data) => {
           if (!data) return data;
-          data.downloads.currentDownload = null;
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          data.downloads.currentDownload = payload as any;
           return data;
         });
       },

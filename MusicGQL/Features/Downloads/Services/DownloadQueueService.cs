@@ -38,6 +38,7 @@ public class DownloadQueueService(
         if (_dedupeKeys.TryAdd(key, 1))
         {
             _queue.Enqueue(item with { QueueKey = key });
+            logger.LogInformation("[DownloadQueue] Enqueued 1 release ({ArtistId}/{Folder})", item.ArtistId, item.ReleaseFolderName);
         }
         PublishQueueUpdated();
     }

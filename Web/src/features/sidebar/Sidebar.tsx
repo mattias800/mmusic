@@ -1,9 +1,9 @@
-import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Cog,
   Heart,
   Import,
   Library,
+  ListOrdered,
   MicVocal,
   Music2,
   User,
@@ -21,7 +21,6 @@ import { MmusicLogo } from "@/components/logo/MmusicLogo.tsx";
 import { PlaylistList } from "@/features/playlists/playlist-list/PlaylistList.tsx";
 import { RootState } from "@/Store.ts";
 import { useSelector } from "react-redux";
-import { ListOrdered } from "lucide-react";
 
 export interface SidebarProps {
   className?: string;
@@ -93,24 +92,27 @@ export const Sidebar = ({ className }: SidebarProps) => {
           <PlaylistList />
         </SidebarSection>
 
-        <SidebarSection heading={"Downloads"} right={<SoulSeekNetworkStatusFetcher />}>
-          <ScrollArea className="h-[300px] px-1">
-            <div className="pt-4 px-6">
-              <DownloadOverviewFetcher />
-            </div>
-          </ScrollArea>
+        <SidebarSection
+          heading={"Downloads"}
+          right={<SoulSeekNetworkStatusFetcher />}
+        >
+          <div className="pt-4 px-6">
+            <DownloadOverviewFetcher />
+          </div>
         </SidebarSection>
 
         <SidebarSection heading={"Import queue"}>
-          <ScrollArea className="h-[200px] px-1">
-            <div className="pt-4 px-6">
-              <ArtistImportQueuePanel />
-            </div>
-          </ScrollArea>
+          <div className="pt-4 px-6">
+            <ArtistImportQueuePanel />
+          </div>
         </SidebarSection>
 
         <SidebarSection heading={"Queues & history"}>
-          <SidebarNavButton path={"/queues"} label={"Open queues"} icon={ListOrdered} />
+          <SidebarNavButton
+            path={"/queues"}
+            label={"Open queues"}
+            icon={ListOrdered}
+          />
         </SidebarSection>
       </div>
 
