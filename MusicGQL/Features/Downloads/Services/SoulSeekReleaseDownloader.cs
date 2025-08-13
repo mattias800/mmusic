@@ -43,7 +43,16 @@ public class SoulSeekReleaseDownloader(
         }
 
         // Guard: ensure manifest exists at library root before any write
-        try { var s = await settingsAccessor.GetAsync(); await manifestService.EnsureWritesAllowedAsync(s.LibraryPath); } catch { return false; }
+        try
+        {
+            var s = await settingsAccessor.GetAsync();
+            await manifestService.EnsureWritesAllowedAsync(s.LibraryPath);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "[SoulSeek] Writes are disabled because library manifest is missing or unreadable. Aborting download.");
+            return false;
+        }
         Directory.CreateDirectory(targetDirectory);
         logger.LogInformation(
             "[SoulSeek] Searching: {Artist} - {Release}",
@@ -133,6 +142,9 @@ public class SoulSeekReleaseDownloader(
         // Shared time budget across all query forms when queue has waiting items
         TimeSpan totalSearchBudget = TimeSpan.FromSeconds(timeLimitSec);
         var budgetStartUtc = DateTime.UtcNow;
+        // Add a couple of extra common separators to increase hit rate
+        queries.Add($"{normArtist} - {normTitle} [FLAC]");
+        queries.Add($"{foldArtist} - {foldTitle} [FLAC]");
         var distinctQueries = queries.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
         logger.LogInformation("[SoulSeek] Starting search across {QueryForms} query forms (queueDepth={QueueDepth}, sharedTimeBudgetSec={Budget})", distinctQueries.Count, queueDepth, timeLimitSec);
         for (int qi = 0; qi < distinctQueries.Count; qi++)
@@ -141,7 +153,8 @@ public class SoulSeekReleaseDownloader(
             var searchTask = client.SearchAsync(new SearchQuery(q));
             try
             {
-                if (hasWaiting)
+                // Only time-slice when the configured budget is very small; otherwise await the search
+                if (hasWaiting && timeLimitSec <= 20)
                 {
                     var elapsed = DateTime.UtcNow - budgetStartUtc;
                     var remaining = totalSearchBudget - elapsed;
@@ -167,6 +180,11 @@ public class SoulSeekReleaseDownloader(
                 continue;
             }
             var result = await searchTask;
+            if (result.Responses == null || result.Responses.Count == 0)
+            {
+                logger.LogDebug("[SoulSeek] No responses for query '{Query}'", q);
+                continue;
+            }
             logger.LogDebug("[SoulSeek] Search completed for '{Query}'. Responses={Count}", q, result.Responses?.Count ?? 0);
             // First, require folder structure that matches Artist/<Album> patterns sufficiently
             var structurallyMatching = result.Responses
@@ -178,8 +196,10 @@ public class SoulSeekReleaseDownloader(
                 .Select(r => new
                 {
                     Response = r,
-                    Audio320Files = r.Files.Where(f =>
-                        f.Extension.Equals("mp3", StringComparison.OrdinalIgnoreCase) && f.BitRate == 320).ToList(),
+                    // Require MP3 320kbps for now
+                    AudioTracks = r.Files.Where(f =>
+                        f.Extension.Equals("mp3", StringComparison.OrdinalIgnoreCase) && f.BitRate == 320
+                    ).ToList(),
                     Score = ComputeCandidateScore(
                         r,
                         artistName,
@@ -196,19 +216,19 @@ public class SoulSeekReleaseDownloader(
                     if (allowedOfficialDigitalCounts is { Count: > 0 })
                     {
                         // Prefer digital: require match to digital counts if available
-                        return allowedOfficialDigitalCounts.Contains(x.Audio320Files.Count);
+                        return allowedOfficialDigitalCounts.Contains(x.AudioTracks.Count);
                     }
                     if (allowedOfficialCounts is { Count: > 0 })
                     {
-                        return allowedOfficialCounts.Contains(x.Audio320Files.Count);
+                        return allowedOfficialCounts.Contains(x.AudioTracks.Count);
                     }
                     // Otherwise, require exact match to expected track count when known
                     if (expectedTrackCount > 0)
                     {
-                        return x.Audio320Files.Count == expectedTrackCount;
+                        return x.AudioTracks.Count == expectedTrackCount;
                     }
                     // As a last resort when nothing is known, require at least 5 tracks
-                    return x.Audio320Files.Count >= 5;
+                    return x.AudioTracks.Count >= 5;
                 })
                 // Under load, skip responses that have no free slot and long queues
                 .Where(x => !hasWaiting || x.Response.HasFreeUploadSlot || x.Response.QueueLength <= 3)
@@ -216,7 +236,7 @@ public class SoulSeekReleaseDownloader(
                 .ThenByDescending(x => x.Response.HasFreeUploadSlot)
                 .ThenBy(x => x.Response.QueueLength)
                 .ThenByDescending(x => x.Response.UploadSpeed)
-                .ThenByDescending(x => x.Audio320Files.Count)
+                .ThenByDescending(x => x.AudioTracks.Count)
                 .Select(x => x.Response)
                 .ToList();
             logger.LogDebug("[SoulSeek] Ranked candidates for '{Query}': {Count}", q, ranked.Count);
@@ -281,6 +301,12 @@ public class SoulSeekReleaseDownloader(
                 queue.Count
             );
             logger.LogDebug("[SoulSeek] Prepared download queue for user '{User}' with {Count} items (expectedTrackCount={Expected})", candidate.Username, queue.Count, expectedTrackCount);
+
+            if (queue.Count == 0)
+            {
+                logger.LogInformation("[SoulSeek] Skipping user '{User}' because no candidate audio files were found", candidate.Username);
+                continue;
+            }
 
             if (minRequiredTracks > 0 && queue.Count < minRequiredTracks)
             {
@@ -595,7 +621,7 @@ public class SoulSeekReleaseDownloader(
         var discNumbers = new HashSet<int>();
         bool anyDiscMarker = false;
 
-        int audio320Count = response.Files.Count(f =>
+        int audioTrackCount = response.Files.Count(f =>
             f.Extension.Equals("mp3", StringComparison.OrdinalIgnoreCase) && f.BitRate == 320);
 
         foreach (var f in response.Files)
@@ -680,17 +706,17 @@ public class SoulSeekReleaseDownloader(
         // Prefer responses with a digital/expected track count match
         if (allowedOfficialDigitalCounts is { Count: > 0 })
         {
-            if (allowedOfficialDigitalCounts.Contains(audio320Count)) score += 120; // strong preference for digital
+            if (allowedOfficialDigitalCounts.Contains(audioTrackCount)) score += 120; // strong preference for digital
         }
 
         if (expectedTrackCount > 0)
         {
-            if (audio320Count == expectedTrackCount) score += 100;
-            else if (Math.Abs(audio320Count - expectedTrackCount) == 1) score += 40;
-            else if (audio320Count > 0)
+            if (audioTrackCount == expectedTrackCount) score += 100;
+            else if (Math.Abs(audioTrackCount - expectedTrackCount) == 1) score += 40;
+            else if (audioTrackCount > 0)
             {
                 // mild closeness bonus within +/-2
-                if (Math.Abs(audio320Count - expectedTrackCount) == 2) score += 15;
+                if (Math.Abs(audioTrackCount - expectedTrackCount) == 2) score += 15;
             }
         }
 

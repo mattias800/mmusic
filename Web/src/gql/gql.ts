@@ -123,6 +123,8 @@ type Documents = {
     "\n  fragment DownloadPathForm_ServerSettings on ServerSettings {\n    id\n    downloadPath\n  }\n": typeof types.DownloadPathForm_ServerSettingsFragmentDoc,
     "\n  mutation UpdateDownloadPath($newDownloadPath: String!) {\n    updateDownloadPath(input: { newDownloadPath: $newDownloadPath }) {\n      ... on UpdateDownloadPathSuccess {\n        serverSettings {\n          id\n          downloadPath\n        }\n      }\n    }\n  }\n": typeof types.UpdateDownloadPathDocument,
     "\n  fragment LibraryPathForm_ServerSettings on ServerSettings {\n    id\n    ...ChangeLibraryFolderControl_ServerSettings\n    libraryPath\n    storageStats {\n      totalDiskBytes\n      availableFreeBytes\n      librarySizeBytes\n    }\n  }\n": typeof types.LibraryPathForm_ServerSettingsFragmentDoc,
+    "\n  query SoulSeekSettings_Query {\n    serverSettings {\n      id\n      soulSeekSearchTimeLimitSeconds\n    }\n  }\n": typeof types.SoulSeekSettings_QueryDocument,
+    "\n  mutation UpdateSoulSeekSearchTimeLimit($seconds: Int!) {\n    updateSoulSeekSearchTimeLimit(seconds: $seconds) {\n      __typename\n      ... on UpdateSoulSeekSearchTimeLimitSuccess {\n        serverSettings { id soulSeekSearchTimeLimitSeconds }\n      }\n      ... on UpdateSoulSeekSearchTimeLimitError { message }\n    }\n  }\n": typeof types.UpdateSoulSeekSearchTimeLimitDocument,
     "\n  fragment ChangeLibraryFolderControl_ServerSettings on ServerSettings {\n    libraryPath\n    serverLibraryManifestStatus {\n      id\n      hasLibraryManifest\n    }\n  }\n": typeof types.ChangeLibraryFolderControl_ServerSettingsFragmentDoc,
     "\n  query ChangeFolder_HasLibraryManifest($path: String!) {\n    fileSystem {\n      hasLibraryManifest(path: $path)\n    }\n  }\n": typeof types.ChangeFolder_HasLibraryManifestDocument,
     "\n  mutation UpdateLibraryPath($newLibraryPath: String!) {\n    updateLibraryPath(input: { newLibraryPath: $newLibraryPath }) {\n      ... on UpdateLibraryPathSuccess {\n        serverSettings {\n          id\n          libraryPath\n        }\n      }\n    }\n  }\n": typeof types.UpdateLibraryPathDocument,
@@ -257,6 +259,8 @@ const documents: Documents = {
     "\n  fragment DownloadPathForm_ServerSettings on ServerSettings {\n    id\n    downloadPath\n  }\n": types.DownloadPathForm_ServerSettingsFragmentDoc,
     "\n  mutation UpdateDownloadPath($newDownloadPath: String!) {\n    updateDownloadPath(input: { newDownloadPath: $newDownloadPath }) {\n      ... on UpdateDownloadPathSuccess {\n        serverSettings {\n          id\n          downloadPath\n        }\n      }\n    }\n  }\n": types.UpdateDownloadPathDocument,
     "\n  fragment LibraryPathForm_ServerSettings on ServerSettings {\n    id\n    ...ChangeLibraryFolderControl_ServerSettings\n    libraryPath\n    storageStats {\n      totalDiskBytes\n      availableFreeBytes\n      librarySizeBytes\n    }\n  }\n": types.LibraryPathForm_ServerSettingsFragmentDoc,
+    "\n  query SoulSeekSettings_Query {\n    serverSettings {\n      id\n      soulSeekSearchTimeLimitSeconds\n    }\n  }\n": types.SoulSeekSettings_QueryDocument,
+    "\n  mutation UpdateSoulSeekSearchTimeLimit($seconds: Int!) {\n    updateSoulSeekSearchTimeLimit(seconds: $seconds) {\n      __typename\n      ... on UpdateSoulSeekSearchTimeLimitSuccess {\n        serverSettings { id soulSeekSearchTimeLimitSeconds }\n      }\n      ... on UpdateSoulSeekSearchTimeLimitError { message }\n    }\n  }\n": types.UpdateSoulSeekSearchTimeLimitDocument,
     "\n  fragment ChangeLibraryFolderControl_ServerSettings on ServerSettings {\n    libraryPath\n    serverLibraryManifestStatus {\n      id\n      hasLibraryManifest\n    }\n  }\n": types.ChangeLibraryFolderControl_ServerSettingsFragmentDoc,
     "\n  query ChangeFolder_HasLibraryManifest($path: String!) {\n    fileSystem {\n      hasLibraryManifest(path: $path)\n    }\n  }\n": types.ChangeFolder_HasLibraryManifestDocument,
     "\n  mutation UpdateLibraryPath($newLibraryPath: String!) {\n    updateLibraryPath(input: { newLibraryPath: $newLibraryPath }) {\n      ... on UpdateLibraryPathSuccess {\n        serverSettings {\n          id\n          libraryPath\n        }\n      }\n    }\n  }\n": types.UpdateLibraryPathDocument,
@@ -732,6 +736,14 @@ export function graphql(source: "\n  mutation UpdateDownloadPath($newDownloadPat
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  fragment LibraryPathForm_ServerSettings on ServerSettings {\n    id\n    ...ChangeLibraryFolderControl_ServerSettings\n    libraryPath\n    storageStats {\n      totalDiskBytes\n      availableFreeBytes\n      librarySizeBytes\n    }\n  }\n"): (typeof documents)["\n  fragment LibraryPathForm_ServerSettings on ServerSettings {\n    id\n    ...ChangeLibraryFolderControl_ServerSettings\n    libraryPath\n    storageStats {\n      totalDiskBytes\n      availableFreeBytes\n      librarySizeBytes\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query SoulSeekSettings_Query {\n    serverSettings {\n      id\n      soulSeekSearchTimeLimitSeconds\n    }\n  }\n"): (typeof documents)["\n  query SoulSeekSettings_Query {\n    serverSettings {\n      id\n      soulSeekSearchTimeLimitSeconds\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  mutation UpdateSoulSeekSearchTimeLimit($seconds: Int!) {\n    updateSoulSeekSearchTimeLimit(seconds: $seconds) {\n      __typename\n      ... on UpdateSoulSeekSearchTimeLimitSuccess {\n        serverSettings { id soulSeekSearchTimeLimitSeconds }\n      }\n      ... on UpdateSoulSeekSearchTimeLimitError { message }\n    }\n  }\n"): (typeof documents)["\n  mutation UpdateSoulSeekSearchTimeLimit($seconds: Int!) {\n    updateSoulSeekSearchTimeLimit(seconds: $seconds) {\n      __typename\n      ... on UpdateSoulSeekSearchTimeLimitSuccess {\n        serverSettings { id soulSeekSearchTimeLimitSeconds }\n      }\n      ... on UpdateSoulSeekSearchTimeLimitError { message }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

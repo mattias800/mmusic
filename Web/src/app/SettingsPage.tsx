@@ -5,6 +5,7 @@ import { ScreenSpinner } from "@/components/spinner/ScreenSpinner.tsx";
 import { graphql } from "@/gql";
 import { MainPadding } from "@/components/layout/MainPadding.tsx";
 import { LibraryPathForm } from "@/features/settings/LibraryPathForm.tsx";
+import { SoulSeekSettingsForm } from "@/features/settings/SoulSeekSettingsForm.tsx";
 // Download path UI intentionally hidden for now (backend kept)
 
 export interface SettingsPageProps {}
@@ -30,6 +31,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = () => {
       <title>Settings</title>
       <ServerSettingsPanel>
         <LibraryPathForm serverSettings={data.serverSettings} />
+        <SoulSeekSettingsForm />
       </ServerSettingsPanel>
     </MainPadding>
   );
