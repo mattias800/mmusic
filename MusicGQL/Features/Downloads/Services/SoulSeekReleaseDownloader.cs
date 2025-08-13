@@ -454,6 +454,7 @@ public class SoulSeekReleaseDownloader(
                 }
                 else
                 {
+                    // Reflect original priority if re-queued explicitly by worker; keep normal queue
                     downloadQueue.Enqueue(nxt);
                 }
 

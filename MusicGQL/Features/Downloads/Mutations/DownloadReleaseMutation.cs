@@ -15,8 +15,8 @@ public class StartDownloadReleaseMutation
         StartDownloadReleaseInput input
     )
     {
-        // Enqueue for visibility in the downloads queue UI (best effort)
-        try { queue.Enqueue(new DownloadQueueItem(input.ArtistId, input.ReleaseFolderName)); } catch { }
+        // Enqueue to the FRONT for user-triggered priority (best effort)
+        try { queue.EnqueueFront(new DownloadQueueItem(input.ArtistId, input.ReleaseFolderName)); } catch { }
 
         var (success, error) = await service.StartAsync(input.ArtistId, input.ReleaseFolderName);
         if (!success)

@@ -30,7 +30,7 @@ public class StartBulkDownloadForArtistMutation
             releases = releases.Where(r => r.Type == ServerLibrary.Json.JsonReleaseType.Single).ToList();
 
         int queued = 0;
-        // Enqueue all first so they are visible immediately in the UI
+        // Enqueue all (auto) to normal queue; keep user explicit single enqueues prioritized elsewhere
         foreach (var r in releases)
         {
             try { queue.Enqueue(new DownloadQueueItem(input.ArtistId, r.FolderName)); queued++; } catch { }

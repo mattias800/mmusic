@@ -52,53 +52,52 @@ public class LastFmEnrichmentService(
             logger.LogWarning(ex, "[EnrichArtist] Failed to fetch Last.fm artist info for mbid='{MbId}'", mbArtistId);
         }
 
-        // Top tracks via Last.fm; fallback to Spotify if Last.fm fails or returns empty
+        // Top tracks via Spotify first; fallback to Last.fm if Spotify fails or returns empty
         try
         {
-            TopTracks.ITopTracksImporter importer = new TopTracks.TopTracksLastFmImporter(lastfmClient);
-            jsonArtist.TopTracks = await importer.GetTopTracksAsync(mbArtistId, 10);
+            // ensure we have a spotify artist id
+            var spotifyId = jsonArtist.Connections?.SpotifyId;
+            if (string.IsNullOrWhiteSpace(spotifyId))
+            {
+                var name = jsonArtist.Name;
+                if (!string.IsNullOrWhiteSpace(name))
+                {
+                    var candidates = await spotifyService.SearchArtistsAsync(name, 1);
+                    var best = candidates?.FirstOrDefault();
+                    if (best != null)
+                    {
+                        jsonArtist.Connections ??= new JsonArtistServiceConnections();
+                        jsonArtist.Connections.SpotifyId = best.Id;
+                        spotifyId = best.Id;
+                    }
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(spotifyId))
+            {
+                var spImporter = new TopTracks.TopTracksSpotifyImporter(spotifyService);
+                jsonArtist.TopTracks = await spImporter.GetTopTracksAsync(spotifyId!, 10);
+            }
         }
         catch (Exception ex)
         {
-            logger.LogWarning(ex,
-                "[EnrichArtist] Last.fm top tracks failed for mbid='{MbId}'. Will attempt Spotify fallback.",
-                mbArtistId);
+            logger.LogWarning(ex, "[EnrichArtist] Spotify top tracks failed for artist='{Name}'. Will attempt Last.fm fallback.", jsonArtist.Name);
             jsonArtist.TopTracks = [];
         }
 
-        // Spotify fallback for top tracks
+        // Last.fm fallback for top tracks
         if (jsonArtist.TopTracks == null || jsonArtist.TopTracks.Count == 0)
         {
             try
             {
-                // ensure we have a spotify artist id
-                var spotifyId = jsonArtist.Connections?.SpotifyId;
-                if (string.IsNullOrWhiteSpace(spotifyId))
-                {
-                    var name = jsonArtist.Name;
-                    if (!string.IsNullOrWhiteSpace(name))
-                    {
-                        var candidates = await spotifyService.SearchArtistsAsync(name, 1);
-                        var best = candidates?.FirstOrDefault();
-                        if (best != null)
-                        {
-                            jsonArtist.Connections ??= new JsonArtistServiceConnections();
-                            jsonArtist.Connections.SpotifyId = best.Id;
-                            spotifyId = best.Id;
-                        }
-                    }
-                }
-
-                if (!string.IsNullOrWhiteSpace(spotifyId))
-                {
-                    var spImporter = new TopTracks.TopTracksSpotifyImporter(spotifyService);
-                    jsonArtist.TopTracks = await spImporter.GetTopTracksAsync(spotifyId!, 10);
-                }
+                TopTracks.ITopTracksImporter importer = new TopTracks.TopTracksLastFmImporter(lastfmClient);
+                jsonArtist.TopTracks = await importer.GetTopTracksAsync(mbArtistId, 10);
             }
             catch (Exception ex)
             {
-                logger.LogWarning(ex, "[EnrichArtist] Spotify fallback for top tracks failed for artist='{Name}'",
-                    jsonArtist.Name);
+                logger.LogWarning(ex,
+                    "[EnrichArtist] Last.fm fallback for top tracks failed for mbid='{MbId}'",
+                    mbArtistId);
             }
         }
 

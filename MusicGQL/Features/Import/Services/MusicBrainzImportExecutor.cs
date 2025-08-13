@@ -166,7 +166,7 @@ public sealed class MusicBrainzImportExecutor(
             catch { }
         }
 
-        // Fetch Last.fm enrichment (only if missing or we just created)
+        // Fetch enrichment (only if missing or we just created)
         try
         {
             if (
@@ -180,12 +180,75 @@ public sealed class MusicBrainzImportExecutor(
                 jsonArtist.MonthlyListeners =
                     info?.Statistics?.Listeners ?? jsonArtist.MonthlyListeners;
 
-                // TOP TRACKS VIA IMPORTER (switchable)
-                // For now, hardcode Last.fm importer; switch to Spotify importer by replacing this line
-                TopTracks.ITopTracksImporter importer = new TopTracks.TopTracksLastFmImporter(
-                    lastfmClient
-                );
-                jsonArtist.TopTracks = await importer.GetTopTracksAsync(mbArtistId, 10);
+                // TOP TRACKS: Prefer Spotify, fallback to Last.fm
+                try
+                {
+                    // Try to resolve Spotify artist id from existing connections, MusicBrainz relations, or search by name
+                    jsonArtist.Connections ??= new JsonArtistServiceConnections();
+                    string? spotifyArtistId = jsonArtist.Connections.SpotifyId;
+
+                    if (string.IsNullOrWhiteSpace(spotifyArtistId))
+                    {
+                        try
+                        {
+                            var mbArtist = await musicBrainzService.GetArtistByIdAsync(mbArtistId);
+                            var rels = mbArtist?.Relations;
+                            if (rels != null)
+                            {
+                                foreach (var rel in rels)
+                                {
+                                    var url = rel?.Url?.Resource;
+                                    if (string.IsNullOrWhiteSpace(url)) continue;
+                                    if (url.Contains("open.spotify.com/artist/", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        var parts = new Uri(url).Segments;
+                                        var id = parts.LastOrDefault()?.Trim('/');
+                                        if (!string.IsNullOrWhiteSpace(id))
+                                        {
+                                            spotifyArtistId = id;
+                                            jsonArtist.Connections.SpotifyId = id;
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        catch { }
+                    }
+
+                    if (string.IsNullOrWhiteSpace(spotifyArtistId))
+                    {
+                        try
+                        {
+                            var matches = await spotifyService.SearchArtistsAsync(artistDisplayName, 1);
+                            var best = matches?.FirstOrDefault();
+                            if (!string.IsNullOrWhiteSpace(best?.Id))
+                            {
+                                spotifyArtistId = best!.Id;
+                                jsonArtist.Connections.SpotifyId = spotifyArtistId;
+                            }
+                        }
+                        catch { }
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(spotifyArtistId))
+                    {
+                        TopTracks.ITopTracksImporter spImporter = new TopTracks.TopTracksSpotifyImporter(spotifyService);
+                        jsonArtist.TopTracks = await spImporter.GetTopTracksAsync(spotifyArtistId!, 10);
+                    }
+                }
+                catch { jsonArtist.TopTracks = jsonArtist.TopTracks ?? []; }
+
+                // Fallback to Last.fm if Spotify not available or returned nothing
+                if (jsonArtist.TopTracks == null || jsonArtist.TopTracks.Count == 0)
+                {
+                    try
+                    {
+                        TopTracks.ITopTracksImporter lfImporter = new TopTracks.TopTracksLastFmImporter(lastfmClient);
+                        jsonArtist.TopTracks = await lfImporter.GetTopTracksAsync(mbArtistId, 10);
+                    }
+                    catch { jsonArtist.TopTracks = jsonArtist.TopTracks ?? []; }
+                }
 
                 // Attempt to map stored top tracks to local library tracks to enable playback
                 try
@@ -255,7 +318,7 @@ public sealed class MusicBrainzImportExecutor(
                     // ignore mapping failures
                 }
 
-                // Complete missing fields (releaseTitle/cover art) using Spotify fallback
+                // Complete missing fields (releaseTitle/cover art) using Spotify data
                 try
                 {
                     var completer = new TopTracks.TopTracksCompleter(spotifyService);
@@ -266,7 +329,7 @@ public sealed class MusicBrainzImportExecutor(
         }
         catch
         {
-            // ignore Last.fm failures
+            // ignore enrichment failures
         }
 
         // Try to enrich external service connections using MusicBrainz relations and Spotify fallback

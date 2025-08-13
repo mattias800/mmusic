@@ -9,6 +9,7 @@ public class DownloadQueueService(
 )
 {
     private readonly ConcurrentQueue<DownloadQueueItem> _queue = new();
+    private readonly ConcurrentQueue<DownloadQueueItem> _priorityQueue = new();
     private readonly ConcurrentDictionary<string, byte> _dedupeKeys = new(StringComparer.OrdinalIgnoreCase);
 
     private static string BuildKey(DownloadQueueItem item)
@@ -43,9 +44,41 @@ public class DownloadQueueService(
         PublishQueueUpdated();
     }
 
+    public void EnqueueFront(IEnumerable<DownloadQueueItem> items)
+    {
+        int count = 0;
+        foreach (var item in items)
+        {
+            var key = BuildKey(item);
+            if (_dedupeKeys.TryAdd(key, 1))
+            {
+                _priorityQueue.Enqueue(item with { QueueKey = key });
+                count++;
+            }
+        }
+        logger.LogInformation("[DownloadQueue] Enqueued {Count} releases at FRONT (priority)", count);
+        PublishQueueUpdated();
+    }
+
+    public void EnqueueFront(DownloadQueueItem item)
+    {
+        var key = BuildKey(item);
+        if (_dedupeKeys.TryAdd(key, 1))
+        {
+            _priorityQueue.Enqueue(item with { QueueKey = key });
+            logger.LogInformation("[DownloadQueue] Enqueued 1 release at FRONT (priority) ({ArtistId}/{Folder})", item.ArtistId, item.ReleaseFolderName);
+        }
+        PublishQueueUpdated();
+    }
+
     public bool TryDequeue(out DownloadQueueItem? item)
     {
-        var ok = _queue.TryDequeue(out var dequeued);
+        // Always drain priority queue first
+        var ok = _priorityQueue.TryDequeue(out var dequeued);
+        if (!ok)
+        {
+            ok = _queue.TryDequeue(out dequeued);
+        }
         item = dequeued;
         if (ok)
         {
@@ -57,11 +90,13 @@ public class DownloadQueueService(
 
     public bool TryRemove(string queueKey)
     {
-        // Non-blocking remove by rebuilding queue without the matching key
+        // Non-blocking remove by rebuilding queues without the matching key
         var removed = false;
-        var list = _queue.ToArray().ToList();
+        var pri = _priorityQueue.ToArray().ToList();
+        var norm = _queue.ToArray().ToList();
+        _priorityQueue.Clear();
         _queue.Clear();
-        foreach (var q in list)
+        foreach (var q in pri)
         {
             if (!removed && string.Equals(q.QueueKey, queueKey, StringComparison.Ordinal))
             {
@@ -69,7 +104,20 @@ public class DownloadQueueService(
                 try { _dedupeKeys.TryRemove(BuildKey(q), out _); } catch { }
                 continue;
             }
-            _queue.Enqueue(q);
+            _priorityQueue.Enqueue(q);
+        }
+        if (!removed)
+        {
+            foreach (var q in norm)
+            {
+                if (!removed && string.Equals(q.QueueKey, queueKey, StringComparison.Ordinal))
+                {
+                    removed = true;
+                    try { _dedupeKeys.TryRemove(BuildKey(q), out _); } catch { }
+                    continue;
+                }
+                _queue.Enqueue(q);
+            }
         }
         if (removed)
         {
@@ -80,7 +128,9 @@ public class DownloadQueueService(
 
     public DownloadQueueState Snapshot()
     {
-        var items = _queue.ToArray();
+        var pri = _priorityQueue.ToArray();
+        var norm = _queue.ToArray();
+        var items = pri.Concat(norm).ToArray();
         return new DownloadQueueState
         {
             Id = "downloadQueue",
