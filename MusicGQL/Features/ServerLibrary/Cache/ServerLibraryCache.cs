@@ -149,12 +149,42 @@ public class ServerLibraryCache(ServerLibraryJsonReader reader, ITopicEventSende
                                 JsonTrack = trackJson,
                             };
 
-                            // Preserve previous media availability status if present
+                            // Preserve previous media availability status if present; otherwise infer from disk
                             var statusKey =
                                 $"{artistJson.Id.ToLowerInvariant()}|{folderName.ToLowerInvariant()}|{cachedTrack.TrackNumber}";
                             if (previousStatuses.TryGetValue(statusKey, out var prevStatus))
                             {
                                 cachedTrack.CachedMediaAvailabilityStatus = prevStatus;
+                            }
+                            else
+                            {
+                                try
+                                {
+                                    var audioRef = trackJson.AudioFilePath;
+                                    if (!string.IsNullOrWhiteSpace(audioRef))
+                                    {
+                                        string resolved = audioRef!;
+                                        if (!Path.IsPathRooted(resolved))
+                                        {
+                                            // Treat leading "./" as relative to release folder
+                                            if (resolved.StartsWith("./"))
+                                                resolved = resolved.Substring(2);
+                                            resolved = Path.Combine(releasePath, resolved);
+                                        }
+                                        if (File.Exists(resolved))
+                                        {
+                                            cachedTrack.CachedMediaAvailabilityStatus = CachedMediaAvailabilityStatus.Available;
+                                        }
+                                        else
+                                        {
+                                            cachedTrack.CachedMediaAvailabilityStatus = CachedMediaAvailabilityStatus.Missing;
+                                        }
+                                    }
+                                }
+                                catch
+                                {
+                                    // Leave as Unknown on any inference error
+                                }
                             }
 
                             cachedRelease.Tracks.Add(cachedTrack);
