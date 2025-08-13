@@ -35,25 +35,7 @@ public class ReleaseJsonBuilder(
             .Where(r => r.ReleaseGroup != null && !r.ReleaseGroup.IsDemo())
             .ToList();
 
-        // Compute distinct possible track counts among official releases (non-bootleg/demo). Keep small set.
-        var possibleOfficialTrackCounts = releases
-            .Where(r => string.Equals(r.Status, "Official", StringComparison.OrdinalIgnoreCase))
-            .Select(r => (r.Media?.SelectMany(m => m.Tracks ?? new List<Hqub.MusicBrainz.Entities.Track>()).Count()) ?? 0)
-            .Where(c => c > 0)
-            .Distinct()
-            .OrderBy(c => c)
-            .Take(8) // safety bound
-            .ToList();
-
-        var possibleOfficialDigitalTrackCounts = releases
-            .Where(r => string.Equals(r.Status, "Official", StringComparison.OrdinalIgnoreCase))
-            .Where(r => (r.Media?.Any(m => string.Equals(m.Format, "Digital Media", StringComparison.OrdinalIgnoreCase) || string.Equals(m.Format, "File", StringComparison.OrdinalIgnoreCase)) ?? false))
-            .Select(r => (r.Media?.SelectMany(m => m.Tracks ?? new List<Hqub.MusicBrainz.Entities.Track>()).Count()) ?? 0)
-            .Where(c => c > 0)
-            .Distinct()
-            .OrderBy(c => c)
-            .Take(8)
-            .ToList();
+        // Do not persist possible track counts in JSON. We'll compute on-demand during downloads.
 
         // Evaluate local audio files (if any) to influence selection
         var releaseDir = Path.Combine(artistDir, releaseFolderName);
@@ -372,8 +354,6 @@ public class ReleaseJsonBuilder(
                     : null,
             CoverArt = coverArtRelPath,
             Tracks = tracks?.Count > 0 ? tracks : null,
-            PossibleNumberOfTracksInOfficialReleases = possibleOfficialTrackCounts.Count > 0 ? possibleOfficialTrackCounts : null,
-            PossibleNumberOfTracksInOfficialDigitalReleases = possibleOfficialDigitalTrackCounts.Count > 0 ? possibleOfficialDigitalTrackCounts : null,
             Connections = new ReleaseServiceConnections
             {
                 MusicBrainzReleaseGroupId = releaseGroupId,

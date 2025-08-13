@@ -52,59 +52,45 @@ public class StartDownloadReleaseService(
             releaseTitle
         );
 
-        // Pre-enrich release.json with possible track counts (digital/official) if missing
+        // Compute allowed track counts on-demand (do not persist in release.json)
+        List<int> allowedOfficialCounts = new();
+        List<int> allowedOfficialDigitalCounts = new();
         try
         {
-            var hasOfficial = release.JsonRelease?.PossibleNumberOfTracksInOfficialReleases?.Count > 0;
-            var hasDigital = release.JsonRelease?.PossibleNumberOfTracksInOfficialDigitalReleases?.Count > 0;
-            if (!hasOfficial || !hasDigital)
+            var artist = await cache.GetArtistByIdAsync(artistId);
+            var mbArtistId = artist?.JsonArtist.Connections?.MusicBrainzArtistId;
+            var mbReleaseGroupId = release.JsonRelease?.Connections?.MusicBrainzReleaseGroupId;
+            if (!string.IsNullOrWhiteSpace(mbReleaseGroupId))
             {
-                var artist = await cache.GetArtistByIdAsync(artistId);
-                var mbArtistId = artist?.JsonArtist.Connections?.MusicBrainzArtistId;
-                if (!string.IsNullOrWhiteSpace(mbArtistId))
+                (allowedOfficialCounts, allowedOfficialDigitalCounts) = await mbImport.GetPossibleTrackCountsForReleaseGroupAsync(mbReleaseGroupId!);
+            }
+            else if (!string.IsNullOrWhiteSpace(mbArtistId) && !string.IsNullOrWhiteSpace(releaseTitle))
+            {
+                var rgs = await mbImport.GetArtistReleaseGroupsAsync(mbArtistId!);
+                var candidates = rgs
+                    .Where(rg => AreTitlesEquivalent(rg.Title, releaseTitle))
+                    .Where(rg => !(rg.SecondaryTypes?.Any(t => t.Equals("Demo", StringComparison.OrdinalIgnoreCase)) ?? false))
+                    .ToList();
+                if (candidates.Count == 0)
                 {
-                    var rgs = await mbImport.GetArtistReleaseGroupsAsync(mbArtistId!);
-                    // Prefer RGs whose titles are equivalent, exclude demos, prefer Album primary type, then earliest date
-                    var candidates = rgs
-                        .Where(rg => AreTitlesEquivalent(rg.Title, releaseTitle ?? string.Empty))
+                    candidates = rgs
+                        .Where(rg => (rg.Title ?? string.Empty).IndexOf(releaseTitle, StringComparison.OrdinalIgnoreCase) >= 0)
                         .Where(rg => !(rg.SecondaryTypes?.Any(t => t.Equals("Demo", StringComparison.OrdinalIgnoreCase)) ?? false))
                         .ToList();
-                    if (candidates.Count == 0)
-                    {
-                        candidates = rgs
-                            .Where(rg => (rg.Title ?? string.Empty).IndexOf(releaseTitle ?? string.Empty, StringComparison.OrdinalIgnoreCase) >= 0)
-                            .Where(rg => !(rg.SecondaryTypes?.Any(t => t.Equals("Demo", StringComparison.OrdinalIgnoreCase)) ?? false))
-                            .ToList();
-                    }
-                    var match = candidates
-                        .OrderByDescending(rg => string.Equals(rg.PrimaryType, "Album", StringComparison.OrdinalIgnoreCase))
-                        .ThenBy(rg => SafeDateKey(rg.FirstReleaseDate))
-                        .FirstOrDefault();
-                    if (match is not null)
-                    {
-                        // Rebuild in place; the builder will compute possible track counts (official + digital)
-                        var importResult = await releaseImporter.ImportReleaseGroupInPlaceAsync(
-                            match.Id,
-                            match.Title,
-                            match.PrimaryType,
-                            Path.GetDirectoryName(release.ReleasePath) ?? Path.Combine("./Library", artistId),
-                            artistId,
-                            release.FolderName
-                        );
-                        if (importResult.Success)
-                        {
-                            await cache.UpdateReleaseFromJsonAsync(artistId, releaseFolderName);
-                            // Refresh local variable for subsequent logic
-                            release = await cache.GetReleaseByArtistAndFolderAsync(artistId, releaseFolderName);
-                            logger.LogInformation("[StartDownload] Pre-enriched possible track counts from MusicBrainz for {ArtistId}/{Folder}", artistId, releaseFolderName);
-                        }
-                    }
+                }
+                var match = candidates
+                    .OrderByDescending(rg => string.Equals(rg.PrimaryType, "Album", StringComparison.OrdinalIgnoreCase))
+                    .ThenBy(rg => SafeDateKey(rg.FirstReleaseDate))
+                    .FirstOrDefault();
+                if (match is not null)
+                {
+                    (allowedOfficialCounts, allowedOfficialDigitalCounts) = await mbImport.GetPossibleTrackCountsForReleaseGroupAsync(match.Id);
                 }
             }
         }
         catch (Exception enrichEx)
         {
-            logger.LogDebug(enrichEx, "[StartDownload] Skipped pre-enrichment of possible track counts");
+            logger.LogDebug(enrichEx, "[StartDownload] Skipped on-demand track count computation");
         }
 
         // Set status to Searching before starting
@@ -126,6 +112,8 @@ public class StartDownloadReleaseService(
             artistName,
             releaseTitle,
             targetDir,
+            allowedOfficialCounts,
+            allowedOfficialDigitalCounts,
             token
         );
         if (!ok)

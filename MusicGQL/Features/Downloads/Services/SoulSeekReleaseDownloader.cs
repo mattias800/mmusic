@@ -29,6 +29,8 @@ public class SoulSeekReleaseDownloader(
         string artistName,
         string releaseTitle,
         string targetDirectory,
+        List<int> allowedOfficialCounts,
+        List<int> allowedOfficialDigitalCounts,
         CancellationToken cancellationToken = default
     )
     {
@@ -55,8 +57,6 @@ public class SoulSeekReleaseDownloader(
         // Determine expected track count from cache (if available)
         var cachedRelease = await cache.GetReleaseByArtistAndFolderAsync(artistId, releaseFolderName);
         int expectedTrackCount = cachedRelease?.Tracks?.Count ?? 0;
-        var allowedOfficialCounts = cachedRelease?.JsonRelease?.PossibleNumberOfTracksInOfficialReleases ?? new List<int>();
-        var allowedOfficialDigitalCounts = cachedRelease?.JsonRelease?.PossibleNumberOfTracksInOfficialDigitalReleases ?? new List<int>();
         progress.Set(new DownloadProgress
         {
             ArtistId = artistId,
