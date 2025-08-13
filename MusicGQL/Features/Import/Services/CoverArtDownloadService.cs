@@ -3,6 +3,7 @@ using MusicGQL.Features.ServerLibrary.Utils;
 using MusicGQL.Integration.MusicBrainz;
 using MusicGQL.Integration.Spotify;
 using Path = System.IO.Path;
+using MusicGQL.Features.ServerSettings;
 
 namespace MusicGQL.Features.Import.Services;
 
@@ -25,6 +26,17 @@ public class CoverArtDownloadService(
         string artistFolderPath
     )
     {
+        // Guard: require library manifest present (safety)
+        try
+        {
+            var libRoot = Directory.GetParent(artistFolderPath)?.FullName ?? string.Empty;
+            if (!File.Exists(System.IO.Path.Combine(libRoot, LibraryManifestService.ManifestFileName)))
+            {
+                return new FanArtDownloadResult();
+            }
+        }
+        catch { return new FanArtDownloadResult(); }
+
         var result = await fanArtService.DownloadArtistPhotosAsync(
             musicBrainzId,
             artistFolderPath
@@ -86,6 +98,17 @@ public class CoverArtDownloadService(
         string releaseFolderPath
     )
     {
+        // Guard: require library manifest present (safety)
+        try
+        {
+            var libRoot = Directory.GetParent(releaseFolderPath)?.FullName ?? string.Empty;
+            if (!File.Exists(System.IO.Path.Combine(libRoot, LibraryManifestService.ManifestFileName)))
+            {
+                return null;
+            }
+        }
+        catch { return null; }
+
         // 1) Try fanart.tv
         var viaFanArt = await fanArtService.DownloadReleaseCoverArtAsync(
             releaseGroupId,

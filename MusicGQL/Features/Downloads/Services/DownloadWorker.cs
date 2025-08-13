@@ -1,4 +1,5 @@
 using MusicGQL.Features.ServerLibrary.Cache;
+using MusicGQL.Features.ServerSettings;
 
 namespace MusicGQL.Features.Downloads.Services;
 
@@ -15,6 +16,25 @@ public class DownloadWorker(
             try
             {
                 using var scope = scopeFactory.CreateScope();
+                var settingsAccessor = scope.ServiceProvider.GetRequiredService<ServerSettingsAccessor>();
+                var manifestService = scope.ServiceProvider.GetRequiredService<LibraryManifestService>();
+
+                // Pause worker if manifest missing; resume automatically when present
+                try
+                {
+                    var settings = await settingsAccessor.GetAsync();
+                    if (!await manifestService.HasManifestAsync(settings.LibraryPath))
+                    {
+                        logger.LogDebug("[DownloadWorker] Library manifest missing; pausing processing.");
+                        await Task.Delay(TimeSpan.FromSeconds(2), stoppingToken);
+                        continue;
+                    }
+                }
+                catch
+                {
+                    await Task.Delay(TimeSpan.FromSeconds(2), stoppingToken);
+                    continue;
+                }
                 var queue = scope.ServiceProvider.GetRequiredService<DownloadQueueService>();
                 var starter = scope.ServiceProvider.GetRequiredService<StartDownloadReleaseService>();
                 var cache = scope.ServiceProvider.GetRequiredService<ServerLibraryCache>();

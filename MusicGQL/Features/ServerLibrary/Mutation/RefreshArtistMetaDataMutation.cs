@@ -74,6 +74,17 @@ public class RefreshArtistMetaDataMutation
                 "[RefreshArtistMetaData] Import/enrich executor failed; continuing to Last.fm enrichment");
         }
 
+        // Backfill any eligible releases (covers previous runs where writes were blocked)
+        try
+        {
+            await importExecutor.ImportEligibleReleaseGroupsAsync(dir, mbId!);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex,
+                "[RefreshArtistMetaData] ImportEligibleReleaseGroupsAsync failed; continuing to enrichment");
+        }
+
         var res = await enrichment.EnrichArtistAsync(dir, mbId!);
         if (!res.Success)
         {

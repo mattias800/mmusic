@@ -422,8 +422,7 @@ public sealed class MusicBrainzImportExecutor(
             // ignore enrich errors
         }
 
-        var artistJson = JsonSerializer.Serialize(jsonArtist, GetJsonOptions());
-        await File.WriteAllTextAsync(artistJsonPath, artistJson);
+        await writer.WriteArtistAsync(jsonArtist);
         logger.LogInformation("[ImportArtist] Wrote artist.json for '{Artist}' at {Path}", jsonArtist.Name, artistJsonPath);
     }
 

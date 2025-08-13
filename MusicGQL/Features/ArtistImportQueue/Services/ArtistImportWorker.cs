@@ -8,6 +8,7 @@ using MusicGQL.Features.Artists;
 using MusicGQL.Features.Playlists.Subscription;
 using MusicGQL.Features.ServerLibrary;
 using MusicGQL.Features.ServerSettings;
+using MusicGQL.Features.ServerLibrary;
 using Path = System.IO.Path;
 
 namespace MusicGQL.Features.ArtistImportQueue.Services;
@@ -79,6 +80,25 @@ public class LibraryImportWorker(
             try
             {
                 using var scope = scopeFactory.CreateScope();
+                var settingsAccessor = scope.ServiceProvider.GetRequiredService<ServerSettingsAccessor>();
+                var manifestService = scope.ServiceProvider.GetRequiredService<LibraryManifestService>();
+
+                // Pause worker if manifest missing; resume automatically when present
+                try
+                {
+                    var settings = await settingsAccessor.GetAsync();
+                    if (!await manifestService.HasManifestAsync(settings.LibraryPath))
+                    {
+                        logger.LogDebug("[LibraryImportWorker] Library manifest missing; pausing processing.");
+                        await Task.Delay(TimeSpan.FromSeconds(2), stoppingToken);
+                        continue;
+                    }
+                }
+                catch
+                {
+                    await Task.Delay(TimeSpan.FromSeconds(2), stoppingToken);
+                    continue;
+                }
                 var queue = scope.ServiceProvider.GetRequiredService<ArtistImportQueueService>();
                 var progress = scope.ServiceProvider.GetRequiredService<CurrentArtistImportStateService>();
                 var mb = scope.ServiceProvider.GetRequiredService<MusicBrainzService>();

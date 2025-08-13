@@ -49,7 +49,7 @@ public class ServerLibraryJsonWriter(ServerSettingsAccessor serverSettingsAccess
             throw new ArgumentException("Artist.Id must be set on JsonArtist before writing.");
 
         var dir = await GetArtistDirAsync(artist.Id);
-        await manifestService.EnsureWritesAllowedAsync(Path.GetDirectoryName(dir)!);
+        await manifestService.EnsureWritesAllowedAsync(await GetLibraryRootAsync());
         Directory.CreateDirectory(dir);
         var path = await GetArtistJsonPathAsync(artist.Id);
         var json = JsonSerializer.Serialize(artist, GetJsonOptions());
@@ -79,7 +79,7 @@ public class ServerLibraryJsonWriter(ServerSettingsAccessor serverSettingsAccess
             throw new ArgumentException("releaseFolderName is required");
 
         var dir = await GetReleaseDirAsync(artistId, releaseFolderName);
-        await manifestService.EnsureWritesAllowedAsync(Path.GetDirectoryName(dir)!);
+        await manifestService.EnsureWritesAllowedAsync(await GetLibraryRootAsync());
         Directory.CreateDirectory(dir);
         var path = await GetReleaseJsonPathAsync(artistId, releaseFolderName);
         var json = JsonSerializer.Serialize(release, GetJsonOptions());
@@ -89,7 +89,7 @@ public class ServerLibraryJsonWriter(ServerSettingsAccessor serverSettingsAccess
     public async Task UpdateReleaseAsync(string artistId, string releaseFolderName, Action<JsonRelease> update)
     {
         var path = await GetReleaseJsonPathAsync(artistId, releaseFolderName);
-        await manifestService.EnsureWritesAllowedAsync(Path.GetDirectoryName(path)!);
+        await manifestService.EnsureWritesAllowedAsync(await GetLibraryRootAsync());
         if (!File.Exists(path)) return;
 
         var text = await File.ReadAllTextAsync(path);
