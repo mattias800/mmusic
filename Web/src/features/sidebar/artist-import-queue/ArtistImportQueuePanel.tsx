@@ -64,18 +64,10 @@ const currentSub = graphql(`
 `);
 
 export const ArtistImportQueuePanel: React.FC = () => {
-  const [{ data, error, fetching }, reexecute] = useQuery({ query });
+  const [{ data, error, fetching }] = useQuery({ query });
 
-  useSubscription({ query: queueSub }, () => {
-    // refetch queue snapshot on update
-    reexecute({ requestPolicy: "network-only" });
-    return null;
-  });
-
-  useSubscription({ query: currentSub }, () => {
-    reexecute({ requestPolicy: "network-only" });
-    return null;
-  });
+  useSubscription({ query: queueSub });
+  useSubscription({ query: currentSub });
 
   if (fetching) {
     return <Spinner />;
@@ -116,7 +108,9 @@ export const ArtistImportQueuePanel: React.FC = () => {
 
       <div>
         <div className="font-medium text-zinc-200">
-          {queue?.queueLength ? `${queue.queueLength} in queue` : "Queue is empty"}
+          {queue?.queueLength
+            ? `${queue.queueLength} in queue`
+            : "Queue is empty"}
         </div>
       </div>
     </div>

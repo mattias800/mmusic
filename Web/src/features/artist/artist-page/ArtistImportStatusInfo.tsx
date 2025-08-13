@@ -50,15 +50,11 @@ export const ArtistImportStatusInfo: React.FC<ArtistImportStatusProps> = ({
     artistImportStatusInfoArtistFragment,
     props.artist,
   );
-  const [{ data }, reexec] = useQuery({
+  const [{ data }] = useQuery({
     query: currentArtistImportQuery,
   });
 
-  useSubscription({ query: currentArtistImportSubscription }, () => {
-    // On any progress event, refetch to update counters
-    reexec({ requestPolicy: "network-only" });
-    return null;
-  });
+  useSubscription({ query: currentArtistImportSubscription });
 
   const st = data?.artistImport?.currentArtistImport;
 

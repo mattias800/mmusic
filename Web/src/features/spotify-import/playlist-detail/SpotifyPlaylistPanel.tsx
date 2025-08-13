@@ -94,7 +94,9 @@ export const SpotifyPlaylistPanel: React.FC<SpotifyPlaylistPanelProps> = (
 
   const [{ data: viewerData }] = useQuery({ query: viewerQuery });
 
-  const [, importPlaylist] = useMutation(importSpotifyPlaylistByIdMutation);
+  const [{ fetching: isImporting }, importPlaylist] = useMutation(
+    importSpotifyPlaylistByIdMutation,
+  );
   const [, enqueueArtists] = useMutation(enqueueArtistsFromPlaylistMutation);
 
   const handleImportPlaylist = async () => {
@@ -170,6 +172,7 @@ export const SpotifyPlaylistPanel: React.FC<SpotifyPlaylistPanelProps> = (
                   variant="secondary"
                   iconLeft={Library}
                   onClick={handleImportPlaylist}
+                  loading={isImporting}
                 >
                   Import playlist
                 </Button>

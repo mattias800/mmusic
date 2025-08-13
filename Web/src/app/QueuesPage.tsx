@@ -455,24 +455,53 @@ export const QueuesPage: React.FC = () => {
 
       <section>
         <h2 className="text-xl font-semibold mb-2">Current import</h2>
-        <div className="rounded border border-zinc-700 p-3">
+        <div className="rounded border border-zinc-700 p-4">
           {ai.currentArtistImport ? (
-            <div className="text-sm text-zinc-300">
-              <div>
-                <Link
-                  to={`/artist/${ai.currentArtistImport.artistName}`}
-                  className="hover:underline"
-                >
-                  {ai.currentArtistImport.artistName}
+            <div className="text-zinc-300">
+              <div className="flex items-center gap-4">
+                <Link to={`/artist/${ai.currentArtistImport.artistName}`}>
+                  <ReleaseCoverArt
+                    titleForPlaceholder={ai.currentArtistImport.artistName}
+                    className="w-24 h-24 rounded object-cover border border-zinc-700"
+                  />
                 </Link>
+                <div className="flex-1 min-w-0">
+                  <div className="truncate text-lg font-semibold">
+                    <Link
+                      to={`/artist/${ai.currentArtistImport.artistName}`}
+                      className="hover:underline"
+                    >
+                      {ai.currentArtistImport.artistName}
+                    </Link>
+                  </div>
+                  <div className="text-sm text-zinc-400 mt-1">
+                    {ai.currentArtistImport.statusInfo.text} —
+                    {" "}
+                    {ai.currentArtistImport.completedReleases}/
+                    {ai.currentArtistImport.totalReleases}
+                  </div>
+                </div>
               </div>
-              <div className="text-xs text-zinc-400">
-                {ai.currentArtistImport.statusInfo.text}{" "}
-                {ai.currentArtistImport.completedReleases}/
-                {ai.currentArtistImport.totalReleases}
+
+              <div className="mt-3">
+                <ProgressIndicator
+                  progressPercent={
+                    ai.currentArtistImport.totalReleases > 0
+                      ? Math.min(
+                          100,
+                          Math.round(
+                            (ai.currentArtistImport.completedReleases /
+                              ai.currentArtistImport.totalReleases) *
+                              100,
+                          ),
+                        )
+                      : 0
+                  }
+                />
               </div>
+
               {ai.currentArtistImport.errorMessage && (
-                <div className="text-xs text-red-400">
+                <div className="text-sm text-red-400 mt-2">
                   {ai.currentArtistImport.errorMessage}
                 </div>
               )}
