@@ -1,6 +1,7 @@
 using MusicGQL.Features.ArtistImportQueue.Services;
 using MusicGQL.Features.Downloads.Services;
 using MusicGQL.Features.ServerLibrary.Cache;
+using MusicGQL.Features.ServerSettings;
 using Path = System.IO.Path;
 
 namespace MusicGQL.Features.ServerLibrary.Services;
@@ -11,7 +12,8 @@ public class ArtistDeletionService(
     DownloadCancellationService downloadCancellation,
     CurrentDownloadStateService currentDownload,
     ArtistImportQueueService artistImportQueue,
-    ILogger<ArtistDeletionService> logger
+    ILogger<ArtistDeletionService> logger,
+    ServerSettingsAccessor serverSettingsAccessor
 )
 {
     public async Task<(bool Success, string? ErrorMessage)> DeleteArtistCompletelyAsync(string artistId)
@@ -41,7 +43,8 @@ public class ArtistDeletionService(
             catch { }
 
             // 4) Delete the artist directory from disk
-            var dir = Path.Combine("./Library/", artistId);
+            var lib = await serverSettingsAccessor.GetAsync();
+            var dir = Path.Combine(lib.LibraryPath, artistId);
             if (Directory.Exists(dir))
             {
                 Directory.Delete(dir, true);

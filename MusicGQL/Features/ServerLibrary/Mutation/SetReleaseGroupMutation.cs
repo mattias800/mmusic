@@ -6,6 +6,7 @@ using MusicGQL.Features.ServerLibrary.Cache;
 using MusicGQL.Features.ServerLibrary.Json;
 using MusicGQL.Features.ServerLibrary.Writer;
 using Path = System.IO.Path;
+using MusicGQL.Features.ServerSettings;
 
 namespace MusicGQL.Features.ServerLibrary.Mutation;
 
@@ -17,6 +18,7 @@ public class SetReleaseGroupMutation
         [Service] ReleaseJsonBuilder builder,
         [Service] ServerLibraryJsonWriter writer,
         [Service] ITopicEventSender eventSender,
+        [Service] ServerSettingsAccessor serverSettingsAccessor,
         SetReleaseGroupInput input
     )
     {
@@ -63,7 +65,7 @@ public class SetReleaseGroupMutation
 
             // Rebuild JSON using the centralized builder (this will select a non-demo main release)
             var built = await builder.BuildAsync(
-                Path.Combine("./Library", input.ArtistId),
+                Path.Combine((await serverSettingsAccessor.GetAsync()).LibraryPath, input.ArtistId),
                 input.MusicBrainzReleaseGroupId,
                 input.ReleaseFolderName,
                 existing.Title,

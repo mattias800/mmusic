@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using MusicGQL.Features.ServerSettings;
 using Path = System.IO.Path;
 
 namespace MusicGQL.Features.ServerLibrary.Reader;
@@ -9,9 +10,20 @@ namespace MusicGQL.Features.ServerLibrary.Reader;
 /// are missing their corresponding JSON metadata files. When found, imports metadata
 /// from MusicBrainz and creates the JSON files in-place, then refreshes the cache.
 /// </summary>
-public class ServerLibraryFileSystemScanner()
+public class ServerLibraryFileSystemScanner(ServerSettingsAccessor serverSettingsAccessor)
 {
-    private const string LibraryPath = "./Library/";
+    private async Task<string> GetLibraryPathAsync()
+    {
+        try
+        {
+            var s = await serverSettingsAccessor.GetAsync();
+            return s.LibraryPath;
+        }
+        catch
+        {
+            return string.Empty;
+        }
+    }
 
     private static readonly string[] AudioExtensions = [".mp3", ".flac", ".wav", ".m4a", ".ogg"];
 
@@ -47,10 +59,11 @@ public class ServerLibraryFileSystemScanner()
 
         try
         {
-            if (!Directory.Exists(LibraryPath))
+            var libraryPath = await GetLibraryPathAsync();
+            if (string.IsNullOrWhiteSpace(libraryPath) || !Directory.Exists(libraryPath))
             {
                 result.Success = true;
-                result.Notes.Add($"Library path not found: {Path.GetFullPath(LibraryPath)}");
+                result.Notes.Add($"Library path not found: {Path.GetFullPath(libraryPath ?? string.Empty)}");
                 return result;
             }
 
@@ -85,16 +98,17 @@ public class ServerLibraryFileSystemScanner()
         return result;
     }
 
-    public Task<ScanPlan> ScanAsync()
+    public async Task<ScanPlan> ScanAsync()
     {
         var plan = new ScanPlan();
 
-        if (!Directory.Exists(LibraryPath))
+        var libraryPath = await GetLibraryPathAsync();
+        if (string.IsNullOrWhiteSpace(libraryPath) || !Directory.Exists(libraryPath))
         {
-            return Task.FromResult(plan);
+            return plan;
         }
 
-        var artistDirectories = Directory.GetDirectories(LibraryPath);
+        var artistDirectories = Directory.GetDirectories(libraryPath);
         foreach (var artistDir in artistDirectories)
         {
             var releaseDirs = Directory.GetDirectories(artistDir);
@@ -128,7 +142,7 @@ public class ServerLibraryFileSystemScanner()
             }
         }
 
-        return Task.FromResult(plan);
+        return plan;
     }
 
     private static JsonSerializerOptions GetJsonOptions()

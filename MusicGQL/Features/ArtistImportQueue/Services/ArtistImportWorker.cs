@@ -7,6 +7,7 @@ using MusicGQL.Db.Postgres;
 using MusicGQL.Features.Artists;
 using MusicGQL.Features.Playlists.Subscription;
 using MusicGQL.Features.ServerLibrary;
+using MusicGQL.Features.ServerSettings;
 using Path = System.IO.Path;
 
 namespace MusicGQL.Features.ArtistImportQueue.Services;
@@ -131,7 +132,7 @@ public class LibraryImportWorker(
                         }
                         catch { }
 
-                        var artistFolderPath = Path.GetDirectoryName(release.ReleasePath) ?? Path.Combine("./Library", artistId);
+                        var artistFolderPath = Path.GetDirectoryName(release.ReleasePath) ?? Path.Combine((await scope.ServiceProvider.GetRequiredService<ServerSettingsAccessor>().GetAsync()).LibraryPath, artistId);
 
                         string? releaseGroupId = release.JsonRelease.Connections?.MusicBrainzReleaseGroupId;
                         string? primaryType = null;

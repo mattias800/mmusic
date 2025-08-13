@@ -5,6 +5,7 @@ using MusicGQL.Features.Playlists.Subscription;
 using MusicGQL.Features.ServerLibrary.Cache;
 using MusicGQL.Features.ServerLibrary.Writer;
 using Path = System.IO.Path;
+using MusicGQL.Features.ServerSettings;
 
 namespace MusicGQL.Features.Downloads.Services;
 
@@ -17,7 +18,8 @@ public class StartDownloadReleaseService(
     Features.Import.Services.LibraryReleaseImportService releaseImporter,
     HotChocolate.Subscriptions.ITopicEventSender eventSender,
     IDbContextFactory<EventDbContext> dbFactory,
-    DownloadCancellationService cancellationService
+    DownloadCancellationService cancellationService,
+    ServerSettingsAccessor serverSettingsAccessor
 )
 {
     public async Task<(bool Success, string? ErrorMessage)> StartAsync(
@@ -295,11 +297,11 @@ public class StartDownloadReleaseService(
                 if (match is not null)
                 {
                     // Rebuild using this RG; builder will pick the best matching release considering local audio files
-                    var importResult = await releaseImporter.ImportReleaseGroupInPlaceAsync(
+                        var importResult = await releaseImporter.ImportReleaseGroupInPlaceAsync(
                         match.Id,
                         match.Title,
                         match.PrimaryType,
-                        Path.GetDirectoryName(rel.ReleasePath) ?? Path.Combine("./Library", artistId),
+                            Path.GetDirectoryName(rel.ReleasePath) ?? Path.Combine((await serverSettingsAccessor.GetAsync()).LibraryPath, artistId),
                         artistId,
                         rel.FolderName
                     );

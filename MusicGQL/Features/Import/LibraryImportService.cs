@@ -2,6 +2,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Hqub.Lastfm;
 using MusicGQL.Features.Import.Services;
+using MusicGQL.Features.ServerSettings;
 using MusicGQL.Features.ServerLibrary.Cache;
 using MusicGQL.Features.ServerLibrary.Json;
 using Path = System.IO.Path;
@@ -19,10 +20,22 @@ public class LibraryImportService(
     ServerLibraryCache cache,
     LibraryReleaseImportService releaseImporter,
     IImportExecutor importExecutor,
-    LastFmEnrichmentService enrichmentService
+    LastFmEnrichmentService enrichmentService,
+    MusicGQL.Features.ServerSettings.ServerSettingsAccessor serverSettingsAccessor
 )
 {
-    private const string LibraryPath = "./Library/";
+    private async Task<string> GetLibraryPathAsync()
+    {
+        try
+        {
+            var s = await serverSettingsAccessor.GetAsync();
+            return s.LibraryPath;
+        }
+        catch
+        {
+            return string.Empty;
+        }
+    }
 
     /// <summary>
     /// Imports an artist by searching MusicBrainz and Spotify, downloading photos, and creating artist.json
@@ -70,7 +83,7 @@ public class LibraryImportService(
             result.ArtistName = mbArtist.Name;
 
             var artistFolderName = SanitizeFolderName(mbArtist.Name);
-            var artistFolderPath = Path.Combine(LibraryPath, artistFolderName);
+            var artistFolderPath = Path.Combine(await GetLibraryPathAsync(), artistFolderName);
             if (!Directory.Exists(artistFolderPath))
             {
                 Directory.CreateDirectory(artistFolderPath);
@@ -146,7 +159,7 @@ public class LibraryImportService(
             }
 
             var mbArtistId = artist.JsonArtist.Connections.MusicBrainzArtistId;
-            var artistFolderPath = Path.Combine(LibraryPath, artistId);
+            var artistFolderPath = Path.Combine(await GetLibraryPathAsync(), artistId);
 
             // 2. Get release groups from MusicBrainz
             Console.WriteLine("🔍 Fetching release groups from MusicBrainz...");

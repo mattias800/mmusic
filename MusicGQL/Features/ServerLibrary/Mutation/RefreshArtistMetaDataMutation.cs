@@ -1,6 +1,7 @@
 using MusicGQL.Features.Artists;
 using MusicGQL.Features.Import.Services;
 using MusicGQL.Features.ServerLibrary.Cache;
+using MusicGQL.Features.ServerSettings;
 using Microsoft.Extensions.Logging;
 using Path = System.IO.Path;
 
@@ -16,6 +17,7 @@ public class RefreshArtistMetaDataMutation
         ILogger<RefreshArtistMetaDataMutation> logger,
         HotChocolate.Subscriptions.ITopicEventSender eventSender,
         [Service] MusicGQL.Features.ServerLibrary.Share.ArtistShareManifestService shareService,
+        [Service] ServerSettingsAccessor serverSettingsAccessor,
         RefreshArtistMetaDataInput input
     )
     {
@@ -53,7 +55,8 @@ public class RefreshArtistMetaDataMutation
         }
 
         var effectiveArtistId = artist.Id;
-        var dir = Path.Combine("./Library/", effectiveArtistId);
+        var lib = await serverSettingsAccessor.GetAsync();
+        var dir = Path.Combine(lib.LibraryPath, effectiveArtistId);
         logger.LogInformation(
             "[RefreshArtistMetaData] Starting enrichment for artistId='{ArtistId}', mbid='{MbId}', dir='{Dir}'",
             effectiveArtistId,

@@ -4,6 +4,7 @@ using Hqub.Lastfm;
 using MusicGQL.Features.ServerLibrary.Json;
 using MusicGQL.Features.ServerLibrary.Utils;
 using MusicGQL.Integration.MusicBrainz;
+using MusicGQL.Features.ServerSettings;
 using Path = System.IO.Path;
 
 namespace MusicGQL.Features.Import.Services;
@@ -15,7 +16,8 @@ namespace MusicGQL.Features.Import.Services;
 public class ReleaseJsonBuilder(
     MusicBrainzService musicBrainzService,
     CoverArtDownloadService coverArtDownloadService,
-    LastfmClient lastfmClient
+    LastfmClient lastfmClient,
+    ServerSettingsAccessor serverSettingsAccessor
 )
 {
     private static readonly string[] AudioExtensions = [".mp3", ".flac", ".wav", ".m4a", ".ogg"];
@@ -201,7 +203,7 @@ public class ReleaseJsonBuilder(
         var mbToLocalArtistId = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         try
         {
-            var libraryRoot = Path.Combine("./", "Library");
+            var libraryRoot = (await serverSettingsAccessor.GetAsync()).LibraryPath;
             if (Directory.Exists(libraryRoot))
             {
                 foreach (var artistPath in Directory.GetDirectories(libraryRoot))

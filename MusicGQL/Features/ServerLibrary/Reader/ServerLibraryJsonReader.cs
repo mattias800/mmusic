@@ -1,13 +1,37 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using MusicGQL.Features.ServerLibrary.Json;
+using MusicGQL.Features.ServerSettings;
 using Path = System.IO.Path;
 
 namespace MusicGQL.Features.ServerLibrary.Reader;
 
-public class ServerLibraryJsonReader
+public class ServerLibraryJsonReader(ServerSettingsAccessor serverSettingsAccessor)
 {
-    private const string libraryPath = "./Library/";
+    private async Task<string> GetLibraryPathAsync()
+    {
+        try
+        {
+            var s = await serverSettingsAccessor.GetAsync();
+            return s.LibraryPath;
+        }
+        catch
+        {
+            return string.Empty;
+        }
+    }
+
+    private string GetLibraryPath()
+    {
+        try
+        {
+            return serverSettingsAccessor.GetAsync().GetAwaiter().GetResult().LibraryPath;
+        }
+        catch
+        {
+            return string.Empty;
+        }
+    }
 
     private readonly JsonSerializerOptions _jsonOptions = new()
     {
@@ -24,7 +48,8 @@ public class ServerLibraryJsonReader
     {
         var artists = new List<(string, JsonArtist)>();
 
-        if (!Directory.Exists(libraryPath))
+        var libraryPath = await GetLibraryPathAsync();
+        if (string.IsNullOrWhiteSpace(libraryPath) || !Directory.Exists(libraryPath))
         {
             return artists;
         }
@@ -106,6 +131,7 @@ public class ServerLibraryJsonReader
         string artistName
     )
     {
+        var libraryPath = await GetLibraryPathAsync();
         var artistPath = Path.Combine(libraryPath, artistName);
         return await ReadArtistAlbumsAsync(artistPath);
     }
@@ -135,6 +161,7 @@ public class ServerLibraryJsonReader
     /// <returns>Artist metadata or null if not found</returns>
     public async Task<JsonArtist?> ReadArtistByNameAsync(string artistName)
     {
+        var libraryPath = await GetLibraryPathAsync();
         var artistPath = Path.Combine(libraryPath, artistName);
         return await ReadArtistFromPathAsync(artistPath);
     }
@@ -165,6 +192,7 @@ public class ServerLibraryJsonReader
     /// <returns>Release metadata or null if not found</returns>
     public async Task<JsonRelease?> ReadReleaseAsync(string artistName, string releaseName)
     {
+        var libraryPath = await GetLibraryPathAsync();
         var releasePath = Path.Combine(libraryPath, artistName, releaseName);
         return await ReadReleaseFromPathAsync(releasePath);
     }
@@ -175,7 +203,8 @@ public class ServerLibraryJsonReader
     /// <returns>List of artist folder names</returns>
     public List<string> GetArtistNames()
     {
-        if (!Directory.Exists(libraryPath))
+        var libraryPath = GetLibraryPath();
+        if (string.IsNullOrWhiteSpace(libraryPath) || !Directory.Exists(libraryPath))
         {
             return new List<string>();
         }
@@ -195,6 +224,7 @@ public class ServerLibraryJsonReader
     /// <returns>List of release folder names</returns>
     public List<string> GetReleaseNames(string artistName)
     {
+        var libraryPath = GetLibraryPath();
         var artistPath = Path.Combine(libraryPath, artistName);
 
         if (!Directory.Exists(artistPath))
@@ -217,6 +247,7 @@ public class ServerLibraryJsonReader
     /// <returns>True if artist exists</returns>
     public bool ArtistExists(string artistName)
     {
+        var libraryPath = GetLibraryPath();
         var artistPath = Path.Combine(libraryPath, artistName);
         var artistJsonPath = Path.Combine(artistPath, "artist.json");
         return File.Exists(artistJsonPath);
@@ -230,6 +261,7 @@ public class ServerLibraryJsonReader
     /// <returns>True if release exists</returns>
     public bool ReleaseExists(string artistName, string releaseName)
     {
+        var libraryPath = GetLibraryPath();
         var releasePath = Path.Combine(libraryPath, artistName, releaseName);
         var releaseJsonPath = Path.Combine(releasePath, "release.json");
         return File.Exists(releaseJsonPath);

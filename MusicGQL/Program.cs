@@ -419,6 +419,7 @@ app.UseRouting(); // Ensure UseRouting is called before UseAuthentication and Us
 app.UseAuthentication();
 app.UseAuthorization();
 
+
 // 🟢 Run event processor once on startup
 using (var scope = app.Services.CreateScope())
 {
@@ -439,9 +440,17 @@ using (var scope = app.Services.CreateScope())
     try
     {
         Console.WriteLine("📀 Loading music library from disk...");
-        Console.WriteLine(
-            $"   🔍 Looking for library at: {System.IO.Path.GetFullPath("./Library/")}"
-        );
+        try
+        {
+            var serverSettingsAccessor = scope.ServiceProvider.GetRequiredService<MusicGQL.Features.ServerSettings.ServerSettingsAccessor>();
+            var settings = await serverSettingsAccessor.GetAsync();
+            var lib = string.IsNullOrWhiteSpace(settings.LibraryPath) ? "(not set)" : settings.LibraryPath;
+            Console.WriteLine($"   🔍 Library path: {lib}");
+        }
+        catch
+        {
+            Console.WriteLine("   🔍 Library path: (error reading settings)");
+        }
         await cache.UpdateCacheAsync();
 
         var stats = await cache.GetCacheStatisticsAsync();

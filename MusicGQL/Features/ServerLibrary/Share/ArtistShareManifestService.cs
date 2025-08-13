@@ -2,11 +2,12 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using MusicGQL.Features.ServerLibrary.Cache;
 using MusicGQL.Features.ServerLibrary.Audio;
+using MusicGQL.Features.ServerSettings;
 using Path = System.IO.Path;
 
 namespace MusicGQL.Features.ServerLibrary.Share;
 
-public class ArtistShareManifestService(ServerLibraryCache cache)
+public class ArtistShareManifestService(ServerLibraryCache cache, ServerSettingsAccessor serverSettingsAccessor)
 {
     private record Manifest(
         int SchemaVersion,
@@ -86,7 +87,7 @@ public class ArtistShareManifestService(ServerLibraryCache cache)
                     continue;
                 if (relPath.StartsWith("./"))
                     relPath = relPath[2..];
-                var full = Path.Combine("./Library", release.ArtistId, release.FolderName, relPath);
+                var full = Path.Combine((await serverSettingsAccessor.GetAsync()).LibraryPath, release.ArtistId, release.FolderName, relPath);
                 var ext = Path.GetExtension(full).TrimStart('.').ToLowerInvariant();
                 if (!File.Exists(full))
                     continue;

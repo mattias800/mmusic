@@ -6,6 +6,7 @@ using MusicGQL.Features.ServerLibrary.Cache;
 using MusicGQL.Features.ServerLibrary.Json;
 using MusicGQL.Features.ServerLibrary.Writer;
 using MusicGQL.Integration.MusicBrainz;
+using MusicGQL.Features.ServerSettings;
 using Path = System.IO.Path;
 
 namespace MusicGQL.Features.ServerLibrary.Mutation;
@@ -19,13 +20,15 @@ public class SetReleaseMatchOverrideMutation
         [Service] ReleaseJsonBuilder builder,
         [Service] ServerLibraryCache cache,
         [Service] ITopicEventSender eventSender,
+        [Service] ServerSettingsAccessor serverSettingsAccessor,
         SetReleaseMatchOverrideInput input
     )
     {
         try
         {
             // Load current release.json (best effort)
-            var releaseDir = Path.Combine("./Library", input.ArtistId, input.ReleaseFolderName);
+            var lib = await serverSettingsAccessor.GetAsync();
+            var releaseDir = Path.Combine(lib.LibraryPath, input.ArtistId, input.ReleaseFolderName);
             var jsonPath = Path.Combine(releaseDir, "release.json");
 
             JsonRelease? existing = null;
@@ -80,7 +83,7 @@ public class SetReleaseMatchOverrideMutation
 
             // Rebuild using builder (it will honor the override if set)
             var built = await builder.BuildAsync(
-                Path.Combine("./Library", input.ArtistId),
+                Path.Combine(lib.LibraryPath, input.ArtistId),
                 existing.Connections.MusicBrainzReleaseGroupId
                     ?? (await EnsureRgIdFromOverride(mbService, input.MusicBrainzReleaseId))
                     ?? string.Empty,

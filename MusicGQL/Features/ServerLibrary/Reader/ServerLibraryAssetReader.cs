@@ -1,3 +1,4 @@
+using MusicGQL.Features.ServerSettings;
 using Path = System.IO.Path;
 
 namespace MusicGQL.Features.ServerLibrary.Reader;
@@ -5,9 +6,20 @@ namespace MusicGQL.Features.ServerLibrary.Reader;
 /// <summary>
 /// Reads asset files (images, audio) from the music library folder structure
 /// </summary>
-public class ServerLibraryAssetReader
+public class ServerLibraryAssetReader(ServerSettingsAccessor serverSettingsAccessor)
 {
-    private const string LibraryPath = "./Library/";
+    private async Task<string> GetLibraryPathAsync()
+    {
+        try
+        {
+            var s = await serverSettingsAccessor.GetAsync();
+            return s.LibraryPath;
+        }
+        catch
+        {
+            return string.Empty;
+        }
+    }
 
     /// <summary>
     /// Gets an artist photo by artist ID, photo type, and photo index
@@ -24,7 +36,8 @@ public class ServerLibraryAssetReader
     {
         try
         {
-            var artistPath = Path.Combine(LibraryPath, artistId);
+            var libraryPath = await GetLibraryPathAsync();
+            var artistPath = Path.Combine(libraryPath, artistId);
             if (!Directory.Exists(artistPath))
                 return (null, null, null);
 
@@ -110,7 +123,8 @@ public class ServerLibraryAssetReader
     {
         try
         {
-            var releasePath = Path.Combine(LibraryPath, artistId, releaseFolderName);
+            var libraryPath = await GetLibraryPathAsync();
+            var releasePath = Path.Combine(libraryPath, artistId, releaseFolderName);
             if (!Directory.Exists(releasePath))
                 return (null, null, null);
 
@@ -163,7 +177,8 @@ public class ServerLibraryAssetReader
     {
         try
         {
-            var artistPath = Path.Combine(LibraryPath, artistId);
+            var libraryPath = await GetLibraryPathAsync();
+            var artistPath = Path.Combine(libraryPath, artistId);
             if (!Directory.Exists(artistPath))
                 return (null, null, null);
 
@@ -230,7 +245,8 @@ public class ServerLibraryAssetReader
     {
         try
         {
-            var releasePath = Path.Combine(LibraryPath, artistId, releaseFolderName);
+            var libraryPath = await GetLibraryPathAsync();
+            var releasePath = Path.Combine(libraryPath, artistId, releaseFolderName);
             if (!Directory.Exists(releasePath))
                 return (null, null, null);
 

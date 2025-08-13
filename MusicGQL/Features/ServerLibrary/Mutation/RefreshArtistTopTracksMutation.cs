@@ -6,6 +6,7 @@ using MusicGQL.Features.Artists;
 using MusicGQL.Features.Import.Services;
 using MusicGQL.Features.Playlists.Commands;
 using MusicGQL.Features.ServerLibrary.Cache;
+using MusicGQL.Features.ServerSettings;
 using Path = System.IO.Path;
 
 namespace MusicGQL.Features.ServerLibrary.Mutation;
@@ -20,6 +21,7 @@ public class RefreshArtistTopTracksMutation
         ClaimsPrincipal claimsPrincipal,
         RenamePlaylistHandler renamePlaylistHandler,
         EventDbContext dbContext,
+        [Service] MusicGQL.Features.ServerSettings.ServerSettingsAccessor serverSettingsAccessor,
         RefreshArtistTopTracksInput input
     )
     {
@@ -45,7 +47,8 @@ public class RefreshArtistTopTracksMutation
             return new RefreshArtistTopTracksUnknownError("Could not find artist in library");
         }
 
-        var dir = Path.Combine("./Library/", input.ArtistId);
+        var lib = await serverSettingsAccessor.GetAsync();
+        var dir = Path.Combine(lib.LibraryPath, input.ArtistId);
 
         // Clean old top tracks photos (toptrack*.jpg) in artist folder
         try

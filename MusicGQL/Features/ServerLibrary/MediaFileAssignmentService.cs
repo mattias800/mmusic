@@ -1,5 +1,6 @@
 using MusicGQL.Features.ServerLibrary.Writer;
 using Path = System.IO.Path;
+using MusicGQL.Features.ServerSettings;
 
 namespace MusicGQL.Features.ServerLibrary;
 
@@ -10,11 +11,12 @@ namespace MusicGQL.Features.ServerLibrary;
 /// 2) Then fallback to case-insensitive filename sort
 /// Only assigns the first N files to N tracks in order (by track number position in JSON)
 /// </summary>
-public class MediaFileAssignmentService
+public class MediaFileAssignmentService(ServerLibrary.Writer.ServerLibraryJsonWriter writer, ServerSettingsAccessor serverSettingsAccessor)
 {
     public async Task<bool> AssignAsync(string artistId, string releaseFolderName)
     {
-        var releaseDir = Path.Combine("./Library", artistId, releaseFolderName);
+        var lib = await serverSettingsAccessor.GetAsync();
+        var releaseDir = Path.Combine(lib.LibraryPath, artistId, releaseFolderName);
         var releaseJsonPath = Path.Combine(releaseDir, "release.json");
         if (!File.Exists(releaseJsonPath)) return false;
 
@@ -37,7 +39,6 @@ public class MediaFileAssignmentService
 
         if (files.Count == 0) return false;
 
-        var writer = new ServerLibraryJsonWriter();
         await writer.UpdateReleaseAsync(artistId, releaseFolderName, rel =>
         {
             if (rel.Tracks == null) return;
