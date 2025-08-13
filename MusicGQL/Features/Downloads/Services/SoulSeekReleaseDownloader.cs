@@ -71,7 +71,13 @@ public class SoulSeekReleaseDownloader(
         int minRequiredTracks = expectedTrackCount > 0
             ? expectedTrackCount
             : 5; // if unknown, require at least 5 to avoid noise
-        logger.LogInformation("[SoulSeek] Expected tracks={Expected}, minRequiredTracks={Min}", expectedTrackCount, minRequiredTracks);
+        // When we have authoritative allowed counts (official/digital), bypass generic min requirement
+        bool useStrictAllowedCounts = (allowedOfficialDigitalCounts is { Count: > 0 }) || (allowedOfficialCounts is { Count: > 0 });
+        if (useStrictAllowedCounts)
+        {
+            minRequiredTracks = 0;
+        }
+        logger.LogInformation("[SoulSeek] Expected tracks={Expected}, minRequiredTracks={Min} (strictAllowedCounts={Strict})", expectedTrackCount, minRequiredTracks, useStrictAllowedCounts);
         if (allowedOfficialCounts.Count > 0)
         {
             try { logger.LogInformation("[SoulSeek] Allowed official track counts: {Counts}", string.Join(", ", allowedOfficialCounts)); } catch { }
@@ -121,8 +127,10 @@ public class SoulSeekReleaseDownloader(
         int timeLimitSec = 60;
         int noDataTimeoutSec = 20;
         try { var s = await settingsAccessor.GetAsync(); timeLimitSec = Math.Max(5, s.SoulSeekSearchTimeLimitSeconds); noDataTimeoutSec = Math.Max(5, s.SoulSeekNoDataTimeoutSeconds); } catch { }
-        TimeSpan searchTimeout = TimeSpan.FromSeconds(timeLimitSec);
-        logger.LogInformation("[SoulSeek] Starting search across {QueryForms} query forms (queueDepth={QueueDepth}, timeLimitSec={TimeLimit})", queries.Count, queueDepth, timeLimitSec);
+        // Shared time budget across all query forms when queue has waiting items
+        TimeSpan totalSearchBudget = TimeSpan.FromSeconds(timeLimitSec);
+        var budgetStartUtc = DateTime.UtcNow;
+        logger.LogInformation("[SoulSeek] Starting search across {QueryForms} query forms (queueDepth={QueueDepth}, sharedTimeBudgetSec={Budget})", queries.Count, queueDepth, timeLimitSec);
         foreach (var q in queries.Distinct(StringComparer.OrdinalIgnoreCase))
         {
             var searchTask = client.SearchAsync(new SearchQuery(q));
@@ -130,7 +138,14 @@ public class SoulSeekReleaseDownloader(
             {
                 if (hasWaiting)
                 {
-                    var completed = await Task.WhenAny(searchTask, Task.Delay(searchTimeout));
+                    var elapsed = DateTime.UtcNow - budgetStartUtc;
+                    var remaining = totalSearchBudget - elapsed;
+                    if (remaining <= TimeSpan.Zero)
+                    {
+                        logger.LogInformation("[SoulSeek] Search budget exhausted before query: {Query}", q);
+                        break;
+                    }
+                    var completed = await Task.WhenAny(searchTask, Task.Delay(remaining));
                     if (completed != searchTask)
                     {
                         logger.LogInformation("[SoulSeek] Search timed out (yield to queue): {Query}", q);
@@ -213,16 +228,6 @@ public class SoulSeekReleaseDownloader(
                 artistName,
                 releaseTitle
             );
-            // If we had waiting items and we timed out, re-enqueue this job at the end of the queue
-            if (hasWaiting)
-            {
-                logger.LogInformation("[SoulSeek] Re-queuing {Artist}/{Release} to back of queue after timeout", artistId, releaseFolderName);
-                downloadQueue.Enqueue(new DownloadQueueItem(artistId, releaseFolderName)
-                {
-                    ArtistName = artistName,
-                    ReleaseTitle = releaseTitle,
-                });
-            }
             return false;
         }
 
@@ -253,7 +258,7 @@ public class SoulSeekReleaseDownloader(
             );
             logger.LogDebug("[SoulSeek] Prepared download queue for user '{User}' with {Count} items (expectedTrackCount={Expected})", candidate.Username, queue.Count, expectedTrackCount);
 
-            if (queue.Count < minRequiredTracks)
+            if (minRequiredTracks > 0 && queue.Count < minRequiredTracks)
             {
                 // Defensive: skip users that don't have enough audio tracks even after queue creation filtering
                 logger.LogInformation(
