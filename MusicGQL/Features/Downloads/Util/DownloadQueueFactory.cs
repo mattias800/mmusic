@@ -66,9 +66,10 @@ public static class DownloadQueueFactory
             list.Add(a);
         }
 
+        // Prefer single-disc (disc null or 1), then digital-friendly folder names implicitly via count
         var primary = groups
-            .OrderByDescending(g => g.Value.Count)
-            .ThenBy(g => g.Key.disc.HasValue ? (g.Key.disc.Value == 1 ? 0 : 1) : 0)
+            .OrderByDescending(g => !g.Key.disc.HasValue || g.Key.disc.Value == 1)
+            .ThenByDescending(g => g.Value.Count)
             .ThenBy(g => g.Key.disc ?? 0)
             .FirstOrDefault();
 

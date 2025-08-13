@@ -13,6 +13,9 @@ public class JsonRelease
     // Distinct track counts among official releases in the linked MusicBrainz release group
     // Serialized as possibleNumberOfTracksInOfficialReleases in JSON
     public List<int>? PossibleNumberOfTracksInOfficialReleases { get; set; }
+    // Distinct track counts among official DIGITAL releases (e.g., Digital Media/File)
+    // Serialized as possibleNumberOfTracksInOfficialDigitalReleases in JSON
+    public List<int>? PossibleNumberOfTracksInOfficialDigitalReleases { get; set; }
 }
 
 public enum JsonReleaseType

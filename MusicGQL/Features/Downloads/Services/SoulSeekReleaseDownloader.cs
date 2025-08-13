@@ -55,6 +55,7 @@ public class SoulSeekReleaseDownloader(
         var cachedRelease = await cache.GetReleaseByArtistAndFolderAsync(artistId, releaseFolderName);
         int expectedTrackCount = cachedRelease?.Tracks?.Count ?? 0;
         var allowedOfficialCounts = cachedRelease?.JsonRelease?.PossibleNumberOfTracksInOfficialReleases ?? new List<int>();
+        var allowedOfficialDigitalCounts = cachedRelease?.JsonRelease?.PossibleNumberOfTracksInOfficialDigitalReleases ?? new List<int>();
         progress.Set(new DownloadProgress
         {
             ArtistId = artistId,
@@ -73,6 +74,10 @@ public class SoulSeekReleaseDownloader(
         if (allowedOfficialCounts.Count > 0)
         {
             try { logger.LogInformation("[SoulSeek] Allowed official track counts: {Counts}", string.Join(", ", allowedOfficialCounts)); } catch { }
+        }
+        if (allowedOfficialDigitalCounts.Count > 0)
+        {
+            try { logger.LogInformation("[SoulSeek] Allowed official DIGITAL track counts: {Counts}", string.Join(", ", allowedOfficialDigitalCounts)); } catch { }
         }
 
         // Discover (optional) year for ranking (we already have expectedTrackCount above)
@@ -155,6 +160,11 @@ public class SoulSeekReleaseDownloader(
                 .Where(x =>
                 {
                     // If we have official allowed counts, require exact match to one of them
+                    if (allowedOfficialDigitalCounts is { Count: > 0 })
+                    {
+                        // Prefer digital: require match to digital counts if available
+                        return allowedOfficialDigitalCounts.Contains(x.Audio320Files.Count);
+                    }
                     if (allowedOfficialCounts is { Count: > 0 })
                     {
                         return allowedOfficialCounts.Contains(x.Audio320Files.Count);
