@@ -24,7 +24,7 @@ public static class DefaultDbServerSettingsProvider
         return new()
         {
             Id = ServerSettingsSingletonId,
-            LibraryPath = "",
+            LibraryPath = "./Library",
             DownloadPath = "",
             SoulSeekSearchTimeLimitSeconds = 60,
             SoulSeekNoDataTimeoutSeconds = 20,

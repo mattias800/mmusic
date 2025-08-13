@@ -207,9 +207,11 @@ public class SoulSeekReleaseDownloader(
                     // As a last resort when nothing is known, require at least 5 tracks
                     return x.Audio320Files.Count >= 5;
                 })
+                // Under load, skip responses that have no free slot and long queues
+                .Where(x => !hasWaiting || x.Response.HasFreeUploadSlot || x.Response.QueueLength <= 3)
                 .OrderByDescending(x => x.Score)
+                .ThenByDescending(x => x.Response.HasFreeUploadSlot)
                 .ThenBy(x => x.Response.QueueLength)
-                .ThenBy(x => x.Response.HasFreeUploadSlot)
                 .ThenByDescending(x => x.Response.UploadSpeed)
                 .ThenByDescending(x => x.Audio320Files.Count)
                 .Select(x => x.Response)
@@ -233,6 +235,20 @@ public class SoulSeekReleaseDownloader(
                 artistName,
                 releaseTitle
             );
+            // Record not found in history
+            try
+            {
+                downloadHistory.Add(new DownloadHistoryItem(
+                    DateTime.UtcNow,
+                    artistId,
+                    releaseFolderName,
+                    artistName,
+                    releaseTitle,
+                    false,
+                    "Not found"
+                ));
+            }
+            catch { }
             return false;
         }
 
