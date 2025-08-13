@@ -130,9 +130,11 @@ public class SoulSeekReleaseDownloader(
         // Shared time budget across all query forms when queue has waiting items
         TimeSpan totalSearchBudget = TimeSpan.FromSeconds(timeLimitSec);
         var budgetStartUtc = DateTime.UtcNow;
-        logger.LogInformation("[SoulSeek] Starting search across {QueryForms} query forms (queueDepth={QueueDepth}, sharedTimeBudgetSec={Budget})", queries.Count, queueDepth, timeLimitSec);
-        foreach (var q in queries.Distinct(StringComparer.OrdinalIgnoreCase))
+        var distinctQueries = queries.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        logger.LogInformation("[SoulSeek] Starting search across {QueryForms} query forms (queueDepth={QueueDepth}, sharedTimeBudgetSec={Budget})", distinctQueries.Count, queueDepth, timeLimitSec);
+        for (int qi = 0; qi < distinctQueries.Count; qi++)
         {
+            var q = distinctQueries[qi];
             var searchTask = client.SearchAsync(new SearchQuery(q));
             try
             {
@@ -145,11 +147,14 @@ public class SoulSeekReleaseDownloader(
                         logger.LogInformation("[SoulSeek] Search budget exhausted before query: {Query}", q);
                         break;
                     }
-                    var completed = await Task.WhenAny(searchTask, Task.Delay(remaining));
+                    // Evenly divide remaining budget across remaining query forms
+                    int remainingQueries = distinctQueries.Count - qi;
+                    var slice = TimeSpan.FromMilliseconds(Math.Max(5, remaining.TotalMilliseconds / Math.Max(1, remainingQueries)));
+                    var completed = await Task.WhenAny(searchTask, Task.Delay(slice));
                     if (completed != searchTask)
                     {
-                        logger.LogInformation("[SoulSeek] Search timed out (yield to queue): {Query}", q);
-                        break;
+                        logger.LogInformation("[SoulSeek] Query slice timed out (moving to next form): {Query} (sliceMs={SliceMs:n0})", q, slice.TotalMilliseconds);
+                        continue;
                     }
                 }
             }
