@@ -156,7 +156,15 @@ public class SoulSeekReleaseDownloader(
                     Response = r,
                     Audio320Files = r.Files.Where(f =>
                         f.Extension.Equals("mp3", StringComparison.OrdinalIgnoreCase) && f.BitRate == 320).ToList(),
-                    Score = ComputeCandidateScore(r, artistName, releaseTitle, expectedYear)
+                    Score = ComputeCandidateScore(
+                        r,
+                        artistName,
+                        releaseTitle,
+                        expectedYear,
+                        expectedTrackCount,
+                        allowedOfficialCounts,
+                        allowedOfficialDigitalCounts
+                    )
                 })
                 .Where(x =>
                 {
@@ -488,8 +496,14 @@ public class SoulSeekReleaseDownloader(
         return Regex.Replace(alnumSpaceOnly, @"\s+", " ").Trim();
     }
 
-    private static int ComputeCandidateScore(SearchResponse response, string artistName, string releaseTitle,
-        string? expectedYear)
+    private static int ComputeCandidateScore(
+        SearchResponse response,
+        string artistName,
+        string releaseTitle,
+        string? expectedYear,
+        int expectedTrackCount,
+        List<int> allowedOfficialCounts,
+        List<int> allowedOfficialDigitalCounts)
     {
         // Heuristic: prefer responses whose file paths look like .../<Artist>/<Album (Year)>/Track
         // Also reward when album segment matches release title and appears after artist segment
@@ -503,6 +517,11 @@ public class SoulSeekReleaseDownloader(
         int considered = 0;
         int strongMatches = 0;
         var albumFolderKeyCounts = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        var discNumbers = new HashSet<int>();
+        bool anyDiscMarker = false;
+
+        int audio320Count = response.Files.Count(f =>
+            f.Extension.Equals("mp3", StringComparison.OrdinalIgnoreCase) && f.BitRate == 320);
 
         foreach (var f in response.Files)
         {
@@ -547,6 +566,21 @@ public class SoulSeekReleaseDownloader(
                     score += 10;
                 }
 
+                // Detect disc markers in segments following album
+                for (int j = idxAlbum + 1; j < segments.Length; j++)
+                {
+                    var s = segments[j];
+                    var m = Regex.Match(s, @"\b(?:cd|disc|disk)[\s_-]*([0-9]+)?\b", RegexOptions.IgnoreCase);
+                    if (m.Success)
+                    {
+                        anyDiscMarker = true;
+                        if (m.Groups[1].Success && int.TryParse(m.Groups[1].Value, out int d))
+                        {
+                            if (d > 0) discNumbers.Add(d);
+                        }
+                    }
+                }
+
                 // Track dominant album folder grouping
                 // Use the original-cased pair of artist+album segments for a grouping key when available
                 string key = idxArtist >= 0 ? $"{segments[idxArtist]}///{segments[idxAlbum]}" : segments[idxAlbum];
@@ -566,6 +600,33 @@ public class SoulSeekReleaseDownloader(
                 int maxGroup = albumFolderKeyCounts.Values.Max();
                 score += Math.Min(100, maxGroup * 2);
             }
+        }
+
+        // Prefer responses with a digital/expected track count match
+        if (allowedOfficialDigitalCounts is { Count: > 0 })
+        {
+            if (allowedOfficialDigitalCounts.Contains(audio320Count)) score += 120; // strong preference for digital
+        }
+
+        if (expectedTrackCount > 0)
+        {
+            if (audio320Count == expectedTrackCount) score += 100;
+            else if (Math.Abs(audio320Count - expectedTrackCount) == 1) score += 40;
+            else if (audio320Count > 0)
+            {
+                // mild closeness bonus within +/-2
+                if (Math.Abs(audio320Count - expectedTrackCount) == 2) score += 15;
+            }
+        }
+
+        // Penalize multi-disc structures. Not forbidden, but de-prioritize compared to single-disc/digital
+        if (discNumbers.Count > 1)
+        {
+            score -= 100; // multiple disc folders detected
+        }
+        else if (anyDiscMarker)
+        {
+            score -= 50; // at least one disc folder present
         }
 
         return score;
