@@ -63,6 +63,7 @@ const query = graphql(`
           id
           artistName
           songTitle
+            releaseFolderName
           queueKey
         }
       }
@@ -529,7 +530,11 @@ export const QueuesPage: React.FC = () => {
                   >
                     {q.artistName}
                   </Link>
-                  {q.songTitle ? ` — ${q.songTitle}` : ""}
+                  {q.releaseFolderName
+                    ? ` — ${q.releaseFolderName}`
+                    : q.songTitle
+                      ? ` — ${q.songTitle}`
+                      : ""}
                 </div>
               </div>
               {q.queueKey && (
@@ -577,7 +582,7 @@ export const QueuesPage: React.FC = () => {
                   </Link>
                   {h.releaseFolderName ? (
                     <>
-                      {"/"}
+                      {" - "}
                       <Link
                         to={`/artist/${h.localArtistId ?? h.artistName}/release/${h.releaseFolderName}`}
                         className="hover:underline"

@@ -101,7 +101,9 @@ public class CoverArtDownloadService(
         // Guard: require library manifest present (safety)
         try
         {
-            var libRoot = Directory.GetParent(releaseFolderPath)?.FullName ?? string.Empty;
+            // releaseFolderPath => <Library>/<Artist>/<Release>
+            var libRoot = Directory.GetParent(Directory.GetParent(releaseFolderPath)?.FullName ?? string.Empty)?.FullName
+                           ?? string.Empty;
             if (!File.Exists(System.IO.Path.Combine(libRoot, LibraryManifestService.ManifestFileName)))
             {
                 return null;
