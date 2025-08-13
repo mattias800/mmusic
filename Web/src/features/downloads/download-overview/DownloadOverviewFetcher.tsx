@@ -10,6 +10,7 @@ const downloadOverviewFetcherQuery = graphql(`
   query DownloadOverviewQuery {
     downloads {
       downloadQueue {
+        id
         queueLength
         items {
           id
@@ -110,7 +111,9 @@ export const DownloadOverviewFetcher: React.FC<
               </div>
             )}
             {typeof current.currentDownloadSpeedKbps === "number" && (
-              <div className="text-xs text-zinc-400">Speed: {current.currentDownloadSpeedKbps!.toFixed(1)} KB/s</div>
+              <div className="text-xs text-zinc-400">
+                Speed: {current.currentDownloadSpeedKbps!.toFixed(1)} KB/s
+              </div>
             )}
             {current.errorMessage && (
               <div className="text-xs text-red-400">{current.errorMessage}</div>

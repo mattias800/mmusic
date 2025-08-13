@@ -362,6 +362,8 @@ builder
     .AddType<CancelCurrentDownloadSuccess>()
     .AddType<CancelCurrentDownloadError>()
     .AddTypeExtension<MusicGQL.Features.Downloads.Mutations.MoveCurrentDownloadToBackMutation>()
+    .AddType<MoveCurrentDownloadToBackSuccess>()
+    .AddType<MoveCurrentDownloadToBackError>()
     .AddTypeExtension<DeleteArtistMutation>()
     .AddType<DeleteArtistSuccess>()
     .AddType<DeleteArtistError>()

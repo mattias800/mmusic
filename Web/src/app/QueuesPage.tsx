@@ -160,6 +160,42 @@ const removeImportMutation = graphql(`
   }
 `);
 
+const cancelCurrentMutation = graphql(`
+  mutation CancelCurrentDownload($artistId: String!) {
+    cancelCurrentDownload(input: { artistId: $artistId }) {
+      __typename
+      ... on CancelCurrentDownloadSuccess {
+        ok
+      }
+      ... on CancelCurrentDownloadError {
+        message
+      }
+    }
+  }
+`);
+
+const moveCurrentToBackMutation = graphql(`
+  mutation MoveCurrentToBack {
+    moveCurrentDownloadToBack {
+      __typename
+      ... on MoveCurrentDownloadToBackSuccess {
+        downloadQueue {
+          id
+          queueLength
+          items {
+            id
+            artistId
+            releaseFolderName
+          }
+        }
+      }
+      ... on MoveCurrentDownloadToBackError {
+        message
+      }
+    }
+  }
+`);
+
 export const QueuesPage: React.FC = () => {
   const [{ data, fetching, error }] = useQuery({ query });
   useSubscription({ query: subDlQ });
@@ -169,6 +205,8 @@ export const QueuesPage: React.FC = () => {
 
   const [, removeDownload] = useMutation(removeDownloadMutation);
   const [, removeImport] = useMutation(removeImportMutation);
+  const [, cancelCurrent] = useMutation(cancelCurrentMutation);
+  const [, moveCurrentToBack] = useMutation(moveCurrentToBackMutation);
 
   if (fetching) return <div className="p-6">Loading…</div>;
   if (error || !data) return <div className="p-6">Error</div>;
@@ -281,6 +319,26 @@ export const QueuesPage: React.FC = () => {
                   {dl.currentDownload.errorMessage}
                 </div>
               )}
+
+              <div className="mt-3 flex gap-2">
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  className="text-black"
+                  onClick={() =>
+                    cancelCurrent({ artistId: dl.currentDownload!.artistId })
+                  }
+                >
+                  Cancel download
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => moveCurrentToBack({})}
+                >
+                  Move to back of queue
+                </Button>
+              </div>
             </div>
           ) : (
             <div className="text-sm text-zinc-400">Idle</div>

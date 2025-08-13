@@ -198,6 +198,20 @@ type CacheStatistics {
   trackCount: Int!
 }
 
+type CancelCurrentDownloadError {
+  message: String!
+}
+
+input CancelCurrentDownloadInput {
+  artistId: String!
+}
+
+union CancelCurrentDownloadResult = CancelCurrentDownloadError | CancelCurrentDownloadSuccess
+
+type CancelCurrentDownloadSuccess {
+  ok: Boolean!
+}
+
 type CreateDirectoryError {
   message: String!
 }
@@ -690,6 +704,16 @@ enum MediaAvailabilityStatus {
   UNKNOWN
 }
 
+type MoveCurrentDownloadToBackError {
+  message: String!
+}
+
+union MoveCurrentDownloadToBackResult = MoveCurrentDownloadToBackError | MoveCurrentDownloadToBackSuccess
+
+type MoveCurrentDownloadToBackSuccess {
+  downloadQueue: DownloadQueueState!
+}
+
 type MovePlaylistItemError {
   message: String!
 }
@@ -736,6 +760,7 @@ type MusicBrainzSearchRoot {
 
 type Mutation {
   addTrackToPlaylist(input: AddTrackToPlaylistInput!): AddTrackToPlaylistResult!
+  cancelCurrentDownload(input: CancelCurrentDownloadInput!): CancelCurrentDownloadResult!
   createDirectory(input: CreateDirectoryInput!): CreateDirectoryResult!
   createPlaylist(input: CreatePlaylistInput!): CreatePlaylistResult!
   createUser(input: CreateUserInput!): CreateUserResult!
@@ -751,6 +776,7 @@ type Mutation {
   importArtistsFromSpotifyPlaylist(input: ImportArtistsFromSpotifyPlaylistInput!): ImportArtistsFromSpotifyPlaylistResult!
   importSpotifyPlaylist(input: ImportSpotifyPlaylistInput!): ImportSpotifyPlaylistResult!
   likeSong(input: LikeSongInput!): LikeSongResult!
+  moveCurrentDownloadToBack: MoveCurrentDownloadToBackResult!
   movePlaylistItem(input: MovePlaylistItemInput!): MovePlaylistItemResult!
   ping: Boolean!
   redownloadRelease(input: RedownloadReleaseInput!): RedownloadReleaseResult!
