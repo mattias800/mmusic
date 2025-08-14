@@ -16,22 +16,61 @@ public class ProwlarrClient(HttpClient httpClient, IOptions<ProwlarrOptions> opt
             return Array.Empty<ProwlarrRelease>();
         }
 
-        var q = artistName + " " + releaseTitle;
-        logger.LogInformation("[Prowlarr] Searching for '{Query}'", q);
+        // Build search query with quality preferences
+        var qualityTerms = new[] { "320", "FLAC", "lossless", "CD", "vinyl", "24bit", "16bit" };
+        var baseQuery = artistName + " " + releaseTitle;
+        
+        // Create multiple search variants with different quality priorities
+        var searchQueries = new List<string>
+        {
+            // High quality first
+            baseQuery + " " + string.Join(" ", qualityTerms),
+            baseQuery + " FLAC 320",
+            baseQuery + " lossless",
+            baseQuery + " 320",
+            // Fallback to base query
+            baseQuery
+        };
+        
+        logger.LogInformation("[Prowlarr] Will try search queries in order: {Queries}", string.Join(" | ", searchQueries));
+        
+        // Try each search query until we find results
+        foreach (var searchQuery in searchQueries)
+        {
+            var results = await TrySearchWithQueryAsync(searchQuery, cancellationToken);
+            if (results.Count > 0)
+            {
+                logger.LogInformation("[Prowlarr] Found {Count} results with query: '{Query}'", results.Count, searchQuery);
+                return results;
+            }
+        }
+        
+        logger.LogInformation("[Prowlarr] No results found with any search query");
+        return Array.Empty<ProwlarrRelease>();
+    }
+    
+    private async Task<IReadOnlyList<ProwlarrRelease>> TrySearchWithQueryAsync(string query, CancellationToken cancellationToken)
+    {
+        var baseUrl = options.Value.BaseUrl?.TrimEnd('/');
+        var apiKey = options.Value.ApiKey;
+        if (string.IsNullOrWhiteSpace(baseUrl) || string.IsNullOrWhiteSpace(apiKey))
+        {
+            return Array.Empty<ProwlarrRelease>();
+        }
 
         // Try a few parameter variants to handle API changes/configs
         var candidateUrls = new List<string>
         {
-            $"{baseUrl}/api/v1/search?apikey={Uri.EscapeDataString(apiKey)}&query={Uri.EscapeDataString(q)}",
-            $"{baseUrl}/api/v1/search?apikey={Uri.EscapeDataString(apiKey)}&query={Uri.EscapeDataString(q)}&type=search",
-            $"{baseUrl}/api/v1/search?apikey={Uri.EscapeDataString(apiKey)}&query={Uri.EscapeDataString(q)}&categories=3000&categories=3010&categories=3030",
-            $"{baseUrl}/api/v1/search?apikey={Uri.EscapeDataString(apiKey)}&query={Uri.EscapeDataString(q)}&categories=3000&categories=3010&categories=3030&limit=50",
+            $"{baseUrl}/api/v1/search?apikey={Uri.EscapeDataString(apiKey)}&query={Uri.EscapeDataString(query)}",
+            $"{baseUrl}/api/v1/search?apikey={Uri.EscapeDataString(apiKey)}&query={Uri.EscapeDataString(query)}&type=search",
+            $"{baseUrl}/api/v1/search?apikey={Uri.EscapeDataString(apiKey)}&query={Uri.EscapeDataString(query)}&categories=3000&categories=3010&categories=3030",
+            $"{baseUrl}/api/v1/search?apikey={Uri.EscapeDataString(apiKey)}&query={Uri.EscapeDataString(query)}&categories=3000&categories=3010&categories=3030&limit=50",
             // Alternate param names some setups accept
-            $"{baseUrl}/api/v1/search?apikey={Uri.EscapeDataString(apiKey)}&term={Uri.EscapeDataString(q)}",
-            $"{baseUrl}/api/v1/search?apikey={Uri.EscapeDataString(apiKey)}&term={Uri.EscapeDataString(q)}&categories=3000&categories=3010&categories=3030",
-            $"{baseUrl}/api/v1/search?apikey={Uri.EscapeDataString(apiKey)}&term={Uri.EscapeDataString(q)}&categories=3000&categories=3010&categories=3030&limit=50",
-            $"{baseUrl}/api/v1/search?apikey={Uri.EscapeDataString(apiKey)}&q={Uri.EscapeDataString(q)}",
-            $"{baseUrl}/api/v1/search?apikey={Uri.EscapeDataString(apiKey)}&Query={Uri.EscapeDataString(q)}",
+            $"{baseUrl}/api/v1/search?apikey={Uri.EscapeDataString(apiKey)}&term={Uri.EscapeDataString(query)}",
+            $"{baseUrl}/api/v1/search?apikey={Uri.EscapeDataString(apiKey)}&term={Uri.EscapeDataString(query)}&categories=3000&categories=3010&categories=3030",
+            $"{baseUrl}/api/v1/search?apikey={Uri.EscapeDataString(apiKey)}&term={Uri.EscapeDataString(query)}&categories=3000&categories=3010&categories=3030&limit=50",
+            $"{baseUrl}/api/v1/search?apikey={Uri.EscapeDataString(apiKey)}&q={Uri.EscapeDataString(query)}",
+            $"{baseUrl}/api/v1/search?apikey={Uri.EscapeDataString(apiKey)}&Query={Uri.EscapeDataString(query)}",
         };
 
         foreach (var url in candidateUrls)
@@ -90,14 +129,14 @@ public class ProwlarrClient(HttpClient httpClient, IOptions<ProwlarrOptions> opt
             try { req.Headers.Add("X-Api-Key", apiKey2); } catch { }
             var payload = new
             {
-                query = q,
+                query = query,
                 type = "search",
                 categories = new[] { 3000, 3010, 3030 },
                 indexerIds = Array.Empty<int>()
             };
             req.Content = new StringContent(JsonSerializer.Serialize(payload));
             req.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/json");
-            logger.LogInformation("[Prowlarr] POST {Url} with payload query='{Query}'", url, q);
+            logger.LogInformation("[Prowlarr] POST {Url} with payload query='{Query}'", url, query);
             var resp = await httpClient.SendAsync(req, cancellationToken);
             if (resp.IsSuccessStatusCode)
             {
@@ -129,7 +168,7 @@ public class ProwlarrClient(HttpClient httpClient, IOptions<ProwlarrOptions> opt
         {
             logger.LogDebug(ex, "Prowlarr POST search failed");
         }
-        logger.LogWarning("Prowlarr search failed for all URL variants for query '{Query}'", q);
+        logger.LogWarning("Prowlarr search failed for all URL variants for query '{Query}'", query);
         return Array.Empty<ProwlarrRelease>();
     }
 

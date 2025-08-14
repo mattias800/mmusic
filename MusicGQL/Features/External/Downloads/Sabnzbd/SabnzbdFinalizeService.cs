@@ -12,7 +12,8 @@ public class SabnzbdFinalizeService(
     ILogger<SabnzbdFinalizeService> logger,
     ServerLibraryCache cache,
     ServerSettings.ServerSettingsAccessor serverSettingsAccessor,
-    IServiceScopeFactory scopeFactory
+    IServiceScopeFactory scopeFactory,
+    SabnzbdClient sabnzbdClient
 )
 {
     private static readonly string[] AudioExtensions = new[] { ".mp3", ".flac", ".m4a", ".wav", ".ogg" };
@@ -27,27 +28,105 @@ public class SabnzbdFinalizeService(
         }
 
         var completed = completedPath!.TrimEnd(System.IO.Path.DirectorySeparatorChar, System.IO.Path.AltDirectorySeparatorChar);
-        var sourceRoot = System.IO.Path.Combine(completed, "mmusic", artistId, releaseFolderName);
+        // SABnzbd doesn't respect the path parameter, so look for the actual folder name
+        // which is typically the NZB name (e.g., "D-A-D - Monster Philosophy")
+        var expectedFolderName = $"{artistId} - {releaseFolderName}";
+        var sourceRoot = System.IO.Path.Combine(completed, expectedFolderName);
         logger.LogInformation("[SAB Finalize] Checking {SourceRoot}", sourceRoot);
-        return await TryFinalizeReleaseCoreAsync(artistId, releaseFolderName, sourceRoot, ct);
+        
+        // Check SABnzbd API to see if the job is actually complete
+        var nzbName = $"{artistId} - {releaseFolderName}";
+        logger.LogInformation("[SAB Finalize] Checking SABnzbd job status for: {NzbName}", nzbName);
+        
+        // Wait a bit for SABnzbd to start processing, then check job status
+        for (int attempt = 1; attempt <= 5; attempt++)
+        {
+            if (attempt > 1)
+            {
+                logger.LogInformation("[SAB Finalize] Attempt {Attempt}/5, waiting 15s before checking job status", attempt);
+                await Task.Delay(TimeSpan.FromSeconds(15), ct);
+            }
+            
+            logger.LogInformation("[SAB Finalize] Attempt {Attempt}/5: Checking if job '{JobName}' is complete...", attempt, nzbName);
+            
+            // First check if SABnzbd says the job is complete
+            var isJobComplete = await sabnzbdClient.IsJobCompleteAsync(nzbName, ct);
+            logger.LogInformation("[SAB Finalize] Attempt {Attempt}/5: IsJobCompleteAsync returned: {Result}", attempt, isJobComplete);
+            
+            if (!isJobComplete)
+            {
+                // Get detailed status for debugging
+                var detailedStatus = await sabnzbdClient.GetJobStatusAsync(nzbName, ct);
+                logger.LogInformation("[SAB Finalize] Attempt {Attempt}/5: Job not complete yet. Detailed status: {Status}", attempt, detailedStatus ?? "unknown");
+                continue;
+            }
+            
+            logger.LogInformation("[SAB Finalize] Attempt {Attempt}/5: SABnzbd reports job complete, attempting to finalize files", attempt);
+            
+            // Job is complete, now try to finalize the files
+            var result = await TryFinalizeReleaseCoreAsync(artistId, releaseFolderName, sourceRoot, ct);
+            if (result)
+            {
+                logger.LogInformation("[SAB Finalize] Successfully finalized on attempt {Attempt}", attempt);
+                return true; // SUCCESS - exit immediately, don't continue with more attempts
+            }
+            
+            logger.LogWarning("[SAB Finalize] Job complete but file finalization failed on attempt {Attempt}/5. This should not happen normally.", attempt);
+            // Don't continue with more attempts if the job is complete but finalization failed
+            // This likely indicates a filesystem issue that won't be resolved by waiting
+            return false;
+        }
+        
+        logger.LogInformation("[SAB Finalize] All attempts failed, job may still be processing or files may be inaccessible");
+        return false;
     }
 
     private async Task<bool> TryFinalizeReleaseCoreAsync(string artistId, string releaseFolderName, string sourceRoot, CancellationToken ct)
     {
         try
         {
+            logger.LogInformation("[SAB Finalize] Starting finalization for {ArtistId}/{ReleaseFolderName}", artistId, releaseFolderName);
+            logger.LogInformation("[SAB Finalize] Source root: {SourceRoot}", sourceRoot);
+            
             var release = await cache.GetReleaseByArtistAndFolderAsync(artistId, releaseFolderName);
-            if (release == null) return false;
+            if (release == null)
+            {
+                logger.LogWarning("[SAB Finalize] Release not found in cache for {ArtistId}/{ReleaseFolderName}", artistId, releaseFolderName);
+                return false;
+            }
+            
             var targetDir = release.ReleasePath;
-            if (string.IsNullOrWhiteSpace(targetDir)) return false;
+            logger.LogInformation("[SAB Finalize] Target directory: {TargetDir}", targetDir);
+            
+            if (string.IsNullOrWhiteSpace(targetDir))
+            {
+                logger.LogWarning("[SAB Finalize] Release path is null or empty for {ArtistId}/{ReleaseFolderName}", artistId, releaseFolderName);
+                return false;
+            }
+            
             Directory.CreateDirectory(targetDir);
-            if (!Directory.Exists(sourceRoot)) return false;
-
+            logger.LogInformation("[SAB Finalize] Created target directory: {TargetDir}", targetDir);
+            
+            if (!Directory.Exists(sourceRoot))
+            {
+                logger.LogWarning("[SAB Finalize] Source root directory does not exist: {SourceRoot}", sourceRoot);
+                return false;
+            }
+            
+            logger.LogInformation("[SAB Finalize] Source root directory exists, scanning for audio files...");
+            
             var sourceFiles = System.IO.Directory
                 .EnumerateFiles(sourceRoot, "*", SearchOption.AllDirectories)
                 .Where(f => AudioExtensions.Contains(System.IO.Path.GetExtension(f).ToLowerInvariant()))
                 .ToList();
-            if (sourceFiles.Count == 0) return false;
+                
+            logger.LogInformation("[SAB Finalize] Found {Count} audio files in source directory", sourceFiles.Count);
+            
+            if (sourceFiles.Count == 0)
+            {
+                logger.LogWarning("[SAB Finalize] No audio files found in source directory: {SourceRoot}", sourceRoot);
+                return false;
+            }
 
             var movedAny = false;
             foreach (var src in sourceFiles)
@@ -82,7 +161,13 @@ public class SabnzbdFinalizeService(
                     logger.LogDebug(ex, "[SAB Finalize] Move failed for {Src}", src);
                 }
             }
-            if (!movedAny) return false;
+            logger.LogInformation("[SAB Finalize] Successfully moved {Count} files", movedAny ? "some" : "0");
+            
+            if (!movedAny)
+            {
+                logger.LogWarning("[SAB Finalize] No files were moved successfully");
+                return false;
+            }
 
             // Update release.json
             var audioFiles = System.IO.Directory
