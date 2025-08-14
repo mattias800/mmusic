@@ -11,7 +11,6 @@ namespace MusicGQL.Features.Downloads.Services;
 
 public class StartDownloadReleaseService(
     ServerLibraryCache cache,
-    SoulSeekReleaseDownloader soulSeekReleaseDownloader,
     ServerLibraryJsonWriter writer,
     ILogger<StartDownloadReleaseService> logger,
     Features.Import.Services.MusicBrainzImportService mbImport,
@@ -19,7 +18,9 @@ public class StartDownloadReleaseService(
     HotChocolate.Subscriptions.ITopicEventSender eventSender,
     IDbContextFactory<EventDbContext> dbFactory,
     DownloadCancellationService cancellationService,
-    ServerSettingsAccessor serverSettingsAccessor
+    ServerSettingsAccessor serverSettingsAccessor,
+    MusicGQL.Features.External.Downloads.DownloadProviderCatalog providers,
+    MusicGQL.Features.External.Downloads.Sabnzbd.SabnzbdFinalizeService sabFinalize
 )
 {
     public async Task<(bool Success, string? ErrorMessage)> StartAsync(
@@ -102,22 +103,38 @@ public class StartDownloadReleaseService(
             CachedReleaseDownloadStatus.Searching
         );
 
-        logger.LogInformation(
-            "[StartDownload] Delegating to SoulSeek downloader for {Artist}/{Folder}",
-            artistId,
-            releaseFolderName
-        );
         var token = cancellationService.CreateFor(artistId, releaseFolderName, cancellationToken);
-        var ok = await soulSeekReleaseDownloader.DownloadReleaseAsync(
-            artistId,
-            releaseFolderName,
-            artistName,
-            releaseTitle,
-            targetDir,
-            allowedOfficialCounts,
-            allowedOfficialDigitalCounts,
-            token
-        );
+        bool ok = false;
+        foreach (var provider in providers.Providers)
+        {
+            try
+            {
+                logger.LogInformation("[StartDownload] Trying provider {Provider} for {Artist}/{Folder}", provider.GetType().Name, artistId, releaseFolderName);
+                ok = await provider.TryDownloadReleaseAsync(
+                    artistId,
+                    releaseFolderName,
+                    artistName,
+                    releaseTitle,
+                    targetDir,
+                    allowedOfficialCounts,
+                    allowedOfficialDigitalCounts,
+                    token
+                );
+                if (ok)
+                {
+                    logger.LogInformation("[StartDownload] Provider {Provider} reported success for {Artist}/{Folder}", provider.GetType().Name, artistId, releaseFolderName);
+                    break;
+                }
+                else
+                {
+                    logger.LogInformation("[StartDownload] Provider {Provider} reported no result for {Artist}/{Folder}", provider.GetType().Name, artistId, releaseFolderName);
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "[StartDownload] Provider {Provider} failed", provider.GetType().Name);
+            }
+        }
         if (!ok)
         {
             var msg = $"No suitable download found for {artistName} - {releaseTitle}";
@@ -130,6 +147,20 @@ public class StartDownloadReleaseService(
             );
 
             return (false, "No suitable download found");
+        }
+
+        // Opportunistic finalize from SAB completed folder in case watcher missed events
+        try
+        {
+            var finalized = await sabFinalize.FinalizeReleaseAsync(artistId, releaseFolderName, token);
+            if (finalized)
+            {
+                logger.LogInformation("[StartDownload] SAB finalize moved audio for {ArtistId}/{Folder}", artistId, releaseFolderName);
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogDebug(ex, "[StartDownload] SAB finalize attempt failed (non-fatal)");
         }
 
         var releaseJsonPath = Path.Combine(targetDir, "release.json");

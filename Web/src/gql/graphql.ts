@@ -975,6 +975,7 @@ export type Mutation = {
   unlikeSong: UnlikeSongResult;
   updateDownloadPath: UpdateDownloadPathResult;
   updateLibraryPath: UpdateLibraryPathResult;
+  updateSoulSeekNoDataTimeout: UpdateSoulSeekNoDataTimeoutResult;
   updateSoulSeekSearchTimeLimit: UpdateSoulSeekSearchTimeLimitResult;
 };
 
@@ -1182,6 +1183,11 @@ export type MutationUpdateDownloadPathArgs = {
 
 export type MutationUpdateLibraryPathArgs = {
   input: UpdateLibraryPathInput;
+};
+
+
+export type MutationUpdateSoulSeekNoDataTimeoutArgs = {
+  input: UpdateSoulSeekNoDataTimeoutInput;
 };
 
 
@@ -1968,6 +1974,22 @@ export type UpdateLibraryPathResult = UpdateLibraryPathSuccess;
 
 export type UpdateLibraryPathSuccess = {
   __typename?: 'UpdateLibraryPathSuccess';
+  serverSettings: ServerSettings;
+};
+
+export type UpdateSoulSeekNoDataTimeoutError = {
+  __typename?: 'UpdateSoulSeekNoDataTimeoutError';
+  message: Scalars['String']['output'];
+};
+
+export type UpdateSoulSeekNoDataTimeoutInput = {
+  seconds: Scalars['Int']['input'];
+};
+
+export type UpdateSoulSeekNoDataTimeoutResult = UpdateSoulSeekNoDataTimeoutError | UpdateSoulSeekNoDataTimeoutSuccess;
+
+export type UpdateSoulSeekNoDataTimeoutSuccess = {
+  __typename?: 'UpdateSoulSeekNoDataTimeoutSuccess';
   serverSettings: ServerSettings;
 };
 

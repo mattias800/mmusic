@@ -19,6 +19,9 @@ public class ServerSettingsEventProcessor
             case SoulSeekSearchTimeLimitUpdated timeLimitUpdated:
                 await HandleSoulSeekSearchTimeLimitUpdated(timeLimitUpdated, dbContext);
                 break;
+            case SoulSeekNoDataTimeoutUpdated noDataTimeoutUpdated:
+                await HandleSoulSeekNoDataTimeoutUpdated(noDataTimeoutUpdated, dbContext);
+                break;
         }
     }
 
@@ -76,6 +79,25 @@ public class ServerSettingsEventProcessor
         }
 
         serverSettings.SoulSeekSearchTimeLimitSeconds = updated.NewSeconds;
+        await dbContext.SaveChangesAsync();
+    }
+
+    private async Task HandleSoulSeekNoDataTimeoutUpdated(
+        SoulSeekNoDataTimeoutUpdated updated,
+        EventDbContext dbContext
+    )
+    {
+        var serverSettings = dbContext.ServerSettings.FirstOrDefault(s =>
+            s.Id == DefaultDbServerSettingsProvider.ServerSettingsSingletonId
+        );
+
+        if (serverSettings is null)
+        {
+            serverSettings = DefaultDbServerSettingsProvider.GetDefault();
+            dbContext.ServerSettings.Add(serverSettings);
+        }
+
+        serverSettings.SoulSeekNoDataTimeoutSeconds = updated.NewSeconds;
         await dbContext.SaveChangesAsync();
     }
 }

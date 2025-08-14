@@ -82,6 +82,9 @@ builder.Services.Configure<SpotifyClientOptions>(
 );
 
 builder.Services.Configure<SoulSeekConnectOptions>(builder.Configuration.GetSection("SoulSeek"));
+builder.Services.Configure<MusicGQL.Features.External.Downloads.Prowlarr.Configuration.ProwlarrOptions>(builder.Configuration.GetSection(MusicGQL.Features.External.Downloads.Prowlarr.Configuration.ProwlarrOptions.SectionName));
+builder.Services.Configure<MusicGQL.Features.External.Downloads.Sabnzbd.Configuration.SabnzbdOptions>(builder.Configuration.GetSection(MusicGQL.Features.External.Downloads.Sabnzbd.Configuration.SabnzbdOptions.SectionName));
+builder.Services.Configure<MusicGQL.Features.External.Downloads.QBittorrent.Configuration.QBittorrentOptions>(builder.Configuration.GetSection(MusicGQL.Features.External.Downloads.QBittorrent.Configuration.QBittorrentOptions.SectionName));
 
 builder
     .Services.AddHybridCache(options =>
@@ -134,6 +137,50 @@ builder
     .AddScoped<UnlikeSongHandler>()
     .AddScoped<UpdateLibraryPathHandler>()
     .AddScoped<UpdateDownloadPathHandler>()
+    // Download providers
+    .AddSingleton<MusicGQL.Features.External.Downloads.SoulSeekDownloadProvider>()
+    .AddHttpClient<MusicGQL.Features.External.Downloads.Prowlarr.ProwlarrClient>()
+    .Services
+    .AddHttpClient<MusicGQL.Features.External.Downloads.Sabnzbd.SabnzbdClient>()
+    .Services
+    .AddHttpClient<MusicGQL.Features.External.Downloads.QBittorrent.QBittorrentClient>()
+    .Services
+    .AddSingleton<MusicGQL.Features.External.Downloads.Sabnzbd.SabnzbdFinalizeService>()
+    .AddSingleton<MusicGQL.Features.External.Downloads.Prowlarr.ProwlarrDownloadProvider>()
+    .AddSingleton<MusicGQL.Features.External.Downloads.DownloadProviderCatalog>(sp =>
+    {
+        var configuration = sp.GetRequiredService<IConfiguration>();
+        var logger = sp.GetRequiredService<ILogger<MusicGQL.Features.External.Downloads.DownloadProviderCatalog>>();
+        bool skipSoulSeek = false;
+        bool preferProwlarrFirst = false;
+        try { skipSoulSeek = configuration.GetValue<bool>("Download:SkipSoulSeek"); } catch { }
+        try { preferProwlarrFirst = configuration.GetValue<bool>("Download:PreferProwlarrFirst"); } catch { }
+
+        var soulSeekProvider = sp.GetRequiredService<MusicGQL.Features.External.Downloads.SoulSeekDownloadProvider>();
+        var prowlarrProvider = sp.GetRequiredService<MusicGQL.Features.External.Downloads.Prowlarr.ProwlarrDownloadProvider>();
+
+        var providers = new List<MusicGQL.Features.External.Downloads.IDownloadProvider>();
+        if (preferProwlarrFirst)
+        {
+            providers.Add(prowlarrProvider);
+            if (!skipSoulSeek) providers.Add(soulSeekProvider);
+        }
+        else
+        {
+            if (!skipSoulSeek) providers.Add(soulSeekProvider);
+            providers.Add(prowlarrProvider);
+        }
+
+        try
+        {
+            logger.LogInformation("[DownloadProviders] skipSoulSeek={Skip}, preferProwlarrFirst={Prefer}", skipSoulSeek, preferProwlarrFirst);
+            logger.LogInformation("[DownloadProviders] Order: {Order}", string.Join(", ", providers.Select(p => p.GetType().Name)));
+        }
+        catch { }
+
+        return new MusicGQL.Features.External.Downloads.DownloadProviderCatalog(providers);
+    })
+    .AddHostedService<MusicGQL.Features.External.Downloads.Sabnzbd.SabnzbdWatcherWorker>()
     // Event processors
     .AddScoped<LikedSongsEventProcessor>()
     .AddScoped<UserEventProcessor>()
@@ -310,6 +357,9 @@ builder
     .AddTypeExtension<UpdateSoulSeekSearchTimeLimitMutation>()
     .AddType<UpdateSoulSeekSearchTimeLimitSuccess>()
     .AddType<UpdateSoulSeekSearchTimeLimitError>()
+    .AddTypeExtension<MusicGQL.Features.ServerSettings.Mutations.UpdateSoulSeekNoDataTimeoutMutation>()
+    .AddType<MusicGQL.Features.ServerSettings.Mutations.UpdateSoulSeekNoDataTimeoutSuccess>()
+    .AddType<MusicGQL.Features.ServerSettings.Mutations.UpdateSoulSeekNoDataTimeoutError>()
     .AddTypeExtension<ScanLibraryForMissingJsonMutation>()
     .AddType<ScanLibraryForMissingJsonSuccess>()
     .AddTypeExtension<RefreshArtistMetaDataMutation>()
