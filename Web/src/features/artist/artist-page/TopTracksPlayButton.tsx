@@ -18,9 +18,11 @@ const query = graphql(`
           title
           coverArtUrl
           track {
+            id
             trackNumber
             trackLength
             release {
+              id
               folderName
               artist {
                 id
