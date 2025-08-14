@@ -9,17 +9,21 @@ namespace MusicGQL.Features.ServerSettings.Mutations;
 public class UpdateSoulSeekSearchTimeLimitMutation
 {
     public async Task<UpdateSoulSeekSearchTimeLimitResult> UpdateSoulSeekSearchTimeLimit(
-        int seconds,
-        [Service] EventDbContext db
+        EventDbContext db,
+        EventProcessor.EventProcessorWorker eventProcessorWorker,
+        int seconds
+
     )
     {
-        if (seconds < 5 || seconds > 600)
+        if (seconds is < 5 or > 600)
         {
             return new UpdateSoulSeekSearchTimeLimitError("Seconds out of range (5-600)");
         }
 
         db.Events.Add(new SoulSeekSearchTimeLimitUpdated { NewSeconds = seconds });
+        
         await db.SaveChangesAsync();
+        await eventProcessorWorker.ProcessEvents();
 
         // Build ServerSettings GQL object from latest row
         var serverSettings = await db.ServerSettings
@@ -28,6 +32,7 @@ public class UpdateSoulSeekSearchTimeLimitMutation
 
         // Mirror the new seconds in the instance we return
         serverSettings.SoulSeekSearchTimeLimitSeconds = seconds;
+        
         return new UpdateSoulSeekSearchTimeLimitSuccess(new ServerSettings(serverSettings));
     }
 }
