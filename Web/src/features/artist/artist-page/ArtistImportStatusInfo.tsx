@@ -20,6 +20,7 @@ const currentArtistImportQuery = graphql(`
   query ArtistPanel_CurrentImport {
     artistImport {
       currentArtistImport {
+        id
         status
         completedReleases
         totalReleases
@@ -33,6 +34,7 @@ const currentArtistImportQuery = graphql(`
 const currentArtistImportSubscription = graphql(`
   subscription ArtistImportStatusInfo_Sub {
     currentArtistImportUpdated {
+      id
       status
       completedReleases
       totalReleases
