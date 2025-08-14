@@ -37,7 +37,7 @@ public class ProwlarrClient(HttpClient httpClient, IOptions<ProwlarrOptions> opt
         // Try each search query until we find results
         foreach (var searchQuery in searchQueries)
         {
-            var results = await TrySearchWithQueryAsync(searchQuery, cancellationToken);
+            var results = await TrySearchWithQueryAsync(searchQuery, artistName, releaseTitle, cancellationToken);
             if (results.Count > 0)
             {
                 logger.LogInformation("[Prowlarr] Found {Count} results with query: '{Query}'", results.Count, searchQuery);
@@ -49,7 +49,7 @@ public class ProwlarrClient(HttpClient httpClient, IOptions<ProwlarrOptions> opt
         return Array.Empty<ProwlarrRelease>();
     }
     
-    private async Task<IReadOnlyList<ProwlarrRelease>> TrySearchWithQueryAsync(string query, CancellationToken cancellationToken)
+    private async Task<IReadOnlyList<ProwlarrRelease>> TrySearchWithQueryAsync(string query, string artistName, string releaseTitle, CancellationToken cancellationToken)
     {
         var baseUrl = options.Value.BaseUrl?.TrimEnd('/');
         var apiKey = options.Value.ApiKey;
@@ -96,7 +96,7 @@ public class ProwlarrClient(HttpClient httpClient, IOptions<ProwlarrOptions> opt
                 var preview = json.Length > 600 ? json[..600] + "…" : json;
                 logger.LogInformation("[Prowlarr] GET body preview: {Preview}", preview);
                 using var doc = JsonDocument.Parse(json);
-                var list = ParseProwlarrResults(doc.RootElement);
+                var list = ParseProwlarrResults(doc.RootElement, artistName, releaseTitle, logger);
                 logger.LogInformation("[Prowlarr] Parsed {Count} results from GET", list.Count);
                 if (list.Count == 0)
                 {
@@ -144,7 +144,7 @@ public class ProwlarrClient(HttpClient httpClient, IOptions<ProwlarrOptions> opt
                 var preview = json.Length > 600 ? json[..600] + "…" : json;
                 logger.LogInformation("[Prowlarr] POST body preview: {Preview}", preview);
                 using var doc = JsonDocument.Parse(json);
-                var list = ParseProwlarrResults(doc.RootElement);
+                var list = ParseProwlarrResults(doc.RootElement, artistName, releaseTitle, logger);
                 logger.LogInformation("[Prowlarr] Parsed {Count} results from POST", list.Count);
                 if (list.Count == 0)
                 {
@@ -172,7 +172,7 @@ public class ProwlarrClient(HttpClient httpClient, IOptions<ProwlarrOptions> opt
         return Array.Empty<ProwlarrRelease>();
     }
 
-    private static List<ProwlarrRelease> ParseProwlarrResults(JsonElement root)
+    private static List<ProwlarrRelease> ParseProwlarrResults(JsonElement root, string artistName, string releaseTitle, ILogger logger)
     {
         // Root can be array or object with Results/results
         JsonElement array = root;
@@ -192,8 +192,12 @@ public class ProwlarrClient(HttpClient httpClient, IOptions<ProwlarrOptions> opt
             return new List<ProwlarrRelease>();
         }
         var list = new List<ProwlarrRelease>();
+        var totalResults = 0;
+        var filteredResults = 0;
+        
         foreach (var item in array.EnumerateArray())
         {
+            totalResults++;
             string? title = GetStringCI(item, "title") ?? GetStringCI(item, "Title");
             string? guid = GetStringCI(item, "guid") ?? GetStringCI(item, "Guid");
             string? magnet = GetStringCI(item, "magnetUrl") ?? GetStringCI(item, "MagnetUrl");
@@ -205,8 +209,28 @@ public class ProwlarrClient(HttpClient httpClient, IOptions<ProwlarrOptions> opt
             {
                 if (idx.TryGetInt32(out var i32)) indexerId = i32;
             }
-            list.Add(new ProwlarrRelease(title, guid, magnet, downloadUrl, size, indexerId));
+            
+            var release = new ProwlarrRelease(title, guid, magnet, downloadUrl, size, indexerId);
+            
+            // Validate and score the result
+            if (IsValidMusicResult(release, artistName, releaseTitle))
+            {
+                list.Add(release);
+            }
+            else
+            {
+                filteredResults++;
+                var reason = GetRejectionReason(release, artistName, releaseTitle);
+                logger.LogDebug("[Prowlarr] Filtered out result '{Title}': {Reason}", title, reason);
+            }
         }
+        
+        logger.LogInformation("[Prowlarr] Filtered {Filtered}/{Total} results for '{Artist} - {Album}'", 
+            filteredResults, totalResults, artistName, releaseTitle);
+        
+        // Sort by relevance score (highest first)
+        list.Sort((a, b) => CalculateRelevanceScore(b, artistName, releaseTitle).CompareTo(CalculateRelevanceScore(a, artistName, releaseTitle)));
+        
         return list;
     }
 
@@ -263,6 +287,152 @@ public class ProwlarrClient(HttpClient httpClient, IOptions<ProwlarrOptions> opt
             return v.GetString();
         }
         return null;
+    }
+    
+    private static bool IsValidMusicResult(ProwlarrRelease release, string artistName, string releaseTitle)
+    {
+        if (string.IsNullOrWhiteSpace(release.Title))
+            return false;
+            
+        var title = release.Title.ToLowerInvariant();
+        var artist = artistName.ToLowerInvariant();
+        var album = releaseTitle.ToLowerInvariant();
+        
+        // Reject obvious non-music content
+        if (ContainsNonMusicTerms(title))
+            return false;
+            
+        // Must contain artist name (or close variation)
+        if (!ContainsArtistName(title, artist))
+            return false;
+            
+        // Must contain album title (or close variation)
+        if (!ContainsAlbumTitle(title, album))
+            return false;
+            
+        // Reject torrent files for SABnzbd
+        if (IsTorrentFile(release.DownloadUrl))
+            return false;
+            
+        return true;
+    }
+    
+    private static bool ContainsNonMusicTerms(string title)
+    {
+        var nonMusicTerms = new[]
+        {
+            "1080p", "720p", "4k", "hdtv", "web-dl", "bluray", "dvdrip", "h264", "h265", "x264", "x265",
+            "season", "episode", "s01", "s02", "e01", "e02", "complete", "series",
+            "movie", "film", "documentary", "show", "tv", "television",
+            "subtitle", "dub", "dubbed", "multi", "dual", "audio"
+        };
+        
+        return nonMusicTerms.Any(term => title.Contains(term));
+    }
+    
+    private static bool ContainsArtistName(string title, string artistName)
+    {
+        // Split artist name into words and check if most are present
+        var artistWords = artistName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        var titleWords = title.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        
+        // At least 50% of artist words must be present
+        var matchingWords = artistWords.Count(word => titleWords.Any(titleWord => 
+            titleWord.Contains(word) || word.Contains(titleWord)));
+            
+        return matchingWords >= Math.Max(1, artistWords.Length / 2);
+    }
+    
+    private static bool ContainsAlbumTitle(string title, string albumTitle)
+    {
+        // Split album title into words and check if most are present
+        var albumWords = albumTitle.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        var titleWords = title.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        
+        // At least 50% of album words must be present
+        var matchingWords = albumWords.Count(word => titleWords.Any(titleWord => 
+            titleWord.Contains(word) || word.Contains(titleWord)));
+            
+        return matchingWords >= Math.Max(1, albumWords.Length / 2);
+    }
+    
+    private static bool IsTorrentFile(string? downloadUrl)
+    {
+        if (string.IsNullOrWhiteSpace(downloadUrl))
+            return false;
+            
+        return downloadUrl.EndsWith(".torrent", StringComparison.OrdinalIgnoreCase) ||
+               downloadUrl.Contains("torrent", StringComparison.OrdinalIgnoreCase);
+    }
+    
+    private static int CalculateRelevanceScore(ProwlarrRelease release, string artistName, string releaseTitle)
+    {
+        if (string.IsNullOrWhiteSpace(release.Title))
+            return 0;
+            
+        var title = release.Title.ToLowerInvariant();
+        var artist = artistName.ToLowerInvariant();
+        var album = releaseTitle.ToLowerInvariant();
+        
+        int score = 0;
+        
+        // Base score for being valid
+        score += 10;
+        
+        // Bonus for exact artist name match
+        if (title.Contains(artist))
+            score += 20;
+            
+        // Bonus for exact album title match
+        if (title.Contains(album))
+            score += 20;
+            
+        // Bonus for quality indicators
+        var qualityTerms = new[] { "flac", "lossless", "320", "cd", "vinyl", "24bit", "16bit" };
+        foreach (var term in qualityTerms)
+        {
+            if (title.Contains(term))
+                score += 5;
+        }
+        
+        // Bonus for common music file extensions
+        var musicExtensions = new[] { ".mp3", ".flac", ".m4a", ".wav", ".ogg", ".aac" };
+        foreach (var ext in musicExtensions)
+        {
+            if (title.Contains(ext))
+                score += 3;
+        }
+        
+        // Penalty for torrent files
+        if (IsTorrentFile(release.DownloadUrl))
+            score -= 50;
+            
+        return score;
+    }
+    
+    private static string GetRejectionReason(ProwlarrRelease release, string artistName, string releaseTitle)
+    {
+        if (string.IsNullOrWhiteSpace(release.Title))
+            return "Missing title";
+            
+        var title = release.Title.ToLowerInvariant();
+        var artist = artistName.ToLowerInvariant();
+        var album = releaseTitle.ToLowerInvariant();
+        
+        // Check each validation step
+        if (ContainsNonMusicTerms(title))
+            return "Contains non-music terms (TV/movie/video)";
+            
+        if (!ContainsArtistName(title, artist))
+            return "Artist name mismatch";
+            
+        if (!ContainsAlbumTitle(title, album))
+            return "Album title mismatch";
+            
+        if (IsTorrentFile(release.DownloadUrl))
+            return "Torrent file (not compatible with SABnzbd)";
+            
+        return "Unknown validation failure";
     }
 
     private static long? GetInt64CI(JsonElement obj, string name)
