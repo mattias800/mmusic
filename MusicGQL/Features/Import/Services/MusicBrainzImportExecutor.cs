@@ -455,8 +455,90 @@ public sealed class MusicBrainzImportExecutor(
                 var primaryCredit = credits.FirstOrDefault();
                 if (primaryCredit?.Artist?.Id == null) return false;
                 
-                return primaryCredit.Artist.Id == mbArtistId;
+                // Basic primary artist check
+                var isPrimaryArtist = primaryCredit.Artist.Id == mbArtistId;
+                if (!isPrimaryArtist) return false;
+                
+                // Additional filtering to exclude non-official releases
+                var title = rg.Title?.ToLowerInvariant() ?? "";
+                var secondaryTypes = rg.SecondaryTypes?.Select(t => t.ToLowerInvariant()).ToList() ?? new List<string>();
+                
+                // Exclude compilations, anthologies, live recordings, mixtapes, etc.
+                var excludeKeywords = new[]
+                {
+                    "anthology", "compilation", "collection", "greatest hits", "best of",
+                    "live", "concert", "performance", "storytellers", "unplugged",
+                    "mixtape", "presented by", "dj", "remix", "remastered",
+                    "deluxe", "expanded", "special edition", "anniversary"
+                };
+                
+                // Check if title contains any exclude keywords
+                if (excludeKeywords.Any(keyword => title.Contains(keyword)))
+                {
+                    return false;
+                }
+                
+                // Specific exclusions for albums that should not be imported
+                var specificExcludeTitles = new[]
+                {
+                    "the college dropout video anthology",
+                    "late orchestration",
+                    "can't tell me nothing: the official mixtape",
+                    "sky high: presented by dj benzi and plain pat",
+                    "good fridays",
+                    "vh1 storytellers"
+                };
+                
+                if (specificExcludeTitles.Any(excludeTitle => title.Contains(excludeTitle)))
+                {
+                    return false;
+                }
+                
+                // Check secondary types that indicate non-studio releases
+                var excludeSecondaryTypes = new[]
+                {
+                    "compilation", "live", "mixtape", "remix", "dj-mix"
+                };
+                
+                if (excludeSecondaryTypes.Any(excludeType => secondaryTypes.Contains(excludeType)))
+                {
+                    return false;
+                }
+                
+                return true;
             }).ToList();
+            
+            // Special handling for important collaborations that should be included
+            var importantCollaborations = eligibleGroups.Where(rg =>
+            {
+                var credits = rg.Credits?.ToList();
+                if (credits == null || credits.Count == 0) return false;
+                
+                // Check if this artist appears but is not the primary artist
+                var hasArtist = credits.Any(c => c.Artist?.Id == mbArtistId);
+                if (!hasArtist) return false;
+                
+                var primaryCredit = credits.FirstOrDefault();
+                if (primaryCredit?.Artist?.Id == null) return false;
+                
+                // Only include if this artist is not the primary artist
+                if (primaryCredit.Artist.Id == mbArtistId) return false;
+                
+                // Check for specific important collaborations
+                var title = rg.Title?.ToLowerInvariant() ?? "";
+                var importantCollaborationTitles = new[]
+                {
+                    "watch the throne", // Kanye West + Jay-Z collaboration
+                    "kids see ghosts", // Kanye West + Kid Cudi collaboration
+                    "cruel summer", // GOOD Music compilation (but important)
+                    "ye vs. the people" // Kanye West + T.I. collaboration
+                };
+                
+                return importantCollaborationTitles.Any(importantTitle => title.Contains(importantTitle));
+            }).ToList();
+            
+            // Combine primary artist groups with important collaborations
+            var finalImportGroups = primaryArtistGroups.Concat(importantCollaborations).ToList();
             
             // Collect non-primary artist appearances for the alsoAppearsOn field
             var nonPrimaryArtistGroups = eligibleGroups.Where(rg =>
@@ -471,6 +553,21 @@ public sealed class MusicBrainzImportExecutor(
                 var primaryCredit = credits.FirstOrDefault();
                 if (primaryCredit?.Artist?.Id == null) return false;
                 
+                // Exclude important collaborations that we're already importing
+                var title = rg.Title?.ToLowerInvariant() ?? "";
+                var importantCollaborationTitles = new[]
+                {
+                    "watch the throne", // Kanye West + Jay-Z collaboration
+                    "kids see ghosts", // Kanye West + Kid Cudi collaboration
+                    "cruel summer", // GOOD Music compilation (but important)
+                    "ye vs. the people" // Kanye West + T.I. collaboration
+                };
+                
+                if (importantCollaborationTitles.Any(importantTitle => title.Contains(importantTitle)))
+                {
+                    return false;
+                }
+                
                 return primaryCredit.Artist.Id != mbArtistId;
             }).ToList();
             
@@ -478,6 +575,10 @@ public sealed class MusicBrainzImportExecutor(
                 eligibleGroups.Count, releaseGroups.Count, string.Join(", ", eligibleTypes));
             logger.LogInformation("[ImportExecutor] 🎯 Further filtered to {PrimaryArtistCount}/{EligibleCount} primary artist release groups", 
                 primaryArtistGroups.Count, eligibleGroups.Count);
+            logger.LogInformation("[ImportExecutor] 🤝 Found {ImportantCollaborationCount} important collaborations to include", 
+                importantCollaborations.Count);
+            logger.LogInformation("[ImportExecutor] 📥 Final import count: {FinalCount} release groups", 
+                finalImportGroups.Count);
             logger.LogInformation("[ImportExecutor] 🤝 Found {NonPrimaryCount} non-primary artist appearances for alsoAppearsOn", 
                 nonPrimaryArtistGroups.Count);
 
@@ -486,7 +587,7 @@ public sealed class MusicBrainzImportExecutor(
             var failedCount = 0;
             var importStart = DateTime.UtcNow;
 
-            foreach (var releaseGroup in primaryArtistGroups)
+            foreach (var releaseGroup in finalImportGroups)
             {
                 try
                 {
