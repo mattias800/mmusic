@@ -1,26 +1,44 @@
 {
   "title": "Example Album",
-  "type": "Album",
-  "firstReleaseYear": "2024",
-  "firstReleaseDate": "2024-08-13",
+  "sortTitle": null,
+  "type": "album",
   "tracks": [
     {
       "title": "Song One",
+      "sortTitle": null,
       "trackNumber": 1,
+      "trackLength": 123000,
       "audioFilePath": "/path/to/song1.mp3",
-      "trackLength": 123000
+      "playCount": null,
+      "connections": null,
+      "credits": null,
+      "statistics": null
     },
     {
       "title": "Song Two",
+      "sortTitle": null,
       "trackNumber": 2,
+      "trackLength": 223000,
       "audioFilePath": "/path/to/song2.mp3",
-      "trackLength": 223000
+      "playCount": null,
+      "connections": null,
+      "credits": null,
+      "statistics": null
     },
     {
       "title": "Song Three",
+      "sortTitle": null,
       "trackNumber": 3,
+      "trackLength": 162000,
       "audioFilePath": "/path/to/song3.mp3",
-      "trackLength": 162000
+      "playCount": null,
+      "connections": null,
+      "credits": null,
+      "statistics": null
     }
-  ]
-} 
+  ],
+  "firstReleaseDate": "2024-08-13",
+  "firstReleaseYear": "2024",
+  "coverArt": null,
+  "connections": null
+}

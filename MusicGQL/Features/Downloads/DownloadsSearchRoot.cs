@@ -6,8 +6,6 @@ public class DownloadsSearchRoot
 {
     public DownloadQueueState DownloadQueue(DownloadQueueService queue) => queue.Snapshot();
 
-
-
     public List<DownloadHistoryItem> DownloadHistory(DownloadHistoryService history) => history.List();
 
     // New multi-slot queries
