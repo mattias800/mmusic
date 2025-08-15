@@ -79,6 +79,20 @@ const slotProgressUpdatedSub = graphql(`
   }
 `);
 
+const slotStatusUpdatedSub = graphql(`
+  subscription SlotStatusUpdatedSub {
+    slotStatusUpdated {
+      slotId
+      isActive
+      currentWork {
+        id
+        artistId
+        releaseFolderName
+      }
+    }
+  }
+`);
+
 export const DownloadOverviewFetcher: React.FC<
   DownloadOverviewFetcherProps
 > = () => {
@@ -89,6 +103,8 @@ export const DownloadOverviewFetcher: React.FC<
   useSubscription({ query: downloadQueueUpdatedSub });
 
   useSubscription({ query: slotProgressUpdatedSub });
+
+  useSubscription({ query: slotStatusUpdatedSub });
 
   if (fetching) return <Spinner />;
   if (error || !data) return null;

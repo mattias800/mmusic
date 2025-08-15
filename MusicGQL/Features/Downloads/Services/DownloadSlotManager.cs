@@ -6,13 +6,15 @@ namespace MusicGQL.Features.Downloads.Services;
 public class DownloadSlotManager(
     ILogger<DownloadSlotManager> logger,
     ServerSettingsAccessor serverSettingsAccessor,
-    IServiceScopeFactory scopeFactory
-) : BackgroundService
+    IServiceScopeFactory scopeFactory,
+    CurrentDownloadStateService currentDownloadStateService
+) : BackgroundService, IDownloadSlotManager
 {
     private readonly ConcurrentDictionary<int, DownloadSlot> _slots = new();
     private readonly ConcurrentQueue<DownloadQueueItem> _workQueue = new();
     private readonly SemaphoreSlim _queueSemaphore = new(1, 1);
     private readonly SemaphoreSlim _slotSemaphore = new(1, 1);
+    private CurrentDownloadStateService _currentDownloadStateService;
     
     private int _nextSlotId = 0;
     private bool _isInitialized = false;
@@ -24,6 +26,10 @@ public class DownloadSlotManager(
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         logger.LogInformation("[DownloadSlotManager] Starting with configurable slots");
+        logger.LogInformation("[DownloadSlotManager] Instance created. Initial _slots.Count: {Count}", _slots.Count);
+        
+        // Initialize the current download state service reference
+        _currentDownloadStateService = currentDownloadStateService;
         
         while (!stoppingToken.IsCancellationRequested)
         {
@@ -47,7 +53,11 @@ public class DownloadSlotManager(
 
     private async Task InitializeSlotsIfNeededAsync(CancellationToken cancellationToken)
     {
-        if (_isInitialized) return;
+        if (_isInitialized) 
+        {
+            logger.LogDebug("[DownloadSlotManager] Already initialized with {SlotCount} slots", _slots.Count);
+            return;
+        }
 
         try
         {
@@ -68,6 +78,12 @@ public class DownloadSlotManager(
             
             _isInitialized = true;
             logger.LogInformation("[DownloadSlotManager] Initialized {SlotCount} slots", _slots.Count);
+            
+            // Publish initial slot status updates
+            foreach (var slot in _slots.Values)
+            {
+                await PublishSlotStatusUpdateAsync(slot.Id, slot.IsActive, slot.CurrentWork, cancellationToken);
+            }
         }
         catch (Exception ex)
         {
@@ -75,10 +91,32 @@ public class DownloadSlotManager(
         }
     }
 
+    public async Task NotifySlotWorkCompletedAsync(int slotId, CancellationToken cancellationToken)
+    {
+        if (_slots.TryGetValue(slotId, out var slot))
+        {
+            await PublishSlotStatusUpdateAsync(slotId, slot.IsActive, slot.CurrentWork, cancellationToken);
+        }
+    }
+
     private async Task ManageSlotsAsync(CancellationToken cancellationToken)
     {
-        // Check if any slots need work
-        var idleSlots = _slots.Values.Where(s => !s.IsActive && !s.IsWorking).ToList();
+        // Check if any slots need work - look for slots that are active but not currently working
+        var idleSlots = _slots.Values.Where(s => s.IsActive && !s.IsWorking).ToList();
+        
+        if (idleSlots.Any() && _workQueue.Count > 0)
+        {
+            logger.LogInformation("[DownloadSlotManager] Found {IdleSlots} idle slots and {QueueLength} items in queue - attempting to assign work", 
+                idleSlots.Count, _workQueue.Count);
+        }
+        else if (_workQueue.Count > 0)
+        {
+            logger.LogDebug("[DownloadSlotManager] Queue has {QueueLength} items but no idle slots available", _workQueue.Count);
+        }
+        else if (idleSlots.Any())
+        {
+            logger.LogDebug("[DownloadSlotManager] Found {IdleSlots} idle slots but queue is empty", idleSlots.Count);
+        }
         
         foreach (var slot in idleSlots)
         {
@@ -99,6 +137,9 @@ public class DownloadSlotManager(
         {
             if (_workQueue.TryDequeue(out var workItem))
             {
+                logger.LogDebug("[DownloadSlotManager] Attempting to assign work {ArtistId}/{Release} to slot {SlotId}", 
+                    workItem.ArtistId, workItem.ReleaseFolderName, slot.Id);
+                
                 // Check if any other slot is already working on this release
                 var isAlreadyBeingProcessed = _slots.Values
                     .Where(s => s.Id != slot.Id)
@@ -115,13 +156,35 @@ public class DownloadSlotManager(
                 
                 // Assign work to the slot
                 await slot.AssignWorkAsync(workItem, cancellationToken);
+                
+                // Publish slot status update
+                await PublishSlotStatusUpdateAsync(slot.Id, slot.IsActive, slot.CurrentWork, cancellationToken);
+                
+                logger.LogInformation("[DownloadSlotManager] Successfully assigned work {ArtistId}/{Release} to slot {SlotId}", 
+                    workItem.ArtistId, workItem.ReleaseFolderName, slot.Id);
                 return true;
+            }
+            else
+            {
+                logger.LogDebug("[DownloadSlotManager] No work available in queue for slot {SlotId}", slot.Id);
             }
             return false;
         }
         finally
         {
             _queueSemaphore.Release();
+        }
+    }
+
+    private async Task PublishSlotStatusUpdateAsync(int slotId, bool isActive, DownloadQueueItem? currentWork, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await _currentDownloadStateService.PublishSlotStatusUpdateAsync(slotId, isActive, currentWork, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Failed to publish slot status update for slot {SlotId}", slotId);
         }
     }
 
@@ -227,7 +290,7 @@ public class DownloadSlotManager(
 
     public List<DownloadSlotInfo> GetSlotsInfo()
     {
-        return _slots.Values.Select(slot => new DownloadSlotInfo(
+        var slots = _slots.Values.Select(slot => new DownloadSlotInfo(
             slot.Id,
             slot.IsActive,
             slot.IsWorking,
@@ -237,5 +300,10 @@ public class DownloadSlotManager(
             slot.LastActivityAt,
             slot.Status
         )).ToList();
+        
+        logger.LogInformation("[DownloadSlotManager] GetSlotsInfo called, returning {Count} slots. IsInitialized: {IsInitialized}", 
+            slots.Count, _isInitialized);
+        
+        return slots;
     }
 }

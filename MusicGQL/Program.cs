@@ -107,10 +107,12 @@ builder
     .AddSingleton<SoulSeekService>()
     .AddSingleton<SoulSeekReleaseDownloader>()
     .AddScoped<StartDownloadReleaseService>()
+    .AddSingleton<DownloadSlotManager>()
+    .AddSingleton<IDownloadSlotManager>(sp => sp.GetRequiredService<DownloadSlotManager>())
     .AddSingleton<DownloadQueueService>()
     .AddSingleton<CurrentDownloadStateService>()
     .AddSingleton<DownloadHistoryService>()
-    .AddSingleton<DownloadSlotManager>()
+    .AddHostedService(sp => sp.GetRequiredService<DownloadSlotManager>())
     // .AddHostedService<DownloadWorker>() // Disabled - now using DownloadSlotManager
     .AddHostedService<MissingLibraryItemsDetectorWorker>()
     .AddSingleton<MusicBrainzService>()

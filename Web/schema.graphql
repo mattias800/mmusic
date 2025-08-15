@@ -1221,6 +1221,12 @@ type SlotProgressUpdate {
   slotId: Int!
 }
 
+type SlotStatusUpdate {
+  currentWork: DownloadQueueItem
+  isActive: Boolean!
+  slotId: Int!
+}
+
 type SoulSeekRoot {
   id: ID!
   status: SoulSeekStatus!
@@ -1335,6 +1341,7 @@ type Subscription {
   ping: Ping!
   playlistItemUpdated(playlistId: ID!): PlaylistItem!
   slotProgressUpdated: SlotProgressUpdate!
+  slotStatusUpdated: SlotStatusUpdate!
   soulSeekStatusUpdated: SoulSeekStatus!
 }
 

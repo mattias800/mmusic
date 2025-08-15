@@ -6,7 +6,7 @@ namespace MusicGQL.Features.Downloads.Services;
 public class DownloadQueueService(
     ITopicEventSender eventSender,
     ILogger<DownloadQueueService> logger,
-    DownloadSlotManager slotManager
+    IDownloadSlotManager slotManager
 )
 {
     private readonly ConcurrentQueue<DownloadQueueItem> _queue = new();

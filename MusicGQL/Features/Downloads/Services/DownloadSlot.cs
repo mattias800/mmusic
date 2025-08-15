@@ -30,33 +30,17 @@ public class DownloadSlot
         if (IsActive) return;
         
         IsActive = true;
-        _logger.LogInformation("[DownloadSlot {SlotId}] Started", Id);
+        _logger.LogInformation("[DownloadSlot {SlotId}] Started and ready for work", Id);
         
+        // The slot is now active and ready to receive work
+        // The DownloadSlotManager will assign work to this slot
+        // No need for a waiting loop - just keep the slot alive
         try
         {
             while (IsActive && !cancellationToken.IsCancellationRequested)
             {
-                try
-                {
-                    if (CurrentWork != null)
-                    {
-                        await ProcessWorkAsync(cancellationToken);
-                    }
-                    else
-                    {
-                        // Wait for work to be assigned
-                        await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken);
-                    }
-                }
-                catch (OperationCanceledException)
-                {
-                    break;
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "[DownloadSlot {SlotId}] Error processing work", Id);
-                    await Task.Delay(TimeSpan.FromSeconds(5), cancellationToken);
-                }
+                // Just keep the slot alive - work will be assigned by the manager
+                await Task.Delay(TimeSpan.FromSeconds(10), cancellationToken);
             }
         }
         finally
@@ -170,6 +154,18 @@ public class DownloadSlot
             IsWorking = false;
             StartedAt = null;
             Status = "Idle";
+            
+            // Publish slot status update
+            try
+            {
+                using var scope = _scopeFactory.CreateScope();
+                var progressService = scope.ServiceProvider.GetRequiredService<CurrentDownloadStateService>();
+                await progressService.PublishSlotStatusUpdateAsync(Id, IsActive, null, CancellationToken.None);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "[DownloadSlot {SlotId}] Error publishing slot status update", Id);
+            }
             
             // Clear progress service
             try

@@ -9,7 +9,7 @@ namespace MusicGQL.Features.ServerSettings.Commands;
 public class UpdateDownloadSlotCountHandler(
     EventDbContext dbContext,
     EventProcessor.EventProcessorWorker eventProcessorWorker,
-    DownloadSlotManager slotManager
+    IDownloadSlotManager slotManager
 )
 {
     public record Command(Guid UserId, int NewSlotCount);

@@ -125,8 +125,26 @@ public class CurrentDownloadStateService(
             logger.LogWarning(ex, "Failed to publish slot progress update for slot {SlotId}", slotId);
         }
     }
+
+    public async Task PublishSlotStatusUpdateAsync(int slotId, bool isActive, DownloadQueueItem? currentWork, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await eventSender.SendAsync(
+                DownloadsSubscription.SlotStatusUpdatedTopic,
+                new SlotStatusUpdate(slotId, isActive, currentWork),
+                cancellationToken
+            );
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Failed to publish slot status update for slot {SlotId}", slotId);
+        }
+    }
 }
 
 public record SlotProgressUpdate(int SlotId, DownloadProgress? Progress);
+
+public record SlotStatusUpdate(int SlotId, bool IsActive, DownloadQueueItem? CurrentWork);
 
 

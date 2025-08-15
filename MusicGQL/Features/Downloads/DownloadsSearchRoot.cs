@@ -15,7 +15,7 @@ public class DownloadsSearchRoot
 
     public DownloadProgress? SlotProgress(CurrentDownloadStateService state, int slotId) => state.GetSlotProgress(slotId);
 
-    public List<DownloadSlotInfo> DownloadSlots(DownloadSlotManager slotManager) => slotManager.GetSlotsInfo();
+    public List<DownloadSlotInfo> DownloadSlots(IDownloadSlotManager slotManager) => slotManager.GetSlotsInfo();
 }
 
 

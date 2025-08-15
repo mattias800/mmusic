@@ -11,6 +11,7 @@ public record DownloadsSubscription
     public const string DownloadQueueUpdatedTopic = "DownloadQueueUpdated";
     public const string DownloadHistoryUpdatedTopic = "DownloadHistoryUpdated";
     public const string SlotProgressUpdatedTopic = "SlotProgressUpdated";
+    public const string SlotStatusUpdatedTopic = "SlotStatusUpdated";
 
     public ValueTask<ISourceStream<DownloadQueueState>> SubscribeToDownloadQueueUpdated(
         [Service] ITopicEventReceiver receiver,
@@ -35,6 +36,14 @@ public record DownloadsSubscription
 
     [Subscribe(With = nameof(SubscribeToSlotProgressUpdated))]
     public SlotProgressUpdate SlotProgressUpdated([EventMessage] SlotProgressUpdate update) => update;
+
+    public ValueTask<ISourceStream<SlotStatusUpdate>> SubscribeToSlotStatusUpdated(
+        [Service] ITopicEventReceiver receiver,
+        CancellationToken cancellationToken
+    ) => receiver.SubscribeAsync<SlotStatusUpdate>(SlotStatusUpdatedTopic, cancellationToken);
+
+    [Subscribe(With = nameof(SubscribeToSlotStatusUpdated))]
+    public SlotStatusUpdate SlotStatusUpdated([EventMessage] SlotStatusUpdate update) => update;
 }
 
 
