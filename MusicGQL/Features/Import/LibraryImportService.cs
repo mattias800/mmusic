@@ -10,7 +10,7 @@ using Path = System.IO.Path;
 namespace MusicGQL.Features.Import;
 
 /// <summary>
-/// Main service for importing artists and releases from external sources into the local library
+/// Main service for importing artists and releases from external sources into the local music library
 /// </summary>
 public class LibraryImportService(
     MusicBrainzImportService musicBrainzService,
@@ -21,7 +21,8 @@ public class LibraryImportService(
     LibraryReleaseImportService releaseImporter,
     IImportExecutor importExecutor,
     LastFmEnrichmentService enrichmentService,
-    MusicGQL.Features.ServerSettings.ServerSettingsAccessor serverSettingsAccessor
+    MusicGQL.Features.ServerSettings.ServerSettingsAccessor serverSettingsAccessor,
+    ILogger<LibraryImportService> logger
 )
 {
     private async Task<string> GetLibraryPathAsync()
@@ -68,49 +69,81 @@ public class LibraryImportService(
     )
     {
         var result = new ArtistImportResult { MusicBrainzId = musicBrainzArtistId };
+        var startTime = DateTime.UtcNow;
 
         try
         {
-            Console.WriteLine($"🎤 Importing artist by MBID (unified): {musicBrainzArtistId}");
+            logger.LogInformation("[ImportArtist] 🎤 Starting artist import for MBID: {MusicBrainzId}", musicBrainzArtistId);
 
             // 1) Resolve MB artist to get display name and canonicalize folder
+            logger.LogInformation("[ImportArtist] 🔍 Step 1: Resolving MusicBrainz artist data for MBID: {MusicBrainzId}", musicBrainzArtistId);
             var mbArtist = await musicBrainzService.GetArtistByIdAsync(musicBrainzArtistId);
             if (mbArtist is null)
             {
+                logger.LogError("[ImportArtist] ❌ Failed to find artist on MusicBrainz with MBID: {MusicBrainzId}", musicBrainzArtistId);
                 result.ErrorMessage = "Artist not found on MusicBrainz";
                 return result;
             }
+            
+            logger.LogInformation("[ImportArtist] ✅ Found MusicBrainz artist: '{ArtistName}' (MBID: {MusicBrainzId})", mbArtist.Name, musicBrainzArtistId);
             result.ArtistName = mbArtist.Name;
 
             var artistFolderName = SanitizeFolderName(mbArtist.Name);
             var artistFolderPath = Path.Combine(await GetLibraryPathAsync(), artistFolderName);
+            
+            logger.LogInformation("[ImportArtist] 📁 Step 2: Creating artist folder structure at: {ArtistFolderPath}", artistFolderPath);
             if (!Directory.Exists(artistFolderPath))
             {
                 Directory.CreateDirectory(artistFolderPath);
+                logger.LogInformation("[ImportArtist] ✅ Created new artist directory: {ArtistFolderPath}", artistFolderPath);
+            }
+            else
+            {
+                logger.LogInformation("[ImportArtist] ℹ️ Artist directory already exists: {ArtistFolderPath}", artistFolderPath);
             }
             result.ArtistFolderPath = artistFolderPath;
 
             // 2) Use the same executor as the file-scanner to create/enrich artist.json (photos, connections, top tracks)
+            logger.LogInformation("[ImportArtist] 🎨 Step 3: Importing/enriching artist metadata and photos");
+            var artistImportStart = DateTime.UtcNow;
             await importExecutor.ImportOrEnrichArtistAsync(
                 artistFolderPath,
                 mbArtist.Id,
                 mbArtist.Name
             );
+            var artistImportDuration = DateTime.UtcNow - artistImportStart;
+            logger.LogInformation("[ImportArtist] ✅ Artist metadata import completed in {DurationMs}ms", artistImportDuration.TotalMilliseconds);
 
             // 3) Import all eligible release groups (albums, EPs, singles)
-            await importExecutor.ImportEligibleReleaseGroupsAsync(artistFolderPath, mbArtist.Id);
+            logger.LogInformation("[ImportArtist] 💿 Step 4: Importing eligible release groups for artist '{ArtistName}'", mbArtist.Name);
+            var releasesImportStart = DateTime.UtcNow;
+            var importedCount = await importExecutor.ImportEligibleReleaseGroupsAsync(artistFolderPath, mbArtist.Id);
+            var releasesImportDuration = DateTime.UtcNow - releasesImportStart;
+            logger.LogInformation("[ImportArtist] ✅ Imported {ImportedCount} release groups in {DurationMs}ms", importedCount, releasesImportDuration.TotalMilliseconds);
 
             // 4) Enrich artist (map top tracks to releases, fill missing info)
+            logger.LogInformation("[ImportArtist] 🔗 Step 5: Enriching artist with additional metadata and track mapping");
+            var enrichmentStart = DateTime.UtcNow;
             try
             {
                 await enrichmentService.EnrichArtistAsync(artistFolderPath, mbArtist.Id);
+                var enrichmentDuration = DateTime.UtcNow - enrichmentStart;
+                logger.LogInformation("[ImportArtist] ✅ Artist enrichment completed in {DurationMs}ms", enrichmentDuration.TotalMilliseconds);
             }
-            catch { }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "[ImportArtist] ⚠️ Artist enrichment failed, continuing without enrichment");
+            }
 
             // 5) Update cache and load artist json for return
+            logger.LogInformation("[ImportArtist] 🗄️ Step 6: Updating server library cache");
+            var cacheUpdateStart = DateTime.UtcNow;
             await cache.UpdateCacheAsync();
+            var cacheUpdateDuration = DateTime.UtcNow - cacheUpdateStart;
+            logger.LogInformation("[ImportArtist] ✅ Cache update completed in {DurationMs}ms", cacheUpdateDuration.TotalMilliseconds);
 
             // Read back artist.json to include in result
+            logger.LogInformation("[ImportArtist] 📖 Step 7: Reading final artist.json for result");
             try
             {
                 var artistJsonText = await File.ReadAllTextAsync(
@@ -124,14 +157,16 @@ public class LibraryImportService(
             catch { }
 
             result.Success = true;
-            Console.WriteLine($"🎉 Successfully imported artist and releases: {mbArtist.Name}");
+            var totalDuration = DateTime.UtcNow - startTime;
+            logger.LogInformation("[ImportArtist] 🎉 Successfully imported artist '{ArtistName}' in {TotalDurationMs}ms", mbArtist.Name, totalDuration.TotalMilliseconds);
+            logger.LogInformation("[ImportArtist] 📊 Import Summary: Artist metadata: {ArtistMs}ms, Releases: {ReleasesMs}ms, Enrichment: {EnrichmentMs}ms, Cache: {CacheMs}ms", 
+                artistImportDuration.TotalMilliseconds, releasesImportDuration.TotalMilliseconds, enrichmentStart - enrichmentStart, cacheUpdateDuration.TotalMilliseconds);
         }
         catch (Exception ex)
         {
+            var totalDuration = DateTime.UtcNow - startTime;
+            logger.LogError(ex, "[ImportArtist] ❌ Failed to import artist with MBID '{MusicBrainzId}' after {TotalDurationMs}ms", musicBrainzArtistId, totalDuration.TotalMilliseconds);
             result.ErrorMessage = ex.Message;
-            Console.WriteLine(
-                $"❌ Error importing artist by MBID '{musicBrainzArtistId}': {ex.Message}"
-            );
         }
 
         return result;
@@ -145,33 +180,47 @@ public class LibraryImportService(
     public async Task<ReleaseImportResult> ImportArtistReleasesAsync(string artistId)
     {
         var result = new ReleaseImportResult { ArtistId = artistId };
+        var startTime = DateTime.UtcNow;
 
         try
         {
-            Console.WriteLine($"💿 Importing releases for artist: {artistId}");
+            logger.LogInformation("[ImportReleases] 💿 Starting release import for artist: {ArtistId}", artistId);
 
             // 1. Get artist info to find MusicBrainz ID
+            logger.LogInformation("[ImportReleases] 🔍 Step 1: Retrieving artist information from cache");
             var artist = await cache.GetArtistByIdAsync(artistId);
             if (artist?.JsonArtist.Connections?.MusicBrainzArtistId == null)
             {
+                logger.LogError("[ImportReleases] ❌ Artist '{ArtistId}' not found in cache or missing MusicBrainz ID", artistId);
                 result.ErrorMessage = "Artist not found or missing MusicBrainz ID";
                 return result;
             }
 
             var mbArtistId = artist.JsonArtist.Connections.MusicBrainzArtistId;
             var artistFolderPath = Path.Combine(await GetLibraryPathAsync(), artistId);
+            logger.LogInformation("[ImportReleases] ✅ Found artist '{ArtistName}' with MBID: {MusicBrainzId}", artist.JsonArtist.Name, mbArtistId);
 
             // 2. Get release groups from MusicBrainz
-            Console.WriteLine("🔍 Fetching release groups from MusicBrainz...");
+            logger.LogInformation("[ImportReleases] 🔍 Step 2: Fetching release groups from MusicBrainz for artist '{ArtistName}'", artist.JsonArtist.Name);
+            var releaseGroupsStart = DateTime.UtcNow;
             var releaseGroups = await musicBrainzService.GetArtistReleaseGroupsAsync(mbArtistId);
+            var releaseGroupsDuration = DateTime.UtcNow - releaseGroupsStart;
 
-            Console.WriteLine($"📀 Found {releaseGroups.Count} release groups");
+            logger.LogInformation("[ImportReleases] 📀 Found {ReleaseGroupCount} release groups in {DurationMs}ms", releaseGroups.Count, releaseGroupsDuration.TotalMilliseconds);
 
             // 3. Import each release group
+            logger.LogInformation("[ImportReleases] 🚀 Step 3: Starting import of {ReleaseGroupCount} release groups", releaseGroups.Count);
+            var importStart = DateTime.UtcNow;
+            var successfulImports = 0;
+            var failedImports = 0;
+            
             foreach (var releaseGroup in releaseGroups)
             {
                 try
                 {
+                    logger.LogInformation("[ImportReleases] 📀 Importing release group: '{Title}' (Type: {PrimaryType})", releaseGroup.Title, releaseGroup.PrimaryType);
+                    var singleReleaseStart = DateTime.UtcNow;
+                    
                     var releaseResult = await ImportReleaseGroupAsync(
                         releaseGroup,
                         artistFolderPath,
@@ -179,46 +228,49 @@ public class LibraryImportService(
                     );
                     result.ImportedReleases.Add(releaseResult);
 
+                    var singleReleaseDuration = DateTime.UtcNow - singleReleaseStart;
                     if (releaseResult.Success)
                     {
-                        Console.WriteLine($"✅ Imported release: {releaseGroup.Title}");
+                        successfulImports++;
+                        logger.LogInformation("[ImportReleases] ✅ Successfully imported release '{Title}' in {DurationMs}ms", releaseGroup.Title, singleReleaseDuration.TotalMilliseconds);
                     }
                     else
                     {
-                        Console.WriteLine(
-                            $"❌ Failed to import release: {releaseGroup.Title} - {releaseResult.ErrorMessage}"
-                        );
+                        failedImports++;
+                        logger.LogWarning("[ImportReleases] ⚠️ Failed to import release '{Title}' after {DurationMs}ms: {ErrorMessage}", 
+                            releaseGroup.Title, singleReleaseDuration.TotalMilliseconds, releaseResult.ErrorMessage);
                     }
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine(
-                        $"❌ Error importing release '{releaseGroup.Title}': {ex.Message}"
-                    );
-                    result.ImportedReleases.Add(
-                        new SingleReleaseImportResult
-                        {
-                            ReleaseGroupId = releaseGroup.Id,
-                            Title = releaseGroup.Title,
-                            ErrorMessage = ex.Message,
-                        }
-                    );
+                    failedImports++;
+                    logger.LogError(ex, "[ImportReleases] ❌ Exception while importing release group '{Title}'", releaseGroup.Title);
+                    result.ImportedReleases.Add(new SingleReleaseImportResult
+                    {
+                        Success = false,
+                        Title = releaseGroup.Title,
+                        ErrorMessage = ex.Message
+                    });
                 }
             }
 
-            // 4. Update cache
-            await cache.UpdateCacheAsync();
-            Console.WriteLine($"🔄 Updated cache");
+            var totalImportDuration = DateTime.UtcNow - importStart;
+            var totalDuration = DateTime.UtcNow - startTime;
+            
+            result.Success = true;
+            // Note: TotalReleases, SuccessfulReleases, and FailedReleases are computed properties
 
-            result.Success = result.ImportedReleases.Any(r => r.Success);
-            Console.WriteLine(
-                $"🎉 Import complete: {result.ImportedReleases.Count(r => r.Success)}/{result.ImportedReleases.Count} releases imported"
-            );
+            logger.LogInformation("[ImportReleases] 🎉 Release import completed in {TotalDurationMs}ms", totalDuration.TotalMilliseconds);
+            logger.LogInformation("[ImportReleases] 📊 Import Summary: {Successful}/{Total} successful, {Failed} failed", 
+                result.SuccessfulReleases, result.TotalReleases, result.FailedReleases);
+            logger.LogInformation("[ImportReleases] ⏱️ Timing: Release groups fetch: {GroupsMs}ms, Individual imports: {ImportsMs}ms", 
+                releaseGroupsDuration.TotalMilliseconds, totalImportDuration.TotalMilliseconds);
         }
         catch (Exception ex)
         {
+            var totalDuration = DateTime.UtcNow - startTime;
+            logger.LogError(ex, "[ImportReleases] ❌ Failed to import releases for artist '{ArtistId}' after {TotalDurationMs}ms", artistId, totalDuration.TotalMilliseconds);
             result.ErrorMessage = ex.Message;
-            Console.WriteLine($"❌ Error importing releases for artist '{artistId}': {ex.Message}");
         }
 
         return result;
