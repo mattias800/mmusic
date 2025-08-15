@@ -355,10 +355,34 @@ public class ReleaseJsonBuilder(
 
             // 12. Build final JsonRelease
             logger.LogInformation("[ReleaseBuilder] 🏗️ Step 12: Building final JsonRelease object");
+            
+            // Read artist name from artist.json
+            string artistName = string.Empty;
+            try
+            {
+                var artistJsonPath = Path.Combine(artistDir, "artist.json");
+                if (File.Exists(artistJsonPath))
+                {
+                    var text = await File.ReadAllTextAsync(artistJsonPath);
+                    var jsonArtist = JsonSerializer.Deserialize<JsonArtist>(text, GetJsonOptions());
+                    artistName = jsonArtist?.Name ?? string.Empty;
+                    logger.LogInformation("[ReleaseBuilder] ✅ Read artist name from artist.json: '{ArtistName}'", artistName);
+                }
+                else
+                {
+                    logger.LogWarning("[ReleaseBuilder] ⚠️ artist.json not found at {ArtistJsonPath}, using empty artist name", artistJsonPath);
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "[ReleaseBuilder] ⚠️ Error reading artist name from artist.json, using empty artist name");
+            }
+            
             var finalRelease = new JsonRelease
             {
                 Title = releaseTitle ?? releaseFolderName,
                 SortTitle = releaseTitle,
+                ArtistName = artistName,
                 Type = releaseType,
                 FirstReleaseDate = selected?.ReleaseGroup?.FirstReleaseDate,
                 FirstReleaseYear =

@@ -17,6 +17,11 @@ const albumSearchQuery = graphql(`
         id
         title
         coverArtUrl
+        artistName
+        artist {
+          id
+          name
+        }
       }
     }
   }
@@ -53,7 +58,12 @@ export const SearchResultRelease: React.FC<SearchResultReleaseProps> = ({
           />
           <div>
             <p className="text-white font-medium">{release.title}</p>
-            <p className="text-xs text-white/60">Album</p>
+            <p className="text-xs text-white/60">
+              {release.artistName !== release.artist.name 
+                ? `${release.artistName} (${release.artist.name})`
+                : release.artistName
+              }
+            </p>
           </div>
         </Link>
       )}

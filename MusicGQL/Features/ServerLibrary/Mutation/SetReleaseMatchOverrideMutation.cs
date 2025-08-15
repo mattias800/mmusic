@@ -59,6 +59,34 @@ public class SetReleaseMatchOverrideMutation
                 Title = input.ReleaseFolderName,
                 Type = JsonReleaseType.Album,
             };
+            
+            // Set artist name if not already set
+            if (string.IsNullOrWhiteSpace(existing.ArtistName))
+            {
+                try
+                {
+                    var artistJsonPath = Path.Combine(lib.LibraryPath, input.ArtistId, "artist.json");
+                    if (File.Exists(artistJsonPath))
+                    {
+                        var text = await File.ReadAllTextAsync(artistJsonPath);
+                        var jsonArtist = JsonSerializer.Deserialize<JsonArtist>(
+                            text,
+                            new JsonSerializerOptions
+                            {
+                                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                                PropertyNameCaseInsensitive = true,
+                                Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) },
+                            }
+                        );
+                        existing.ArtistName = jsonArtist?.Name ?? string.Empty;
+                    }
+                }
+                catch
+                {
+                    existing.ArtistName = string.Empty;
+                }
+            }
+            
             existing.Connections ??= new ReleaseServiceConnections();
 
             // If no RG id present and we have a specific release id, fetch RG id from MB

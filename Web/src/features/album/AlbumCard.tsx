@@ -17,6 +17,7 @@ const albumCardReleaseGroupFragment = graphql(`
     coverArtUrl
     folderName
     isFullyMissing
+    artistName
     artist {
       id
       images {
@@ -53,6 +54,7 @@ export const AlbumCard: React.FC<AlbumCardProps> = (props) => {
         <span className="truncate">{release.title}</span>
         {release.isFullyMissing && <Tag variant={"error"}>Missing</Tag>}
       </div>
+      <div className={"text-gray-400 text-sm"}>{release.artistName}</div>
       <div className={"text-gray-400 text-sm"}>{release.firstReleaseYear}</div>
     </button>
   );

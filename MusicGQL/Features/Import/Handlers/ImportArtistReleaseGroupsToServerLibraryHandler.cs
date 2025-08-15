@@ -21,7 +21,20 @@ public class ImportArtistReleaseGroupsToServerLibraryHandler(
                 command.ArtistMbId
             );
 
-            var releaseGroupsToImport = allReleaseGroup
+            // Filter to only include release groups where this artist is the primary credited artist
+            var primaryArtistGroups = allReleaseGroup.Where(rg =>
+            {
+                var credits = rg.Credits?.ToList();
+                if (credits == null || credits.Count == 0) return false;
+                
+                // Check if the first (primary) credit is for this artist
+                var primaryCredit = credits.FirstOrDefault();
+                if (primaryCredit?.Artist?.Id == null) return false;
+                
+                return primaryCredit.Artist.Id == command.ArtistMbId;
+            }).ToList();
+
+            var releaseGroupsToImport = primaryArtistGroups
                 .Where(LibraryDecider.ShouldBeAddedWhenAddingArtistToServerLibrary)
                 .ToList();
 

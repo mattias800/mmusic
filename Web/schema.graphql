@@ -968,6 +968,7 @@ type RefreshReleaseSuccess {
 
 type Release {
   artist: Artist!
+  artistName: String!
   coverArtUrl: String!
   downloadStatus: ReleaseDownloadStatus!
   firstReleaseDate: String

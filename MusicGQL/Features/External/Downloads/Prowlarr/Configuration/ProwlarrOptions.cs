@@ -16,6 +16,26 @@ public class ProwlarrOptions
     /// Maximum number of retry attempts for failed requests. Default is 2.
     /// </summary>
     public int MaxRetries { get; set; } = 2;
+    
+    /// <summary>
+    /// Whether to test connectivity before attempting searches. Default is true.
+    /// </summary>
+    public bool TestConnectivityFirst { get; set; } = true;
+    
+    /// <summary>
+    /// Delay in seconds between retry attempts. Default is 1 second.
+    /// </summary>
+    public int RetryDelaySeconds { get; set; } = 1;
+    
+    /// <summary>
+    /// Whether to enable detailed logging for debugging. Default is false.
+    /// </summary>
+    public bool EnableDetailedLogging { get; set; } = false;
+    
+    /// <summary>
+    /// Maximum number of concurrent requests to Prowlarr. Default is 1.
+    /// </summary>
+    public int MaxConcurrentRequests { get; set; } = 1;
 }
 
 

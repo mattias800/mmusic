@@ -24,6 +24,7 @@ const songSearchQuery = graphql(`
           title
           coverArtUrl
           folderName
+          artistName
           artist {
             id
             name
@@ -77,7 +78,10 @@ export const SearchResultTrack: React.FC<SearchResultTrackProps> = ({
                 to={getRouteToArtist(track.release.artist.id)}
                 className="hover:underline"
               >
-                {track.release.artist.name}
+                {track.release.artistName !== track.release.artist.name 
+                  ? `${track.release.artistName} (${track.release.artist.name})`
+                  : track.release.artistName
+                }
               </Link>
               {track.release && (
                 <>

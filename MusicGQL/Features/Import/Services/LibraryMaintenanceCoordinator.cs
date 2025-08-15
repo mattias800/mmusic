@@ -1,6 +1,9 @@
 using MusicGQL.Features.ServerLibrary.Cache;
 using MusicGQL.Features.ServerLibrary.Reader;
 using Path = System.IO.Path;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using MusicGQL.Features.ServerLibrary.Json;
 
 namespace MusicGQL.Features.Import.Services;
 
@@ -121,6 +124,79 @@ public class LibraryMaintenanceCoordinator(
                 if (importedAnyReleaseForThisArtist)
                 {
                     artistsToEnrich[artist.ArtistDir] = idArtist.MusicBrainzArtistId;
+                }
+
+                // Update existing release.json files to include ArtistName field
+                try
+                {
+                    var artistJsonPath = Path.Combine(artist.ArtistDir, "artist.json");
+                    if (File.Exists(artistJsonPath))
+                    {
+                        var artistText = await File.ReadAllTextAsync(artistJsonPath);
+                        var jsonArtist = JsonSerializer.Deserialize<JsonArtist>(
+                            artistText,
+                            new JsonSerializerOptions
+                            {
+                                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                                PropertyNameCaseInsensitive = true,
+                                Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) },
+                            }
+                        );
+                        
+                        if (jsonArtist?.Name != null)
+                        {
+                            var updatedReleases = 0;
+                            foreach (var rel in artist.Releases.Where(r => !r.MissingReleaseJson))
+                            {
+                                var releaseJsonPath = Path.Combine(rel.ReleaseDir, "release.json");
+                                if (File.Exists(releaseJsonPath))
+                                {
+                                    try
+                                    {
+                                        var releaseText = await File.ReadAllTextAsync(releaseJsonPath);
+                                        var releaseJson = JsonSerializer.Deserialize<JsonRelease>(
+                                            releaseText,
+                                            new JsonSerializerOptions
+                                            {
+                                                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                                                PropertyNameCaseInsensitive = true,
+                                                Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) },
+                                            }
+                                        );
+                                        
+                                        if (releaseJson != null && string.IsNullOrWhiteSpace(releaseJson.ArtistName))
+                                        {
+                                            releaseJson.ArtistName = jsonArtist.Name;
+                                            var updatedText = JsonSerializer.Serialize(
+                                                releaseJson,
+                                                new JsonSerializerOptions
+                                                {
+                                                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                                                    WriteIndented = true,
+                                                    Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) },
+                                                }
+                                            );
+                                            await File.WriteAllTextAsync(releaseJsonPath, updatedText);
+                                            updatedReleases++;
+                                        }
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        result.Notes.Add($"Failed to update release.json for '{Path.GetFileName(rel.ReleaseDir)}': {ex.Message}");
+                                    }
+                                }
+                            }
+                            
+                            if (updatedReleases > 0)
+                            {
+                                result.Notes.Add($"Updated ArtistName field in {updatedReleases} existing release.json files for '{Path.GetFileName(artist.ArtistDir)}'");
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    result.Notes.Add($"Failed to update ArtistName fields for '{Path.GetFileName(artist.ArtistDir)}': {ex.Message}");
                 }
             }
 

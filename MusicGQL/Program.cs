@@ -153,6 +153,10 @@ builder
         // Configure timeout for Prowlarr requests using options
         var options = serviceProvider.GetRequiredService<IOptions<ProwlarrOptions>>();
         client.Timeout = TimeSpan.FromSeconds(options.Value.TimeoutSeconds);
+        
+        // Additional configuration for better reliability
+        client.DefaultRequestHeaders.Add("User-Agent", "MusicGQL/1.0");
+        client.DefaultRequestHeaders.Add("Accept", "application/json");
     })
     .Services
     .AddHttpClient<MusicGQL.Features.External.Downloads.Sabnzbd.SabnzbdClient>(client =>

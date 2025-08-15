@@ -56,6 +56,34 @@ public class SetReleaseGroupMutation
 
             // Ensure connections block exists and set new RG id; clear specific release override
             existing ??= new JsonRelease { Title = release.Title, Type = JsonReleaseType.Album };
+            
+            // Set artist name if not already set
+            if (string.IsNullOrWhiteSpace(existing.ArtistName))
+            {
+                try
+                {
+                    var artistJsonPath = Path.Combine(release.ReleasePath, "..", "artist.json");
+                    if (File.Exists(artistJsonPath))
+                    {
+                        var text = await File.ReadAllTextAsync(artistJsonPath);
+                        var jsonArtist = JsonSerializer.Deserialize<JsonArtist>(
+                            text,
+                            new JsonSerializerOptions
+                            {
+                                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                                PropertyNameCaseInsensitive = true,
+                                Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) },
+                            }
+                        );
+                        existing.ArtistName = jsonArtist?.Name ?? string.Empty;
+                    }
+                }
+                catch
+                {
+                    existing.ArtistName = string.Empty;
+                }
+            }
+            
             existing.Connections ??= new ReleaseServiceConnections();
             existing.Connections.MusicBrainzReleaseGroupId = input.MusicBrainzReleaseGroupId;
             existing.Connections.MusicBrainzReleaseIdOverride = null;

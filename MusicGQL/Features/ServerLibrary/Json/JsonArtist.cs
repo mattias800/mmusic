@@ -9,6 +9,7 @@ public class JsonArtist
     public List<JsonTopTrack>? TopTracks { get; set; }
     public JsonArtistPhotos? Photos { get; set; }
     public JsonArtistServiceConnections? Connections { get; set; }
+    public List<JsonArtistAppearance>? AlsoAppearsOn { get; set; }
 }
 
 public class JsonTopTrack
@@ -42,4 +43,55 @@ public class JsonArtistServiceConnections
     public string? SoundcloudUrl { get; set; }
     public string? BandcampUrl { get; set; }
     public string? DiscogsUrl { get; set; }
+}
+
+/// <summary>
+/// Represents an appearance by this artist on a release where they are not the primary artist
+/// </summary>
+public class JsonArtistAppearance
+{
+    /// <summary>
+    /// Title of the release/album
+    /// </summary>
+    public string ReleaseTitle { get; set; } = string.Empty;
+    
+    /// <summary>
+    /// Type of release (Album, EP, Single)
+    /// </summary>
+    public string ReleaseType { get; set; } = string.Empty;
+    
+    /// <summary>
+    /// Name of the primary artist for this release
+    /// </summary>
+    public string PrimaryArtistName { get; set; } = string.Empty;
+    
+    /// <summary>
+    /// MusicBrainz ID of the primary artist
+    /// </summary>
+    public string? PrimaryArtistMusicBrainzId { get; set; }
+    
+    /// <summary>
+    /// MusicBrainz ID of the release group
+    /// </summary>
+    public string? MusicBrainzReleaseGroupId { get; set; }
+    
+    /// <summary>
+    /// First release date of the release group
+    /// </summary>
+    public string? FirstReleaseDate { get; set; }
+    
+    /// <summary>
+    /// Year of first release
+    /// </summary>
+    public string? FirstReleaseYear { get; set; }
+    
+    /// <summary>
+    /// Role of this artist on the release (e.g., "Featured Artist", "Producer", "Composer")
+    /// </summary>
+    public string? Role { get; set; }
+    
+    /// <summary>
+    /// Cover art URL if available
+    /// </summary>
+    public string? CoverArt { get; set; }
 }

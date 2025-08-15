@@ -39,7 +39,7 @@ export const TopArtistCard: React.FC<TopArtistCardProps> = (props) => {
       imageAlt={artist.name + " cover"}
       onClick={() =>
         artist?.musicBrainzArtist?.id &&
-        navigate(`/artist/${artist.musicBrainzArtist?.id}`)
+        navigate(`/mb-artist/${artist.musicBrainzArtist?.id}`)
       }
     >
       <PhotoCardCenterHeading>{artist.name}</PhotoCardCenterHeading>

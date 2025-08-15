@@ -19,6 +19,8 @@ public record Release([property: GraphQLIgnore] CachedRelease Model)
 
     public string Title() => Model.Title;
 
+    public string ArtistName() => Model.JsonRelease.ArtistName;
+
     public ReleaseType? Type() =>
         Model.Type switch
         {

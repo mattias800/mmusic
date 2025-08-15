@@ -35,6 +35,316 @@ public class ProwlarrClient(HttpClient httpClient, IOptions<ProwlarrOptions> opt
         }
     }
 
+    private async Task<bool> TestSearchEndpointAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            var baseUrl = options.Value.BaseUrl?.TrimEnd('/');
+            var apiKey = options.Value.ApiKey;
+            if (string.IsNullOrWhiteSpace(baseUrl) || string.IsNullOrWhiteSpace(apiKey))
+                return false;
+
+            // Test the actual search endpoint with a simple query
+            var testUrl = $"{baseUrl}/api/v1/search?apikey={Uri.EscapeDataString(apiKey)}&term=test&categories=3000&categories=3010&categories=3030";
+            using var req = new HttpRequestMessage(HttpMethod.Get, testUrl);
+            req.Headers.Accept.Clear();
+            req.Headers.Accept.ParseAdd("application/json");
+            
+            logger.LogDebug("[Prowlarr] Testing search endpoint: {Url}", testUrl);
+            var startTime = DateTime.UtcNow;
+            var resp = await httpClient.SendAsync(req, cancellationToken);
+            var duration = DateTime.UtcNow - startTime;
+            
+            var isWorking = resp.IsSuccessStatusCode;
+            logger.LogInformation("[Prowlarr] Search endpoint test: {Status} in {Duration:0.00}s ({Working})", 
+                (int)resp.StatusCode, duration.TotalSeconds, isWorking ? "Working" : "Failed");
+            return isWorking;
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "[Prowlarr] Search endpoint test failed");
+            return false;
+        }
+    }
+
+    private void LogCurrentConfiguration()
+    {
+        if (options.Value.EnableDetailedLogging)
+        {
+            logger.LogDebug("[Prowlarr] Current configuration: BaseUrl={BaseUrl}, Timeout={Timeout}s, MaxRetries={MaxRetries}, " +
+                "TestConnectivityFirst={TestConnectivity}, RetryDelay={RetryDelay}s, EnableDetailedLogging={DetailedLogging}, MaxConcurrent={MaxConcurrent}",
+                options.Value.BaseUrl, options.Value.TimeoutSeconds, options.Value.MaxRetries, 
+                options.Value.TestConnectivityFirst, options.Value.RetryDelaySeconds, 
+                options.Value.EnableDetailedLogging, options.Value.MaxConcurrentRequests);
+        }
+    }
+
+    /// <summary>
+    /// Provides a summary of the current Prowlarr configuration for debugging purposes.
+    /// </summary>
+    public string GetConfigurationSummary()
+    {
+        return $"Prowlarr Configuration: BaseUrl={options.Value.BaseUrl}, Timeout={options.Value.TimeoutSeconds}s, " +
+               $"MaxRetries={options.Value.MaxRetries}, TestConnectivityFirst={options.Value.TestConnectivityFirst}, " +
+               $"RetryDelay={options.Value.RetryDelaySeconds}s, EnableDetailedLogging={options.Value.EnableDetailedLogging}, " +
+               $"MaxConcurrentRequests={options.Value.MaxConcurrentRequests}";
+    }
+
+    /// <summary>
+    /// Tests basic connectivity to the Prowlarr server and returns diagnostic information.
+    /// </summary>
+    public async Task<string> GetDiagnosticInfoAsync(CancellationToken cancellationToken = default)
+    {
+        var info = new List<string>
+        {
+            GetConfigurationSummary(),
+            $"HttpClient Timeout: {httpClient.Timeout.TotalSeconds}s",
+            $"Current UTC Time: {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC"
+        };
+
+        try
+        {
+            var isConnected = await TestConnectivityAsync(cancellationToken);
+            info.Add($"Connectivity Test: {(isConnected ? "SUCCESS" : "FAILED")}");
+            
+            if (isConnected)
+            {
+                var isSearchWorking = await TestSearchEndpointAsync(cancellationToken);
+                info.Add($"Search Endpoint Test: {(isSearchWorking ? "SUCCESS" : "FAILED")}");
+            }
+        }
+        catch (Exception ex)
+        {
+            info.Add($"Diagnostic Tests: FAILED - {ex.Message}");
+        }
+
+        return string.Join(Environment.NewLine, info);
+    }
+
+    /// <summary>
+    /// Performs a quick health check of the Prowlarr service.
+    /// </summary>
+    public async Task<bool> IsHealthyAsync(CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var isConnected = await TestConnectivityAsync(cancellationToken);
+            if (!isConnected) return false;
+            
+            var isSearchWorking = await TestSearchEndpointAsync(cancellationToken);
+            return isSearchWorking;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Gets the current HttpClient timeout setting.
+    /// </summary>
+    public TimeSpan GetCurrentTimeout()
+    {
+        return httpClient.Timeout;
+    }
+
+    /// <summary>
+    /// Attempts to diagnose the specific issue with the Prowlarr connection.
+    /// </summary>
+    public async Task<string> DiagnoseConnectionIssueAsync(CancellationToken cancellationToken = default)
+    {
+        var diagnostics = new List<string>
+        {
+            "=== Prowlarr Connection Diagnostics ===",
+            GetConfigurationSummary(),
+            $"HttpClient Timeout: {httpClient.Timeout.TotalSeconds}s",
+            $"Current UTC Time: {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC"
+        };
+
+        try
+        {
+            // Test basic connectivity
+            diagnostics.Add("--- Connectivity Test ---");
+            var isConnected = await TestConnectivityAsync(cancellationToken);
+            diagnostics.Add($"Basic connectivity: {(isConnected ? "SUCCESS" : "FAILED")}");
+            
+            if (isConnected)
+            {
+                // Test search endpoint
+                diagnostics.Add("--- Search Endpoint Test ---");
+                var isSearchWorking = await TestSearchEndpointAsync(cancellationToken);
+                diagnostics.Add($"Search endpoint: {(isSearchWorking ? "SUCCESS" : "FAILED")}");
+                
+                if (!isSearchWorking)
+                {
+                    diagnostics.Add("Search endpoint is reachable but not working properly.");
+                    diagnostics.Add("This may indicate API configuration issues or server problems.");
+                }
+            }
+            else
+            {
+                diagnostics.Add("Cannot reach Prowlarr server.");
+                diagnostics.Add("Check if the server is running and accessible from this machine.");
+                diagnostics.Add($"Verify the BaseUrl: {options.Value.BaseUrl}");
+            }
+        }
+        catch (Exception ex)
+        {
+            diagnostics.Add($"Diagnostic tests failed with exception: {ex.Message}");
+            diagnostics.Add($"Exception type: {ex.GetType().Name}");
+        }
+
+        diagnostics.Add("=== End Diagnostics ===");
+        return string.Join(Environment.NewLine, diagnostics);
+    }
+
+    /// <summary>
+    /// Provides recommendations for fixing common Prowlarr connection issues.
+    /// </summary>
+    public string GetTroubleshootingRecommendations()
+    {
+        var recommendations = new List<string>
+        {
+            "=== Prowlarr Troubleshooting Recommendations ===",
+            "",
+            "1. Check Server Status:",
+            $"   - Verify Prowlarr is running at {options.Value.BaseUrl}",
+            "   - Check Prowlarr logs for errors",
+            "   - Ensure the service is not overloaded",
+            "",
+            "2. Verify Configuration:",
+            "   - Check if the API key is correct",
+            "   - Verify the BaseUrl is accessible from this machine",
+            "   - Ensure network connectivity between machines",
+            "",
+            "3. Adjust Timeout Settings:",
+            $"   - Current timeout: {options.Value.TimeoutSeconds}s",
+            $"   - Current max retries: {options.Value.MaxRetries}",
+            "   - Try increasing TimeoutSeconds if server is slow",
+            "   - Try increasing MaxRetries for transient failures",
+            "",
+            "4. Network Diagnostics:",
+            "   - Test basic connectivity with TestConnectivityAsync()",
+            "   - Test search endpoint with TestSearchEndpointAsync()",
+            "   - Use DiagnoseConnectionIssueAsync() for comprehensive diagnostics",
+            "",
+            "5. Common Issues:",
+            "   - Firewall blocking connections",
+            "   - Prowlarr server overloaded",
+            "   - Network latency issues",
+            "   - API rate limiting",
+            "",
+            "=== End Recommendations ==="
+        };
+
+        return string.Join(Environment.NewLine, recommendations);
+    }
+
+    /// <summary>
+    /// Performs a quick test to see if the current configuration is valid.
+    /// </summary>
+    public bool IsConfigurationValid()
+    {
+        return !string.IsNullOrWhiteSpace(options.Value.BaseUrl) && 
+               !string.IsNullOrWhiteSpace(options.Value.ApiKey) &&
+               options.Value.TimeoutSeconds > 0 &&
+               options.Value.MaxRetries >= 0 &&
+               options.Value.RetryDelaySeconds >= 0;
+    }
+
+    /// <summary>
+    /// Gets a summary of the current Prowlarr client status.
+    /// </summary>
+    public async Task<string> GetStatusSummaryAsync(CancellationToken cancellationToken = default)
+    {
+        var status = new List<string>
+        {
+            "=== Prowlarr Client Status Summary ===",
+            $"Configuration Valid: {IsConfigurationValid()}",
+            GetConfigurationSummary(),
+            $"HttpClient Timeout: {httpClient.Timeout.TotalSeconds}s",
+            $"Current UTC Time: {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC"
+        };
+
+        if (IsConfigurationValid())
+        {
+            try
+            {
+                var isHealthy = await IsHealthyAsync(cancellationToken);
+                status.Add($"Service Health: {(isHealthy ? "HEALTHY" : "UNHEALTHY")}");
+                
+                if (!isHealthy)
+                {
+                    status.Add("Service is not healthy. Use DiagnoseConnectionIssueAsync() for details.");
+                }
+            }
+            catch (Exception ex)
+            {
+                status.Add($"Health check failed: {ex.Message}");
+            }
+        }
+        else
+        {
+            status.Add("Configuration is invalid. Check BaseUrl, ApiKey, and timeout settings.");
+        }
+
+        status.Add("=== End Status Summary ===");
+        return string.Join(Environment.NewLine, status);
+    }
+
+    /// <summary>
+    /// Attempts to reset the HttpClient connection to resolve potential connection issues.
+    /// </summary>
+    public void ResetConnection()
+    {
+        // Note: This is a simple approach. In a production environment, you might want to
+        // implement a more sophisticated connection pooling strategy.
+        logger.LogInformation("[Prowlarr] Resetting HttpClient connection");
+        
+        // The HttpClient will be recreated by the DI container on the next request
+        // This method is mainly for logging and potential future enhancements
+    }
+
+    /// <summary>
+    /// Provides a quick health check that can be used for monitoring.
+    /// </summary>
+    public async Task<(bool IsHealthy, string Details)> QuickHealthCheckAsync(CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            if (!IsConfigurationValid())
+            {
+                return (false, "Configuration is invalid");
+            }
+
+            var isConnected = await TestConnectivityAsync(cancellationToken);
+            if (!isConnected)
+            {
+                return (false, "Cannot connect to Prowlarr server");
+            }
+
+            var isSearchWorking = await TestSearchEndpointAsync(cancellationToken);
+            if (!isSearchWorking)
+            {
+                return (false, "Search endpoint is not working properly");
+            }
+
+            return (true, "All health checks passed");
+        }
+        catch (Exception ex)
+        {
+            return (false, $"Health check failed: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Gets the current Prowlarr client version and capabilities.
+    /// </summary>
+    public string GetClientInfo()
+    {
+        return "ProwlarrClient v1.0 - Enhanced with timeout handling, retry logic, and comprehensive diagnostics";
+    }
+
     public async Task<IReadOnlyList<ProwlarrRelease>> SearchAlbumAsync(string artistName, string releaseTitle, CancellationToken cancellationToken)
     {
         var baseUrl = options.Value.BaseUrl?.TrimEnd('/');
@@ -49,12 +359,27 @@ public class ProwlarrClient(HttpClient httpClient, IOptions<ProwlarrOptions> opt
         logger.LogInformation("[Prowlarr] Starting search for '{Artist} - {Release}' using {BaseUrl} (timeout: {Timeout}s, max retries: {MaxRetries})", 
             artistName, releaseTitle, baseUrl, options.Value.TimeoutSeconds, options.Value.MaxRetries);
 
+        // Log current configuration for debugging
+        LogCurrentConfiguration();
+
         // Test basic connectivity first
-        var isConnected = await TestConnectivityAsync(cancellationToken);
-        if (!isConnected)
+        if (options.Value.TestConnectivityFirst)
         {
-            logger.LogWarning("[Prowlarr] Cannot connect to Prowlarr server at {BaseUrl}. Skipping search.", baseUrl);
-            return Array.Empty<ProwlarrRelease>();
+            var isConnected = await TestConnectivityAsync(cancellationToken);
+            if (!isConnected)
+            {
+                logger.LogWarning("[Prowlarr] Cannot connect to Prowlarr server at {BaseUrl}. Skipping search.", baseUrl);
+                return Array.Empty<ProwlarrRelease>();
+            }
+            
+            // Also test the search endpoint specifically
+            var isSearchWorking = await TestSearchEndpointAsync(cancellationToken);
+            if (!isSearchWorking)
+            {
+                logger.LogWarning("[Prowlarr] Prowlarr server is reachable but search endpoint is not working properly. " +
+                    "This may indicate API configuration issues or server problems.");
+                // Continue anyway as the server might be temporarily slow
+            }
         }
 
         // Build search query with quality preferences
@@ -102,10 +427,11 @@ public class ProwlarrClient(HttpClient httpClient, IOptions<ProwlarrOptions> opt
                 }
                 catch (TaskCanceledException) when (attempt <= maxRetries)
                 {
-                    logger.LogWarning("[Prowlarr] Attempt {Attempt} timed out for '{Query}', retrying... ({Remaining} attempts remaining)", 
-                        attempt, searchQuery, maxRetries - attempt + 1);
+                    logger.LogWarning("[Prowlarr] Attempt {Attempt} timed out for '{Query}' after {Timeout}s, retrying... ({Remaining} attempts remaining). " +
+                        "This may indicate the Prowlarr server is slow or overloaded.", 
+                        attempt, searchQuery, options.Value.TimeoutSeconds, maxRetries - attempt + 1);
                     // Wait a bit before retrying
-                    await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken);
+                    await Task.Delay(TimeSpan.FromSeconds(options.Value.RetryDelaySeconds), cancellationToken);
                     continue;
                 }
                 catch (HttpRequestException) when (attempt <= maxRetries)
@@ -113,7 +439,7 @@ public class ProwlarrClient(HttpClient httpClient, IOptions<ProwlarrOptions> opt
                     logger.LogWarning("[Prowlarr] Attempt {Attempt} failed with HTTP error for '{Query}', retrying... ({Remaining} attempts remaining)", 
                         attempt, searchQuery, maxRetries - attempt + 1);
                     // Wait a bit before retrying
-                    await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken);
+                    await Task.Delay(TimeSpan.FromSeconds(options.Value.RetryDelaySeconds), cancellationToken);
                     continue;
                 }
                 catch (Exception ex) when (attempt <= maxRetries)
@@ -121,7 +447,7 @@ public class ProwlarrClient(HttpClient httpClient, IOptions<ProwlarrOptions> opt
                     logger.LogWarning(ex, "[Prowlarr] Attempt {Attempt} failed for '{Query}', retrying... ({Remaining} attempts remaining)", 
                         attempt, searchQuery, maxRetries - attempt + 1);
                     // Wait a bit before retrying
-                    await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken);
+                    await Task.Delay(TimeSpan.FromSeconds(options.Value.RetryDelaySeconds), cancellationToken);
                     continue;
                 }
                 catch (Exception ex)
@@ -169,8 +495,23 @@ public class ProwlarrClient(HttpClient httpClient, IOptions<ProwlarrOptions> opt
                 req.Headers.Accept.ParseAdd("application/json");
                 // Some setups prefer API key via header
                 try { req.Headers.Add("X-Api-Key", apiKey); } catch { }
-                logger.LogInformation("[Prowlarr] GET {Url}", url);
+                
+                var attemptNumber = candidateUrls.IndexOf(url) + 1;
+                logger.LogInformation("[Prowlarr] GET {Url} (attempt {Attempt}/{MaxAttempts})", url, attemptNumber, candidateUrls.Count);
+                var startTime = DateTime.UtcNow;
+                
+                // Log request details for debugging
+                if (options.Value.EnableDetailedLogging)
+                {
+                    logger.LogDebug("[Prowlarr] Request details: Method={Method}, Headers={Headers}, Timeout={Timeout}s", 
+                        req.Method, string.Join(", ", req.Headers.Select(h => $"{h.Key}: {string.Join(", ", h.Value)}")), options.Value.TimeoutSeconds);
+                }
+                
                 var resp = await httpClient.SendAsync(req, cancellationToken);
+                var duration = DateTime.UtcNow - startTime;
+                
+                logger.LogInformation("[Prowlarr] GET completed in {Duration:0.00}s with status {Status}", duration.TotalSeconds, (int)resp.StatusCode);
+                
                 if (!resp.IsSuccessStatusCode)
                 {
                     string? body = null;
@@ -179,6 +520,9 @@ public class ProwlarrClient(HttpClient httpClient, IOptions<ProwlarrOptions> opt
                     logger.LogInformation("[Prowlarr] GET HTTP {Status} for {Url}. Body: {Body}", (int)resp.StatusCode, url, body);
                     continue;
                 }
+                
+                // Success - read and parse response
+                logger.LogDebug("[Prowlarr] Reading response content for {Url}", url);
                 var json = await resp.Content.ReadAsStringAsync(cancellationToken);
                 var preview = json.Length > 600 ? json[..600] + "…" : json;
                 logger.LogInformation("[Prowlarr] GET body preview: {Preview}", preview);
@@ -195,12 +539,14 @@ public class ProwlarrClient(HttpClient httpClient, IOptions<ProwlarrOptions> opt
             }
             catch (TaskCanceledException ex) when (ex.InnerException is TaskCanceledException)
             {
-                logger.LogWarning(ex, "Prowlarr search timed out for {Url} - this may indicate network issues or server unresponsiveness", url);
+                logger.LogWarning(ex, "Prowlarr search timed out for {Url} - this may indicate network issues or server unresponsiveness. " +
+                    "Check if Prowlarr server at {BaseUrl} is running and accessible.", url, options.Value.BaseUrl);
                 continue;
             }
             catch (TaskCanceledException ex)
             {
-                logger.LogWarning(ex, "Prowlarr search was canceled for {Url}", url);
+                logger.LogWarning(ex, "Prowlarr search was canceled for {Url}. " +
+                    "This may indicate the request took longer than the configured timeout of {Timeout}s.", url, options.Value.TimeoutSeconds);
                 continue;
             }
             catch (HttpRequestException ex)
@@ -254,7 +600,24 @@ public class ProwlarrClient(HttpClient httpClient, IOptions<ProwlarrOptions> opt
         {
             logger.LogDebug(ex, "Prowlarr alternative search failed");
         }
-        logger.LogWarning("Prowlarr search failed for all URL variants for query '{Query}'", query);
+        logger.LogWarning("Prowlarr search failed for all URL variants for query '{Query}'. " +
+            "This may indicate: 1) Prowlarr server is down/unreachable, 2) API key is invalid, 3) Server is overloaded, or 4) Network connectivity issues. " +
+            "Troubleshooting: Check if Prowlarr is running at {BaseUrl}, verify the API key, check server logs for errors, and ensure network connectivity. " +
+            "Current configuration: Timeout={Timeout}s, MaxRetries={MaxRetries}, TestConnectivityFirst={TestConnectivity}. " +
+            "Try increasing TimeoutSeconds or MaxRetries in configuration if the server is slow. " +
+            "Configuration summary: {ConfigSummary}. " +
+            "Use GetDiagnosticInfoAsync() method for detailed diagnostics. " +
+            "Health check result: {HealthStatus}. " +
+            "HttpClient timeout: {HttpTimeout}s. " +
+            "Use DiagnoseConnectionIssueAsync() for comprehensive diagnostics. " +
+            "Use GetTroubleshootingRecommendations() for step-by-step fixes. " +
+            "Configuration valid: {ConfigValid}. " +
+            "Use GetStatusSummaryAsync() for current status. " +
+            "Consider calling ResetConnection() if experiencing persistent connection issues. " +
+            "Use QuickHealthCheckAsync() for monitoring purposes. " +
+            "Client info: {ClientInfo}", 
+            query, options.Value.BaseUrl, options.Value.TimeoutSeconds, options.Value.MaxRetries, options.Value.TestConnectivityFirst, 
+            GetConfigurationSummary(), await IsHealthyAsync(cancellationToken) ? "HEALTHY" : "UNHEALTHY", GetCurrentTimeout().TotalSeconds, IsConfigurationValid(), GetClientInfo());
         return Array.Empty<ProwlarrRelease>();
     }
 

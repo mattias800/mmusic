@@ -445,15 +445,48 @@ public sealed class MusicBrainzImportExecutor(
             var eligibleTypes = new[] { "Album", "EP", "Single" };
             var eligibleGroups = releaseGroups.Where(rg => eligibleTypes.Contains(rg.PrimaryType)).ToList();
             
+            // Filter to only include release groups where this artist is the primary credited artist
+            var primaryArtistGroups = eligibleGroups.Where(rg =>
+            {
+                var credits = rg.Credits?.ToList();
+                if (credits == null || credits.Count == 0) return false;
+                
+                // Check if the first (primary) credit is for this artist
+                var primaryCredit = credits.FirstOrDefault();
+                if (primaryCredit?.Artist?.Id == null) return false;
+                
+                return primaryCredit.Artist.Id == mbArtistId;
+            }).ToList();
+            
+            // Collect non-primary artist appearances for the alsoAppearsOn field
+            var nonPrimaryArtistGroups = eligibleGroups.Where(rg =>
+            {
+                var credits = rg.Credits?.ToList();
+                if (credits == null || credits.Count == 0) return false;
+                
+                // Check if this artist appears but is not the primary artist
+                var hasArtist = credits.Any(c => c.Artist?.Id == mbArtistId);
+                if (!hasArtist) return false;
+                
+                var primaryCredit = credits.FirstOrDefault();
+                if (primaryCredit?.Artist?.Id == null) return false;
+                
+                return primaryCredit.Artist.Id != mbArtistId;
+            }).ToList();
+            
             logger.LogInformation("[ImportExecutor] ✅ Filtered to {EligibleCount}/{TotalCount} eligible release groups (types: {Types})", 
                 eligibleGroups.Count, releaseGroups.Count, string.Join(", ", eligibleTypes));
+            logger.LogInformation("[ImportExecutor] 🎯 Further filtered to {PrimaryArtistCount}/{EligibleCount} primary artist release groups", 
+                primaryArtistGroups.Count, eligibleGroups.Count);
+            logger.LogInformation("[ImportExecutor] 🤝 Found {NonPrimaryCount} non-primary artist appearances for alsoAppearsOn", 
+                nonPrimaryArtistGroups.Count);
 
             var importedCount = 0;
             var skippedCount = 0;
             var failedCount = 0;
             var importStart = DateTime.UtcNow;
 
-            foreach (var releaseGroup in eligibleGroups)
+            foreach (var releaseGroup in primaryArtistGroups)
             {
                 try
                 {
@@ -512,6 +545,55 @@ public sealed class MusicBrainzImportExecutor(
 
             var totalImportDuration = DateTime.UtcNow - importStart;
             var totalDuration = DateTime.UtcNow - startTime;
+            
+            // Populate alsoAppearsOn field in artist.json with non-primary artist appearances
+            if (nonPrimaryArtistGroups != null && nonPrimaryArtistGroups.Count > 0)
+            {
+                try
+                {
+                    var artistJsonPath = Path.Combine(artistDir, "artist.json");
+                    if (File.Exists(artistJsonPath))
+                    {
+                        var artistText = await File.ReadAllTextAsync(artistJsonPath);
+                        var jsonArtist = JsonSerializer.Deserialize<JsonArtist>(artistText, GetJsonOptions()) ?? new JsonArtist();
+                        
+                        jsonArtist.AlsoAppearsOn = nonPrimaryArtistGroups.Select(rg =>
+                        {
+                            var credits = rg.Credits?.ToList();
+                            var primaryCredit = credits?.FirstOrDefault();
+                            var primaryArtistName = primaryCredit?.Artist?.Name ?? primaryCredit?.Name ?? "Unknown Artist";
+                            var primaryArtistId = primaryCredit?.Artist?.Id;
+                            
+                            // Determine the role of this artist on the release
+                            var artistCredit = credits?.FirstOrDefault(c => c.Artist?.Id == mbArtistId);
+                            var role = artistCredit?.JoinPhrase?.TrimStart(' ', '&', ',') ?? "Featured Artist";
+                            
+                            return new JsonArtistAppearance
+                            {
+                                ReleaseTitle = rg.Title ?? "Unknown Release",
+                                ReleaseType = rg.PrimaryType ?? "Unknown",
+                                PrimaryArtistName = primaryArtistName,
+                                PrimaryArtistMusicBrainzId = primaryArtistId,
+                                MusicBrainzReleaseGroupId = rg.Id,
+                                FirstReleaseDate = rg.FirstReleaseDate,
+                                FirstReleaseYear = rg.FirstReleaseDate?.Split("-").FirstOrDefault(),
+                                Role = role,
+                                CoverArt = null // Could be populated later if needed
+                            };
+                        }).ToList();
+                        
+                        // Write updated artist.json
+                        var updatedArtistText = JsonSerializer.Serialize(jsonArtist, GetJsonOptions());
+                        await File.WriteAllTextAsync(artistJsonPath, updatedArtistText);
+                        
+                        logger.LogInformation("[ImportExecutor] 📝 Added {AppearanceCount} appearances to alsoAppearsOn field in artist.json", jsonArtist.AlsoAppearsOn.Count);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    logger.LogWarning(ex, "[ImportExecutor] ⚠️ Failed to update alsoAppearsOn field in artist.json");
+                }
+            }
             
             logger.LogInformation("[ImportExecutor] 🎉 Release group import completed in {TotalDurationMs}ms", totalDuration.TotalMilliseconds);
             logger.LogInformation("[ImportExecutor] 📊 Import Summary: {Imported} imported, {Skipped} skipped, {Failed} failed", 

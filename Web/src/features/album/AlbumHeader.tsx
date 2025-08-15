@@ -19,6 +19,7 @@ const albumHeaderReleaseFragment = graphql(`
     type
     coverArtUrl
     firstReleaseYear
+    artistName
     artist {
       id
       name
@@ -68,7 +69,10 @@ export const AlbumHeader: React.FC<AlbumHeaderProps> = (props) => {
             className={"text-sm font-bold"}
             to={getRouteToArtist(release.artist.id)}
           >
-            {release.artist.name}
+            {release.artistName !== release.artist.name 
+              ? `${release.artistName} (${release.artist.name})`
+              : release.artistName
+            }
           </Link>
           <p className="text-sm text-gray-300">
             • {release.firstReleaseYear} • {numSongsText}, {albumTime}
