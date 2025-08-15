@@ -41,6 +41,24 @@ public class LastFmEnrichmentService(
             return result;
         }
 
+        // Build candidate names from artist name, sortName, and aliases
+        var candidateNames = new List<string>();
+        void add(string? s)
+        {
+            if (!string.IsNullOrWhiteSpace(s) && !candidateNames.Contains(s, StringComparer.OrdinalIgnoreCase))
+                candidateNames.Add(s);
+        }
+        add(jsonArtist.Name);
+        add(jsonArtist.SortName);
+        if (jsonArtist.Aliases != null)
+        {
+            foreach (var a in jsonArtist.Aliases)
+            {
+                add(a.Name);
+                add(a.SortName);
+            }
+        }
+
         // Fetch listeners from Last.fm (best effort)
         try
         {
@@ -50,6 +68,21 @@ public class LastFmEnrichmentService(
         catch (Exception ex)
         {
             logger.LogWarning(ex, "[EnrichArtist] Failed to fetch Last.fm artist info for mbid='{MbId}'", mbArtistId);
+            // Try resolving by alias names
+            foreach (var name in candidateNames)
+            {
+                try
+                {
+                    var infoByName = await lastfmClient.Artist.GetInfoAsync(name);
+                    if (infoByName != null)
+                    {
+                        jsonArtist.MonthlyListeners = infoByName.Statistics?.Listeners;
+                        logger.LogInformation("[EnrichArtist] Resolved Last.fm listeners via alias '{Alias}'", name);
+                        break;
+                    }
+                }
+                catch { }
+            }
         }
 
         // Top tracks via Spotify first; fallback to Last.fm if Spotify fails or returns empty
@@ -59,24 +92,72 @@ public class LastFmEnrichmentService(
             var spotifyId = jsonArtist.Connections?.SpotifyId;
             if (string.IsNullOrWhiteSpace(spotifyId))
             {
-                var name = jsonArtist.Name;
-                if (!string.IsNullOrWhiteSpace(name))
+                foreach (var name in candidateNames)
                 {
-                    var candidates = await spotifyService.SearchArtistsAsync(name, 1);
-                    var best = candidates?.FirstOrDefault();
-                    if (best != null)
+                    try
                     {
-                        jsonArtist.Connections ??= new JsonArtistServiceConnections();
-                        jsonArtist.Connections.SpotifyId = best.Id;
-                        spotifyId = best.Id;
+                        var candidates = await spotifyService.SearchArtistsAsync(name, 3);
+                        var best = candidates?.FirstOrDefault();
+                        if (best != null)
+                        {
+                            jsonArtist.Connections ??= new JsonArtistServiceConnections();
+                            jsonArtist.Connections.SpotifyId = best.Id; // legacy field
+                            jsonArtist.Connections.SpotifyIds ??= new List<JsonSpotifyArtistIdentity>();
+                            if (!jsonArtist.Connections.SpotifyIds.Any(x => string.Equals(x.Id, best.Id, StringComparison.OrdinalIgnoreCase)))
+                            {
+                                jsonArtist.Connections.SpotifyIds.Add(new JsonSpotifyArtistIdentity
+                                {
+                                    Id = best.Id,
+                                    DisplayName = best.Name,
+                                    Source = "search",
+                                    AddedAt = DateTime.UtcNow.ToString("yyyy-MM-dd")
+                                });
+                            }
+                            spotifyId = best.Id;
+                            logger.LogInformation("[EnrichArtist] Resolved Spotify artist via name '{Name}'", name);
+                            break;
+                        }
                     }
+                    catch { }
                 }
             }
 
-            if (!string.IsNullOrWhiteSpace(spotifyId))
+            // Collect all linked Spotify IDs (including legacy single field) and merge top tracks
+            var allSpotifyIds = jsonArtist.Connections?.SpotifyIds?.Select(s => s.Id).ToList() ?? new List<string>();
+            if (!string.IsNullOrWhiteSpace(spotifyId) && !allSpotifyIds.Contains(spotifyId))
+            {
+                allSpotifyIds.Add(spotifyId);
+            }
+
+            if (allSpotifyIds.Count > 0)
             {
                 var spImporter = new TopTracks.TopTracksSpotifyImporter(spotifyService);
-                jsonArtist.TopTracks = await spImporter.GetTopTracksAsync(spotifyId!, 10);
+                var merged = new Dictionary<string, JsonTopTrack>(StringComparer.OrdinalIgnoreCase);
+                foreach (var sid in allSpotifyIds)
+                {
+                    try
+                    {
+                        var tracks = await spImporter.GetTopTracksAsync(sid, 10) ?? new List<JsonTopTrack>();
+                        foreach (var t in tracks)
+                        {
+                            var key = NormalizeTitle(t.Title);
+                            if (merged.TryGetValue(key, out var existing))
+                            {
+                                if ((t.PlayCount ?? 0) > (existing.PlayCount ?? 0))
+                                    merged[key] = t;
+                            }
+                            else
+                            {
+                                merged[key] = t;
+                            }
+                        }
+                    }
+                    catch { }
+                }
+                jsonArtist.TopTracks = merged.Values
+                    .OrderByDescending(t => t.PlayCount ?? 0)
+                    .Take(10)
+                    .ToList();
             }
         }
         catch (Exception ex)

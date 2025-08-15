@@ -5,11 +5,22 @@ public class JsonArtist
     public string Id { get; set; }
     public string Name { get; set; }
     public string? SortName { get; set; }
+    public List<JsonArtistAlias>? Aliases { get; set; }
     public long? MonthlyListeners { get; set; }
     public List<JsonTopTrack>? TopTracks { get; set; }
     public JsonArtistPhotos? Photos { get; set; }
     public JsonArtistServiceConnections? Connections { get; set; }
     public List<JsonArtistAppearance>? AlsoAppearsOn { get; set; }
+}
+
+public class JsonArtistAlias
+{
+    public string? Name { get; set; }
+    public string? SortName { get; set; }
+    public string? BeginDate { get; set; }
+    public string? EndDate { get; set; }
+    public string? Type { get; set; }
+    public string? Locale { get; set; }
 }
 
 public class JsonTopTrack
@@ -34,7 +45,11 @@ public class JsonArtistPhotos
 public class JsonArtistServiceConnections
 {
     public string? MusicBrainzArtistId { get; set; }
+    // Legacy single Spotify ID for backward compatibility
     public string? SpotifyId { get; set; }
+    // New: support multiple linked Spotify artist identities
+    public List<JsonSpotifyArtistIdentity>? SpotifyIds { get; set; }
+
     public string? YoutubeChannelUrl { get; set; }
     public string? YoutubeMusicUrl { get; set; }
     public string? AppleMusicArtistId { get; set; }
@@ -43,6 +58,16 @@ public class JsonArtistServiceConnections
     public string? SoundcloudUrl { get; set; }
     public string? BandcampUrl { get; set; }
     public string? DiscogsUrl { get; set; }
+}
+
+public class JsonSpotifyArtistIdentity
+{
+    public string Id { get; set; } = string.Empty;
+    public string? DisplayName { get; set; }
+    public string? Source { get; set; } // e.g., "musicbrainz" or "search"
+    public bool? Verified { get; set; }
+    public long? Followers { get; set; }
+    public string? AddedAt { get; set; }
 }
 
 /// <summary>

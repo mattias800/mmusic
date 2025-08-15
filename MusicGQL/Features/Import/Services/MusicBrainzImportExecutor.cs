@@ -169,6 +169,31 @@ public sealed class MusicBrainzImportExecutor(
         // Fetch enrichment (only if missing or we just created)
         try
         {
+            // Always refresh aliases from MusicBrainz (lightweight and cached)
+            try
+            {
+                var mbArtist = await musicBrainzService.GetArtistByIdAsync(mbArtistId);
+                var aliases = mbArtist?.Aliases?.Select(a => new JsonArtistAlias
+                {
+                    Name = a.Name,
+                    SortName = a.SortName,
+                    BeginDate = a.Begin,
+                    EndDate = a.End,
+                    Type = a.Type,
+                    Locale = a.Locale
+                }).ToList();
+                if (aliases != null && aliases.Any())
+                {
+                    jsonArtist.Aliases = aliases;
+                }
+                // Prefer MusicBrainz sort name if available
+                if (!string.IsNullOrWhiteSpace(mbArtist?.SortName))
+                {
+                    jsonArtist.SortName = mbArtist!.SortName;
+                }
+            }
+            catch { }
+
             if (
                 created
                 || jsonArtist.MonthlyListeners == null
@@ -195,20 +220,42 @@ public sealed class MusicBrainzImportExecutor(
                             var rels = mbArtist?.Relations;
                             if (rels != null)
                             {
+                                var foundIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
                                 foreach (var rel in rels)
                                 {
                                     var url = rel?.Url?.Resource;
                                     if (string.IsNullOrWhiteSpace(url)) continue;
                                     if (url.Contains("open.spotify.com/artist/", StringComparison.OrdinalIgnoreCase))
                                     {
-                                        var parts = new Uri(url).Segments;
-                                        var id = parts.LastOrDefault()?.Trim('/');
-                                        if (!string.IsNullOrWhiteSpace(id))
+                                        try
                                         {
-                                            spotifyArtistId = id;
-                                            jsonArtist.Connections.SpotifyId = id;
-                                            break;
+                                            var id = new Uri(url).Segments.LastOrDefault()?.Trim('/');
+                                            if (!string.IsNullOrWhiteSpace(id) && foundIds.Add(id))
+                                            {
+                                                jsonArtist.Connections.SpotifyIds ??= new List<JsonSpotifyArtistIdentity>();
+                                                if (!jsonArtist.Connections.SpotifyIds.Any(x => string.Equals(x.Id, id, StringComparison.OrdinalIgnoreCase)))
+                                                {
+                                                    jsonArtist.Connections.SpotifyIds.Add(new JsonSpotifyArtistIdentity
+                                                    {
+                                                        Id = id,
+                                                        DisplayName = artistDisplayName,
+                                                        Source = "musicbrainz",
+                                                        AddedAt = DateTime.UtcNow.ToString("yyyy-MM-dd")
+                                                    });
+                                                }
+                                            }
                                         }
+                                        catch { }
+                                    }
+                                }
+                                // Back-compat: set single SpotifyId to the first linked id if not already set
+                                if (string.IsNullOrWhiteSpace(jsonArtist.Connections.SpotifyId))
+                                {
+                                    var first = jsonArtist.Connections.SpotifyIds?.FirstOrDefault()?.Id;
+                                    if (!string.IsNullOrWhiteSpace(first))
+                                    {
+                                        spotifyArtistId = first;
+                                        jsonArtist.Connections.SpotifyId = first;
                                     }
                                 }
                             }
@@ -226,15 +273,59 @@ public sealed class MusicBrainzImportExecutor(
                             {
                                 spotifyArtistId = best!.Id;
                                 jsonArtist.Connections.SpotifyId = spotifyArtistId;
+                                jsonArtist.Connections.SpotifyIds ??= new List<JsonSpotifyArtistIdentity>();
+                                if (!jsonArtist.Connections.SpotifyIds.Any(x => string.Equals(x.Id, best.Id, StringComparison.OrdinalIgnoreCase)))
+                                {
+                                    jsonArtist.Connections.SpotifyIds.Add(new JsonSpotifyArtistIdentity
+                                    {
+                                        Id = best.Id,
+                                        DisplayName = best.Name,
+                                        Source = "search",
+                                        AddedAt = DateTime.UtcNow.ToString("yyyy-MM-dd")
+                                    });
+                                }
                             }
                         }
                         catch { }
                     }
 
-                    if (!string.IsNullOrWhiteSpace(spotifyArtistId))
+                    // Fetch top tracks from all linked Spotify IDs, merged by play count
+                    var allSpotifyIds = (jsonArtist.Connections.SpotifyIds?.Select(s => s.Id).ToList() ?? new List<string>());
+                    if (!string.IsNullOrWhiteSpace(spotifyArtistId) && !allSpotifyIds.Contains(spotifyArtistId))
+                    {
+                        allSpotifyIds.Add(spotifyArtistId);
+                    }
+
+                    if (allSpotifyIds.Count > 0)
                     {
                         TopTracks.ITopTracksImporter spImporter = new TopTracks.TopTracksSpotifyImporter(spotifyService);
-                        jsonArtist.TopTracks = await spImporter.GetTopTracksAsync(spotifyArtistId!, 10);
+                        var merged = new Dictionary<string, JsonTopTrack>(StringComparer.OrdinalIgnoreCase);
+                        foreach (var sid in allSpotifyIds)
+                        {
+                            try
+                            {
+                                var tracks = await spImporter.GetTopTracksAsync(sid, 10) ?? new List<JsonTopTrack>();
+                                foreach (var t in tracks)
+                                {
+                                    var key = NormalizeTitle(t.Title);
+                                    if (merged.TryGetValue(key, out var existing))
+                                    {
+                                        // keep highest play count
+                                        if ((t.PlayCount ?? 0) > (existing.PlayCount ?? 0))
+                                            merged[key] = t;
+                                    }
+                                    else
+                                    {
+                                        merged[key] = t;
+                                    }
+                                }
+                            }
+                            catch { }
+                        }
+                        jsonArtist.TopTracks = merged.Values
+                            .OrderByDescending(t => t.PlayCount ?? 0)
+                            .Take(10)
+                            .ToList();
                     }
                 }
                 catch { jsonArtist.TopTracks = jsonArtist.TopTracks ?? []; }
