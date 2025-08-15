@@ -137,4 +137,17 @@ public static class LibraryAssetUrlFactory
         var escapedReleaseFolderName = Uri.EscapeDataString(releaseFolderName);
         return $"/library/{escapedArtistId}/releases/{escapedReleaseFolderName}/tracks/{trackNumber}/audio";
     }
+
+    /// <summary>
+    /// Creates an appearance cover art URL
+    /// </summary>
+    /// <param name="artistId">Artist ID</param>
+    /// <param name="appearanceId">Appearance ID (from the filename like "appearance_abc123_def456_cover.jpg")</param>
+    /// <returns>Appearance cover art URL</returns>
+    public static string CreateAppearanceCoverArtUrl(string artistId, string appearanceId)
+    {
+        var escapedArtistId = Uri.EscapeDataString(artistId);
+        var escapedAppearanceId = Uri.EscapeDataString(appearanceId);
+        return $"/library/{escapedArtistId}/appearances/{escapedAppearanceId}/coverart";
+    }
 }

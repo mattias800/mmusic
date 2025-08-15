@@ -108,6 +108,31 @@ public class LibraryAssetsController(ServerLibraryAssetReader assetReader) : Con
     }
 
     /// <summary>
+    /// Serves cover art for artist appearances (./appearance_*.jpg in artist folder)
+    /// GET /library/{artistId}/appearances/{appearanceId}/coverart
+    /// </summary>
+    [HttpGet("{artistId}/appearances/{appearanceId}/coverart")]
+    public async Task<IActionResult> GetAppearanceCoverArt(string artistId, string appearanceId)
+    {
+        var (stream, contentType, fileName) = await assetReader.GetAppearanceCoverArtAsync(
+            artistId,
+            appearanceId
+        );
+
+        if (stream == null || contentType == null)
+        {
+            return NotFound(
+                $"Appearance cover art not found for artist '{artistId}' with appearance ID '{appearanceId}'"
+            );
+        }
+
+        // Determine if we should include file extension in response
+        var shouldIncludeExtension = ShouldIncludeFileExtension(Request.Path);
+
+        return File(stream, contentType, shouldIncludeExtension ? fileName : null);
+    }
+
+    /// <summary>
     /// Serves track audio files
     /// GET /library/{artistId}/releases/{releaseFolderName}/tracks/{trackNumber}/audio
     /// </summary>
@@ -243,6 +268,44 @@ public class LibraryAssetsController(ServerLibraryAssetReader assetReader) : Con
         {
             return NotFound(
                 $"Cover art not found for release '{releaseFolderName}' by artist '{artistId}'"
+            );
+        }
+
+        // Validate that the requested extension matches the actual file
+        var actualExtension = System
+            .IO.Path.GetExtension(fileName)
+            ?.TrimStart('.')
+            .ToLowerInvariant();
+        if (actualExtension != extension.ToLowerInvariant())
+        {
+            return NotFound(
+                $"Requested extension '{extension}' does not match actual file extension '{actualExtension}'"
+            );
+        }
+
+        return File(stream, contentType, fileName);
+    }
+
+    /// <summary>
+    /// Alternative endpoint with file extension for appearance cover art
+    /// GET /library/{artistId}/appearances/{appearanceId}/coverart.{extension}
+    /// </summary>
+    [HttpGet("{artistId}/appearances/{appearanceId}/coverart.{extension}")]
+    public async Task<IActionResult> GetAppearanceCoverArtWithExtension(
+        string artistId,
+        string appearanceId,
+        string extension
+    )
+    {
+        var (stream, contentType, fileName) = await assetReader.GetAppearanceCoverArtAsync(
+            artistId,
+            appearanceId
+        );
+
+        if (stream == null || contentType == null)
+        {
+            return NotFound(
+                $"Appearance cover art not found for artist '{artistId}' with appearance ID '{appearanceId}'"
             );
         }
 

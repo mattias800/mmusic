@@ -81,4 +81,14 @@ public record Artist([property: GraphQLIgnore] CachedArtist Model) : IArtistBase
 
         return new ArtistImages(Model.JsonArtist.Photos, Model.Id);
     }
+
+    public IEnumerable<ArtistAppearsOn> AlsoAppearsOn()
+    {
+        if (Model.JsonArtist.AlsoAppearsOn == null || Model.JsonArtist.AlsoAppearsOn.Count == 0)
+        {
+            return [];
+        }
+
+        return Model.JsonArtist.AlsoAppearsOn.Select(appearance => new ArtistAppearsOn(appearance, Model.Id));
+    }
 }

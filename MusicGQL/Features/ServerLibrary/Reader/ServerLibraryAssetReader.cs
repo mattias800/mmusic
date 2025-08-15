@@ -1,5 +1,7 @@
 using MusicGQL.Features.ServerSettings;
 using Path = System.IO.Path;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace MusicGQL.Features.ServerLibrary.Reader;
 
@@ -206,7 +208,7 @@ public class ServerLibraryAssetReader(ServerSettingsAccessor serverSettingsAcces
             // Otherwise, serve local toptrackNN.jpg referenced by CoverArt
             var coverArtRel = topTrack.CoverArt;
 
-            if (string.IsNullOrWhiteSpace(coverArtRel))
+            if (string.IsNullOrEmpty(coverArtRel))
                 return (null, null, null);
 
             if (coverArtRel.StartsWith("./"))
@@ -226,6 +228,48 @@ public class ServerLibraryAssetReader(ServerSettingsAccessor serverSettingsAcces
         catch (Exception ex)
         {
             Console.WriteLine($"Error reading top track cover art: {ex.Message}");
+            return (null, null, null);
+        }
+    }
+
+    /// <summary>
+    /// Gets appearance cover art by artist ID and appearance ID
+    /// </summary>
+    /// <param name="artistId">Artist ID</param>
+    /// <param name="appearanceId">Appearance ID (from the filename like "appearance_abc123_def456_cover.jpg")</param>
+    /// <returns>File stream and content type, or null if not found</returns>
+    public async Task<(Stream? stream, string? contentType, string? fileName)> GetAppearanceCoverArtAsync(
+        string artistId,
+        string appearanceId
+    )
+    {
+        try
+        {
+            var libraryPath = await GetLibraryPathAsync();
+            var artistPath = Path.Combine(libraryPath, artistId);
+            if (!Directory.Exists(artistPath))
+                return (null, null, null);
+
+            // Look for appearance cover art files in the artist folder
+            var appearanceFiles = Directory
+                .GetFiles(artistPath, $"appearance_{appearanceId}_cover.*")
+                .Where(f => IsImageFile(f))
+                .ToList();
+
+            if (appearanceFiles.Count == 0)
+                return (null, null, null);
+
+            // Use the first found appearance cover art file
+            var coverArtPath = appearanceFiles[0];
+            var fileStream = new FileStream(coverArtPath, FileMode.Open, FileAccess.Read);
+            var contentType = GetContentTypeFromExtension(Path.GetExtension(coverArtPath));
+            var fileName = Path.GetFileName(coverArtPath);
+
+            return (fileStream, contentType, fileName);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error reading appearance cover art: {ex.Message}");
             return (null, null, null);
         }
     }
@@ -312,20 +356,28 @@ public class ServerLibraryAssetReader(ServerSettingsAccessor serverSettingsAcces
     }
 
     /// <summary>
-    /// Gets JSON serializer options consistent with ServerLibraryJsonReader
+    /// Gets JSON serialization options
     /// </summary>
-    private static System.Text.Json.JsonSerializerOptions GetJsonOptions()
+    private static JsonSerializerOptions GetJsonOptions()
     {
-        return new System.Text.Json.JsonSerializerOptions
+        return new JsonSerializerOptions
         {
             PropertyNameCaseInsensitive = true,
-            PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase,
-            Converters =
-            {
-                new System.Text.Json.Serialization.JsonStringEnumConverter(
-                    System.Text.Json.JsonNamingPolicy.CamelCase
-                ),
-            },
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) },
+        };
+    }
+
+    /// <summary>
+    /// Checks if a file is an image file based on its extension
+    /// </summary>
+    private static bool IsImageFile(string filePath)
+    {
+        var extension = Path.GetExtension(filePath).ToLowerInvariant();
+        return extension switch
+        {
+            ".jpg" or ".jpeg" or ".png" or ".gif" or ".webp" => true,
+            _ => false
         };
     }
 }
