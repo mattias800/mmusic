@@ -27,6 +27,9 @@ const downloadOverviewFetcherQuery = graphql(`
         completedTracks
         errorMessage
         currentDownloadSpeedKbps
+        currentProvider
+        currentProviderIndex
+        totalProviders
       }
     }
   }
@@ -56,6 +59,9 @@ const currentDownloadUpdatedSub = graphql(`
       completedTracks
       errorMessage
       currentDownloadSpeedKbps
+      currentProvider
+      currentProviderIndex
+      totalProviders
     }
   }
 `);
@@ -108,6 +114,11 @@ export const DownloadOverviewFetcher: React.FC<
               <div className="text-xs text-zinc-400">
                 {statusText(current.status)} {current.completedTracks}/
                 {current.totalTracks}
+                {current.currentProvider && current.totalProviders && (
+                  <span className="ml-2">
+                    via {current.currentProvider} ({current.currentProviderIndex}/{current.totalProviders})
+                  </span>
+                )}
               </div>
             )}
             {typeof current.currentDownloadSpeedKbps === "number" && (

@@ -20,7 +20,9 @@ public class StartDownloadReleaseService(
     DownloadCancellationService cancellationService,
     ServerSettingsAccessor serverSettingsAccessor,
     MusicGQL.Features.External.Downloads.DownloadProviderCatalog providers,
-    MusicGQL.Features.External.Downloads.Sabnzbd.SabnzbdFinalizeService sabFinalize
+    MusicGQL.Features.External.Downloads.Sabnzbd.SabnzbdFinalizeService sabFinalize,
+    CurrentDownloadStateService currentDownloadState,
+    DownloadHistoryService downloadHistory
 )
 {
     public async Task<(bool Success, string? ErrorMessage)> StartAsync(
@@ -105,11 +107,45 @@ public class StartDownloadReleaseService(
 
         var token = cancellationService.CreateFor(artistId, releaseFolderName, cancellationToken);
         bool ok = false;
-        foreach (var provider in providers.Providers)
+        var providerList = providers.Providers.ToList();
+        var totalProviders = providerList.Count;
+        
+        // Set initial searching status with provider info
+        currentDownloadState.Set(new DownloadProgress
         {
+            ArtistId = artistId,
+            ReleaseFolderName = releaseFolderName,
+            ArtistName = artistName,
+            ReleaseTitle = releaseTitle,
+            Status = DownloadStatus.Searching,
+            TotalProviders = totalProviders,
+            CurrentProviderIndex = 0,
+            CurrentProvider = null
+        });
+        
+        for (int i = 0; i < providerList.Count; i++)
+        {
+            var provider = providerList[i];
+            var providerName = provider.GetType().Name;
+            
             try
             {
-                logger.LogInformation("[StartDownload] Trying provider {Provider} for {Artist}/{Folder}", provider.GetType().Name, artistId, releaseFolderName);
+                // Update current provider info
+                currentDownloadState.Set(new DownloadProgress
+                {
+                    ArtistId = artistId,
+                    ReleaseFolderName = releaseFolderName,
+                    ArtistName = artistName,
+                    ReleaseTitle = releaseTitle,
+                    Status = DownloadStatus.Searching,
+                    TotalProviders = totalProviders,
+                    CurrentProviderIndex = i + 1,
+                    CurrentProvider = providerName
+                });
+                
+                logger.LogInformation("[StartDownload] Trying provider {Provider} ({Index}/{Total}) for {Artist}/{Folder}", 
+                    providerName, i + 1, totalProviders, artistId, releaseFolderName);
+                
                 ok = await provider.TryDownloadReleaseAsync(
                     artistId,
                     releaseFolderName,
@@ -120,25 +156,52 @@ public class StartDownloadReleaseService(
                     allowedOfficialDigitalCounts,
                     token
                 );
+                
                 if (ok)
                 {
-                    logger.LogInformation("[StartDownload] Provider {Provider} reported success for {Artist}/{Folder}", provider.GetType().Name, artistId, releaseFolderName);
+                    logger.LogInformation("[StartDownload] Provider {Provider} reported success for {Artist}/{Folder}", providerName, artistId, releaseFolderName);
+                    
+                    // Add success to history
+                    downloadHistory.Add(new DownloadHistoryItem(
+                        DateTime.UtcNow,
+                        artistId,
+                        releaseFolderName,
+                        artistName,
+                        releaseTitle,
+                        true,
+                        null,
+                        providerName
+                    ));
+                    
                     break;
                 }
                 else
                 {
-                    logger.LogInformation("[StartDownload] Provider {Provider} reported no result for {Artist}/{Folder}", provider.GetType().Name, artistId, releaseFolderName);
+                    logger.LogInformation("[StartDownload] Provider {Provider} reported no result for {Artist}/{Folder}", providerName, artistId, releaseFolderName);
                 }
             }
             catch (Exception ex)
             {
-                logger.LogWarning(ex, "[StartDownload] Provider {Provider} failed", provider.GetType().Name);
+                logger.LogWarning(ex, "[StartDownload] Provider {Provider} failed", providerName);
             }
         }
+        
         if (!ok)
         {
             var msg = $"No suitable download found for {artistName} - {releaseTitle}";
             logger.LogWarning("[StartDownload] {Message}", msg);
+
+            // Add "Not Found" to history
+            downloadHistory.Add(new DownloadHistoryItem(
+                DateTime.UtcNow,
+                artistId,
+                releaseFolderName,
+                artistName,
+                releaseTitle,
+                false,
+                "No suitable download found",
+                null
+            ));
 
             await cache.UpdateReleaseDownloadStatus(
                 artistId,

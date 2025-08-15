@@ -8,7 +8,8 @@ public record DownloadHistoryItem
     string? ArtistName,
     string? ReleaseTitle,
     bool Success,
-    string? ErrorMessage
+    string? ErrorMessage,
+    string? ProviderUsed
 );
 
 public class DownloadHistoryService

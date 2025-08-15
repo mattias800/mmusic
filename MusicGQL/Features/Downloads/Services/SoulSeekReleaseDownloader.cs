@@ -261,15 +261,16 @@ public class SoulSeekReleaseDownloader(
             // Record not found in history
             try
             {
-                downloadHistory.Add(new DownloadHistoryItem(
-                    DateTime.UtcNow,
-                    artistId,
-                    releaseFolderName,
-                    artistName,
-                    releaseTitle,
-                    false,
-                    "Not found"
-                ));
+                            downloadHistory.Add(new DownloadHistoryItem(
+                DateTime.UtcNow,
+                artistId,
+                releaseFolderName,
+                artistName,
+                releaseTitle,
+                false,
+                "Not found",
+                "SoulSeekDownloadProvider"
+            ));
             }
             catch { }
             return false;
@@ -541,7 +542,8 @@ public class SoulSeekReleaseDownloader(
                         artistName,
                         releaseTitle,
                         true,
-                        null
+                        null,
+                        "SoulSeekDownloadProvider"
                     ));
                 }
                 catch { }
@@ -580,7 +582,8 @@ public class SoulSeekReleaseDownloader(
                 artistName,
                 releaseTitle,
                 false,
-                "All candidates failed"
+                "All candidates failed",
+                "SoulSeekDownloadProvider"
             ));
         }
         catch { }

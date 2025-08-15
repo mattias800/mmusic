@@ -312,6 +312,7 @@ type DownloadHistoryItem {
   artistId: String!
   artistName: String
   errorMessage: String
+  providerUsed: String
   releaseFolderName: String!
   releaseTitle: String
   success: Boolean!
@@ -324,12 +325,15 @@ type DownloadProgress {
   completedTracks: Int!
   coverArtUrl: String
   currentDownloadSpeedKbps: Float
+  currentProvider: String
+  currentProviderIndex: Int!
   currentTrackProgressPercent: Float
   errorMessage: String
   id: String!
   releaseFolderName: String!
   releaseTitle: String
   status: DownloadStatus!
+  totalProviders: Int!
   totalTracks: Int!
 }
 

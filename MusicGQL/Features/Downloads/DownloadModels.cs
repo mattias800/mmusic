@@ -48,6 +48,11 @@ public record DownloadProgress
     public string? CoverArtUrl { get; init; }
     public double? CurrentTrackProgressPercent { get; init; }
     public double? CurrentDownloadSpeedKbps { get; init; }
+    
+    // Current provider information
+    public string? CurrentProvider { get; init; }
+    public int CurrentProviderIndex { get; init; }
+    public int TotalProviders { get; init; }
 }
 
 

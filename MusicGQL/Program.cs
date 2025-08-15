@@ -160,16 +160,12 @@ builder
         var prowlarrProvider = sp.GetRequiredService<MusicGQL.Features.External.Downloads.Prowlarr.ProwlarrDownloadProvider>();
 
         var providers = new List<MusicGQL.Features.External.Downloads.IDownloadProvider>();
-        if (preferProwlarrFirst)
-        {
-            providers.Add(prowlarrProvider);
-            if (!skipSoulSeek) providers.Add(soulSeekProvider);
-        }
-        else
-        {
-            if (!skipSoulSeek) providers.Add(soulSeekProvider);
-            providers.Add(prowlarrProvider);
-        }
+        
+        // Always try Prowlarr first, then Soulseek
+        providers.Add(prowlarrProvider);
+        if (!skipSoulSeek) providers.Add(soulSeekProvider);
+        
+        // Note: preferProwlarrFirst is now always true by default
 
         try
         {

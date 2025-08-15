@@ -23,6 +23,9 @@ const query = graphql(`
         coverArtUrl
         currentTrackProgressPercent
         currentDownloadSpeedKbps
+        currentProvider
+        currentProviderIndex
+        totalProviders
       }
       downloadQueue {
         id
@@ -42,6 +45,7 @@ const query = graphql(`
         releaseTitle
         success
         errorMessage
+        providerUsed
       }
     }
     artistImport {
@@ -113,6 +117,9 @@ const subDlCur = graphql(`
       coverArtUrl
       currentTrackProgressPercent
       currentDownloadSpeedKbps
+      currentProvider
+      currentProviderIndex
+      totalProviders
     }
   }
 `);
@@ -264,6 +271,11 @@ export const QueuesPage: React.FC = () => {
                         — {dl.currentDownload.completedTracks}/
                         {dl.currentDownload.totalTracks}
                       </>
+                    )}
+                    {dl.currentDownload.currentProvider && dl.currentDownload.totalProviders && (
+                      <span className="ml-2">
+                        via {dl.currentDownload.currentProvider} ({dl.currentDownload.currentProviderIndex}/{dl.currentDownload.totalProviders})
+                      </span>
                     )}
                   </div>
                   {typeof dl.currentDownload.currentDownloadSpeedKbps ===
@@ -443,8 +455,15 @@ export const QueuesPage: React.FC = () => {
                   </div>
                 </div>
               </div>
-              <div className={h.success ? "text-green-400" : "text-red-400"}>
-                {h.success ? "Completed" : "Failed"}
+              <div className="flex flex-col items-end text-right">
+                <div className={h.success ? "text-green-400" : "text-red-400"}>
+                  {h.success ? "Completed" : "Failed"}
+                </div>
+                {h.providerUsed && (
+                  <div className="text-xs text-zinc-500 mt-1">
+                    via {h.providerUsed}
+                  </div>
+                )}
               </div>
             </div>
           ))}
