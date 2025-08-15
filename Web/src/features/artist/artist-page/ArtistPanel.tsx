@@ -17,6 +17,7 @@ import { ArtistServiceConnections } from "@/features/artist/artist-page/ArtistSe
 import { ArtistNumReleasesAvailableIndicator } from "@/features/artist/artist-page/ArtistNumReleasesAvailableIndicator.tsx";
 import { ArtistDownloadAllReleasesButton } from "@/features/artist/artist-page/ArtistDownloadAllReleasesButton.tsx";
 import { ArtistImportStatusInfo } from "@/features/artist/artist-page/ArtistImportStatusInfo.tsx";
+import { ArtistStatisticsHeader } from "@/features/artist/artist-page/ArtistStatisticsHeader.tsx";
 
 interface ArtistPanelProps {
   artist: FragmentType<typeof artistPanelArtistFragment>;
@@ -30,6 +31,7 @@ const artistPanelArtistFragment = graphql(`
     ...ArtistNumReleasesAvailableIndicator_Artist
     ...ArtistServiceConnections_Artist
     ...ArtistDownloadAllReleasesButton_Artist
+    ...ArtistStatisticsHeader_Artist
     name
     listeners
     connectedExternalServices {
@@ -208,6 +210,8 @@ export const ArtistPanel: React.FC<ArtistPanelProps> = (props) => {
           )}
         />
       </div>
+
+      <ArtistStatisticsHeader artist={artist} />
 
       <MainPadding>
         <SectionList>

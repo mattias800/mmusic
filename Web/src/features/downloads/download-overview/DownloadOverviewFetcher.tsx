@@ -1,6 +1,7 @@
 import { graphql } from "@/gql";
 import * as React from "react";
 import { useQuery, useSubscription } from "urql";
+import { Link } from "react-router";
 import { Spinner } from "@/components/spinner/Spinner.tsx";
 import { DownloadStatus } from "@/gql/graphql.ts";
 
@@ -143,7 +144,20 @@ export const DownloadOverviewFetcher: React.FC<
             return (
               <div key={slot.id} className="text-zinc-300 mb-2">
                 <div>
-                  Slot {slot.id}: {progress.artistId} - {progress.releaseFolderName}
+                  Slot {slot.id}:{" "}
+                  <Link
+                    to={`/artist/${progress.artistId}`}
+                    className="text-blue-400 hover:text-blue-300 hover:underline"
+                  >
+                    {progress.artistId}
+                  </Link>
+                  {" - "}
+                  <Link
+                    to={`/artist/${progress.artistId}/release/${progress.releaseFolderName}`}
+                    className="text-blue-400 hover:text-blue-300 hover:underline"
+                  >
+                    {progress.releaseFolderName}
+                  </Link>
                 </div>
                 {progress.status && (
                   <div className="text-xs text-zinc-400">

@@ -148,11 +148,24 @@ builder
     .AddScoped<UpdateDownloadSlotCountHandler>()
     // Download providers
     .AddSingleton<MusicGQL.Features.External.Downloads.SoulSeekDownloadProvider>()
-    .AddHttpClient<MusicGQL.Features.External.Downloads.Prowlarr.ProwlarrClient>()
+    .AddHttpClient<MusicGQL.Features.External.Downloads.Prowlarr.ProwlarrClient>((serviceProvider, client) =>
+    {
+        // Configure timeout for Prowlarr requests using options
+        var options = serviceProvider.GetRequiredService<IOptions<ProwlarrOptions>>();
+        client.Timeout = TimeSpan.FromSeconds(options.Value.TimeoutSeconds);
+    })
     .Services
-    .AddHttpClient<MusicGQL.Features.External.Downloads.Sabnzbd.SabnzbdClient>()
+    .AddHttpClient<MusicGQL.Features.External.Downloads.Sabnzbd.SabnzbdClient>(client =>
+    {
+        // Configure timeout for SABnzbd requests - 30 seconds should be sufficient for local network
+        client.Timeout = TimeSpan.FromSeconds(30);
+    })
     .Services
-    .AddHttpClient<MusicGQL.Features.External.Downloads.QBittorrent.QBittorrentClient>()
+    .AddHttpClient<MusicGQL.Features.External.Downloads.QBittorrent.QBittorrentClient>(client =>
+    {
+        // Configure timeout for QBittorrent requests - 30 seconds should be sufficient for local network
+        client.Timeout = TimeSpan.FromSeconds(30);
+    })
     .Services
     .AddSingleton<MusicGQL.Features.External.Downloads.Sabnzbd.SabnzbdFinalizeService>()
     .AddSingleton<MusicGQL.Features.External.Downloads.Prowlarr.ProwlarrDownloadProvider>()

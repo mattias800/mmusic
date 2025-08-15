@@ -7,44 +7,132 @@ namespace MusicGQL.Features.External.Downloads.Prowlarr;
 
 public class ProwlarrClient(HttpClient httpClient, IOptions<ProwlarrOptions> options, ILogger<ProwlarrClient> logger)
 {
+    private async Task<bool> TestConnectivityAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            var baseUrl = options.Value.BaseUrl?.TrimEnd('/');
+            if (string.IsNullOrWhiteSpace(baseUrl))
+                return false;
+
+            // Try a simple ping to the server
+            var pingUrl = $"{baseUrl}/api/v1/system/status";
+            using var req = new HttpRequestMessage(HttpMethod.Get, pingUrl);
+            req.Headers.Accept.Clear();
+            req.Headers.Accept.ParseAdd("application/json");
+            
+            logger.LogDebug("[Prowlarr] Testing connectivity to {Url}", pingUrl);
+            var resp = await httpClient.SendAsync(req, cancellationToken);
+            var isConnected = resp.IsSuccessStatusCode;
+            logger.LogInformation("[Prowlarr] Connectivity test to {BaseUrl}: {Status} ({Connected})", 
+                baseUrl, (int)resp.StatusCode, isConnected ? "Connected" : "Failed");
+            return isConnected;
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "[Prowlarr] Connectivity test failed to {BaseUrl}", options.Value.BaseUrl);
+            return false;
+        }
+    }
+
     public async Task<IReadOnlyList<ProwlarrRelease>> SearchAlbumAsync(string artistName, string releaseTitle, CancellationToken cancellationToken)
     {
         var baseUrl = options.Value.BaseUrl?.TrimEnd('/');
         var apiKey = options.Value.ApiKey;
         if (string.IsNullOrWhiteSpace(baseUrl) || string.IsNullOrWhiteSpace(apiKey))
         {
+            logger.LogWarning("[Prowlarr] Missing configuration: BaseUrl={BaseUrl}, ApiKey={HasApiKey}", 
+                baseUrl ?? "null", !string.IsNullOrWhiteSpace(apiKey));
+            return Array.Empty<ProwlarrRelease>();
+        }
+
+        logger.LogInformation("[Prowlarr] Starting search for '{Artist} - {Release}' using {BaseUrl} (timeout: {Timeout}s, max retries: {MaxRetries})", 
+            artistName, releaseTitle, baseUrl, options.Value.TimeoutSeconds, options.Value.MaxRetries);
+
+        // Test basic connectivity first
+        var isConnected = await TestConnectivityAsync(cancellationToken);
+        if (!isConnected)
+        {
+            logger.LogWarning("[Prowlarr] Cannot connect to Prowlarr server at {BaseUrl}. Skipping search.", baseUrl);
             return Array.Empty<ProwlarrRelease>();
         }
 
         // Build search query with quality preferences
-        var qualityTerms = new[] { "320", "FLAC" };
         var baseQuery = artistName + " " + releaseTitle;
         
         // Create multiple search variants with different quality priorities
         var searchQueries = new List<string>
         {
-            // High quality first
-            baseQuery + " FLAC 320",
-            baseQuery + " FLAC",
+            // 1. Search for 320 kbps MP3 first (good quality, reasonable file size)
             baseQuery + " 320",
-            // Fallback to base query
+            // 2. Search for FLAC (lossless quality)
+            baseQuery + " FLAC",
+            // 3. Fallback to base query (no quality specified)
             baseQuery
         };
         
+        logger.LogInformation("[Prowlarr] Quality-based search strategy for '{Artist} - {Release}': 320 → FLAC → no quality", artistName, releaseTitle);
         logger.LogInformation("[Prowlarr] Will try search queries in order: {Queries}", string.Join(" | ", searchQueries));
         
-        // Try each search query until we find results
+        // Try each search query until we find results, with retry logic
         foreach (var searchQuery in searchQueries)
         {
-            var results = await TrySearchWithQueryAsync(searchQuery, artistName, releaseTitle, cancellationToken);
-            if (results.Count > 0)
+            logger.LogInformation("[Prowlarr] Trying quality level: '{Query}'", searchQuery);
+            
+            // Retry logic for transient failures
+            var maxRetries = options.Value.MaxRetries;
+            for (int attempt = 1; attempt <= maxRetries + 1; attempt++)
             {
-                logger.LogInformation("[Prowlarr] Found {Count} results with query: '{Query}'", results.Count, searchQuery);
-                return results;
+                try
+                {
+                    var results = await TrySearchWithQueryAsync(searchQuery, artistName, releaseTitle, cancellationToken);
+                    if (results.Count > 0)
+                    {
+                        var qualityLevel = searchQuery == baseQuery ? "no quality specified" : 
+                                         searchQuery.Contains("320") ? "320 kbps" : 
+                                         searchQuery.Contains("FLAC") ? "FLAC" : "unknown";
+                        logger.LogInformation("[Prowlarr] Found {Count} results with {QualityLevel} search: '{Query}'", results.Count, qualityLevel, searchQuery);
+                        return results;
+                    }
+                    else
+                    {
+                        logger.LogInformation("[Prowlarr] No results with '{Query}', trying next quality level", searchQuery);
+                        break; // No results, try next quality level
+                    }
+                }
+                catch (TaskCanceledException) when (attempt <= maxRetries)
+                {
+                    logger.LogWarning("[Prowlarr] Attempt {Attempt} timed out for '{Query}', retrying... ({Remaining} attempts remaining)", 
+                        attempt, searchQuery, maxRetries - attempt + 1);
+                    // Wait a bit before retrying
+                    await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken);
+                    continue;
+                }
+                catch (HttpRequestException) when (attempt <= maxRetries)
+                {
+                    logger.LogWarning("[Prowlarr] Attempt {Attempt} failed with HTTP error for '{Query}', retrying... ({Remaining} attempts remaining)", 
+                        attempt, searchQuery, maxRetries - attempt + 1);
+                    // Wait a bit before retrying
+                    await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken);
+                    continue;
+                }
+                catch (Exception ex) when (attempt <= maxRetries)
+                {
+                    logger.LogWarning(ex, "[Prowlarr] Attempt {Attempt} failed for '{Query}', retrying... ({Remaining} attempts remaining)", 
+                        attempt, searchQuery, maxRetries - attempt + 1);
+                    // Wait a bit before retrying
+                    await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken);
+                    continue;
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "[Prowlarr] Final attempt failed for '{Query}' after {Attempt} attempts", searchQuery, attempt);
+                    break; // Final attempt failed, try next quality level
+                }
             }
         }
         
-        logger.LogInformation("[Prowlarr] No results found with any search query");
+        logger.LogInformation("[Prowlarr] No results found with any quality level (320, FLAC, or no quality specified)");
         return Array.Empty<ProwlarrRelease>();
     }
     
@@ -104,6 +192,16 @@ public class ProwlarrClient(HttpClient httpClient, IOptions<ProwlarrOptions> opt
                     continue;
                 }
                 return list;
+            }
+            catch (TaskCanceledException ex) when (ex.InnerException is TaskCanceledException)
+            {
+                logger.LogWarning(ex, "Prowlarr search timed out for {Url} - this may indicate network issues or server unresponsiveness", url);
+                continue;
+            }
+            catch (TaskCanceledException ex)
+            {
+                logger.LogWarning(ex, "Prowlarr search was canceled for {Url}", url);
+                continue;
             }
             catch (HttpRequestException ex)
             {

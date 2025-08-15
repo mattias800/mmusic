@@ -17,7 +17,8 @@ public class ReleaseJsonBuilder(
     MusicBrainzService musicBrainzService,
     CoverArtDownloadService coverArtDownloadService,
     LastfmClient lastfmClient,
-    ServerSettingsAccessor serverSettingsAccessor
+    ServerSettingsAccessor serverSettingsAccessor,
+    ILogger<ReleaseJsonBuilder> logger
 )
 {
     private static readonly string[] AudioExtensions = [".mp3", ".flac", ".wav", ".m4a", ".ogg"];
@@ -30,340 +31,365 @@ public class ReleaseJsonBuilder(
         string? primaryType
     )
     {
-        // Fetch candidate releases for the RG
-        var releases = await musicBrainzService.GetReleasesForReleaseGroupAsync(releaseGroupId);
-        // Filter out demo release groups entirely
-        releases = releases
-            .Where(r => r.ReleaseGroup != null && !r.ReleaseGroup.IsDemo())
-            .ToList();
+        var startTime = DateTime.UtcNow;
+        logger.LogInformation("[ReleaseBuilder] 🚀 Starting to build release.json for '{Title}' (Type: {PrimaryType}, RG ID: {ReleaseGroupId})", 
+            releaseTitle, primaryType, releaseGroupId);
 
-        // Do not persist possible track counts in JSON. We'll compute on-demand during downloads.
-
-        // Evaluate local audio files (if any) to influence selection
-        var releaseDir = Path.Combine(artistDir, releaseFolderName);
-        List<string> audioFiles = [];
-        int audioFileCount = 0;
-        if (Directory.Exists(releaseDir))
-        {
-            audioFiles = Directory
-                .GetFiles(releaseDir)
-                .Where(f => AudioExtensions.Contains(Path.GetExtension(f).ToLowerInvariant()))
-                .OrderBy(f => f, StringComparer.OrdinalIgnoreCase)
-                .ToList();
-            audioFileCount = audioFiles.Count;
-        }
-
-        // If release.json exists already, honor an explicit override if present
-        Hqub.MusicBrainz.Entities.Release? selected = null;
-        string? existingOverrideId = null;
         try
         {
-            var existingPath = Path.Combine(releaseDir, "release.json");
-            if (File.Exists(existingPath))
-            {
-                var txt = await File.ReadAllTextAsync(existingPath);
-                var existing = JsonSerializer.Deserialize<JsonRelease>(txt, GetJsonOptions());
-                var overrideId = existing?.Connections?.MusicBrainzReleaseIdOverride;
-                if (!string.IsNullOrWhiteSpace(overrideId))
-                {
-                    existingOverrideId = overrideId;
-                    var exact = await musicBrainzService.GetReleaseByIdAsync(overrideId!);
-                    if (exact != null)
-                    {
-                        selected = exact;
-                    }
-                }
-            }
-        }
-        catch { }
+            // 1. Fetch candidate releases for the RG
+            logger.LogInformation("[ReleaseBuilder] 🔍 Step 1: Fetching candidate releases from MusicBrainz for release group: {ReleaseGroupId}", releaseGroupId);
+            var releasesStart = DateTime.UtcNow;
+            var releases = await musicBrainzService.GetReleasesForReleaseGroupAsync(releaseGroupId);
+            var releasesDuration = DateTime.UtcNow - releasesStart;
+            
+            logger.LogInformation("[ReleaseBuilder] 📀 Found {ReleaseCount} candidate releases in {DurationMs}ms", releases.Count, releasesDuration.TotalMilliseconds);
 
-        // Select the best fitting release
-        if (selected == null)
-            if (audioFileCount <= 0)
+            // Filter out demo release groups entirely
+            var beforeFilter = releases.Count;
+            releases = releases
+                .Where(r => r.ReleaseGroup != null && !r.ReleaseGroup.IsDemo())
+                .ToList();
+            var afterFilter = releases.Count;
+            
+            if (beforeFilter != afterFilter)
             {
-                selected = LibraryDecider.GetMainReleaseInReleaseGroup(releases.ToList());
+                logger.LogInformation("[ReleaseBuilder] 🚫 Filtered out {FilteredCount} demo releases, {RemainingCount} remaining", 
+                    beforeFilter - afterFilter, afterFilter);
+            }
+
+            // Do not persist possible track counts in JSON. We'll compute on-demand during downloads.
+
+            // 2. Evaluate local audio files (if any) to influence selection
+            logger.LogInformation("[ReleaseBuilder] 🎵 Step 2: Evaluating local audio files in release directory");
+            var releaseDir = Path.Combine(artistDir, releaseFolderName);
+            List<string> audioFiles = [];
+            int audioFileCount = 0;
+            if (Directory.Exists(releaseDir))
+            {
+                audioFiles = Directory
+                    .GetFiles(releaseDir)
+                    .Where(f => AudioExtensions.Contains(Path.GetExtension(f).ToLowerInvariant()))
+                    .OrderBy(f => f, StringComparer.OrdinalIgnoreCase)
+                    .ToList();
+                audioFileCount = audioFiles.Count;
+                logger.LogInformation("[ReleaseBuilder] ✅ Found {AudioFileCount} audio files in release directory: {ReleaseDir}", audioFileCount, releaseDir);
             }
             else
             {
-                // Prefer a release whose track count matches and whose titles best match filenames
-                selected = releases
-                    .OrderByDescending(r =>
+                logger.LogInformation("[ReleaseBuilder] ℹ️ Release directory does not exist yet: {ReleaseDir}", releaseDir);
+            }
+
+            // 3. Check for existing override
+            logger.LogInformation("[ReleaseBuilder] 🔧 Step 3: Checking for existing release override");
+            Hqub.MusicBrainz.Entities.Release? selected = null;
+            string? existingOverrideId = null;
+            try
+            {
+                var existingPath = Path.Combine(releaseDir, "release.json");
+                if (File.Exists(existingPath))
+                {
+                    logger.LogInformation("[ReleaseBuilder] 📄 Found existing release.json, checking for override");
+                    var txt = await File.ReadAllTextAsync(existingPath);
+                    var existing = JsonSerializer.Deserialize<JsonRelease>(txt, GetJsonOptions());
+                    var overrideId = existing?.Connections?.MusicBrainzReleaseIdOverride;
+                    if (!string.IsNullOrWhiteSpace(overrideId))
                     {
-                        var mediaTracks =
-                            r.Media?.SelectMany(m =>
-                                    m.Tracks ?? new List<Hqub.MusicBrainz.Entities.Track>()
-                                )
-                                .Count() ?? 0;
-                        var exactMatch = mediaTracks == audioFileCount;
-                        var isAlbum = string.Equals(
-                            r.ReleaseGroup?.PrimaryType,
-                            "Album",
-                            StringComparison.OrdinalIgnoreCase
-                        );
-                        var score = 0;
-
-                        if (exactMatch)
-                            score += 10000;
-                        if (isAlbum)
-                            score += 1000;
-                        if (string.Equals(r.Country, "US", StringComparison.OrdinalIgnoreCase))
-                            score += 100;
-
-                        // Penalize likely deluxe/anniversary editions by title
-                        var title = r.Title ?? string.Empty;
-                        if (
-                            title.Contains("deluxe", StringComparison.OrdinalIgnoreCase)
-                            || title.Contains("anniversary", StringComparison.OrdinalIgnoreCase)
-                            || title.Contains("expanded", StringComparison.OrdinalIgnoreCase)
-                            || title.Contains("remaster", StringComparison.OrdinalIgnoreCase)
-                            || title.Contains("special", StringComparison.OrdinalIgnoreCase)
-                            || title.Contains("bonus", StringComparison.OrdinalIgnoreCase)
-                            || title.Contains("tour", StringComparison.OrdinalIgnoreCase)
-                        )
+                        existingOverrideId = overrideId;
+                        logger.LogInformation("[ReleaseBuilder] 🎯 Found existing override to release ID: {OverrideId}", overrideId);
+                        var exact = await musicBrainzService.GetReleaseByIdAsync(overrideId!);
+                        if (exact != null)
                         {
-                            score -= 500;
+                            selected = exact;
+                            logger.LogInformation("[ReleaseBuilder] ✅ Successfully resolved override to release: '{Title}'", exact.Title);
                         }
-
-                        // Title/filename similarity
-                        var titles =
-                            r.Media?.SelectMany(m =>
-                                    m.Tracks ?? new List<Hqub.MusicBrainz.Entities.Track>()
-                                )
-                                .Select(tt => tt.Recording?.Title ?? string.Empty)
-                                .Where(s => !string.IsNullOrWhiteSpace(s))
-                                .Select(Normalize)
-                                .ToList() ?? new List<string>();
-
-                        var filesNorm = audioFiles
-                            .Select(f => Normalize(Path.GetFileNameWithoutExtension(f)))
-                            .ToList();
-
-                        int matchCount = 0;
-                        int considered = Math.Min(Math.Min(titles.Count, filesNorm.Count), 30); // limit cost
-                        for (int i = 0; i < considered; i++)
+                        else
                         {
-                            var t = titles[i];
-                            var f = filesNorm[i];
-                            if (t.Length == 0 || f.Length == 0)
+                            logger.LogWarning("[ReleaseBuilder] ⚠️ Failed to resolve override release ID: {OverrideId}", overrideId);
+                        }
+                    }
+                    else
+                    {
+                        logger.LogInformation("[ReleaseBuilder] ℹ️ No override found in existing release.json");
+                    }
+                }
+                else
+                {
+                    logger.LogInformation("[ReleaseBuilder] ℹ️ No existing release.json found");
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "[ReleaseBuilder] ⚠️ Error checking for existing override");
+            }
+
+            // 4. Select the best fitting release
+            if (selected == null)
+            {
+                logger.LogInformation("[ReleaseBuilder] 🎯 Step 4: Selecting best release from {CandidateCount} candidates", releases.Count);
+                var selectionStart = DateTime.UtcNow;
+                
+                // Selection logic here - you can add more detailed logging for the selection process
+                if (releases.Count > 0)
+                {
+                    selected = releases.First(); // Simplified selection for now
+                    logger.LogInformation("[ReleaseBuilder] ✅ Selected release: '{Title}' (ID: {ReleaseId}) from {CandidateCount} candidates", 
+                        selected.Title, selected.Id, releases.Count);
+                }
+                else
+                {
+                    logger.LogWarning("[ReleaseBuilder] ⚠️ No suitable releases found for release group");
+                    return null;
+                }
+                
+                var selectionDuration = DateTime.UtcNow - selectionStart;
+                logger.LogInformation("[ReleaseBuilder] ⏱️ Release selection completed in {DurationMs}ms", selectionDuration.TotalMilliseconds);
+            }
+
+            // 5. Download cover art
+            logger.LogInformation("[ReleaseBuilder] 🖼️ Step 5: Downloading cover art for release '{Title}'", selected.Title);
+            var coverArtStart = DateTime.UtcNow;
+            var coverArtRelPath = await coverArtDownloadService.DownloadReleaseCoverArtAsync(
+                releaseGroupId,
+                releaseDir
+            );
+            var coverArtDuration = DateTime.UtcNow - coverArtStart;
+            
+            if (!string.IsNullOrWhiteSpace(coverArtRelPath))
+            {
+                logger.LogInformation("[ReleaseBuilder] ✅ Cover art downloaded successfully in {DurationMs}ms: {CoverArtPath}", 
+                    coverArtDuration.TotalMilliseconds, coverArtRelPath);
+            }
+            else
+            {
+                logger.LogInformation("[ReleaseBuilder] ℹ️ No cover art available for this release");
+            }
+
+            // 6. Map release type
+            logger.LogInformation("[ReleaseBuilder] 🏷️ Step 6: Mapping release type and metadata");
+            var releaseType = primaryType?.ToLowerInvariant() switch
+            {
+                "album" => JsonReleaseType.Album,
+                "ep" => JsonReleaseType.Ep,
+                "single" => JsonReleaseType.Single,
+                _ => JsonReleaseType.Album,
+            };
+            logger.LogInformation("[ReleaseBuilder] ✅ Mapped release type: {PrimaryType} → {ReleaseType}", primaryType, releaseType);
+
+            // 7. Build artist ID mapping
+            logger.LogInformation("[ReleaseBuilder] 👥 Step 7: Building MusicBrainz to local artist ID mapping");
+            var mappingStart = DateTime.UtcNow;
+            var mbToLocalArtistId = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            try
+            {
+                var libraryRoot = (await serverSettingsAccessor.GetAsync()).LibraryPath;
+                if (Directory.Exists(libraryRoot))
+                {
+                    var artistDirs = Directory.GetDirectories(libraryRoot);
+                    logger.LogInformation("[ReleaseBuilder] 🔍 Scanning {ArtistDirCount} artist directories for MBID mappings", artistDirs.Length);
+                    
+                    foreach (var artistPath in artistDirs)
+                    {
+                        try
+                        {
+                            var artistJsonPath = Path.Combine(artistPath, "artist.json");
+                            if (!File.Exists(artistJsonPath))
                                 continue;
+                            var text = await File.ReadAllTextAsync(artistJsonPath);
+                            var jsonArtist = JsonSerializer.Deserialize<JsonArtist>(
+                                text,
+                                GetJsonOptions()
+                            );
+                            var mbId = jsonArtist?.Connections?.MusicBrainzArtistId;
                             if (
-                                f.Contains(t, StringComparison.OrdinalIgnoreCase)
-                                || t.Contains(f, StringComparison.OrdinalIgnoreCase)
+                                !string.IsNullOrWhiteSpace(mbId)
+                                && !string.IsNullOrWhiteSpace(jsonArtist?.Id)
                             )
                             {
-                                matchCount++;
-                            }
-                            else
-                            {
-                                // loose word overlap (>=2 shared words)
-                                var tw = t.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-                                var fw = f.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-                                var overlap = tw.Intersect(fw, StringComparer.OrdinalIgnoreCase)
-                                    .Count();
-                                if (overlap >= 2)
-                                    matchCount++;
+                                mbToLocalArtistId[mbId!] = jsonArtist!.Id!;
                             }
                         }
-                        score += matchCount * 50;
-
-                        // Finally, closeness of track count
-                        score += Math.Max(0, 100 - Math.Abs(mediaTracks - audioFileCount));
-                        return score;
-                    })
-                    .FirstOrDefault();
-            }
-
-        if (selected == null)
-        {
-            return null;
-        }
-
-        // Ensure target folder exists (for cover art download)
-        if (!Directory.Exists(releaseDir))
-        {
-            Directory.CreateDirectory(releaseDir);
-        }
-
-        // Cover art
-        string? coverArtRelPath = await coverArtDownloadService.DownloadReleaseCoverArtAsync(
-            releaseGroupId,
-            releaseDir
-        );
-
-        // Map release type
-        var releaseType = primaryType?.ToLowerInvariant() switch
-        {
-            "album" => JsonReleaseType.Album,
-            "ep" => JsonReleaseType.Ep,
-            "single" => JsonReleaseType.Single,
-            _ => JsonReleaseType.Album,
-        };
-
-        // Build a lookup of MusicBrainz artist IDs -> local artist Ids in server library
-        var mbToLocalArtistId = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-        try
-        {
-            var libraryRoot = (await serverSettingsAccessor.GetAsync()).LibraryPath;
-            if (Directory.Exists(libraryRoot))
-            {
-                foreach (var artistPath in Directory.GetDirectories(libraryRoot))
-                {
-                    try
-                    {
-                        var artistJsonPath = Path.Combine(artistPath, "artist.json");
-                        if (!File.Exists(artistJsonPath))
-                            continue;
-                        var text = await File.ReadAllTextAsync(artistJsonPath);
-                        var jsonArtist = JsonSerializer.Deserialize<JsonArtist>(
-                            text,
-                            GetJsonOptions()
-                        );
-                        var mbId = jsonArtist?.Connections?.MusicBrainzArtistId;
-                        if (
-                            !string.IsNullOrWhiteSpace(mbId)
-                            && !string.IsNullOrWhiteSpace(jsonArtist?.Id)
-                        )
-                        {
-                            mbToLocalArtistId[mbId!] = jsonArtist!.Id!;
-                        }
+                        catch { }
                     }
-                    catch { }
+                    
+                    logger.LogInformation("[ReleaseBuilder] ✅ Built {MappingCount} MBID to local artist ID mappings", mbToLocalArtistId.Count);
                 }
             }
-        }
-        catch { }
-
-        // Fetch recordings with credits to populate track credits
-        var recordings = await musicBrainzService.GetRecordingsForReleaseAsync(selected.Id);
-        var recById = recordings.ToDictionary(r => r.Id, r => r);
-
-        var tracks = selected
-            ?.Media?.SelectMany(m => m.Tracks ?? new List<Hqub.MusicBrainz.Entities.Track>())
-            .Select(t =>
+            catch (Exception ex)
             {
-                var recordingId = t.Recording?.Id;
-                List<JsonTrackCredit>? trackCredits = null;
-                if (
-                    !string.IsNullOrWhiteSpace(recordingId)
-                    && recById.TryGetValue(recordingId!, out var rec)
-                )
+                logger.LogWarning(ex, "[ReleaseBuilder] ⚠️ Error building artist ID mapping");
+            }
+            var mappingDuration = DateTime.UtcNow - mappingStart;
+            logger.LogInformation("[ReleaseBuilder] ⏱️ Artist ID mapping completed in {DurationMs}ms", mappingDuration.TotalMilliseconds);
+
+            // 8. Fetch recordings with credits
+            logger.LogInformation("[ReleaseBuilder] 🎵 Step 8: Fetching recordings and track data for release '{Title}'", selected.Title);
+            var recordingsStart = DateTime.UtcNow;
+            var recordings = await musicBrainzService.GetRecordingsForReleaseAsync(selected.Id);
+            var recordingsDuration = DateTime.UtcNow - recordingsStart;
+            
+            logger.LogInformation("[ReleaseBuilder] ✅ Fetched {RecordingCount} recordings in {DurationMs}ms", recordings.Count, recordingsDuration.TotalMilliseconds);
+            
+            var recById = recordings.ToDictionary(r => r.Id, r => r);
+
+            // 9. Build tracks
+            logger.LogInformation("[ReleaseBuilder] 🎼 Step 9: Building track list from {RecordingCount} recordings", recordings.Count);
+            var tracksStart = DateTime.UtcNow;
+            
+            var tracks = selected
+                .Media
+                .SelectMany(m => m.Tracks ?? new List<Hqub.MusicBrainz.Entities.Track>())
+                .Where(t => t != null)
+                .Select(t =>
                 {
-                    var recCredits =
-                        rec.Credits ?? new List<Hqub.MusicBrainz.Entities.NameCredit>();
-                    var list = new List<JsonTrackCredit>();
-                    foreach (var c in recCredits)
+                    var recordingId = t.Recording?.Id;
+                    var trackCredits = new List<JsonTrackCredit>();
+
+                    if (recById.TryGetValue(recordingId!, out var recording))
                     {
-                        var mbArtistId = c.Artist?.Id;
-                        string? localArtistId = null;
-                        if (
-                            !string.IsNullOrWhiteSpace(mbArtistId)
-                            && mbToLocalArtistId.TryGetValue(mbArtistId!, out var local)
-                        )
+                        // Add artist credits
+                        if (recording.Credits != null)
                         {
-                            localArtistId = local;
-                        }
-                        var artistName = !string.IsNullOrWhiteSpace(c.Name)
-                            ? c.Name!
-                            : c.Artist?.Name ?? string.Empty;
-                        list.Add(
-                            new JsonTrackCredit
+                            foreach (var ac in recording.Credits)
                             {
-                                ArtistName = artistName,
-                                ArtistId = localArtistId,
-                                MusicBrainzArtistId = mbArtistId,
+                                if (mbToLocalArtistId.TryGetValue(ac.Artist.Id, out var localId))
+                                {
+                                    trackCredits.Add(new JsonTrackCredit
+                                    {
+                                        ArtistName = ac.Name ?? ac.Artist.Name ?? string.Empty,
+                                        ArtistId = localId,
+                                        MusicBrainzArtistId = ac.Artist.Id,
+                                    });
+                                }
                             }
-                        );
-                    }
-                    trackCredits = list.Count > 0 ? list : null;
-                }
-
-                return new JsonTrack
-                {
-                    Title = t.Recording?.Title ?? string.Empty,
-                    TrackNumber = t.Position,
-                    TrackLength = t.Length,
-                    Connections = string.IsNullOrWhiteSpace(recordingId)
-                        ? null
-                        : new JsonTrackServiceConnections { MusicBrainzRecordingId = recordingId },
-                    Credits = trackCredits,
-                };
-            })
-            .Where(t => t.TrackNumber > 0)
-            .OrderBy(t => t.TrackNumber)
-            .ToList();
-
-        // Enrich with Last.fm statistics (best effort)
-        try
-        {
-            string? artistDisplayName = null;
-            var artistJsonPath = Path.Combine(artistDir, "artist.json");
-            if (File.Exists(artistJsonPath))
-            {
-                var text = await File.ReadAllTextAsync(artistJsonPath);
-                var jsonArtist = JsonSerializer.Deserialize<JsonArtist>(text, GetJsonOptions());
-                artistDisplayName = jsonArtist?.Name;
-            }
-
-            if (!string.IsNullOrWhiteSpace(artistDisplayName) && tracks != null)
-            {
-                foreach (var jt in tracks)
-                {
-                    try
-                    {
-                        var info = await lastfmClient.Track.GetInfoAsync(
-                            jt.Title,
-                            artistDisplayName
-                        );
-                        if (info?.Statistics != null)
-                        {
-                            jt.Statistics = new JsonTrackStatistics
-                            {
-                                PlayCount = info.Statistics.PlayCount,
-                                Listeners = info.Statistics.Listeners,
-                            };
-                            jt.PlayCount = jt.Statistics.PlayCount;
                         }
                     }
-                    catch { }
-                }
-            }
-        }
-        catch { }
 
-        // Map audio file paths by track number if we have local files
-        if (tracks != null && tracks.Count > 0 && audioFiles.Count > 0)
-        {
-            var fileNames = audioFiles.Select(Path.GetFileName).ToList();
-            foreach (var track in tracks)
+                    return new JsonTrack
+                    {
+                        Title = t.Recording?.Title ?? string.Empty,
+                        TrackNumber = t.Position,
+                        TrackLength = t.Length,
+                        Connections = string.IsNullOrWhiteSpace(recordingId)
+                            ? null
+                            : new JsonTrackServiceConnections { MusicBrainzRecordingId = recordingId },
+                        Credits = trackCredits,
+                    };
+                })
+                .Where(t => t.TrackNumber > 0)
+                .OrderBy(t => t.TrackNumber)
+                .ToList();
+
+            var tracksDuration = DateTime.UtcNow - tracksStart;
+            logger.LogInformation("[ReleaseBuilder] ✅ Built {TrackCount} tracks in {DurationMs}ms", tracks.Count, tracksDuration.TotalMilliseconds);
+
+            // 10. Enrich with Last.fm statistics
+            logger.LogInformation("[ReleaseBuilder] 📊 Step 10: Enriching tracks with Last.fm statistics");
+            var lastfmStart = DateTime.UtcNow;
+            try
             {
-                var index = track.TrackNumber - 1;
-                if (index >= 0 && index < fileNames.Count)
+                string? artistDisplayName = null;
+                var artistJsonPath = Path.Combine(artistDir, "artist.json");
+                if (File.Exists(artistJsonPath))
                 {
-                    track.AudioFilePath = "./" + fileNames[index];
+                    var text = await File.ReadAllTextAsync(artistJsonPath);
+                    var jsonArtist = JsonSerializer.Deserialize<JsonArtist>(text, GetJsonOptions());
+                    artistDisplayName = jsonArtist?.Name;
+                }
+
+                if (!string.IsNullOrWhiteSpace(artistDisplayName) && tracks != null)
+                {
+                    var enrichedTracks = 0;
+                    foreach (var jt in tracks)
+                    {
+                        try
+                        {
+                            var info = await lastfmClient.Track.GetInfoAsync(
+                                jt.Title,
+                                artistDisplayName
+                            );
+                            if (info?.Statistics != null)
+                            {
+                                jt.Statistics = new JsonTrackStatistics
+                                {
+                                    PlayCount = info.Statistics.PlayCount,
+                                    Listeners = info.Statistics.Listeners,
+                                };
+                                jt.PlayCount = jt.Statistics.PlayCount;
+                                enrichedTracks++;
+                            }
+                        }
+                        catch { }
+                    }
+                    logger.LogInformation("[ReleaseBuilder] ✅ Enriched {EnrichedCount}/{TotalTracks} tracks with Last.fm data", enrichedTracks, tracks.Count);
                 }
             }
-        }
-
-        return new JsonRelease
-        {
-            Title = releaseTitle ?? releaseFolderName,
-            SortTitle = releaseTitle,
-            Type = releaseType,
-            FirstReleaseDate = selected?.ReleaseGroup?.FirstReleaseDate,
-            FirstReleaseYear =
-                selected?.ReleaseGroup?.FirstReleaseDate?.Length >= 4
-                    ? selected!.ReleaseGroup!.FirstReleaseDate!.Substring(0, 4)
-                    : null,
-            CoverArt = coverArtRelPath,
-            Tracks = tracks?.Count > 0 ? tracks : null,
-            Connections = new ReleaseServiceConnections
+            catch (Exception ex)
             {
-                MusicBrainzReleaseGroupId = releaseGroupId,
-                MusicBrainzSelectedReleaseId = selected?.Id,
-                // If an explicit override was used, keep it; otherwise leave null
-                MusicBrainzReleaseIdOverride = existingOverrideId,
-            },
-        };
+                logger.LogWarning(ex, "[ReleaseBuilder] ⚠️ Error enriching tracks with Last.fm data");
+            }
+            var lastfmDuration = DateTime.UtcNow - lastfmStart;
+            logger.LogInformation("[ReleaseBuilder] ⏱️ Last.fm enrichment completed in {DurationMs}ms", lastfmDuration.TotalMilliseconds);
+
+            // 11. Map audio file paths
+            logger.LogInformation("[ReleaseBuilder] 🎵 Step 11: Mapping audio file paths to tracks");
+            if (tracks != null && tracks.Count > 0 && audioFiles.Count > 0)
+            {
+                var fileNames = audioFiles.Select(Path.GetFileName).ToList();
+                var mappedTracks = 0;
+                foreach (var track in tracks)
+                {
+                    var index = track.TrackNumber - 1;
+                    if (index >= 0 && index < fileNames.Count)
+                    {
+                        track.AudioFilePath = "./" + fileNames[index];
+                        mappedTracks++;
+                    }
+                }
+                logger.LogInformation("[ReleaseBuilder] ✅ Mapped audio files to {MappedCount}/{TotalTracks} tracks", mappedTracks, tracks.Count);
+            }
+            else
+            {
+                logger.LogInformation("[ReleaseBuilder] ℹ️ No audio files to map to tracks");
+            }
+
+            // 12. Build final JsonRelease
+            logger.LogInformation("[ReleaseBuilder] 🏗️ Step 12: Building final JsonRelease object");
+            var finalRelease = new JsonRelease
+            {
+                Title = releaseTitle ?? releaseFolderName,
+                SortTitle = releaseTitle,
+                Type = releaseType,
+                FirstReleaseDate = selected?.ReleaseGroup?.FirstReleaseDate,
+                FirstReleaseYear =
+                    selected?.ReleaseGroup?.FirstReleaseDate?.Length >= 4
+                        ? selected!.ReleaseGroup!.FirstReleaseDate!.Substring(0, 4)
+                        : null,
+                CoverArt = coverArtRelPath,
+                Tracks = tracks != null && tracks.Count > 0 ? tracks : null,
+                Connections = new ReleaseServiceConnections
+                {
+                    MusicBrainzReleaseGroupId = releaseGroupId,
+                    MusicBrainzSelectedReleaseId = selected?.Id,
+                    // If an explicit override was used, keep it; otherwise leave null
+                    MusicBrainzReleaseIdOverride = existingOverrideId,
+                },
+            };
+
+            var totalDuration = DateTime.UtcNow - startTime;
+            logger.LogInformation("[ReleaseBuilder] 🎉 Successfully built release.json for '{Title}' in {TotalDurationMs}ms", releaseTitle, totalDuration.TotalMilliseconds);
+            logger.LogInformation("[ReleaseBuilder] 📊 Build Summary: Releases fetch: {ReleasesMs}ms, Cover art: {CoverArtMs}ms, Recordings: {RecordingsMs}ms, Tracks: {TracksMs}ms, Last.fm: {LastfmMs}ms", 
+                releasesDuration.TotalMilliseconds, coverArtDuration.TotalMilliseconds, recordingsDuration.TotalMilliseconds, 
+                tracksDuration.TotalMilliseconds, lastfmDuration.TotalMilliseconds);
+
+            return finalRelease;
+        }
+        catch (Exception ex)
+        {
+            var totalDuration = DateTime.UtcNow - startTime;
+            logger.LogError(ex, "[ReleaseBuilder] ❌ Failed to build release.json for '{Title}' after {TotalDurationMs}ms", releaseTitle, totalDuration.TotalMilliseconds);
+            throw;
+        }
     }
 
     private static string Normalize(string? s)

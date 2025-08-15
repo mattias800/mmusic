@@ -45,5 +45,6 @@ export const cacheKeys: Record<TypesWithNoId, KeyGenerator> = {
   UsersEdge: () => null,
   KeyValuePairOfInt32AndDownloadProgress: () => null,
   SlotProgressUpdate: () => null,
+  SlotStatusUpdate: () => null,
   StorageStats: () => null,
 };

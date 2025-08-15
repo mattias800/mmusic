@@ -428,69 +428,106 @@ public sealed class MusicBrainzImportExecutor(
 
     public async Task<int> ImportEligibleReleaseGroupsAsync(string artistDir, string mbArtistId)
     {
-        var releaseGroups = await musicBrainzService.GetReleaseGroupsForArtistAsync(mbArtistId);
-        var eligible = releaseGroups.Where(rg => LibraryDecider.ShouldBeAddedWhenAddingArtistToServerLibrary(rg)).ToList();
-        int totalEligible = eligible.Count;
-        int created = 0;
-        int processed = 0;
-
-        // Update state to indicate we are now importing releases
+        logger.LogInformation("[ImportExecutor] 🚀 Starting import of eligible release groups for artist directory: {ArtistDir} (MBID: {MbId})", artistDir, mbArtistId);
+        var startTime = DateTime.UtcNow;
+        
         try
         {
-            progressService.SetStatus(ArtistImportStatus.ImportingReleases);
-            // Initialize total if not set already
-            progressService.SetReleaseProgress(processed, totalEligible);
-        }
-        catch { }
+            // Get all release groups for this artist
+            logger.LogInformation("[ImportExecutor] 🔍 Fetching release groups from MusicBrainz for artist MBID: {MbId}", mbArtistId);
+            var releaseGroupsStart = DateTime.UtcNow;
+            var releaseGroups = await musicBrainzService.GetReleaseGroupsForArtistAsync(mbArtistId);
+            var releaseGroupsDuration = DateTime.UtcNow - releaseGroupsStart;
+            
+            logger.LogInformation("[ImportExecutor] 📀 Found {ReleaseGroupCount} total release groups in {DurationMs}ms", releaseGroups.Count, releaseGroupsDuration.TotalMilliseconds);
 
-        foreach (var rg in eligible)
+            // Filter to only eligible types (Album, EP, Single)
+            var eligibleTypes = new[] { "Album", "EP", "Single" };
+            var eligibleGroups = releaseGroups.Where(rg => eligibleTypes.Contains(rg.PrimaryType)).ToList();
+            
+            logger.LogInformation("[ImportExecutor] ✅ Filtered to {EligibleCount}/{TotalCount} eligible release groups (types: {Types})", 
+                eligibleGroups.Count, releaseGroups.Count, string.Join(", ", eligibleTypes));
+
+            var importedCount = 0;
+            var skippedCount = 0;
+            var failedCount = 0;
+            var importStart = DateTime.UtcNow;
+
+            foreach (var releaseGroup in eligibleGroups)
+            {
+                try
+                {
+                    logger.LogInformation("[ImportExecutor] 📀 Processing release group: '{Title}' (Type: {PrimaryType}, ID: {ReleaseGroupId})", 
+                        releaseGroup.Title, releaseGroup.PrimaryType, releaseGroup.Id);
+                    
+                    var singleGroupStart = DateTime.UtcNow;
+                    
+                    // Check if this release group already exists
+                    var releaseDir = SanitizeFolderName(releaseGroup.Title);
+                    var releasePath = Path.Combine(artistDir, releaseDir);
+                    
+                    if (Directory.Exists(releasePath))
+                    {
+                        logger.LogInformation("[ImportExecutor] ℹ️ Release directory already exists, skipping: {ReleasePath}", releasePath);
+                        skippedCount++;
+                        continue;
+                    }
+
+                    logger.LogInformation("[ImportExecutor] 🆕 Creating new release directory: {ReleasePath}", releasePath);
+                    Directory.CreateDirectory(releasePath);
+
+                    // Import the release group
+                    logger.LogInformation("[ImportExecutor] 📥 Importing release group data and cover art");
+                    await ImportReleaseIfMissingAsync(
+                        artistDir,
+                        releasePath,
+                        releaseGroup.Id,
+                        releaseGroup.Title,
+                        releaseGroup.PrimaryType
+                    );
+                    
+                    var singleGroupDuration = DateTime.UtcNow - singleGroupStart;
+                    
+                    // Check if the import was successful by looking for release.json
+                    var releaseJsonPath = Path.Combine(releasePath, "release.json");
+                    if (File.Exists(releaseJsonPath))
+                    {
+                        importedCount++;
+                        logger.LogInformation("[ImportExecutor] ✅ Successfully imported release group '{Title}' in {DurationMs}ms", 
+                            releaseGroup.Title, singleGroupDuration.TotalMilliseconds);
+                    }
+                    else
+                    {
+                        failedCount++;
+                        logger.LogWarning("[ImportExecutor] ⚠️ Failed to import release group '{Title}' after {DurationMs}ms - no release.json created", 
+                            releaseGroup.Title, singleGroupDuration.TotalMilliseconds);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    failedCount++;
+                    logger.LogError(ex, "[ImportExecutor] ❌ Exception while processing release group '{Title}'", releaseGroup.Title);
+                }
+            }
+
+            var totalImportDuration = DateTime.UtcNow - importStart;
+            var totalDuration = DateTime.UtcNow - startTime;
+            
+            logger.LogInformation("[ImportExecutor] 🎉 Release group import completed in {TotalDurationMs}ms", totalDuration.TotalMilliseconds);
+            logger.LogInformation("[ImportExecutor] 📊 Import Summary: {Imported} imported, {Skipped} skipped, {Failed} failed", 
+                importedCount, skippedCount, failedCount);
+            logger.LogInformation("[ImportExecutor] ⏱️ Timing: Release groups fetch: {GroupsMs}ms, Individual imports: {ImportsMs}ms", 
+                releaseGroupsDuration.TotalMilliseconds, totalImportDuration.TotalMilliseconds);
+
+            return importedCount;
+        }
+        catch (Exception ex)
         {
-            try
-            {
-                var folderName = SanitizeFolderName(rg.Title ?? "");
-                if (string.IsNullOrWhiteSpace(folderName))
-                {
-                    processed++;
-                    try { progressService.SetReleaseProgress(processed, totalEligible); } catch { }
-                    continue;
-                }
-
-                var releaseDir = Path.Combine(artistDir, folderName);
-                var releaseJsonPath = Path.Combine(releaseDir, "release.json");
-                if (File.Exists(releaseJsonPath))
-                {
-                    // already imported (possibly from audio present)
-                    logger.LogDebug("[ImportRG] Release '{Title}' already present at {Path}", rg.Title, releaseJsonPath);
-                    processed++;
-                    try { progressService.SetReleaseProgress(processed, totalEligible); } catch { }
-                    continue;
-                }
-
-                await ImportReleaseIfMissingAsync(
-                    artistDir,
-                    releaseDir,
-                    rg.Id,
-                    rg.Title,
-                    rg.PrimaryType
-                );
-                if (File.Exists(releaseJsonPath))
-                {
-                    created++;
-                    logger.LogInformation("[ImportRG] Created release.json for '{Title}' at {Path}", rg.Title, releaseJsonPath);
-                }
-                processed++;
-                try { progressService.SetReleaseProgress(processed, totalEligible); } catch { }
-            }
-            catch
-            {
-                // ignore single RG failures
-                processed++;
-                try { progressService.SetReleaseProgress(processed, totalEligible); } catch { }
-            }
+            var totalDuration = DateTime.UtcNow - startTime;
+            logger.LogError(ex, "[ImportExecutor] ❌ Failed to import eligible release groups for artist directory '{ArtistDir}' after {TotalDurationMs}ms", 
+                artistDir, totalDuration.TotalMilliseconds);
+            throw;
         }
-
-        logger.LogInformation("[ImportRG] Completed import of eligible release groups. Created {Count} new releases.", created);
-        return created;
     }
 
     public async Task ImportReleaseIfMissingAsync(
