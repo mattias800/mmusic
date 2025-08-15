@@ -431,15 +431,23 @@ public sealed class MusicBrainzImportExecutor(
             var rels = mbArtist?.Relations;
             if (rels != null)
             {
+                var spotifyIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
                 foreach (var rel in rels)
                 {
                     var url = rel?.Url?.Resource;
                     if (string.IsNullOrWhiteSpace(url)) continue;
                     if (url.Contains("open.spotify.com/artist/", StringComparison.OrdinalIgnoreCase))
                     {
-                        var parts = new Uri(url).Segments;
-                        var id = parts.LastOrDefault()?.Trim('/');
-                        if (!string.IsNullOrWhiteSpace(id)) jsonArtist.Connections.SpotifyId ??= id;
+                        try
+                        {
+                            var id = new Uri(url).Segments.LastOrDefault()?.Trim('/');
+                            if (!string.IsNullOrWhiteSpace(id))
+                            {
+                                jsonArtist.Connections.SpotifyId ??= id; // legacy single field
+                                spotifyIds.Add(id);
+                            }
+                        }
+                        catch { }
                     }
                     else if (url.Contains("music.apple.com", StringComparison.OrdinalIgnoreCase))
                     {
@@ -481,6 +489,25 @@ public sealed class MusicBrainzImportExecutor(
                         jsonArtist.Connections.DiscogsUrl ??= url;
                     }
                 }
+
+                if (spotifyIds.Count > 0)
+                {
+                    jsonArtist.Connections.SpotifyIds ??= new List<JsonSpotifyArtistIdentity>();
+                    foreach (var sid in spotifyIds)
+                    {
+                        if (!jsonArtist.Connections.SpotifyIds.Any(x => string.Equals(x.Id, sid, StringComparison.OrdinalIgnoreCase)))
+                        {
+                            jsonArtist.Connections.SpotifyIds.Add(new JsonSpotifyArtistIdentity
+                            {
+                                Id = sid,
+                                DisplayName = jsonArtist.Name,
+                                Source = "musicbrainz",
+                                AddedAt = DateTime.UtcNow.ToString("yyyy-MM-dd"),
+                            });
+                        }
+                    }
+                }
+
                 // Normalize any previously mis-assigned YouTube Music link
                 if (!string.IsNullOrWhiteSpace(jsonArtist.Connections.YoutubeChannelUrl)
                     && jsonArtist.Connections.YoutubeChannelUrl.Contains("music.youtube.com", StringComparison.OrdinalIgnoreCase))
