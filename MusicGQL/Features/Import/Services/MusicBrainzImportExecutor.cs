@@ -658,36 +658,109 @@ public sealed class MusicBrainzImportExecutor(
                         var artistText = await File.ReadAllTextAsync(artistJsonPath);
                         var jsonArtist = JsonSerializer.Deserialize<JsonArtist>(artistText, GetJsonOptions()) ?? new JsonArtist();
                         
-                        jsonArtist.AlsoAppearsOn = nonPrimaryArtistGroups.Select(rg =>
+                        logger.LogInformation("[ImportExecutor] 🖼️ Downloading cover art for {Count} non-primary artist appearances", nonPrimaryArtistGroups.Count);
+                        
+                        var appearancesWithCoverArt = new List<JsonArtistAppearance>();
+                        
+                        foreach (var rg in nonPrimaryArtistGroups)
                         {
-                            var credits = rg.Credits?.ToList();
-                            var primaryCredit = credits?.FirstOrDefault();
-                            var primaryArtistName = primaryCredit?.Artist?.Name ?? primaryCredit?.Name ?? "Unknown Artist";
-                            var primaryArtistId = primaryCredit?.Artist?.Id;
-                            
-                            // Determine the role of this artist on the release
-                            var artistCredit = credits?.FirstOrDefault(c => c.Artist?.Id == mbArtistId);
-                            var role = artistCredit?.JoinPhrase?.TrimStart(' ', '&', ',') ?? "Featured Artist";
-                            
-                            return new JsonArtistAppearance
+                            try
                             {
-                                ReleaseTitle = rg.Title ?? "Unknown Release",
-                                ReleaseType = rg.PrimaryType ?? "Unknown",
-                                PrimaryArtistName = primaryArtistName,
-                                PrimaryArtistMusicBrainzId = primaryArtistId,
-                                MusicBrainzReleaseGroupId = rg.Id,
-                                FirstReleaseDate = rg.FirstReleaseDate,
-                                FirstReleaseYear = rg.FirstReleaseDate?.Split("-").FirstOrDefault(),
-                                Role = role,
-                                CoverArt = null // Could be populated later if needed
-                            };
-                        }).ToList();
+                                var credits = rg.Credits?.ToList();
+                                var primaryCredit = credits?.FirstOrDefault();
+                                var primaryArtistName = primaryCredit?.Artist?.Name ?? primaryCredit?.Name ?? "Unknown Artist";
+                                var primaryArtistId = primaryCredit?.Artist?.Id;
+                                
+                                // Determine the role of this artist on the release
+                                var artistCredit = credits?.FirstOrDefault(c => c.Artist?.Id == mbArtistId);
+                                var role = artistCredit?.JoinPhrase?.TrimStart(' ', '&', ',') ?? "Featured Artist";
+                                
+                                // Fetch cover art for this release group
+                                string? coverArtUrl = null;
+                                try
+                                {
+                                    // Try to get cover art URL from Cover Art Archive and download it locally
+                                    var releases = await musicBrainzService.GetReleasesForReleaseGroupAsync(rg.Id);
+                                    var bestRelease = releases.FirstOrDefault();
+                                    if (bestRelease?.Id != null)
+                                    {
+                                        // Try to download cover art from Cover Art Archive
+                                        try
+                                        {
+                                            using var httpClient = new HttpClient();
+                                            var coverArtSourceUrl = $"https://coverartarchive.org/release/{bestRelease.Id}/front-500.jpg";
+                                            
+                                            var response = await httpClient.GetAsync(coverArtSourceUrl);
+                                            if (response.IsSuccessStatusCode)
+                                            {
+                                                var imageBytes = await response.Content.ReadAsByteArrayAsync();
+                                                var fileName = $"appearance_{rg.Id}_cover.jpg";
+                                                var coverArtPath = Path.Combine(artistDir, fileName);
+                                                
+                                                await File.WriteAllBytesAsync(coverArtPath, imageBytes);
+                                                coverArtUrl = $"./{fileName}";
+                                                
+                                                logger.LogDebug("[ImportExecutor] 🖼️ Downloaded cover art for '{Title}': {CoverArtPath}", rg.Title, coverArtPath);
+                                            }
+                                            else
+                                            {
+                                                // Try alternative URL without size specification
+                                                coverArtSourceUrl = $"https://coverartarchive.org/release/{bestRelease.Id}/front";
+                                                response = await httpClient.GetAsync(coverArtSourceUrl);
+                                                if (response.IsSuccessStatusCode)
+                                                {
+                                                    var imageBytes = await response.Content.ReadAsByteArrayAsync();
+                                                    var fileName = $"appearance_{rg.Id}_cover.jpg";
+                                                    var coverArtPath = Path.Combine(artistDir, fileName);
+                                                    
+                                                    await File.WriteAllBytesAsync(coverArtPath, imageBytes);
+                                                    coverArtUrl = $"./{fileName}";
+                                                    
+                                                    logger.LogDebug("[ImportExecutor] 🖼️ Downloaded cover art for '{Title}' (alternative URL): {CoverArtPath}", rg.Title, coverArtPath);
+                                                }
+                                            }
+                                        }
+                                        catch (Exception downloadEx)
+                                        {
+                                            logger.LogDebug(downloadEx, "[ImportExecutor] ⚠️ Failed to download cover art for '{Title}' from Cover Art Archive", rg.Title);
+                                        }
+                                    }
+                                }
+                                catch (Exception coverArtEx)
+                                {
+                                    logger.LogDebug(coverArtEx, "[ImportExecutor] ⚠️ Failed to fetch cover art for release group '{Title}' (ID: {ReleaseGroupId})", rg.Title, rg.Id);
+                                }
+                                
+                                var appearance = new JsonArtistAppearance
+                                {
+                                    ReleaseTitle = rg.Title ?? "Unknown Release",
+                                    ReleaseType = rg.PrimaryType ?? "Unknown",
+                                    PrimaryArtistName = primaryArtistName,
+                                    PrimaryArtistMusicBrainzId = primaryArtistId,
+                                    MusicBrainzReleaseGroupId = rg.Id,
+                                    FirstReleaseDate = rg.FirstReleaseDate,
+                                    FirstReleaseYear = rg.FirstReleaseDate?.Split("-").FirstOrDefault(),
+                                    Role = role,
+                                    CoverArt = coverArtUrl
+                                };
+                                
+                                appearancesWithCoverArt.Add(appearance);
+                            }
+                            catch (Exception appearanceEx)
+                            {
+                                logger.LogWarning(appearanceEx, "[ImportExecutor] ⚠️ Failed to process appearance for release group '{Title}'", rg.Title);
+                            }
+                        }
+                        
+                        jsonArtist.AlsoAppearsOn = appearancesWithCoverArt;
                         
                         // Write updated artist.json
                         var updatedArtistText = JsonSerializer.Serialize(jsonArtist, GetJsonOptions());
                         await File.WriteAllTextAsync(artistJsonPath, updatedArtistText);
                         
-                        logger.LogInformation("[ImportExecutor] 📝 Added {AppearanceCount} appearances to alsoAppearsOn field in artist.json", jsonArtist.AlsoAppearsOn.Count);
+                        var coverArtCount = appearancesWithCoverArt.Count(a => !string.IsNullOrEmpty(a.CoverArt));
+                        logger.LogInformation("[ImportExecutor] 📝 Added {AppearanceCount} appearances to alsoAppearsOn field in artist.json ({CoverArtCount} with locally stored cover art)", 
+                            appearancesWithCoverArt.Count, coverArtCount);
                     }
                 }
                 catch (Exception ex)
