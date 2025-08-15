@@ -1,59 +1,97 @@
+using Hqub.Lastfm;
+using Microsoft.Extensions.Logging;
 using MusicGQL.Features.ServerLibrary.Json;
 using MusicGQL.Integration.Spotify;
 
 namespace MusicGQL.Features.Import.Services.TopTracks;
 
-public class TopTracksCompleter(SpotifyService spotifyService)
+public class TopTracksCompleter(SpotifyService spotifyService, LastfmClient lastfmClient, ILogger logger)
 {
     private static string Normalize(string s) => (s ?? string.Empty).Trim().ToLowerInvariant();
 
     public async Task CompleteAsync(string artistDir, JsonArtist artist)
     {
+        const int MaxTop = 25;
+        // Weights are tuned to favor Spotify popularity when Last.fm scrobbles are small or missing
+        const double Wlf = 0.5; // weight for Last.fm (log10 scale)
+        const double Wsp = 2.0; // weight for Spotify popularity (0..1)
+        const long LfIgnoreBelow = 10000; // if LF plays < this, we effectively ignore LF for ranking
         if (artist.TopTracks == null || artist.TopTracks.Count == 0)
         {
             return;
         }
 
-        // Find Spotify artist id either from connections or via search by name
-        string? spotifyArtistId = artist.Connections?.SpotifyId;
-        if (string.IsNullOrWhiteSpace(spotifyArtistId))
+        // Build candidate artist names for Last.fm lookups (handle Ye/Kanye aliasing)
+        var candidateArtistNames = new List<string>();
+        void addName(string? s)
         {
+            if (!string.IsNullOrWhiteSpace(s) && !candidateArtistNames.Contains(s, StringComparer.OrdinalIgnoreCase))
+                candidateArtistNames.Add(s);
+        }
+        addName(artist.Name);
+        addName(artist.SortName);
+        if (artist.Aliases != null)
+        {
+            foreach (var a in artist.Aliases)
+            {
+                addName(a.Name);
+                addName(a.SortName);
+            }
+        }
+
+        // Build a map of Spotify tracks across all linked Spotify IDs (and legacy),
+        // choosing the entry with the highest popularity for each normalized title.
+        var allSpotifyIds = new List<string>();
+        if (artist.Connections?.SpotifyIds != null)
+        {
+            allSpotifyIds.AddRange(artist.Connections.SpotifyIds.Select(s => s.Id));
+        }
+        if (!string.IsNullOrWhiteSpace(artist.Connections?.SpotifyId))
+        {
+            if (!allSpotifyIds.Contains(artist.Connections.SpotifyId, StringComparer.OrdinalIgnoreCase))
+                allSpotifyIds.Add(artist.Connections.SpotifyId);
+        }
+        if (allSpotifyIds.Count == 0)
+        {
+            // Try to resolve one by name as a last resort
             try
             {
                 var candidates = await spotifyService.SearchArtistsAsync(artist.Name, 1);
                 var best = candidates?.FirstOrDefault();
                 if (best != null)
                 {
-                    spotifyArtistId = best.Id;
+                    allSpotifyIds.Add(best.Id);
                     artist.Connections ??= new JsonArtistServiceConnections();
-                    artist.Connections.SpotifyId = spotifyArtistId;
+                    artist.Connections.SpotifyId = best.Id;
                 }
             }
-            catch
-            {
-                // ignore spotify failures
-            }
+            catch { }
         }
 
-        List<SpotifyAPI.Web.FullTrack>? spotifyTopTracks = null;
-        if (!string.IsNullOrWhiteSpace(spotifyArtistId))
+        var titleToSpotify = new Dictionary<string, SpotifyAPI.Web.FullTrack>(StringComparer.OrdinalIgnoreCase);
+        foreach (var sid in allSpotifyIds)
         {
             try
             {
-                spotifyTopTracks =
-                    await spotifyService.GetArtistTopTracksAsync(spotifyArtistId!) ?? [];
+                var list = await spotifyService.GetArtistTopTracksAsync(sid) ?? new List<SpotifyAPI.Web.FullTrack>();
+                foreach (var t in list)
+                {
+                    var key = Normalize(t.Name);
+                    if (titleToSpotify.TryGetValue(key, out var existing))
+                    {
+                        if (t.Popularity > existing.Popularity)
+                        {
+                            titleToSpotify[key] = t;
+                        }
+                    }
+                    else
+                    {
+                        titleToSpotify[key] = t;
+                    }
+                }
             }
-            catch
-            {
-                spotifyTopTracks = [];
-            }
+            catch { }
         }
-
-        var titleToSpotify =
-            spotifyTopTracks
-                ?.GroupBy(t => Normalize(t.Name))
-                .ToDictionary(g => g.Key, g => g.First())
-            ?? new Dictionary<string, SpotifyAPI.Web.FullTrack>();
 
         // Ensure an HttpClient for downloading images when needed
         using var httpClient = new HttpClient();
@@ -61,6 +99,7 @@ public class TopTracksCompleter(SpotifyService spotifyService)
         for (int i = 0; i < artist.TopTracks.Count; i++)
         {
             var tt = artist.TopTracks[i];
+            long? beforePlayCount = tt.PlayCount;
 
             var normalizedTitle = Normalize(tt.Title);
             titleToSpotify.TryGetValue(normalizedTitle, out var spotifyMatch);
@@ -76,6 +115,69 @@ public class TopTracksCompleter(SpotifyService spotifyService)
             {
                 tt.TrackLength = spotifyMatch.DurationMs;
             }
+
+            // Fill play count, preferring Last.fm when available, else Spotify popularity as proxy
+            long? lfCountUsed = null;
+            int? spPopularityUsed = null;
+            if (tt.PlayCount == null)
+            {
+                bool set = false;
+                foreach (var candidateArtist in candidateArtistNames)
+                {
+                    try
+                    {
+                        var lf = await lastfmClient.Track.GetInfoAsync(tt.Title, candidateArtist);
+                        var lfPlays = lf?.Statistics?.PlayCount;
+                        if (lfPlays != null)
+                        {
+                            tt.PlayCount = lfPlays;
+                            lfCountUsed = lfPlays;
+                            set = true;
+                            break;
+                        }
+                    }
+                    catch { }
+                }
+
+                double? spNorm = null;
+                if (!set && spotifyMatch != null)
+                {
+                    // Popularity is 0-100; store as long for consistent ranking
+                    spNorm = spotifyMatch.Popularity;
+                    spPopularityUsed = spotifyMatch.Popularity;
+                    tt.PlayCount = (long)Math.Round(spNorm.Value);
+                }
+
+            }
+
+            // Compute RankScore using both signals when available
+            // Normalize components and compute blended rank
+            double lfScore = 0.0;
+            if (lfCountUsed.HasValue)
+            {
+                if (lfCountUsed.Value >= LfIgnoreBelow)
+                {
+                    lfScore = Math.Log10(lfCountUsed.Value + 1.0);
+                }
+                else
+                {
+                    // treat as effectively zero to avoid penalizing popular Spotify tracks with low LF scrobbles
+                    lfScore = 0.0;
+                }
+            }
+            double spScore = spPopularityUsed.HasValue ? (spPopularityUsed.Value / 100.0) : 0.0;
+            var rankScore = Wlf * lfScore + Wsp * spScore;
+            tt.RankScore = rankScore;
+            tt.RankSource = lfCountUsed.HasValue && spPopularityUsed.HasValue ? "lf+sp"
+                : lfCountUsed.HasValue ? "lf"
+                : spPopularityUsed.HasValue ? "sp_popularity" : null;
+
+            // Log enrichment details for diagnostics
+            try
+            {
+                logger.LogInformation("[TopTracksCompleter] Track='{Title}' before={Before} after={After} lfUsed={Lf} spPop={Sp}", tt.Title, beforePlayCount ?? 0, tt.PlayCount ?? 0, lfCountUsed ?? 0, spPopularityUsed ?? -1);
+            }
+            catch { }
 
             // Cover art handling
             if (string.IsNullOrWhiteSpace(tt.CoverArt))
@@ -100,5 +202,24 @@ public class TopTracksCompleter(SpotifyService spotifyService)
                 }
             }
         }
+
+        // Resort by rank score (then play count) now that we have enriched counts
+        artist.TopTracks = artist.TopTracks
+            .OrderByDescending(t => t.RankScore ?? 0)
+            .ThenByDescending(t => t.PlayCount ?? 0)
+            .ThenBy(t => t.Title)
+            .Take(MaxTop)
+            .ToList();
+
+        // Summary log of final ranking
+        try
+        {
+            for (int i = 0; i < Math.Min(10, artist.TopTracks.Count); i++)
+            {
+                var t = artist.TopTracks[i];
+                logger.LogInformation("[TopTracksCompleter] FinalRank #{Rank}: '{Title}' score={Score:F3} plays={Plays} source={Source}", i + 1, t.Title, t.RankScore ?? 0, t.PlayCount ?? 0, t.RankSource ?? "");
+            }
+        }
+        catch { }
     }
 }

@@ -32,6 +32,8 @@ public class JsonTopTrack
     public string? ReleaseFolderName { get; set; }
     public int? TrackNumber { get; set; }
     public long? PlayCount { get; set; }
+    public double? RankScore { get; set; }
+    public string? RankSource { get; set; } // "lf", "sp_popularity", or "lf+sp"
 }
 
 public class JsonArtistPhotos

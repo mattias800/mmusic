@@ -137,7 +137,7 @@ public class LastFmEnrichmentService(
                 {
                     try
                     {
-                        var tracks = await spImporter.GetTopTracksAsync(sid, 10) ?? new List<JsonTopTrack>();
+                        var tracks = await spImporter.GetTopTracksAsync(sid, 25) ?? new List<JsonTopTrack>();
                         foreach (var t in tracks)
                         {
                             var key = NormalizeTitle(t.Title);
@@ -156,7 +156,7 @@ public class LastFmEnrichmentService(
                 }
                 jsonArtist.TopTracks = merged.Values
                     .OrderByDescending(t => t.PlayCount ?? 0)
-                    .Take(10)
+                    .Take(25)
                     .ToList();
             }
         }
@@ -172,7 +172,7 @@ public class LastFmEnrichmentService(
             try
             {
                 TopTracks.ITopTracksImporter importer = new TopTracks.TopTracksLastFmImporter(lastfmClient);
-                jsonArtist.TopTracks = await importer.GetTopTracksAsync(mbArtistId, 10);
+                jsonArtist.TopTracks = await importer.GetTopTracksAsync(mbArtistId, 25);
             }
             catch (Exception ex)
             {
@@ -185,7 +185,7 @@ public class LastFmEnrichmentService(
         // Complete missing fields using Spotify as fallback (releaseTitle, cover art download)
         try
         {
-            var completer = new TopTracks.TopTracksCompleter(spotifyService);
+            var completer = new TopTracks.TopTracksCompleter(spotifyService, lastfmClient, logger);
             await completer.CompleteAsync(artistDir, jsonArtist);
         }
         catch (Exception ex)

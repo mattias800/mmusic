@@ -304,7 +304,7 @@ public sealed class MusicBrainzImportExecutor(
                         {
                             try
                             {
-                                var tracks = await spImporter.GetTopTracksAsync(sid, 10) ?? new List<JsonTopTrack>();
+                                var tracks = await spImporter.GetTopTracksAsync(sid, 25) ?? new List<JsonTopTrack>();
                                 foreach (var t in tracks)
                                 {
                                     var key = NormalizeTitle(t.Title);
@@ -324,7 +324,7 @@ public sealed class MusicBrainzImportExecutor(
                         }
                         jsonArtist.TopTracks = merged.Values
                             .OrderByDescending(t => t.PlayCount ?? 0)
-                            .Take(10)
+                            .Take(25)
                             .ToList();
                     }
                 }
@@ -336,7 +336,7 @@ public sealed class MusicBrainzImportExecutor(
                     try
                     {
                         TopTracks.ITopTracksImporter lfImporter = new TopTracks.TopTracksLastFmImporter(lastfmClient);
-                        jsonArtist.TopTracks = await lfImporter.GetTopTracksAsync(mbArtistId, 10);
+                        jsonArtist.TopTracks = await lfImporter.GetTopTracksAsync(mbArtistId, 25);
                     }
                     catch { jsonArtist.TopTracks = jsonArtist.TopTracks ?? []; }
                 }
@@ -412,7 +412,7 @@ public sealed class MusicBrainzImportExecutor(
                 // Complete missing fields (releaseTitle/cover art) using Spotify data
                 try
                 {
-                    var completer = new TopTracks.TopTracksCompleter(spotifyService);
+                    var completer = new TopTracks.TopTracksCompleter(spotifyService, lastfmClient, logger);
                     await completer.CompleteAsync(artistDir, jsonArtist);
                 }
                 catch { }
