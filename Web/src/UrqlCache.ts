@@ -1,44 +1,37 @@
 import { cacheExchange } from "@urql/exchange-graphcache";
 import introspection from "./gql/introspection.json";
 import { cacheKeys } from "./UrqlCacheKeys";
-import { DownloadOverviewQueryDocument, QueuesPage_QueryDocument } from "@/gql/graphql";
+import { QueuesPage_QueryDocument } from "@/gql/graphql";
 
 export const optimisticCacheExchange = cacheExchange({
   schema: introspection,
   keys: cacheKeys,
   updates: {
     Subscription: {
-      // With normalized ids in place, subscriptions auto-merge updates.
-      // We still ensure the link flips to null, and also re-point the link
-      // when a new release starts (different id).
-      currentDownloadUpdated: (result, _args, cache) => {
+      // Handle slot progress updates for the multi-slot download system
+      slotProgressUpdated: (result, _args, cache) => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const payload = (result as any)?.currentDownloadUpdated ?? null;
-        if (payload === null) {
-          cache.updateQuery({ query: DownloadOverviewQueryDocument }, (data) => {
-            if (!data) return data;
-            data.downloads.currentDownload = null;
-            return data;
-          });
-          cache.updateQuery({ query: QueuesPage_QueryDocument }, (data) => {
-            if (!data) return data;
-            data.downloads.currentDownload = null;
-            return data;
-          });
-          return;
-        }
+        const payload = (result as any)?.slotProgressUpdated ?? null;
+        if (!payload) return;
 
-        // Ensure the link points to the latest entity (new id when moving to next release)
-        cache.updateQuery({ query: DownloadOverviewQueryDocument }, (data) => {
-          if (!data) return data;
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          data.downloads.currentDownload = payload as any;
-          return data;
-        });
+        const slotId = payload.slotId;
+        const progress = payload.progress;
+
+        // Update the slot progress in the downloads data
         cache.updateQuery({ query: QueuesPage_QueryDocument }, (data) => {
-          if (!data) return data;
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          data.downloads.currentDownload = payload as any;
+          if (!data?.downloads?.downloadSlots) return data;
+          
+          const slotIndex = data.downloads.downloadSlots.findIndex(slot => slot.id === slotId);
+          if (slotIndex >= 0) {
+            // Update the existing slot
+            data.downloads.downloadSlots[slotIndex] = {
+              ...data.downloads.downloadSlots[slotIndex],
+              currentProgress: progress,
+              isWorking: progress !== null,
+              lastActivityAt: progress ? new Date().toISOString() : data.downloads.downloadSlots[slotIndex].lastActivityAt
+            };
+          }
+          
           return data;
         });
       },

@@ -55,4 +55,15 @@ public record DownloadProgress
     public int TotalProviders { get; init; }
 }
 
+public record DownloadSlotInfo(
+    int Id,
+    bool IsActive,
+    bool IsWorking,
+    DownloadQueueItem? CurrentWork,
+    DownloadProgress? CurrentProgress,
+    DateTime? StartedAt,
+    DateTime? LastActivityAt,
+    string? Status
+);
+
 

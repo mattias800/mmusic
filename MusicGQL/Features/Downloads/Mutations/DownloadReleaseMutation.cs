@@ -9,7 +9,6 @@ namespace MusicGQL.Features.Downloads.Mutations;
 public class StartDownloadReleaseMutation
 {
     public async Task<StartDownloadReleaseResult> StartDownloadRelease(
-        [Service] StartDownloadReleaseService service,
         [Service] ServerLibraryCache cache,
         [Service] DownloadQueueService queue,
         StartDownloadReleaseInput input
@@ -18,11 +17,7 @@ public class StartDownloadReleaseMutation
         // Enqueue to the FRONT for user-triggered priority (best effort)
         try { queue.EnqueueFront(new DownloadQueueItem(input.ArtistId, input.ReleaseFolderName)); } catch { }
 
-        var (success, error) = await service.StartAsync(input.ArtistId, input.ReleaseFolderName);
-        if (!success)
-        {
-            return new StartDownloadReleaseUnknownError(error ?? "Unknown error");
-        }
+        // Get the release info for the response
         var release = await cache.GetReleaseByArtistAndFolderAsync(input.ArtistId, input.ReleaseFolderName);
         return release is null
             ? new StartDownloadReleaseAccepted(input.ArtistId, input.ReleaseFolderName)

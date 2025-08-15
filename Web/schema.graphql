@@ -198,20 +198,6 @@ type CacheStatistics {
   trackCount: Int!
 }
 
-type CancelCurrentDownloadError {
-  message: String!
-}
-
-input CancelCurrentDownloadInput {
-  artistId: String!
-}
-
-union CancelCurrentDownloadResult = CancelCurrentDownloadError | CancelCurrentDownloadSuccess
-
-type CancelCurrentDownloadSuccess {
-  ok: Boolean!
-}
-
 type CreateDirectoryError {
   message: String!
 }
@@ -350,6 +336,17 @@ type DownloadQueueState {
   queueLength: Int!
 }
 
+type DownloadSlotInfo {
+  currentProgress: DownloadProgress
+  currentWork: DownloadQueueItem
+  id: Int!
+  isActive: Boolean!
+  isWorking: Boolean!
+  lastActivityAt: DateTime
+  startedAt: DateTime
+  status: String
+}
+
 enum DownloadStatus {
   COMPLETED
   DOWNLOADING
@@ -360,9 +357,11 @@ enum DownloadStatus {
 }
 
 type DownloadsSearchRoot {
-  currentDownload: DownloadProgress
+  allSlotProgress: [KeyValuePairOfInt32AndDownloadProgress!]!
   downloadHistory: [DownloadHistoryItem!]!
   downloadQueue: DownloadQueueState!
+  downloadSlots: [DownloadSlotInfo!]!
+  slotProgress(slotId: Int!): DownloadProgress
 }
 
 input EnqueueArtistsFromSpotifyPlaylistInput {
@@ -497,6 +496,11 @@ type ImportedRelease {
   releaseGroupId: String!
   success: Boolean!
   title: String!
+}
+
+type KeyValuePairOfInt32AndDownloadProgress {
+  key: Int!
+  value: DownloadProgress!
 }
 
 type LastFmAlbum {
@@ -720,16 +724,6 @@ enum MediaAvailabilityStatus {
   UNKNOWN
 }
 
-type MoveCurrentDownloadToBackError {
-  message: String!
-}
-
-union MoveCurrentDownloadToBackResult = MoveCurrentDownloadToBackError | MoveCurrentDownloadToBackSuccess
-
-type MoveCurrentDownloadToBackSuccess {
-  downloadQueue: DownloadQueueState!
-}
-
 type MovePlaylistItemError {
   message: String!
 }
@@ -776,7 +770,6 @@ type MusicBrainzSearchRoot {
 
 type Mutation {
   addTrackToPlaylist(input: AddTrackToPlaylistInput!): AddTrackToPlaylistResult!
-  cancelCurrentDownload(input: CancelCurrentDownloadInput!): CancelCurrentDownloadResult!
   createDirectory(input: CreateDirectoryInput!): CreateDirectoryResult!
   createLibraryManifest: CreateLibraryManifestResult!
   createPlaylist(input: CreatePlaylistInput!): CreatePlaylistResult!
@@ -793,7 +786,6 @@ type Mutation {
   importArtistsFromSpotifyPlaylist(input: ImportArtistsFromSpotifyPlaylistInput!): ImportArtistsFromSpotifyPlaylistResult!
   importSpotifyPlaylist(input: ImportSpotifyPlaylistInput!): ImportSpotifyPlaylistResult!
   likeSong(input: LikeSongInput!): LikeSongResult!
-  moveCurrentDownloadToBack: MoveCurrentDownloadToBackResult!
   movePlaylistItem(input: MovePlaylistItemInput!): MovePlaylistItemResult!
   ping: Boolean!
   redownloadRelease(input: RedownloadReleaseInput!): RedownloadReleaseResult!
@@ -819,6 +811,7 @@ type Mutation {
   startDownloadRelease(input: StartDownloadReleaseInput!): StartDownloadReleaseResult!
   unlikeSong(input: UnlikedSongInput!): UnlikeSongResult!
   updateDownloadPath(input: UpdateDownloadPathInput!): UpdateDownloadPathResult!
+  updateDownloadSlotCount(input: UpdateDownloadSlotCountInput!): UpdateDownloadSlotCountResult!
   updateLibraryPath(input: UpdateLibraryPathInput!): UpdateLibraryPathResult!
   updateSoulSeekNoDataTimeout(input: UpdateSoulSeekNoDataTimeoutInput!): UpdateSoulSeekNoDataTimeoutResult!
   updateSoulSeekSearchTimeLimit(seconds: Int!): UpdateSoulSeekSearchTimeLimitResult!
@@ -1086,6 +1079,7 @@ type ServerLibrarySearchRoot {
 
 type ServerSettings {
   downloadPath: String!
+  downloadSlotCount: Int!
   hasLibraryManifest: Boolean!
   id: ID!
   libraryPath: String!
@@ -1222,6 +1216,11 @@ type SignOutSuccess {
   success: Boolean!
 }
 
+type SlotProgressUpdate {
+  progress: DownloadProgress
+  slotId: Int!
+}
+
 type SoulSeekRoot {
   id: ID!
   status: SoulSeekStatus!
@@ -1322,7 +1321,6 @@ type Subscription {
   artistImportQueueUpdated: ArtistImportQueueState!
   artistImported: Artist!
   currentArtistImportUpdated: ArtistImportProgress!
-  currentDownloadUpdated: DownloadProgress
   downloadHistoryUpdated: [DownloadHistoryItem!]!
   downloadQueueUpdated: DownloadQueueState!
   libraryArtistReleaseUpdated(artistId: String!): Release!
@@ -1336,6 +1334,7 @@ type Subscription {
   libraryTrackUpdated(artistId: String!, releaseFolderName: String!, trackNumber: Int!): Track!
   ping: Ping!
   playlistItemUpdated(playlistId: ID!): PlaylistItem!
+  slotProgressUpdated: SlotProgressUpdate!
   soulSeekStatusUpdated: SoulSeekStatus!
 }
 
@@ -1397,6 +1396,20 @@ input UpdateDownloadPathInput {
 union UpdateDownloadPathResult = UpdateDownloadPathSuccess
 
 type UpdateDownloadPathSuccess {
+  serverSettings: ServerSettings!
+}
+
+type UpdateDownloadSlotCountError {
+  message: String!
+}
+
+input UpdateDownloadSlotCountInput {
+  newSlotCount: Int!
+}
+
+union UpdateDownloadSlotCountResult = UpdateDownloadSlotCountError | UpdateDownloadSlotCountSuccess
+
+type UpdateDownloadSlotCountSuccess {
   serverSettings: ServerSettings!
 }
 

@@ -9,8 +9,8 @@ namespace MusicGQL.Features.Downloads;
 public record DownloadsSubscription
 {
     public const string DownloadQueueUpdatedTopic = "DownloadQueueUpdated";
-    public const string CurrentDownloadUpdatedTopic = "CurrentDownloadUpdated";
     public const string DownloadHistoryUpdatedTopic = "DownloadHistoryUpdated";
+    public const string SlotProgressUpdatedTopic = "SlotProgressUpdated";
 
     public ValueTask<ISourceStream<DownloadQueueState>> SubscribeToDownloadQueueUpdated(
         [Service] ITopicEventReceiver receiver,
@@ -20,14 +20,6 @@ public record DownloadsSubscription
     [Subscribe(With = nameof(SubscribeToDownloadQueueUpdated))]
     public DownloadQueueState DownloadQueueUpdated([EventMessage] DownloadQueueState state) => state;
 
-    public ValueTask<ISourceStream<DownloadProgress?>> SubscribeToCurrentDownloadUpdated(
-        [Service] ITopicEventReceiver receiver,
-        CancellationToken cancellationToken
-    ) => receiver.SubscribeAsync<DownloadProgress?>(CurrentDownloadUpdatedTopic, cancellationToken);
-
-    [Subscribe(With = nameof(SubscribeToCurrentDownloadUpdated))]
-    public DownloadProgress? CurrentDownloadUpdated([EventMessage] DownloadProgress? progress) => progress;
-
     public ValueTask<ISourceStream<List<DownloadHistoryItem>>> SubscribeToDownloadHistoryUpdated(
         [Service] ITopicEventReceiver receiver,
         CancellationToken cancellationToken
@@ -35,6 +27,14 @@ public record DownloadsSubscription
 
     [Subscribe(With = nameof(SubscribeToDownloadHistoryUpdated))]
     public List<DownloadHistoryItem> DownloadHistoryUpdated([EventMessage] List<DownloadHistoryItem> history) => history;
+
+    public ValueTask<ISourceStream<SlotProgressUpdate>> SubscribeToSlotProgressUpdated(
+        [Service] ITopicEventReceiver receiver,
+        CancellationToken cancellationToken
+    ) => receiver.SubscribeAsync<SlotProgressUpdate>(SlotProgressUpdatedTopic, cancellationToken);
+
+    [Subscribe(With = nameof(SubscribeToSlotProgressUpdated))]
+    public SlotProgressUpdate SlotProgressUpdated([EventMessage] SlotProgressUpdate update) => update;
 }
 
 

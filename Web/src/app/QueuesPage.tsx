@@ -10,22 +10,34 @@ import { DownloadStatus } from "@/gql/graphql.ts";
 const query = graphql(`
   query QueuesPage_Query {
     downloads {
-      currentDownload {
+      downloadSlots {
         id
-        artistId
-        releaseFolderName
+        isActive
+        isWorking
+        currentWork {
+          artistId
+          releaseFolderName
+        }
+        currentProgress {
+          id
+          artistId
+          releaseFolderName
+          status
+          totalTracks
+          completedTracks
+          errorMessage
+          artistName
+          releaseTitle
+          coverArtUrl
+          currentTrackProgressPercent
+          currentDownloadSpeedKbps
+          currentProvider
+          currentProviderIndex
+          totalProviders
+        }
+        startedAt
+        lastActivityAt
         status
-        totalTracks
-        completedTracks
-        errorMessage
-        artistName
-        releaseTitle
-        coverArtUrl
-        currentTrackProgressPercent
-        currentDownloadSpeedKbps
-        currentProvider
-        currentProviderIndex
-        totalProviders
       }
       downloadQueue {
         id
@@ -102,24 +114,27 @@ const subDlQ = graphql(`
   }
 `);
 
-const subDlCur = graphql(`
-  subscription QueuesPage_CurrentDownloadUpdated {
-    currentDownloadUpdated {
-      id
-      artistId
-      releaseFolderName
-      status
-      totalTracks
-      completedTracks
-      errorMessage
-      artistName
-      releaseTitle
-      coverArtUrl
-      currentTrackProgressPercent
-      currentDownloadSpeedKbps
-      currentProvider
-      currentProviderIndex
-      totalProviders
+const subSlotProgress = graphql(`
+  subscription QueuesPage_SlotProgressUpdated {
+    slotProgressUpdated {
+      slotId
+      progress {
+        id
+        artistId
+        releaseFolderName
+        status
+        totalTracks
+        completedTracks
+        errorMessage
+        artistName
+        releaseTitle
+        coverArtUrl
+        currentTrackProgressPercent
+        currentDownloadSpeedKbps
+        currentProvider
+        currentProviderIndex
+        totalProviders
+      }
     }
   }
 `);
@@ -168,53 +183,17 @@ const removeImportMutation = graphql(`
   }
 `);
 
-const cancelCurrentMutation = graphql(`
-  mutation CancelCurrentDownload($artistId: String!) {
-    cancelCurrentDownload(input: { artistId: $artistId }) {
-      __typename
-      ... on CancelCurrentDownloadSuccess {
-        ok
-      }
-      ... on CancelCurrentDownloadError {
-        message
-      }
-    }
-  }
-`);
 
-const moveCurrentToBackMutation = graphql(`
-  mutation MoveCurrentToBack {
-    moveCurrentDownloadToBack {
-      __typename
-      ... on MoveCurrentDownloadToBackSuccess {
-        downloadQueue {
-          id
-          queueLength
-          items {
-            id
-            artistId
-            releaseFolderName
-          }
-        }
-      }
-      ... on MoveCurrentDownloadToBackError {
-        message
-      }
-    }
-  }
-`);
 
 export const QueuesPage: React.FC = () => {
   const [{ data, fetching, error }] = useQuery({ query });
   useSubscription({ query: subDlQ });
-  useSubscription({ query: subDlCur });
+  useSubscription({ query: subSlotProgress });
   useSubscription({ query: subImportQ });
   useSubscription({ query: subImportCur });
 
   const [, removeDownload] = useMutation(removeDownloadMutation);
   const [, removeImport] = useMutation(removeImportMutation);
-  const [, cancelCurrent] = useMutation(cancelCurrentMutation);
-  const [, moveCurrentToBack] = useMutation(moveCurrentToBackMutation);
 
   if (fetching) return <div className="p-6">Loading…</div>;
   if (error || !data) return <div className="p-6">Error</div>;
@@ -225,136 +204,128 @@ export const QueuesPage: React.FC = () => {
   return (
     <div className="p-6 grid grid-cols-1 lg:grid-cols-2 gap-8">
       <section>
-        <h2 className="text-xl font-semibold mb-2">Current download</h2>
-        <div className="rounded border border-zinc-700 p-4">
-          {dl.currentDownload ? (
-            <div className="text-zinc-300">
-              <div className="flex items-center gap-4">
-                <Link
-                  to={`/artist/${dl.currentDownload.artistId}/release/${dl.currentDownload.releaseFolderName}`}
-                >
-                  <ReleaseCoverArt
-                    srcUrl={
-                      dl.currentDownload.coverArtUrl ??
-                      `/library/${dl.currentDownload.artistId}/releases/${dl.currentDownload.releaseFolderName}/coverart`
-                    }
-                    titleForPlaceholder={
-                      dl.currentDownload.releaseTitle ??
-                      dl.currentDownload.releaseFolderName
-                    }
-                    className="w-24 h-24 rounded object-cover border border-zinc-700"
-                  />
-                </Link>
-                <div className="flex-1 min-w-0">
-                  <div className="truncate text-lg font-semibold">
-                    <Link
-                      to={`/artist/${dl.currentDownload.artistId}`}
-                      className="hover:underline"
-                    >
-                      {dl.currentDownload.artistName ??
-                        dl.currentDownload.artistId}
-                    </Link>
-                    {" - "}
-                    <Link
-                      to={`/artist/${dl.currentDownload.artistId}/release/${dl.currentDownload.releaseFolderName}`}
-                      className="hover:underline"
-                    >
-                      {dl.currentDownload.releaseTitle ??
-                        dl.currentDownload.releaseFolderName}
-                    </Link>
-                  </div>
-                  <div className="text-sm text-zinc-400 mt-1">
-                    {dl.currentDownload.status}{" "}
-                    {dl.currentDownload.status ===
-                      DownloadStatus.Downloading && (
-                      <>
-                        — {dl.currentDownload.completedTracks}/
-                        {dl.currentDownload.totalTracks}
-                      </>
-                    )}
-                    {dl.currentDownload.currentProvider && dl.currentDownload.totalProviders && (
-                      <span className="ml-2">
-                        via {dl.currentDownload.currentProvider} ({dl.currentDownload.currentProviderIndex}/{dl.currentDownload.totalProviders})
-                      </span>
-                    )}
-                  </div>
-                  {typeof dl.currentDownload.currentDownloadSpeedKbps ===
-                    "number" && (
-                    <div className="text-xs text-zinc-400 mt-1">
-                      Speed:{" "}
-                      {dl.currentDownload.currentDownloadSpeedKbps!.toFixed(1)}{" "}
-                      KB/s
+        <h2 className="text-xl font-semibold mb-2">Download Slots ({dl.downloadSlots?.length || 0})</h2>
+        <div className="space-y-4">
+          {dl.downloadSlots && dl.downloadSlots.length > 0 ? (
+            dl.downloadSlots.map((slot) => (
+              <div key={slot.id} className="rounded border border-zinc-700 p-4">
+                <div className="text-zinc-300">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="text-sm font-medium">
+                      Slot {slot.id} - {slot.status || "Idle"}
                     </div>
+                    <div className="text-xs text-zinc-500">
+                      {slot.isActive ? "Active" : "Inactive"}
+                    </div>
+                  </div>
+                  
+                  {slot.isWorking && slot.currentWork && slot.currentProgress ? (
+                    <div className="flex items-center gap-4">
+                      <Link
+                        to={`/artist/${slot.currentWork.artistId}/release/${slot.currentWork.releaseFolderName}`}
+                      >
+                        <ReleaseCoverArt
+                          srcUrl={
+                            slot.currentProgress.coverArtUrl ??
+                            `/library/${slot.currentWork.artistId}/releases/${slot.currentWork.releaseFolderName}/coverart`
+                          }
+                          titleForPlaceholder={
+                            slot.currentProgress.releaseTitle ??
+                            slot.currentWork.releaseFolderName
+                          }
+                          className="w-24 h-24 rounded object-cover border border-zinc-700"
+                        />
+                      </Link>
+                      <div className="flex-1 min-w-0">
+                        <div className="truncate text-lg font-semibold">
+                          <Link
+                            to={`/artist/${slot.currentWork.artistId}`}
+                            className="hover:underline"
+                          >
+                            {slot.currentProgress.artistName ??
+                              slot.currentWork.artistId}
+                          </Link>
+                          {" - "}
+                          <Link
+                            to={`/artist/${slot.currentWork.artistId}/release/${slot.currentWork.releaseFolderName}`}
+                            className="hover:underline"
+                          >
+                            {slot.currentProgress.releaseTitle ??
+                              slot.currentWork.releaseFolderName}
+                          </Link>
+                        </div>
+                        <div className="text-sm text-zinc-400 mt-1">
+                          {slot.currentProgress.status}{" "}
+                          {slot.currentProgress.status === DownloadStatus.Downloading && (
+                            <>
+                              — {slot.currentProgress.completedTracks}/
+                              {slot.currentProgress.totalTracks}
+                            </>
+                          )}
+                          {slot.currentProgress.currentProvider && slot.currentProgress.totalProviders && (
+                            <span className="ml-2">
+                              via {slot.currentProgress.currentProvider} ({slot.currentProgress.currentProviderIndex}/{slot.currentProgress.totalProviders})
+                            </span>
+                          )}
+                        </div>
+                        {typeof slot.currentProgress.currentDownloadSpeedKbps === "number" && (
+                          <div className="text-xs text-zinc-400 mt-1">
+                            Speed: {slot.currentProgress.currentDownloadSpeedKbps.toFixed(1)} KB/s
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-zinc-400 text-center py-8">
+                      {slot.isActive ? "Waiting for work..." : "Slot inactive"}
+                    </div>
+                  )}
+
+                  {slot.currentProgress && (
+                    <>
+                      <div className="mt-3">
+                        <ProgressIndicator
+                          progressPercent={
+                            slot.currentProgress.totalTracks > 0
+                              ? Math.min(
+                                  100,
+                                  Math.round(
+                                    (slot.currentProgress.completedTracks /
+                                      slot.currentProgress.totalTracks) *
+                                      100,
+                                  ),
+                                )
+                              : 0
+                          }
+                        />
+                      </div>
+
+                      {typeof slot.currentProgress.currentTrackProgressPercent === "number" && (
+                        <div className="mt-3 text-xs text-zinc-400">
+                          Current track: {Math.max(1, slot.currentProgress.completedTracks)} / {slot.currentProgress.totalTracks}
+                          <div className="mt-1">
+                            <ProgressIndicator
+                              progressPercent={Math.max(
+                                0,
+                                Math.min(100, slot.currentProgress.currentTrackProgressPercent),
+                              )}
+                            />
+                          </div>
+                        </div>
+                      )}
+
+                      {slot.currentProgress.errorMessage && (
+                        <div className="text-sm text-red-400 mt-2">
+                          {slot.currentProgress.errorMessage}
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               </div>
-
-              <div className="mt-3">
-                <ProgressIndicator
-                  progressPercent={
-                    dl.currentDownload.totalTracks > 0
-                      ? Math.min(
-                          100,
-                          Math.round(
-                            (dl.currentDownload.completedTracks /
-                              dl.currentDownload.totalTracks) *
-                              100,
-                          ),
-                        )
-                      : 0
-                  }
-                />
-              </div>
-
-              {/* Compact current track row */}
-              {typeof dl.currentDownload.currentTrackProgressPercent ===
-                "number" && (
-                <div className="mt-3 text-xs text-zinc-400">
-                  Current track:{" "}
-                  {Math.max(1, dl.currentDownload.completedTracks)} /{" "}
-                  {dl.currentDownload.totalTracks}
-                  <div className="mt-1">
-                    <ProgressIndicator
-                      progressPercent={Math.max(
-                        0,
-                        Math.min(
-                          100,
-                          dl.currentDownload.currentTrackProgressPercent!,
-                        ),
-                      )}
-                    />
-                  </div>
-                </div>
-              )}
-
-              {dl.currentDownload.errorMessage && (
-                <div className="text-sm text-red-400 mt-2">
-                  {dl.currentDownload.errorMessage}
-                </div>
-              )}
-
-              <div className="mt-3 flex gap-2">
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  className="text-black"
-                  onClick={() =>
-                    cancelCurrent({ artistId: dl.currentDownload!.artistId })
-                  }
-                >
-                  Cancel download
-                </Button>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => moveCurrentToBack({})}
-                >
-                  Move to back of queue
-                </Button>
-              </div>
-            </div>
+            ))
           ) : (
-            <div className="text-sm text-zinc-400">Idle</div>
+            <div className="text-zinc-400 text-center py-8">No download slots available</div>
           )}
         </div>
 

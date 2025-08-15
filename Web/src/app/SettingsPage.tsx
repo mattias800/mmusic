@@ -6,6 +6,7 @@ import { graphql } from "@/gql";
 import { MainPadding } from "@/components/layout/MainPadding.tsx";
 import { LibraryPathForm } from "@/features/settings/LibraryPathForm.tsx";
 import { SoulSeekSettingsForm } from "@/features/settings/SoulSeekSettingsForm.tsx";
+import { DownloadSlotSettingsForm } from "@/features/settings/DownloadSlotSettingsForm.tsx";
 // Download path UI intentionally hidden for now (backend kept)
 
 export interface SettingsPageProps {}
@@ -14,6 +15,7 @@ const settingsPageQuery = graphql(`
   query SettingsPage {
     serverSettings {
       ...LibraryPathForm_ServerSettings
+      downloadSlotCount
     }
   }
 `);
@@ -32,6 +34,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = () => {
       <ServerSettingsPanel>
         <LibraryPathForm serverSettings={data.serverSettings} />
         <SoulSeekSettingsForm />
+        <DownloadSlotSettingsForm serverSettings={data.serverSettings} />
       </ServerSettingsPanel>
     </MainPadding>
   );

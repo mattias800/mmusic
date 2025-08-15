@@ -5,7 +5,8 @@ namespace MusicGQL.Features.Downloads.Services;
 
 public class DownloadQueueService(
     ITopicEventSender eventSender,
-    ILogger<DownloadQueueService> logger
+    ILogger<DownloadQueueService> logger,
+    DownloadSlotManager slotManager
 )
 {
     private readonly ConcurrentQueue<DownloadQueueItem> _queue = new();
@@ -17,7 +18,7 @@ public class DownloadQueueService(
         return $"dl|{item.ArtistId}|{item.ReleaseFolderName}";
     }
 
-    public void Enqueue(IEnumerable<DownloadQueueItem> items)
+    public async void Enqueue(IEnumerable<DownloadQueueItem> items)
     {
         int count = 0;
         foreach (var item in items)
@@ -25,7 +26,7 @@ public class DownloadQueueService(
             var key = BuildKey(item);
             if (_dedupeKeys.TryAdd(key, 1))
             {
-                _queue.Enqueue(item with { QueueKey = key });
+                await slotManager.EnqueueWorkAsync(item, CancellationToken.None);
                 count++;
             }
         }
@@ -33,18 +34,18 @@ public class DownloadQueueService(
         PublishQueueUpdated();
     }
 
-    public void Enqueue(DownloadQueueItem item)
+    public async void Enqueue(DownloadQueueItem item)
     {
         var key = BuildKey(item);
         if (_dedupeKeys.TryAdd(key, 1))
         {
-            _queue.Enqueue(item with { QueueKey = key });
+            await slotManager.EnqueueWorkAsync(item, CancellationToken.None);
             logger.LogInformation("[DownloadQueue] Enqueued 1 release ({ArtistId}/{Folder})", item.ArtistId, item.ReleaseFolderName);
         }
         PublishQueueUpdated();
     }
 
-    public void EnqueueFront(IEnumerable<DownloadQueueItem> items)
+    public async void EnqueueFront(IEnumerable<DownloadQueueItem> items)
     {
         int count = 0;
         foreach (var item in items)
@@ -52,7 +53,10 @@ public class DownloadQueueService(
             var key = BuildKey(item);
             if (_dedupeKeys.TryAdd(key, 1))
             {
-                _priorityQueue.Enqueue(item with { QueueKey = key });
+                // For priority items, we'll add them to the front of the slot manager's queue
+                // This is a simplified approach - in a more sophisticated system we might want
+                // to implement actual priority queuing in the slot manager
+                await slotManager.EnqueueWorkAsync(item, CancellationToken.None);
                 count++;
             }
         }
@@ -60,12 +64,15 @@ public class DownloadQueueService(
         PublishQueueUpdated();
     }
 
-    public void EnqueueFront(DownloadQueueItem item)
+    public async void EnqueueFront(DownloadQueueItem item)
     {
         var key = BuildKey(item);
         if (_dedupeKeys.TryAdd(key, 1))
         {
-            _priorityQueue.Enqueue(item with { QueueKey = key });
+            // For priority items, we'll add them to the front of the slot manager's queue
+            // This is a simplified approach - in a more sophisticated system we might want
+            // to implement actual priority queuing in the slot manager
+            await slotManager.EnqueueWorkAsync(item, CancellationToken.None);
             logger.LogInformation("[DownloadQueue] Enqueued 1 release at FRONT (priority) ({ArtistId}/{Folder})", item.ArtistId, item.ReleaseFolderName);
         }
         PublishQueueUpdated();
@@ -128,14 +135,15 @@ public class DownloadQueueService(
 
     public DownloadQueueState Snapshot()
     {
-        var pri = _priorityQueue.ToArray();
-        var norm = _queue.ToArray();
-        var items = pri.Concat(norm).ToArray();
+        // Get queue state from slot manager
+        var queueItems = slotManager.GetQueueSnapshot();
+        var items = queueItems.Take(25).ToList();
+        
         return new DownloadQueueState
         {
             Id = "downloadQueue",
-            QueueLength = items.Length,
-            Items = items.Take(25).ToList(),
+            QueueLength = slotManager.QueueLength,
+            Items = items,
         };
     }
 

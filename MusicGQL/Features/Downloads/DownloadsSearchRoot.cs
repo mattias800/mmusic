@@ -6,9 +6,16 @@ public class DownloadsSearchRoot
 {
     public DownloadQueueState DownloadQueue(DownloadQueueService queue) => queue.Snapshot();
 
-    public DownloadProgress? CurrentDownload(CurrentDownloadStateService state) => state.Get();
+
 
     public List<DownloadHistoryItem> DownloadHistory(DownloadHistoryService history) => history.List();
+
+    // New multi-slot queries
+    public IReadOnlyDictionary<int, DownloadProgress> AllSlotProgress(CurrentDownloadStateService state) => state.GetAllSlotProgress();
+
+    public DownloadProgress? SlotProgress(CurrentDownloadStateService state, int slotId) => state.GetSlotProgress(slotId);
+
+    public List<DownloadSlotInfo> DownloadSlots(DownloadSlotManager slotManager) => slotManager.GetSlotsInfo();
 }
 
 

@@ -18,6 +18,8 @@ public record ServerSettings([property: GraphQLIgnore] DbServerSettings Model)
 
     public int SoulSeekNoDataTimeoutSeconds() => Model.SoulSeekNoDataTimeoutSeconds;
 
+    public int DownloadSlotCount() => Model.DownloadSlotCount;
+
     public ServerLibraryManifestStatus ServerLibraryManifestStatus() => new();
 
     [GraphQLName("storageStats")]

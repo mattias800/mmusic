@@ -18,18 +18,28 @@ const downloadOverviewFetcherQuery = graphql(`
           releaseFolderName
         }
       }
-      currentDownload {
+      downloadSlots {
         id
-        artistId
-        releaseFolderName
+        isActive
+        isWorking
+        currentWork {
+          artistId
+          releaseFolderName
+        }
+        currentProgress {
+          id
+          artistId
+          releaseFolderName
+          status
+          totalTracks
+          completedTracks
+          errorMessage
+          currentDownloadSpeedKbps
+          currentProvider
+          currentProviderIndex
+          totalProviders
+        }
         status
-        totalTracks
-        completedTracks
-        errorMessage
-        currentDownloadSpeedKbps
-        currentProvider
-        currentProviderIndex
-        totalProviders
       }
     }
   }
@@ -48,20 +58,23 @@ const downloadQueueUpdatedSub = graphql(`
   }
 `);
 
-const currentDownloadUpdatedSub = graphql(`
-  subscription CurrentDownloadUpdatedSub {
-    currentDownloadUpdated {
-      id
-      artistId
-      releaseFolderName
-      status
-      totalTracks
-      completedTracks
-      errorMessage
-      currentDownloadSpeedKbps
-      currentProvider
-      currentProviderIndex
-      totalProviders
+const slotProgressUpdatedSub = graphql(`
+  subscription SlotProgressUpdatedSub {
+    slotProgressUpdated {
+      slotId
+      progress {
+        id
+        artistId
+        releaseFolderName
+        status
+        totalTracks
+        completedTracks
+        errorMessage
+        currentDownloadSpeedKbps
+        currentProvider
+        currentProviderIndex
+        totalProviders
+      }
     }
   }
 `);
@@ -75,13 +88,13 @@ export const DownloadOverviewFetcher: React.FC<
 
   useSubscription({ query: downloadQueueUpdatedSub });
 
-  useSubscription({ query: currentDownloadUpdatedSub });
+  useSubscription({ query: slotProgressUpdatedSub });
 
   if (fetching) return <Spinner />;
   if (error || !data) return null;
 
   const queue = data.downloads.downloadQueue;
-  const current = data.downloads.currentDownload;
+  const slots = data.downloads.downloadSlots;
 
   const statusText = (s?: DownloadStatus | null) => {
     switch (s) {
@@ -101,37 +114,45 @@ export const DownloadOverviewFetcher: React.FC<
     }
   };
 
+  // Find active working slots
+  const workingSlots = slots?.filter(slot => slot.isWorking && slot.currentProgress) || [];
+
   return (
     <div className="space-y-3 text-sm">
       <div>
-        <div className="font-medium text-zinc-200">Current</div>
-        {current && current.status !== DownloadStatus.Idle ? (
-          <div className="text-zinc-300">
-            <div>
-              {current.artistId} - {current.releaseFolderName}
-            </div>
-            {current.status && (
-              <div className="text-xs text-zinc-400">
-                {statusText(current.status)} {current.completedTracks}/
-                {current.totalTracks}
-                {current.currentProvider && current.totalProviders && (
-                  <span className="ml-2">
-                    via {current.currentProvider} ({current.currentProviderIndex}/{current.totalProviders})
-                  </span>
+        <div className="font-medium text-zinc-200">Active Downloads ({workingSlots.length})</div>
+        {workingSlots.length > 0 ? (
+          workingSlots.map((slot) => {
+            const progress = slot.currentProgress!;
+            return (
+              <div key={slot.id} className="text-zinc-300 mb-2">
+                <div>
+                  Slot {slot.id}: {progress.artistId} - {progress.releaseFolderName}
+                </div>
+                {progress.status && (
+                  <div className="text-xs text-zinc-400">
+                    {statusText(progress.status)} {progress.completedTracks}/
+                    {progress.totalTracks}
+                    {progress.currentProvider && progress.totalProviders && (
+                      <span className="ml-2">
+                        via {progress.currentProvider} ({progress.currentProviderIndex}/{progress.totalProviders})
+                      </span>
+                    )}
+                  </div>
+                )}
+                {typeof progress.currentDownloadSpeedKbps === "number" && (
+                  <div className="text-xs text-zinc-400">
+                    Speed: {progress.currentDownloadSpeedKbps.toFixed(1)} KB/s
+                  </div>
+                )}
+                {progress.errorMessage && (
+                  <div className="text-xs text-red-400">{progress.errorMessage}</div>
                 )}
               </div>
-            )}
-            {typeof current.currentDownloadSpeedKbps === "number" && (
-              <div className="text-xs text-zinc-400">
-                Speed: {current.currentDownloadSpeedKbps!.toFixed(1)} KB/s
-              </div>
-            )}
-            {current.errorMessage && (
-              <div className="text-xs text-red-400">{current.errorMessage}</div>
-            )}
-          </div>
+            );
+          })
         ) : (
-          <div className="text-zinc-400">Idle</div>
+          <div className="text-zinc-400">No active downloads</div>
         )}
       </div>
 

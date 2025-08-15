@@ -22,6 +22,9 @@ public class ServerSettingsEventProcessor
             case SoulSeekNoDataTimeoutUpdated noDataTimeoutUpdated:
                 await HandleSoulSeekNoDataTimeoutUpdated(noDataTimeoutUpdated, dbContext);
                 break;
+            case DownloadSlotCountUpdated slotCountUpdated:
+                await HandleDownloadSlotCountUpdated(slotCountUpdated, dbContext);
+                break;
         }
     }
 
@@ -98,6 +101,25 @@ public class ServerSettingsEventProcessor
         }
 
         serverSettings.SoulSeekNoDataTimeoutSeconds = updated.NewSeconds;
+        await dbContext.SaveChangesAsync();
+    }
+
+    private async Task HandleDownloadSlotCountUpdated(
+        DownloadSlotCountUpdated updated,
+        EventDbContext dbContext
+    )
+    {
+        var serverSettings = dbContext.ServerSettings.FirstOrDefault(s =>
+            s.Id == DefaultDbServerSettingsProvider.ServerSettingsSingletonId
+        );
+
+        if (serverSettings is null)
+        {
+            serverSettings = DefaultDbServerSettingsProvider.GetDefault();
+            dbContext.ServerSettings.Add(serverSettings);
+        }
+
+        serverSettings.DownloadSlotCount = updated.NewSlotCount;
         await dbContext.SaveChangesAsync();
     }
 }
