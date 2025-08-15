@@ -17,16 +17,15 @@ public class ProwlarrClient(HttpClient httpClient, IOptions<ProwlarrOptions> opt
         }
 
         // Build search query with quality preferences
-        var qualityTerms = new[] { "320", "FLAC", "lossless", "CD", "vinyl", "24bit", "16bit" };
+        var qualityTerms = new[] { "320", "FLAC" };
         var baseQuery = artistName + " " + releaseTitle;
         
         // Create multiple search variants with different quality priorities
         var searchQueries = new List<string>
         {
             // High quality first
-            baseQuery + " " + string.Join(" ", qualityTerms),
             baseQuery + " FLAC 320",
-            baseQuery + " lossless",
+            baseQuery + " FLAC",
             baseQuery + " 320",
             // Fallback to base query
             baseQuery
@@ -117,41 +116,30 @@ public class ProwlarrClient(HttpClient httpClient, IOptions<ProwlarrOptions> opt
                 continue;
             }
         }
-        // Try POST variant some setups require
+        // Try a different search approach - the POST endpoint seems to be for grabbing specific releases
+        // Let's try using the same endpoint but with different parameters or a different method
         try
         {
             var baseUrl2 = options.Value.BaseUrl!.TrimEnd('/');
             var apiKey2 = options.Value.ApiKey!;
-            var url = $"{baseUrl2}/api/v1/search?apikey={Uri.EscapeDataString(apiKey2)}";
-            using var req = new HttpRequestMessage(HttpMethod.Post, url);
+            // Try using the search endpoint with query parameters instead of POST body
+            var url = $"{baseUrl2}/api/v1/search?apikey={Uri.EscapeDataString(apiKey2)}&query={Uri.EscapeDataString(query)}&type=search";
+            using var req = new HttpRequestMessage(HttpMethod.Get, url);
             req.Headers.Accept.Clear();
             req.Headers.Accept.ParseAdd("application/json");
             try { req.Headers.Add("X-Api-Key", apiKey2); } catch { }
-            var payload = new
-            {
-                query = query,
-                type = "search",
-                categories = new[] { 3000, 3010, 3030 },
-                indexerIds = Array.Empty<int>()
-            };
-            req.Content = new StringContent(JsonSerializer.Serialize(payload));
-            req.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/json");
-            logger.LogInformation("[Prowlarr] POST {Url} with payload query='{Query}'", url, query);
+            
+            logger.LogInformation("[Prowlarr] Alternative GET {Url}", url);
             var resp = await httpClient.SendAsync(req, cancellationToken);
             if (resp.IsSuccessStatusCode)
             {
                 var json = await resp.Content.ReadAsStringAsync(cancellationToken);
                 var preview = json.Length > 600 ? json[..600] + "…" : json;
-                logger.LogInformation("[Prowlarr] POST body preview: {Preview}", preview);
+                logger.LogInformation("[Prowlarr] Alternative GET body preview: {Preview}", preview);
                 using var doc = JsonDocument.Parse(json);
                 var list = ParseProwlarrResults(doc.RootElement, artistName, releaseTitle, logger);
-                logger.LogInformation("[Prowlarr] Parsed {Count} results from POST", list.Count);
-                if (list.Count == 0)
-                {
-                    logger.LogInformation("[Prowlarr] No results from POST variant.");
-                    try { LogRootShape(doc.RootElement, logger); } catch { }
-                }
-                else
+                logger.LogInformation("[Prowlarr] Parsed {Count} results from alternative GET", list.Count);
+                if (list.Count > 0)
                 {
                     return list;
                 }
@@ -161,12 +149,12 @@ public class ProwlarrClient(HttpClient httpClient, IOptions<ProwlarrOptions> opt
                 string? body = null;
                 try { body = await resp.Content.ReadAsStringAsync(cancellationToken); } catch { }
                 if (!string.IsNullOrWhiteSpace(body) && body.Length > 500) body = body[..500] + "…";
-                logger.LogInformation("[Prowlarr] POST search HTTP {Status}. Body: {Body}", (int)resp.StatusCode, body);
+                logger.LogInformation("[Prowlarr] Alternative GET HTTP {Status}. Body: {Body}", (int)resp.StatusCode, body);
             }
         }
         catch (Exception ex)
         {
-            logger.LogDebug(ex, "Prowlarr POST search failed");
+            logger.LogDebug(ex, "Prowlarr alternative search failed");
         }
         logger.LogWarning("Prowlarr search failed for all URL variants for query '{Query}'", query);
         return Array.Empty<ProwlarrRelease>();
