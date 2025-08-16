@@ -46,7 +46,7 @@ export const SearchInput: React.FC<SearchInputProps> = () => {
             placeholder="Search your music library..."
             value={value}
             onChange={(ev) => setValue(ev.target.value)}
-            className="w-full pl-12 pr-4 py-3 bg-gray-800/80 border-white/30 text-white placeholder-gray-300 focus:bg-gray-800/90 focus:border-blue-400/70 focus:ring-blue-400/40 focus:ring-2 transition-all duration-200 rounded-2xl text-lg font-semibold backdrop-blur-sm"
+            className="w-full pl-12 pr-4 py-3 bg-gray-800/80 border-white/30 text-white placeholder-gray-100 focus:bg-gray-800/90 focus:border-blue-400/70 focus:ring-blue-400/40 focus:ring-2 transition-all duration-200 rounded-2xl text-md backdrop-blur-sm"
           />
         </div>
       </form>
