@@ -43,6 +43,7 @@ type QueuesPageDownloadSlot = {
 type QueuesPageImport = {
   id: string;
   artistName: string;
+  songTitle?: string | null;
   statusInfo: {
     id: string;
     text: string;
@@ -543,6 +544,12 @@ const CurrentImportCard: React.FC<{ import: QueuesPageImport }> = ({ import: imp
           >
             {importItem.artistName}
           </Link>
+          {importItem.songTitle && (
+            <>
+              {" - "}
+              <span className="text-gray-300">{importItem.songTitle}</span>
+            </>
+          )}
         </div>
         <div className="text-sm text-gray-300 mt-1">
           {importItem.statusInfo.text} — {importItem.completedReleases}/{importItem.totalReleases}

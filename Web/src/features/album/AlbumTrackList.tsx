@@ -3,7 +3,6 @@ import * as React from "react";
 import { TrackItem } from "@/components/track-item/TrackItem.tsx";
 import { useAppDispatch, useAppSelector } from "@/ReduxAppHooks.ts";
 import { musicPlayerSlice } from "@/features/music-players/MusicPlayerSlice.ts";
-import { TrackListHeading } from "@/components/track-item/TrackListHeading.tsx";
 import { AlbumTrackTag } from "@/features/album/AlbumTrackTag.tsx";
 import { createMusicPlayerTrack } from "@/features/music-players/MusicPlayerTrackFactory.ts";
 import { TrackCreditLinks } from "@/features/album/TrackCreditLinks.tsx";
@@ -61,8 +60,6 @@ export const AlbumTrackList: React.FC<AlbumTrackListProps> = (props) => {
 
   return (
     <div>
-      <TrackListHeading />
-
       {release?.tracks.map((track, idx) => {
         const isPlaying =
           player.currentTrack?.artistId === release?.artist.id &&

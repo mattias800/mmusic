@@ -91,10 +91,9 @@ export const AlbumHeader: React.FC<AlbumHeaderProps> = (props) => {
               className="text-xl font-semibold text-white hover:text-green-300 transition-colors duration-200 hover:underline"
               to={getRouteToArtist(release.artist.id)}
             >
-              {release.artistName !== release.artist.name 
+              {release.artistName !== release.artist.name
                 ? `${release.artistName} (${release.artist.name})`
-                : release.artistName
-              }
+                : release.artistName}
             </Link>
           </div>
 
