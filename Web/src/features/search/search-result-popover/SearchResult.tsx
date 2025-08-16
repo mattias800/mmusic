@@ -15,7 +15,7 @@ export const SearchResult: React.FC<SearchResultProps> = ({
   onClickSearchResult,
 }) => {
   return (
-    <div className="w-[48rem] rounded-2xl bg-gray-900/95 backdrop-blur-md shadow-2xl border border-white/20 max-h-[85vh] overflow-hidden">
+    <div className="w-[56rem] rounded-2xl bg-gray-900/95 backdrop-blur-md shadow-2xl border border-white/20 max-h-[85vh] overflow-hidden relative z-[9999]">
       {/* Header */}
       <div className="p-6 pb-4 border-b border-white/10">
         <div className="flex items-center gap-3 mb-2">
@@ -31,7 +31,7 @@ export const SearchResult: React.FC<SearchResultProps> = ({
 
       {/* Three Column Layout */}
       <div className="p-6 space-y-6 max-h-[calc(85vh-120px)] overflow-y-auto">
-        <div className="grid grid-cols-3 gap-6">
+        <div className="grid grid-cols-3 gap-8">
           {/* Artists Column */}
           <div className="space-y-4">
             <SearchResultArtist

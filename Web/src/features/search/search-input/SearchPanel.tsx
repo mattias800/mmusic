@@ -28,7 +28,7 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({
 
   return (
     <div className={"relative"}>
-      <div className={"absolute z-20"}>
+      <div className={"absolute z-[9999]"}>
         {debouncedText.length > 2 && (
           <SearchResult
             onClickSearchResult={onClickSearchResult}

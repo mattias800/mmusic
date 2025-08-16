@@ -19,7 +19,7 @@ export const ArtistHeader: React.FC<ArtistHeaderProps> = ({
   return (
     <div className="relative">
       {/* Artist info positioned above the image */}
-      <div className="absolute inset-x-0 inset-y-0 top-0 z-10 p-6 md:p-10 flex flex-col justify-end">
+      <div className="absolute inset-x-0 inset-y-0 top-0 z-9 p-6 md:p-10 flex flex-col justify-end">
         <div className={"flex gap-4 justify-between"}>
           <div className={"flex flex-col gap-4"}>
             <div className="flex items-center gap-2 text-sm text-white font-medium">

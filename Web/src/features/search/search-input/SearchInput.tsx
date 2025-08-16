@@ -37,7 +37,7 @@ export const SearchInput: React.FC<SearchInputProps> = () => {
   }, []);
 
   return (
-    <div>
+    <div className="relative z-[9999]">
       <form ref={formRef} onFocus={() => setInFocus(true)}>
         <Input
           placeholder="Search your music library..."
@@ -47,7 +47,7 @@ export const SearchInput: React.FC<SearchInputProps> = () => {
         />
       </form>
       {value && inFocus && (
-        <div ref={popupRef} className="mt-3 relative z-50">
+        <div ref={popupRef} className="mt-3 relative z-[9999]">
           <SearchPanel
             searchText={value}
             onClickSearchResult={onClickSearchResult}

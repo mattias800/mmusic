@@ -50,44 +50,39 @@ export const SearchResultRelease: React.FC<SearchResultReleaseProps> = ({
           className="group block p-4 rounded-xl bg-gray-800/80 hover:bg-gray-700/80 border border-white/10 hover:border-white/20 transition-all duration-200 hover:scale-[1.02]"
           onClick={onClickSearchResult}
         >
-          <div className="flex items-center gap-3">
-            {/* Album Cover */}
-            <div className="relative">
-              {release.coverArtUrl ? (
-                <img
-                  src={release.coverArtUrl}
-                  alt={release.title}
-                  className="w-12 h-12 rounded-lg object-cover border-2 border-white/20 group-hover:border-white/30 transition-colors"
-                />
-              ) : (
-                <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-green-500/20 to-blue-500/20 border-2 border-white/20 group-hover:border-white/30 flex items-center justify-center transition-colors">
-                  <Disc3 className="w-5 h-5 text-green-400" />
+          <div className="space-y-3">
+            {/* Album Header */}
+            <div className="flex items-start gap-3">
+              {/* Album Cover */}
+              <div className="relative flex-shrink-0">
+                {release.coverArtUrl ? (
+                  <img
+                    src={release.coverArtUrl}
+                    alt={release.title}
+                    className="w-16 h-16 rounded-lg object-cover border-2 border-white/20 group-hover:border-white/30 transition-colors"
+                  />
+                ) : (
+                  <div className="w-16 h-16 rounded-lg bg-gradient-to-br from-green-500/20 to-blue-500/20 border-2 border-white/20 group-hover:border-white/30 flex items-center justify-center transition-colors">
+                    <Disc3 className="w-5 h-5 text-green-400" />
+                  </div>
+                )}
+                <div className="absolute -bottom-1 -right-1 p-1.5 bg-green-500/80 rounded-full border border-white/20">
+                  <Music className="w-3.5 h-3.5 text-white" />
                 </div>
-              )}
-              <div className="absolute -bottom-1 -right-1 p-1 bg-green-500/80 rounded-full border border-white/20">
-                <Music className="w-3 h-3 text-white" />
               </div>
-            </div>
-            
-            {/* Album Info */}
-            <div className="flex-1 min-w-0">
-              <p className="text-white font-medium truncate group-hover:text-green-300 transition-colors">
-                {release.title}
-              </p>
-              <p className="text-xs text-gray-400 flex items-center gap-1 mt-1">
-                <span className="w-2 h-2 bg-green-400 rounded-full"></span>
-                {release.artistName !== release.artist.name 
-                  ? `${release.artistName} (${release.artist.name})`
-                  : release.artistName
-                }
-              </p>
-            </div>
-            
-            {/* Arrow */}
-            <div className="text-gray-400 group-hover:text-green-400 transition-colors">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
+              
+              {/* Album Info */}
+              <div className="flex-1 min-w-0 space-y-2">
+                <p className="text-white font-semibold text-base truncate group-hover:text-green-300 transition-colors">
+                  {release.title}
+                </p>
+                <div className="text-sm text-gray-300">
+                  {release.artistName !== release.artist.name 
+                    ? `${release.artistName} (${release.artist.name})`
+                    : release.artistName
+                  }
+                </div>
+              </div>
             </div>
           </div>
         </Link>
