@@ -188,7 +188,12 @@ public class DownloadSlotManager(
         }
     }
 
-    public async Task EnqueueWorkAsync(DownloadQueueItem item, CancellationToken cancellationToken)
+    public bool TryDequeue(out DownloadQueueItem? item)
+    {
+        return _workQueue.TryDequeue(out item);
+    }
+
+    public async Task<bool> EnqueueWorkAsync(DownloadQueueItem item, CancellationToken cancellationToken)
     {
         // Check if any slot is already working on this release
         var isAlreadyBeingProcessed = _slots.Values
@@ -198,7 +203,7 @@ public class DownloadSlotManager(
         {
             logger.LogDebug("[DownloadSlotManager] Release {ArtistId}/{Release} already being processed, skipping", 
                 item.ArtistId, item.ReleaseFolderName);
-            return;
+            return false;
         }
         
         // Check if it's already in the queue
@@ -207,7 +212,7 @@ public class DownloadSlotManager(
         {
             logger.LogDebug("[DownloadSlotManager] Release {ArtistId}/{Release} already in queue, skipping", 
                 item.ArtistId, item.ReleaseFolderName);
-            return;
+            return false;
         }
         
         await _queueSemaphore.WaitAsync(cancellationToken);
@@ -216,6 +221,7 @@ public class DownloadSlotManager(
             _workQueue.Enqueue(item);
             logger.LogInformation("[DownloadSlotManager] Enqueued work for {ArtistId}/{Release}, queue length: {QueueLength}", 
                 item.ArtistId, item.ReleaseFolderName, _workQueue.Count);
+            return true;
         }
         finally
         {

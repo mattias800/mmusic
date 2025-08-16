@@ -6,7 +6,8 @@ public interface IDownloadSlotManager
     int QueueLength { get; }
     int ActiveSlotCount { get; }
     
-    Task EnqueueWorkAsync(DownloadQueueItem item, CancellationToken cancellationToken);
+    Task<bool> EnqueueWorkAsync(DownloadQueueItem item, CancellationToken cancellationToken);
+    bool TryDequeue(out DownloadQueueItem? item);
     Task UpdateSlotConfigurationAsync(int newSlotCount, CancellationToken cancellationToken);
     Task StopAllSlotsAsync(CancellationToken cancellationToken);
     List<DownloadQueueItem> GetQueueSnapshot();

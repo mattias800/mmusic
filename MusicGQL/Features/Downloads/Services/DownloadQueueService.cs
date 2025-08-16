@@ -26,8 +26,16 @@ public class DownloadQueueService(
             var key = BuildKey(item);
             if (_dedupeKeys.TryAdd(key, 1))
             {
-                await slotManager.EnqueueWorkAsync(item, CancellationToken.None);
-                count++;
+                var success = await slotManager.EnqueueWorkAsync(item, CancellationToken.None);
+                if (success)
+                {
+                    count++;
+                }
+                else
+                {
+                    // If enqueue failed, remove the dedupe key so it can be retried later
+                    _dedupeKeys.TryRemove(key, out _);
+                }
             }
         }
         logger.LogInformation("[DownloadQueue] Enqueued {Count} releases", count);
@@ -39,8 +47,17 @@ public class DownloadQueueService(
         var key = BuildKey(item);
         if (_dedupeKeys.TryAdd(key, 1))
         {
-            await slotManager.EnqueueWorkAsync(item, CancellationToken.None);
-            logger.LogInformation("[DownloadQueue] Enqueued 1 release ({ArtistId}/{Folder})", item.ArtistId, item.ReleaseFolderName);
+            var success = await slotManager.EnqueueWorkAsync(item, CancellationToken.None);
+            if (success)
+            {
+                logger.LogInformation("[DownloadQueue] Enqueued 1 release ({ArtistId}/{Folder})", item.ArtistId, item.ReleaseFolderName);
+            }
+            else
+            {
+                // If enqueue failed, remove the dedupe key so it can be retried later
+                _dedupeKeys.TryRemove(key, out _);
+                logger.LogDebug("[DownloadQueue] Failed to enqueue release ({ArtistId}/{Folder}) - already in queue or being processed", item.ArtistId, item.ReleaseFolderName);
+            }
         }
         PublishQueueUpdated();
     }
@@ -56,8 +73,16 @@ public class DownloadQueueService(
                 // For priority items, we'll add them to the front of the slot manager's queue
                 // This is a simplified approach - in a more sophisticated system we might want
                 // to implement actual priority queuing in the slot manager
-                await slotManager.EnqueueWorkAsync(item, CancellationToken.None);
-                count++;
+                var success = await slotManager.EnqueueWorkAsync(item, CancellationToken.None);
+                if (success)
+                {
+                    count++;
+                }
+                else
+                {
+                    // If enqueue failed, remove the dedupe key so it can be retried later
+                    _dedupeKeys.TryRemove(key, out _);
+                }
             }
         }
         logger.LogInformation("[DownloadQueue] Enqueued {Count} releases at FRONT (priority)", count);
@@ -72,24 +97,29 @@ public class DownloadQueueService(
             // For priority items, we'll add them to the front of the slot manager's queue
             // This is a simplified approach - in a more sophisticated system we might want
             // to implement actual priority queuing in the slot manager
-            await slotManager.EnqueueWorkAsync(item, CancellationToken.None);
-            logger.LogInformation("[DownloadQueue] Enqueued 1 release at FRONT (priority) ({ArtistId}/{Folder})", item.ArtistId, item.ReleaseFolderName);
+            var success = await slotManager.EnqueueWorkAsync(item, CancellationToken.None);
+            if (success)
+            {
+                logger.LogInformation("[DownloadQueue] Enqueued 1 release at FRONT (priority) ({ArtistId}/{Folder})", item.ArtistId, item.ReleaseFolderName);
+            }
+            else
+            {
+                // If enqueue failed, remove the dedupe key so it can be retried later
+                _dedupeKeys.TryRemove(key, out _);
+                logger.LogDebug("[DownloadQueue] Failed to enqueue release at FRONT ({ArtistId}/{Folder}) - already in queue or being processed", item.ArtistId, item.ReleaseFolderName);
+            }
         }
         PublishQueueUpdated();
     }
 
     public bool TryDequeue(out DownloadQueueItem? item)
     {
-        // Always drain priority queue first
-        var ok = _priorityQueue.TryDequeue(out var dequeued);
-        if (!ok)
-        {
-            ok = _queue.TryDequeue(out dequeued);
-        }
+        // Dequeue from the slot manager's actual queue
+        var ok = slotManager.TryDequeue(out var dequeued);
         item = dequeued;
-        if (ok)
+        if (ok && dequeued != null)
         {
-            try { _dedupeKeys.TryRemove(BuildKey(dequeued!), out _); } catch { }
+            try { _dedupeKeys.TryRemove(BuildKey(dequeued), out _); } catch { }
             PublishQueueUpdated();
         }
         return ok;

@@ -11,17 +11,16 @@ import {
 } from "@/components/ui/dropdown-menu.tsx";
 import { Spinner } from "@/components/spinner/Spinner.tsx";
 import { useMutation, useSubscription } from "urql";
-// import { toast } from "sonner";
 import { FixMatchDialog } from "@/features/album/components/FixMatchDialog.tsx";
 import { LargeLikeButton } from "@/components/buttons/LargeLikeButton.tsx";
 import { AlbumHeader } from "@/features/album/AlbumHeader.tsx";
 import { AlbumTrackList } from "@/features/album/AlbumTrackList.tsx";
 import { FragmentType, graphql, useFragment } from "@/gql";
-import { GradientContent } from "@/components/page-body/GradientContent";
-import { MainPadding } from "@/components/layout/MainPadding.tsx";
 import { ReleaseDownloadButton } from "@/features/downloads/release-download-button/ReleaseDownloadButton.tsx";
 import { PlayAlbumButton } from "@/features/album/PlayAlbumButton.tsx";
 import { ConfirmDeleteReleaseAudioDialog } from "@/features/album/components/ConfirmDeleteReleaseAudioDialog.tsx";
+import { GlassCard, PageLayout } from "@/components/ui";
+import { FolderOpen, RefreshCw, Settings, Trash2 } from "lucide-react";
 
 export interface AlbumPanelProps {
   release: FragmentType<typeof albumPanelReleaseGroupFragment>;
@@ -109,16 +108,18 @@ const deleteReleaseAudioMutation = graphql(`
 `);
 
 const scanReleaseFolderForMediaMutation = graphql(`
-  mutation ScanReleaseFolderForMedia($input: ScanReleaseFolderForMediaInput!) {
-    scanReleaseFolderForMedia(input: $input) {
-      ... on ScanReleaseFolderForMediaSuccess {
-        release {
-          id
-          ...AlbumPanel_Release
-        }
-      }
-      ... on ScanReleaseFolderForMediaError {
-        message
+  subscription AlbumPanelUpdates(
+    $artistId: String!
+    $releaseFolderName: String!
+  ) {
+    libraryCacheTracksInReleaseUpdated(
+      artistId: $artistId
+      releaseFolderName: $releaseFolderName
+    ) {
+      track {
+        id
+        isMissing
+        mediaAvailabilityStatus
       }
     }
   }
@@ -168,75 +169,98 @@ export const AlbumPanel: React.FC<AlbumPanelProps> = (props) => {
   });
 
   return (
-    <GradientContent>
-      <MainPadding>
-        <div>
-          <div>
-            <AlbumHeader release={release} />
+    <PageLayout addSearchPadding>
+      <div className="space-y-8">
+        {/* Album Header with Cover Art */}
+        <AlbumHeader release={release} />
 
-            <div className="flex items-center gap-3 mb-6">
-              <PlayAlbumButton release={release} />
-              <ShuffleButton />
-              <LargeLikeButton />
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <DotsButton />
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                  <DropdownMenuItem
-                    onSelect={() =>
-                      refreshRelease({
-                        input: {
-                          artistId: release.artist.id,
-                          releaseFolderName: release.folderName,
-                        },
-                      })
-                    }
-                  >
-                    Refresh release metadata
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onSelect={() =>
-                      scanReleaseFolderForMedia({
-                        input: {
-                          artistId: release.artist.id,
-                          releaseFolderName: release.folderName,
-                        },
-                      })
-                    }
-                  >
-                    Scan folder for media files
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onSelect={() => setConfirmOpen(true)}>
-                    Delete audio files for this release
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onSelect={() => setFixOpen(true)}>
-                    Fix match
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-              {(refreshing || deleting || scanning || fixing) && <Spinner size={"sm"} />}
-              <ReleaseDownloadButton release={release} />
-            </div>
+        {/* Action Buttons */}
+        <GlassCard>
+          <div className="flex items-center gap-4 flex-wrap">
+            <PlayAlbumButton release={release} />
+            <ShuffleButton />
+            <LargeLikeButton />
+            <ReleaseDownloadButton release={release} />
+
+            {/* Actions Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <DotsButton />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuLabel>Release Actions</DropdownMenuLabel>
+                <DropdownMenuItem
+                  onSelect={() =>
+                    refreshRelease({
+                      input: {
+                        artistId: release.artist.id,
+                        releaseFolderName: release.folderName,
+                      },
+                    })
+                  }
+                >
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Refresh release metadata
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onSelect={() =>
+                    scanReleaseFolderForMedia({
+                      artistId: release.artist.id,
+                      releaseFolderName: release.folderName,
+                    })
+                  }
+                >
+                  <FolderOpen className="w-4 h-4 mr-2" />
+                  Scan folder for media files
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => setConfirmOpen(true)}>
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Delete audio files for this release
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => setFixOpen(true)}>
+                  <Settings className="w-4 h-4 mr-2" />
+                  Fix match
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* Loading Spinner */}
+            {(refreshing || deleting || scanning || fixing) && (
+              <div className="flex items-center gap-2 text-blue-400">
+                <Spinner size={"sm"} />
+                <span className="text-sm">
+                  {refreshing && "Refreshing..."}
+                  {deleting && "Deleting..."}
+                  {scanning && "Scanning..."}
+                  {fixing && "Fixing..."}
+                </span>
+              </div>
+            )}
           </div>
+        </GlassCard>
 
-          <div>
-            <AlbumTrackList releaseGroup={release} />
+        {/* Track List */}
+        <GlassCard>
+          <AlbumTrackList releaseGroup={release} />
+        </GlassCard>
 
-            <div className="text-white/40 text-xs mt-12">
-              <p>© {release.firstReleaseYear} Some label AB</p>
-            </div>
+        {/* Copyright Info */}
+        <div className="text-center py-6">
+          <div className="inline-flex items-center gap-2 text-gray-400 text-sm bg-white/5 px-4 py-2 rounded-full border border-white/10">
+            <span>© {release.firstReleaseYear}</span>
+            <span>•</span>
+            <span>Some label AB</span>
           </div>
-
-          <ConfirmDeleteReleaseAudioDialog
-            open={confirmOpen}
-            onOpenChange={setConfirmOpen}
-            hasAnyAudio={!release.isFullyMissing}
-            onConfirmDelete={onConfirmDelete}
-          />
         </div>
-      </MainPadding>
+      </div>
+
+      <ConfirmDeleteReleaseAudioDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        hasAnyAudio={!release.isFullyMissing}
+        onConfirmDelete={onConfirmDelete}
+      />
+
       <FixMatchDialog
         open={fixOpen}
         onOpenChange={setFixOpen}
@@ -245,6 +269,6 @@ export const AlbumPanel: React.FC<AlbumPanelProps> = (props) => {
         onBeginFix={() => setFixing(true)}
         onEndFix={() => setFixing(false)}
       />
-    </GradientContent>
+    </PageLayout>
   );
 };
