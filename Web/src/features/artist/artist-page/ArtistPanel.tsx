@@ -2,7 +2,7 @@ import * as React from "react";
 import { TopArtistTracks } from "@/features/artist/artist-page/TopArtistTracks.tsx";
 import { FragmentType, graphql, useFragment } from "@/gql";
 import { ArtistHeader } from "@/features/artist/artist-page/ArtistHeader.tsx";
-import { PageLayout, GlassCard } from "@/components/ui";
+import { PageLayout, GlassCard, ArtistTabs } from "@/components/ui";
 import { MainPadding } from "@/components/layout/MainPadding.tsx";
 import { ArtistActionButtons } from "@/features/artist/artist-page/ArtistActionButtons.tsx";
 import { CardFlexList } from "@/components/page-body/CardFlexList.tsx";
@@ -14,7 +14,7 @@ import { ArtistNumReleasesAvailableIndicator } from "@/features/artist/artist-pa
 import { ArtistDownloadAllReleasesButton } from "@/features/artist/artist-page/ArtistDownloadAllReleasesButton.tsx";
 import { ArtistImportStatusInfo } from "@/features/artist/artist-page/ArtistImportStatusInfo.tsx";
 import { ArtistStatisticsHeader } from "@/features/artist/artist-page/ArtistStatisticsHeader.tsx";
-import { Music, Disc3, TrendingUp } from "lucide-react";
+import { Music, Disc3, TrendingUp, BarChart3 } from "lucide-react";
 
 interface ArtistPanelProps {
   artist: FragmentType<typeof artistPanelArtistFragment>;
@@ -220,72 +220,78 @@ export const ArtistPanel: React.FC<ArtistPanelProps> = (props) => {
           </GlassCard>
 
           <GlassCard 
-            title="Media Availability" 
+            title="Music Collection" 
             icon={Disc3} 
             iconBgColor="bg-indigo-500/20"
           >
-            <ArtistStatisticsHeader artist={artist} />
-          </GlassCard>
-
-          <GlassCard 
-            title="Top Tracks" 
-            icon={TrendingUp} 
-            iconBgColor="bg-pink-500/20"
-          >
-            <TopArtistTracks
-              artistId={artist.id}
-              loadingTopTracks={loadingTopTracks}
+            <ArtistTabs
+              tabs={[
+                {
+                  id: "media-availability",
+                  label: "Media Availability",
+                  icon: BarChart3,
+                  content: <ArtistStatisticsHeader artist={artist} />
+                },
+                {
+                  id: "top-tracks",
+                  label: "Top Tracks",
+                  icon: TrendingUp,
+                  content: (
+                    <TopArtistTracks
+                      artistId={artist.id}
+                      loadingTopTracks={loadingTopTracks}
+                    />
+                  )
+                },
+                {
+                  id: "albums",
+                  label: "Albums",
+                  icon: Disc3,
+                  content: (
+                    <CardFlexList>
+                      {artist.albums
+                        .toSorted(byStringField((a) => a.firstReleaseDate ?? ""))
+                        .toReversed()
+                        .map((release) => (
+                          <AlbumCard release={release} key={release.id} />
+                        ))}
+                    </CardFlexList>
+                  )
+                },
+                ...(artist.eps.length > 0 ? [{
+                  id: "eps",
+                  label: "EPs",
+                  icon: Music,
+                  content: (
+                    <CardFlexList>
+                      {artist.eps
+                        .toSorted(byStringField((a) => a.firstReleaseDate ?? ""))
+                        .toReversed()
+                        .map((release) => (
+                          <AlbumCard release={release} key={release.id} />
+                        ))}
+                    </CardFlexList>
+                  )
+                }] : []),
+                ...(artist.singles.length > 0 ? [{
+                  id: "singles",
+                  label: "Singles",
+                  icon: Music,
+                  content: (
+                    <CardFlexList>
+                      {artist.singles
+                        .toSorted(byStringField((a) => a.firstReleaseDate ?? ""))
+                        .toReversed()
+                        .map((release) => (
+                          <AlbumCard release={release} key={release.id} />
+                        ))}
+                    </CardFlexList>
+                  )
+                }] : [])
+              ]}
+              defaultTab="media-availability"
             />
           </GlassCard>
-
-          <GlassCard 
-            title="Albums" 
-            icon={Disc3} 
-            iconBgColor="bg-blue-500/20"
-          >
-            <CardFlexList>
-              {artist.albums
-                .toSorted(byStringField((a) => a.firstReleaseDate ?? ""))
-                .toReversed()
-                .map((release) => (
-                  <AlbumCard release={release} key={release.id} />
-                ))}
-            </CardFlexList>
-          </GlassCard>
-
-          {artist.eps.length > 0 && (
-            <GlassCard 
-              title="EPs" 
-              icon={Music} 
-              iconBgColor="bg-purple-500/20"
-            >
-              <CardFlexList>
-                {artist.eps
-                  .toSorted(byStringField((a) => a.firstReleaseDate ?? ""))
-                  .toReversed()
-                  .map((release) => (
-                    <AlbumCard release={release} key={release.id} />
-                  ))}
-              </CardFlexList>
-            </GlassCard>
-          )}
-
-          {artist.singles.length > 0 && (
-            <GlassCard 
-              title="Singles" 
-              icon={Music} 
-              iconBgColor="bg-green-500/20"
-            >
-              <CardFlexList>
-                {artist.singles
-                  .toSorted(byStringField((a) => a.firstReleaseDate ?? ""))
-                  .toReversed()
-                  .map((release) => (
-                    <AlbumCard release={release} key={release.id} />
-                  ))}
-              </CardFlexList>
-            </GlassCard>
-          )}
         </div>
       </MainPadding>
     </PageLayout>
