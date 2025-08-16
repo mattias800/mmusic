@@ -29,7 +29,7 @@ export const LibraryPathForm: React.FC<LibraryPathFormProps> = (props) => {
   );
 
   return (
-    <div className="flex flex-col gap-12">
+    <div className="space-y-8">
       <ChangeLibraryFolderControl serverSettings={serverSettings} />
 
       {serverSettings.storageStats && (

@@ -13,8 +13,9 @@ import { DirectoryBrowserModal } from "../components/DirectoryBrowser/DirectoryB
 import { FragmentType, graphql, useFragment } from "@/gql";
 import { useClient, useMutation } from "urql";
 import { Label } from "@/components/ui/label.tsx";
-import { AlertTriangle, CheckCircle2 } from "lucide-react";
+import { AlertTriangle, CheckCircle2, FolderOpen, Settings } from "lucide-react";
 import { Alert } from "@/components/ui/Alert.tsx";
+import { StatusCard, GradientButton } from "@/components/ui";
 
 export interface ChangeLibraryFolderControlProps {
   serverSettings: FragmentType<
@@ -114,88 +115,112 @@ export const ChangeLibraryFolderControl: React.FC<
   };
 
   return (
-    <>
-      <div className={"flex flex-col gap-4"}>
-        <div className={"flex flex-col gap-2"}>
-          <Label style={{ marginBottom: "6px", display: "block" }}>
-            Library path
-          </Label>
-
-          <div className={"flex items-center gap-2"}>
-            <div className="max-w-2xl flex gap-4 border border-zinc-700 rounded-md py-2 px-4">
-              <span className={"text-zinc-400"}>
-                {serverSettings.libraryPath || "(not set)"}
-              </span>
-            </div>
-            {selectedFolderHasManifest ? (
-              <CheckCircle2 className="h-6 w-6 text-emerald-400" />
-            ) : (
-              <AlertTriangle className="h-6 w-6 text-amber-400" />
-            )}
+    <div className="space-y-6">
+      {/* Current Library Path Status */}
+      <div className="p-4 bg-white/5 rounded-lg border border-white/10">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="p-2 bg-blue-500/20 rounded-lg">
+            <FolderOpen className="w-5 h-5 text-blue-400" />
           </div>
+          <h3 className="text-lg font-semibold text-white">Current Library Path</h3>
         </div>
-        <div>
-          <Button
-            variant="destructive"
-            loading={updateLibraryPathFetching}
-            disabled={updateLibraryPathFetching}
-            onClick={() => setIsConfirmOpen(true)}
-          >
-            Change...
-          </Button>
+        
+        <div className="flex items-center gap-3 mb-4">
+          <div className="flex-1 p-3 bg-white/5 rounded-lg border border-white/10">
+            <span className="text-gray-300">
+              {serverSettings.libraryPath || "(not set)"}
+            </span>
+          </div>
+          {selectedFolderHasManifest ? (
+            <div className="flex items-center gap-2 text-emerald-400">
+              <CheckCircle2 className="h-5 w-5" />
+              <span className="text-sm">Valid</span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 text-amber-400">
+              <AlertTriangle className="h-5 w-5" />
+              <span className="text-sm">No Manifest</span>
+            </div>
+          )}
         </div>
+        
+        <GradientButton
+          variant="primary"
+          onClick={() => setIsConfirmOpen(true)}
+          disabled={updateLibraryPathFetching}
+          className="w-full"
+        >
+          Change Library Path
+        </GradientButton>
       </div>
 
+      {/* Manifest Warning */}
       {serverSettings.libraryPath && !selectedFolderHasManifest && (
-        <div className="max-w-lg">
-          <Alert variant="warning" title="No library manifest found">
-            The configured folder does not contain a mmusic library manifest.
-            Writing is disabled until a manifest is created, to prevent
-            accidental writing to the wrong folder, since mmusic downloads media
-            automatically.
-            <div className="mt-2">
-              <Button
-                disabled={createManifestInCurrentFolderFetching}
-                loading={createManifestInCurrentFolderFetching}
-                variant="destructive"
-                onClick={async () => {
-                  await createManifestInCurrentFolder({});
-                }}
-              >
-                Create manifest in this folder
-              </Button>
+        <div className="p-4 bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20 rounded-xl">
+          <div className="flex items-start gap-3">
+            <div className="flex-shrink-0">
+              <div className="p-2 bg-amber-500/20 rounded-lg">
+                <AlertTriangle className="w-5 h-5 text-amber-400" />
+              </div>
             </div>
-          </Alert>
+            <div className="flex-1 min-w-0">
+              <h3 className="text-sm font-medium text-amber-200">No Library Manifest Found</h3>
+              <p className="mt-1 text-sm text-amber-300">
+                The configured folder does not contain a mmusic library manifest.
+                Writing is disabled until a manifest is created, to prevent
+                accidental writing to the wrong folder, since mmusic downloads media
+                automatically.
+              </p>
+              <div className="mt-3">
+                <GradientButton
+                  variant="danger"
+                  disabled={createManifestInCurrentFolderFetching}
+                  onClick={async () => {
+                    await createManifestInCurrentFolder({});
+                  }}
+                  size="sm"
+                >
+                  Create Manifest in This Folder
+                </GradientButton>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
+      {/* Change Library Path Confirmation Dialog */}
       <Dialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
-        <DialogContent>
+        <DialogContent className="bg-gray-800 border-gray-700">
           <DialogHeader>
-            <DialogTitle>Change library folder?</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-white">Change Library Folder?</DialogTitle>
+            <DialogDescription className="text-gray-300">
               Changing the library path is a dangerous operation. Make sure the
               new folder contains your existing media, or the library may appear
               empty until rescanned.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsConfirmOpen(false)}>
+            <Button 
+              variant="outline" 
+              onClick={() => setIsConfirmOpen(false)}
+              className="border-gray-600 text-gray-300 hover:bg-gray-700"
+            >
               Cancel
             </Button>
-            <Button
-              variant="destructive"
+            <GradientButton
+              variant="danger"
               onClick={() => {
                 setIsConfirmOpen(false);
                 setIsModalOpen(true);
               }}
             >
-              I understand, continue
-            </Button>
+              I Understand, Continue
+            </GradientButton>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
+      {/* Directory Browser Modal */}
       <DirectoryBrowserModal
         open={isModalOpen}
         onOpenChange={setIsModalOpen}
@@ -216,24 +241,27 @@ export const ChangeLibraryFolderControl: React.FC<
             setIsCreateManifestOpen(true);
           }
         }}
-        heading={"Select library folder"}
+        heading={"Select Library Folder"}
       />
 
+      {/* Create Manifest Confirmation Dialog */}
       <Dialog
         open={isCreateManifestOpen}
         onOpenChange={setIsCreateManifestOpen}
       >
-        <DialogContent>
+        <DialogContent className="bg-gray-800 border-gray-700">
           <DialogHeader>
-            <DialogTitle>No manifest found in folder</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-white">No Manifest Found in Folder</DialogTitle>
+            <DialogDescription className="text-gray-300">
               The selected folder does not contain a mmusic library manifest. To
               enable safe writes here, a manifest will be created. Are you sure
               this is the correct folder?
             </DialogDescription>
           </DialogHeader>
           {createError && (
-            <div className="text-sm text-red-400">{createError}</div>
+            <div className="text-sm text-red-400 bg-red-500/10 p-3 rounded-lg border border-red-500/20">
+              {createError}
+            </div>
           )}
           <DialogFooter>
             <Button
@@ -243,18 +271,19 @@ export const ChangeLibraryFolderControl: React.FC<
                 setPendingPath(null);
                 setCreateError(null);
               }}
+              className="border-gray-600 text-gray-300 hover:bg-gray-700"
             >
               Cancel
             </Button>
-            <Button
-              variant="destructive"
+            <GradientButton
+              variant="danger"
               onClick={onClickCreateManifestAndSetFolder}
             >
-              Create manifest and set folder
-            </Button>
+              Create Manifest and Set Folder
+            </GradientButton>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </>
+    </div>
   );
 };

@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert } from '@/components/ui/Alert';
 import { CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { GradientButton } from '@/components/ui';
 
 const UPDATE_LISTENBRAINZ_CREDENTIALS = graphql(`
   mutation UpdateUserListenBrainzCredentials($input: UpdateUserListenBrainzCredentialsInput!) {
@@ -133,9 +134,13 @@ export function ListenBrainzSettingsForm({
             </div>
           </div>
           
-          <Button onClick={handleEdit} className="w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white border-0 shadow-lg">
+          <GradientButton 
+            onClick={handleEdit} 
+            variant="primary" 
+            fullWidth
+          >
             Edit Settings
-          </Button>
+          </GradientButton>
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -172,10 +177,11 @@ export function ListenBrainzSettingsForm({
           </div>
           
           <div className="flex gap-3">
-            <Button 
+            <GradientButton 
               type="submit" 
               disabled={isLoading} 
-              className="flex-1 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 shadow-lg"
+              variant="success"
+              fullWidth
             >
               {isLoading ? (
                 <>
@@ -185,7 +191,7 @@ export function ListenBrainzSettingsForm({
               ) : (
                 'Save Changes'
               )}
-            </Button>
+            </GradientButton>
             <Button 
               type="button" 
               variant="outline" 
