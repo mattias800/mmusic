@@ -13,9 +13,13 @@ public record SubmitListenInput(
     DateTime? ListenedAt = null
 );
 
-public record SubmitListenResult;
+[UnionType]
+public abstract record SubmitListenResult;
 
-public record SubmitListenSuccess : SubmitListenResult;
+public record SubmitListenSuccess : SubmitListenResult
+{
+    public bool Success { get; } = true;
+}
 
 public record SubmitListenError(string Message) : SubmitListenResult;
 

@@ -11,9 +11,13 @@ public record UpdateListenBrainzSettingsInput(
     string ApiKey
 );
 
-public record UpdateListenBrainzSettingsResult;
+[UnionType]
+public abstract record UpdateListenBrainzSettingsResult;
 
-public record UpdateListenBrainzSettingsSuccess : UpdateListenBrainzSettingsResult;
+public record UpdateListenBrainzSettingsSuccess : UpdateListenBrainzSettingsResult
+{
+    public bool Success { get; } = true;
+}
 
 public record UpdateListenBrainzSettingsError(string Message) : UpdateListenBrainzSettingsResult;
 

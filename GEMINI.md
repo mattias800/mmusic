@@ -12,11 +12,11 @@ The mmusic project is a monorepo containing three main projects:
 
 ## Backend (MusicGQL)
 
-The `MusicGQL` project is a .NET 8 application built with ASP.NET Core and the Hot Chocolate GraphQL server. It follows a CQRS (Command Query Responsibility Segregation) and event-sourcing architecture.
+The `MusicGQL` project is a .NET 9 application built with ASP.NET Core and the Hot Chocolate GraphQL server. It follows a CQRS (Command Query Responsibility Segregation) and event-sourcing architecture.
 
 ### Technology Stack
 
-- **Framework:** .NET 8, ASP.NET Core
+- **Framework:** .NET 9, ASP.NET Core
 - **GraphQL:** Hot Chocolate
 - **Event Sourcing/Service Bus:** Rebus
 - **Databases:**

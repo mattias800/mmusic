@@ -614,6 +614,19 @@ type LikedSong {
   recording: MbRecording
 }
 
+type ListenBrainzQueryRoot {
+  userInfo(username: String!): ListenBrainzUserInfo
+}
+
+type ListenBrainzUserInfo {
+  bio: String
+  id: ID!
+  joined: DateTime
+  location: String
+  username: String!
+  website: String
+}
+
 """
 The `Long` scalar type represents non-fractional signed whole 64-bit numeric values. Long can represent values between -(2^63) and 2^63 - 1.
 """
@@ -842,12 +855,15 @@ type Mutation {
   signOut(input: SignOutInput!): SignOutResult!
   startBulkDownloadForArtist(input: StartBulkDownloadForArtistInput!): StartBulkDownloadForArtistResult!
   startDownloadRelease(input: StartDownloadReleaseInput!): StartDownloadReleaseResult!
+  submitListen(input: SubmitListenInput!): SubmitListenResult!
   unlikeSong(input: UnlikedSongInput!): UnlikeSongResult!
   updateDownloadPath(input: UpdateDownloadPathInput!): UpdateDownloadPathResult!
   updateDownloadSlotCount(input: UpdateDownloadSlotCountInput!): UpdateDownloadSlotCountResult!
   updateLibraryPath(input: UpdateLibraryPathInput!): UpdateLibraryPathResult!
+  updateListenBrainzSettings(input: UpdateListenBrainzSettingsInput!): UpdateListenBrainzSettingsResult!
   updateSoulSeekNoDataTimeout(input: UpdateSoulSeekNoDataTimeoutInput!): UpdateSoulSeekNoDataTimeoutResult!
   updateSoulSeekSearchTimeLimit(seconds: Int!): UpdateSoulSeekSearchTimeLimitResult!
+  updateUserListenBrainzCredentials(input: UpdateUserListenBrainzCredentialsInput!): UpdateUserListenBrainzCredentialsResult!
 }
 
 """Information about pagination in a connection."""
@@ -1117,6 +1133,8 @@ type ServerSettings {
   hasLibraryManifest: Boolean!
   id: ID!
   libraryPath: String!
+  listenBrainzApiKey: String!
+  listenBrainzUsername: String!
   serverLibraryManifestStatus: ServerLibraryManifestStatus!
   soulSeekNoDataTimeoutSeconds: Int!
   soulSeekSearchTimeLimitSeconds: Int!
@@ -1357,6 +1375,23 @@ type StorageStats {
   totalDiskBytes: Long
 }
 
+type SubmitListenError {
+  message: String!
+}
+
+input SubmitListenInput {
+  albumName: String
+  artistName: String!
+  listenedAt: DateTime
+  trackName: String!
+}
+
+union SubmitListenResult = SubmitListenError | SubmitListenSuccess
+
+type SubmitListenSuccess {
+  success: Boolean!
+}
+
 type Subscription {
   artistImportBackgroundProgress(artistId: String!): ArtistImportBackgroundProgress!
   artistImportBackgroundQueueUpdated: ArtistImportBackgroundQueueState!
@@ -1466,6 +1501,21 @@ type UpdateLibraryPathSuccess {
   serverSettings: ServerSettings!
 }
 
+type UpdateListenBrainzSettingsError {
+  message: String!
+}
+
+input UpdateListenBrainzSettingsInput {
+  apiKey: String!
+  username: String!
+}
+
+union UpdateListenBrainzSettingsResult = UpdateListenBrainzSettingsError | UpdateListenBrainzSettingsSuccess
+
+type UpdateListenBrainzSettingsSuccess {
+  success: Boolean!
+}
+
 type UpdateSoulSeekNoDataTimeoutError {
   message: String!
 }
@@ -1490,6 +1540,22 @@ type UpdateSoulSeekSearchTimeLimitSuccess {
   serverSettings: ServerSettings!
 }
 
+type UpdateUserListenBrainzCredentialsError {
+  message: String!
+}
+
+input UpdateUserListenBrainzCredentialsInput {
+  listenBrainzToken: String
+  listenBrainzUserId: String
+  userId: UUID!
+}
+
+union UpdateUserListenBrainzCredentialsResult = UpdateUserListenBrainzCredentialsError | UpdateUserListenBrainzCredentialsSuccess
+
+type UpdateUserListenBrainzCredentialsSuccess {
+  user: User!
+}
+
 type Url {
   id: String
   resource: String
@@ -1499,6 +1565,8 @@ type User {
   createdAt: DateTime!
   id: ID!
   likedSongs: [LikedSong!]!
+  listenBrainzToken: String
+  listenBrainzUserId: String
   playlists: [Playlist!]!
   updatedAt: DateTime!
   username: String!
