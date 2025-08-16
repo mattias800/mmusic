@@ -27,7 +27,7 @@ export const GlobalPageLayout: React.FC<GlobalPageLayoutProps> = ({
                 </aside>
               )}
               <main
-                className={`flex-1 relative lg:border-l pb-24 ${renderSidebar ? "ml-64" : ""}`}
+                className={`flex-1 relative lg:border-l ${renderSidebar ? "ml-64" : ""}`}
               >
                 {renderSearch && (
                   <div className="pl-64 fixed top-4 left-8 right-8 z-10">
