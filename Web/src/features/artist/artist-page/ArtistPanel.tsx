@@ -219,19 +219,9 @@ export const ArtistPanel: React.FC<ArtistPanelProps> = (props) => {
             </div>
           </GlassCard>
 
-          <GlassCard 
-            title="Music Collection" 
-            icon={Disc3} 
-            iconBgColor="bg-indigo-500/20"
-          >
+          <GlassCard>
             <ArtistTabs
               tabs={[
-                {
-                  id: "media-availability",
-                  label: "Media Availability",
-                  icon: BarChart3,
-                  content: <ArtistStatisticsHeader artist={artist} />
-                },
                 {
                   id: "top-tracks",
                   label: "Top Tracks",
@@ -287,9 +277,15 @@ export const ArtistPanel: React.FC<ArtistPanelProps> = (props) => {
                         ))}
                     </CardFlexList>
                   )
-                }] : [])
+                }] : []),
+                {
+                  id: "media-availability",
+                  label: "Media Availability",
+                  icon: BarChart3,
+                  content: <ArtistStatisticsHeader artist={artist} />
+                }
               ]}
-              defaultTab="media-availability"
+              defaultTab="top-tracks"
             />
           </GlassCard>
         </div>
