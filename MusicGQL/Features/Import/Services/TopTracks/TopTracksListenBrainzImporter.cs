@@ -40,6 +40,7 @@ public class TopTracksListenBrainzImporter(
             // Use HttpClient for downloading cover art
             using var httpClient = new HttpClient();
             
+            // Create all tracks first
             for (int i = 0; i < Math.Min(recordings.Count, take); i++)
             {
                 var recording = recordings[i];
@@ -53,50 +54,42 @@ public class TopTracksListenBrainzImporter(
                     RankSource = "listenbrainz", // Mark this as ListenBrainz data
                 };
                 
-                // Try to fetch cover art from Cover Art Archive if we have the release MBID
+                topTracks.Add(track);
+            }
+            
+            // Fetch all cover art in parallel
+            var coverArtTasks = new List<Task>();
+            
+            for (int i = 0; i < topTracks.Count; i++)
+            {
+                var track = topTracks[i];
+                var recording = recordings[i];
+                
                 if (!string.IsNullOrEmpty(recording.CaaReleaseMbid))
                 {
-                    try
-                    {
-                        var coverArtUrl = $"https://coverartarchive.org/release/{recording.CaaReleaseMbid}/front-500";
-                        logger.LogInformation("[TopTracksListenBrainzImporter] Attempting to fetch cover art for '{Title}' from Cover Art Archive: {Url}", 
-                            track.Title, coverArtUrl);
-                        
-                        var response = await httpClient.GetAsync(coverArtUrl);
-                        if (response.IsSuccessStatusCode)
-                        {
-                            var bytes = await response.Content.ReadAsByteArrayAsync();
-                            var fileName = $"toptrack{(i + 1).ToString("00")}.jpg";
-                            
-                            // Note: We can't save the file here because we don't have the artist directory
-                            // The file will be saved later by the TopTracksCompleter
-                            // For now, we'll set the CoverArt field to indicate we have a URL to fetch from
-                            track.CoverArt = coverArtUrl; // This will be processed by the completer
-                            
-                            logger.LogInformation("[TopTracksListenBrainzImporter] Successfully fetched cover art for '{Title}' from Cover Art Archive ({Size} bytes)", 
-                                track.Title, bytes.Length);
-                        }
-                        else
-                        {
-                            logger.LogInformation("[TopTracksListenBrainzImporter] Cover Art Archive returned {StatusCode} for '{Title}', will try Spotify fallback", 
-                                response.StatusCode, track.Title);
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        logger.LogInformation("[TopTracksListenBrainzImporter] Failed to fetch cover art for '{Title}' from Cover Art Archive: {Error}, will try Spotify fallback", 
-                            track.Title, ex.Message);
-                    }
+                    var coverArtTask = FetchCoverArtAsync(httpClient, track, recording, i + 1);
+                    coverArtTasks.Add(coverArtTask);
                 }
                 else
                 {
                     logger.LogInformation("[TopTracksListenBrainzImporter] No release MBID available for '{Title}', will try Spotify fallback", track.Title);
                 }
-                
+            }
+            
+            // Wait for all cover art downloads to complete
+            if (coverArtTasks.Count > 0)
+            {
+                logger.LogInformation("[TopTracksListenBrainzImporter] Starting parallel download of {Count} cover art images", coverArtTasks.Count);
+                await Task.WhenAll(coverArtTasks);
+                logger.LogInformation("[TopTracksListenBrainzImporter] Completed all cover art downloads");
+            }
+            
+            // Log final results
+            for (int i = 0; i < topTracks.Count; i++)
+            {
+                var track = topTracks[i];
                 logger.LogDebug("[TopTracksListenBrainzImporter] Converted recording {Index}: '{Title}' (PlayCount: {PlayCount}, Length: {Length}s, CoverArt: {CoverArt})", 
                     i + 1, track.Title, track.PlayCount, track.TrackLength, track.CoverArt ?? "null");
-                
-                topTracks.Add(track);
             }
 
             logger.LogInformation("[TopTracksListenBrainzImporter] Successfully converted {Count} recordings to top tracks for MB artist {MbArtistId}. Final track count: {FinalCount}", 
@@ -115,6 +108,41 @@ public class TopTracksListenBrainzImporter(
         {
             logger.LogError(ex, "[TopTracksListenBrainzImporter] Unexpected error while getting top tracks for MB artist {MbArtistId}", mbArtistId);
             return [];
+        }
+    }
+    
+    private async Task FetchCoverArtAsync(HttpClient httpClient, JsonTopTrack track, ListenBrainzTopRecording recording, int index)
+    {
+        try
+        {
+            var coverArtUrl = $"https://coverartarchive.org/release/{recording.CaaReleaseMbid}/front-500";
+            logger.LogInformation("[TopTracksListenBrainzImporter] Attempting to fetch cover art for '{Title}' from Cover Art Archive: {Url}", 
+                track.Title, coverArtUrl);
+            
+            var response = await httpClient.GetAsync(coverArtUrl);
+            if (response.IsSuccessStatusCode)
+            {
+                var bytes = await response.Content.ReadAsByteArrayAsync();
+                var fileName = $"toptrack{index.ToString("00")}.jpg";
+                
+                // Note: We can't save the file here because we don't have the artist directory
+                // The file will be saved later by the TopTracksCompleter
+                // For now, we'll set the CoverArt field to indicate we have a URL to fetch from
+                track.CoverArt = coverArtUrl; // This will be processed by the completer
+                
+                logger.LogInformation("[TopTracksListenBrainzImporter] Successfully fetched cover art for '{Title}' from Cover Art Archive ({Size} bytes)", 
+                    track.Title, bytes.Length);
+            }
+            else
+            {
+                logger.LogInformation("[TopTracksListenBrainzImporter] Cover Art Archive returned {StatusCode} for '{Title}', will try Spotify fallback", 
+                    response.StatusCode, track.Title);
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogInformation("[TopTracksListenBrainzImporter] Failed to fetch cover art for '{Title}' from Cover Art Archive: {Error}, will try Spotify fallback", 
+                track.Title, ex.Message);
         }
     }
 }
