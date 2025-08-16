@@ -12,7 +12,6 @@ import {
   Play,
   Download,
   Clock,
-  Settings,
 } from "lucide-react";
 import { SearchInput } from "../search/search-input/SearchInput.tsx";
 import { DownloadOverviewFetcher } from "@/features/downloads/download-overview/DownloadOverviewFetcher.tsx";

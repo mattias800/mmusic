@@ -12,10 +12,8 @@ import {
 import { DirectoryBrowserModal } from "../components/DirectoryBrowser/DirectoryBrowserModal.tsx";
 import { FragmentType, graphql, useFragment } from "@/gql";
 import { useClient, useMutation } from "urql";
-import { Label } from "@/components/ui/label.tsx";
-import { AlertTriangle, CheckCircle2, FolderOpen, Settings } from "lucide-react";
-import { Alert } from "@/components/ui/Alert.tsx";
-import { StatusCard, GradientButton } from "@/components/ui";
+import { CheckCircle2, FolderOpen, AlertTriangle } from "lucide-react";
+import { GradientButton } from "@/components/ui";
 
 export interface ChangeLibraryFolderControlProps {
   serverSettings: FragmentType<

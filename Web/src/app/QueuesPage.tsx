@@ -6,8 +6,75 @@ import { Link } from "react-router";
 import { ReleaseCoverArt } from "@/components/images/ReleaseCoverArt.tsx";
 import { ProgressIndicator } from "@/components/progress/ProgressIndicator";
 import { DownloadStatus } from "@/gql/graphql.ts";
-import { PageLayout, PageHeader, GlassCard, StatusCard, StatusGrid, InfoSection } from "@/components/ui";
-import { Download, Upload, Clock, Activity, CheckCircle, XCircle, AlertTriangle, Play, Pause } from "lucide-react";
+import { PageLayout, PageHeader, GlassCard, InfoSection } from "@/components/ui";
+import { Download, Clock, ListOrdered, CheckCircle, XCircle, AlertTriangle } from "lucide-react";
+
+// Type for the actual query result structure
+type QueuesPageDownloadSlot = {
+  id: number;
+  isActive: boolean;
+  isWorking: boolean;
+  currentWork?: {
+    artistId: string;
+    releaseFolderName: string;
+  } | null;
+  currentProgress?: {
+    id: string;
+    artistId: string;
+    releaseFolderName: string;
+    status: string;
+    totalTracks: number;
+    completedTracks: number;
+    errorMessage?: string | null;
+    artistName?: string | null;
+    releaseTitle?: string | null;
+    coverArtUrl?: string | null;
+    currentTrackProgressPercent?: number | null;
+    currentDownloadSpeedKbps?: number | null;
+    currentProvider?: string | null;
+    currentProviderIndex?: number | null;
+    totalProviders?: number | null;
+  } | null;
+  startedAt?: string | null;
+  lastActivityAt?: string | null;
+  status?: string | null;
+};
+
+type QueuesPageImport = {
+  id: string;
+  artistName: string;
+  statusInfo: {
+    id: string;
+    text: string;
+  };
+  totalReleases: number;
+  completedReleases: number;
+  errorMessage?: string | null;
+};
+
+type QueuesPageQueueItem = {
+  id: string;
+  artistId?: string | null;
+  artistName?: string | null;
+  releaseFolderName?: string | null;
+  songTitle?: string | null;
+  queueKey?: string | null;
+};
+
+type QueuesPageHistoryItem = {
+  timestampUtc: string;
+  artistId?: string | null;
+  artistName?: string | null;
+  releaseFolderName?: string | null;
+  releaseTitle?: string | null;
+  localArtistId?: string | null;
+  songTitle?: string | null;
+  success: boolean;
+  errorMessage?: string | null;
+  providerUsed?: string | null;
+  jobKind?: string | null;
+  musicBrainzArtistId?: string | null;
+};
 
 const query = graphql(`
   query QueuesPage_Query {
@@ -205,7 +272,7 @@ export const QueuesPage: React.FC = () => {
     <PageLayout>
       {/* Header Section */}
       <PageHeader 
-        icon={Activity} 
+        icon={AlertTriangle} 
         title="Queues & Activity" 
         subtitle="Monitor downloads, imports, and system activity" 
       />
@@ -276,7 +343,7 @@ export const QueuesPage: React.FC = () => {
           {/* Current Import */}
           <GlassCard 
             title="Current Import" 
-            icon={Upload} 
+            icon={ListOrdered} 
             iconBgColor="bg-purple-500/20"
           >
             {ai.currentArtistImport ? (
@@ -327,7 +394,7 @@ export const QueuesPage: React.FC = () => {
 
       {/* Bottom Info Section */}
       <InfoSection 
-        icon={Activity} 
+        icon={AlertTriangle} 
         title="About Queues & Activity" 
         variant="blue"
       >
@@ -340,7 +407,7 @@ export const QueuesPage: React.FC = () => {
 };
 
 // Helper Components
-const DownloadSlotCard: React.FC<{ slot: any }> = ({ slot }) => (
+const DownloadSlotCard: React.FC<{ slot: QueuesPageDownloadSlot }> = ({ slot }) => (
   <div className="p-4 bg-white/5 rounded-lg border border-white/10">
     <div className="flex items-center justify-between mb-3">
       <div className="flex items-center gap-2">
@@ -459,7 +526,7 @@ const DownloadSlotCard: React.FC<{ slot: any }> = ({ slot }) => (
   </div>
 );
 
-const CurrentImportCard: React.FC<{ import: any }> = ({ import: importItem }) => (
+const CurrentImportCard: React.FC<{ import: QueuesPageImport }> = ({ import: importItem }) => (
   <div className="space-y-4">
     <div className="flex items-center gap-4">
       <Link to={`/artist/${importItem.artistName}`}>
@@ -506,14 +573,14 @@ const CurrentImportCard: React.FC<{ import: any }> = ({ import: importItem }) =>
   </div>
 );
 
-const QueueItem: React.FC<{ item: any; onRemove: () => void; type: 'download' | 'import' }> = ({ item, onRemove, type }) => (
+const QueueItem: React.FC<{ item: QueuesPageQueueItem; onRemove: () => void; type: 'download' | 'import' }> = ({ item, onRemove, type }) => (
   <div className="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/10">
     <div className="flex items-center gap-3">
       {type === 'download' ? (
         <Link to={`/artist/${item.artistId}/release/${item.releaseFolderName}`}>
           <ReleaseCoverArt
             srcUrl={`/library/${item.artistId}/releases/${item.releaseFolderName}/coverart`}
-            titleForPlaceholder={item.releaseFolderName}
+            titleForPlaceholder={item.releaseFolderName || 'Release'}
             className="w-8 h-8 rounded object-cover border border-white/20"
           />
         </Link>
@@ -523,22 +590,30 @@ const QueueItem: React.FC<{ item: any; onRemove: () => void; type: 'download' | 
       <div className="text-sm text-gray-300">
         {type === 'download' ? (
           <>
-            <Link to={`/artist/${item.artistId}`} className="hover:underline">
-              {item.artistId}
-            </Link>
-            {" - "}
-            <Link
-              to={`/artist/${item.artistId}/release/${item.releaseFolderName}`}
-              className="hover:underline"
-            >
-              {item.releaseFolderName}
-            </Link>
+            {item.artistId && (
+              <Link to={`/artist/${item.artistId}`} className="hover:underline">
+                {item.artistId}
+              </Link>
+            )}
+            {item.artistId && item.releaseFolderName && (
+              <>
+                {" - "}
+                <Link
+                  to={`/artist/${item.artistId}/release/${item.releaseFolderName}`}
+                  className="hover:underline"
+                >
+                  {item.releaseFolderName}
+                </Link>
+              </>
+            )}
           </>
         ) : (
           <>
-            <Link to={`/artist/${item.artistName}`} className="hover:underline">
-              {item.artistName}
-            </Link>
+            {item.artistName && (
+              <Link to={`/artist/${item.artistName}`} className="hover:underline">
+                {item.artistName}
+              </Link>
+            )}
             {item.releaseFolderName
               ? ` — ${item.releaseFolderName}`
               : item.songTitle
@@ -559,7 +634,7 @@ const QueueItem: React.FC<{ item: any; onRemove: () => void; type: 'download' | 
   </div>
 );
 
-const HistoryItem: React.FC<{ item: any; type: 'download' | 'import' }> = ({ item, type }) => (
+const HistoryItem: React.FC<{ item: QueuesPageHistoryItem; type: 'download' | 'import' }> = ({ item, type }) => (
   <div className="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/10">
     <div className="flex items-center gap-3">
       {type === 'download' && item.releaseFolderName ? (

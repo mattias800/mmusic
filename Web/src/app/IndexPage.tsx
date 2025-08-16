@@ -3,8 +3,8 @@ import { TopTrackRecommendations } from "@/features/recommendations/top-tracks/T
 import { ServerLibraryStatisticsHeader } from "@/features/server-library/ServerLibraryStatisticsHeader.tsx";
 import { graphql } from "@/gql";
 import { useQuery } from "urql";
-import { PageLayout, PageHeader, GlassCard, StatusCard, StatusGrid, InfoSection } from "@/components/ui";
-import { Music, Disc3, Users, TrendingUp, Star, Heart, Activity } from "lucide-react";
+import { PageLayout, PageHeader, GlassCard, InfoSection } from "@/components/ui";
+import { Music, Users, TrendingUp, Star } from "lucide-react";
 
 const indexPageQuery = graphql(`
   query IndexPageQuery {

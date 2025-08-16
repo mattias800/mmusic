@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
 import { GradientButton } from "@/components/ui";
-import { Download, Settings, AlertTriangle } from "lucide-react";
+import { Download, AlertTriangle } from "lucide-react";
 
 const updateDownloadSlotCountMutation = graphql(`
   mutation UpdateDownloadSlotCount($input: UpdateDownloadSlotCountInput!) {
