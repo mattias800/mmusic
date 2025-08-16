@@ -40,13 +40,14 @@ export const SearchInput: React.FC<SearchInputProps> = () => {
     <div>
       <form ref={formRef} onFocus={() => setInFocus(true)}>
         <Input
-          placeholder={"Search..."}
+          placeholder="Search your music library..."
           value={value}
           onChange={(ev) => setValue(ev.target.value)}
+          className="bg-white/10 border-white/20 text-white placeholder-gray-400 focus:border-blue-400 focus:ring-blue-400 transition-all duration-200"
         />
       </form>
       {value && inFocus && (
-        <div ref={popupRef}>
+        <div ref={popupRef} className="mt-2">
           <SearchPanel
             searchText={value}
             onClickSearchResult={onClickSearchResult}

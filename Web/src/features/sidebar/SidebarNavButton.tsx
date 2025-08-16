@@ -1,7 +1,6 @@
 import type { ComponentType } from "react";
 import * as React from "react";
 import { NavLink, useLocation } from "react-router";
-import { Button } from "@/components/ui/button.tsx";
 import { cn } from "@/lib/utils.ts";
 
 export interface SidebarNavButtonProps {
@@ -13,20 +12,28 @@ export interface SidebarNavButtonProps {
 export const SidebarNavButton: React.FC<SidebarNavButtonProps> = ({
   label,
   path,
-  icon,
+  icon: Icon,
 }) => {
   const { pathname } = useLocation();
+  const isActive = pathname === path;
 
   return (
-    <Button
-      variant={pathname === path ? "secondary" : "ghost"}
-      className="w-full justify-start"
-      iconLeft={icon}
-      asChild
+    <NavLink 
+      to={path} 
+      role="button" 
+      className={cn(
+        "flex items-center w-full px-3 py-2 rounded-lg transition-all duration-200 group",
+        "hover:bg-white/10 hover:border-white/20",
+        isActive 
+          ? "bg-gradient-to-r from-blue-500/20 to-purple-500/20 border border-blue-500/30 text-white" 
+          : "text-gray-300 hover:text-white border border-transparent"
+      )}
     >
-      <NavLink to={path} role="button" className={cn("flex items-center w-full")}>
-        {label}
-      </NavLink>
-    </Button>
+      <Icon className={cn(
+        "w-4 h-4 mr-3 transition-colors duration-200",
+        isActive ? "text-blue-400" : "text-gray-400 group-hover:text-gray-300"
+      )} />
+      <span className="text-sm font-medium">{label}</span>
+    </NavLink>
   );
 };

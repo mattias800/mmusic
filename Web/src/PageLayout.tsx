@@ -14,18 +14,15 @@ export const PageLayout: React.FC<PageLayoutProps> = ({
       <div className="hidden md:block h-full">
         <div className="border-t h-full">
           <div className="bg-background h-full">
-            <div className="grid lg:grid-cols-5 h-full">
+            <div className="flex h-full">
               {renderSidebar && (
-                <>
-                  <div className="w-64" />
-                  <aside
-                    className={"h-screen fixed top-0 left-0 bottom-0 w-64"}
-                  >
-                    {renderSidebar?.()}
-                  </aside>
-                </>
+                <aside
+                  className={"h-screen w-64 flex-shrink-0"}
+                >
+                  {renderSidebar?.()}
+                </aside>
               )}
-              <main className="col-span-3 lg:col-span-4 lg:border-l pb-24">
+              <main className="flex-1 lg:border-l pb-24">
                 {children}
               </main>
             </div>

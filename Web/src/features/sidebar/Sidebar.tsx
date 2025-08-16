@@ -7,6 +7,12 @@ import {
   MicVocal,
   Music2,
   User,
+  Search,
+  Home,
+  Play,
+  Download,
+  Clock,
+  Settings,
 } from "lucide-react";
 import { SearchInput } from "../search/search-input/SearchInput.tsx";
 import { DownloadOverviewFetcher } from "@/features/downloads/download-overview/DownloadOverviewFetcher.tsx";
@@ -49,77 +55,85 @@ export const Sidebar = ({ className }: SidebarProps) => {
     <div
       id="sidebar"
       className={cn(
-        "h-full flex flex-col justify-between relative z-10",
+        "h-full flex flex-col justify-between relative z-10 bg-white/5 backdrop-blur-sm border-r border-white/10",
         musicPlayerIsOpen && "pb-24",
         className,
       )}
     >
-      <div className={"flex flex-col gap-4"}>
-        <div className={"flex justify-center"}>
-          <MmusicLogo width={"100px"} />
+      {/* Top Section - Logo and Search */}
+      <div className="flex flex-col gap-6 p-6">
+        {/* Logo */}
+        <div className="flex justify-center">
+          <div className="p-3 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-xl border border-white/10">
+            <MmusicLogo width={"80px"} />
+          </div>
         </div>
 
-        <SidebarSection heading={"Search library"}>
-          <SearchInput />
+        {/* Search Section */}
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 px-2">
+            <Search className="w-4 h-4 text-blue-400" />
+            <h3 className="text-sm font-semibold text-white">Search Library</h3>
+          </div>
+          <div className="px-2">
+            <SearchInput />
+          </div>
+        </div>
+      </div>
+
+      {/* Main Navigation */}
+      <div className="flex-1 flex flex-col gap-6 px-6">
+        {/* Discover Section */}
+        <SidebarSection heading="Discover" icon={Home} iconColor="text-pink-400">
+          <SidebarNavButton path="/" label="Popular artists" icon={Heart} />
         </SidebarSection>
-
-        <SidebarSection heading={"Discover"}>
-          <SidebarNavButton path={"/"} label={"Popular artists"} icon={Heart} />
+        
+        {/* Library Section */}
+        <SidebarSection heading="Library" icon={Library} iconColor="text-blue-400">
+          <SidebarNavButton path="/liked-songs" label="Liked songs" icon={Heart} />
+          <SidebarNavButton path="/songs" label="Songs" icon={Music2} />
+          <SidebarNavButton path="/artists" label="Artists" icon={MicVocal} />
+          <SidebarNavButton path="/albums" label="Albums" icon={Library} />
         </SidebarSection>
-
-        <SidebarSection heading={"Library"}>
-          <SidebarNavButton
-            path={"/liked-songs"}
-            label={"Liked songs"}
-            icon={Heart}
-          />
-
-          <SidebarNavButton path={"/songs"} label={"Songs"} icon={Music2} />
-          <SidebarNavButton
-            path={"/artists"}
-            label={"Artists"}
-            icon={MicVocal}
-          />
-          <SidebarNavButton path={"/albums"} label={"Albums"} icon={Library} />
-        </SidebarSection>
-
-        <SidebarSection heading={"Playlists"}>
-          <SidebarNavButton
-            path={"/playlists/import/spotify"}
-            label={"Import from Spotify"}
-            icon={Import}
-          />
+        
+        {/* Playlists Section */}
+        <SidebarSection heading="Playlists" icon={Play} iconColor="text-green-400">
+          <SidebarNavButton path="/playlists/import/spotify" label="Import from Spotify" icon={Import} />
           <PlaylistList />
         </SidebarSection>
-
-        <SidebarSection
-          heading={"Downloads"}
+        
+        {/* Downloads Section */}
+        <SidebarSection 
+          heading="Downloads" 
+          icon={Download} 
+          iconColor="text-orange-400"
           right={<SoulSeekNetworkStatusFetcher />}
         >
-          <div className="pt-4 px-6">
+          <div className="pt-2">
             <DownloadOverviewFetcher />
           </div>
         </SidebarSection>
-
-        <SidebarSection heading={"Import queue"}>
-          <div className="pt-4 px-6">
+        
+        {/* Import Queue Section */}
+        <SidebarSection heading="Import Queue" icon={Clock} iconColor="text-purple-400">
+          <div className="pt-2">
             <ArtistImportQueuePanel />
           </div>
         </SidebarSection>
-
-        <SidebarSection heading={"Queues & history"}>
-          <SidebarNavButton
-            path={"/queues"}
-            label={"Open queues"}
-            icon={ListOrdered}
-          />
+        
+        {/* Queues & History Section */}
+        <SidebarSection heading="Queues & History" icon={ListOrdered} iconColor="text-indigo-400">
+          <SidebarNavButton path="/queues" label="Open queues" icon={ListOrdered} />
         </SidebarSection>
       </div>
 
-      <SidebarSection heading={"You"}>
-        <SidebarNavButton path={"/profile"} icon={User} label={username} />
-        <SidebarNavButton path={"/settings"} icon={Cog} label={"Settings"} />
-      </SidebarSection>
+      {/* Bottom Section - User */}
+      <div className="p-6">
+        <SidebarSection heading="You" icon={User} iconColor="text-emerald-400">
+          <SidebarNavButton path="/profile" icon={User} label={username} />
+          <SidebarNavButton path="/settings" icon={Cog} label="Settings" />
+        </SidebarSection>
+      </div>
     </div>
   );
 };
