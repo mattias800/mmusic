@@ -5,8 +5,9 @@ import { graphql } from "@/gql";
 import { LibraryPathForm } from "@/features/settings/LibraryPathForm.tsx";
 import { SoulSeekSettingsForm } from "@/features/settings/SoulSeekSettingsForm.tsx";
 import { DownloadSlotSettingsForm } from "@/features/settings/DownloadSlotSettingsForm.tsx";
+import { TopTracksServiceSettingsForm } from "@/features/settings/TopTracksServiceSettingsForm.tsx";
 import { PageLayout, PageHeader, GlassCard, InfoSection } from "@/components/ui";
-import { Settings, Download, FolderOpen, Server, Info } from "lucide-react";
+import { Settings, Download, FolderOpen, Server, Info, Music } from "lucide-react";
 
 export interface SettingsPageProps {}
 
@@ -15,6 +16,9 @@ const settingsPageQuery = graphql(`
     serverSettings {
       ...LibraryPathForm_ServerSettings
       downloadSlotCount
+      listenBrainzTopTracksEnabled
+      spotifyTopTracksEnabled
+      lastFmTopTracksEnabled
     }
   }
 `);
@@ -58,6 +62,14 @@ export const SettingsPage: React.FC<SettingsPageProps> = () => {
             iconBgColor="bg-green-500/20"
           >
             <DownloadSlotSettingsForm serverSettings={data.serverSettings} />
+          </GlassCard>
+
+          <GlassCard 
+            title="Top Tracks Services" 
+            icon={Music} 
+            iconBgColor="bg-purple-500/20"
+          >
+            <TopTracksServiceSettingsForm />
           </GlassCard>
 
           <GlassCard 
