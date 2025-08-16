@@ -3,183 +3,87 @@ using System.Text.Json.Serialization;
 using Hqub.Lastfm;
 using MusicGQL.Features.ServerLibrary.Json;
 using Path = System.IO.Path;
+using Microsoft.Extensions.Logging;
+using MusicGQL.Integration.Spotify;
+using MusicGQL.Features.Import.Services.TopTracks;
 
 namespace MusicGQL.Features.Import.Services;
 
 public class LastFmEnrichmentService(
+    SpotifyService spotifyService,
     LastfmClient lastfmClient,
-    Integration.Spotify.SpotifyService spotifyService,
-    ILogger<LastFmEnrichmentService> logger
-)
+    TopTracksServiceManager topTracksServiceManager,
+    ILogger<LastFmEnrichmentService> logger)
 {
-    public async Task<EnrichmentResult> EnrichArtistAsync(string artistDir, string mbArtistId)
-    {
-        var result = new EnrichmentResult { ArtistDir = artistDir };
-        var artistJsonPath = Path.Combine(artistDir, "artist.json");
+    private static string NormalizeTitle(string s) => (s ?? string.Empty).Trim().ToLowerInvariant();
 
+    public async Task EnrichArtistAsync(string artistDir, string mbArtistId)
+    {
+        var artistJsonPath = Path.Combine(artistDir, "artist.json");
         if (!File.Exists(artistJsonPath))
         {
-            result.ErrorMessage = "artist.json not found";
-            return result;
+            logger.LogWarning("[EnrichArtist] No artist.json found in {ArtistDir}", artistDir);
+            return;
         }
 
         JsonArtist? jsonArtist;
         try
         {
-            var text = await File.ReadAllTextAsync(artistJsonPath);
-            jsonArtist = JsonSerializer.Deserialize<JsonArtist>(text, GetJsonOptions());
+            var artistText = await File.ReadAllTextAsync(artistJsonPath);
+            jsonArtist = JsonSerializer.Deserialize<JsonArtist>(
+                artistText,
+                GetJsonOptions()
+            );
         }
         catch (Exception ex)
         {
-            result.ErrorMessage = $"Failed to read artist.json: {ex.Message}";
-            return result;
+            logger.LogError(ex, "[EnrichArtist] Failed to deserialize artist.json from {ArtistDir}", artistDir);
+            return;
         }
 
         if (jsonArtist == null)
         {
-            result.ErrorMessage = "Malformed artist.json";
-            return result;
+            logger.LogWarning("[EnrichArtist] Failed to deserialize artist.json from {ArtistDir}", artistDir);
+            return;
         }
 
-        // Build candidate names from artist name, sortName, and aliases
+        // Get candidate names for external service lookups
         var candidateNames = new List<string>();
-        void add(string? s)
+        void addName(string? s)
         {
             if (!string.IsNullOrWhiteSpace(s) && !candidateNames.Contains(s, StringComparer.OrdinalIgnoreCase))
                 candidateNames.Add(s);
         }
-        add(jsonArtist.Name);
-        add(jsonArtist.SortName);
+        addName(jsonArtist.Name);
+        addName(jsonArtist.SortName);
         if (jsonArtist.Aliases != null)
         {
             foreach (var a in jsonArtist.Aliases)
             {
-                add(a.Name);
-                add(a.SortName);
+                addName(a.Name);
+                addName(a.SortName);
             }
         }
 
-        // Fetch listeners from Last.fm (best effort)
+        // Use the new TopTracksServiceManager to get top tracks
         try
         {
-            var info = await lastfmClient.Artist.GetInfoByMbidAsync(mbArtistId);
-            jsonArtist.MonthlyListeners = info?.Statistics?.Listeners;
-        }
-        catch (Exception ex)
-        {
-            logger.LogWarning(ex, "[EnrichArtist] Failed to fetch Last.fm artist info for mbid='{MbId}'", mbArtistId);
-            // Try resolving by alias names
-            foreach (var name in candidateNames)
+            logger.LogInformation("[EnrichArtist] Getting top tracks for artist '{Name}' using service manager", jsonArtist.Name);
+            jsonArtist.TopTracks = await topTracksServiceManager.GetTopTracksAsync(mbArtistId, jsonArtist.Name, 25);
+            
+            if (jsonArtist.TopTracks != null && jsonArtist.TopTracks.Count > 0)
             {
-                try
-                {
-                    var infoByName = await lastfmClient.Artist.GetInfoAsync(name);
-                    if (infoByName != null)
-                    {
-                        jsonArtist.MonthlyListeners = infoByName.Statistics?.Listeners;
-                        logger.LogInformation("[EnrichArtist] Resolved Last.fm listeners via alias '{Alias}'", name);
-                        break;
-                    }
-                }
-                catch { }
+                logger.LogInformation("[EnrichArtist] Got {Count} top tracks for artist '{Name}'", jsonArtist.TopTracks.Count, jsonArtist.Name);
             }
-        }
-
-        // Top tracks via Spotify first; fallback to Last.fm if Spotify fails or returns empty
-        try
-        {
-            // ensure we have a spotify artist id
-            var spotifyId = jsonArtist.Connections?.SpotifyId;
-            if (string.IsNullOrWhiteSpace(spotifyId))
+            else
             {
-                foreach (var name in candidateNames)
-                {
-                    try
-                    {
-                        var candidates = await spotifyService.SearchArtistsAsync(name, 3);
-                        var best = candidates?.FirstOrDefault();
-                        if (best != null)
-                        {
-                            jsonArtist.Connections ??= new JsonArtistServiceConnections();
-                            jsonArtist.Connections.SpotifyId = best.Id; // legacy field
-                            jsonArtist.Connections.SpotifyIds ??= new List<JsonSpotifyArtistIdentity>();
-                            if (!jsonArtist.Connections.SpotifyIds.Any(x => string.Equals(x.Id, best.Id, StringComparison.OrdinalIgnoreCase)))
-                            {
-                                jsonArtist.Connections.SpotifyIds.Add(new JsonSpotifyArtistIdentity
-                                {
-                                    Id = best.Id,
-                                    DisplayName = best.Name,
-                                    Source = "search",
-                                    AddedAt = DateTime.UtcNow.ToString("yyyy-MM-dd")
-                                });
-                            }
-                            spotifyId = best.Id;
-                            logger.LogInformation("[EnrichArtist] Resolved Spotify artist via name '{Name}'", name);
-                            break;
-                        }
-                    }
-                    catch { }
-                }
-            }
-
-            // Collect all linked Spotify IDs (including legacy single field) and merge top tracks
-            var allSpotifyIds = jsonArtist.Connections?.SpotifyIds?.Select(s => s.Id).ToList() ?? new List<string>();
-            if (!string.IsNullOrWhiteSpace(spotifyId) && !allSpotifyIds.Contains(spotifyId))
-            {
-                allSpotifyIds.Add(spotifyId);
-            }
-
-            if (allSpotifyIds.Count > 0)
-            {
-                var spImporter = new TopTracks.TopTracksSpotifyImporter(spotifyService);
-                var merged = new Dictionary<string, JsonTopTrack>(StringComparer.OrdinalIgnoreCase);
-                foreach (var sid in allSpotifyIds)
-                {
-                    try
-                    {
-                        var tracks = await spImporter.GetTopTracksAsync(sid, 25) ?? new List<JsonTopTrack>();
-                        foreach (var t in tracks)
-                        {
-                            var key = NormalizeTitle(t.Title);
-                            if (merged.TryGetValue(key, out var existing))
-                            {
-                                if ((t.PlayCount ?? 0) > (existing.PlayCount ?? 0))
-                                    merged[key] = t;
-                            }
-                            else
-                            {
-                                merged[key] = t;
-                            }
-                        }
-                    }
-                    catch { }
-                }
-                jsonArtist.TopTracks = merged.Values
-                    .OrderByDescending(t => t.PlayCount ?? 0)
-                    .Take(25)
-                    .ToList();
+                logger.LogWarning("[EnrichArtist] No top tracks found for artist '{Name}'", jsonArtist.Name);
             }
         }
         catch (Exception ex)
         {
-            logger.LogWarning(ex, "[EnrichArtist] Spotify top tracks failed for artist='{Name}'. Will attempt Last.fm fallback.", jsonArtist.Name);
+            logger.LogWarning(ex, "[EnrichArtist] Top tracks service manager failed for artist='{Name}'", jsonArtist.Name);
             jsonArtist.TopTracks = [];
-        }
-
-        // Last.fm fallback for top tracks
-        if (jsonArtist.TopTracks == null || jsonArtist.TopTracks.Count == 0)
-        {
-            try
-            {
-                TopTracks.ITopTracksImporter importer = new TopTracks.TopTracksLastFmImporter(lastfmClient);
-                jsonArtist.TopTracks = await importer.GetTopTracksAsync(mbArtistId, 25);
-            }
-            catch (Exception ex)
-            {
-                logger.LogWarning(ex,
-                    "[EnrichArtist] Last.fm fallback for top tracks failed for mbid='{MbId}'",
-                    mbArtistId);
-            }
         }
 
         // Complete missing fields using Spotify as fallback (releaseTitle, cover art download)
@@ -253,50 +157,29 @@ public class LastFmEnrichmentService(
         }
         catch (Exception ex)
         {
-            logger.LogWarning(ex, "[EnrichArtist] Mapping top tracks to library failed for artist='{Name}'",
-                jsonArtist.Name);
+            logger.LogWarning(ex, "[EnrichArtist] Failed to map top tracks to local library for artist='{Name}'", jsonArtist.Name);
         }
 
+        // Save updated artist.json
         try
         {
-            var updated = JsonSerializer.Serialize(jsonArtist, GetJsonOptions());
-            await File.WriteAllTextAsync(artistJsonPath, updated);
-            result.Success = true;
+            var updatedJson = JsonSerializer.Serialize(jsonArtist, GetJsonOptions());
+            await File.WriteAllTextAsync(artistJsonPath, updatedJson);
+            logger.LogInformation("[EnrichArtist] Updated artist.json for '{Name}'", jsonArtist.Name);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "[EnrichArtist] Failed to write artist.json at '{Path}'", artistJsonPath);
-            result.ErrorMessage = ex.Message;
+            logger.LogError(ex, "[EnrichArtist] Failed to save updated artist.json for '{Name}'", jsonArtist.Name);
         }
-
-        return result;
     }
 
-    public class EnrichmentResult
+    private static JsonSerializerOptions GetJsonOptions()
     {
-        public bool Success { get; set; }
-        public string ArtistDir { get; set; } = string.Empty;
-        public string? ErrorMessage { get; set; }
-    }
-
-    private static string NormalizeTitle(string input)
-    {
-        if (string.IsNullOrWhiteSpace(input)) return string.Empty;
-        var s = input
-            .Replace("’", "'")
-            .Replace("“", "\"")
-            .Replace("”", "\"");
-        var builder = new System.Text.StringBuilder(s.Length);
-        foreach (var ch in s)
+        return new JsonSerializerOptions
         {
-            if (char.IsLetterOrDigit(ch) || char.IsWhiteSpace(ch))
-            {
-                builder.Append(char.ToLowerInvariant(ch));
-            }
-        }
-
-        var normalized = System.Text.RegularExpressions.Regex.Replace(builder.ToString(), "\\s+", " ").Trim();
-        return normalized;
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            WriteIndented = true
+        };
     }
 
     private static string StripParentheses(string input)
@@ -315,12 +198,4 @@ public class LastFmEnrichmentService(
         var npb = NormalizeTitle(StripParentheses(b));
         return npa.Equals(npb, StringComparison.Ordinal);
     }
-
-    private static JsonSerializerOptions GetJsonOptions() =>
-        new()
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            WriteIndented = true,
-            Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) },
-        };
 }

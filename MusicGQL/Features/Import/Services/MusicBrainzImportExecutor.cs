@@ -6,6 +6,7 @@ using MusicGQL.Features.ServerLibrary.Utils;
 using MusicGQL.Integration.MusicBrainz;
 using MusicGQL.Features.ArtistImportQueue;
 using MusicGQL.Features.ArtistImportQueue.Services;
+using MusicGQL.Features.Import.Services.TopTracks;
 using Path = System.IO.Path;
 
 namespace MusicGQL.Features.Import.Services;
@@ -33,7 +34,8 @@ public sealed class MusicBrainzImportExecutor(
     ILogger<MusicBrainzImportExecutor> logger,
     ReleaseJsonBuilder releaseJsonBuilder,
     ServerLibrary.Writer.ServerLibraryJsonWriter writer,
-    CurrentArtistImportStateService progressService
+    CurrentArtistImportStateService progressService,
+    TopTracksServiceManager topTracksServiceManager
 ) : IImportExecutor
 {
     private static readonly string[] AudioExtensions = [".mp3", ".flac", ".wav", ".m4a", ".ogg"];
@@ -205,140 +207,25 @@ public sealed class MusicBrainzImportExecutor(
                 jsonArtist.MonthlyListeners =
                     info?.Statistics?.Listeners ?? jsonArtist.MonthlyListeners;
 
-                // TOP TRACKS: Prefer Spotify, fallback to Last.fm
+                // TOP TRACKS: Use the new TopTracksServiceManager
                 try
                 {
-                    // Try to resolve Spotify artist id from existing connections, MusicBrainz relations, or search by name
-                    jsonArtist.Connections ??= new JsonArtistServiceConnections();
-                    string? spotifyArtistId = jsonArtist.Connections.SpotifyId;
-
-                    if (string.IsNullOrWhiteSpace(spotifyArtistId))
+                    logger.LogInformation("[MusicBrainzImportExecutor] Getting top tracks for artist '{Name}' using service manager", artistDisplayName);
+                    jsonArtist.TopTracks = await topTracksServiceManager.GetTopTracksAsync(mbArtistId, artistDisplayName, 25);
+                    
+                    if (jsonArtist.TopTracks != null && jsonArtist.TopTracks.Count > 0)
                     {
-                        try
-                        {
-                            var mbArtist = await musicBrainzService.GetArtistByIdAsync(mbArtistId);
-                            var rels = mbArtist?.Relations;
-                            if (rels != null)
-                            {
-                                var foundIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-                                foreach (var rel in rels)
-                                {
-                                    var url = rel?.Url?.Resource;
-                                    if (string.IsNullOrWhiteSpace(url)) continue;
-                                    if (url.Contains("open.spotify.com/artist/", StringComparison.OrdinalIgnoreCase))
-                                    {
-                                        try
-                                        {
-                                            var id = new Uri(url).Segments.LastOrDefault()?.Trim('/');
-                                            if (!string.IsNullOrWhiteSpace(id) && foundIds.Add(id))
-                                            {
-                                                jsonArtist.Connections.SpotifyIds ??= new List<JsonSpotifyArtistIdentity>();
-                                                if (!jsonArtist.Connections.SpotifyIds.Any(x => string.Equals(x.Id, id, StringComparison.OrdinalIgnoreCase)))
-                                                {
-                                                    jsonArtist.Connections.SpotifyIds.Add(new JsonSpotifyArtistIdentity
-                                                    {
-                                                        Id = id,
-                                                        DisplayName = artistDisplayName,
-                                                        Source = "musicbrainz",
-                                                        AddedAt = DateTime.UtcNow.ToString("yyyy-MM-dd")
-                                                    });
-                                                }
-                                            }
-                                        }
-                                        catch { }
-                                    }
-                                }
-                                // Back-compat: set single SpotifyId to the first linked id if not already set
-                                if (string.IsNullOrWhiteSpace(jsonArtist.Connections.SpotifyId))
-                                {
-                                    var first = jsonArtist.Connections.SpotifyIds?.FirstOrDefault()?.Id;
-                                    if (!string.IsNullOrWhiteSpace(first))
-                                    {
-                                        spotifyArtistId = first;
-                                        jsonArtist.Connections.SpotifyId = first;
-                                    }
-                                }
-                            }
-                        }
-                        catch { }
+                        logger.LogInformation("[MusicBrainzImportExecutor] Got {Count} top tracks for artist '{Name}'", jsonArtist.TopTracks.Count, artistDisplayName);
                     }
-
-                    if (string.IsNullOrWhiteSpace(spotifyArtistId))
+                    else
                     {
-                        try
-                        {
-                            var matches = await spotifyService.SearchArtistsAsync(artistDisplayName, 1);
-                            var best = matches?.FirstOrDefault();
-                            if (!string.IsNullOrWhiteSpace(best?.Id))
-                            {
-                                spotifyArtistId = best!.Id;
-                                jsonArtist.Connections.SpotifyId = spotifyArtistId;
-                                jsonArtist.Connections.SpotifyIds ??= new List<JsonSpotifyArtistIdentity>();
-                                if (!jsonArtist.Connections.SpotifyIds.Any(x => string.Equals(x.Id, best.Id, StringComparison.OrdinalIgnoreCase)))
-                                {
-                                    jsonArtist.Connections.SpotifyIds.Add(new JsonSpotifyArtistIdentity
-                                    {
-                                        Id = best.Id,
-                                        DisplayName = best.Name,
-                                        Source = "search",
-                                        AddedAt = DateTime.UtcNow.ToString("yyyy-MM-dd")
-                                    });
-                                }
-                            }
-                        }
-                        catch { }
-                    }
-
-                    // Fetch top tracks from all linked Spotify IDs, merged by play count
-                    var allSpotifyIds = (jsonArtist.Connections.SpotifyIds?.Select(s => s.Id).ToList() ?? new List<string>());
-                    if (!string.IsNullOrWhiteSpace(spotifyArtistId) && !allSpotifyIds.Contains(spotifyArtistId))
-                    {
-                        allSpotifyIds.Add(spotifyArtistId);
-                    }
-
-                    if (allSpotifyIds.Count > 0)
-                    {
-                        TopTracks.ITopTracksImporter spImporter = new TopTracks.TopTracksSpotifyImporter(spotifyService);
-                        var merged = new Dictionary<string, JsonTopTrack>(StringComparer.OrdinalIgnoreCase);
-                        foreach (var sid in allSpotifyIds)
-                        {
-                            try
-                            {
-                                var tracks = await spImporter.GetTopTracksAsync(sid, 25) ?? new List<JsonTopTrack>();
-                                foreach (var t in tracks)
-                                {
-                                    var key = NormalizeTitle(t.Title);
-                                    if (merged.TryGetValue(key, out var existing))
-                                    {
-                                        // keep highest play count
-                                        if ((t.PlayCount ?? 0) > (existing.PlayCount ?? 0))
-                                            merged[key] = t;
-                                    }
-                                    else
-                                    {
-                                        merged[key] = t;
-                                    }
-                                }
-                            }
-                            catch { }
-                        }
-                        jsonArtist.TopTracks = merged.Values
-                            .OrderByDescending(t => t.PlayCount ?? 0)
-                            .Take(25)
-                            .ToList();
+                        logger.LogWarning("[MusicBrainzImportExecutor] No top tracks found for artist '{Name}'", artistDisplayName);
                     }
                 }
-                catch { jsonArtist.TopTracks = jsonArtist.TopTracks ?? []; }
-
-                // Fallback to Last.fm if Spotify not available or returned nothing
-                if (jsonArtist.TopTracks == null || jsonArtist.TopTracks.Count == 0)
+                catch (Exception ex)
                 {
-                    try
-                    {
-                        TopTracks.ITopTracksImporter lfImporter = new TopTracks.TopTracksLastFmImporter(lastfmClient);
-                        jsonArtist.TopTracks = await lfImporter.GetTopTracksAsync(mbArtistId, 25);
-                    }
-                    catch { jsonArtist.TopTracks = jsonArtist.TopTracks ?? []; }
+                    logger.LogWarning(ex, "[MusicBrainzImportExecutor] Top tracks service manager failed for artist '{Name}'", artistDisplayName);
+                    jsonArtist.TopTracks = jsonArtist.TopTracks ?? [];
                 }
 
                 // Attempt to map stored top tracks to local library tracks to enable playback

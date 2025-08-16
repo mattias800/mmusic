@@ -20,6 +20,11 @@ public class DbServerSettings
     // ListenBrainz integration settings
     public string ListenBrainzUsername { get; set; } = string.Empty;
     public string ListenBrainzApiKey { get; set; } = string.Empty;
+
+    // Top Tracks Service Configuration
+    public bool ListenBrainzTopTracksEnabled { get; set; } = true;  // Primary source
+    public bool SpotifyTopTracksEnabled { get; set; } = false;      // Disabled by default
+    public bool LastFmTopTracksEnabled { get; set; } = false;      // Disabled by default
 }
 
 public static class DefaultDbServerSettingsProvider
@@ -38,6 +43,9 @@ public static class DefaultDbServerSettingsProvider
             DownloadSlotCount = 3,
             ListenBrainzUsername = "",
             ListenBrainzApiKey = "",
+            ListenBrainzTopTracksEnabled = true,
+            SpotifyTopTracksEnabled = false,
+            LastFmTopTracksEnabled = false,
         };
     }
 }

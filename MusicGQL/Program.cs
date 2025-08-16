@@ -55,6 +55,7 @@ using MusicGQL.Integration.Spotify.Configuration;
 using MusicGQL.Integration.Youtube.Configuration;
 using MusicGQL.Integration.ListenBrainz;
 using MusicGQL.Features.ListenBrainz;
+using MusicGQL.Features.Import.Services.TopTracks;
 using MusicGQL.Types;
 using MetaBrainz.ListenBrainz;
 using Soulseek;
@@ -154,6 +155,11 @@ builder
     .AddScoped<UpdateLibraryPathHandler>()
     .AddScoped<UpdateDownloadPathHandler>()
     .AddScoped<UpdateDownloadSlotCountHandler>()
+    // Top Tracks Services
+    .AddScoped<TopTracksServiceManager>()
+    .AddScoped<TopTracksListenBrainzImporter>()
+    .AddScoped<TopTracksSpotifyImporter>()
+    .AddScoped<TopTracksLastFmImporter>()
     // Download providers
     .AddSingleton<MusicGQL.Features.External.Downloads.SoulSeekDownloadProvider>()
     .AddHttpClient<MusicGQL.Features.External.Downloads.Prowlarr.ProwlarrClient>((serviceProvider, client) =>
@@ -375,6 +381,9 @@ builder
     .AddTypeExtension<UpdateListenBrainzSettingsMutation>()
     .AddType<UpdateListenBrainzSettingsSuccess>()
     .AddType<UpdateListenBrainzSettingsError>()
+    .AddTypeExtension<UpdateTopTracksServiceSettingsMutation>()
+    .AddType<UpdateTopTracksServiceSettingsSuccess>()
+    .AddType<UpdateTopTracksServiceSettingsError>()
     .AddTypeExtension<DownloadsSearchRoot>()
     .AddTypeExtension<DownloadsSubscription>()
     .AddTypeExtension<DownloadQueueMutations>()

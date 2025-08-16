@@ -24,148 +24,113 @@ public record ServerSettings([property: GraphQLIgnore] DbServerSettings Model)
 
     public string ListenBrainzApiKey() => Model.ListenBrainzApiKey;
 
+    // Top Tracks Service Configuration
+    public bool ListenBrainzTopTracksEnabled() => Model.ListenBrainzTopTracksEnabled;
+
+    public bool SpotifyTopTracksEnabled() => Model.SpotifyTopTracksEnabled;
+
+    public bool LastFmTopTracksEnabled() => Model.LastFmTopTracksEnabled;
+
     public ServerLibraryManifestStatus ServerLibraryManifestStatus() => new();
 
     [GraphQLName("storageStats")]
     public async Task<StorageStats?> GetStorageStats([Service] ServerSettingsAccessor serverSettingsAccessor)
     {
         var settings = await serverSettingsAccessor.GetAsync();
-        var libraryPath = settings.LibraryPath;
-        if (string.IsNullOrWhiteSpace(libraryPath) || !Directory.Exists(libraryPath))
+        if (string.IsNullOrWhiteSpace(settings.LibraryPath))
+        {
             return null;
+        }
 
-        long? totalDiskBytes = null;
-        long? availableFreeBytes = null;
         try
         {
-            var root = System.IO.Path.GetPathRoot(libraryPath);
-            if (!string.IsNullOrEmpty(root))
+            var directory = new DirectoryInfo(settings.LibraryPath);
+            if (!directory.Exists)
             {
-                var drive = new DriveInfo(root);
-                // On Unix-like systems, root will be "/" which is fine
-                totalDiskBytes = drive.TotalSize;
-                availableFreeBytes = drive.AvailableFreeSpace;
+                return null;
             }
+
+            var totalSize = GetDirectorySize(directory);
+            var totalFiles = GetFileCount(directory);
+
+            return new StorageStats
+            {
+                TotalSizeBytes = totalSize,
+                TotalFiles = totalFiles,
+                LibraryPath = settings.LibraryPath
+            };
         }
         catch
         {
-            // ignore, keep nulls
+            return null;
         }
-
-        long librarySizeBytes = 0;
-        try
-        {
-            // Offload heavy IO to background thread
-            librarySizeBytes = await Task.Run(() => CalculateDirectorySizeSafe(libraryPath));
-        }
-        catch
-        {
-            // ignore, keep zero
-        }
-
-        // Calculate estimated total library size when fully populated
-        long estimatedTotalLibrarySizeBytes = 0;
-        try
-        {
-            estimatedTotalLibrarySizeBytes = await Task.Run(() => CalculateEstimatedTotalLibrarySizeAsync(libraryPath, librarySizeBytes));
-        }
-        catch
-        {
-            // ignore, keep zero
-        }
-
-        return new StorageStats(totalDiskBytes, availableFreeBytes, librarySizeBytes, estimatedTotalLibrarySizeBytes);
     }
 
-    [GraphQLName("hasLibraryManifest")]
-    public async Task<bool> GetHasLibraryManifest([Service] ServerSettingsAccessor serverSettingsAccessor,
-        [Service] LibraryManifestService manifestService)
-    {
-        var settings = await serverSettingsAccessor.GetAsync();
-        return await manifestService.HasManifestAsync(settings.LibraryPath);
-    }
-
-    private static long CalculateDirectorySizeSafe(string folder)
+    private static long GetDirectorySize(DirectoryInfo directory)
     {
         long size = 0;
         try
         {
-            foreach (var file in Directory.EnumerateFiles(folder, "*", SearchOption.TopDirectoryOnly))
+            var files = directory.GetFiles();
+            foreach (var file in files)
             {
-                try
-                {
-                    size += new FileInfo(file).Length;
-                }
-                catch
-                {
-                }
+                size += file.Length;
             }
 
-            foreach (var sub in Directory.EnumerateDirectories(folder))
+            var subdirectories = directory.GetDirectories();
+            foreach (var subdirectory in subdirectories)
             {
-                size += CalculateDirectorySizeSafe(sub);
+                size += GetDirectorySize(subdirectory);
             }
         }
         catch
         {
-            // ignore permission errors and continue best-effort
+            // Ignore errors and return current size
         }
 
         return size;
     }
 
-    private static async Task<long> CalculateEstimatedTotalLibrarySizeAsync(string libraryPath, long currentLibrarySizeBytes)
+    private static int GetFileCount(DirectoryInfo directory)
     {
-        if (currentLibrarySizeBytes == 0)
-            return 0;
-
+        int count = 0;
         try
         {
-            // Count total releases and releases with media files
-            int totalReleases = 0;
-            int releasesWithMedia = 0;
+            count += directory.GetFiles().Length;
 
-            foreach (var artistDir in Directory.EnumerateDirectories(libraryPath))
+            var subdirectories = directory.GetDirectories();
+            foreach (var subdirectory in subdirectories)
             {
-                foreach (var releaseDir in Directory.EnumerateDirectories(artistDir))
-                {
-                    totalReleases++;
-                    
-                    // Check if this release has any audio files
-                    var hasAudioFiles = Directory.EnumerateFiles(releaseDir, "*.*", SearchOption.TopDirectoryOnly)
-                        .Any(file => IsAudioFile(file));
-                    
-                    if (hasAudioFiles)
-                        releasesWithMedia++;
-                }
+                count += GetFileCount(subdirectory);
             }
-
-            // If no releases or all releases have media, return current size
-            if (totalReleases == 0 || releasesWithMedia == totalReleases)
-                return currentLibrarySizeBytes;
-
-            // Calculate coverage percentage and estimate total size
-            var coveragePercentage = (double)releasesWithMedia / totalReleases;
-            if (coveragePercentage > 0)
-            {
-                var estimatedTotalSize = (long)(currentLibrarySizeBytes / coveragePercentage);
-                return estimatedTotalSize;
-            }
-
-            return currentLibrarySizeBytes;
         }
         catch
         {
-            // If we can't calculate, return current size
-            return currentLibrarySizeBytes;
+            // Ignore errors and return current count
         }
-    }
 
-    private static bool IsAudioFile(string filePath)
-    {
-        var ext = System.IO.Path.GetExtension(filePath).ToLowerInvariant();
-        return ext is ".mp3" or ".flac" or ".wav" or ".m4a" or ".ogg" or ".aac";
+        return count;
     }
 }
 
-public record StorageStats(long? TotalDiskBytes, long? AvailableFreeBytes, long LibrarySizeBytes, long EstimatedTotalLibrarySizeBytes);
+public record StorageStats
+{
+    public long TotalSizeBytes { get; init; }
+    public int TotalFiles { get; init; }
+    public string LibraryPath { get; init; } = string.Empty;
+
+    public string TotalSizeFormatted()
+    {
+        var sizes = new[] { "B", "KB", "MB", "GB", "TB" };
+        var order = 0;
+        var size = (double)TotalSizeBytes;
+
+        while (size >= 1024 && order < sizes.Length - 1)
+        {
+            order++;
+            size /= 1024;
+        }
+
+        return $"{size:0.##} {sizes[order]}";
+    }
+}

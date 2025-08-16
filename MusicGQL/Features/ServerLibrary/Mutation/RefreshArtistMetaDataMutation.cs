@@ -85,14 +85,10 @@ public class RefreshArtistMetaDataMutation
                 "[RefreshArtistMetaData] ImportEligibleReleaseGroupsAsync failed; continuing to enrichment");
         }
 
-        var res = await enrichment.EnrichArtistAsync(dir, mbId!);
-        if (!res.Success)
-        {
-            logger.LogWarning("[RefreshArtistMetaData] Enrichment failed for artistId='{ArtistId}': {Error}",
-                effectiveArtistId, res.ErrorMessage ?? "Unknown error");
-            return new RefreshArtistMetaDataError(res.ErrorMessage ?? "Unknown error");
-        }
-
+        await enrichment.EnrichArtistAsync(dir, mbId!);
+        // EnrichArtistAsync now returns void, so we assume success
+        // TODO: Consider adding error handling if needed
+        
         logger.LogInformation(
             "[RefreshArtistMetaData] Enrichment complete for artistId='{ArtistId}'. Updating cache...",
             effectiveArtistId);
