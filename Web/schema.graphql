@@ -447,6 +447,21 @@ type FileSystemSearchRoot {
   hasLibraryManifest(path: String!): Boolean!
 }
 
+type FixReleaseTypeError {
+  message: String!
+}
+
+input FixReleaseTypeInput {
+  artistId: String!
+  releaseFolderName: String!
+}
+
+union FixReleaseTypeResult = FixReleaseTypeError | FixReleaseTypeSuccess
+
+type FixReleaseTypeSuccess {
+  release: JsonRelease!
+}
+
 type GenerateArtistShareFilesError {
   message: String!
 }
@@ -536,6 +551,55 @@ type JsonLabelInfo {
   disambiguation: String
   id: String
   name: String!
+}
+
+type JsonRelease {
+  artistId: String
+  artistName: String!
+  connections: ReleaseServiceConnections
+  coverArt: String
+  firstReleaseDate: String
+  firstReleaseYear: String
+  labels: [JsonLabelInfo!]
+  sortTitle: String
+  title: String!
+  tracks: [JsonTrack!]
+  type: JsonReleaseType!
+}
+
+enum JsonReleaseType {
+  ALBUM
+  EP
+  SINGLE
+}
+
+type JsonTrack {
+  audioFilePath: String
+  connections: JsonTrackServiceConnections
+  credits: [JsonTrackCredit!]
+  playCount: Long
+  sortTitle: String
+  statistics: JsonTrackStatistics
+  title: String!
+  trackLength: Int
+  trackNumber: Int!
+}
+
+type JsonTrackCredit {
+  artistId: String
+  artistName: String!
+  musicBrainzArtistId: String
+}
+
+type JsonTrackServiceConnections {
+  musicBrainzRecordingId: String
+  musicVideoYoutubeVideoUrl: String
+  spotifySongId: String
+}
+
+type JsonTrackStatistics {
+  listeners: Long!
+  playCount: Long!
 }
 
 type KeyValuePairOfInt32AndDownloadProgress {
@@ -646,6 +710,7 @@ type MbAlbumImages {
 
 type MbArtist implements ArtistBase {
   albums: [MbReleaseGroup!]!
+  artist: Artist
   country: String
   disambiguation: String
   id: ID!
@@ -833,6 +898,7 @@ type Mutation {
   enqueueArtist(artistName: String!, songTitle: String): Boolean!
   enqueueArtistsFromSpotifyPlaylist(input: EnqueueArtistsFromSpotifyPlaylistInput!): Boolean!
   enqueueMissingArtistsFromPlaylist(playlistId: ID!): Boolean!
+  fixReleaseType(input: FixReleaseTypeInput!): FixReleaseTypeResult!
   generateArtistShareFiles(input: GenerateArtistShareFilesInput!): GenerateArtistShareFilesResult!
   importArtist(input: ImportArtistInput!): ImportArtistResult!
   importArtistReleases(artistId: String!): ImportReleasesResult!
@@ -1047,6 +1113,14 @@ enum ReleaseDownloadStatus {
   IDLE
   NOT_FOUND
   SEARCHING
+}
+
+type ReleaseServiceConnections {
+  musicBrainzReleaseGroupId: String
+  musicBrainzReleaseIdOverride: String
+  musicBrainzSelectedReleaseId: String
+  spotifyAlbumId: String
+  youtubePlaylistUrl: String
 }
 
 enum ReleaseType {

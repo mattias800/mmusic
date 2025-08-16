@@ -486,6 +486,29 @@ public class ServerLibraryCache(ServerLibraryJsonReader reader, ITopicEventSende
     }
 
     /// <summary>
+    /// Gets an artist by MusicBrainz ID
+    /// </summary>
+    /// <param name="musicBrainzId">MusicBrainz artist ID</param>
+    /// <returns>Cached artist or null if not found</returns>
+    public async Task<CachedArtist?> GetArtistByMusicBrainzIdAsync(string musicBrainzId)
+    {
+        await EnsureCacheInitializedAsync();
+
+        lock (_lockObject)
+        {
+            // Search through all artists to find one with matching MusicBrainz ID
+            foreach (var artist in _artistsById.Values)
+            {
+                if (artist.JsonArtist.Connections?.MusicBrainzArtistId == musicBrainzId)
+                {
+                    return artist;
+                }
+            }
+            return null;
+        }
+    }
+
+    /// <summary>
     /// Gets a release by artist ID and release folder name
     /// </summary>
     /// <param name="artistId">Artist ID</param>

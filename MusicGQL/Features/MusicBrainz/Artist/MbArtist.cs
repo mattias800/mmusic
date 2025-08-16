@@ -2,6 +2,7 @@ using Hqub.Lastfm;
 using MusicGQL.Features.LastFm;
 using MusicGQL.Features.MusicBrainz.ReleaseGroup;
 using MusicGQL.Features.ServerLibrary.Utils;
+using MusicGQL.Features.ServerLibrary.Cache;
 using MusicGQL.Integration.MusicBrainz;
 using TrackSeries.FanArtTV.Client;
 using MusicGQL.Features.Artists;
@@ -48,6 +49,15 @@ public record MbArtist([property: GraphQLIgnore] Hqub.MusicBrainz.Entities.Artis
         var albumReleaseGroups = releaseGroups.Where(r => r.IsMainSingle()).ToList();
 
         return albumReleaseGroups.Select(r => new MbReleaseGroup(r));
+    }
+
+    /// <summary>
+    /// Gets the corresponding local Artist entity if one exists in the server library
+    /// </summary>
+    public async Task<MusicGQL.Features.Artists.Artist?> Artist(ServerLibraryCache cache)
+    {
+        var localArtist = await cache.GetArtistByMusicBrainzIdAsync(Model.Id);
+        return localArtist != null ? new MusicGQL.Features.Artists.Artist(localArtist) : null;
     }
 
     public async Task<IEnumerable<LastFmTrack>> TopTracks(LastfmClient lastfmClient)

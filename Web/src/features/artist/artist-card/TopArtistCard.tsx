@@ -20,6 +20,9 @@ const topArtistCardArtistFragment = graphql(`
       images {
         artistThumb
       }
+      artist {
+        id
+      }
     }
     statistics {
       listeners
@@ -33,14 +36,19 @@ export const TopArtistCard: React.FC<TopArtistCardProps> = (props) => {
 
   const navigate = useNavigate();
 
+  const onClick = () => {
+    if (artist?.musicBrainzArtist?.artist?.id) {
+      navigate(`/artist/${artist?.musicBrainzArtist?.artist?.id}`);
+    } else if (artist?.musicBrainzArtist?.id) {
+      navigate(`/mb-artist/${artist.musicBrainzArtist?.id}`);
+    }
+  };
+
   return (
     <PhotoCard
       imageUrl={imageUrl ?? ""}
       imageAlt={artist.name + " cover"}
-      onClick={() =>
-        artist?.musicBrainzArtist?.id &&
-        navigate(`/mb-artist/${artist.musicBrainzArtist?.id}`)
-      }
+      onClick={onClick}
     >
       <PhotoCardCenterHeading>{artist.name}</PhotoCardCenterHeading>
       <PhotoCardBottomText>
