@@ -122,7 +122,7 @@ export const ChangeLibraryFolderControl: React.FC<
           </Label>
 
           <div className={"flex items-center gap-2"}>
-            <div className=" flex gap-4 border border-zinc-700 rounded-md py-2 px-4">
+            <div className="max-w-2xl flex gap-4 border border-zinc-700 rounded-md py-2 px-4">
               <span className={"text-zinc-400"}>
                 {serverSettings.libraryPath || "(not set)"}
               </span>

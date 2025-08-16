@@ -1371,6 +1371,7 @@ type StartDownloadReleaseUnknownError {
 
 type StorageStats {
   availableFreeBytes: Long
+  estimatedTotalLibrarySizeBytes: Long!
   librarySizeBytes: Long!
   totalDiskBytes: Long
 }

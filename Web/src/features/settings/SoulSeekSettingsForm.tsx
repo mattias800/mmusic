@@ -40,16 +40,20 @@ export const SoulSeekSettingsForm: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col gap-2 w-xs">
+    <div className="flex flex-col gap-2 max-w-2xl">
       <Label htmlFor="slsk-time">Soulseek search time limit (seconds)</Label>
-      <Input
-        id="slsk-time"
-        type="number"
-        min={5}
-        max={600}
-        value={value}
-        onChange={(e) => setValue(parseInt(e.target.value || "0", 10))}
-      />
+      <div className="flex items-center gap-2">
+        <Input
+          id="slsk-time"
+          type="number"
+          min={5}
+          max={600}
+          value={value}
+          onChange={(e) => setValue(parseInt(e.target.value || "0", 10))}
+          className="w-24"
+        />
+        <span className="text-sm text-zinc-400">seconds (5-600)</span>
+      </div>
       <div>
         <Button onClick={onSave} loading={fetching} disabled={fetching}>
           Save

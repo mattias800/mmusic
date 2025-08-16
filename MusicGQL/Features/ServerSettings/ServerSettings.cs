@@ -63,7 +63,18 @@ public record ServerSettings([property: GraphQLIgnore] DbServerSettings Model)
             // ignore, keep zero
         }
 
-        return new StorageStats(totalDiskBytes, availableFreeBytes, librarySizeBytes);
+        // Calculate estimated total library size when fully populated
+        long estimatedTotalLibrarySizeBytes = 0;
+        try
+        {
+            estimatedTotalLibrarySizeBytes = await Task.Run(() => CalculateEstimatedTotalLibrarySizeAsync(libraryPath, librarySizeBytes));
+        }
+        catch
+        {
+            // ignore, keep zero
+        }
+
+        return new StorageStats(totalDiskBytes, availableFreeBytes, librarySizeBytes, estimatedTotalLibrarySizeBytes);
     }
 
     [GraphQLName("hasLibraryManifest")]
@@ -102,6 +113,59 @@ public record ServerSettings([property: GraphQLIgnore] DbServerSettings Model)
 
         return size;
     }
+
+    private static async Task<long> CalculateEstimatedTotalLibrarySizeAsync(string libraryPath, long currentLibrarySizeBytes)
+    {
+        if (currentLibrarySizeBytes == 0)
+            return 0;
+
+        try
+        {
+            // Count total releases and releases with media files
+            int totalReleases = 0;
+            int releasesWithMedia = 0;
+
+            foreach (var artistDir in Directory.EnumerateDirectories(libraryPath))
+            {
+                foreach (var releaseDir in Directory.EnumerateDirectories(artistDir))
+                {
+                    totalReleases++;
+                    
+                    // Check if this release has any audio files
+                    var hasAudioFiles = Directory.EnumerateFiles(releaseDir, "*.*", SearchOption.TopDirectoryOnly)
+                        .Any(file => IsAudioFile(file));
+                    
+                    if (hasAudioFiles)
+                        releasesWithMedia++;
+                }
+            }
+
+            // If no releases or all releases have media, return current size
+            if (totalReleases == 0 || releasesWithMedia == totalReleases)
+                return currentLibrarySizeBytes;
+
+            // Calculate coverage percentage and estimate total size
+            var coveragePercentage = (double)releasesWithMedia / totalReleases;
+            if (coveragePercentage > 0)
+            {
+                var estimatedTotalSize = (long)(currentLibrarySizeBytes / coveragePercentage);
+                return estimatedTotalSize;
+            }
+
+            return currentLibrarySizeBytes;
+        }
+        catch
+        {
+            // If we can't calculate, return current size
+            return currentLibrarySizeBytes;
+        }
+    }
+
+    private static bool IsAudioFile(string filePath)
+    {
+        var ext = System.IO.Path.GetExtension(filePath).ToLowerInvariant();
+        return ext is ".mp3" or ".flac" or ".wav" or ".m4a" or ".ogg" or ".aac";
+    }
 }
 
-public record StorageStats(long? TotalDiskBytes, long? AvailableFreeBytes, long LibrarySizeBytes);
+public record StorageStats(long? TotalDiskBytes, long? AvailableFreeBytes, long LibrarySizeBytes, long EstimatedTotalLibrarySizeBytes);

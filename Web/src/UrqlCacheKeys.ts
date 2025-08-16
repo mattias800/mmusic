@@ -2,8 +2,12 @@ import { KeyGenerator } from "@urql/exchange-graphcache";
 import { TypesWithNoId } from "@/gql/types-with-no-id.ts";
 
 export const cacheKeys: Record<TypesWithNoId, KeyGenerator> = {
+  ArtistAppearsOn: () => null,
   ArtistConnectedExternalService: () => null,
   ArtistImages: () => null,
+  ArtistImportBackgroundJob: () => null,
+  ArtistImportBackgroundProgress: () => null,
+  ArtistImportBackgroundQueueState: () => null,
   ArtistImportHistoryItem: () => null,
   ArtistImportSearchRoot: () => null,
   ArtistSearchRoot: () => null,
@@ -19,6 +23,7 @@ export const cacheKeys: Record<TypesWithNoId, KeyGenerator> = {
   LastFmTag: () => null,
   LibraryCacheTrackStatus: () => null,
   LibraryReleaseDownloadStatusUpdate: () => null,
+  ListenBrainzQueryRoot: () => null,
   MbAlbumImages: () => null,
   MbArtistImages: () => null,
   MbLabelInfo: () => null,

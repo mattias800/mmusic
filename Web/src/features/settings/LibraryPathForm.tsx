@@ -17,6 +17,7 @@ const libraryPathFormServerSettingsFragment = graphql(`
       totalDiskBytes
       availableFreeBytes
       librarySizeBytes
+      estimatedTotalLibrarySizeBytes
     }
   }
 `);
@@ -38,6 +39,7 @@ export const LibraryPathForm: React.FC<LibraryPathFormProps> = (props) => {
             serverSettings.storageStats.availableFreeBytes ?? undefined
           }
           libraryBytes={serverSettings.storageStats.librarySizeBytes}
+          estimatedTotalLibraryBytes={serverSettings.storageStats.estimatedTotalLibrarySizeBytes}
         />
       )}
 
