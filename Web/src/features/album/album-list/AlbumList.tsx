@@ -5,7 +5,7 @@ import { Section } from "@/components/page-body/Section.tsx";
 import { SectionHeading } from "@/components/headings/SectionHeading.tsx";
 import { CardFlexList } from "@/components/page-body/CardFlexList.tsx";
 import { AlbumCard } from "@/features/album/AlbumCard.tsx";
-import { MainPadding } from "@/components/layout/MainPadding.tsx";
+import { PageLayout } from "@/components/ui";
 
 export interface AlbumListProps {
   releaseGroups: Array<FragmentType<typeof albumListAlbumFragment>>;
@@ -22,7 +22,7 @@ export const AlbumList: React.FC<AlbumListProps> = (props) => {
   const releaseGroup = useFragment(albumListAlbumFragment, props.releaseGroups);
 
   return (
-    <MainPadding>
+    <PageLayout addSearchPadding>
       <SectionList>
         <Section>
           <SectionHeading>Albums</SectionHeading>
@@ -33,6 +33,6 @@ export const AlbumList: React.FC<AlbumListProps> = (props) => {
           </CardFlexList>
         </Section>
       </SectionList>
-    </MainPadding>
+    </PageLayout>
   );
 };
