@@ -517,6 +517,23 @@ export type FileSystemSearchRootHasLibraryManifestArgs = {
   path: Scalars['String']['input'];
 };
 
+export type FixReleaseTypeError = {
+  __typename?: 'FixReleaseTypeError';
+  message: Scalars['String']['output'];
+};
+
+export type FixReleaseTypeInput = {
+  artistId: Scalars['String']['input'];
+  releaseFolderName: Scalars['String']['input'];
+};
+
+export type FixReleaseTypeResult = FixReleaseTypeError | FixReleaseTypeSuccess;
+
+export type FixReleaseTypeSuccess = {
+  __typename?: 'FixReleaseTypeSuccess';
+  release: JsonRelease;
+};
+
 export type GenerateArtistShareFilesError = {
   __typename?: 'GenerateArtistShareFilesError';
   message: Scalars['String']['output'];
@@ -618,6 +635,60 @@ export type JsonLabelInfo = {
   disambiguation?: Maybe<Scalars['String']['output']>;
   id?: Maybe<Scalars['String']['output']>;
   name: Scalars['String']['output'];
+};
+
+export type JsonRelease = {
+  __typename?: 'JsonRelease';
+  artistId?: Maybe<Scalars['String']['output']>;
+  artistName: Scalars['String']['output'];
+  connections?: Maybe<ReleaseServiceConnections>;
+  coverArt?: Maybe<Scalars['String']['output']>;
+  firstReleaseDate?: Maybe<Scalars['String']['output']>;
+  firstReleaseYear?: Maybe<Scalars['String']['output']>;
+  labels?: Maybe<Array<JsonLabelInfo>>;
+  sortTitle?: Maybe<Scalars['String']['output']>;
+  title: Scalars['String']['output'];
+  tracks?: Maybe<Array<JsonTrack>>;
+  type: JsonReleaseType;
+};
+
+export enum JsonReleaseType {
+  Album = 'ALBUM',
+  Ep = 'EP',
+  Single = 'SINGLE'
+}
+
+export type JsonTrack = {
+  __typename?: 'JsonTrack';
+  audioFilePath?: Maybe<Scalars['String']['output']>;
+  connections?: Maybe<JsonTrackServiceConnections>;
+  credits?: Maybe<Array<JsonTrackCredit>>;
+  playCount?: Maybe<Scalars['Long']['output']>;
+  sortTitle?: Maybe<Scalars['String']['output']>;
+  statistics?: Maybe<JsonTrackStatistics>;
+  title: Scalars['String']['output'];
+  trackLength?: Maybe<Scalars['Int']['output']>;
+  trackNumber: Scalars['Int']['output'];
+};
+
+export type JsonTrackCredit = {
+  __typename?: 'JsonTrackCredit';
+  artistId?: Maybe<Scalars['String']['output']>;
+  artistName: Scalars['String']['output'];
+  musicBrainzArtistId?: Maybe<Scalars['String']['output']>;
+};
+
+export type JsonTrackServiceConnections = {
+  __typename?: 'JsonTrackServiceConnections';
+  musicBrainzRecordingId?: Maybe<Scalars['String']['output']>;
+  musicVideoYoutubeVideoUrl?: Maybe<Scalars['String']['output']>;
+  spotifySongId?: Maybe<Scalars['String']['output']>;
+};
+
+export type JsonTrackStatistics = {
+  __typename?: 'JsonTrackStatistics';
+  listeners: Scalars['Long']['output'];
+  playCount: Scalars['Long']['output'];
 };
 
 export type KeyValuePairOfInt32AndDownloadProgress = {
@@ -1007,6 +1078,7 @@ export type Mutation = {
   enqueueArtist: Scalars['Boolean']['output'];
   enqueueArtistsFromSpotifyPlaylist: Scalars['Boolean']['output'];
   enqueueMissingArtistsFromPlaylist: Scalars['Boolean']['output'];
+  fixReleaseType: FixReleaseTypeResult;
   generateArtistShareFiles: GenerateArtistShareFilesResult;
   importArtist: ImportArtistResult;
   importArtistReleases: ImportReleasesResult;
@@ -1097,6 +1169,11 @@ export type MutationEnqueueArtistsFromSpotifyPlaylistArgs = {
 
 export type MutationEnqueueMissingArtistsFromPlaylistArgs = {
   playlistId: Scalars['ID']['input'];
+};
+
+
+export type MutationFixReleaseTypeArgs = {
+  input: FixReleaseTypeInput;
 };
 
 
@@ -1481,6 +1558,15 @@ export enum ReleaseDownloadStatus {
   NotFound = 'NOT_FOUND',
   Searching = 'SEARCHING'
 }
+
+export type ReleaseServiceConnections = {
+  __typename?: 'ReleaseServiceConnections';
+  musicBrainzReleaseGroupId?: Maybe<Scalars['String']['output']>;
+  musicBrainzReleaseIdOverride?: Maybe<Scalars['String']['output']>;
+  musicBrainzSelectedReleaseId?: Maybe<Scalars['String']['output']>;
+  spotifyAlbumId?: Maybe<Scalars['String']['output']>;
+  youtubePlaylistUrl?: Maybe<Scalars['String']['output']>;
+};
 
 export enum ReleaseType {
   Album = 'ALBUM',

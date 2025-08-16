@@ -1,7 +1,6 @@
 import * as React from "react";
 import { FragmentType, graphql, useFragment } from "@/gql";
 import { Download } from "lucide-react";
-import { Button } from "@/components/ui/button.tsx";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,6 +9,7 @@ import {
 } from "@/components/ui/dropdown-menu.tsx";
 import { useMutation } from "urql";
 import { BulkDownloadScope } from "@/gql/graphql";
+import { GradientButton } from "@/components/ui";
 
 export interface ArtistDownloadAllReleasesButtonProps {
   artist: FragmentType<typeof artistDownloadAllReleasesButtonArtistFragment>;
@@ -50,36 +50,44 @@ export const ArtistDownloadAllReleasesButton: React.FC<
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="secondary" className="flex items-center gap-2">
+        <GradientButton className="flex items-center gap-2">
           <Download className="h-5 w-5" />
           Download
-        </Button>
+        </GradientButton>
       </DropdownMenuTrigger>
       <DropdownMenuContent>
         <DropdownMenuItem
           onSelect={() =>
-            startBulk({ input: { artistId: artist.id, scope: BulkDownloadScope.All } })
+            startBulk({
+              input: { artistId: artist.id, scope: BulkDownloadScope.All },
+            })
           }
         >
           Download all releases
         </DropdownMenuItem>
         <DropdownMenuItem
           onSelect={() =>
-            startBulk({ input: { artistId: artist.id, scope: BulkDownloadScope.Albums } })
+            startBulk({
+              input: { artistId: artist.id, scope: BulkDownloadScope.Albums },
+            })
           }
         >
           Download all albums
         </DropdownMenuItem>
         <DropdownMenuItem
           onSelect={() =>
-            startBulk({ input: { artistId: artist.id, scope: BulkDownloadScope.Singles } })
+            startBulk({
+              input: { artistId: artist.id, scope: BulkDownloadScope.Singles },
+            })
           }
         >
           Download all singles
         </DropdownMenuItem>
         <DropdownMenuItem
           onSelect={() =>
-            startBulk({ input: { artistId: artist.id, scope: BulkDownloadScope.Eps } })
+            startBulk({
+              input: { artistId: artist.id, scope: BulkDownloadScope.Eps },
+            })
           }
         >
           Download all EPs

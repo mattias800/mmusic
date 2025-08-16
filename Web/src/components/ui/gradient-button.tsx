@@ -1,12 +1,15 @@
 import React from "react";
 import { ButtonHTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
+import { LoaderCircle } from "lucide-react";
 
-export interface GradientButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+export interface GradientButtonProps
+  extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: "primary" | "secondary" | "success" | "danger";
   size?: "sm" | "md" | "lg";
   fullWidth?: boolean;
   children: React.ReactNode;
+  loading?: boolean;
 }
 
 export const GradientButton: React.FC<GradientButtonProps> = ({
@@ -15,19 +18,24 @@ export const GradientButton: React.FC<GradientButtonProps> = ({
   fullWidth = false,
   className = "",
   children,
+  loading,
   ...props
 }) => {
   const variantClasses = {
-    primary: "bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600",
-    secondary: "bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700",
-    success: "bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600",
-    danger: "bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600"
+    primary:
+      "bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600",
+    secondary:
+      "bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700",
+    success:
+      "bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600",
+    danger:
+      "bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600",
   };
 
   const sizeClasses = {
     sm: "px-3 py-2 text-sm",
     md: "px-4 py-2 text-base",
-    lg: "px-6 py-3 text-lg"
+    lg: "px-6 py-3 text-lg",
   };
 
   return (
@@ -37,10 +45,11 @@ export const GradientButton: React.FC<GradientButtonProps> = ({
         variantClasses[variant],
         sizeClasses[size],
         fullWidth && "w-full",
-        className
+        className,
       )}
       {...props}
     >
+      {loading && <LoaderCircle className="animate-spin size-4" />}
       {children}
     </button>
   );

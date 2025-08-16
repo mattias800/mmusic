@@ -2,10 +2,10 @@ import * as React from "react";
 import { useState } from "react";
 import { useMutation, useSubscription } from "urql";
 import { FragmentType, graphql, useFragment } from "@/gql";
-import { Button } from "@/components/ui/button.tsx";
 import { Download } from "lucide-react";
 import { ReleaseDownloadStatus } from "@/gql/graphql.ts";
 import { Tag } from "@/components/text/Tag.tsx";
+import { GradientButton } from "@/components/ui";
 
 export interface ReleaseDownloadButtonProps {
   release: FragmentType<typeof releaseDownloadButtonReleaseFragment>;
@@ -112,53 +112,50 @@ export const ReleaseDownloadButton: React.FC<ReleaseDownloadButtonProps> = (
   switch (release.downloadStatus) {
     case ReleaseDownloadStatus.Downloading:
       return (
-        <Button
-          variant="secondary"
+        <GradientButton
           onClick={onClickDownload}
           className="flex items-center gap-2"
           loading={true}
           disabled={true}
         >
           Downloading...
-        </Button>
+        </GradientButton>
       );
 
     case ReleaseDownloadStatus.Searching:
       return (
-        <Button
-          variant="secondary"
+        <GradientButton
           onClick={onClickDownload}
           className="flex items-center gap-2"
           loading={true}
           disabled={true}
         >
           Searching...
-        </Button>
+        </GradientButton>
       );
 
     case ReleaseDownloadStatus.Idle:
       return (
-        <Button
-          variant="secondary"
+        <GradientButton
           onClick={onClickDownload}
           className="flex items-center gap-2"
         >
           <Download className="h-5 w-5" />
           {queued ? "Queued" : "Download"}
-        </Button>
+        </GradientButton>
       );
 
     case ReleaseDownloadStatus.NotFound:
       return (
         <div className={"flex items-center gap-4 text-red-500"}>
           <Tag variant={"error"}>Could not find release.</Tag>
-          <Button
+          <GradientButton
             onClick={onClickDownload}
             className="flex items-center gap-2"
           >
             <Download className="h-5 w-5" />
             {queued ? "Queued" : "Download"}
-          </Button>
+          </GradientButton>
         </div>
       );
   }
