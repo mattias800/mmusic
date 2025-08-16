@@ -106,9 +106,9 @@ export const ArtistStatisticsHeader: React.FC<ArtistStatisticsHeaderProps> = (pr
   };
 
   return (
-    <div className="px-6 md:px-10 py-6 bg-gradient-to-r from-zinc-900/50 to-zinc-800/50 border-b border-zinc-700">
+    <div className="space-y-6">
       {/* Overall Statistics Header */}
-      <div className="flex items-center gap-3 mb-6">
+      <div className="flex items-center gap-3">
         <div className="p-3 bg-purple-600/20 border border-purple-500/30 rounded-lg">
           <BarChart3 className="w-6 h-6 text-purple-400" />
         </div>

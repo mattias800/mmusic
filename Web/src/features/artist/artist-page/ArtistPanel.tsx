@@ -2,11 +2,7 @@ import * as React from "react";
 import { TopArtistTracks } from "@/features/artist/artist-page/TopArtistTracks.tsx";
 import { FragmentType, graphql, useFragment } from "@/gql";
 import { ArtistHeader } from "@/features/artist/artist-page/ArtistHeader.tsx";
-import { GradientContent } from "@/components/page-body/GradientContent.tsx";
-import { SectionHeading } from "@/components/headings/SectionHeading.tsx";
-import { Section } from "@/components/page-body/Section.tsx";
-import { SectionList } from "@/components/page-body/SectionList.tsx";
-// removed server status widget (legacy)
+import { PageLayout, GlassCard } from "@/components/ui";
 import { MainPadding } from "@/components/layout/MainPadding.tsx";
 import { ArtistActionButtons } from "@/features/artist/artist-page/ArtistActionButtons.tsx";
 import { CardFlexList } from "@/components/page-body/CardFlexList.tsx";
@@ -18,6 +14,7 @@ import { ArtistNumReleasesAvailableIndicator } from "@/features/artist/artist-pa
 import { ArtistDownloadAllReleasesButton } from "@/features/artist/artist-page/ArtistDownloadAllReleasesButton.tsx";
 import { ArtistImportStatusInfo } from "@/features/artist/artist-page/ArtistImportStatusInfo.tsx";
 import { ArtistStatisticsHeader } from "@/features/artist/artist-page/ArtistStatisticsHeader.tsx";
+import { Music, Disc3, TrendingUp, Heart, Activity } from "lucide-react";
 
 interface ArtistPanelProps {
   artist: FragmentType<typeof artistPanelArtistFragment>;
@@ -177,92 +174,122 @@ export const ArtistPanel: React.FC<ArtistPanelProps> = (props) => {
     generateShareFiles({ input: { artistId: artist.id } });
 
   return (
-    <GradientContent>
+    <PageLayout>
       <ArtistHeader
         artistName={artist.name}
         artistBackgroundUrl={artist.images?.backgrounds?.[0] ?? ""}
         listeners={artist.listeners}
         renderConnections={() => <ArtistServiceConnections artist={artist} />}
+        albumCount={artist.albums?.length ?? 0}
+        epCount={artist.eps?.length ?? 0}
+        singleCount={artist.singles?.length ?? 0}
       />
 
-      <div
-        className={"flex justify-between items-center gap-4 px-6 md:px-10 py-6"}
-      >
-        <ArtistActionButtons
-          artist={artist}
-          loadingTopTracks={loadingTopTracks}
-          loadingMetaData={loadingLastFm || loadingRefreshAll || generatingShare}
-          onRefreshTopTracks={onRefreshTopTracks}
-          onRefreshMetaData={onRefreshMetaData}
-          onRefreshAllReleaseMetadata={onRefreshAllReleases}
-          onGenerateShareFiles={onGenerateShareFiles}
-        />
-
-        <ArtistImportStatusInfo
-          artist={artist}
-          renderWhenNoInfo={() => (
-            <ArtistNumReleasesAvailableIndicator
+      <MainPadding>
+        <div className="space-y-6">
+          <GlassCard 
+            title="Actions" 
+            icon={Activity} 
+            iconBgColor="bg-green-500/20"
+          >
+            <ArtistActionButtons
               artist={artist}
-              renderDownloadAllReleasesButton={() => (
-                <ArtistDownloadAllReleasesButton artist={artist} />
+              loadingTopTracks={loadingTopTracks}
+              loadingMetaData={loadingLastFm || loadingRefreshAll || generatingShare}
+              onRefreshTopTracks={onRefreshTopTracks}
+              onRefreshMetaData={onRefreshMetaData}
+              onRefreshAllReleaseMetadata={onRefreshAllReleases}
+              onGenerateShareFiles={onGenerateShareFiles}
+            />
+          </GlassCard>
+
+          <GlassCard 
+            title="Import Status" 
+            icon={Heart} 
+            iconBgColor="bg-orange-500/20"
+          >
+            <ArtistImportStatusInfo
+              artist={artist}
+              renderWhenNoInfo={() => (
+                <ArtistNumReleasesAvailableIndicator
+                  artist={artist}
+                  renderDownloadAllReleasesButton={() => (
+                    <ArtistDownloadAllReleasesButton artist={artist} />
+                  )}
+                />
               )}
             />
-          )}
-        />
-      </div>
+          </GlassCard>
 
-      <ArtistStatisticsHeader artist={artist} />
+          <GlassCard 
+            title="Media Availability" 
+            icon={Disc3} 
+            iconBgColor="bg-indigo-500/20"
+          >
+            <ArtistStatisticsHeader artist={artist} />
+          </GlassCard>
 
-      <MainPadding>
-        <SectionList>
-          <TopArtistTracks
-            artistId={artist.id}
-            loadingTopTracks={loadingTopTracks}
-          />
+          <GlassCard 
+            title="Top Tracks" 
+            icon={TrendingUp} 
+            iconBgColor="bg-pink-500/20"
+          >
+            <TopArtistTracks
+              artistId={artist.id}
+              loadingTopTracks={loadingTopTracks}
+            />
+          </GlassCard>
 
-          <>
-            <Section>
-              <SectionHeading>Albums</SectionHeading>
+          <GlassCard 
+            title="Albums" 
+            icon={Disc3} 
+            iconBgColor="bg-blue-500/20"
+          >
+            <CardFlexList>
+              {artist.albums
+                .toSorted(byStringField((a) => a.firstReleaseDate ?? ""))
+                .toReversed()
+                .map((release) => (
+                  <AlbumCard release={release} key={release.id} />
+                ))}
+            </CardFlexList>
+          </GlassCard>
+
+          {artist.eps.length > 0 && (
+            <GlassCard 
+              title="EPs" 
+              icon={Music} 
+              iconBgColor="bg-purple-500/20"
+            >
               <CardFlexList>
-                {artist.albums
+                {artist.eps
                   .toSorted(byStringField((a) => a.firstReleaseDate ?? ""))
                   .toReversed()
                   .map((release) => (
                     <AlbumCard release={release} key={release.id} />
                   ))}
               </CardFlexList>
-            </Section>
+            </GlassCard>
+          )}
 
-            {artist.eps.length > 0 && (
-              <Section>
-                <SectionHeading>EPs</SectionHeading>
-                <CardFlexList>
-                  {artist.eps
-                    .toSorted(byStringField((a) => a.firstReleaseDate ?? ""))
-                    .toReversed()
-                    .map((release) => (
-                      <AlbumCard release={release} key={release.id} />
-                    ))}
-                </CardFlexList>
-              </Section>
-            )}
-
-            {artist.singles.length > 0 && (
-              <Section>
-                <SectionHeading>Singles</SectionHeading>
-                <CardFlexList>
-                  {artist.singles
-                    .toSorted(byStringField((a) => a.firstReleaseDate ?? ""))
-                    .toReversed()
-                    .map((release) => (
-                      <AlbumCard release={release} key={release.id} />
-                    ))}
-                </CardFlexList>
-              </Section>
-            )}
-          </>
-        </SectionList>
+          {artist.singles.length > 0 && (
+            <GlassCard 
+              title="Singles" 
+              icon={Music} 
+              iconBgColor="bg-green-500/20"
+            >
+              <CardFlexList>
+                {artist.singles
+                  .toSorted(byStringField((a) => a.firstReleaseDate ?? ""))
+                  .toReversed()
+                  .map((release) => (
+                    <AlbumCard release={release} key={release.id} />
+                  ))}
+              </CardFlexList>
+            </GlassCard>
+          )}
+        </div>
       </MainPadding>
-    </GradientContent>
+    </PageLayout>
   );
 };
