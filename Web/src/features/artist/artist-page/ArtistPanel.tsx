@@ -14,7 +14,7 @@ import { ArtistNumReleasesAvailableIndicator } from "@/features/artist/artist-pa
 import { ArtistDownloadAllReleasesButton } from "@/features/artist/artist-page/ArtistDownloadAllReleasesButton.tsx";
 import { ArtistImportStatusInfo } from "@/features/artist/artist-page/ArtistImportStatusInfo.tsx";
 import { ArtistStatisticsHeader } from "@/features/artist/artist-page/ArtistStatisticsHeader.tsx";
-import { Music, Disc3, TrendingUp, Heart, Activity } from "lucide-react";
+import { Music, Disc3, TrendingUp } from "lucide-react";
 
 interface ArtistPanelProps {
   artist: FragmentType<typeof artistPanelArtistFragment>;
@@ -187,38 +187,36 @@ export const ArtistPanel: React.FC<ArtistPanelProps> = (props) => {
 
       <MainPadding>
         <div className="space-y-6">
-          <GlassCard 
-            title="Actions" 
-            icon={Activity} 
-            iconBgColor="bg-green-500/20"
-          >
-            <ArtistActionButtons
-              artist={artist}
-              loadingTopTracks={loadingTopTracks}
-              loadingMetaData={loadingLastFm || loadingRefreshAll || generatingShare}
-              onRefreshTopTracks={onRefreshTopTracks}
-              onRefreshMetaData={onRefreshMetaData}
-              onRefreshAllReleaseMetadata={onRefreshAllReleases}
-              onGenerateShareFiles={onGenerateShareFiles}
-            />
-          </GlassCard>
-
-          <GlassCard 
-            title="Import Status" 
-            icon={Heart} 
-            iconBgColor="bg-orange-500/20"
-          >
-            <ArtistImportStatusInfo
-              artist={artist}
-              renderWhenNoInfo={() => (
-                <ArtistNumReleasesAvailableIndicator
+          <GlassCard>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-center">
+              {/* Left side - Actions */}
+              <div>
+                <ArtistActionButtons
                   artist={artist}
-                  renderDownloadAllReleasesButton={() => (
-                    <ArtistDownloadAllReleasesButton artist={artist} />
+                  loadingTopTracks={loadingTopTracks}
+                  loadingMetaData={loadingLastFm || loadingRefreshAll || generatingShare}
+                  onRefreshTopTracks={onRefreshTopTracks}
+                  onRefreshMetaData={onRefreshMetaData}
+                  onRefreshAllReleaseMetadata={onRefreshAllReleases}
+                  onGenerateShareFiles={onGenerateShareFiles}
+                />
+              </div>
+
+              {/* Right side - Import Status */}
+              <div className="flex justify-end">
+                <ArtistImportStatusInfo
+                  artist={artist}
+                  renderWhenNoInfo={() => (
+                    <ArtistNumReleasesAvailableIndicator
+                      artist={artist}
+                      renderDownloadAllReleasesButton={() => (
+                        <ArtistDownloadAllReleasesButton artist={artist} />
+                      )}
+                    />
                   )}
                 />
-              )}
-            />
+              </div>
+            </div>
           </GlassCard>
 
           <GlassCard 

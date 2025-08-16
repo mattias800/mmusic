@@ -4,7 +4,6 @@ import {
   Disc3, 
   Music, 
   Album, 
-  BarChart3, 
   CheckCircle2, 
   AlertCircle 
 } from "lucide-react";
@@ -107,19 +106,6 @@ export const ArtistStatisticsHeader: React.FC<ArtistStatisticsHeaderProps> = (pr
 
   return (
     <div className="space-y-6">
-      {/* Overall Statistics Header */}
-      <div className="flex items-center gap-3">
-        <div className="p-3 bg-purple-600/20 border border-purple-500/30 rounded-lg">
-          <BarChart3 className="w-6 h-6 text-purple-400" />
-        </div>
-        <div>
-          <h2 className="text-xl font-bold text-zinc-100">Media Availability</h2>
-          <p className="text-zinc-400">
-            {availableReleases} of {totalReleases} releases have complete media files
-          </p>
-        </div>
-      </div>
-
       {/* Overall Progress Bar */}
       {totalReleases > 0 && (
         <div className="mb-6">
