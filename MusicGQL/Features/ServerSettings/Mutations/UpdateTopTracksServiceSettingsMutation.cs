@@ -17,7 +17,8 @@ public abstract record UpdateTopTracksServiceSettingsResult;
 
 public record UpdateTopTracksServiceSettingsSuccess : UpdateTopTracksServiceSettingsResult
 {
-    public bool Success { get; } = true;
+    public bool Success { get; init; } = true;
+    public string Message { get; init; } = "Top tracks service settings updated successfully";
 }
 
 public record UpdateTopTracksServiceSettingsError(string Message) : UpdateTopTracksServiceSettingsResult;
@@ -27,28 +28,33 @@ public record UpdateTopTracksServiceSettingsMutation
 {
     public async Task<UpdateTopTracksServiceSettingsResult> UpdateTopTracksServiceSettings(
         UpdateTopTracksServiceSettingsInput input,
-        [Service] EventDbContext dbContext
-    )
+        [Service] EventDbContext dbContext)
     {
         try
         {
-            var settings = await dbContext.ServerSettings
-                .FirstOrDefaultAsync(s => s.Id == DefaultDbServerSettingsProvider.ServerSettingsSingletonId);
-
+            var settings = await dbContext.ServerSettings.FirstOrDefaultAsync();
             if (settings == null)
             {
-                // Create default settings if they don't exist
-                settings = DefaultDbServerSettingsProvider.GetDefault();
-                dbContext.ServerSettings.Add(settings);
+                return new UpdateTopTracksServiceSettingsError("Server settings not found");
             }
 
+            // Update the settings
             settings.ListenBrainzTopTracksEnabled = input.ListenBrainzTopTracksEnabled;
             settings.SpotifyTopTracksEnabled = input.SpotifyTopTracksEnabled;
             settings.LastFmTopTracksEnabled = input.LastFmTopTracksEnabled;
 
             await dbContext.SaveChangesAsync();
 
-            return new UpdateTopTracksServiceSettingsSuccess();
+            var enabledServices = new List<string>();
+            if (input.ListenBrainzTopTracksEnabled) enabledServices.Add("ListenBrainz");
+            if (input.SpotifyTopTracksEnabled) enabledServices.Add("Spotify");
+            if (input.LastFmTopTracksEnabled) enabledServices.Add("Last.fm");
+
+            var message = enabledServices.Count > 0 
+                ? $"Top tracks services updated. Enabled services: {string.Join(", ", enabledServices)}"
+                : "Top tracks services updated. All services are now disabled.";
+
+            return new UpdateTopTracksServiceSettingsSuccess { Message = message };
         }
         catch (Exception ex)
         {

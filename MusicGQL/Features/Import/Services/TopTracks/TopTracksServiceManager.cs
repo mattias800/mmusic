@@ -26,77 +26,146 @@ public class TopTracksServiceManager
         _logger = logger;
     }
 
-    public async Task<List<JsonTopTrack>> GetTopTracksAsync(string artistId, string artistName, int take = 25)
+    public async Task<TopTracksResult> GetTopTracksAsync(string mbArtistId, string artistDisplayName, int take = 25)
     {
         var settings = await _serverSettingsAccessor.GetAsync();
-        var tracks = new List<JsonTopTrack>();
+        var result = new TopTracksResult();
+        
+        _logger.LogInformation("[TopTracksServiceManager] Getting top tracks for artist '{ArtistName}' (MBID: {MbArtistId})", 
+            artistDisplayName, mbArtistId);
+        
+        _logger.LogInformation("[TopTracksServiceManager] Service configuration - ListenBrainz: {ListenBrainzEnabled}, Spotify: {SpotifyEnabled}, LastFm: {LastFmEnabled}", 
+            settings.ListenBrainzTopTracksEnabled, settings.SpotifyTopTracksEnabled, settings.LastFmTopTracksEnabled);
 
-        // Try ListenBrainz first (primary source)
+        // Try ListenBrainz first if enabled
         if (settings.ListenBrainzTopTracksEnabled)
         {
             try
             {
-                _logger.LogInformation("[TopTracksServiceManager] Attempting ListenBrainz for artist '{ArtistName}'", artistName);
-                var lbTracks = await _listenBrainzImporter.GetTopTracksAsync(artistId, take);
-                if (lbTracks.Count > 0)
+                _logger.LogInformation("[TopTracksServiceManager] ListenBrainz is enabled. Attempting to get top tracks for artist '{ArtistName}'", artistDisplayName);
+                var listenBrainzTracks = await _listenBrainzImporter.GetTopTracksAsync(mbArtistId, take);
+                
+                _logger.LogInformation("[TopTracksServiceManager] ListenBrainz importer returned {Count} tracks for artist '{ArtistName}'", 
+                    listenBrainzTracks.Count, artistDisplayName);
+                
+                if (listenBrainzTracks.Count > 0)
                 {
-                    tracks.AddRange(lbTracks);
-                    _logger.LogInformation("[TopTracksServiceManager] Got {Count} tracks from ListenBrainz for artist '{ArtistName}'", lbTracks.Count, artistName);
+                    result.Tracks = listenBrainzTracks;
+                    result.Source = "ListenBrainz";
+                    result.Success = true;
+                    _logger.LogInformation("[TopTracksServiceManager] ListenBrainz succeeded with {Count} tracks for artist '{ArtistName}'", 
+                        listenBrainzTracks.Count, artistDisplayName);
+                    return result;
+                }
+                else
+                {
+                    _logger.LogWarning("[TopTracksServiceManager] ListenBrainz returned no tracks for artist '{ArtistName}'", artistDisplayName);
+                    result.Warnings.Add("ListenBrainz returned no tracks for this artist");
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "[TopTracksServiceManager] ListenBrainz failed for artist '{ArtistName}'", artistName);
+                _logger.LogError(ex, "[TopTracksServiceManager] ListenBrainz failed with exception for artist '{ArtistName}': {ErrorMessage}", 
+                    artistDisplayName, ex.Message);
+                result.Warnings.Add($"ListenBrainz failed: {ex.Message}");
             }
         }
+        else
+        {
+            _logger.LogInformation("[TopTracksServiceManager] ListenBrainz is disabled for artist '{ArtistName}'", artistDisplayName);
+        }
 
-        // If we don't have enough tracks, try Spotify
-        if (tracks.Count < take && settings.SpotifyTopTracksEnabled)
+        // Try Spotify if enabled and ListenBrainz failed
+        if (settings.SpotifyTopTracksEnabled)
         {
             try
             {
-                _logger.LogInformation("[TopTracksServiceManager] Attempting Spotify for artist '{ArtistName}'", artistName);
-                var spTracks = await _spotifyImporter.GetTopTracksAsync(artistId, take - tracks.Count);
-                if (spTracks.Count > 0)
+                _logger.LogInformation("[TopTracksServiceManager] Spotify is enabled. Attempting to get top tracks for artist '{ArtistName}'", artistDisplayName);
+                var spotifyTracks = await _spotifyImporter.GetTopTracksAsync(mbArtistId, take);
+                
+                _logger.LogInformation("[TopTracksServiceManager] Spotify importer returned {Count} tracks for artist '{ArtistName}'", 
+                    spotifyTracks.Count, artistDisplayName);
+                
+                if (spotifyTracks.Count > 0)
                 {
-                    tracks.AddRange(spTracks);
-                    _logger.LogInformation("[TopTracksServiceManager] Got {Count} tracks from Spotify for artist '{ArtistName}'", spTracks.Count, artistName);
+                    result.Tracks = spotifyTracks;
+                    result.Source = "Spotify";
+                    result.Success = true;
+                    _logger.LogInformation("[TopTracksServiceManager] Spotify succeeded with {Count} tracks for artist '{ArtistName}'", 
+                        spotifyTracks.Count, artistDisplayName);
+                    return result;
+                }
+                else
+                {
+                    _logger.LogWarning("[TopTracksServiceManager] Spotify returned no tracks for artist '{ArtistName}'", artistDisplayName);
+                    result.Warnings.Add("Spotify returned no tracks for this artist");
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "[TopTracksServiceManager] Spotify failed for artist '{ArtistName}'", artistName);
+                _logger.LogError(ex, "[TopTracksServiceManager] Spotify failed with exception for artist '{ArtistName}': {ErrorMessage}", 
+                    artistDisplayName, ex.Message);
+                result.Warnings.Add($"Spotify failed: {ex.Message}");
             }
         }
+        else
+        {
+            _logger.LogInformation("[TopTracksServiceManager] Spotify is disabled for artist '{ArtistName}'", artistDisplayName);
+        }
 
-        // If we still don't have enough tracks, try Last.fm
-        if (tracks.Count < take && settings.LastFmTopTracksEnabled)
+        // Try Last.fm if enabled and others failed
+        if (settings.LastFmTopTracksEnabled)
         {
             try
             {
-                _logger.LogInformation("[TopTracksServiceManager] Attempting Last.fm for artist '{ArtistName}'", artistName);
-                var lfTracks = await _lastFmImporter.GetTopTracksAsync(artistId, take - tracks.Count);
-                if (lfTracks.Count > 0)
+                _logger.LogInformation("[TopTracksServiceManager] Last.fm is enabled. Attempting to get top tracks for artist '{ArtistName}'", artistDisplayName);
+                var lastFmTracks = await _lastFmImporter.GetTopTracksAsync(mbArtistId, take);
+                
+                _logger.LogInformation("[TopTracksServiceManager] Last.fm importer returned {Count} tracks for artist '{ArtistName}'", 
+                    lastFmTracks.Count, artistDisplayName);
+                
+                if (lastFmTracks.Count > 0)
                 {
-                    tracks.AddRange(lfTracks);
-                    _logger.LogInformation("[TopTracksServiceManager] Got {Count} tracks from Last.fm for artist '{ArtistName}'", lfTracks.Count, artistName);
+                    result.Tracks = lastFmTracks;
+                    result.Source = "Last.fm";
+                    result.Success = true;
+                    _logger.LogInformation("[TopTracksServiceManager] Last.fm succeeded with {Count} tracks for artist '{ArtistName}'", 
+                        lastFmTracks.Count, artistDisplayName);
+                    return result;
+                }
+                else
+                {
+                    _logger.LogWarning("[TopTracksServiceManager] Last.fm returned no tracks for artist '{ArtistName}'", artistDisplayName);
+                    result.Warnings.Add("Last.fm returned no tracks for this artist");
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "[TopTracksServiceManager] Last.fm failed for artist '{ArtistName}'", artistName);
+                _logger.LogError(ex, "[TopTracksServiceManager] Last.fm failed with exception for artist '{ArtistName}': {ErrorMessage}", 
+                    artistDisplayName, ex.Message);
+                result.Warnings.Add($"Last.fm failed: {ex.Message}");
             }
         }
+        else
+        {
+            _logger.LogInformation("[TopTracksServiceManager] Last.fm is disabled for artist '{ArtistName}'", artistDisplayName);
+        }
 
-        // Remove duplicates and take only the requested number
-        var uniqueTracks = tracks
-            .GroupBy(t => t.Title, StringComparer.OrdinalIgnoreCase)
-            .Select(g => g.OrderByDescending(t => t.PlayCount ?? 0).First())
-            .OrderByDescending(t => t.PlayCount ?? 0)
-            .Take(take)
-            .ToList();
-
-        _logger.LogInformation("[TopTracksServiceManager] Final result: {Count} unique tracks for artist '{ArtistName}'", uniqueTracks.Count, artistName);
-        return uniqueTracks;
+        // All services failed or returned no tracks
+        result.Success = false;
+        result.Warnings.Add("All enabled top tracks services failed or returned no data");
+        
+        _logger.LogWarning("[TopTracksServiceManager] All top tracks services failed for artist '{ArtistName}'. Final warnings: {Warnings}", 
+            artistDisplayName, string.Join("; ", result.Warnings));
+        
+        return result;
     }
+}
+
+public class TopTracksResult
+{
+    public List<JsonTopTrack> Tracks { get; set; } = [];
+    public string Source { get; set; } = string.Empty;
+    public bool Success { get; set; }
+    public List<string> Warnings { get; set; } = [];
 }

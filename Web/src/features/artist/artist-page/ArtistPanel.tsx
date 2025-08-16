@@ -2,8 +2,7 @@ import * as React from "react";
 import { TopArtistTracks } from "@/features/artist/artist-page/TopArtistTracks.tsx";
 import { FragmentType, graphql, useFragment } from "@/gql";
 import { ArtistHeader } from "@/features/artist/artist-page/ArtistHeader.tsx";
-import { PageLayout, GlassCard, ArtistTabs } from "@/components/ui";
-import { MainPadding } from "@/components/layout/MainPadding.tsx";
+import { ArtistTabs, GlassCard, PageLayout } from "@/components/ui";
 import { ArtistActionButtons } from "@/features/artist/artist-page/ArtistActionButtons.tsx";
 import { CardFlexList } from "@/components/page-body/CardFlexList.tsx";
 import { byStringField } from "@/common/sorting/Comparators.ts";
@@ -14,7 +13,7 @@ import { ArtistNumReleasesAvailableIndicator } from "@/features/artist/artist-pa
 import { ArtistDownloadAllReleasesButton } from "@/features/artist/artist-page/ArtistDownloadAllReleasesButton.tsx";
 import { ArtistImportStatusInfo } from "@/features/artist/artist-page/ArtistImportStatusInfo.tsx";
 import { ArtistStatisticsHeader } from "@/features/artist/artist-page/ArtistStatisticsHeader.tsx";
-import { Music, Disc3, TrendingUp, BarChart3 } from "lucide-react";
+import { BarChart3, Disc3, Music, TrendingUp } from "lucide-react";
 
 interface ArtistPanelProps {
   artist: FragmentType<typeof artistPanelArtistFragment>;
@@ -174,7 +173,7 @@ export const ArtistPanel: React.FC<ArtistPanelProps> = (props) => {
     generateShareFiles({ input: { artistId: artist.id } });
 
   return (
-    <PageLayout>
+    <>
       <ArtistHeader
         artistName={artist.name}
         artistBackgroundUrl={artist.images?.backgrounds?.[0] ?? ""}
@@ -185,7 +184,7 @@ export const ArtistPanel: React.FC<ArtistPanelProps> = (props) => {
         singleCount={artist.singles?.length ?? 0}
       />
 
-      <MainPadding>
+      <PageLayout>
         <div className="space-y-6">
           <GlassCard>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-center">
@@ -194,7 +193,9 @@ export const ArtistPanel: React.FC<ArtistPanelProps> = (props) => {
                 <ArtistActionButtons
                   artist={artist}
                   loadingTopTracks={loadingTopTracks}
-                  loadingMetaData={loadingLastFm || loadingRefreshAll || generatingShare}
+                  loadingMetaData={
+                    loadingLastFm || loadingRefreshAll || generatingShare
+                  }
                   onRefreshTopTracks={onRefreshTopTracks}
                   onRefreshMetaData={onRefreshMetaData}
                   onRefreshAllReleaseMetadata={onRefreshAllReleases}
@@ -231,7 +232,7 @@ export const ArtistPanel: React.FC<ArtistPanelProps> = (props) => {
                       artistId={artist.id}
                       loadingTopTracks={loadingTopTracks}
                     />
-                  )
+                  ),
                 },
                 {
                   id: "albums",
@@ -240,56 +241,70 @@ export const ArtistPanel: React.FC<ArtistPanelProps> = (props) => {
                   content: (
                     <CardFlexList>
                       {artist.albums
-                        .toSorted(byStringField((a) => a.firstReleaseDate ?? ""))
+                        .toSorted(
+                          byStringField((a) => a.firstReleaseDate ?? ""),
+                        )
                         .toReversed()
                         .map((release) => (
                           <AlbumCard release={release} key={release.id} />
                         ))}
                     </CardFlexList>
-                  )
+                  ),
                 },
-                ...(artist.eps.length > 0 ? [{
-                  id: "eps",
-                  label: "EPs",
-                  icon: Music,
-                  content: (
-                    <CardFlexList>
-                      {artist.eps
-                        .toSorted(byStringField((a) => a.firstReleaseDate ?? ""))
-                        .toReversed()
-                        .map((release) => (
-                          <AlbumCard release={release} key={release.id} />
-                        ))}
-                    </CardFlexList>
-                  )
-                }] : []),
-                ...(artist.singles.length > 0 ? [{
-                  id: "singles",
-                  label: "Singles",
-                  icon: Music,
-                  content: (
-                    <CardFlexList>
-                      {artist.singles
-                        .toSorted(byStringField((a) => a.firstReleaseDate ?? ""))
-                        .toReversed()
-                        .map((release) => (
-                          <AlbumCard release={release} key={release.id} />
-                        ))}
-                    </CardFlexList>
-                  )
-                }] : []),
+                ...(artist.eps.length > 0
+                  ? [
+                      {
+                        id: "eps",
+                        label: "EPs",
+                        icon: Music,
+                        content: (
+                          <CardFlexList>
+                            {artist.eps
+                              .toSorted(
+                                byStringField((a) => a.firstReleaseDate ?? ""),
+                              )
+                              .toReversed()
+                              .map((release) => (
+                                <AlbumCard release={release} key={release.id} />
+                              ))}
+                          </CardFlexList>
+                        ),
+                      },
+                    ]
+                  : []),
+                ...(artist.singles.length > 0
+                  ? [
+                      {
+                        id: "singles",
+                        label: "Singles",
+                        icon: Music,
+                        content: (
+                          <CardFlexList>
+                            {artist.singles
+                              .toSorted(
+                                byStringField((a) => a.firstReleaseDate ?? ""),
+                              )
+                              .toReversed()
+                              .map((release) => (
+                                <AlbumCard release={release} key={release.id} />
+                              ))}
+                          </CardFlexList>
+                        ),
+                      },
+                    ]
+                  : []),
                 {
                   id: "media-availability",
                   label: "Media Availability",
                   icon: BarChart3,
-                  content: <ArtistStatisticsHeader artist={artist} />
-                }
+                  content: <ArtistStatisticsHeader artist={artist} />,
+                },
               ]}
               defaultTab="top-tracks"
             />
           </GlassCard>
         </div>
-      </MainPadding>
-    </PageLayout>
+      </PageLayout>
+    </>
   );
 };

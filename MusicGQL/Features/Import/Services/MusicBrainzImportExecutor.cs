@@ -211,21 +211,38 @@ public sealed class MusicBrainzImportExecutor(
                 try
                 {
                     logger.LogInformation("[MusicBrainzImportExecutor] Getting top tracks for artist '{Name}' using service manager", artistDisplayName);
-                    jsonArtist.TopTracks = await topTracksServiceManager.GetTopTracksAsync(mbArtistId, artistDisplayName, 25);
+                    var topTracksResult = await topTracksServiceManager.GetTopTracksAsync(mbArtistId, artistDisplayName, 25);
                     
-                    if (jsonArtist.TopTracks != null && jsonArtist.TopTracks.Count > 0)
+                    if (topTracksResult.Success && topTracksResult.Tracks.Count > 0)
                     {
-                        logger.LogInformation("[MusicBrainzImportExecutor] Got {Count} top tracks for artist '{Name}'", jsonArtist.TopTracks.Count, artistDisplayName);
+                        logger.LogInformation("[MusicBrainzImportExecutor] Got {Count} top tracks from {Source} for artist '{Name}'", 
+                            topTracksResult.Tracks.Count, topTracksResult.Source, artistDisplayName);
+                        jsonArtist.TopTracks = topTracksResult.Tracks;
                     }
                     else
                     {
-                        logger.LogWarning("[MusicBrainzImportExecutor] No top tracks found for artist '{Name}'", artistDisplayName);
+                        // Preserve existing top tracks if available
+                        if (jsonArtist.TopTracks != null && jsonArtist.TopTracks.Count > 0)
+                        {
+                            logger.LogInformation("[MusicBrainzImportExecutor] Preserving existing {Count} top tracks for artist '{Name}'", 
+                                jsonArtist.TopTracks.Count, artistDisplayName);
+                        }
+                        else
+                        {
+                            logger.LogWarning("[MusicBrainzImportExecutor] No top tracks found for artist '{Name}'. Warnings: {Warnings}", 
+                                artistDisplayName, string.Join("; ", topTracksResult.Warnings));
+                        }
                     }
                 }
                 catch (Exception ex)
                 {
-                    logger.LogWarning(ex, "[MusicBrainzImportExecutor] Top tracks service manager failed for artist '{Name}'", artistDisplayName);
-                    jsonArtist.TopTracks = jsonArtist.TopTracks ?? [];
+                    logger.LogError(ex, "[MusicBrainzImportExecutor] Failed to get top tracks for artist '{Name}'", artistDisplayName);
+                    // Preserve existing top tracks if available
+                    if (jsonArtist.TopTracks != null && jsonArtist.TopTracks.Count > 0)
+                    {
+                        logger.LogInformation("[MusicBrainzImportExecutor] Preserving existing {Count} top tracks for artist '{Name}' after error", 
+                            jsonArtist.TopTracks.Count, artistDisplayName);
+                    }
                 }
 
                 // Attempt to map stored top tracks to local library tracks to enable playback

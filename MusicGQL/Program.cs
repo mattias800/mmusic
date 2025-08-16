@@ -90,6 +90,11 @@ builder.Services.Configure<SpotifyClientOptions>(
     builder.Configuration.GetSection(SpotifyClientOptions.SectionName)
 );
 
+// Configure ListenBrainz options
+builder.Services.Configure<ListenBrainzConfiguration>(
+    builder.Configuration.GetSection(ListenBrainzConfiguration.SectionName)
+);
+
 builder.Services.Configure<SoulSeekConnectOptions>(builder.Configuration.GetSection("SoulSeek"));
 builder.Services.Configure<ProwlarrOptions>(builder.Configuration.GetSection(ProwlarrOptions.SectionName));
 builder.Services.Configure<SabnzbdOptions>(builder.Configuration.GetSection(SabnzbdOptions.SectionName));
@@ -125,6 +130,7 @@ builder
     .AddSingleton<SpotifyService>()
     .AddSingleton<ListenBrainzService>()
     .AddSingleton<UserListenBrainzService>()
+    .AddSingleton<ListenBrainzPopularityClient>()
     .AddSingleton<ArtistImportQueueService>()
     .AddSingleton<CurrentArtistImportStateService>()
     .AddSingleton<ImportHistoryService>()

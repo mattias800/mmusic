@@ -65,25 +65,42 @@ public class LastFmEnrichmentService(
             }
         }
 
-        // Use the new TopTracksServiceManager to get top tracks
+        // TOP TRACKS: Use the new TopTracksServiceManager
         try
         {
             logger.LogInformation("[EnrichArtist] Getting top tracks for artist '{Name}' using service manager", jsonArtist.Name);
-            jsonArtist.TopTracks = await topTracksServiceManager.GetTopTracksAsync(mbArtistId, jsonArtist.Name, 25);
+            var topTracksResult = await topTracksServiceManager.GetTopTracksAsync(mbArtistId, jsonArtist.Name, 25);
             
-            if (jsonArtist.TopTracks != null && jsonArtist.TopTracks.Count > 0)
+            if (topTracksResult.Success && topTracksResult.Tracks.Count > 0)
             {
-                logger.LogInformation("[EnrichArtist] Got {Count} top tracks for artist '{Name}'", jsonArtist.TopTracks.Count, jsonArtist.Name);
+                logger.LogInformation("[EnrichArtist] Got {Count} top tracks from {Source} for artist '{Name}'", 
+                    topTracksResult.Tracks.Count, topTracksResult.Source, jsonArtist.Name);
+                jsonArtist.TopTracks = topTracksResult.Tracks;
             }
             else
             {
-                logger.LogWarning("[EnrichArtist] No top tracks found for artist '{Name}'", jsonArtist.Name);
+                // Preserve existing top tracks if available
+                if (jsonArtist.TopTracks != null && jsonArtist.TopTracks.Count > 0)
+                {
+                    logger.LogInformation("[EnrichArtist] Preserving existing {Count} top tracks for artist '{Name}'", 
+                        jsonArtist.TopTracks.Count, jsonArtist.Name);
+                }
+                else
+                {
+                    logger.LogWarning("[EnrichArtist] No top tracks found for artist '{Name}'. Warnings: {Warnings}", 
+                        jsonArtist.Name, string.Join("; ", topTracksResult.Warnings));
+                }
             }
         }
         catch (Exception ex)
         {
-            logger.LogWarning(ex, "[EnrichArtist] Top tracks service manager failed for artist='{Name}'", jsonArtist.Name);
-            jsonArtist.TopTracks = [];
+            logger.LogError(ex, "[EnrichArtist] Failed to get top tracks for artist '{Name}'", jsonArtist.Name);
+            // Preserve existing top tracks if available
+            if (jsonArtist.TopTracks != null && jsonArtist.TopTracks.Count > 0)
+            {
+                logger.LogInformation("[EnrichArtist] Preserving existing {Count} top tracks for artist '{Name}' after error", 
+                    jsonArtist.TopTracks.Count, jsonArtist.Name);
+            }
         }
 
         // Complete missing fields using Spotify as fallback (releaseTitle, cover art download)

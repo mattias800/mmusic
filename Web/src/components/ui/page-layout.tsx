@@ -13,7 +13,7 @@ export const PageLayout: React.FC<PageLayoutProps> = ({
 }) => {
   return (
     <div className={`min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 ${className}`}>
-      <div className={`container mx-auto ${containerClassName}`}>
+      <div className={`container mx-auto px-6 py-6 ${containerClassName}`}>
         {children}
       </div>
     </div>

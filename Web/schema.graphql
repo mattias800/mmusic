@@ -863,6 +863,7 @@ type Mutation {
   updateListenBrainzSettings(input: UpdateListenBrainzSettingsInput!): UpdateListenBrainzSettingsResult!
   updateSoulSeekNoDataTimeout(input: UpdateSoulSeekNoDataTimeoutInput!): UpdateSoulSeekNoDataTimeoutResult!
   updateSoulSeekSearchTimeLimit(seconds: Int!): UpdateSoulSeekSearchTimeLimitResult!
+  updateTopTracksServiceSettings(input: UpdateTopTracksServiceSettingsInput!): UpdateTopTracksServiceSettingsResult!
   updateUserListenBrainzCredentials(input: UpdateUserListenBrainzCredentialsInput!): UpdateUserListenBrainzCredentialsResult!
 }
 
@@ -1130,14 +1131,16 @@ type ServerLibrarySearchRoot {
 type ServerSettings {
   downloadPath: String!
   downloadSlotCount: Int!
-  hasLibraryManifest: Boolean!
   id: ID!
+  lastFmTopTracksEnabled: Boolean!
   libraryPath: String!
   listenBrainzApiKey: String!
+  listenBrainzTopTracksEnabled: Boolean!
   listenBrainzUsername: String!
   serverLibraryManifestStatus: ServerLibraryManifestStatus!
   soulSeekNoDataTimeoutSeconds: Int!
   soulSeekSearchTimeLimitSeconds: Int!
+  spotifyTopTracksEnabled: Boolean!
   storageStats: StorageStats
 }
 
@@ -1539,6 +1542,23 @@ union UpdateSoulSeekSearchTimeLimitResult = UpdateSoulSeekSearchTimeLimitError |
 
 type UpdateSoulSeekSearchTimeLimitSuccess {
   serverSettings: ServerSettings!
+}
+
+type UpdateTopTracksServiceSettingsError {
+  message: String!
+}
+
+input UpdateTopTracksServiceSettingsInput {
+  lastFmTopTracksEnabled: Boolean!
+  listenBrainzTopTracksEnabled: Boolean!
+  spotifyTopTracksEnabled: Boolean!
+}
+
+union UpdateTopTracksServiceSettingsResult = UpdateTopTracksServiceSettingsError | UpdateTopTracksServiceSettingsSuccess
+
+type UpdateTopTracksServiceSettingsSuccess {
+  message: String!
+  success: Boolean!
 }
 
 type UpdateUserListenBrainzCredentialsError {

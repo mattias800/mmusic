@@ -18,7 +18,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
 }) => {
   const sizeClasses = {
     sm: "w-16 h-16",
-    md: "w-20 h-20", 
+    md: "w-20 h-20",
     lg: "w-24 h-24"
   };
 
@@ -29,7 +29,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
   };
 
   return (
-    <div className={`text-center mb-12 ${className}`}>
+    <div className={`text-center my-12 ${className}`}>
       <div className={`inline-flex items-center justify-center ${sizeClasses[avatarSize]} bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 rounded-full mb-6 shadow-2xl`}>
         <Icon className={`${iconSizeClasses[avatarSize]} text-white`} />
       </div>

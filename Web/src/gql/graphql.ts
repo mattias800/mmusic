@@ -1036,6 +1036,7 @@ export type Mutation = {
   updateListenBrainzSettings: UpdateListenBrainzSettingsResult;
   updateSoulSeekNoDataTimeout: UpdateSoulSeekNoDataTimeoutResult;
   updateSoulSeekSearchTimeLimit: UpdateSoulSeekSearchTimeLimitResult;
+  updateTopTracksServiceSettings: UpdateTopTracksServiceSettingsResult;
   updateUserListenBrainzCredentials: UpdateUserListenBrainzCredentialsResult;
 };
 
@@ -1263,6 +1264,11 @@ export type MutationUpdateSoulSeekNoDataTimeoutArgs = {
 
 export type MutationUpdateSoulSeekSearchTimeLimitArgs = {
   seconds: Scalars['Int']['input'];
+};
+
+
+export type MutationUpdateTopTracksServiceSettingsArgs = {
+  input: UpdateTopTracksServiceSettingsInput;
 };
 
 
@@ -1612,14 +1618,16 @@ export type ServerSettings = {
   __typename?: 'ServerSettings';
   downloadPath: Scalars['String']['output'];
   downloadSlotCount: Scalars['Int']['output'];
-  hasLibraryManifest: Scalars['Boolean']['output'];
   id: Scalars['ID']['output'];
+  lastFmTopTracksEnabled: Scalars['Boolean']['output'];
   libraryPath: Scalars['String']['output'];
   listenBrainzApiKey: Scalars['String']['output'];
+  listenBrainzTopTracksEnabled: Scalars['Boolean']['output'];
   listenBrainzUsername: Scalars['String']['output'];
   serverLibraryManifestStatus: ServerLibraryManifestStatus;
   soulSeekNoDataTimeoutSeconds: Scalars['Int']['output'];
   soulSeekSearchTimeLimitSeconds: Scalars['Int']['output'];
+  spotifyTopTracksEnabled: Scalars['Boolean']['output'];
   storageStats?: Maybe<StorageStats>;
 };
 
@@ -2156,6 +2164,25 @@ export type UpdateSoulSeekSearchTimeLimitResult = UpdateSoulSeekSearchTimeLimitE
 export type UpdateSoulSeekSearchTimeLimitSuccess = {
   __typename?: 'UpdateSoulSeekSearchTimeLimitSuccess';
   serverSettings: ServerSettings;
+};
+
+export type UpdateTopTracksServiceSettingsError = {
+  __typename?: 'UpdateTopTracksServiceSettingsError';
+  message: Scalars['String']['output'];
+};
+
+export type UpdateTopTracksServiceSettingsInput = {
+  lastFmTopTracksEnabled: Scalars['Boolean']['input'];
+  listenBrainzTopTracksEnabled: Scalars['Boolean']['input'];
+  spotifyTopTracksEnabled: Scalars['Boolean']['input'];
+};
+
+export type UpdateTopTracksServiceSettingsResult = UpdateTopTracksServiceSettingsError | UpdateTopTracksServiceSettingsSuccess;
+
+export type UpdateTopTracksServiceSettingsSuccess = {
+  __typename?: 'UpdateTopTracksServiceSettingsSuccess';
+  message: Scalars['String']['output'];
+  success: Scalars['Boolean']['output'];
 };
 
 export type UpdateUserListenBrainzCredentialsError = {

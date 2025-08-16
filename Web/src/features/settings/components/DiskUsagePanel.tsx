@@ -25,7 +25,7 @@ export const DiskUsagePanel: React.FC<DiskUsagePanelProps> = ({ totalBytes, free
           />
           <StatusCard 
             label="Free Space" 
-            value={freeBytes ? formatBytes(freeBytes) : "—"} 
+            value={freeBytes ? formatBytes(freeBytes) : "Not available"} 
           />
           <StatusCard 
             label="Current Library" 
@@ -39,17 +39,29 @@ export const DiskUsagePanel: React.FC<DiskUsagePanelProps> = ({ totalBytes, free
       </div>
 
       {/* Disk Usage Visualization */}
-      <div>
-        <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-          <TrendingUp className="w-5 h-5 text-green-400" />
-          Disk Usage
-        </h3>
-        <DiskUsageBar
-          totalBytes={totalBytes ?? 0}
-          freeBytes={freeBytes ?? 0}
-          libraryBytes={libraryBytes}
-        />
-      </div>
+      {totalBytes && freeBytes ? (
+        <div>
+          <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+            <TrendingUp className="w-5 h-5 text-green-400" />
+            Disk Usage
+          </h3>
+          <DiskUsageBar
+            totalBytes={totalBytes}
+            freeBytes={freeBytes}
+            libraryBytes={libraryBytes}
+          />
+        </div>
+      ) : (
+        <div>
+          <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+            <AlertTriangle className="w-5 h-5 text-yellow-400" />
+            Disk Usage Information
+          </h3>
+          <div className="text-sm text-gray-400">
+            Free space information is not available. Only showing library size.
+          </div>
+        </div>
+      )}
       
       {/* Storage Warning */}
       {totalBytes && freeBytes && estimatedTotalLibraryBytes > libraryBytes && (
