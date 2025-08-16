@@ -17,22 +17,48 @@ export function SearchResultGroup<T extends { id: string }>({
   renderItem,
 }: SearchResultGroupProps<T>) {
   return (
-    <div className="flex flex-col gap-2">
-      <div className={"flex items-center gap-4"}>
-        <h3 className="text-lg font-semibold text-white">{heading}</h3>
-        {fetching && items && <Spinner size={"sm"} />}
+    <div className="space-y-4">
+      {/* Section Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <h3 className="text-base font-semibold text-white tracking-tight">{heading}</h3>
+          {fetching && items && (
+            <div className="flex items-center gap-2">
+              <Spinner size="sm" />
+              <span className="text-xs text-gray-400">Updating...</span>
+            </div>
+          )}
+        </div>
+        {items && items.length > 0 && (
+          <div className="text-xs text-gray-400 bg-gray-800/80 px-3 py-1.5 rounded-full border border-white/10">
+            {items.length} result{items.length !== 1 ? 's' : ''}
+          </div>
+        )}
       </div>
+
+      {/* Content */}
       <div className="space-y-2">
         {fetching && !items && (
-          <SpinnerSpacing>
-            <Spinner />
-          </SpinnerSpacing>
+          <div className="flex items-center justify-center py-8">
+            <SpinnerSpacing>
+              <Spinner />
+            </SpinnerSpacing>
+          </div>
         )}
-        {!items || (items.length === 0 && <NoResultsFound />)}
 
-        {items?.map((item) => (
-          <div key={item.id}>{renderItem(item)}</div>
-        ))}
+        {!fetching && (!items || items.length === 0) && (
+          <NoResultsFound />
+        )}
+
+        {items && items.length > 0 && (
+          <div className="space-y-2">
+            {items.map((item) => (
+              <div key={item.id} className="group">
+                {renderItem(item)}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

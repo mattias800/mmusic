@@ -47,7 +47,7 @@ export const SearchInput: React.FC<SearchInputProps> = () => {
         />
       </form>
       {value && inFocus && (
-        <div ref={popupRef} className="mt-2">
+        <div ref={popupRef} className="mt-3 relative z-50">
           <SearchPanel
             searchText={value}
             onClickSearchResult={onClickSearchResult}

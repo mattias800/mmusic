@@ -3,6 +3,7 @@ import { SearchResultArtist } from "./SearchResultArtist.tsx";
 import { SearchResultRelease } from "./SearchResultRelease.tsx";
 import { SearchResultTrack } from "./SearchResultTrack.tsx";
 import { Link } from "react-router";
+import { Search, TrendingUp } from "lucide-react";
 
 export interface SearchResultProps {
   searchText: string;
@@ -14,30 +15,61 @@ export const SearchResult: React.FC<SearchResultProps> = ({
   onClickSearchResult,
 }) => {
   return (
-    <div className="w-96 rounded-2xl bg-black shadow-lg border border-white/10 max-h-[80vh] overflow-y-auto p-4 pb-10 gap-8 flex flex-col">
-      <SearchResultArtist
-        searchText={searchText}
-        onClickSearchResult={onClickSearchResult}
-      />
+    <div className="w-[48rem] rounded-2xl bg-gray-900/95 backdrop-blur-md shadow-2xl border border-white/20 max-h-[85vh] overflow-hidden">
+      {/* Header */}
+      <div className="p-6 pb-4 border-b border-white/10">
+        <div className="flex items-center gap-3 mb-2">
+          <div className="p-2 bg-blue-500/20 rounded-lg border border-blue-500/30">
+            <Search className="w-5 h-5 text-blue-400" />
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold text-white">Search Results</h3>
+            <p className="text-sm text-gray-300">"{searchText}"</p>
+          </div>
+        </div>
+      </div>
 
-      <SearchResultRelease
-        searchText={searchText}
-        onClickSearchResult={onClickSearchResult}
-      />
+      {/* Three Column Layout */}
+      <div className="p-6 space-y-6 max-h-[calc(85vh-120px)] overflow-y-auto">
+        <div className="grid grid-cols-3 gap-6">
+          {/* Artists Column */}
+          <div className="space-y-4">
+            <SearchResultArtist
+              searchText={searchText}
+              onClickSearchResult={onClickSearchResult}
+            />
+          </div>
 
-      <SearchResultTrack
-        searchText={searchText}
-        onClickSearchResult={onClickSearchResult}
-      />
+          {/* Albums Column */}
+          <div className="space-y-4">
+            <SearchResultRelease
+              searchText={searchText}
+              onClickSearchResult={onClickSearchResult}
+            />
+          </div>
 
+          {/* Songs Column */}
+          <div className="space-y-4">
+            <SearchResultTrack
+              searchText={searchText}
+              onClickSearchResult={onClickSearchResult}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Footer */}
       {searchText && (
-        <Link
-          to={`/search?q=${encodeURIComponent(searchText)}`}
-          onClick={onClickSearchResult}
-          className="mt-4 px-4 py-2 bg-neutral-700 hover:bg-neutral-600 text-white text-sm rounded-md text-center transition-colors"
-        >
-          Show more
-        </Link>
+        <div className="p-6 pt-4 border-t border-white/10 bg-gradient-to-r from-blue-500/5 to-purple-500/5">
+          <Link
+            to={`/search?q=${encodeURIComponent(searchText)}`}
+            onClick={onClickSearchResult}
+            className="w-full px-4 py-3 bg-gradient-to-r from-blue-500/20 to-purple-500/20 hover:from-blue-500/30 hover:to-purple-500/30 border border-blue-500/30 text-white text-sm font-medium rounded-xl text-center transition-all duration-200 hover:scale-[1.02] flex items-center justify-center gap-2"
+          >
+            <TrendingUp className="w-4 h-4" />
+            View All Results
+          </Link>
+        </div>
       )}
     </div>
   );
