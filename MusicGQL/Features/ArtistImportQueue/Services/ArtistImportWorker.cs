@@ -169,6 +169,28 @@ public class LibraryImportWorker(
                             releaseGroupId = match.Id;
                             primaryType = match.PrimaryType;
                         }
+                        else
+                        {
+                            // If we already have a release group ID, fetch the primary type from MusicBrainz
+                            logger.LogInformation("[LibraryImportWorker] Fetching primary type for existing release group {ReleaseGroupId}", releaseGroupId);
+                            try
+                            {
+                                var releaseGroup = await WithRetryAsync(() => mb.GetReleaseGroupByIdAsync(releaseGroupId), opName: "GetReleaseGroupById", log: logger);
+                                if (releaseGroup != null)
+                                {
+                                    primaryType = releaseGroup.PrimaryType;
+                                    logger.LogInformation("[LibraryImportWorker] Found primary type: {PrimaryType} for release group {ReleaseGroupId}", primaryType, releaseGroupId);
+                                }
+                                else
+                                {
+                                    logger.LogWarning("[LibraryImportWorker] Could not fetch release group {ReleaseGroupId} from MusicBrainz", releaseGroupId);
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                logger.LogWarning(ex, "[LibraryImportWorker] Error fetching release group {ReleaseGroupId} from MusicBrainz", releaseGroupId);
+                            }
+                        }
 
                         var releaseImporter = scope.ServiceProvider.GetRequiredService<LibraryReleaseImportService>();
                         if (!string.IsNullOrWhiteSpace(releaseGroupId))

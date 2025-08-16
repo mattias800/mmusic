@@ -11,6 +11,7 @@ public class JsonRelease
     public string? FirstReleaseDate { get; set; }
     public string? FirstReleaseYear { get; set; }
     public string? CoverArt { get; set; }
+    public List<JsonLabelInfo>? Labels { get; set; }
     public ReleaseServiceConnections? Connections { get; set; }
 }
 
@@ -19,6 +20,14 @@ public enum JsonReleaseType
     Album,
     Ep,
     Single,
+}
+
+public class JsonLabelInfo
+{
+    public string Name { get; set; } = string.Empty;
+    public string? Id { get; set; }
+    public string? CatalogNumber { get; set; }
+    public string? Disambiguation { get; set; }
 }
 
 public class ReleaseServiceConnections

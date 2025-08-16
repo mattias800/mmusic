@@ -15,7 +15,7 @@ export type TypesWithNoId = 'ArtistAppearsOn' | 'ArtistConnectedExternalService'
  * Union type of all GraphQL object types that have an id field.
  * This is used for reference and validation.
  */
-export type TypesWithId = 'Artist' | 'ArtistImportProgress' | 'ArtistImportQueueItem' | 'ArtistImportQueueState' | 'ArtistImportStatusInfo' | 'DownloadProgress' | 'DownloadQueueItem' | 'DownloadQueueState' | 'DownloadSlotInfo' | 'ExternalArtist' | 'ExternalRoot' | 'ExternalService' | 'FileSystemEntry' | 'LastFmAlbum' | 'LastFmArtist' | 'LastFmTrack' | 'LikedSong' | 'ListenBrainzUserInfo' | 'MbArtist' | 'MbGenre' | 'MbLabel' | 'MbRecording' | 'MbRecordingStreamingServiceInfo' | 'MbRelease' | 'MbReleaseGroup' | 'MbTrack' | 'Ping' | 'Playlist' | 'PlaylistItem' | 'Release' | 'ServerLibraryManifestStatus' | 'ServerSettings' | 'SoulSeekRoot' | 'SoulSeekStatus' | 'SpotifyArtist' | 'SpotifyPlaylist' | 'SpotifyTrack' | 'Track' | 'TrackMedia' | 'Url' | 'User';
+export type TypesWithId = 'Artist' | 'ArtistImportProgress' | 'ArtistImportQueueItem' | 'ArtistImportQueueState' | 'ArtistImportStatusInfo' | 'DownloadProgress' | 'DownloadQueueItem' | 'DownloadQueueState' | 'DownloadSlotInfo' | 'ExternalArtist' | 'ExternalRoot' | 'ExternalService' | 'FileSystemEntry' | 'JsonLabelInfo' | 'LastFmAlbum' | 'LastFmArtist' | 'LastFmTrack' | 'LikedSong' | 'ListenBrainzUserInfo' | 'MbArtist' | 'MbGenre' | 'MbLabel' | 'MbRecording' | 'MbRecordingStreamingServiceInfo' | 'MbRelease' | 'MbReleaseGroup' | 'MbTrack' | 'Ping' | 'Playlist' | 'PlaylistItem' | 'Release' | 'ServerLibraryManifestStatus' | 'ServerSettings' | 'SoulSeekRoot' | 'SoulSeekStatus' | 'SpotifyArtist' | 'SpotifyPlaylist' | 'SpotifyTrack' | 'Track' | 'TrackMedia' | 'Url' | 'User';
 
 /**
  * Type guard to check if a type has an id field.
@@ -23,7 +23,7 @@ export type TypesWithId = 'Artist' | 'ArtistImportProgress' | 'ArtistImportQueue
  * @returns True if the type has an id field, false otherwise
  */
 export function hasIdField(type: string): type is TypesWithId {
-  const typesWithId: string[] = ['Artist', 'ArtistImportProgress', 'ArtistImportQueueItem', 'ArtistImportQueueState', 'ArtistImportStatusInfo', 'DownloadProgress', 'DownloadQueueItem', 'DownloadQueueState', 'DownloadSlotInfo', 'ExternalArtist', 'ExternalRoot', 'ExternalService', 'FileSystemEntry', 'LastFmAlbum', 'LastFmArtist', 'LastFmTrack', 'LikedSong', 'ListenBrainzUserInfo', 'MbArtist', 'MbGenre', 'MbLabel', 'MbRecording', 'MbRecordingStreamingServiceInfo', 'MbRelease', 'MbReleaseGroup', 'MbTrack', 'Ping', 'Playlist', 'PlaylistItem', 'Release', 'ServerLibraryManifestStatus', 'ServerSettings', 'SoulSeekRoot', 'SoulSeekStatus', 'SpotifyArtist', 'SpotifyPlaylist', 'SpotifyTrack', 'Track', 'TrackMedia', 'Url', 'User'];
+  const typesWithId: string[] = ['Artist', 'ArtistImportProgress', 'ArtistImportQueueItem', 'ArtistImportQueueState', 'ArtistImportStatusInfo', 'DownloadProgress', 'DownloadQueueItem', 'DownloadQueueState', 'DownloadSlotInfo', 'ExternalArtist', 'ExternalRoot', 'ExternalService', 'FileSystemEntry', 'JsonLabelInfo', 'LastFmAlbum', 'LastFmArtist', 'LastFmTrack', 'LikedSong', 'ListenBrainzUserInfo', 'MbArtist', 'MbGenre', 'MbLabel', 'MbRecording', 'MbRecordingStreamingServiceInfo', 'MbRelease', 'MbReleaseGroup', 'MbTrack', 'Ping', 'Playlist', 'PlaylistItem', 'Release', 'ServerLibraryManifestStatus', 'ServerSettings', 'SoulSeekRoot', 'SoulSeekStatus', 'SpotifyArtist', 'SpotifyPlaylist', 'SpotifyTrack', 'Track', 'TrackMedia', 'Url', 'User'];
   return typesWithId.includes(type);
 }
 

@@ -531,6 +531,13 @@ type ImportedRelease {
   title: String!
 }
 
+type JsonLabelInfo {
+  catalogNumber: String
+  disambiguation: String
+  id: String
+  name: String!
+}
+
 type KeyValuePairOfInt32AndDownloadProgress {
   key: Int!
   value: DownloadProgress!
@@ -1026,6 +1033,7 @@ type Release {
   folderName: String!
   id: ID!
   isFullyMissing: Boolean!
+  labels: [JsonLabelInfo!]!
   musicBrainzReleaseGroupId: String
   musicBrainzReleaseIdOverride: String
   musicBrainzSelectedReleaseId: String

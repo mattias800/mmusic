@@ -36,6 +36,12 @@ const albumPanelReleaseGroupFragment = graphql(`
     ...AlbumHeader_Release
     ...AlbumTrackList_Release
     firstReleaseYear
+    labels {
+      name
+      id
+      catalogNumber
+      disambiguation
+    }
     artist {
       id
     }
@@ -176,66 +182,70 @@ export const AlbumPanel: React.FC<AlbumPanelProps> = (props) => {
 
         {/* Action Buttons */}
         <GlassCard>
-          <div className="flex items-center gap-4 flex-wrap">
-            <PlayAlbumButton release={release} />
-            <ShuffleButton />
-            <LargeLikeButton />
-            <ReleaseDownloadButton release={release} />
+          <div className={"flex items-center justify-between gap-4"}>
+            <div className="flex items-center gap-4 flex-wrap">
+              <PlayAlbumButton release={release} />
+              <ShuffleButton />
+              <LargeLikeButton />
 
-            {/* Actions Dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <DotsButton />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuLabel>Release Actions</DropdownMenuLabel>
-                <DropdownMenuItem
-                  onSelect={() =>
-                    refreshRelease({
-                      input: {
+              {/* Actions Dropdown */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <DotsButton />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuLabel>Release Actions</DropdownMenuLabel>
+                  <DropdownMenuItem
+                    onSelect={() =>
+                      refreshRelease({
+                        input: {
+                          artistId: release.artist.id,
+                          releaseFolderName: release.folderName,
+                        },
+                      })
+                    }
+                  >
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    Refresh release metadata
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onSelect={() =>
+                      scanReleaseFolderForMedia({
                         artistId: release.artist.id,
                         releaseFolderName: release.folderName,
-                      },
-                    })
-                  }
-                >
-                  <RefreshCw className="w-4 h-4 mr-2" />
-                  Refresh release metadata
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onSelect={() =>
-                    scanReleaseFolderForMedia({
-                      artistId: release.artist.id,
-                      releaseFolderName: release.folderName,
-                    })
-                  }
-                >
-                  <FolderOpen className="w-4 h-4 mr-2" />
-                  Scan folder for media files
-                </DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => setConfirmOpen(true)}>
-                  <Trash2 className="w-4 h-4 mr-2" />
-                  Delete audio files for this release
-                </DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => setFixOpen(true)}>
-                  <Settings className="w-4 h-4 mr-2" />
-                  Fix match
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                      })
+                    }
+                  >
+                    <FolderOpen className="w-4 h-4 mr-2" />
+                    Scan folder for media files
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => setConfirmOpen(true)}>
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Delete audio files for this release
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => setFixOpen(true)}>
+                    <Settings className="w-4 h-4 mr-2" />
+                    Fix match
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
 
-            {/* Loading Spinner */}
-            {(refreshing || deleting || scanning || fixing) && (
-              <div className="flex items-center gap-2 text-blue-400">
-                <Spinner size={"sm"} />
-                <span className="text-sm">
-                  {refreshing && "Refreshing..."}
-                  {deleting && "Deleting..."}
-                  {scanning && "Scanning..."}
-                  {fixing && "Fixing..."}
-                </span>
-              </div>
-            )}
+              {/* Loading Spinner */}
+              {(refreshing || deleting || scanning || fixing) && (
+                <div className="flex items-center gap-2 text-blue-400">
+                  <Spinner size={"sm"} />
+                  <span className="text-sm">
+                    {refreshing && "Refreshing..."}
+                    {deleting && "Deleting..."}
+                    {scanning && "Scanning..."}
+                    {fixing && "Fixing..."}
+                  </span>
+                </div>
+              )}
+            </div>
+            <div>
+              <ReleaseDownloadButton release={release} />
+            </div>
           </div>
         </GlassCard>
 
@@ -248,8 +258,24 @@ export const AlbumPanel: React.FC<AlbumPanelProps> = (props) => {
         <div className="text-center py-6">
           <div className="inline-flex items-center gap-2 text-gray-400 text-sm bg-white/5 px-4 py-2 rounded-full border border-white/10">
             <span>© {release.firstReleaseYear}</span>
-            <span>•</span>
-            <span>Some label AB</span>
+            {release.labels && release.labels.length > 0 && (
+              <>
+                <span>•</span>
+                <span>{release.labels[0].name}</span>
+                {release.labels[0].catalogNumber && (
+                  <>
+                    <span>•</span>
+                    <span className="text-xs opacity-75">{release.labels[0].catalogNumber}</span>
+                  </>
+                )}
+              </>
+            )}
+            {(!release.labels || release.labels.length === 0) && (
+              <>
+                <span>•</span>
+                <span className="opacity-50">Label information unavailable</span>
+              </>
+            )}
           </div>
         </div>
       </div>

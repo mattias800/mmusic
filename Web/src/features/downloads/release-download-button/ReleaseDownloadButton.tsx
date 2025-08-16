@@ -33,9 +33,14 @@ const startDownloadReleaseMutation = graphql(`
     ) {
       __typename
       ... on StartDownloadReleaseSuccess {
-        release { id }
+        release {
+          id
+        }
       }
-      ... on StartDownloadReleaseAccepted { artistId releaseFolderName }
+      ... on StartDownloadReleaseAccepted {
+        artistId
+        releaseFolderName
+      }
     }
   }
 `);
@@ -145,16 +150,15 @@ export const ReleaseDownloadButton: React.FC<ReleaseDownloadButtonProps> = (
 
     case ReleaseDownloadStatus.NotFound:
       return (
-        <div className={"flex items-center gap-2 text-red-500"}>
+        <div className={"flex items-center gap-4 text-red-500"}>
+          <Tag variant={"error"}>Could not find release.</Tag>
           <Button
-            variant="secondary"
             onClick={onClickDownload}
             className="flex items-center gap-2"
           >
             <Download className="h-5 w-5" />
             {queued ? "Queued" : "Download"}
           </Button>
-          <Tag>Could not find release.</Tag>
         </div>
       );
   }

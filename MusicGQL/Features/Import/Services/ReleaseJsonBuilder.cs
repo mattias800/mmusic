@@ -196,14 +196,28 @@ public class ReleaseJsonBuilder(
 
             // 6. Map release type
             logger.LogInformation("[ReleaseBuilder] 🏷️ Step 6: Mapping release type and metadata");
+            logger.LogInformation("[ReleaseBuilder] 🔍 Raw primaryType from MusicBrainz: '{PrimaryType}'", primaryType);
+            
             var releaseType = primaryType?.ToLowerInvariant() switch
             {
                 "album" => JsonReleaseType.Album,
                 "ep" => JsonReleaseType.Ep,
                 "single" => JsonReleaseType.Single,
-                _ => JsonReleaseType.Album,
+                "compilation" => JsonReleaseType.Album, // Treat compilations as albums
+                "soundtrack" => JsonReleaseType.Album,  // Treat soundtracks as albums
+                "live" => JsonReleaseType.Album,        // Treat live releases as albums
+                "remix" => JsonReleaseType.Ep,          // Treat remix releases as EPs
+                "mixtape" => JsonReleaseType.Ep,        // Treat mixtapes as EPs
+                _ => JsonReleaseType.Album, // Default fallback
             };
-            logger.LogInformation("[ReleaseBuilder] ✅ Mapped release type: {PrimaryType} → {ReleaseType}", primaryType, releaseType);
+            
+            logger.LogInformation("[ReleaseBuilder] ✅ Mapped release type: '{PrimaryType}' → {ReleaseType}", primaryType, releaseType);
+            
+            // Additional logging for debugging
+            if (primaryType != null && !new[] { "album", "ep", "single", "compilation", "soundtrack", "live", "remix", "mixtape" }.Contains(primaryType.ToLowerInvariant()))
+            {
+                logger.LogWarning("[ReleaseBuilder] ⚠️ Unknown primary type '{PrimaryType}' - defaulting to Album", primaryType);
+            }
 
             // 7. Build artist ID mapping
             logger.LogInformation("[ReleaseBuilder] 👥 Step 7: Building MusicBrainz to local artist ID mapping");
@@ -440,6 +454,31 @@ public class ReleaseJsonBuilder(
             logger.LogInformation("[ReleaseBuilder] ✅ Final artist name for release: '{FinalArtistName}' (from MusicBrainz: {FromMb}, Local ID: {LocalId})", 
                 finalArtistName, !string.IsNullOrEmpty(musicBrainzArtistName), localArtistId);
             
+            // Extract label information from MusicBrainz release
+            var labels = new List<JsonLabelInfo>();
+            if (selected?.Labels != null && selected.Labels.Any())
+            {
+                logger.LogInformation("[ReleaseBuilder] 🏷️ Found {LabelCount} labels for release '{Title}'", selected.Labels.Count(), selected.Title);
+                foreach (var labelInfo in selected.Labels)
+                {
+                    var jsonLabel = new JsonLabelInfo
+                    {
+                        Name = labelInfo.Label?.Name ?? string.Empty,
+                        Id = labelInfo.Label?.Id,
+                        CatalogNumber = labelInfo.CatalogNumber,
+                        Disambiguation = labelInfo.Label?.Disambiguation
+                    };
+                    labels.Add(jsonLabel);
+                    
+                    logger.LogInformation("[ReleaseBuilder] 🏷️ Label: '{LabelName}' (ID: {LabelId}, Catalog: {CatalogNumber})", 
+                        jsonLabel.Name, jsonLabel.Id, jsonLabel.CatalogNumber ?? "N/A");
+                }
+            }
+            else
+            {
+                logger.LogInformation("[ReleaseBuilder] ℹ️ No label information found for release '{Title}'", selected?.Title ?? "Unknown");
+            }
+            
             var finalRelease = new JsonRelease
             {
                 Title = releaseTitle ?? releaseFolderName,
@@ -453,6 +492,7 @@ public class ReleaseJsonBuilder(
                         ? selected!.ReleaseGroup!.FirstReleaseDate!.Substring(0, 4)
                         : null,
                 CoverArt = coverArtRelPath,
+                Labels = labels.Count > 0 ? labels : null,
                 Tracks = tracks != null && tracks.Count > 0 ? tracks : null,
                 Connections = new ReleaseServiceConnections
                 {

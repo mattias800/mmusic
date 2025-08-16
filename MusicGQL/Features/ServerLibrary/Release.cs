@@ -2,6 +2,7 @@ using MusicGQL.Features.Artists;
 using MusicGQL.Features.Downloads;
 using MusicGQL.Features.ServerLibrary.Cache;
 using MusicGQL.Features.ServerLibrary.Utils;
+using MusicGQL.Features.ServerLibrary.Json;
 
 namespace MusicGQL.Features.ServerLibrary;
 
@@ -70,6 +71,11 @@ public record Release([property: GraphQLIgnore] CachedRelease Model)
         if (tracks.Count == 0) return true;
         return tracks.All(t => string.IsNullOrWhiteSpace(t.JsonTrack.AudioFilePath));
     }
+
+    /// <summary>
+    /// Gets the label information for this release
+    /// </summary>
+    public IEnumerable<Json.JsonLabelInfo> Labels() => Model.JsonRelease.Labels ?? [];
 
     /// <summary>
     /// MusicBrainz connections for this release. These are persisted in the underlying JSON.
