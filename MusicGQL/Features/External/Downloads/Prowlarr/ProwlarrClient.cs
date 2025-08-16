@@ -13,24 +13,92 @@ public class ProwlarrClient(HttpClient httpClient, IOptions<ProwlarrOptions> opt
         {
             var baseUrl = options.Value.BaseUrl?.TrimEnd('/');
             if (string.IsNullOrWhiteSpace(baseUrl))
+            {
+                logger.LogWarning("[Prowlarr] BaseUrl is not configured");
                 return false;
+            }
 
-            // Try a simple ping to the server
-            var pingUrl = $"{baseUrl}/api/v1/system/status";
+            // Try a simple ping to the server. If we have an API key, include it to avoid 401s.
+            var apiKey = options.Value.ApiKey;
+            var pingUrl = string.IsNullOrWhiteSpace(apiKey)
+                ? $"{baseUrl}/api/v1/system/status"
+                : $"{baseUrl}/api/v1/system/status?apikey={Uri.EscapeDataString(apiKey)}";
+
             using var req = new HttpRequestMessage(HttpMethod.Get, pingUrl);
             req.Headers.Accept.Clear();
             req.Headers.Accept.ParseAdd("application/json");
+            if (!string.IsNullOrWhiteSpace(apiKey))
+            {
+                // Some setups expect the API key in a header
+                try { req.Headers.Add("X-Api-Key", apiKey); } catch { }
+            }
             
             logger.LogDebug("[Prowlarr] Testing connectivity to {Url}", pingUrl);
-            var resp = await httpClient.SendAsync(req, cancellationToken);
-            var isConnected = resp.IsSuccessStatusCode;
-            logger.LogInformation("[Prowlarr] Connectivity test to {BaseUrl}: {Status} ({Connected})", 
-                baseUrl, (int)resp.StatusCode, isConnected ? "Connected" : "Failed");
-            return isConnected;
+            
+            // Create a timeout for just the connectivity test (shorter than the HttpClient default)
+            var connectivityTimeoutSeconds = 10;
+            using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(connectivityTimeoutSeconds));
+            using var combinedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeoutCts.Token);
+            
+            var startTime = DateTime.UtcNow;
+            var resp = await httpClient.SendAsync(req, combinedCts.Token);
+            var duration = DateTime.UtcNow - startTime;
+            
+            if (resp.IsSuccessStatusCode)
+            {
+                logger.LogInformation("[Prowlarr] Connectivity test to {BaseUrl}: {Status} in {Duration:0.00}s (Connected)", 
+                    baseUrl, (int)resp.StatusCode, duration.TotalSeconds);
+                return true;
+            }
+            else
+            {
+                // Distinguish between different types of failures
+                if (resp.StatusCode == System.Net.HttpStatusCode.Unauthorized || resp.StatusCode == System.Net.HttpStatusCode.Forbidden)
+                {
+                    // Server is reachable but auth is required/denied. Treat as CONNECTED for the purposes of reachability
+                    // and let the search endpoint test validate the API key correctness.
+                    logger.LogWarning("[Prowlarr] Auth response from {BaseUrl}: {Status} in {Duration:0.00}s. Server is reachable.", 
+                        baseUrl, (int)resp.StatusCode, duration.TotalSeconds);
+                    return true;
+                }
+                
+                logger.LogWarning("[Prowlarr] Connectivity test to {BaseUrl}: {Status} in {Duration:0.00}s (Failed - Server responded but with error)", 
+                    baseUrl, (int)resp.StatusCode, duration.TotalSeconds);
+                return false;
+            }
+        }
+        catch (TaskCanceledException ex) when (ex.InnerException is TaskCanceledException)
+        {
+            var connectivityTimeoutSeconds = 10; // matches the CTS above
+            logger.LogWarning("[Prowlarr] Connectivity test failed to {BaseUrl} - Request timed out after {Timeout}s. This usually indicates network connectivity issues or the server is not responding.", 
+                options.Value.BaseUrl, connectivityTimeoutSeconds);
+            
+            // Add specific timeout diagnostics
+            logger.LogWarning("[Prowlarr] TIMEOUT DIAGNOSTICS:");
+            logger.LogWarning("[Prowlarr] - Request was sent but no response received within {Timeout}s", connectivityTimeoutSeconds);
+            logger.LogWarning("[Prowlarr] - This suggests the server at {BaseUrl} is either:", options.Value.BaseUrl);
+            logger.LogWarning("[Prowlarr]   * Not running (check if Prowlarr service is started)");
+            logger.LogWarning("[Prowlarr]   * Not accessible from this machine (check network/firewall)");
+            logger.LogWarning("[Prowlarr]   * Overloaded and not responding (check server resources)");
+            
+            return false;
+        }
+        catch (TaskCanceledException)
+        {
+            logger.LogWarning("[Prowlarr] Connectivity test failed to {BaseUrl} - Request was canceled. This may indicate network connectivity issues.", 
+                options.Value.BaseUrl);
+            return false;
+        }
+        catch (HttpRequestException ex)
+        {
+            logger.LogWarning(ex, "[Prowlarr] Connectivity test failed to {BaseUrl} - HTTP request error. This may indicate network connectivity issues or the server is unreachable.", 
+                options.Value.BaseUrl);
+            return false;
         }
         catch (Exception ex)
         {
-            logger.LogWarning(ex, "[Prowlarr] Connectivity test failed to {BaseUrl}", options.Value.BaseUrl);
+            logger.LogWarning(ex, "[Prowlarr] Connectivity test failed to {BaseUrl} - Unexpected error during connectivity test.", 
+                options.Value.BaseUrl);
             return false;
         }
     }
@@ -99,7 +167,9 @@ public class ProwlarrClient(HttpClient httpClient, IOptions<ProwlarrOptions> opt
         {
             GetConfigurationSummary(),
             $"HttpClient Timeout: {httpClient.Timeout.TotalSeconds}s",
-            $"Current UTC Time: {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC"
+            $"Current UTC Time: {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC",
+            $"Machine Name: {Environment.MachineName}",
+            $"OS: {Environment.OSVersion}"
         };
 
         try
@@ -112,10 +182,28 @@ public class ProwlarrClient(HttpClient httpClient, IOptions<ProwlarrOptions> opt
                 var isSearchWorking = await TestSearchEndpointAsync(cancellationToken);
                 info.Add($"Search Endpoint Test: {(isSearchWorking ? "SUCCESS" : "FAILED")}");
             }
+            else
+            {
+                // Add troubleshooting suggestions for connectivity failures
+                info.Add("");
+                info.Add("TROUBLESHOOTING SUGGESTIONS:");
+                info.Add("1. Verify Prowlarr server is running and accessible");
+                info.Add("2. Check if the IP address 192.168.11.174 is correct");
+                info.Add("3. Verify port 9696 is open and not blocked by firewall");
+                info.Add("4. Test network connectivity: ping 192.168.11.174");
+                info.Add("5. Check if you can access http://192.168.11.174:9696 in a web browser");
+                info.Add("6. Verify the API key is correct");
+                info.Add("7. Check Prowlarr server logs for any errors");
+            }
         }
         catch (Exception ex)
         {
             info.Add($"Diagnostic Tests: FAILED - {ex.Message}");
+            info.Add($"Exception Type: {ex.GetType().Name}");
+            if (ex.InnerException != null)
+            {
+                info.Add($"Inner Exception: {ex.InnerException.Message}");
+            }
         }
 
         return string.Join(Environment.NewLine, info);
@@ -146,6 +234,182 @@ public class ProwlarrClient(HttpClient httpClient, IOptions<ProwlarrOptions> opt
     public TimeSpan GetCurrentTimeout()
     {
         return httpClient.Timeout;
+    }
+
+    /// <summary>
+    /// Tests basic network connectivity to the Prowlarr server IP address.
+    /// This can help diagnose if the issue is network-level or application-level.
+    /// </summary>
+    public async Task<string> TestNetworkConnectivityAsync()
+    {
+        var info = new List<string>
+        {
+            "Network Connectivity Test Results:",
+            "================================"
+        };
+
+        try
+        {
+            var baseUrl = options.Value.BaseUrl;
+            if (string.IsNullOrWhiteSpace(baseUrl))
+            {
+                info.Add("ERROR: BaseUrl not configured");
+                return string.Join(Environment.NewLine, info);
+            }
+
+            // Extract IP address from URL
+            var uri = new Uri(baseUrl);
+            var host = uri.Host;
+            var port = uri.Port;
+
+            info.Add($"Target Host: {host}");
+            info.Add($"Target Port: {port}");
+            info.Add($"Full URL: {baseUrl}");
+
+            // Test DNS resolution
+            try
+            {
+                var addresses = await System.Net.Dns.GetHostAddressesAsync(host);
+                info.Add($"DNS Resolution: SUCCESS - {addresses.Length} address(es) found");
+                foreach (var addr in addresses)
+                {
+                    info.Add($"  - {addr} ({addr.AddressFamily})");
+                }
+            }
+            catch (Exception ex)
+            {
+                info.Add($"DNS Resolution: FAILED - {ex.Message}");
+            }
+
+            // Test basic connectivity (this is a simple test, not a full HTTP request)
+            try
+            {
+                using var client = new System.Net.Sockets.TcpClient();
+                var connectTask = client.ConnectAsync(host, port);
+                var timeoutTask = Task.Delay(5000); // 5 second timeout
+                
+                var completedTask = await Task.WhenAny(connectTask, timeoutTask);
+                if (completedTask == connectTask)
+                {
+                    await connectTask; // Ensure any exceptions are thrown
+                    info.Add($"TCP Connection: SUCCESS - Connected to {host}:{port}");
+                    client.Close();
+                }
+                else
+                {
+                    info.Add($"TCP Connection: TIMEOUT - Could not connect to {host}:{port} within 5 seconds");
+                }
+            }
+            catch (Exception ex)
+            {
+                info.Add($"TCP Connection: FAILED - {ex.Message}");
+            }
+
+            info.Add("");
+            info.Add("Note: These tests check basic network connectivity.");
+            info.Add("HTTP-level issues (like authentication, API errors) require additional testing.");
+        }
+        catch (Exception ex)
+        {
+            info.Add($"Network Test Error: {ex.Message}");
+        }
+
+        return string.Join(Environment.NewLine, info);
+    }
+
+    /// <summary>
+    /// Tests basic network connectivity to the Prowlarr server
+    /// </summary>
+    public async Task<string> TestBasicNetworkConnectivityAsync()
+    {
+        var baseUrl = options.Value.BaseUrl?.TrimEnd('/');
+        if (string.IsNullOrWhiteSpace(baseUrl))
+        {
+            return "ERROR: BaseUrl is not configured";
+        }
+
+        var uri = new Uri(baseUrl);
+        var host = uri.Host;
+        var port = uri.Port;
+
+        var info = new List<string>
+        {
+            $"Basic Network Connectivity Test for {baseUrl}",
+            "=============================================",
+            $"Target Host: {host}",
+            $"Target Port: {port}",
+            ""
+        };
+
+        try
+        {
+            // Test 1: DNS Resolution
+            info.Add("1. DNS Resolution Test:");
+            try
+            {
+                var addresses = await System.Net.Dns.GetHostAddressesAsync(host);
+                info.Add($"   ✅ SUCCESS: Resolved {host} to {addresses.Length} address(es):");
+                foreach (var addr in addresses)
+                {
+                    info.Add($"      - {addr} ({addr.AddressFamily})");
+                }
+            }
+            catch (Exception ex)
+            {
+                info.Add($"   ❌ FAILED: Could not resolve {host}: {ex.Message}");
+                info.Add($"   💡 SUGGESTION: Check if the hostname is correct and DNS is working");
+                return string.Join(Environment.NewLine, info);
+            }
+
+            info.Add("");
+
+            // Test 2: Port Connectivity
+            info.Add("2. Port Connectivity Test:");
+            try
+            {
+                using var tcpClient = new System.Net.Sockets.TcpClient();
+                var connectTask = tcpClient.ConnectAsync(host, port);
+                
+                // Use a shorter timeout for basic connectivity test
+                var timeoutTask = Task.Delay(TimeSpan.FromSeconds(10));
+                var completedTask = await Task.WhenAny(connectTask, timeoutTask);
+                
+                if (completedTask == connectTask)
+                {
+                    await connectTask; // Ensure any exceptions are thrown
+                    info.Add($"   ✅ SUCCESS: Port {port} is reachable on {host}");
+                    info.Add($"   💡 This means the network path is working, but Prowlarr may not be responding");
+                }
+                else
+                {
+                    info.Add($"   ❌ FAILED: Port {port} connection timed out after 10s");
+                    info.Add($"   💡 SUGGESTION: Check if Prowlarr service is running and listening on port {port}");
+                }
+            }
+            catch (Exception ex)
+            {
+                info.Add($"   ❌ FAILED: Port {port} connection failed: {ex.Message}");
+                info.Add($"   💡 SUGGESTION: Check firewall rules and if Prowlarr is listening on port {port}");
+            }
+
+            info.Add("");
+            info.Add("SUMMARY:");
+            info.Add("If DNS resolution works but port connectivity fails, the issue is likely:");
+            info.Add("- Prowlarr service not running");
+            info.Add("- Prowlarr not listening on the expected port");
+            info.Add("- Firewall blocking the connection");
+            info.Add("");
+            info.Add("If both tests pass but HTTP requests timeout, the issue is likely:");
+            info.Add("- Prowlarr service overloaded");
+            info.Add("- Application-level blocking");
+            info.Add("- Incorrect API endpoint configuration");
+        }
+        catch (Exception ex)
+        {
+            info.Add($"ERROR during network test: {ex.Message}");
+        }
+
+        return string.Join(Environment.NewLine, info);
     }
 
     /// <summary>
@@ -320,7 +584,7 @@ public class ProwlarrClient(HttpClient httpClient, IOptions<ProwlarrOptions> opt
             var isConnected = await TestConnectivityAsync(cancellationToken);
             if (!isConnected)
             {
-                return (false, "Cannot connect to Prowlarr server");
+                return (false, "Prowlarr server is not accessible (network issue or authentication failed)");
             }
 
             var isSearchWorking = await TestSearchEndpointAsync(cancellationToken);
@@ -368,7 +632,7 @@ public class ProwlarrClient(HttpClient httpClient, IOptions<ProwlarrOptions> opt
             var isConnected = await TestConnectivityAsync(cancellationToken);
             if (!isConnected)
             {
-                logger.LogWarning("[Prowlarr] Cannot connect to Prowlarr server at {BaseUrl}. Skipping search.", baseUrl);
+                logger.LogWarning("[Prowlarr] Prowlarr server is not accessible at {BaseUrl}. This may be due to network issues, authentication problems, or the server being unavailable. Skipping search.", baseUrl);
                 return Array.Empty<ProwlarrRelease>();
             }
             

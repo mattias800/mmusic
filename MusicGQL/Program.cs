@@ -601,58 +601,93 @@ using (var scope = app.Services.CreateScope())
         Console.WriteLine($"   🕒 Last updated: {stats.LastUpdated:yyyy-MM-dd HH:mm:ss} UTC");
         Console.WriteLine();
 
-        // Display all artists and their albums
-        var artists = await cache.GetAllArtistsAsync();
-
-        if (artists.Count > 0)
+        // Only show detailed listing if explicitly requested (reduce startup noise)
+        var showDetailedListing = Environment.GetEnvironmentVariable("MUSICGQL_SHOW_DETAILED_STARTUP") == "true";
+        
+        if (showDetailedListing)
         {
-            Console.WriteLine("🎤 ARTISTS & ALBUMS IN LIBRARY:");
-            Console.WriteLine("───────────────────────────────────────────────");
+            // Display all artists and their albums (verbose mode)
+            var artists = await cache.GetAllArtistsAsync();
 
-            foreach (var artist in artists.OrderBy(a => a.Name))
+            if (artists.Count > 0)
             {
-                Console.WriteLine($"🎸 {artist.Name}");
-                if (!string.IsNullOrEmpty(artist.SortName) && artist.SortName != artist.Name)
-                {
-                    Console.WriteLine($"   (Sort: {artist.SortName})");
-                }
+                Console.WriteLine("🎤 ARTISTS & ALBUMS IN LIBRARY:");
+                Console.WriteLine("───────────────────────────────────────────────");
 
-                if (artist.Releases.Count > 0)
+                foreach (var artist in artists.OrderBy(a => a.Name))
                 {
-                    foreach (var release in artist.Releases.OrderBy(r => r.Title))
+                    Console.WriteLine($"🎸 {artist.Name}");
+                    if (!string.IsNullOrEmpty(artist.SortName) && artist.SortName != artist.Name)
                     {
-                        var typeIcon = release.Type switch
-                        {
-                            JsonReleaseType.Album => "💿",
-                            JsonReleaseType.Ep => "💽",
-                            JsonReleaseType.Single => "🎵",
-                            _ => "📀",
-                        };
+                        Console.WriteLine($"   (Sort: {artist.SortName})");
+                    }
 
-                        var trackCountText =
-                            release.Tracks.Count > 0 ? $" ({release.Tracks.Count} tracks)" : "";
-                        Console.WriteLine($"   {typeIcon} {release.Title}{trackCountText}");
-
-                        if (!string.IsNullOrEmpty(release.JsonRelease.FirstReleaseYear))
+                    if (artist.Releases.Count > 0)
+                    {
+                        foreach (var release in artist.Releases.OrderBy(r => r.Title))
                         {
-                            Console.WriteLine(
-                                $"      📅 Released: {release.JsonRelease.FirstReleaseYear}"
-                            );
+                            var typeIcon = release.Type switch
+                            {
+                                JsonReleaseType.Album => "💿",
+                                JsonReleaseType.Ep => "💽",
+                                JsonReleaseType.Single => "🎵",
+                                _ => "📀",
+                            };
+
+                            var trackCountText =
+                                release.Tracks.Count > 0 ? $" ({release.Tracks.Count} tracks)" : "";
+                            Console.WriteLine($"   {typeIcon} {release.Title}{trackCountText}");
+
+                            if (!string.IsNullOrEmpty(release.JsonRelease.FirstReleaseYear))
+                            {
+                                Console.WriteLine(
+                                    $"      📅 Released: {release.JsonRelease.FirstReleaseYear}"
+                                );
+                            }
                         }
                     }
-                }
-                else
-                {
-                    Console.WriteLine("   📭 No releases found");
-                }
+                    else
+                    {
+                        Console.WriteLine("   📭 No releases found");
+                    }
 
-                Console.WriteLine();
+                    Console.WriteLine();
+                }
+            }
+            else
+            {
+                Console.WriteLine("📭 No artists found in library");
+                Console.WriteLine("   💡 Make sure your library folder contains artist.json files");
             }
         }
         else
         {
-            Console.WriteLine("📭 No artists found in library");
-            Console.WriteLine("   💡 Make sure your library folder contains artist.json files");
+            // Show only summary information (default mode - less noisy)
+            var artists = await cache.GetAllArtistsAsync();
+            if (artists.Count > 0)
+            {
+                var sampleArtists = artists.Take(5).OrderBy(a => a.Name).ToList();
+                Console.WriteLine($"🎤 Library contains {artists.Count} artists");
+                if (artists.Count > 5)
+                {
+                    Console.WriteLine($"   📋 Sample artists: {string.Join(", ", sampleArtists.Select(a => a.Name))}...");
+                }
+                else
+                {
+                    Console.WriteLine($"   📋 Artists: {string.Join(", ", sampleArtists.Select(a => a.Name))}");
+                }
+                Console.WriteLine();
+            }
+            else
+            {
+                Console.WriteLine("📭 No artists found in library");
+                Console.WriteLine("   💡 Make sure your library folder contains artist.json files");
+            }
+            
+            // Add helpful hint about detailed logging
+            Console.WriteLine("💡 To see detailed artist and release listing during startup, set:");
+            Console.WriteLine("   MUSICGQL_SHOW_DETAILED_STARTUP=true");
+            Console.WriteLine();
         }
 
         // After initial cache load, run maintenance: scan, identify, import, and refresh cache again
