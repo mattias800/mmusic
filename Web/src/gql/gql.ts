@@ -149,7 +149,8 @@ type Documents = {
     "\n  query ViewerIdForSpotifyImport {\n    viewer {\n      id\n    }\n  }\n": typeof types.ViewerIdForSpotifyImportDocument,
     "\n  mutation ImportSpotifyPlaylist($playlistId: String!, $userId: UUID!) {\n    importSpotifyPlaylist(input: { playlistId: $playlistId, userId: $userId }) {\n      __typename\n      ... on ImportSpotifyPlaylistSuccess {\n        playlist {\n          id\n          name\n        }\n      }\n      ... on ImportSpotifyPlaylistError {\n        message\n      }\n    }\n  }\n": typeof types.ImportSpotifyPlaylistDocument,
     "\n  mutation EnqueueArtistsFromSpotifyPlaylist($playlistId: String!) {\n    enqueueArtistsFromSpotifyPlaylist(input: { playlistId: $playlistId })\n  }\n": typeof types.EnqueueArtistsFromSpotifyPlaylistDocument,
-    "\n  fragment UserProfilePanel_User on User {\n    id\n    username\n    createdAt\n    updatedAt\n    likedSongs {\n      id\n    }\n  }\n": typeof types.UserProfilePanel_UserFragmentDoc,
+    "\n  fragment UserProfilePanel_User on User {\n    id\n    username\n    createdAt\n    updatedAt\n    listenBrainzUserId\n    hasListenBrainzToken\n  }\n": typeof types.UserProfilePanel_UserFragmentDoc,
+    "\n  mutation UpdateUserListenBrainzCredentials($input: UpdateUserListenBrainzCredentialsInput!) {\n    updateUserListenBrainzCredentials(input: $input) {\n      ... on UpdateUserListenBrainzCredentialsSuccess {\n        user {\n          id\n          username\n          listenBrainzUserId\n          hasListenBrainzToken\n        }\n      }\n      ... on UpdateUserListenBrainzCredentialsError {\n        message\n      }\n    }\n  }\n": typeof types.UpdateUserListenBrainzCredentialsDocument,
     "\n  query UserProfileWidget {\n    viewer {\n      id\n      username\n    }\n  }\n": typeof types.UserProfileWidgetDocument,
 };
 const documents: Documents = {
@@ -288,7 +289,8 @@ const documents: Documents = {
     "\n  query ViewerIdForSpotifyImport {\n    viewer {\n      id\n    }\n  }\n": types.ViewerIdForSpotifyImportDocument,
     "\n  mutation ImportSpotifyPlaylist($playlistId: String!, $userId: UUID!) {\n    importSpotifyPlaylist(input: { playlistId: $playlistId, userId: $userId }) {\n      __typename\n      ... on ImportSpotifyPlaylistSuccess {\n        playlist {\n          id\n          name\n        }\n      }\n      ... on ImportSpotifyPlaylistError {\n        message\n      }\n    }\n  }\n": types.ImportSpotifyPlaylistDocument,
     "\n  mutation EnqueueArtistsFromSpotifyPlaylist($playlistId: String!) {\n    enqueueArtistsFromSpotifyPlaylist(input: { playlistId: $playlistId })\n  }\n": types.EnqueueArtistsFromSpotifyPlaylistDocument,
-    "\n  fragment UserProfilePanel_User on User {\n    id\n    username\n    createdAt\n    updatedAt\n    likedSongs {\n      id\n    }\n  }\n": types.UserProfilePanel_UserFragmentDoc,
+    "\n  fragment UserProfilePanel_User on User {\n    id\n    username\n    createdAt\n    updatedAt\n    listenBrainzUserId\n    hasListenBrainzToken\n  }\n": types.UserProfilePanel_UserFragmentDoc,
+    "\n  mutation UpdateUserListenBrainzCredentials($input: UpdateUserListenBrainzCredentialsInput!) {\n    updateUserListenBrainzCredentials(input: $input) {\n      ... on UpdateUserListenBrainzCredentialsSuccess {\n        user {\n          id\n          username\n          listenBrainzUserId\n          hasListenBrainzToken\n        }\n      }\n      ... on UpdateUserListenBrainzCredentialsError {\n        message\n      }\n    }\n  }\n": types.UpdateUserListenBrainzCredentialsDocument,
     "\n  query UserProfileWidget {\n    viewer {\n      id\n      username\n    }\n  }\n": types.UserProfileWidgetDocument,
 };
 
@@ -849,7 +851,11 @@ export function graphql(source: "\n  mutation EnqueueArtistsFromSpotifyPlaylist(
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment UserProfilePanel_User on User {\n    id\n    username\n    createdAt\n    updatedAt\n    likedSongs {\n      id\n    }\n  }\n"): (typeof documents)["\n  fragment UserProfilePanel_User on User {\n    id\n    username\n    createdAt\n    updatedAt\n    likedSongs {\n      id\n    }\n  }\n"];
+export function graphql(source: "\n  fragment UserProfilePanel_User on User {\n    id\n    username\n    createdAt\n    updatedAt\n    listenBrainzUserId\n    hasListenBrainzToken\n  }\n"): (typeof documents)["\n  fragment UserProfilePanel_User on User {\n    id\n    username\n    createdAt\n    updatedAt\n    listenBrainzUserId\n    hasListenBrainzToken\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  mutation UpdateUserListenBrainzCredentials($input: UpdateUserListenBrainzCredentialsInput!) {\n    updateUserListenBrainzCredentials(input: $input) {\n      ... on UpdateUserListenBrainzCredentialsSuccess {\n        user {\n          id\n          username\n          listenBrainzUserId\n          hasListenBrainzToken\n        }\n      }\n      ... on UpdateUserListenBrainzCredentialsError {\n        message\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation UpdateUserListenBrainzCredentials($input: UpdateUserListenBrainzCredentialsInput!) {\n    updateUserListenBrainzCredentials(input: $input) {\n      ... on UpdateUserListenBrainzCredentialsSuccess {\n        user {\n          id\n          username\n          listenBrainzUserId\n          hasListenBrainzToken\n        }\n      }\n      ... on UpdateUserListenBrainzCredentialsError {\n        message\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

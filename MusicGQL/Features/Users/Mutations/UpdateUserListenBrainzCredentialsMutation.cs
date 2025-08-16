@@ -1,5 +1,6 @@
 using MusicGQL.Db.Postgres;
 using MusicGQL.EventProcessor;
+using MusicGQL.Db.Postgres.Models;
 using MusicGQL.Features.Users.Db;
 using MusicGQL.Features.Users.Events;
 using MusicGQL.Features.Users.Services;
@@ -27,27 +28,51 @@ public class UpdateUserListenBrainzCredentialsMutation
                 return new UpdateUserListenBrainzCredentialsError("User not found");
             }
 
-            // If credentials are provided, validate them
-            if (!string.IsNullOrEmpty(input.ListenBrainzToken))
+            // Determine what to update
+            var newListenBrainzUserId = input.ListenBrainzUserId;
+            var newListenBrainzToken = input.ListenBrainzToken;
+
+            // If token is provided (not empty), validate it
+            if (!string.IsNullOrEmpty(newListenBrainzToken))
             {
-                var validationResult = await userListenBrainzService.ValidateTokenAsync(user);
+                // Create a temporary user with the new token for validation
+                var tempUser = new DbUser
+                {
+                    UserId = user.UserId,
+                    Username = user.Username,
+                    ListenBrainzUserId = newListenBrainzUserId ?? user.ListenBrainzUserId,
+                    ListenBrainzToken = newListenBrainzToken
+                };
+
+                var validationResult = await userListenBrainzService.ValidateTokenAsync(tempUser);
                 if (!validationResult.IsValid)
                 {
                     return new UpdateUserListenBrainzCredentialsError($"Invalid ListenBrainz token: {validationResult.Message}");
                 }
 
                 // Update the user's ListenBrainz user ID if it's different from what we got from validation
-                if (!string.IsNullOrEmpty(validationResult.User) && validationResult.User != input.ListenBrainzUserId)
+                if (!string.IsNullOrEmpty(validationResult.User) && validationResult.User != newListenBrainzUserId)
                 {
-                    input = input with { ListenBrainzUserId = validationResult.User };
+                    newListenBrainzUserId = validationResult.User;
                 }
+            }
+            else
+            {
+                // If no token provided, keep the existing token
+                newListenBrainzToken = user.ListenBrainzToken;
+            }
+
+            // If no user ID provided, keep the existing one
+            if (string.IsNullOrEmpty(newListenBrainzUserId))
+            {
+                newListenBrainzUserId = user.ListenBrainzUserId;
             }
 
             // Create the event
             var event_ = new UserListenBrainzCredentialsUpdated(
                 input.UserId,
-                input.ListenBrainzUserId,
-                input.ListenBrainzToken
+                newListenBrainzUserId,
+                newListenBrainzToken
             );
 
             dbContext.Events.Add(event_);

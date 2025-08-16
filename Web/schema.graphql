@@ -1564,9 +1564,9 @@ type Url {
 
 type User {
   createdAt: DateTime!
+  hasListenBrainzToken: Boolean!
   id: ID!
   likedSongs: [LikedSong!]!
-  listenBrainzToken: String
   listenBrainzUserId: String
   playlists: [Playlist!]!
   updatedAt: DateTime!
