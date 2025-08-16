@@ -20,6 +20,10 @@ public record ServerSettings([property: GraphQLIgnore] DbServerSettings Model)
 
     public int DownloadSlotCount() => Model.DownloadSlotCount;
 
+    public string ListenBrainzUsername() => Model.ListenBrainzUsername;
+
+    public string ListenBrainzApiKey() => Model.ListenBrainzApiKey;
+
     public ServerLibraryManifestStatus ServerLibraryManifestStatus() => new();
 
     [GraphQLName("storageStats")]

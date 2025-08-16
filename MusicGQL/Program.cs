@@ -52,7 +52,10 @@ using MusicGQL.Integration.MusicBrainz;
 using MusicGQL.Integration.Spotify;
 using MusicGQL.Integration.Spotify.Configuration;
 using MusicGQL.Integration.Youtube.Configuration;
+using MusicGQL.Integration.ListenBrainz;
+using MusicGQL.Features.ListenBrainz;
 using MusicGQL.Types;
+using MetaBrainz.ListenBrainz;
 using Soulseek;
 using Soulseek.Diagnostics;
 using SpotifyAPI.Web;
@@ -118,6 +121,7 @@ builder
     .AddSingleton<MusicBrainzService>()
     .AddSingleton<YouTubeService>()
     .AddSingleton<SpotifyService>()
+    .AddSingleton<ListenBrainzService>()
     .AddSingleton<ArtistImportQueueService>()
     .AddSingleton<CurrentArtistImportStateService>()
     .AddSingleton<ImportHistoryService>()
@@ -362,6 +366,9 @@ builder
     .AddTypeExtension<ImportSubscription>()
     .AddTypeExtension<ArtistImportSearchRoot>()
     .AddTypeExtension<ArtistImportMutations>()
+    .AddTypeExtension<ListenBrainzQueryRoot>()
+    .AddTypeExtension<ListenBrainzMutations>()
+    .AddTypeExtension<UpdateListenBrainzSettingsMutation>()
     .AddTypeExtension<DownloadsSearchRoot>()
     .AddTypeExtension<DownloadsSubscription>()
     .AddTypeExtension<DownloadQueueMutations>()
@@ -497,6 +504,14 @@ builder.Services.AddHttpClient<MusicBrainzClient>(client =>
         "Hqub.MusicBrainz/3.0 (https://github.com/avatar29A/MusicBrainz)"
     );
     client.DefaultRequestHeaders.Add("Accept", "application/json");
+});
+
+// Configure ListenBrainz client
+builder.Services.AddSingleton<ListenBrainz>(provider =>
+{
+    var contact = new Uri("https://github.com/yourusername/mmusic");
+    // ListenBrainz v4.0.0 expects (application, version, contact)
+    return new ListenBrainz("MusicGQL", "1.0", contact);
 });
 
 builder.Services.AddFanArtTVClient(options =>

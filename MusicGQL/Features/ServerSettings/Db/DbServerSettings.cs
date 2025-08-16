@@ -16,6 +16,10 @@ public class DbServerSettings
 
     // Number of concurrent download slots to use
     public int DownloadSlotCount { get; set; } = 3;
+
+    // ListenBrainz integration settings
+    public string ListenBrainzUsername { get; set; } = string.Empty;
+    public string ListenBrainzApiKey { get; set; } = string.Empty;
 }
 
 public static class DefaultDbServerSettingsProvider
@@ -32,6 +36,8 @@ public static class DefaultDbServerSettingsProvider
             SoulSeekSearchTimeLimitSeconds = 60,
             SoulSeekNoDataTimeoutSeconds = 20,
             DownloadSlotCount = 3,
+            ListenBrainzUsername = "",
+            ListenBrainzApiKey = "",
         };
     }
 }
