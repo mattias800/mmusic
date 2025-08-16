@@ -5,7 +5,7 @@ import { Section } from "@/components/page-body/Section.tsx";
 import { SectionHeading } from "@/components/headings/SectionHeading.tsx";
 import { ArtistCard } from "@/features/artist/artist-card/ArtistCard.tsx";
 import { CardFlexList } from "@/components/page-body/CardFlexList.tsx";
-import { MainPadding } from "@/components/layout/MainPadding.tsx";
+import { PageLayout } from "@/components/ui";
 
 export interface ArtistListProps {
   artists: Array<FragmentType<typeof artistListArtistFragment>>;
@@ -22,7 +22,7 @@ export const ArtistList: React.FC<ArtistListProps> = (props) => {
   const artists = useFragment(artistListArtistFragment, props.artists);
 
   return (
-    <MainPadding>
+    <PageLayout addSearchPadding>
       <SectionList>
         <Section>
           <SectionHeading>Artists</SectionHeading>
@@ -33,6 +33,6 @@ export const ArtistList: React.FC<ArtistListProps> = (props) => {
           </CardFlexList>
         </Section>
       </SectionList>
-    </MainPadding>
+    </PageLayout>
   );
 };
