@@ -1,7 +1,8 @@
 import * as React from "react";
-import { Check, LoaderCircle, Plus } from "lucide-react";
+import { Check } from "lucide-react";
 import { useMutation } from "urql";
 import { graphql } from "@/gql";
+import { GradientButton } from "@/components/ui";
 
 export interface ArtistInLibraryButtonProps {
   artistId: string;
@@ -36,22 +37,16 @@ export const ArtistInLibraryButton: React.FC<ArtistInLibraryButtonProps> = ({
 
   if (isInLibrary) {
     return (
-      <button
-        className="border rounded-full px-1 py-1 text-sm bg-green-500 text-black transition flex gap-2 items-center"
-        onClick={onClick}
-      >
-        <Check />
-      </button>
+      <GradientButton onClick={onClick} loading={fetching}>
+        <Check className="w-5 h-5 text-green-400" />
+        Add to Library
+      </GradientButton>
     );
   }
 
   return (
-    <button
-      className="border border-white rounded-full px-4 py-1 text-sm hover:bg-white hover:text-black transition flex gap-2 items-center cursor-pointer"
-      onClick={onClick}
-    >
-      {fetching ? <LoaderCircle className="animate-spin" /> : <Plus />}
+    <GradientButton onClick={onClick} loading={fetching}>
       Add to Library
-    </button>
+    </GradientButton>
   );
 };

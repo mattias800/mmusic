@@ -23,7 +23,7 @@ export const ArtistHeader: React.FC<ArtistHeaderProps> = ({
   singleCount,
 }) => {
   const totalReleases = albumCount + epCount + singleCount;
-  
+
   return (
     <div className="relative">
       {/* Artist info positioned above the image */}
@@ -40,7 +40,7 @@ export const ArtistHeader: React.FC<ArtistHeaderProps> = ({
             <p className="text-white text-sm">
               {formatLargeNumber(listeners)} monthly listeners
             </p>
-            
+
             {/* Release Counts */}
             <div className="flex items-center gap-6 text-sm text-white/80">
               <div className="flex items-center gap-2">
