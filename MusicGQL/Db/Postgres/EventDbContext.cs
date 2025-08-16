@@ -42,6 +42,7 @@ public class EventDbContext(DbContextOptions<EventDbContext> options) : DbContex
             .HasValue<SongAddedToPlaylist>("SongAddedToPlaylist")
             .HasValue<UserCreated>("UserCreated")
             .HasValue<UserPasswordHashUpdated>("UserPasswordHashUpdated")
+            .HasValue<UserListenBrainzCredentialsUpdated>("UserListenBrainzCredentialsUpdated")
             .HasValue<LibraryPathUpdated>("LibraryPathUpdated");
         modelBuilder.Entity<DbTrackPlayCount>(b =>
         {

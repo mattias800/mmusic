@@ -17,6 +17,9 @@ public class UserEventProcessor(ILogger<UserEventProcessor> logger)
             case UserPasswordHashUpdated userPasswordHashSet:
                 await HandleUserPasswordHashSet(userPasswordHashSet, dbContext);
                 break;
+            case UserListenBrainzCredentialsUpdated userListenBrainzCredentialsUpdated:
+                await HandleUserListenBrainzCredentialsUpdated(userListenBrainzCredentialsUpdated, dbContext);
+                break;
         }
     }
 
@@ -62,6 +65,28 @@ public class UserEventProcessor(ILogger<UserEventProcessor> logger)
         }
 
         user.PasswordHash = ev.PasswordHash;
+        user.UpdatedAt = DateTime.UtcNow;
+        await dbContext.SaveChangesAsync();
+    }
+
+    private async Task HandleUserListenBrainzCredentialsUpdated(
+        UserListenBrainzCredentialsUpdated ev,
+        EventDbContext dbContext
+    )
+    {
+        var user = dbContext.Users.FirstOrDefault(u => u.UserId == ev.SubjectUserId);
+
+        if (user is null)
+        {
+            logger.LogWarning(
+                "UserListenBrainzCredentialsUpdated event received for UserId: {UserId}, but no existing user found. Ignoring",
+                ev.SubjectUserId
+            );
+            return;
+        }
+
+        user.ListenBrainzUserId = ev.ListenBrainzUserId;
+        user.ListenBrainzToken = ev.ListenBrainzToken;
         user.UpdatedAt = DateTime.UtcNow;
         await dbContext.SaveChangesAsync();
     }

@@ -48,6 +48,7 @@ using MusicGQL.Features.ServerSettings.Mutations;
 using MusicGQL.Features.Users.Aggregate;
 using MusicGQL.Features.Users.Handlers;
 using MusicGQL.Features.Users.Mutations;
+using MusicGQL.Features.Users.Services;
 using MusicGQL.Integration.MusicBrainz;
 using MusicGQL.Integration.Spotify;
 using MusicGQL.Integration.Spotify.Configuration;
@@ -122,6 +123,7 @@ builder
     .AddSingleton<YouTubeService>()
     .AddSingleton<SpotifyService>()
     .AddSingleton<ListenBrainzService>()
+    .AddSingleton<UserListenBrainzService>()
     .AddSingleton<ArtistImportQueueService>()
     .AddSingleton<CurrentArtistImportStateService>()
     .AddSingleton<ImportHistoryService>()
@@ -368,7 +370,11 @@ builder
     .AddTypeExtension<ArtistImportMutations>()
     .AddTypeExtension<ListenBrainzQueryRoot>()
     .AddTypeExtension<ListenBrainzMutations>()
+    .AddType<SubmitListenSuccess>()
+    .AddType<SubmitListenError>()
     .AddTypeExtension<UpdateListenBrainzSettingsMutation>()
+    .AddType<UpdateListenBrainzSettingsSuccess>()
+    .AddType<UpdateListenBrainzSettingsError>()
     .AddTypeExtension<DownloadsSearchRoot>()
     .AddTypeExtension<DownloadsSubscription>()
     .AddTypeExtension<DownloadQueueMutations>()
@@ -440,6 +446,9 @@ builder
     .AddTypeExtension<CreateUserMutation>()
     .AddType<CreateUserSuccess>()
     .AddType<CreateUserError>()
+    .AddTypeExtension<UpdateUserListenBrainzCredentialsMutation>()
+    .AddType<UpdateUserListenBrainzCredentialsSuccess>()
+    .AddType<UpdateUserListenBrainzCredentialsError>()
     .AddTypeExtension<SignInMutation>()
     .AddType<SignInSuccess>()
     .AddType<SignInError>()

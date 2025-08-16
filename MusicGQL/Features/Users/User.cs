@@ -17,6 +17,10 @@ public record User([property: GraphQLIgnore] DbUser Model)
 
     public DateTime UpdatedAt() => Model.UpdatedAt;
 
+    public string? ListenBrainzUserId() => Model.ListenBrainzUserId;
+
+    public string? ListenBrainzToken() => Model.ListenBrainzToken;
+
     public async Task<IEnumerable<LikedSong>> LikedSongs([Service] EventDbContext dbContext)
     {
         var likedSongs = await dbContext
