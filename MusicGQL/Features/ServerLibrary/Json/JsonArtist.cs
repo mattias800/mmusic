@@ -33,7 +33,7 @@ public class JsonTopTrack
     public int? TrackNumber { get; set; }
     public long? PlayCount { get; set; }
     public double? RankScore { get; set; }
-    public string? RankSource { get; set; } // "lf", "sp_popularity", or "lf+sp"
+    public string? RankSource { get; set; } // "lf", "sp_popularity", "lf+sp", or "listenbrainz"
 }
 
 public class JsonArtistPhotos

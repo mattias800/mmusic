@@ -208,8 +208,6 @@ public class TopTracksCompleter(SpotifyService spotifyService, LastfmClient last
             {
                 logger.LogInformation("[TopTracksCompleter] Processing cover art for track '{Title}' (source: {Source})", tt.Title, tt.RankSource ?? "unknown");
                 
-                // If mapped to a local release, this should already have been set by caller from release cover art.
-                // If still missing, try to get cover art from various sources
                 string? coverArtUrl = null;
                 string? coverArtSource = null;
                 
@@ -217,10 +215,8 @@ public class TopTracksCompleter(SpotifyService spotifyService, LastfmClient last
                 // ListenBrainz has caa_id and caa_release_mbid which can be used to get cover art
                 if (tt.RankSource == "listenbrainz")
                 {
-                    logger.LogInformation("[TopTracksCompleter] ListenBrainz track '{Title}' - attempting to get cover art from ListenBrainz data", tt.Title);
-                    // TODO: Implement ListenBrainz cover art fetching using caa_id or caa_release_mbid
-                    // For now, we'll fall back to Spotify
-                    logger.LogInformation("[TopTracksCompleter] ListenBrainz cover art not yet implemented, falling back to Spotify", tt.Title);
+                    logger.LogInformation("[TopTracksCompleter] ListenBrainz track '{Title}' - cover art should already be handled by importer", tt.Title);
+                    // ListenBrainz cover art is now handled by the importer, so we just fall through to Spotify
                 }
                 
                 // Try Spotify album image as fallback
@@ -266,6 +262,31 @@ public class TopTracksCompleter(SpotifyService spotifyService, LastfmClient last
                 else
                 {
                     logger.LogInformation("[TopTracksCompleter] No cover art available for '{Title}' (source: {Source}) - will remain null", tt.Title, tt.RankSource ?? "unknown");
+                }
+            }
+            else if (tt.CoverArt.StartsWith("http"))
+            {
+                // CoverArt is already set to a URL (from ListenBrainz), download and save it locally
+                logger.LogInformation("[TopTracksCompleter] Track '{Title}' already has cover art URL: {Url}, downloading and saving locally", tt.Title, tt.CoverArt);
+                
+                try
+                {
+                    var bytes = await httpClient.GetByteArrayAsync(tt.CoverArt);
+                    var fileName = $"toptrack{(i + 1).ToString("00")}.jpg";
+                    var fullPath = System.IO.Path.Combine(artistDir, fileName);
+                    
+                    logger.LogInformation("[TopTracksCompleter] Saving cover art for '{Title}' to {Path} ({Size} bytes)", tt.Title, fullPath, bytes.Length);
+                    
+                    await File.WriteAllBytesAsync(fullPath, bytes);
+                    tt.CoverArt = "./" + fileName; // Update to local file path
+                    
+                    logger.LogInformation("[TopTracksCompleter] Successfully downloaded and saved cover art for '{Title}': {FileName} ({Size} bytes)", 
+                        tt.Title, fileName, bytes.Length);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogWarning(ex, "[TopTracksCompleter] Failed to download cover art for '{Title}' from {Url}, clearing CoverArt field", tt.Title, tt.CoverArt);
+                    tt.CoverArt = null; // Clear the failed URL
                 }
             }
             else

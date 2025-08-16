@@ -2,6 +2,7 @@ using MusicGQL.Features.ServerLibrary.Json;
 using MusicGQL.Integration.ListenBrainz;
 using MetaBrainz.ListenBrainz;
 using Microsoft.Extensions.Logging;
+using System.Net.Http;
 
 namespace MusicGQL.Features.Import.Services.TopTracks;
 
@@ -34,26 +35,69 @@ public class TopTracksListenBrainzImporter(
             logger.LogInformation("[TopTracksListenBrainzImporter] Converting {Count} top recordings to JsonTopTrack format for MB artist {MbArtistId}", 
                 recordings.Count, mbArtistId);
             
-            var topTracks = recordings
-                .Take(take)
-                .Select((recording, index) => 
+            var topTracks = new List<JsonTopTrack>();
+            
+            // Use HttpClient for downloading cover art
+            using var httpClient = new HttpClient();
+            
+            for (int i = 0; i < Math.Min(recordings.Count, take); i++)
+            {
+                var recording = recordings[i];
+                var track = new JsonTopTrack
                 {
-                    var track = new JsonTopTrack
+                    Title = recording.RecordingName,
+                    ReleaseTitle = recording.ReleaseName,
+                    CoverArt = null, // Will be set below if we can fetch cover art
+                    PlayCount = recording.TotalListenCount,
+                    TrackLength = recording.Length,
+                    RankSource = "listenbrainz", // Mark this as ListenBrainz data
+                };
+                
+                // Try to fetch cover art from Cover Art Archive if we have the release MBID
+                if (!string.IsNullOrEmpty(recording.CaaReleaseMbid))
+                {
+                    try
                     {
-                        Title = recording.RecordingName,
-                        ReleaseTitle = recording.ReleaseName,
-                        CoverArt = null, // Will be set later when matched to local release
-                        PlayCount = recording.TotalListenCount,
-                        TrackLength = recording.Length,
-                        // Additional ListenBrainz-specific data could be stored here if needed
-                    };
-                    
-                    logger.LogDebug("[TopTracksListenBrainzImporter] Converted recording {Index}: '{Title}' (PlayCount: {PlayCount}, Length: {Length}s)", 
-                        index + 1, track.Title, track.PlayCount, track.TrackLength);
-                    
-                    return track;
-                })
-                .ToList();
+                        var coverArtUrl = $"https://coverartarchive.org/release/{recording.CaaReleaseMbid}/front-500";
+                        logger.LogInformation("[TopTracksListenBrainzImporter] Attempting to fetch cover art for '{Title}' from Cover Art Archive: {Url}", 
+                            track.Title, coverArtUrl);
+                        
+                        var response = await httpClient.GetAsync(coverArtUrl);
+                        if (response.IsSuccessStatusCode)
+                        {
+                            var bytes = await response.Content.ReadAsByteArrayAsync();
+                            var fileName = $"toptrack{(i + 1).ToString("00")}.jpg";
+                            
+                            // Note: We can't save the file here because we don't have the artist directory
+                            // The file will be saved later by the TopTracksCompleter
+                            // For now, we'll set the CoverArt field to indicate we have a URL to fetch from
+                            track.CoverArt = coverArtUrl; // This will be processed by the completer
+                            
+                            logger.LogInformation("[TopTracksListenBrainzImporter] Successfully fetched cover art for '{Title}' from Cover Art Archive ({Size} bytes)", 
+                                track.Title, bytes.Length);
+                        }
+                        else
+                        {
+                            logger.LogInformation("[TopTracksListenBrainzImporter] Cover Art Archive returned {StatusCode} for '{Title}', will try Spotify fallback", 
+                                response.StatusCode, track.Title);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.LogInformation("[TopTracksListenBrainzImporter] Failed to fetch cover art for '{Title}' from Cover Art Archive: {Error}, will try Spotify fallback", 
+                            track.Title, ex.Message);
+                    }
+                }
+                else
+                {
+                    logger.LogInformation("[TopTracksListenBrainzImporter] No release MBID available for '{Title}', will try Spotify fallback", track.Title);
+                }
+                
+                logger.LogDebug("[TopTracksListenBrainzImporter] Converted recording {Index}: '{Title}' (PlayCount: {PlayCount}, Length: {Length}s, CoverArt: {CoverArt})", 
+                    i + 1, track.Title, track.PlayCount, track.TrackLength, track.CoverArt ?? "null");
+                
+                topTracks.Add(track);
+            }
 
             logger.LogInformation("[TopTracksListenBrainzImporter] Successfully converted {Count} recordings to top tracks for MB artist {MbArtistId}. Final track count: {FinalCount}", 
                 recordings.Count, mbArtistId, topTracks.Count);
@@ -70,8 +114,6 @@ public class TopTracksListenBrainzImporter(
         catch (Exception ex)
         {
             logger.LogError(ex, "[TopTracksListenBrainzImporter] Unexpected error while getting top tracks for MB artist {MbArtistId}", mbArtistId);
-            logger.LogError("[TopTracksListenBrainzImporter] Error details: {ErrorMessage}", ex.Message);
-            logger.LogError("[TopTracksListenBrainzImporter] Stack trace: {StackTrace}", ex.StackTrace);
             return [];
         }
     }

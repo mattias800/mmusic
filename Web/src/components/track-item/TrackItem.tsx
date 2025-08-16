@@ -58,7 +58,7 @@ export const TrackItem: React.FC<TrackItemProps> = ({
     <ContextMenu>
       <ContextMenuTrigger>
         <div
-          className={`grid ${showCoverArt ? "grid-cols-[40px_80px_1fr_150px_50px]" : "grid-cols-[40px_1fr_150px_50px]"} items-center px-4 py-2 rounded hover:bg-neutral-800 ${
+          className={`grid ${showCoverArt ? "grid-cols-[40px_80px_1fr_150px_50px]" : "grid-cols-[40px_1fr_150px_50px]"} items-center px-4 py-2 rounded hover:bg-white/5 ${
             playing ? "text-green-400 font-semibold" : "text-white"
           }`}
           draggable={draggable}
