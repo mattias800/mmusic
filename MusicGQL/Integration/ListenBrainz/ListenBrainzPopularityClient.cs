@@ -118,23 +118,28 @@ public class ListenBrainzPopularityClient
                 _logger.LogInformation("[ListenBrainzPopularityClient] Successfully deserialized {Count} recordings for artist {ArtistMbid} (attempt {Attempt})", 
                     recordings.Count, artistMbid, attempt);
                 
-                if (recordings.Count > 0)
+                // Filter to top 30 tracks by listen count and only log those
+                var topRecordings = recordings
+                    .OrderByDescending(r => r.TotalListenCount)
+                    .Take(30)
+                    .ToList();
+                
+                _logger.LogInformation("[ListenBrainzPopularityClient] Filtered to top {TopCount} recordings by listen count (from {TotalCount} total)", 
+                    topRecordings.Count, recordings.Count);
+                
+                if (topRecordings.Count > 0)
                 {
-                    var firstRecording = recordings[0];
-                    _logger.LogInformation("[ListenBrainzPopularityClient] Sample recording: '{RecordingName}' by '{ArtistName}' (MBID: {RecordingMbid})", 
+                    var firstRecording = topRecordings[0];
+                    _logger.LogInformation("[ListenBrainzPopularityClient] Top recording: '{RecordingName}' by '{ArtistName}' (MBID: {RecordingMbid})", 
                         firstRecording.RecordingName, firstRecording.ArtistName, firstRecording.RecordingMbid);
                     
                     // Add more detailed logging to debug the deserialization
-                    _logger.LogInformation("[ListenBrainzPopularityClient] Sample recording details - Title: '{Title}', Artist: '{Artist}', MBID: '{Mbid}', Length: {Length}, ListenCount: {ListenCount}, UserCount: {UserCount}", 
+                    _logger.LogInformation("[ListenBrainzPopularityClient] Top recording details - Title: '{Title}', Artist: '{Artist}', MBID: '{Mbid}', Length: {Length}, ListenCount: {ListenCount}, UserCount: {UserCount}", 
                         firstRecording.RecordingName, firstRecording.ArtistName, firstRecording.RecordingMbid, 
                         firstRecording.Length, firstRecording.TotalListenCount, firstRecording.TotalUserCount);
-                    
-                    // Log a small sample of the raw JSON to see the structure
-                    var sampleJson = content.Length > 500 ? content.Substring(0, 500) + "..." : content;
-                    _logger.LogInformation("[ListenBrainzPopularityClient] Raw JSON sample: {SampleJson}", sampleJson);
                 }
                 
-                return recordings;
+                return topRecordings;
             }
             catch (TaskCanceledException ex) when (ex.InnerException is TimeoutException)
             {

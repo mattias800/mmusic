@@ -19,7 +19,7 @@ public class TopTracksListenBrainzImporter(
             
             var recordings = await popularityClient.GetTopRecordingsForArtistAsync(mbArtistId);
             
-            logger.LogInformation("[TopTracksListenBrainzImporter] ListenBrainz popularity client returned {Count} recordings for MB artist {MbArtistId}", 
+            logger.LogInformation("[TopTracksListenBrainzImporter] ListenBrainz popularity client returned {Count} top recordings for MB artist {MbArtistId}", 
                 recordings.Count, mbArtistId);
             
             if (recordings.Count == 0)
@@ -31,11 +31,10 @@ public class TopTracksListenBrainzImporter(
                 return [];
             }
 
-            logger.LogInformation("[TopTracksListenBrainzImporter] Converting {Count} recordings to JsonTopTrack format for MB artist {MbArtistId}", 
+            logger.LogInformation("[TopTracksListenBrainzImporter] Converting {Count} top recordings to JsonTopTrack format for MB artist {MbArtistId}", 
                 recordings.Count, mbArtistId);
             
             var topTracks = recordings
-                .OrderByDescending(r => r.TotalListenCount)
                 .Take(take)
                 .Select((recording, index) => 
                 {
