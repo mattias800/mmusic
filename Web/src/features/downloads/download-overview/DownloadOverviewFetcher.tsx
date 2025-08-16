@@ -131,61 +131,42 @@ export const DownloadOverviewFetcher: React.FC<
     }
   };
 
-  // Find active working slots
+  // Calculate working slots and total download speed
   const workingSlots = slots?.filter(slot => slot.isWorking && slot.currentProgress) || [];
+  const totalSlots = slots?.length || 0;
+  const workingCount = workingSlots.length;
+
+  // Calculate total download speed from all working slots
+  let totalSpeedKbps = 0;
+  workingSlots.forEach(slot => {
+    if (slot.currentProgress?.currentDownloadSpeedKbps) {
+      totalSpeedKbps += slot.currentProgress.currentDownloadSpeedKbps;
+    }
+  });
 
   return (
     <div className="space-y-3 text-sm">
+      {/* Slots Summary */}
       <div>
-        <div className="font-medium text-zinc-200">Active Downloads ({workingSlots.length})</div>
-        {workingSlots.length > 0 ? (
-          workingSlots.map((slot) => {
-            const progress = slot.currentProgress!;
-            return (
-              <div key={slot.id} className="text-zinc-300 mb-2">
-                <div>
-                  Slot {slot.id}:{" "}
-                  <Link
-                    to={`/artist/${progress.artistId}`}
-                    className="text-blue-400 hover:text-blue-300 hover:underline"
-                  >
-                    {progress.artistId}
-                  </Link>
-                  {" - "}
-                  <Link
-                    to={`/artist/${progress.artistId}/release/${progress.releaseFolderName}`}
-                    className="text-blue-400 hover:text-blue-300 hover:underline"
-                  >
-                    {progress.releaseFolderName}
-                  </Link>
-                </div>
-                {progress.status && (
-                  <div className="text-xs text-zinc-400">
-                    {statusText(progress.status)} {progress.completedTracks}/
-                    {progress.totalTracks}
-                    {progress.currentProvider && progress.totalProviders && (
-                      <span className="ml-2">
-                        via {progress.currentProvider} ({progress.currentProviderIndex}/{progress.totalProviders})
-                      </span>
-                    )}
-                  </div>
-                )}
-                {typeof progress.currentDownloadSpeedKbps === "number" && (
-                  <div className="text-xs text-zinc-400">
-                    Speed: {progress.currentDownloadSpeedKbps.toFixed(1)} KB/s
-                  </div>
-                )}
-                {progress.errorMessage && (
-                  <div className="text-xs text-red-400">{progress.errorMessage}</div>
-                )}
-              </div>
-            );
-          })
-        ) : (
-          <div className="text-zinc-400">No active downloads</div>
-        )}
+        <div className="font-medium text-zinc-200">
+          {workingCount > 0
+            ? `${workingCount}/${totalSlots} slots working`
+            : `${totalSlots} slots idle`
+          }
+        </div>
       </div>
 
+      {/* Total Download Speed */}
+      {totalSpeedKbps > 0 && (
+        <div>
+          <div className="font-medium text-zinc-200">Total Speed</div>
+          <div className="text-zinc-400">
+            {totalSpeedKbps.toFixed(1)} KB/s
+          </div>
+        </div>
+      )}
+
+      {/* Queue Status */}
       <div>
         <div className="font-medium text-zinc-200">
           {queue?.queueLength
@@ -193,6 +174,33 @@ export const DownloadOverviewFetcher: React.FC<
             : "Queue is empty"}
         </div>
       </div>
+
+      {/* Quick Status Summary */}
+      {workingCount > 0 && (
+        <div className="text-xs text-zinc-400">
+          {workingSlots.map(slot => {
+            const progress = slot.currentProgress!;
+            return (
+              <div key={slot.id} className="truncate">
+                <Link
+                  to={`/artist/${progress.artistId}`}
+                  className="hover:underline"
+                >
+                  {progress.artistId}
+                </Link>
+                {" - "}
+                <Link
+                  to={`/artist/${progress.artistId}/release/${progress.releaseFolderName}`}
+                  className="hover:underline"
+                >
+                  {progress.releaseFolderName}
+                </Link>
+                : {statusText(progress.status)}
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 };

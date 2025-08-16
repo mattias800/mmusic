@@ -108,8 +108,8 @@ export const TrackItem: React.FC<TrackItemProps> = ({
       </ContextMenuTrigger>
       <ContextMenuContent className="w-40">
         <ContextMenuItem>Add to Library</ContextMenuItem>
+        {contextMenuItems}
         <ContextMenuSub>
-          {contextMenuItems}
           <ContextMenuSubTrigger>Add to Playlist</ContextMenuSubTrigger>
           <ContextMenuSubContent className="w-48">
             {renderAddToPlaylistSubmenu?.() ?? (

@@ -11,7 +11,6 @@ import {
   Home,
   Play,
   Download,
-  Clock,
 } from "lucide-react";
 import { SearchInput } from "../search/search-input/SearchInput.tsx";
 import { DownloadOverviewFetcher } from "@/features/downloads/download-overview/DownloadOverviewFetcher.tsx";
@@ -21,7 +20,6 @@ import { cn } from "@/lib/utils.ts";
 import { SidebarNavButton } from "@/features/sidebar/SidebarNavButton.tsx";
 import { SidebarSection } from "@/features/sidebar/SidebarSection.tsx";
 import { SoulSeekNetworkStatusFetcher } from "@/features/soul-seek-network-status/SoulSeekNetworkStatusFetcher.tsx";
-import { ArtistImportQueuePanel } from "@/features/sidebar/artist-import-queue/ArtistImportQueuePanel.tsx";
 import { MmusicLogo } from "@/components/logo/MmusicLogo.tsx";
 import { PlaylistList } from "@/features/playlists/playlist-list/PlaylistList.tsx";
 import { RootState } from "@/Store.ts";
@@ -110,13 +108,6 @@ export const Sidebar = ({ className }: SidebarProps) => {
         >
           <div className="pt-2">
             <DownloadOverviewFetcher />
-          </div>
-        </SidebarSection>
-        
-        {/* Import Queue Section */}
-        <SidebarSection heading="Import Queue" icon={Clock} iconColor="text-purple-400">
-          <div className="pt-2">
-            <ArtistImportQueuePanel />
           </div>
         </SidebarSection>
         
