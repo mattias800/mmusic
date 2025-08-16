@@ -1,6 +1,6 @@
 import { BrowserRouter } from "react-router";
 import { AppRouter } from "@/AppRouter.tsx";
-import { PageLayout } from "@/PageLayout.tsx";
+import { GlobalPageLayout } from "@/GlobalPageLayout.tsx";
 import { Provider as UrqlProvider } from "urql";
 import { Provider as ReduxProvider } from "react-redux";
 import { urqlClient } from "@/UrqlClient.ts";
@@ -11,6 +11,7 @@ import { SetupPage } from "@/app/SetupPage.tsx";
 import { SignInPage } from "@/app/SignInPage.tsx";
 import { Sidebar } from "@/features/sidebar/Sidebar.tsx";
 import { ThemeProvider } from "@/components/theme-provider.tsx";
+import { SearchInput } from "@/features/search/search-input/SearchInput.tsx";
 
 function App() {
   return (
@@ -23,9 +24,12 @@ function App() {
               <>
                 <MusicPlayer />
                 <BrowserRouter>
-                  <PageLayout renderSidebar={() => <Sidebar />}>
+                  <GlobalPageLayout
+                    renderSidebar={() => <Sidebar />}
+                    renderSearch={() => <SearchInput />}
+                  >
                     <AppRouter />
-                  </PageLayout>
+                  </GlobalPageLayout>
                 </BrowserRouter>
               </>
             )}

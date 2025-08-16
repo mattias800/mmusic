@@ -2,20 +2,16 @@ import React from "react";
 
 export interface PageLayoutProps {
   children: React.ReactNode;
-  className?: string;
   containerClassName?: string;
 }
 
 export const PageLayout: React.FC<PageLayoutProps> = ({
   children,
-  className = "",
-  containerClassName = ""
+  containerClassName = "",
 }) => {
   return (
-    <div className={`min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 ${className}`}>
-      <div className={`container mx-auto px-6 py-6 ${containerClassName}`}>
-        {children}
-      </div>
+    <div className={`container mx-auto px-6 py-6 ${containerClassName}`}>
+      {children}
     </div>
   );
 };
