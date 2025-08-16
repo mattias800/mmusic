@@ -2,6 +2,7 @@ using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MusicGQL.Features.ListenBrainz;
+using System.Text.Json.Serialization;
 
 namespace MusicGQL.Integration.ListenBrainz;
 
@@ -122,6 +123,15 @@ public class ListenBrainzPopularityClient
                     var firstRecording = recordings[0];
                     _logger.LogInformation("[ListenBrainzPopularityClient] Sample recording: '{RecordingName}' by '{ArtistName}' (MBID: {RecordingMbid})", 
                         firstRecording.RecordingName, firstRecording.ArtistName, firstRecording.RecordingMbid);
+                    
+                    // Add more detailed logging to debug the deserialization
+                    _logger.LogInformation("[ListenBrainzPopularityClient] Sample recording details - Title: '{Title}', Artist: '{Artist}', MBID: '{Mbid}', Length: {Length}, ListenCount: {ListenCount}, UserCount: {UserCount}", 
+                        firstRecording.RecordingName, firstRecording.ArtistName, firstRecording.RecordingMbid, 
+                        firstRecording.Length, firstRecording.TotalListenCount, firstRecording.TotalUserCount);
+                    
+                    // Log a small sample of the raw JSON to see the structure
+                    var sampleJson = content.Length > 500 ? content.Substring(0, 500) + "..." : content;
+                    _logger.LogInformation("[ListenBrainzPopularityClient] Raw JSON sample: {SampleJson}", sampleJson);
                 }
                 
                 return recordings;
@@ -197,17 +207,40 @@ public class ListenBrainzPopularityClient
 
 public class ListenBrainzTopRecording
 {
+    [JsonPropertyName("artist_mbids")]
     public List<string> ArtistMbids { get; set; } = [];
+    
+    [JsonPropertyName("artist_name")]
     public string ArtistName { get; set; } = string.Empty;
+    
+    [JsonPropertyName("caa_id")]
     public long? CaaId { get; set; }
+    
+    [JsonPropertyName("caa_release_mbid")]
     public string? CaaReleaseMbid { get; set; }
+    
+    [JsonPropertyName("length")]
     public int? Length { get; set; }
+    
+    [JsonPropertyName("recording_mbid")]
     public string RecordingMbid { get; set; } = string.Empty;
+    
+    [JsonPropertyName("recording_name")]
     public string RecordingName { get; set; } = string.Empty;
+    
+    [JsonPropertyName("release_color")]
     public ReleaseColor? ReleaseColor { get; set; }
+    
+    [JsonPropertyName("release_mbid")]
     public string? ReleaseMbid { get; set; }
+    
+    [JsonPropertyName("release_name")]
     public string? ReleaseName { get; set; }
+    
+    [JsonPropertyName("total_listen_count")]
     public long TotalListenCount { get; set; }
+    
+    [JsonPropertyName("total_user_count")]
     public long TotalUserCount { get; set; }
 }
 

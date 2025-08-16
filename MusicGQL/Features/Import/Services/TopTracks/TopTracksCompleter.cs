@@ -116,10 +116,14 @@ public class TopTracksCompleter(SpotifyService spotifyService, LastfmClient last
                 tt.TrackLength = spotifyMatch.DurationMs;
             }
 
+            // Check if this track already has real play count data (e.g., from ListenBrainz)
+            bool hasRealPlayCount = tt.PlayCount.HasValue && tt.PlayCount.Value > 0;
+            
             // Fill play count, preferring Last.fm when available, else Spotify popularity as proxy
+            // BUT only if we don't already have real play count data
             long? lfCountUsed = null;
             int? spPopularityUsed = null;
-            if (tt.PlayCount == null)
+            if (!hasRealPlayCount && tt.PlayCount == null)
             {
                 bool set = false;
                 foreach (var candidateArtist in candidateArtistNames)
@@ -149,13 +153,19 @@ public class TopTracksCompleter(SpotifyService spotifyService, LastfmClient last
                     tt.PlayCount = (long)Math.Round(spNorm.Value);
                     try { logger.LogInformation("[TopTracksCompleter] SP popularity match title='{Title}' popularity={Pop}", tt.Title, spPopularityUsed ?? -1); } catch { }
                 }
-
             }
 
             // Compute RankScore using both signals when available
-            // Normalize components and compute blended rank
+            // If we have real play count data, use it directly for ranking
             double lfScore = 0.0;
-            if (lfCountUsed.HasValue)
+            if (hasRealPlayCount)
+            {
+                // Use the real play count for ranking (e.g., from ListenBrainz)
+                lfScore = Math.Log10(tt.PlayCount.Value + 1.0);
+                lfCountUsed = tt.PlayCount.Value;
+                tt.RankSource = "listenbrainz"; // Mark as ListenBrainz data
+            }
+            else if (lfCountUsed.HasValue)
             {
                 if (lfCountUsed.Value >= LfIgnoreBelow)
                 {
@@ -170,9 +180,14 @@ public class TopTracksCompleter(SpotifyService spotifyService, LastfmClient last
             double spScore = spPopularityUsed.HasValue ? (spPopularityUsed.Value / 100.0) : 0.0;
             var rankScore = Wlf * lfScore + Wsp * spScore;
             tt.RankScore = rankScore;
-            tt.RankSource = lfCountUsed.HasValue && spPopularityUsed.HasValue ? "lf+sp"
-                : lfCountUsed.HasValue ? "lf"
-                : spPopularityUsed.HasValue ? "sp_popularity" : null;
+            
+            // Set rank source based on what we used
+            if (tt.RankSource == null)
+            {
+                tt.RankSource = lfCountUsed.HasValue && spPopularityUsed.HasValue ? "lf+sp"
+                    : lfCountUsed.HasValue ? "lf"
+                    : spPopularityUsed.HasValue ? "sp_popularity" : null;
+            }
 
             // Log enrichment details for diagnostics
             try
