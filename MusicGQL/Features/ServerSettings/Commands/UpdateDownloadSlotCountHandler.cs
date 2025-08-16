@@ -8,7 +8,7 @@ namespace MusicGQL.Features.ServerSettings.Commands;
 
 public class UpdateDownloadSlotCountHandler(
     EventDbContext dbContext,
-    EventProcessor.EventProcessorWorker eventProcessorWorker,
+    EventProcessorWorker eventProcessorWorker,
     IDownloadSlotManager slotManager
 )
 {
@@ -43,7 +43,7 @@ public class UpdateDownloadSlotCountHandler(
 
         // Add event to database
         dbContext.Events.Add(
-            new Events.DownloadSlotCountUpdated
+            new DownloadSlotCountUpdated
             {
                 ActorUserId = Guid.Empty, // TODO: Get actual user ID
                 NewSlotCount = command.NewSlotCount,

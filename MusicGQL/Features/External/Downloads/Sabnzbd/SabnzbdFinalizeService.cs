@@ -115,7 +115,7 @@ public class SabnzbdFinalizeService(
             
             logger.LogInformation("[SAB Finalize] Source root directory exists, scanning for audio files...");
             
-            var sourceFiles = System.IO.Directory
+            var sourceFiles = Directory
                 .EnumerateFiles(sourceRoot, "*", SearchOption.AllDirectories)
                 .Where(f => AudioExtensions.Contains(System.IO.Path.GetExtension(f).ToLowerInvariant()))
                 .ToList();
@@ -149,7 +149,7 @@ public class SabnzbdFinalizeService(
                         var ext = System.IO.Path.GetExtension(dest);
                         destFinal = System.IO.Path.Combine(targetDir, $"{name} ({counter++}){ext}");
                     }
-                    System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(destFinal)!);
+                    Directory.CreateDirectory(System.IO.Path.GetDirectoryName(destFinal)!);
                     try { File.Move(src, destFinal); }
                     catch (UnauthorizedAccessException) { File.Copy(src, destFinal, overwrite: false); try { File.Delete(src); } catch { } }
                     catch (IOException) { File.Copy(src, destFinal, overwrite: false); try { File.Delete(src); } catch { } }
@@ -170,7 +170,7 @@ public class SabnzbdFinalizeService(
             }
 
             // Update release.json
-            var audioFiles = System.IO.Directory
+            var audioFiles = Directory
                 .GetFiles(targetDir)
                 .Where(f => AudioExtensions.Contains(System.IO.Path.GetExtension(f).ToLowerInvariant()))
                 .OrderBy(f => f, StringComparer.OrdinalIgnoreCase)

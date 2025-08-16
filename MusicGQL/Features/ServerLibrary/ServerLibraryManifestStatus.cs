@@ -9,7 +9,7 @@ public record ServerLibraryManifestStatus
 
     public async Task<bool> HasLibraryManifest(
         ServerSettingsAccessor serverSettingsAccessor,
-        ServerSettings.LibraryManifestService manifestService
+        LibraryManifestService manifestService
     )
     {
         try

@@ -134,7 +134,7 @@ public class ArtistImportQueueService(
     private void PublishQueueUpdated()
     {
         _ = eventSender.SendAsync(
-            ArtistImportSubscription.ArtistImportQueueUpdatedTopic,
+            "ArtistImportQueueUpdated",
             Snapshot()
         );
     }

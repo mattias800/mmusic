@@ -8,7 +8,7 @@ public class DeleteArtistMutation
 {
     public async Task<DeleteArtistResult> DeleteArtist(
         DeleteArtistInput input,
-        [Service] MusicGQL.Features.ServerLibrary.Services.ArtistDeletionService deletionService
+        [Service] Services.ArtistDeletionService deletionService
     )
     {
         var (success, error) = await deletionService.DeleteArtistCompletelyAsync(input.ArtistId);

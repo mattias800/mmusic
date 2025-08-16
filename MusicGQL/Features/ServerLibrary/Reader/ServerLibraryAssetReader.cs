@@ -49,7 +49,7 @@ public class ServerLibraryAssetReader(ServerSettingsAccessor serverSettingsAcces
                 return (null, null, null);
 
             var jsonContent = await File.ReadAllTextAsync(artistJsonPath);
-            var artistJson = System.Text.Json.JsonSerializer.Deserialize<Json.JsonArtist>(
+            var artistJson = JsonSerializer.Deserialize<Json.JsonArtist>(
                 jsonContent,
                 GetJsonOptions()
             );
@@ -136,7 +136,7 @@ public class ServerLibraryAssetReader(ServerSettingsAccessor serverSettingsAcces
                 return (null, null, null);
 
             var jsonContent = await File.ReadAllTextAsync(releaseJsonPath);
-            var releaseJson = System.Text.Json.JsonSerializer.Deserialize<Json.JsonRelease>(
+            var releaseJson = JsonSerializer.Deserialize<Json.JsonRelease>(
                 jsonContent,
                 GetJsonOptions()
             );
@@ -189,7 +189,7 @@ public class ServerLibraryAssetReader(ServerSettingsAccessor serverSettingsAcces
                 return (null, null, null);
 
             var jsonContent = await File.ReadAllTextAsync(artistJsonPath);
-            var artistJson = System.Text.Json.JsonSerializer.Deserialize<Json.JsonArtist>(
+            var artistJson = JsonSerializer.Deserialize<Json.JsonArtist>(
                 jsonContent,
                 GetJsonOptions()
             );
@@ -300,7 +300,7 @@ public class ServerLibraryAssetReader(ServerSettingsAccessor serverSettingsAcces
                 return (null, null, null);
 
             var jsonContent = await File.ReadAllTextAsync(releaseJsonPath);
-            var releaseJson = System.Text.Json.JsonSerializer.Deserialize<Json.JsonRelease>(
+            var releaseJson = JsonSerializer.Deserialize<Json.JsonRelease>(
                 jsonContent,
                 GetJsonOptions()
             );

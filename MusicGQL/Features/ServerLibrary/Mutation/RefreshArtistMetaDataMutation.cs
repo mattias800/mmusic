@@ -16,7 +16,7 @@ public class RefreshArtistMetaDataMutation
         IImportExecutor importExecutor,
         ILogger<RefreshArtistMetaDataMutation> logger,
         HotChocolate.Subscriptions.ITopicEventSender eventSender,
-        [Service] MusicGQL.Features.ServerLibrary.Share.ArtistShareManifestService shareService,
+        [Service] Share.ArtistShareManifestService shareService,
         [Service] ServerSettingsAccessor serverSettingsAccessor,
         RefreshArtistMetaDataInput input
     )

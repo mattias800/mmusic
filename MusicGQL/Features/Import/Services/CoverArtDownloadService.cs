@@ -30,7 +30,7 @@ public class CoverArtDownloadService(
         try
         {
             var libRoot = Directory.GetParent(artistFolderPath)?.FullName ?? string.Empty;
-            if (!File.Exists(System.IO.Path.Combine(libRoot, LibraryManifestService.ManifestFileName)))
+            if (!File.Exists(Path.Combine(libRoot, LibraryManifestService.ManifestFileName)))
             {
                 return new FanArtDownloadResult();
             }
@@ -104,7 +104,7 @@ public class CoverArtDownloadService(
             // releaseFolderPath => <Library>/<Artist>/<Release>
             var libRoot = Directory.GetParent(Directory.GetParent(releaseFolderPath)?.FullName ?? string.Empty)?.FullName
                            ?? string.Empty;
-            if (!File.Exists(System.IO.Path.Combine(libRoot, LibraryManifestService.ManifestFileName)))
+            if (!File.Exists(Path.Combine(libRoot, LibraryManifestService.ManifestFileName)))
             {
                 return null;
             }

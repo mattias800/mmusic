@@ -78,7 +78,7 @@ public class SoulSeekReleaseDownloader(
             CompletedTracks = 0,
             ArtistName = cachedRelease?.ArtistName ?? artistName,
             ReleaseTitle = cachedRelease?.Title ?? releaseTitle,
-            CoverArtUrl = Features.ServerLibrary.Utils.LibraryAssetUrlFactory.CreateReleaseCoverArtUrl(artistId, releaseFolderName)
+            CoverArtUrl = ServerLibrary.Utils.LibraryAssetUrlFactory.CreateReleaseCoverArtUrl(artistId, releaseFolderName)
         });
         int minRequiredTracks = expectedTrackCount > 0
             ? expectedTrackCount
@@ -410,7 +410,7 @@ public class SoulSeekReleaseDownloader(
                                     CompletedTracks = displayTrack,
                                     ArtistName = cachedRelease?.ArtistName ?? artistName,
                                     ReleaseTitle = cachedRelease?.Title ?? releaseTitle,
-                                    CoverArtUrl = Features.ServerLibrary.Utils.LibraryAssetUrlFactory.CreateReleaseCoverArtUrl(artistId, releaseFolderName),
+                                    CoverArtUrl = ServerLibrary.Utils.LibraryAssetUrlFactory.CreateReleaseCoverArtUrl(artistId, releaseFolderName),
                                     CurrentTrackProgressPercent = percent,
                                     CurrentDownloadSpeedKbps = kbps,
                                 });
@@ -458,7 +458,7 @@ public class SoulSeekReleaseDownloader(
                             CompletedTracks = displayTrack,
                             ArtistName = cachedRelease?.ArtistName ?? artistName,
                             ReleaseTitle = cachedRelease?.Title ?? releaseTitle,
-                            CoverArtUrl = Features.ServerLibrary.Utils.LibraryAssetUrlFactory.CreateReleaseCoverArtUrl(artistId, releaseFolderName),
+                            CoverArtUrl = ServerLibrary.Utils.LibraryAssetUrlFactory.CreateReleaseCoverArtUrl(artistId, releaseFolderName),
                             CurrentTrackProgressPercent = 100,
                             CurrentDownloadSpeedKbps = null,
                         });

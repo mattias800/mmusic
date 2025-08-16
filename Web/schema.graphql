@@ -69,6 +69,7 @@ enum ApplyPolicy {
 
 type Artist implements ArtistBase {
   albums: [Release!]!
+  alsoAppearsOn: [ArtistAppearsOn!]!
   connectedExternalServices: [ArtistConnectedExternalService!]!
   eps: [Release!]!
   id: ID!
@@ -80,6 +81,18 @@ type Artist implements ArtistBase {
   singles: [Release!]!
   sortName: String!
   topTracks: [ArtistTopTrack!]!
+}
+
+type ArtistAppearsOn {
+  coverArtUrl: String
+  firstReleaseDate: String
+  firstReleaseYear: String
+  musicBrainzReleaseGroupId: String
+  primaryArtistMusicBrainzId: String
+  primaryArtistName: String!
+  releaseTitle: String!
+  releaseType: String!
+  role: String
 }
 
 interface ArtistBase {
@@ -100,6 +113,26 @@ type ArtistImages {
   banners: [String!]!
   logos: [String!]!
   thumbs: [String!]!
+}
+
+type ArtistImportBackgroundJob {
+  artistId: String!
+  artistName: String!
+  artistPath: String!
+  musicBrainzId: String!
+}
+
+type ArtistImportBackgroundProgress {
+  artistId: String!
+  hasError: Boolean!
+  message: String!
+  percentage: Int!
+  timestamp: DateTime!
+}
+
+type ArtistImportBackgroundQueueState {
+  items: [ArtistImportBackgroundJob!]!
+  queueLength: Int!
 }
 
 type ArtistImportHistoryItem {
@@ -1325,6 +1358,8 @@ type StorageStats {
 }
 
 type Subscription {
+  artistImportBackgroundProgress(artistId: String!): ArtistImportBackgroundProgress!
+  artistImportBackgroundQueueUpdated: ArtistImportBackgroundQueueState!
   artistImportQueueUpdated: ArtistImportQueueState!
   artistImported: Artist!
   currentArtistImportUpdated: ArtistImportProgress!

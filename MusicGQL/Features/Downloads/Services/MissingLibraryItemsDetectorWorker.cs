@@ -79,11 +79,11 @@ public class MissingLibraryItemsDetectorWorker(
 
                 // Shuffle candidates
                 // Prioritize by type: Album > Ep > Single, then shuffle within each priority
-                int Priority(MusicGQL.Features.ServerLibrary.Json.JsonReleaseType t) => t switch
+                int Priority(ServerLibrary.Json.JsonReleaseType t) => t switch
                 {
-                    MusicGQL.Features.ServerLibrary.Json.JsonReleaseType.Album => 0,
-                    MusicGQL.Features.ServerLibrary.Json.JsonReleaseType.Ep => 1,
-                    MusicGQL.Features.ServerLibrary.Json.JsonReleaseType.Single => 2,
+                    ServerLibrary.Json.JsonReleaseType.Album => 0,
+                    ServerLibrary.Json.JsonReleaseType.Ep => 1,
+                    ServerLibrary.Json.JsonReleaseType.Single => 2,
                     _ => 3
                 };
                 var rng = new Random();

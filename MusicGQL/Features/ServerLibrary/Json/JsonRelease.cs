@@ -5,6 +5,7 @@ public class JsonRelease
     public string Title { get; set; }
     public string? SortTitle { get; set; }
     public string ArtistName { get; set; } = string.Empty;
+    public string? ArtistId { get; set; }
     public JsonReleaseType Type { get; set; }
     public List<JsonTrack>? Tracks { get; set; }
     public string? FirstReleaseDate { get; set; }

@@ -21,7 +21,7 @@ public class RefreshArtistTopTracksMutation
         ClaimsPrincipal claimsPrincipal,
         RenamePlaylistHandler renamePlaylistHandler,
         EventDbContext dbContext,
-        [Service] MusicGQL.Features.ServerSettings.ServerSettingsAccessor serverSettingsAccessor,
+        [Service] ServerSettingsAccessor serverSettingsAccessor,
         RefreshArtistTopTracksInput input
     )
     {

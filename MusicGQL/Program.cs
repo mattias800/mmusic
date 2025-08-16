@@ -121,6 +121,8 @@ builder
     .AddSingleton<ArtistImportQueueService>()
     .AddSingleton<CurrentArtistImportStateService>()
     .AddSingleton<ImportHistoryService>()
+    .AddSingleton<ArtistImportBackgroundQueueService>()
+    .AddHostedService<ArtistImportBackgroundService>()
     .AddSingleton<ServerLibraryJsonReader>()
     .AddSingleton<ServerLibraryAssetReader>()
     .AddSingleton<ServerLibraryFileSystemScanner>()
@@ -159,7 +161,7 @@ builder
         client.DefaultRequestHeaders.Add("Accept", "application/json");
     })
     .Services
-    .AddHttpClient<MusicGQL.Features.External.Downloads.Sabnzbd.SabnzbdClient>(client =>
+    .AddHttpClient<SabnzbdClient>(client =>
     {
         // Configure timeout for SABnzbd requests - 30 seconds should be sufficient for local network
         client.Timeout = TimeSpan.FromSeconds(30);
@@ -171,7 +173,7 @@ builder
         client.Timeout = TimeSpan.FromSeconds(30);
     })
     .Services
-    .AddSingleton<MusicGQL.Features.External.Downloads.Sabnzbd.SabnzbdFinalizeService>()
+    .AddSingleton<SabnzbdFinalizeService>()
     .AddSingleton<MusicGQL.Features.External.Downloads.Prowlarr.ProwlarrDownloadProvider>()
     .AddSingleton<MusicGQL.Features.External.Downloads.DownloadProviderCatalog>(sp =>
     {
@@ -220,8 +222,8 @@ builder
 
         return new MusicGQL.Features.External.Downloads.DownloadProviderCatalog(providers);
     })
-    .AddHostedService<MusicGQL.Features.External.Downloads.Sabnzbd.SabnzbdWatcherWorker>()
-    .AddHostedService<MusicGQL.Features.External.Downloads.Sabnzbd.SabnzbdHistoryScannerWorker>()
+    .AddHostedService<SabnzbdWatcherWorker>()
+    .AddHostedService<SabnzbdHistoryScannerWorker>()
     // Event processors
     .AddScoped<LikedSongsEventProcessor>()
     .AddScoped<UserEventProcessor>()
@@ -319,7 +321,7 @@ builder.Services.AddAutoMapper(typeof(Program));
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddHttpClient();
 builder.Services.AddSingleton<MusicGQL.Features.Assets.ExternalAssetStorage>();
-builder.Services.AddSingleton<MusicGQL.Features.Downloads.Services.DownloadCancellationService>();
+builder.Services.AddSingleton<DownloadCancellationService>();
 builder.Services.AddSingleton<MusicGQL.Features.ServerLibrary.Services.ArtistDeletionService>();
 
 // Add MVC controllers for asset endpoints
@@ -357,7 +359,7 @@ builder
     .AddType<ImportArtistsFromSpotifyPlaylistError>()
     .AddTypeExtension<SoulSeekSubscription>()
     .AddTypeExtension<LibrarySubscription>()
-    .AddTypeExtension<ArtistImportSubscription>()
+    .AddTypeExtension<ImportSubscription>()
     .AddTypeExtension<ArtistImportSearchRoot>()
     .AddTypeExtension<ArtistImportMutations>()
     .AddTypeExtension<DownloadsSearchRoot>()
@@ -402,9 +404,9 @@ builder
     .AddTypeExtension<UpdateSoulSeekSearchTimeLimitMutation>()
     .AddType<UpdateSoulSeekSearchTimeLimitSuccess>()
     .AddType<UpdateSoulSeekSearchTimeLimitError>()
-    .AddTypeExtension<MusicGQL.Features.ServerSettings.Mutations.UpdateSoulSeekNoDataTimeoutMutation>()
-    .AddType<MusicGQL.Features.ServerSettings.Mutations.UpdateSoulSeekNoDataTimeoutSuccess>()
-    .AddType<MusicGQL.Features.ServerSettings.Mutations.UpdateSoulSeekNoDataTimeoutError>()
+    .AddTypeExtension<UpdateSoulSeekNoDataTimeoutMutation>()
+    .AddType<UpdateSoulSeekNoDataTimeoutSuccess>()
+    .AddType<UpdateSoulSeekNoDataTimeoutError>()
     .AddTypeExtension<ScanLibraryForMissingJsonMutation>()
     .AddType<ScanLibraryForMissingJsonSuccess>()
     .AddTypeExtension<RefreshArtistMetaDataMutation>()

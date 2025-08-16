@@ -11,7 +11,7 @@ namespace MusicGQL.Features.ServerLibrary;
 /// 2) Then fallback to case-insensitive filename sort
 /// Only assigns the first N files to N tracks in order (by track number position in JSON)
 /// </summary>
-public class MediaFileAssignmentService(ServerLibrary.Writer.ServerLibraryJsonWriter writer, ServerSettingsAccessor serverSettingsAccessor)
+public class MediaFileAssignmentService(ServerLibraryJsonWriter writer, ServerSettingsAccessor serverSettingsAccessor)
 {
     public async Task<bool> AssignAsync(string artistId, string releaseFolderName)
     {

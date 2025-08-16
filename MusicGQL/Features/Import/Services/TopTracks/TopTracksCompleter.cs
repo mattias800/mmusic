@@ -132,6 +132,7 @@ public class TopTracksCompleter(SpotifyService spotifyService, LastfmClient last
                         {
                             tt.PlayCount = lfPlays;
                             lfCountUsed = lfPlays;
+                            try { logger.LogInformation("[TopTracksCompleter] LF match title='{Title}' artist='{Artist}' plays={Plays} listeners={Listeners}", tt.Title, candidateArtist, lfPlays ?? 0, lf?.Statistics?.Listeners ?? 0); } catch { }
                             set = true;
                             break;
                         }
@@ -146,6 +147,7 @@ public class TopTracksCompleter(SpotifyService spotifyService, LastfmClient last
                     spNorm = spotifyMatch.Popularity;
                     spPopularityUsed = spotifyMatch.Popularity;
                     tt.PlayCount = (long)Math.Round(spNorm.Value);
+                    try { logger.LogInformation("[TopTracksCompleter] SP popularity match title='{Title}' popularity={Pop}", tt.Title, spPopularityUsed ?? -1); } catch { }
                 }
 
             }
@@ -175,7 +177,14 @@ public class TopTracksCompleter(SpotifyService spotifyService, LastfmClient last
             // Log enrichment details for diagnostics
             try
             {
-                logger.LogInformation("[TopTracksCompleter] Track='{Title}' before={Before} after={After} lfUsed={Lf} spPop={Sp}", tt.Title, beforePlayCount ?? 0, tt.PlayCount ?? 0, lfCountUsed ?? 0, spPopularityUsed ?? -1);
+                if (lfCountUsed == null && spPopularityUsed == null)
+                {
+                    logger.LogInformation("[TopTracksCompleter] No LF/SP data for title='{Title}' (before={Before}, after={After})", tt.Title, beforePlayCount ?? 0, tt.PlayCount ?? 0);
+                }
+                else
+                {
+                    logger.LogInformation("[TopTracksCompleter] Track='{Title}' before={Before} after={After} lfUsed={Lf} spPop={Sp}", tt.Title, beforePlayCount ?? 0, tt.PlayCount ?? 0, lfCountUsed ?? 0, spPopularityUsed ?? -1);
+                }
             }
             catch { }
 

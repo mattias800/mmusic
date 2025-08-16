@@ -21,7 +21,7 @@ public class LibraryImportService(
     LibraryReleaseImportService releaseImporter,
     IImportExecutor importExecutor,
     LastFmEnrichmentService enrichmentService,
-    MusicGQL.Features.ServerSettings.ServerSettingsAccessor serverSettingsAccessor,
+    ServerSettingsAccessor serverSettingsAccessor,
     ILogger<LibraryImportService> logger
 )
 {

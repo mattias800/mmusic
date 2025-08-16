@@ -49,7 +49,7 @@ public class CurrentArtistImportStateService(
     private void Publish()
     {
         _ = eventSender.SendAsync(
-            ArtistImportSubscription.CurrentArtistImportUpdatedTopic,
+            "CurrentArtistImportUpdated",
             _state
         );
     }

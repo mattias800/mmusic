@@ -44,6 +44,35 @@ public class ReleaseJsonBuilder(
             var releasesDuration = DateTime.UtcNow - releasesStart;
             
             logger.LogInformation("[ReleaseBuilder] 📀 Found {ReleaseCount} candidate releases in {DurationMs}ms", releases.Count, releasesDuration.TotalMilliseconds);
+            
+            // Log detailed MusicBrainz response for debugging
+            foreach (var release in releases.Take(3)) // Log first 3 releases to avoid spam
+            {
+                logger.LogInformation("[ReleaseBuilder] 📋 Release '{Title}' (ID: {ReleaseId}):", release.Title, release.Id);
+                logger.LogInformation("[ReleaseBuilder]   - Date: {Date}, Country: {Country}, Status: {Status}", release.Date, release.Country, release.Status);
+                
+                if (release.ReleaseGroup?.Credits?.Any() == true)
+                {
+                    logger.LogInformation("[ReleaseBuilder]   - Release Group Credits ({CreditCount}):", release.ReleaseGroup.Credits.Count());
+                    foreach (var credit in release.ReleaseGroup.Credits.Take(5)) // Limit to first 5 credits
+                    {
+                        logger.LogInformation("[ReleaseBuilder]     * {ArtistName} (ID: {ArtistId}, Join: '{JoinPhrase}')", 
+                            credit.Name ?? credit.Artist?.Name ?? "Unknown", 
+                            credit.Artist?.Id ?? "Unknown", 
+                            credit.JoinPhrase ?? "");
+                    }
+                }
+                else
+                {
+                    logger.LogInformation("[ReleaseBuilder]   - No release group credits found");
+                }
+                
+                if (release.Media?.Any() == true)
+                {
+                    var totalTracks = release.Media.Sum(m => m.Tracks?.Count ?? 0);
+                    logger.LogInformation("[ReleaseBuilder]   - Media: {MediaCount} media with {TotalTracks} total tracks", release.Media.Count(), totalTracks);
+                }
+            }
 
             // Filter out demo release groups entirely
             var beforeFilter = releases.Count;
@@ -356,8 +385,9 @@ public class ReleaseJsonBuilder(
             // 12. Build final JsonRelease
             logger.LogInformation("[ReleaseBuilder] 🏗️ Step 12: Building final JsonRelease object");
             
-            // Read artist name from artist.json
-            string artistName = string.Empty;
+            // Read artist information from artist.json
+            string localArtistName = string.Empty;
+            string? localArtistId = null;
             try
             {
                 var artistJsonPath = Path.Combine(artistDir, "artist.json");
@@ -365,24 +395,57 @@ public class ReleaseJsonBuilder(
                 {
                     var text = await File.ReadAllTextAsync(artistJsonPath);
                     var jsonArtist = JsonSerializer.Deserialize<JsonArtist>(text, GetJsonOptions());
-                    artistName = jsonArtist?.Name ?? string.Empty;
-                    logger.LogInformation("[ReleaseBuilder] ✅ Read artist name from artist.json: '{ArtistName}'", artistName);
+                    localArtistName = jsonArtist?.Name ?? string.Empty;
+                    localArtistId = jsonArtist?.Id;
+                    logger.LogInformation("[ReleaseBuilder] ✅ Read artist info from artist.json: Name='{ArtistName}', ID='{ArtistId}'", localArtistName, localArtistId);
                 }
                 else
                 {
-                    logger.LogWarning("[ReleaseBuilder] ⚠️ artist.json not found at {ArtistJsonPath}, using empty artist name", artistJsonPath);
+                    logger.LogWarning("[ReleaseBuilder] ⚠️ artist.json not found at {ArtistJsonPath}", artistJsonPath);
                 }
             }
             catch (Exception ex)
             {
-                logger.LogWarning(ex, "[ReleaseBuilder] ⚠️ Error reading artist name from artist.json, using empty artist name");
+                logger.LogWarning(ex, "[ReleaseBuilder] ⚠️ Error reading artist info from artist.json");
             }
+            
+            // Get artist name from MusicBrainz (preserves historical accuracy)
+            string musicBrainzArtistName = string.Empty;
+            string? musicBrainzArtistId = null;
+            if (selected?.ReleaseGroup?.Credits?.Any() == true)
+            {
+                var primaryCredit = selected.ReleaseGroup.Credits.FirstOrDefault();
+                if (primaryCredit != null)
+                {
+                    musicBrainzArtistName = primaryCredit.Name ?? primaryCredit.Artist?.Name ?? "Unknown";
+                    musicBrainzArtistId = primaryCredit.Artist?.Id;
+                    logger.LogInformation("[ReleaseBuilder] 🔍 MusicBrainz primary artist credit: '{MbArtistName}' (ID: {MbArtistId})", 
+                        musicBrainzArtistName, musicBrainzArtistId);
+                    
+                    if (!string.IsNullOrEmpty(localArtistName) && !string.IsNullOrEmpty(musicBrainzArtistName) && 
+                        !string.Equals(localArtistName, musicBrainzArtistName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        logger.LogInformation("[ReleaseBuilder] ℹ️ Artist name change detected: Local '{LocalName}' vs MusicBrainz '{MbName}' (historical)", 
+                            localArtistName, musicBrainzArtistName);
+                    }
+                }
+            }
+            else
+            {
+                logger.LogWarning("[ReleaseBuilder] ⚠️ No MusicBrainz artist credits found for selected release");
+            }
+            
+            // Use MusicBrainz artist name for historical accuracy, but fall back to local if needed
+            var finalArtistName = !string.IsNullOrEmpty(musicBrainzArtistName) ? musicBrainzArtistName : localArtistName;
+            logger.LogInformation("[ReleaseBuilder] ✅ Final artist name for release: '{FinalArtistName}' (from MusicBrainz: {FromMb}, Local ID: {LocalId})", 
+                finalArtistName, !string.IsNullOrEmpty(musicBrainzArtistName), localArtistId);
             
             var finalRelease = new JsonRelease
             {
                 Title = releaseTitle ?? releaseFolderName,
                 SortTitle = releaseTitle,
-                ArtistName = artistName,
+                ArtistName = finalArtistName,
+                ArtistId = localArtistId,
                 Type = releaseType,
                 FirstReleaseDate = selected?.ReleaseGroup?.FirstReleaseDate,
                 FirstReleaseYear =

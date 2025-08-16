@@ -417,7 +417,7 @@ public class LibraryImportWorker(
                             {
                                 logger.LogInformation("Imported artist now present in cache: {ArtistName} (Id {ArtistId})", importedArtist.Name, importedArtist.Id);
                                 await events.SendAsync(
-                                    ArtistImportSubscription.ArtistImportedTopic,
+                                    "ArtistImported",
                                     new Artist(importedArtist)
                                 );
 
