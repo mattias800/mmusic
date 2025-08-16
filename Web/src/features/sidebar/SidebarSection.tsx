@@ -18,13 +18,13 @@ export const SidebarSection: React.FC<SidebarSectionProps> = ({
   iconColor = "text-gray-400",
 }) => {
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       {heading && (
         <SidebarSectionHeading right={right} icon={Icon} iconColor={iconColor}>
           {heading}
         </SidebarSectionHeading>
       )}
-      <div className="flex flex-col gap-1">{children}</div>
+      <div className="flex flex-col gap-2">{children}</div>
     </div>
   );
 };
