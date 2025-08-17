@@ -3,6 +3,14 @@
 After each task is done, compile the backend to see that there are no errors.
 If there are updates to GraphQL schema, we need to run "bun types:once" while the
 backend is running. Ask user for help if needed.
+
+If there are changes to the database, make sure to update migrations.
+
+$ dotnet ef migrations add <MigrationName>
+$ dotnet ef database update
+
+This application is very much work in progress, so migrations will be deleted sometimes.
+
 If there are no errors in backend build, type generation, frontend lint or frontend typecheck,
 then the task is done.
 Create a git commit, update the check in TODO.md and move to next task.
