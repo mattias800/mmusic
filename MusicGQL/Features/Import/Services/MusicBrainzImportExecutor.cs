@@ -338,11 +338,31 @@ public sealed class MusicBrainzImportExecutor(
                         if (lfSimilar != null)
                         {
                             sims = lfSimilar
-                                .Select(a => new MusicGQL.Integration.ListenBrainz.SimilarArtistResponse
+                                .Select(a =>
                                 {
-                                    artist_mbid = a.MBID ?? string.Empty,
-                                    artist_name = a.Name ?? string.Empty,
-                                    score = 0.0
+                                    // Try to read Last.fm 'Match' value via reflection; normalize into 0..1
+                                    double score = 0.0;
+                                    try
+                                    {
+                                        var matchProp = a.GetType().GetProperty("Match");
+                                        if (matchProp != null)
+                                        {
+                                            var val = matchProp.GetValue(a);
+                                            if (val is double d) score = d;
+                                            else if (val is float f) score = f;
+                                            else if (val is string s && double.TryParse(s, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var parsed)) score = parsed;
+                                            // Normalize if value looks like percentage
+                                            if (score > 1.0) score = score / 100.0;
+                                        }
+                                    }
+                                    catch { }
+
+                                    return new MusicGQL.Integration.ListenBrainz.SimilarArtistResponse
+                                    {
+                                        artist_mbid = a.MBID ?? string.Empty,
+                                        artist_name = a.Name ?? string.Empty,
+                                        score = score
+                                    };
                                 })
                                 .Where(s => !string.IsNullOrWhiteSpace(s.artist_mbid) || !string.IsNullOrWhiteSpace(s.artist_name))
                                 .Take(12)
