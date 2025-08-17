@@ -358,3 +358,59 @@ They should use Tailwind CSS for styling.
 Please avoid comments in the code when possible.
 If you feel like you need to add a comment, consider if the code can be refactored to be more readable instead.
 Never add comments in the imports section.
+
+## User Admin (Patterns and Guidelines)
+
+These guidelines capture the patterns applied in the latest user admin refactor and should be used for similar CRUD admin surfaces.
+
+### Component Structure
+- Page (`src/app/AdminUsersPage.tsx`) is responsible for data fetching and authorization guards.
+  - Query includes both `viewer` and `users` edges, and spreads feature fragments.
+- Feature components live under `src/features/user-admin/` and are split by concern:
+  - `UserAdminPanel`: layout orchestration and high-level presentation; receives fragment-typed `viewer` and `users` props.
+  - `UserAdminCard`: compact, reusable card for a single user row; accepts render props for actions/role toggles.
+  - `UserEditButton`: modal for editing username and setting password (uses `Dialog` and `Input`).
+  - `UserRolesToggles`: group of role toggle buttons, right-aligned.
+  - `CreateNewUserButton`: modal trigger for creating a user.
+
+### GraphQL Fragments & Data Flow
+- Co-locate fragments with each feature component and expose them via fragment spreads:
+  - Example: `UserAdminPanel_User`, `UserAdminCard_User`, `UserEditButton_User`, `UserRolesToggles_User`.
+- The page-level query must spread all needed feature fragments so every child can `useFragment` safely without extra queries.
+- Use `useFragment(fragment, props.something)` inside feature components to unmask data.
+- Keep result objects unmodified and avoid manual typing; rely on generated documents and `useFragment` for type safety.
+
+### Mutations
+- Define mutations alongside the component that triggers them.
+- Mutation result payloads should return the modified entity (and optionally a minimal set of related entities) so the UI can update without refetching.
+  - Example: `CreateUser` returns `user` and may also include `users` for cache refresh when necessary.
+- For role updates, return the updated `user` and let components re-render via cache updates.
+- For destructive actions (delete user):
+  - Confirm via `ConfirmDeletePrompt` modal.
+  - Backend must enforce invariants (cannot delete last admin, cannot delete self).
+  - Return minimally `deletedUserId` so clients can remove it from the list.
+
+### Authorization and Safety in UI
+- Gate the entire Admin page on `viewer.isAdmin` (or dedicated capability field) at the page level.
+- In the roles UI:
+  - Disable the Admin toggle if the user is the last admin or if toggling would remove admin from the only remaining admin.
+  - Disable the Admin toggle for `viewer` when removal would remove admin from self.
+
+### UX and Visual Patterns
+- Prefer modal dialogs (`Dialog`) for create/edit flows to keep the surface clean.
+- Use `GlassCard` for primary group containers and `GlassCardInner` (or `StatusCard`) for item rows.
+- Align role toggles as a right-justified flex group; keep edit and metadata on the left.
+- Use high-contrast action buttons for primary actions (e.g., blue variant with icons) and destructive variant for delete.
+
+### Codegen & Types
+- After backend schema changes, always run `bun run codegen:types` to update fragments and operation types.
+- Ensure unique operation names. Page- or feature-specific mutations should be prefixed (e.g., `AdminCreateUser`).
+
+### Do & Don’t Recap
+- Do:
+  - Keep queries in pages; fragments in features; use `useFragment` in features.
+  - Return updated entities in mutation success payloads.
+  - Add clear UI affordances (confirmation for delete, disabled states for unsafe actions).
+- Don’t:
+  - Call hooks inside callbacks (respect hooks rules); build any derived lists with mapping done before handlers.
+  - Cast to `any`; use generated documents and `useFragment` instead.

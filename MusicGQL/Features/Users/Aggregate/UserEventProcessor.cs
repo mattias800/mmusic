@@ -24,6 +24,9 @@ public class UserEventProcessor(ILogger<UserEventProcessor> logger)
             case UserRolesUpdated userRolesUpdated:
                 await HandleUserRolesUpdated(userRolesUpdated, dbContext);
                 break;
+            case UserDeleted userDeleted:
+                await HandleUserDeleted(userDeleted, dbContext);
+                break;
             case UserUsernameUpdated userUsernameUpdated:
                 await HandleUserUsernameUpdated(userUsernameUpdated, dbContext);
                 break;
@@ -132,6 +135,18 @@ public class UserEventProcessor(ILogger<UserEventProcessor> logger)
 
         user.Username = ev.NewUsername;
         user.UpdatedAt = DateTime.UtcNow;
+        await dbContext.SaveChangesAsync();
+    }
+
+    private async Task HandleUserDeleted(UserDeleted ev, EventDbContext dbContext)
+    {
+        var user = dbContext.Users.FirstOrDefault(u => u.UserId == ev.SubjectUserId);
+        if (user is null)
+        {
+            logger.LogWarning("UserDeleted received for non-existing user {UserId}", ev.SubjectUserId);
+            return;
+        }
+        dbContext.Users.Remove(user);
         await dbContext.SaveChangesAsync();
     }
 }

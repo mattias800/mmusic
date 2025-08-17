@@ -45,6 +45,7 @@ public class EventDbContext(DbContextOptions<EventDbContext> options) : DbContex
             .HasValue<UserListenBrainzCredentialsUpdated>("UserListenBrainzCredentialsUpdated")
             .HasValue<MusicGQL.Features.Users.Events.UserRolesUpdated>("UserRolesUpdated")
             .HasValue<MusicGQL.Features.Users.Events.UserUsernameUpdated>("UserUsernameUpdated")
+            .HasValue<MusicGQL.Features.Users.Events.UserDeleted>("UserDeleted")
             .HasValue<LibraryPathUpdated>("LibraryPathUpdated");
         modelBuilder.Entity<DbTrackPlayCount>(b =>
         {
