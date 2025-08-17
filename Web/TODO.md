@@ -47,8 +47,11 @@ The user will create a git commit manually.
     * [ ] Allowing users to change user roles on other users
     * [ ] Allowing users to see current downloads and queues page
     * [ ] Allowing users to edit auth tokens for external services
-* [ ] Add UI for adding new users
-* [ ] Add UI for changing user roles
+* [ ] Add a new page for administrating users.
+* [ ] Add UI for adding and editing users in the new page.
+* [ ] Add UI for changing user roles in the new page.
+
+## Migrate appsettings.development.json to server settings
 * [ ] Move all appsettings.development.json to server settings, while still allowing appsettings.development.json to
   override server settings, for local development. This should be done in ServerSettingsAccessor.
 * [ ] Limit access to server settings to users with admin role. Both in UI, and in the API. Authenticate the user in
