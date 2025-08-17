@@ -31,12 +31,12 @@ The user will create a git commit manually.
 
 ## Similar artists
 
-* [ ] Add a GraphQL node for similar artists
-* [ ] Similar artists should be fetched from an external service and stored in artist.json. Add JsonSimilarArtist class.
-* [ ] Similar artists should be self contained, like playlists. Any cover arts should be downloaded.
-* [ ] Similar artists should be fetched when importing the artist metadata.
-* [ ] If similar artist exists in local library, that reference should be stored in the JSON as well.
-* [ ] Add a card "Similar artists" to artist page
+* [x] Add a GraphQL node for similar artists
+* [x] Similar artists should be fetched from an external service and stored in artist.json. Add JsonSimilarArtist class.
+* [x] Similar artists should be self contained, like playlists. Any cover arts should be downloaded.
+* [x] Similar artists should be fetched when importing the artist metadata.
+* [x] If similar artist exists in local server library, that reference should be stored in the JSON as well.
+* [x] Add a card "Similar artists" to artist page
 
 ## New server settings
 
