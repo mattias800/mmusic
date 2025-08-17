@@ -1,8 +1,8 @@
 import * as React from "react";
 import { useMutation, useQuery } from "urql";
 import { graphql } from "@/gql";
-import { PageLayout, PageHeader, GlassCard, PageLoading, PageError, PageNoData } from "@/components/ui";
-import { Users as UsersIcon, Shield, AlertTriangle } from "lucide-react";
+import { PageLayout, PageHeader, GlassCard, PageLoading, PageError, PageNoData, RoleToggleButton } from "@/components/ui";
+import { Users as UsersIcon, Shield, AlertTriangle, Crown, ListPlus, Download, Settings2, Eye, KeyRound } from "lucide-react";
 
 const usersQuery = graphql(`
   query AdminUsersPage {
@@ -52,19 +52,22 @@ export const AdminUsersPage: React.FC = () => {
   return (
     <PageLayout>
       <PageHeader icon={UsersIcon} title="User Administration" subtitle="Manage user roles and permissions" />
-      <div className="max-w-4xl mx-auto space-y-6">
+      <div className="max-w-5xl mx-auto space-y-8">
         <GlassCard title="Users" icon={UsersIcon}>
-          <div className="space-y-4">
+          <div className="divide-y divide-white/10">
             {users.map(u => (
-              <div key={u!.id} className="flex items-center justify-between p-3 rounded-lg bg-white/5 border border-white/10">
-                <div className="text-white font-medium">{u!.username}</div>
-                <div className="flex gap-2">
-                  <button disabled={updating} onClick={() => toggleRole(u!.id, 1 << 0)} className="px-3 py-1 rounded bg-blue-500/20 hover:bg-blue-500/30 text-blue-200">Admin</button>
-                  <button disabled={updating} onClick={() => toggleRole(u!.id, 1 << 1)} className="px-3 py-1 rounded bg-blue-500/20 hover:bg-blue-500/30 text-blue-200">Create Playlists</button>
-                  <button disabled={updating} onClick={() => toggleRole(u!.id, 1 << 2)} className="px-3 py-1 rounded bg-blue-500/20 hover:bg-blue-500/30 text-blue-200">Trigger Downloads</button>
-                  <button disabled={updating} onClick={() => toggleRole(u!.id, 1 << 3)} className="px-3 py-1 rounded bg-blue-500/20 hover:bg-blue-500/30 text-blue-200">Manage Roles</button>
-                  <button disabled={updating} onClick={() => toggleRole(u!.id, 1 << 4)} className="px-3 py-1 rounded bg-blue-500/20 hover:bg-blue-500/30 text-blue-200">View Downloads</button>
-                  <button disabled={updating} onClick={() => toggleRole(u!.id, 1 << 5)} className="px-3 py-1 rounded bg-blue-500/20 hover:bg-blue-500/30 text-blue-200">Edit External Auth</button>
+              <div key={u!.id} className="flex items-start justify-between py-4 first:pt-0 last:pb-0">
+                <div className="min-w-48">
+                  <div className="text-white font-semibold text-base">{u!.username}</div>
+                  <div className="text-xs text-gray-400">ID: {u!.id}</div>
+                </div>
+                <div className="flex flex-wrap gap-3">
+                  <RoleToggleButton disabled={updating} label="Admin" active={((u!.roles ?? 0) & (1 << 0)) !== 0} onToggle={() => toggleRole(u!.id, 1 << 0)} icon={Crown} />
+                  <RoleToggleButton disabled={updating} label="Create Playlists" active={((u!.roles ?? 0) & (1 << 1)) !== 0} onToggle={() => toggleRole(u!.id, 1 << 1)} icon={ListPlus} />
+                  <RoleToggleButton disabled={updating} label="Trigger Downloads" active={((u!.roles ?? 0) & (1 << 2)) !== 0} onToggle={() => toggleRole(u!.id, 1 << 2)} icon={Download} />
+                  <RoleToggleButton disabled={updating} label="Manage Roles" active={((u!.roles ?? 0) & (1 << 3)) !== 0} onToggle={() => toggleRole(u!.id, 1 << 3)} icon={Settings2} />
+                  <RoleToggleButton disabled={updating} label="View Downloads" active={((u!.roles ?? 0) & (1 << 4)) !== 0} onToggle={() => toggleRole(u!.id, 1 << 4)} icon={Eye} />
+                  <RoleToggleButton disabled={updating} label="Edit External Auth" active={((u!.roles ?? 0) & (1 << 5)) !== 0} onToggle={() => toggleRole(u!.id, 1 << 5)} icon={KeyRound} />
                 </div>
               </div>
             ))}

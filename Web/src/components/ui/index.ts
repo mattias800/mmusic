@@ -5,6 +5,7 @@ export { GlassCard } from "./glass-card";
 export { StatusCard, StatusGrid } from "./status-card";
 export { GradientButton } from "./gradient-button";
 export { InfoSection } from "./info-section";
+export { RoleToggleButton } from "./role-toggle-button";
 export { ArtistTabs } from "./artist-tabs";
 
 // Page State Components
