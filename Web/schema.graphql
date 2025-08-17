@@ -993,7 +993,7 @@ type PlaylistItem {
 type PlaylistSearchRoot {
   byId(playlistId: ID!): Playlist
   importPlaylists: ImportPlaylistSearchRoot!
-  searchPlaylists(limit: Int! = 20, searchTerm: String!): [Playlist!]!
+  searchPlaylists(limit: Int!, searchTerm: String!): [Playlist!]!
 }
 
 type Query {
@@ -1221,6 +1221,9 @@ type ServerSettings {
   listenBrainzTopTracksEnabled: Boolean!
   listenBrainzUsername: String!
   serverLibraryManifestStatus: ServerLibraryManifestStatus!
+  soulSeekBatchDownloadingEnabled: Boolean!
+  soulSeekLibrarySharingEnabled: Boolean!
+  soulSeekListeningPort: Int!
   soulSeekNoDataTimeoutSeconds: Int!
   soulSeekSearchTimeLimitSeconds: Int!
   spotifyTopTracksEnabled: Boolean!
@@ -1714,4 +1717,3 @@ type UsersEdge {
   """The item at the end of the edge."""
   node: User!
 }
-
