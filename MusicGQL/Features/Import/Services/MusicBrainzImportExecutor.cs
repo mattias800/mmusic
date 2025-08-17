@@ -329,6 +329,28 @@ public sealed class MusicBrainzImportExecutor(
             try
             {
                 var sims = await listenBrainzSimilarityClient.GetSimilarArtistsByMbidAsync(mbArtistId, 12);
+                // Fallback: try Last.fm similar artists if ListenBrainz yields none
+                if (sims.Count == 0)
+                {
+                    try
+                    {
+                        var lfSimilar = await lastfmClient.Artist.GetSimilarByMbidAsync(mbArtistId);
+                        if (lfSimilar != null)
+                        {
+                            sims = lfSimilar
+                                .Select(a => new MusicGQL.Integration.ListenBrainz.SimilarArtistResponse
+                                {
+                                    artist_mbid = a.MBID ?? string.Empty,
+                                    artist_name = a.Name ?? string.Empty,
+                                    score = 0.0
+                                })
+                                .Where(s => !string.IsNullOrWhiteSpace(s.artist_mbid) || !string.IsNullOrWhiteSpace(s.artist_name))
+                                .Take(12)
+                                .ToList();
+                        }
+                    }
+                    catch { }
+                }
                 if (sims.Count > 0)
                 {
                     var list = new List<JsonSimilarArtist>();
