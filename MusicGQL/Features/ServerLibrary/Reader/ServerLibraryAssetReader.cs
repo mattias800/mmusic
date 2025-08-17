@@ -275,6 +275,44 @@ public class ServerLibraryAssetReader(ServerSettingsAccessor serverSettingsAcces
     }
 
     /// <summary>
+    /// Gets a similar artist thumbnail by parent artist and similar MBID
+    /// Looks for files named similar_thumb_{mbid}.* in the artist directory
+    /// </summary>
+    public async Task<(Stream? stream, string? contentType, string? fileName)> GetSimilarArtistThumbAsync(
+        string artistId,
+        string musicBrainzArtistId
+    )
+    {
+        try
+        {
+            var libraryPath = await GetLibraryPathAsync();
+            var artistPath = Path.Combine(libraryPath, artistId);
+            if (!Directory.Exists(artistPath))
+                return (null, null, null);
+
+            var pattern = $"similar_thumb_{musicBrainzArtistId}.*";
+            var matches = Directory
+                .GetFiles(artistPath, pattern)
+                .Where(f => IsImageFile(f))
+                .ToList();
+
+            if (matches.Count == 0)
+                return (null, null, null);
+
+            var filePath = matches[0];
+            var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
+            var contentType = GetContentTypeFromExtension(Path.GetExtension(filePath));
+            var fileName = Path.GetFileName(filePath);
+            return (fileStream, contentType, fileName);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error reading similar artist thumb: {ex.Message}");
+            return (null, null, null);
+        }
+    }
+
+    /// <summary>
     /// Gets an audio file by artist ID, release folder name, and track number
     /// </summary>
     /// <param name="artistId">Artist ID</param>

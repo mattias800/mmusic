@@ -100,6 +100,6 @@ public record Artist([property: GraphQLIgnore] CachedArtist Model) : IArtistBase
         {
             return [];
         }
-        return list.Select(sa => new SimilarArtist(sa));
+        return list.Select(sa => new SimilarArtist(sa, Model.Id));
     }
 }

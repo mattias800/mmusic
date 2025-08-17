@@ -47,12 +47,14 @@ public class ListenBrainzSimilarityClient
                 new { artist_mbids = new[] { artistMbid }, algorithm }
             };
 
+            var json = System.Text.Json.JsonSerializer.Serialize(payload);
+            using var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
             var req = new HttpRequestMessage(HttpMethod.Post, endpoint)
             {
-                Content = JsonContent.Create(payload)
+                Content = content
             };
 
-            _logger.LogInformation("[ListenBrainzSimilarityClient] POST {Endpoint} (algorithm={Algorithm}, artist={Artist})", endpoint, algorithm, artistMbid);
+            _logger.LogInformation("[ListenBrainzSimilarityClient] POST {Endpoint} (algorithm={Algorithm}, artist={Artist}) payload={Payload}", endpoint, algorithm, artistMbid, json);
 
             using var resp = await _httpClient.SendAsync(req, cancellationToken);
             var text = await resp.Content.ReadAsStringAsync(cancellationToken);
@@ -60,7 +62,18 @@ public class ListenBrainzSimilarityClient
             if (!resp.IsSuccessStatusCode)
             {
                 _logger.LogWarning("[ListenBrainzSimilarityClient] Non-success status {Status} for {Url}. Body: {Body}", resp.StatusCode, endpoint, text);
-                return [];
+
+                // Fallback: try GET /json with query params if POST fails (e.g., rare 400s)
+                var getUrl = $"{endpoint}?artist_mbids={Uri.EscapeDataString(artistMbid)}&algorithm={Uri.EscapeDataString(algorithm)}";
+                _logger.LogInformation("[ListenBrainzSimilarityClient] Falling back to GET {Url}", getUrl);
+                using var getResp = await _httpClient.GetAsync(getUrl, cancellationToken);
+                var getText = await getResp.Content.ReadAsStringAsync(cancellationToken);
+                if (!getResp.IsSuccessStatusCode)
+                {
+                    _logger.LogWarning("[ListenBrainzSimilarityClient] GET fallback also failed: {Status}. Body: {Body}", getResp.StatusCode, getText);
+                    return [];
+                }
+                text = getText;
             }
 
             // The labs endpoint returns an array of objects: { artist_mbid, name, score, ... }

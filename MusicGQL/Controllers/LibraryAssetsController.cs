@@ -133,6 +133,22 @@ public class LibraryAssetsController(ServerLibraryAssetReader assetReader) : Con
     }
 
     /// <summary>
+    /// Serves similar artist thumbnail stored in the parent artist folder
+    /// GET /library/{artistId}/similar/{musicBrainzArtistId}/thumb
+    /// </summary>
+    [HttpGet("{artistId}/similar/{musicBrainzArtistId}/thumb")]
+    public async Task<IActionResult> GetSimilarArtistThumb(string artistId, string musicBrainzArtistId)
+    {
+        var (stream, contentType, fileName) = await assetReader.GetSimilarArtistThumbAsync(artistId, musicBrainzArtistId);
+        if (stream == null || contentType == null)
+        {
+            return NotFound($"Similar artist thumb not found for artist '{artistId}' and MBID '{musicBrainzArtistId}'");
+        }
+        var shouldIncludeExtension = ShouldIncludeFileExtension(Request.Path);
+        return File(stream, contentType, shouldIncludeExtension ? fileName : null);
+    }
+
+    /// <summary>
     /// Serves track audio files
     /// GET /library/{artistId}/releases/{releaseFolderName}/tracks/{trackNumber}/audio
     /// </summary>

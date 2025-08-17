@@ -150,4 +150,15 @@ public static class LibraryAssetUrlFactory
         var escapedAppearanceId = Uri.EscapeDataString(appearanceId);
         return $"/library/{escapedArtistId}/appearances/{escapedAppearanceId}/coverart";
     }
+
+    /// <summary>
+    /// Creates a URL for a similar artist thumbnail that is stored within the parent artist's folder
+    /// File pattern on disk: similar_thumb_{musicBrainzArtistId}.<ext>
+    /// </summary>
+    public static string CreateSimilarArtistThumbUrl(string artistId, string musicBrainzArtistId)
+    {
+        var escapedArtistId = Uri.EscapeDataString(artistId);
+        var escapedMbId = Uri.EscapeDataString(musicBrainzArtistId);
+        return $"/library/{escapedArtistId}/similar/{escapedMbId}/thumb";
+    }
 }
