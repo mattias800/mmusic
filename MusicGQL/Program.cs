@@ -116,6 +116,7 @@ builder
     ))
     .AddSingleton<SoulSeekService>()
     .AddSingleton<SoulSeekUserDiscoveryService>()
+    .AddSingleton<SoulSeekLibrarySharingService>()
     .AddSingleton<SoulSeekReleaseDownloader>()
     .AddScoped<StartDownloadReleaseService>()
     .AddSingleton<DownloadSlotManager>()

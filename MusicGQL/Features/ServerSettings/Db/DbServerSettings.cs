@@ -17,6 +17,12 @@ public class DbServerSettings
     // Enable batch downloading from Soulseek users (discover additional releases after successful downloads)
     public bool SoulSeekBatchDownloadingEnabled { get; set; } = true;
 
+    // Enable sharing the music library on Soulseek network
+    public bool SoulSeekLibrarySharingEnabled { get; set; } = true;
+
+    // Soulseek listening port for incoming connections (0 = auto-detect)
+    public int SoulSeekListeningPort { get; set; } = 0;
+
     // Number of concurrent download slots to use
     public int DownloadSlotCount { get; set; } = 3;
 
@@ -44,6 +50,8 @@ public static class DefaultDbServerSettingsProvider
             SoulSeekSearchTimeLimitSeconds = 60,
             SoulSeekNoDataTimeoutSeconds = 20,
             SoulSeekBatchDownloadingEnabled = true,
+            SoulSeekLibrarySharingEnabled = true,
+            SoulSeekListeningPort = 50300,
             DownloadSlotCount = 3,
             ListenBrainzUsername = "",
             ListenBrainzApiKey = "",

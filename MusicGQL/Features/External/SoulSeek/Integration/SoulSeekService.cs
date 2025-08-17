@@ -10,7 +10,8 @@ public class SoulSeekService(
     IOptions<SoulSeekConnectOptions> options,
     ITopicEventSender eventSender,
     ILogger<SoulSeekService> logger,
-    ServerSettingsAccessor serverSettingsAccessor
+    ServerSettingsAccessor serverSettingsAccessor,
+    SoulSeekLibrarySharingService librarySharingService
 )
 {
     public SoulSeekState State { get; set; } = new(SoulSeekNetworkState.Offline);
@@ -35,6 +36,9 @@ public class SoulSeekService(
                 options.Value.Username,
                 options.Value.Password
             );
+
+            // Initialize library sharing after successful connection
+            await librarySharingService.InitializeAsync();
         }
         catch (Exception ex)
         {
@@ -60,11 +64,21 @@ public class SoulSeekService(
         );
     }
 
-    private void OnConnected(object? sender, EventArgs eventArgs)
+    private async void OnConnected(object? sender, EventArgs eventArgs)
     {
         State = new(SoulSeekNetworkState.Online);
         PublishUpdate();
         logger.LogInformation("Connected to Soulseek");
+
+        // Start sharing the library after connection
+        try
+        {
+            await librarySharingService.StartSharingAsync();
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Failed to start library sharing after connection");
+        }
     }
 
     private void PublishUpdate()

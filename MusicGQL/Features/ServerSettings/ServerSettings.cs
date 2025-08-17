@@ -20,6 +20,10 @@ public record ServerSettings([property: GraphQLIgnore] DbServerSettings Model)
 
     public bool SoulSeekBatchDownloadingEnabled() => Model.SoulSeekBatchDownloadingEnabled;
 
+    public bool SoulSeekLibrarySharingEnabled() => Model.SoulSeekLibrarySharingEnabled;
+
+    public int SoulSeekListeningPort() => Model.SoulSeekListeningPort;
+
     public int DownloadSlotCount() => Model.DownloadSlotCount;
 
     public string ListenBrainzUsername() => Model.ListenBrainzUsername;
