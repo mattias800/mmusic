@@ -21,7 +21,7 @@ The user will create a git commit manually.
 ## Search feature should search playlist names as well
 
 * [x] Add GraphQL nodes for searching playlists names
-* [ ] Add a UI in search result for playlist with similar design as the existing search results.
+* [x] Add a UI in search result for playlist with similar design as the existing search results.
 
 ## Artists page "appears on" tab
 
