@@ -4,6 +4,7 @@ import { SearchResultRelease } from "./SearchResultRelease.tsx";
 import { SearchResultTrack } from "./SearchResultTrack.tsx";
 import { Link } from "react-router";
 import { Search, TrendingUp } from "lucide-react";
+import { SearchResultPlaylist } from "./SearchResultPlaylist.tsx";
 
 export interface SearchResultProps {
   searchText: string;
@@ -29,10 +30,10 @@ export const SearchResult: React.FC<SearchResultProps> = ({
         </div>
       </div>
 
-      {/* Three Column Layout */}
+      {/* Responsive Grid Layout */}
       <div className="p-6 space-y-6 max-h-[calc(85vh-120px)] overflow-y-auto">
-        <div className="grid grid-cols-3 gap-8">
-          {/* Artists Column */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          {/* Artists */}
           <div className="space-y-4">
             <SearchResultArtist
               searchText={searchText}
@@ -40,7 +41,7 @@ export const SearchResult: React.FC<SearchResultProps> = ({
             />
           </div>
 
-          {/* Albums Column */}
+          {/* Albums */}
           <div className="space-y-4">
             <SearchResultRelease
               searchText={searchText}
@@ -48,9 +49,17 @@ export const SearchResult: React.FC<SearchResultProps> = ({
             />
           </div>
 
-          {/* Songs Column */}
+          {/* Songs */}
           <div className="space-y-4">
             <SearchResultTrack
+              searchText={searchText}
+              onClickSearchResult={onClickSearchResult}
+            />
+          </div>
+
+          {/* Playlists */}
+          <div className="space-y-4">
+            <SearchResultPlaylist
               searchText={searchText}
               onClickSearchResult={onClickSearchResult}
             />
