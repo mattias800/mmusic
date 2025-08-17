@@ -14,3 +14,8 @@ When refreshing all artist releases, every release is pushed
 to import queue separately. This makes the progress bar show 0/1 for every release.
 
 Instead, the artist should be pushed to the queue, so the progress bar shows correct progress.
+
+## Importing a playlist
+
+When importing a playlist, it should appear in realtime in the playlist list.
+The should be implemented with subscriptions, there can be no query refreshes.
