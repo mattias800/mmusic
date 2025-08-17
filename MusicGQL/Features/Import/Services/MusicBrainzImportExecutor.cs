@@ -35,7 +35,10 @@ public sealed class MusicBrainzImportExecutor(
     ReleaseJsonBuilder releaseJsonBuilder,
     ServerLibrary.Writer.ServerLibraryJsonWriter writer,
     CurrentArtistImportStateService progressService,
-    TopTracksServiceManager topTracksServiceManager
+    TopTracksServiceManager topTracksServiceManager,
+    Integration.ListenBrainz.ListenBrainzSimilarityClient listenBrainzSimilarityClient,
+    FanArtDownloadService fanArtDownloadService,
+    ServerLibrary.Cache.ServerLibraryCache cache
 ) : IImportExecutor
 {
     private static readonly string[] AudioExtensions = [".mp3", ".flac", ".wav", ".m4a", ".ogg"];
@@ -321,6 +324,44 @@ public sealed class MusicBrainzImportExecutor(
                 }
                 catch { }
             }
+
+            // Fetch similar artists from ListenBrainz and store (best-effort)
+            try
+            {
+                var sims = await listenBrainzSimilarityClient.GetSimilarArtistsByMbidAsync(mbArtistId, 12);
+                if (sims.Count > 0)
+                {
+                    var list = new List<JsonSimilarArtist>();
+                    foreach (var s in sims)
+                    {
+                        string? thumb = null;
+                        if (!string.IsNullOrWhiteSpace(s.artist_mbid))
+                        {
+                            thumb = await fanArtDownloadService.DownloadSingleArtistThumbAsync(s.artist_mbid, artistDir);
+                        }
+                        string? localArtistId = null;
+                        try
+                        {
+                            if (!string.IsNullOrWhiteSpace(s.artist_mbid))
+                            {
+                                var cached = await cache.GetArtistByMusicBrainzIdAsync(s.artist_mbid);
+                                localArtistId = cached?.Id;
+                            }
+                        }
+                        catch { }
+                        list.Add(new JsonSimilarArtist
+                        {
+                            Name = string.IsNullOrWhiteSpace(s.artist_name) ? "Unknown Artist" : s.artist_name,
+                            MusicBrainzArtistId = string.IsNullOrWhiteSpace(s.artist_mbid) ? null : s.artist_mbid,
+                            SimilarityScore = s.score,
+                            Thumb = thumb,
+                            ArtistId = localArtistId
+                        });
+                    }
+                    jsonArtist.SimilarArtists = list;
+                }
+            }
+            catch { }
         }
         catch
         {

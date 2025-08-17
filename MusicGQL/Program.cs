@@ -133,6 +133,7 @@ builder
     .AddSingleton<ListenBrainzService>()
     .AddSingleton<UserListenBrainzService>()
     .AddSingleton<ListenBrainzPopularityClient>()
+    .AddSingleton<MusicGQL.Integration.ListenBrainz.ListenBrainzSimilarityClient>()
     .AddSingleton<ArtistImportQueueService>()
     .AddSingleton<CurrentArtistImportStateService>()
     .AddSingleton<ImportHistoryService>()

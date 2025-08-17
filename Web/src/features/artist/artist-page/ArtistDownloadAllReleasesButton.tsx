@@ -50,10 +50,7 @@ export const ArtistDownloadAllReleasesButton: React.FC<
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <GradientButton className="flex items-center gap-2">
-          <Download className="h-5 w-5" />
-          Download
-        </GradientButton>
+        <GradientButton iconLeft={Download}>Download</GradientButton>
       </DropdownMenuTrigger>
       <DropdownMenuContent>
         <DropdownMenuItem

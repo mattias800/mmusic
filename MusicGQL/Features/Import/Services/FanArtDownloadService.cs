@@ -101,6 +101,33 @@ public class FanArtDownloadService
     }
 
     /// <summary>
+    /// Downloads a single best artist thumb, returns relative path or null
+    /// </summary>
+    public async Task<string?> DownloadSingleArtistThumbAsync(string musicBrainzId, string artistFolderPath)
+    {
+        try
+        {
+            var artistImages = await _fanArtClient.Music.GetArtistAsync(musicBrainzId);
+            var thumbUrl = artistImages?.ArtistThumb?.FirstOrDefault()?.Url;
+            if (string.IsNullOrWhiteSpace(thumbUrl)) return null;
+
+            var uri = new Uri(thumbUrl);
+            var extension = Path.GetExtension(uri.LocalPath);
+            if (string.IsNullOrEmpty(extension)) extension = ".jpg";
+            var fileName = $"similar_thumb_{musicBrainzId}{extension}";
+            var filePath = Path.Combine(artistFolderPath, fileName);
+
+            var bytes = await _httpClient.GetByteArrayAsync(thumbUrl);
+            await File.WriteAllBytesAsync(filePath, bytes);
+            return $"./{fileName}";
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    /// <summary>
     /// Downloads a collection of images from URLs
     /// </summary>
     /// <param name="images">Image objects with URLs</param>

@@ -114,7 +114,6 @@ export const ReleaseDownloadButton: React.FC<ReleaseDownloadButtonProps> = (
       return (
         <GradientButton
           onClick={onClickDownload}
-          className="flex items-center gap-2"
           loading={true}
           disabled={true}
         >
@@ -126,7 +125,6 @@ export const ReleaseDownloadButton: React.FC<ReleaseDownloadButtonProps> = (
       return (
         <GradientButton
           onClick={onClickDownload}
-          className="flex items-center gap-2"
           loading={true}
           disabled={true}
         >
@@ -138,9 +136,8 @@ export const ReleaseDownloadButton: React.FC<ReleaseDownloadButtonProps> = (
       return (
         <GradientButton
           onClick={onClickDownload}
-          className="flex items-center gap-2"
+          iconLeft={Download}
         >
-          <Download className="h-5 w-5" />
           {queued ? "Queued" : "Download"}
         </GradientButton>
       );
@@ -151,9 +148,8 @@ export const ReleaseDownloadButton: React.FC<ReleaseDownloadButtonProps> = (
           <Tag variant={"error"}>Could not find release.</Tag>
           <GradientButton
             onClick={onClickDownload}
-            className="flex items-center gap-2"
+            iconLeft={Download}
           >
-            <Download className="h-5 w-5" />
             {queued ? "Queued" : "Download"}
           </GradientButton>
         </div>

@@ -37,8 +37,7 @@ export const ArtistInLibraryButton: React.FC<ArtistInLibraryButtonProps> = ({
 
   if (isInLibrary) {
     return (
-      <GradientButton onClick={onClick} loading={fetching}>
-        <Check className="w-5 h-5 text-green-400" />
+      <GradientButton onClick={onClick} loading={fetching} iconLeft={Check}>
         Add to Library
       </GradientButton>
     );

@@ -78,6 +78,7 @@ type Artist implements ArtistBase {
   name: String!
   releaseByFolderName(releaseFolderName: String!): Release
   releases: [Release!]!
+  similarArtists: [SimilarArtist!]!
   singles: [Release!]!
   sortName: String!
   topTracks: [ArtistTopTrack!]!
@@ -1355,6 +1356,14 @@ union SignOutResult = SignOutError | SignOutSuccess
 
 type SignOutSuccess {
   success: Boolean!
+}
+
+type SimilarArtist {
+  artist: Artist
+  musicBrainzArtistId: String
+  name: String!
+  similarityScore: Float
+  thumb: String
 }
 
 type SlotProgressUpdate {

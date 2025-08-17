@@ -10,6 +10,7 @@ export interface GradientButtonProps
   fullWidth?: boolean;
   children: React.ReactNode;
   loading?: boolean;
+  iconLeft?: React.ComponentType<{ className?: string }>;
 }
 
 export const GradientButton: React.FC<GradientButtonProps> = ({
@@ -19,6 +20,7 @@ export const GradientButton: React.FC<GradientButtonProps> = ({
   className = "",
   children,
   loading,
+  iconLeft: IconLeft,
   ...props
 }) => {
   const variantClasses = {
@@ -49,7 +51,11 @@ export const GradientButton: React.FC<GradientButtonProps> = ({
       )}
       {...props}
     >
-      {loading && <LoaderCircle className="animate-spin size-4" />}
+      {loading ? (
+        <LoaderCircle className="animate-spin size-4 mr-2" />
+      ) : (
+        IconLeft ? <IconLeft className="w-4 h-4 mr-2" /> : null
+      )}
       {children}
     </button>
   );

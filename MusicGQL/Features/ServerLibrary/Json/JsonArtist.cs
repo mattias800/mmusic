@@ -11,6 +11,7 @@ public class JsonArtist
     public JsonArtistPhotos? Photos { get; set; }
     public JsonArtistServiceConnections? Connections { get; set; }
     public List<JsonArtistAppearance>? AlsoAppearsOn { get; set; }
+    public List<JsonSimilarArtist>? SimilarArtists { get; set; }
 }
 
 public class JsonArtistAlias
@@ -121,4 +122,16 @@ public class JsonArtistAppearance
     /// Cover art URL if available
     /// </summary>
     public string? CoverArt { get; set; }
+}
+
+/// <summary>
+/// Represents a similar artist recommendation (self-contained assets)
+/// </summary>
+public class JsonSimilarArtist
+{
+    public string Name { get; set; } = string.Empty;
+    public string? MusicBrainzArtistId { get; set; }
+    public double? SimilarityScore { get; set; }
+    public string? Thumb { get; set; }
+    public string? ArtistId { get; set; }
 }

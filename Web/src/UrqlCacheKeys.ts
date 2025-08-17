@@ -58,4 +58,5 @@ export const cacheKeys: Record<TypesWithNoId, KeyGenerator> = {
   SlotProgressUpdate: () => null,
   SlotStatusUpdate: () => null,
   StorageStats: () => null,
+  SimilarArtist: () => null,
 };

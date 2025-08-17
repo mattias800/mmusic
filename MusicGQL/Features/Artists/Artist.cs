@@ -2,6 +2,7 @@ using MusicGQL.Features.External;
 using MusicGQL.Features.ServerLibrary;
 using MusicGQL.Features.ServerLibrary.Cache;
 using MusicGQL.Features.ServerLibrary.Json;
+using MusicGQL.Features.ListenBrainz;
 
 namespace MusicGQL.Features.Artists;
 
@@ -90,5 +91,15 @@ public record Artist([property: GraphQLIgnore] CachedArtist Model) : IArtistBase
         }
 
         return Model.JsonArtist.AlsoAppearsOn.Select(appearance => new ArtistAppearsOn(appearance, Model.Id));
+    }
+
+    public IEnumerable<SimilarArtist> SimilarArtists()
+    {
+        var list = Model.JsonArtist.SimilarArtists;
+        if (list == null || list.Count == 0)
+        {
+            return [];
+        }
+        return list.Select(sa => new SimilarArtist(sa));
     }
 }

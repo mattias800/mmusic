@@ -15,6 +15,7 @@ import { ArtistImportStatusInfo } from "@/features/artist/artist-page/ArtistImpo
 import { ArtistStatisticsHeader } from "@/features/artist/artist-page/ArtistStatisticsHeader.tsx";
 import { BarChart3, Disc3, Music, TrendingUp } from "lucide-react";
 import { ArtistAppearsOnTabContent } from "@/features/artist/artist-page/ArtistAppearsOnTabContent.tsx";
+import { SimilarArtistsTabContent } from "@/features/artist/artist-page/SimilarArtistsTabContent.tsx";
 
 interface ArtistPanelProps {
   artist: FragmentType<typeof artistPanelArtistFragment>;
@@ -69,6 +70,12 @@ const artistPanelArtistFragment = graphql(`
       releaseTitle
       releaseType
       role
+    }
+    similarArtists {
+      name
+      thumb
+      similarityScore
+      artist { id }
     }
   }
 `);
@@ -310,6 +317,22 @@ export const ArtistPanel: React.FC<ArtistPanelProps> = (props) => {
                   label: "Media Availability",
                   icon: BarChart3,
                   content: <ArtistStatisticsHeader artist={artist} />,
+                },
+                {
+                  id: "similar-artists",
+                  label: "Similar Artists",
+                  icon: TrendingUp,
+                  content: (
+                    <SimilarArtistsTabContent
+                      artistId={artist.id}
+                      items={(artist.similarArtists ?? []).map((s) => ({
+                        name: s.name,
+                        thumb: s.thumb,
+                        similarityScore: s.similarityScore,
+                        artist: s.artist ? { id: s.artist.id } : null,
+                      }))}
+                    />
+                  ),
                 },
                 {
                   id: "appears-on",
