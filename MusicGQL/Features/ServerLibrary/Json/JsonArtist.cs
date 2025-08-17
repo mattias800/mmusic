@@ -48,8 +48,10 @@ public class JsonArtistPhotos
 public class JsonArtistServiceConnections
 {
     public string? MusicBrainzArtistId { get; set; }
+
     // Legacy single Spotify ID for backward compatibility
     public string? SpotifyId { get; set; }
+
     // New: support multiple linked Spotify artist identities
     public List<JsonSpotifyArtistIdentity>? SpotifyIds { get; set; }
 
@@ -82,42 +84,42 @@ public class JsonArtistAppearance
     /// Title of the release/album
     /// </summary>
     public string ReleaseTitle { get; set; } = string.Empty;
-    
+
     /// <summary>
     /// Type of release (Album, EP, Single)
     /// </summary>
     public string ReleaseType { get; set; } = string.Empty;
-    
+
     /// <summary>
     /// Name of the primary artist for this release
     /// </summary>
     public string PrimaryArtistName { get; set; } = string.Empty;
-    
+
     /// <summary>
     /// MusicBrainz ID of the primary artist
     /// </summary>
     public string? PrimaryArtistMusicBrainzId { get; set; }
-    
+
     /// <summary>
     /// MusicBrainz ID of the release group
     /// </summary>
     public string? MusicBrainzReleaseGroupId { get; set; }
-    
+
     /// <summary>
     /// First release date of the release group
     /// </summary>
     public string? FirstReleaseDate { get; set; }
-    
+
     /// <summary>
     /// Year of first release
     /// </summary>
     public string? FirstReleaseYear { get; set; }
-    
+
     /// <summary>
     /// Role of this artist on the release (e.g., "Featured Artist", "Producer", "Composer")
     /// </summary>
     public string? Role { get; set; }
-    
+
     /// <summary>
     /// Cover art URL if available
     /// </summary>
@@ -130,7 +132,7 @@ public class JsonArtistAppearance
 public class JsonSimilarArtist
 {
     public string Name { get; set; } = string.Empty;
-    public string? MusicBrainzArtistId { get; set; }
+    public string MusicBrainzArtistId { get; set; } = string.Empty;
     public double? SimilarityScore { get; set; }
     public string? Thumb { get; set; }
     public string? ArtistId { get; set; }

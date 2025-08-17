@@ -10,8 +10,9 @@ public record SimilarArtist(
 )
 {
     public string Name => Model.Name;
-    public string? MusicBrainzArtistId => Model.MusicBrainzArtistId;
+    public string MusicBrainzArtistId => Model.MusicBrainzArtistId;
     public double? SimilarityScore => Model.SimilarityScore;
+
     public string? Thumb() =>
         !string.IsNullOrWhiteSpace(Model.MusicBrainzArtistId)
             ? LibraryAssetUrlFactory.CreateSimilarArtistThumbUrl(ParentArtistId, Model.MusicBrainzArtistId)
@@ -26,5 +27,3 @@ public record SimilarArtist(
         return cached is null ? null : new Artist(cached);
     }
 }
-
-

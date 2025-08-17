@@ -76,6 +76,7 @@ const artistPanelArtistFragment = graphql(`
       thumb
       similarityScore
       artist { id }
+      musicBrainzArtistId
     }
   }
 `);

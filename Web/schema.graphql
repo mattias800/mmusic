@@ -1376,7 +1376,7 @@ type SignOutSuccess {
 
 type SimilarArtist {
   artist: Artist
-  musicBrainzArtistId: String
+  musicBrainzArtistId: String!
   name: String!
   similarityScore: Float
   thumb: String

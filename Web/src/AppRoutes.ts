@@ -5,3 +5,6 @@ export const getRouteToRelease = (
 
 export const getRouteToArtist = (artistId: string): string =>
   `/artist/${artistId}`;
+
+export const getRouteToMbArtist = (mbArtistId: string): string =>
+  `/mb-artist/${mbArtistId}`;
