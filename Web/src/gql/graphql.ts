@@ -605,6 +605,23 @@ export type ImportReleasesResult = {
   totalReleases: Scalars['Int']['output'];
 };
 
+export type ImportSimilarArtistsError = {
+  __typename?: 'ImportSimilarArtistsError';
+  message: Scalars['String']['output'];
+};
+
+export type ImportSimilarArtistsInput = {
+  artistId: Scalars['String']['input'];
+};
+
+export type ImportSimilarArtistsResult = ImportSimilarArtistsError | ImportSimilarArtistsSuccess;
+
+export type ImportSimilarArtistsSuccess = {
+  __typename?: 'ImportSimilarArtistsSuccess';
+  artist: Artist;
+  importedCount: Scalars['Int']['output'];
+};
+
 export type ImportSpotifyPlaylistError = {
   __typename?: 'ImportSpotifyPlaylistError';
   message: Scalars['String']['output'];
@@ -1085,6 +1102,7 @@ export type Mutation = {
   importArtist: ImportArtistResult;
   importArtistReleases: ImportReleasesResult;
   importArtistsFromSpotifyPlaylist: ImportArtistsFromSpotifyPlaylistResult;
+  importSimilarArtists: ImportSimilarArtistsResult;
   importSpotifyPlaylist: ImportSpotifyPlaylistResult;
   likeSong: LikeSongResult;
   movePlaylistItem: MovePlaylistItemResult;
@@ -1196,6 +1214,11 @@ export type MutationImportArtistReleasesArgs = {
 
 export type MutationImportArtistsFromSpotifyPlaylistArgs = {
   input: ImportArtistsFromSpotifyPlaylistInput;
+};
+
+
+export type MutationImportSimilarArtistsArgs = {
+  input: ImportSimilarArtistsInput;
 };
 
 

@@ -525,6 +525,21 @@ type ImportReleasesResult {
   totalReleases: Int!
 }
 
+type ImportSimilarArtistsError {
+  message: String!
+}
+
+input ImportSimilarArtistsInput {
+  artistId: String!
+}
+
+union ImportSimilarArtistsResult = ImportSimilarArtistsError | ImportSimilarArtistsSuccess
+
+type ImportSimilarArtistsSuccess {
+  artist: Artist!
+  importedCount: Int!
+}
+
 type ImportSpotifyPlaylistError {
   message: String!
 }
@@ -904,6 +919,7 @@ type Mutation {
   importArtist(input: ImportArtistInput!): ImportArtistResult!
   importArtistReleases(artistId: String!): ImportReleasesResult!
   importArtistsFromSpotifyPlaylist(input: ImportArtistsFromSpotifyPlaylistInput!): ImportArtistsFromSpotifyPlaylistResult!
+  importSimilarArtists(input: ImportSimilarArtistsInput!): ImportSimilarArtistsResult!
   importSpotifyPlaylist(input: ImportSpotifyPlaylistInput!): ImportSpotifyPlaylistResult!
   likeSong(input: LikeSongInput!): LikeSongResult!
   movePlaylistItem(input: MovePlaylistItemInput!): MovePlaylistItemResult!

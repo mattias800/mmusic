@@ -328,7 +328,7 @@ public sealed class MusicBrainzImportExecutor(
             // Fetch similar artists from ListenBrainz and store (best-effort)
             try
             {
-                var sims = await listenBrainzSimilarityClient.GetSimilarArtistsByMbidAsync(mbArtistId, 12);
+                var sims = await listenBrainzSimilarityClient.GetSimilarArtistsByMbidAsync(mbArtistId, 50);
                 // Fallback: try Last.fm similar artists if ListenBrainz yields none
                 if (sims.Count == 0)
                 {
