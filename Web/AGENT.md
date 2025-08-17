@@ -2,6 +2,11 @@
 
 This document provides essential information for developers working on the MMusic project.
 
+## Important instructions
+
+Never stop the docker-compose.yml file that is up and running.
+If it has been stopped, start it!
+
 ## Build and Configuration
 
 ### Prerequisites

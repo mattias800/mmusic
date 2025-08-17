@@ -19,33 +19,6 @@ services:
       - "6380:6379"
     volumes:
       - garnetdata:/data
-  neo4j:
-    image: neo4j:latest
-    ports:
-      - "7474:7474"
-      - "7687:7687"
-    volumes:
-      - neo4j_data:/data
-    environment:
-      - NEO4J_AUTH=none
-      - NEO4J_PLUGINS=["apoc"]
-      - NEO4J_dbms_security_procedures_unrestricted=apoc.*
-      - NEO4J_dbms_security_procedures_allowlist=apoc.*
-      - NEO4J_apoc_import_file_enabled=true
-  rabbitmq:
-    image: rabbitmq:3-management
-    restart: always
-    ports:
-      - "5672:5672"
-      - "15672:15672"
-    volumes:
-      - rabbitmq_data:/var/lib/rabbitmq
-    environment:
-      - RABBITMQ_DEFAULT_USER=guest
-      - RABBITMQ_DEFAULT_PASS=guest
-
 volumes:
   postgres_data:
   garnetdata:
-  rabbitmq_data:
-  neo4j_data:
