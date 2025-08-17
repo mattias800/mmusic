@@ -18,6 +18,8 @@ public record ServerSettings([property: GraphQLIgnore] DbServerSettings Model)
 
     public int SoulSeekNoDataTimeoutSeconds() => Model.SoulSeekNoDataTimeoutSeconds;
 
+    public bool SoulSeekBatchDownloadingEnabled() => Model.SoulSeekBatchDownloadingEnabled;
+
     public int DownloadSlotCount() => Model.DownloadSlotCount;
 
     public string ListenBrainzUsername() => Model.ListenBrainzUsername;

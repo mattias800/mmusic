@@ -21,6 +21,7 @@ public class SoulSeekReleaseDownloader(
     DownloadHistoryService downloadHistory,
     ServerSettings.ServerSettingsAccessor settingsAccessor,
     ServerSettings.LibraryManifestService manifestService,
+    SoulSeekUserDiscoveryService userDiscoveryService,
     ILogger<SoulSeekReleaseDownloader> logger
 )
 {
@@ -563,6 +564,40 @@ public class SoulSeekReleaseDownloader(
                     candidate.Username
                 );
                 progress.SetStatus(DownloadStatus.Completed);
+                
+                // Discover additional releases from this user (batch downloading optimization)
+                try
+                {
+                    var settings = await settingsAccessor.GetAsync();
+                    if (settings.SoulSeekBatchDownloadingEnabled)
+                    {
+                        _ = Task.Run(async () =>
+                        {
+                            try
+                            {
+                                await userDiscoveryService.DiscoverAdditionalReleasesAsync(
+                                    candidate.Username,
+                                    artistId,
+                                    releaseFolderName,
+                                    cancellationToken
+                                );
+                            }
+                            catch (Exception ex)
+                            {
+                                logger.LogDebug(ex, "[SoulSeek] Background discovery failed for user {User}", candidate.Username);
+                            }
+                        }, cancellationToken);
+                    }
+                    else
+                    {
+                        logger.LogDebug("[SoulSeek] Batch downloading disabled, skipping discovery for user {User}", candidate.Username);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    logger.LogDebug(ex, "[SoulSeek] Failed to start background discovery for user {User}", candidate.Username);
+                }
+                
                 try
                 {
                     downloadHistory.Add(new DownloadHistoryItem(

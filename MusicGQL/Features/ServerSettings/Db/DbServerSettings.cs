@@ -14,6 +14,9 @@ public class DbServerSettings
     // Max seconds to wait without receiving data during a SoulSeek transfer before cancelling it
     public int SoulSeekNoDataTimeoutSeconds { get; set; } = 20;
 
+    // Enable batch downloading from Soulseek users (discover additional releases after successful downloads)
+    public bool SoulSeekBatchDownloadingEnabled { get; set; } = true;
+
     // Number of concurrent download slots to use
     public int DownloadSlotCount { get; set; } = 3;
 
@@ -40,6 +43,7 @@ public static class DefaultDbServerSettingsProvider
             DownloadPath = "",
             SoulSeekSearchTimeLimitSeconds = 60,
             SoulSeekNoDataTimeoutSeconds = 20,
+            SoulSeekBatchDownloadingEnabled = true,
             DownloadSlotCount = 3,
             ListenBrainzUsername = "",
             ListenBrainzApiKey = "",
