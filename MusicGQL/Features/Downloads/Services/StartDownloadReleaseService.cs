@@ -56,6 +56,17 @@ public class StartDownloadReleaseService(
             artistName,
             releaseTitle
         );
+        
+        // Log the artist name source for debugging
+        var currentArtistName = (await cache.GetArtistByIdAsync(artistId))?.JsonArtist.Name ?? "Unknown";
+        if (artistName != currentArtistName)
+        {
+            logger.LogInformation(
+                "[StartDownload] Using historical artist name '{HistoricalName}' (from release.json) instead of current name '{CurrentName}' for search",
+                artistName,
+                currentArtistName
+            );
+        }
 
         // Compute allowed track counts on-demand (do not persist in release.json)
         List<int> allowedOfficialCounts = new();

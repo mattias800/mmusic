@@ -117,7 +117,7 @@ public class ServerLibraryCache(ServerLibraryJsonReader reader, ITopicEventSende
                         ReleasePath = releasePath,
                         FolderName = folderName,
                         ArtistId = artistJson.Id,
-                        ArtistName = artistJson.Name,
+                        ArtistName = releaseJson.ArtistName, // Use the artist name from release.json (historical name)
                         JsonRelease = releaseJson,
                         Tracks = new List<CachedTrack>(),
                     };
@@ -142,7 +142,7 @@ public class ServerLibraryCache(ServerLibraryJsonReader reader, ITopicEventSende
                                 TrackNumber = trackJson.TrackNumber,
                                 AudioFilePath = trackJson.AudioFilePath,
                                 ArtistId = artistJson.Id,
-                                ArtistName = artistJson.Name,
+                                ArtistName = releaseJson.ArtistName, // Use the artist name from release.json (historical name)
                                 ReleaseFolderName = folderName,
                                 ReleaseTitle = releaseJson.Title,
                                 JsonReleaseType = releaseJson.Type,
