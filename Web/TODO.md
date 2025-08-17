@@ -14,6 +14,7 @@ This application is very much work in progress, so migrations will be deleted so
 If there are no errors in backend build, type generation, frontend lint or frontend typecheck,
 then the task is done.
 Create a git commit, update the check in TODO.md and move to next task.
+When creating a commit, only include the files that were changed for the task.
 
 If there are problems, ask the user for assistance.
 
