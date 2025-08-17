@@ -5,9 +5,10 @@ import { Users as UsersIcon } from "lucide-react";
 import { UserAdminCard } from "@/features/user-admin/UserAdminCard.tsx";
 import { CreateNewUserButton } from "@/features/user-admin/CreateNewUserButton.tsx";
 import { sumBy } from "lodash-es";
-import { UserEditButton } from "@/features/user-admin/UserEditButton.tsx";
 import { UserRolesToggles } from "@/features/user-admin/UserRolesToggles.tsx";
 import { UserDeleteButton } from "@/features/user-admin/UserDeleteButton.tsx";
+import { UserChangeUsernameButton } from "@/features/user-admin/UserChangeUsernameButton.tsx";
+import { UserChangePasswordButton } from "@/features/user-admin/UserChangePasswordButton.tsx";
 
 export interface UserAdminPanelProps {
   viewer: FragmentType<typeof userAdminPanelViewerFragment>;
@@ -28,7 +29,8 @@ const userAdminPanelUserFragment = graphql(`
   fragment UserAdminPanel_User on User {
     id
     ...UserDeleteButton_User
-    ...UserEditButton_User
+    ...UserChangeUsernameButton_User
+    ...UserChangePasswordButton_User
     ...UserRolesToggles_User
     ...UserAdminCard_User
     roles
@@ -58,14 +60,19 @@ export const UserAdminPanel: React.FC<UserAdminPanelProps> = (props) => {
               <UserAdminCard
                 key={user.id}
                 user={user}
-                renderEditButton={() => <UserEditButton user={user} />}
+                renderButtons={() => (
+                  <div className="flex flex-col items-center gap-3">
+                    <UserChangeUsernameButton user={user} />
+                    <UserChangePasswordButton user={user} />
+                    <UserDeleteButton user={user} />
+                  </div>
+                )}
                 renderRoleToggles={() => (
                   <UserRolesToggles
                     user={user}
                     canRemoveAdminRole={numAdmins > 1 && user.id !== viewer.id}
                   />
                 )}
-                renderDeleteButton={() => <UserDeleteButton user={user} />}
               />
             ))}
             <div className="flex justify-start"></div>

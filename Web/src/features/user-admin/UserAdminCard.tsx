@@ -7,8 +7,7 @@ import { GlassCardInner } from "@/components/ui/glas-card-inner.tsx";
 export interface UserAdminCardProps {
   user: FragmentType<typeof userAdminCardUserFragment>;
   renderRoleToggles: () => ReactNode;
-  renderEditButton: () => ReactNode;
-  renderDeleteButton: () => ReactNode;
+  renderButtons: () => ReactNode;
 }
 
 const userAdminCardUserFragment = graphql(`
@@ -20,9 +19,8 @@ const userAdminCardUserFragment = graphql(`
 `);
 
 export const UserAdminCard: React.FC<UserAdminCardProps> = ({
-  renderEditButton,
+  renderButtons,
   renderRoleToggles,
-  renderDeleteButton,
   ...props
 }) => {
   const user = useFragment(userAdminCardUserFragment, props.user);
@@ -35,10 +33,7 @@ export const UserAdminCard: React.FC<UserAdminCardProps> = ({
     >
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-56 flex flex-col gap-4">
-          <div className="flex items-center gap-3">
-            {renderEditButton()}
-            {renderDeleteButton()}
-          </div>
+          <div className="flex items-center gap-3">{renderButtons()}</div>
           <div className="text-xs text-gray-400">ID: {user.id}</div>
         </div>
         {renderRoleToggles()}
