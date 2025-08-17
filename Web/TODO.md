@@ -19,7 +19,7 @@ If there are problems, ask the user for assistance.
 
 ## Search feature should search playlist names as well
 
-* [ ] Add GraphQL nodes for searching playlists names
+* [x] Add GraphQL nodes for searching playlists names
 * [ ] Add a UI in search result for playlist with similar design as the existing search results.
 
 ## Artists page "appears on" tab
@@ -53,4 +53,4 @@ If there are problems, ask the user for assistance.
 * [ ] Limit access to server settings to users with admin role. Both in UI, and in the API. Authenticate the user in
   both queries and mutations.
 * [ ] Add UI for editing the new server settings from appsettings.development.json
-* [ ] Connection strings should be read from a config file, and not be stored in server settings. 
+* [ ] Connection strings should be read from a config file, and not be stored in server settings.

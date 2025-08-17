@@ -993,6 +993,7 @@ type PlaylistItem {
 type PlaylistSearchRoot {
   byId(playlistId: ID!): Playlist
   importPlaylists: ImportPlaylistSearchRoot!
+  searchPlaylists(limit: Int! = 20, searchTerm: String!): [Playlist!]!
 }
 
 type Query {
@@ -1713,3 +1714,4 @@ type UsersEdge {
   """The item at the end of the edge."""
   node: User!
 }
+
