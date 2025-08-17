@@ -74,8 +74,6 @@ public class ListenBrainzPopularityClient
                 }
 
                 var content = await response.Content.ReadAsStringAsync(cancellationToken);
-                _logger.LogInformation("[ListenBrainzPopularityClient] Raw response content for artist {ArtistMbid}: {Content}", 
-                    artistMbid, content);
                 
                 if (string.IsNullOrWhiteSpace(content))
                 {

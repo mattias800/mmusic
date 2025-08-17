@@ -25,8 +25,8 @@ The user will create a git commit manually.
 
 ## Artists page "appears on" tab
 
-* [ ] Artists page should have an "appears on" tab
-* [ ] "Appears on" tab should contain one card with playlists, and one card with other artists releases that they appear
+* [x] Artists page should have an "appears on" tab
+* [x] "Appears on" tab should contain one card with playlists, and one card with other artists releases that they appear
   on
 
 ## Similar artists

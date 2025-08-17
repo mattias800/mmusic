@@ -14,6 +14,7 @@ import { ArtistDownloadAllReleasesButton } from "@/features/artist/artist-page/A
 import { ArtistImportStatusInfo } from "@/features/artist/artist-page/ArtistImportStatusInfo.tsx";
 import { ArtistStatisticsHeader } from "@/features/artist/artist-page/ArtistStatisticsHeader.tsx";
 import { BarChart3, Disc3, Music, TrendingUp } from "lucide-react";
+import { ArtistAppearsOnTabContent } from "@/features/artist/artist-page/ArtistAppearsOnTabContent.tsx";
 
 interface ArtistPanelProps {
   artist: FragmentType<typeof artistPanelArtistFragment>;
@@ -57,6 +58,17 @@ const artistPanelArtistFragment = graphql(`
     }
     images {
       backgrounds
+    }
+    alsoAppearsOn {
+      coverArtUrl
+      firstReleaseDate
+      firstReleaseYear
+      musicBrainzReleaseGroupId
+      primaryArtistMusicBrainzId
+      primaryArtistName
+      releaseTitle
+      releaseType
+      role
     }
   }
 `);
@@ -298,6 +310,17 @@ export const ArtistPanel: React.FC<ArtistPanelProps> = (props) => {
                   label: "Media Availability",
                   icon: BarChart3,
                   content: <ArtistStatisticsHeader artist={artist} />,
+                },
+                {
+                  id: "appears-on",
+                  label: "Appears On",
+                  icon: Music,
+                  content: (
+                    <ArtistAppearsOnTabContent
+                      artistId={artist.id}
+                      appearsOn={artist.alsoAppearsOn}
+                    />
+                  ),
                 },
               ]}
               defaultTab="top-tracks"
