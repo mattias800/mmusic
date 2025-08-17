@@ -1,13 +1,11 @@
 import * as React from "react";
 import { useQuery } from "urql";
-import { ScreenSpinner } from "@/components/spinner/ScreenSpinner.tsx";
 import { graphql } from "@/gql";
 import { LibraryPathForm } from "@/features/settings/LibraryPathForm.tsx";
-import { SoulSeekSettingsForm } from "@/features/settings/SoulSeekSettingsForm.tsx";
 import { DownloadSlotSettingsForm } from "@/features/settings/DownloadSlotSettingsForm.tsx";
 import { TopTracksServiceSettingsForm } from "@/features/settings/TopTracksServiceSettingsForm.tsx";
-import { PageLayout, PageHeader, GlassCard, InfoSection } from "@/components/ui";
-import { Settings, Download, FolderOpen, Server, Info, Music } from "lucide-react";
+import { PageLayout, PageHeader, GlassCard, InfoSection, PageLoading, PageError, PageNoData } from "@/components/ui";
+import { Settings, AlertTriangle, Cog } from "lucide-react";
 
 export interface SettingsPageProps {}
 
@@ -28,9 +26,27 @@ export const SettingsPage: React.FC<SettingsPageProps> = () => {
     query: settingsPageQuery,
   });
   
-  if (fetching || stale) return <ScreenSpinner />;
-  if (error) return <div>Error: {error.message}</div>;
-  if (!data?.serverSettings) return <div>No data</div>;
+  if (fetching || stale) return <PageLoading 
+    title="Loading Settings" 
+    subtitle="Fetching your server configuration"
+    icon={Settings}
+    iconBgColor="bg-blue-500/20"
+  />;
+  
+  if (error) return <PageError 
+    title="Failed to Load Settings" 
+    message="We couldn't load your server settings"
+    error={error}
+    icon={AlertTriangle}
+    iconBgColor="bg-red-500/20"
+  />;
+  
+  if (!data?.serverSettings) return <PageNoData 
+    title="Settings Not Available" 
+    message="Your server settings couldn't be loaded"
+    icon={Cog}
+    iconBgColor="bg-yellow-500/20"
+  />;
 
   return (
     <PageLayout>
@@ -42,55 +58,44 @@ export const SettingsPage: React.FC<SettingsPageProps> = () => {
       />
 
       {/* Main Content Grid */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 max-w-7xl mx-auto">
-        {/* Left Column - Library & Storage */}
-        <div className="space-y-8">
-          <GlassCard 
-            title="Library Configuration" 
-            icon={FolderOpen} 
-            iconBgColor="bg-blue-500/20"
-          >
-            <LibraryPathForm serverSettings={data.serverSettings} />
-          </GlassCard>
-        </div>
+      <div className="max-w-4xl mx-auto space-y-8">
+        {/* Library Path Settings */}
+        <GlassCard 
+          title="Library Path Configuration" 
+          icon={Settings} 
+          iconBgColor="bg-blue-500/20"
+        >
+          <LibraryPathForm serverSettings={data.serverSettings} />
+        </GlassCard>
 
-        {/* Right Column - Download & External Services */}
-        <div className="space-y-8">
-          <GlassCard 
-            title="Download Settings" 
-            icon={Download} 
-            iconBgColor="bg-green-500/20"
-          >
-            <DownloadSlotSettingsForm serverSettings={data.serverSettings} />
-          </GlassCard>
+        {/* Download Settings */}
+        <GlassCard 
+          title="Download Configuration" 
+          icon={Settings} 
+          iconBgColor="bg-green-500/20"
+        >
+          <DownloadSlotSettingsForm serverSettings={data.serverSettings} />
+        </GlassCard>
 
-          <GlassCard 
-            title="Top Tracks Services" 
-            icon={Music} 
-            iconBgColor="bg-purple-500/20"
-          >
-            <TopTracksServiceSettingsForm />
-          </GlassCard>
-
-          <GlassCard 
-            title="External Services" 
-            icon={Server} 
-            iconBgColor="bg-purple-500/20"
-          >
-            <SoulSeekSettingsForm />
-          </GlassCard>
-        </div>
+        {/* Top Tracks Settings */}
+        <GlassCard 
+          title="Top Tracks Integration" 
+          icon={Settings} 
+          iconBgColor="bg-purple-500/20"
+        >
+          <TopTracksServiceSettingsForm />
+        </GlassCard>
       </div>
 
       {/* Bottom Info Section */}
       <InfoSection 
-        icon={Info} 
+        icon={Settings} 
         title="About Server Settings" 
         variant="blue"
       >
-        These settings control how mmusic operates on your server. The library path determines where your music files are stored, 
-        download slots control how many releases can be downloaded simultaneously, and external service settings configure 
-        how mmusic interacts with services like SoulSeek. Changes to these settings may require a server restart to take effect.
+        These settings control how your mmusic server operates. The library path determines where your music files are stored, 
+        download slots control how many simultaneous downloads can run, and top tracks integration enables external services 
+        to provide music recommendations. Changes to these settings may require a server restart to take effect.
       </InfoSection>
     </PageLayout>
   );

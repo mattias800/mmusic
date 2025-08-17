@@ -3,8 +3,8 @@ import { TopTrackRecommendations } from "@/features/recommendations/top-tracks/T
 import { ServerLibraryStatisticsHeader } from "@/features/server-library/ServerLibraryStatisticsHeader.tsx";
 import { graphql } from "@/gql";
 import { useQuery } from "urql";
-import { PageLayout, PageHeader, GlassCard, InfoSection } from "@/components/ui";
-import { Music, Users, TrendingUp, Star } from "lucide-react";
+import { PageLayout, PageHeader, GlassCard, InfoSection, PageLoading, PageError, PageNoData } from "@/components/ui";
+import { Music, Users, TrendingUp, Star, AlertTriangle } from "lucide-react";
 
 const indexPageQuery = graphql(`
   query IndexPageQuery {
@@ -19,9 +19,27 @@ export const IndexPage = () => {
     query: indexPageQuery,
   });
 
-  if (fetching) return <div className="p-6">Loading...</div>;
-  if (error) return <div className="p-6">Error: {error.message}</div>;
-  if (!data?.serverLibrary) return <div className="p-6">No data</div>;
+  if (fetching) return <PageLoading 
+    title="Loading Dashboard" 
+    subtitle="Preparing your music library overview and recommendations"
+    icon={Music}
+    iconBgColor="bg-blue-500/20"
+  />;
+  
+  if (error) return <PageError 
+    title="Failed to Load Dashboard" 
+    message="We couldn't load your music library dashboard"
+    error={error}
+    icon={AlertTriangle}
+    iconBgColor="bg-red-500/20"
+  />;
+  
+  if (!data?.serverLibrary) return <PageNoData 
+    title="No Library Data Available" 
+    message="Your music library data couldn't be loaded. This might be a temporary issue."
+    icon={Music}
+    iconBgColor="bg-yellow-500/20"
+  />;
 
   return (
     <PageLayout>

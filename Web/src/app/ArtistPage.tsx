@@ -2,8 +2,9 @@ import { graphql } from "@/gql";
 import { useQuery } from "urql";
 import { useParams } from "react-router";
 import { ArtistPanel } from "@/features/artist/artist-page/ArtistPanel.tsx";
-import { ScreenSpinner } from "@/components/spinner/ScreenSpinner.tsx";
+import { PageLoading, PageError } from "@/components/ui";
 import { ArtistNotFound } from "@/app/ArtistNotFound.tsx";
+import { Music, AlertTriangle } from "lucide-react";
 
 const artistQuery = graphql(`
   query ArtistQuery($artistId: ID!) {
@@ -26,15 +27,33 @@ export const ArtistPage = () => {
   });
 
   if (!artistId) {
-    return "Invalid artist ID";
+    return <PageError 
+      title="Invalid Artist ID" 
+      message="The artist ID provided is not valid"
+      icon={AlertTriangle}
+      iconBgColor="bg-red-500/20"
+    />;
   }
 
   if (fetching || stale) {
-    return <ScreenSpinner />;
+    return <PageLoading 
+      title="Loading Artist" 
+      subtitle="Fetching artist information and discography"
+      icon={Music}
+      iconBgColor="bg-purple-500/20"
+    />;
   }
+  
   if (error) {
-    return <div>Error: {error.message}</div>;
+    return <PageError 
+      title="Failed to Load Artist" 
+      message="We couldn't load the artist information"
+      error={error}
+      icon={AlertTriangle}
+      iconBgColor="bg-red-500/20"
+    />;
   }
+  
   if (!data?.serverLibrary.artistById) {
     return <ArtistNotFound />;
   }

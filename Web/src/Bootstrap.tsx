@@ -1,7 +1,8 @@
 import * as React from "react";
 import { PropsWithChildren, ReactNode } from "react";
 import { gql, useQuery } from "urql";
-import { ScreenSpinner } from "@/components/spinner/ScreenSpinner.tsx";
+import { PageLoading, PageError } from "@/components/ui";
+import { Music, AlertTriangle } from "lucide-react";
 
 export interface BootstrapProps extends PropsWithChildren {
   renderAuthenticated: () => ReactNode;
@@ -28,11 +29,22 @@ export const Bootstrap: React.FC<BootstrapProps> = ({
   });
 
   if (fetching) {
-    return <ScreenSpinner />;
+    return <PageLoading 
+      title="Initializing Application" 
+      subtitle="Checking user status and configuration"
+      icon={Music}
+      iconBgColor="bg-blue-500/20"
+    />;
   }
 
   if (error || !data) {
-    return <div>Error checking user status.</div>;
+    return <PageError 
+      title="Application Error" 
+      message="We encountered an error while checking user status"
+      error={error}
+      icon={AlertTriangle}
+      iconBgColor="bg-red-500/20"
+    />;
   }
 
   if (!data.areThereAnyUsers) {

@@ -2,7 +2,8 @@ import { graphql } from "@/gql";
 import { useQuery } from "urql";
 import { useParams } from "react-router";
 import { AlbumPanel } from "@/features/album/AlbumPanel.tsx";
-import { ScreenSpinner } from "@/components/spinner/ScreenSpinner.tsx";
+import { PageLoading, PageError, PageNoData } from "@/components/ui";
+import { Music, AlertTriangle, Disc3 } from "lucide-react";
 
 const albumQuery = graphql(`
   query AlbumQuery($artistId: ID!, $releaseFolderName: String!) {
@@ -31,11 +32,29 @@ export const AlbumPage = () => {
     pause: !artistId || !releaseFolderName,
   });
 
-  if (fetching || stale) return <ScreenSpinner />;
-  if (error) return <div>Error: {error.message}</div>;
+  if (fetching || stale) return <PageLoading 
+    title="Loading Album" 
+    subtitle="Fetching album information and track listing"
+    icon={Music}
+    iconBgColor="bg-purple-500/20"
+  />;
+  
+  if (error) return <PageError 
+    title="Failed to Load Album" 
+    message="We couldn't load the album information"
+    error={error}
+    icon={AlertTriangle}
+    iconBgColor="bg-red-500/20"
+  />;
+  
   const release = data?.serverLibrary.artistById?.releaseByFolderName;
 
-  if (!release) return <div>No data</div>;
+  if (!release) return <PageNoData 
+    title="Album Not Found" 
+    message="The album you're looking for doesn't exist or may have been removed"
+    icon={Disc3}
+    iconBgColor="bg-yellow-500/20"
+  />;
 
   return (
     <>

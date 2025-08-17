@@ -1,9 +1,10 @@
 import { graphql } from "@/gql";
 import { useQuery } from "urql";
 import { useParams } from "react-router";
-import { ScreenSpinner } from "@/components/spinner/ScreenSpinner.tsx";
+import { PageLoading, PageError } from "@/components/ui";
 import { ArtistNotFound } from "@/app/ArtistNotFound.tsx";
 import { ArtistNotInLibraryPanel } from "@/features/artist/artist-not-in-library/ArtistNotInLibraryPanel.tsx";
+import { Music, AlertTriangle } from "lucide-react";
 
 const mbArtistQuery = graphql(`
   query MbArtistQuery($mbArtistId: ID!) {
@@ -28,15 +29,33 @@ export const MbArtistPage = () => {
   });
 
   if (!mbArtistId) {
-    return "Invalid artist ID";
+    return <PageError 
+      title="Invalid Artist ID" 
+      message="The MusicBrainz artist ID provided is not valid"
+      icon={AlertTriangle}
+      iconBgColor="bg-red-500/20"
+    />;
   }
 
   if (fetching || stale) {
-    return <ScreenSpinner />;
+    return <PageLoading 
+      title="Loading Artist Information" 
+      subtitle="Fetching artist details from MusicBrainz"
+      icon={Music}
+      iconBgColor="bg-green-500/20"
+    />;
   }
+  
   if (error) {
-    return <div>Error: {error.message}</div>;
+    return <PageError 
+      title="Failed to Load Artist" 
+      message="We couldn't load the artist information from MusicBrainz"
+      error={error}
+      icon={AlertTriangle}
+      iconBgColor="bg-red-500/20"
+    />;
   }
+  
   if (!data?.musicBrainz.artist.byId) {
     return <ArtistNotFound />;
   }

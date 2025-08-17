@@ -7,7 +7,6 @@ import {
   Library,
   ListOrdered,
   MicVocal,
-  Music2,
   Play,
   User,
 } from "lucide-react";
@@ -80,12 +79,6 @@ export const Sidebar = ({ className }: SidebarProps) => {
           icon={Library}
           iconColor="text-blue-400"
         >
-          <SidebarNavButton
-            path="/liked-songs"
-            label="Liked songs"
-            icon={Heart}
-          />
-          <SidebarNavButton path="/songs" label="Songs" icon={Music2} />
           <SidebarNavButton path="/artists" label="Artists" icon={MicVocal} />
           <SidebarNavButton path="/albums" label="Albums" icon={Library} />
         </SidebarSection>

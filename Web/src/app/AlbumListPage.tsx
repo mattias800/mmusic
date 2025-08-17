@@ -1,8 +1,9 @@
 import * as React from "react";
 import { graphql } from "@/gql";
 import { useQuery } from "urql";
-import { ScreenSpinner } from "@/components/spinner/ScreenSpinner.tsx";
+import { PageLoading, PageError, PageNoAlbums } from "@/components/ui";
 import { AlbumList } from "@/features/album/album-list/AlbumList.tsx";
+import { Music, AlertTriangle } from "lucide-react";
 
 export interface AlbumListPageProps {}
 
@@ -22,9 +23,28 @@ export const AlbumListPage: React.FC<AlbumListPageProps> = () => {
     query: albumListQuery,
   });
 
-  if (fetching || stale) return <ScreenSpinner />;
-  if (error) return <div>Error: {error.message}</div>;
-  if (!data?.serverLibrary.allReleases) return <div>No data</div>;
+  if (fetching || stale)
+    return (
+      <PageLoading
+        title="Loading Albums"
+        subtitle="Fetching your music collection"
+        icon={Music}
+        iconBgColor="bg-purple-500/20"
+      />
+    );
+
+  if (error)
+    return (
+      <PageError
+        title="Failed to Load Albums"
+        message="We couldn't load your album collection"
+        error={error}
+        icon={AlertTriangle}
+        iconBgColor="bg-red-500/20"
+      />
+    );
+
+  if (!data?.serverLibrary.allReleases?.length) return <PageNoAlbums />;
 
   return (
     <>
