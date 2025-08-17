@@ -1,8 +1,8 @@
 # TODO
 
 After each task is done, compile the backend to see that there are no errors.
-If there are updates to GraphQL schema, we need to run "bun types:once" while the
-backend is running. Ask user for help if needed.
+If there are updates to GraphQL schema, we need to restart the backend and 
+run "bun types:once" while the backend is running. Ask user for help if needed.
 
 If there are changes to the database, make sure to update migrations.
 
