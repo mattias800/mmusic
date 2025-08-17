@@ -286,6 +286,7 @@ public class SoulSeekReleaseDownloader(
 
             foreach (var candidate in orderedCandidates)
         {
+            logger.LogDebug("[SoulSeek] Starting download attempt with candidate user: {User}", candidate.Username);
             bool userFailed = false;
             var queue = DownloadQueueFactory.Create(
                 candidate,
@@ -321,6 +322,10 @@ public class SoulSeekReleaseDownloader(
                 continue;
             }
 
+            // Reset no-data timeout for each new candidate user
+            var userLastDataTick = DateTime.UtcNow;
+            logger.LogDebug("[SoulSeek] Starting download session for user '{User}' with no-data timeout of {Timeout}s", candidate.Username, noDataTimeoutSec);
+
             while (queue.Any())
             {
                 if (cancellationToken.IsCancellationRequested) { return false; }
@@ -346,21 +351,26 @@ public class SoulSeekReleaseDownloader(
                     CachedMediaAvailabilityStatus.Downloading
                 );
 
+                // Declare variables outside try block so they're accessible in catch block
+                var lastDataTick = DateTime.UtcNow;
+                var sw = System.Diagnostics.Stopwatch.StartNew();
+                
                 try
                 {
-                    var sw = System.Diagnostics.Stopwatch.StartNew();
-                    var noDataStopwatch = System.Diagnostics.Stopwatch.StartNew();
                     // Monitor for no-data outside of progress callback so we cancel even if no callbacks are fired
                     using var perFileCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
                     using var monitorCts = new CancellationTokenSource();
-                    var lastDataTick = DateTime.UtcNow;
                     var monitorTask = Task.Run(async () =>
                     {
                         try
                         {
                             while (!monitorCts.IsCancellationRequested)
                             {
-                                if ((DateTime.UtcNow - lastDataTick).TotalSeconds >= noDataTimeoutSec)
+                                // Check both per-file and per-user no-data timeouts
+                                var fileNoDataElapsed = (DateTime.UtcNow - lastDataTick).TotalSeconds;
+                                var userNoDataElapsed = (DateTime.UtcNow - userLastDataTick).TotalSeconds;
+                                
+                                if (fileNoDataElapsed >= noDataTimeoutSec || userNoDataElapsed >= noDataTimeoutSec)
                                 {
                                     try { perFileCts.Cancel(); } catch { }
                                     break;
@@ -393,13 +403,21 @@ public class SoulSeekReleaseDownloader(
                                 double percent = total > 0 ? (received * 100.0) / total : 0;
                                 if (delta > 0)
                                 {
-                                    noDataStopwatch.Restart();
+                                    // Reset both per-file and per-user no-data timers when data is received
                                     lastDataTick = DateTime.UtcNow;
+                                    userLastDataTick = DateTime.UtcNow;
                                 }
-                                else if (noDataStopwatch.Elapsed.TotalSeconds >= noDataTimeoutSec)
+                                else
                                 {
-                                    // Cancel transfer: no data for too long
-                                    try { perFileCts.Cancel(); } catch { }
+                                    // Check both timeouts in the progress callback as well
+                                    var fileNoDataElapsed = (DateTime.UtcNow - lastDataTick).TotalSeconds;
+                                    var userNoDataElapsed = (DateTime.UtcNow - userLastDataTick).TotalSeconds;
+                                    
+                                    if (fileNoDataElapsed >= noDataTimeoutSec || userNoDataElapsed >= noDataTimeoutSec)
+                                    {
+                                        // Cancel transfer: no data for too long (either per-file or per-user)
+                                        try { perFileCts.Cancel(); } catch { }
+                                    }
                                 }
                                 progress.Set(new DownloadProgress
                                 {
@@ -486,7 +504,19 @@ public class SoulSeekReleaseDownloader(
                         logger.LogInformation("[SoulSeek] Download cancelled externally for {Artist}/{Folder}", artistId, releaseFolderName);
                         return false;
                     }
-                    logger.LogWarning(ocex, "[SoulSeek] Download cancelled due to no-data timeout ({Seconds}s) for file {File}", noDataTimeoutSec, item.FileName);
+                    
+                    // Determine which timeout occurred (per-file or per-user)
+                    var fileNoDataElapsed = (DateTime.UtcNow - lastDataTick).TotalSeconds;
+                    var userNoDataElapsed = (DateTime.UtcNow - userLastDataTick).TotalSeconds;
+                    
+                    if (userNoDataElapsed >= noDataTimeoutSec)
+                    {
+                        logger.LogWarning(ocex, "[SoulSeek] Download cancelled due to per-user no-data timeout ({Seconds}s) for user {User}", noDataTimeoutSec, candidate.Username);
+                    }
+                    else
+                    {
+                        logger.LogWarning(ocex, "[SoulSeek] Download cancelled due to per-file no-data timeout ({Seconds}s) for file {File}", noDataTimeoutSec, item.FileName);
+                    }
                     userFailed = true;
                 }
                 catch (Exception ex)
@@ -565,6 +595,7 @@ public class SoulSeekReleaseDownloader(
                 "[SoulSeek] Moving to next candidate user after failure: {User}",
                 candidate.Username
             );
+            logger.LogDebug("[SoulSeek] No-data timeout will be reset for the next candidate user");
         }
 
         logger.LogWarning(
