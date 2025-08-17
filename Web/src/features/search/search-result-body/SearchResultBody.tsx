@@ -2,6 +2,7 @@ import * as React from "react";
 import { ArtistSearchResults } from "./ArtistSearchResults";
 import { AlbumSearchResults } from "./AlbumSearchResults";
 import { RecordingSearchResults } from "./RecordingSearchResults";
+import { PlaylistSearchResults } from "./PlaylistSearchResults";
 
 export interface SearchResultBodyProps {
   searchText: string;
@@ -15,6 +16,7 @@ export const SearchResultBody: React.FC<SearchResultBodyProps> = ({
       <ArtistSearchResults searchText={searchText} />
       <AlbumSearchResults searchText={searchText} />
       <RecordingSearchResults searchText={searchText} />
+      <PlaylistSearchResults searchText={searchText} />
     </div>
   );
 };
