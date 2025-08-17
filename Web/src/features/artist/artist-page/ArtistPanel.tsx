@@ -72,11 +72,7 @@ const artistPanelArtistFragment = graphql(`
       role
     }
     similarArtists {
-      name
-      thumb
-      similarityScore
-      artist { id }
-      musicBrainzArtistId
+      ...SimilarArtistsTabContent_SimilarArtist
     }
   }
 `);
@@ -326,12 +322,7 @@ export const ArtistPanel: React.FC<ArtistPanelProps> = (props) => {
                   content: (
                     <SimilarArtistsTabContent
                       artistId={artist.id}
-                      items={(artist.similarArtists ?? []).map((s) => ({
-                        name: s.name,
-                        thumb: s.thumb,
-                        similarityScore: s.similarityScore,
-                        artist: s.artist ? { id: s.artist.id } : null,
-                      }))}
+                      similarArtists={artist.similarArtists}
                     />
                   ),
                 },
