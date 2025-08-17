@@ -941,6 +941,7 @@ type Mutation {
   setPlaylistItemArtistMusicBrainzMatch(input: SetPlaylistItemArtistMusicBrainzMatchInput!): SetPlaylistItemArtistMusicBrainzMatchResult!
   setReleaseGroup(input: SetReleaseGroupInput!): SetReleaseGroupResult!
   setReleaseMatchOverride(input: SetReleaseMatchOverrideInput!): SetReleaseMatchOverrideResult!
+  setUserPassword(input: SetUserPasswordInput!): SetUserPasswordResult!
   signIn(input: SignInInput!): SignInResult!
   signOut(input: SignOutInput!): SignOutResult!
   startBulkDownloadForArtist(input: StartBulkDownloadForArtistInput!): StartBulkDownloadForArtistResult!
@@ -956,6 +957,7 @@ type Mutation {
   updateTopTracksServiceSettings(input: UpdateTopTracksServiceSettingsInput!): UpdateTopTracksServiceSettingsResult!
   updateUserListenBrainzCredentials(input: UpdateUserListenBrainzCredentialsInput!): UpdateUserListenBrainzCredentialsResult!
   updateUserRoles(input: UpdateUserRolesInput!): UpdateUserRolesResult!
+  updateUserUsername(input: UpdateUserUsernameInput!): UpdateUserUsernameResult!
 }
 
 """Information about pagination in a connection."""
@@ -1346,6 +1348,21 @@ type SetReleaseMatchOverrideSuccess {
   release: Release!
 }
 
+type SetUserPasswordError {
+  message: String!
+}
+
+input SetUserPasswordInput {
+  newPassword: String!
+  userId: UUID!
+}
+
+union SetUserPasswordResult = SetUserPasswordError | SetUserPasswordSuccess
+
+type SetUserPasswordSuccess {
+  user: User!
+}
+
 type SignInError {
   message: String!
 }
@@ -1701,6 +1718,21 @@ input UpdateUserRolesInput {
 union UpdateUserRolesResult = UpdateUserRolesError | UpdateUserRolesSuccess
 
 type UpdateUserRolesSuccess {
+  user: User!
+}
+
+type UpdateUserUsernameError {
+  message: String!
+}
+
+input UpdateUserUsernameInput {
+  newUsername: String!
+  userId: UUID!
+}
+
+union UpdateUserUsernameResult = UpdateUserUsernameError | UpdateUserUsernameSuccess
+
+type UpdateUserUsernameSuccess {
   user: User!
 }
 

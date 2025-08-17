@@ -1124,6 +1124,7 @@ export type Mutation = {
   setPlaylistItemArtistMusicBrainzMatch: SetPlaylistItemArtistMusicBrainzMatchResult;
   setReleaseGroup: SetReleaseGroupResult;
   setReleaseMatchOverride: SetReleaseMatchOverrideResult;
+  setUserPassword: SetUserPasswordResult;
   signIn: SignInResult;
   signOut: SignOutResult;
   startBulkDownloadForArtist: StartBulkDownloadForArtistResult;
@@ -1139,6 +1140,7 @@ export type Mutation = {
   updateTopTracksServiceSettings: UpdateTopTracksServiceSettingsResult;
   updateUserListenBrainzCredentials: UpdateUserListenBrainzCredentialsResult;
   updateUserRoles: UpdateUserRolesResult;
+  updateUserUsername: UpdateUserUsernameResult;
 };
 
 
@@ -1318,6 +1320,11 @@ export type MutationSetReleaseMatchOverrideArgs = {
 };
 
 
+export type MutationSetUserPasswordArgs = {
+  input: SetUserPasswordInput;
+};
+
+
 export type MutationSignInArgs = {
   input: SignInInput;
 };
@@ -1390,6 +1397,11 @@ export type MutationUpdateUserListenBrainzCredentialsArgs = {
 
 export type MutationUpdateUserRolesArgs = {
   input: UpdateUserRolesInput;
+};
+
+
+export type MutationUpdateUserUsernameArgs = {
+  input: UpdateUserUsernameInput;
 };
 
 /** Information about pagination in a connection. */
@@ -1878,6 +1890,23 @@ export type SetReleaseMatchOverrideSuccess = {
   release: Release;
 };
 
+export type SetUserPasswordError = {
+  __typename?: 'SetUserPasswordError';
+  message: Scalars['String']['output'];
+};
+
+export type SetUserPasswordInput = {
+  newPassword: Scalars['String']['input'];
+  userId: Scalars['UUID']['input'];
+};
+
+export type SetUserPasswordResult = SetUserPasswordError | SetUserPasswordSuccess;
+
+export type SetUserPasswordSuccess = {
+  __typename?: 'SetUserPasswordSuccess';
+  user: User;
+};
+
 export type SignInError = {
   __typename?: 'SignInError';
   message: Scalars['String']['output'];
@@ -2362,6 +2391,23 @@ export type UpdateUserRolesResult = UpdateUserRolesError | UpdateUserRolesSucces
 
 export type UpdateUserRolesSuccess = {
   __typename?: 'UpdateUserRolesSuccess';
+  user: User;
+};
+
+export type UpdateUserUsernameError = {
+  __typename?: 'UpdateUserUsernameError';
+  message: Scalars['String']['output'];
+};
+
+export type UpdateUserUsernameInput = {
+  newUsername: Scalars['String']['input'];
+  userId: Scalars['UUID']['input'];
+};
+
+export type UpdateUserUsernameResult = UpdateUserUsernameError | UpdateUserUsernameSuccess;
+
+export type UpdateUserUsernameSuccess = {
+  __typename?: 'UpdateUserUsernameSuccess';
   user: User;
 };
 

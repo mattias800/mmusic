@@ -40,7 +40,7 @@ export const AdminUsersPage: React.FC = () => {
   if (!isAdmin) return <PageNoData title="Not authorized" message="You need admin role to view this page" icon={Shield} iconBgColor="bg-yellow-500/20"/>;
 
   const users = data?.user?.users?.nodes ?? [];
-
+  
   const toggleRole = async (userId: string, bit: number) => {
     const user = users.find(u => u?.id === userId);
     if (!user) return;
@@ -62,7 +62,20 @@ export const AdminUsersPage: React.FC = () => {
                   <div className="text-xs text-gray-400">ID: {u!.id}</div>
                 </div>
                 <div className="flex flex-wrap gap-3">
-                  <RoleToggleButton disabled={updating} label="Admin" active={((u!.roles ?? 0) & (1 << 0)) !== 0} onToggle={() => toggleRole(u!.id, 1 << 0)} icon={Crown} />
+                  <RoleToggleButton
+                    disabled={
+                      updating ||
+                      // Prevent removing admin from self
+                      (u!.id === data?.viewer?.id) ||
+                      // Prevent removing the last admin
+                      ((((u!.roles ?? 0) & (1 << 0)) !== 0) &&
+                        (users.filter(x => ((x!.roles ?? 0) & (1 << 0)) !== 0).length <= 1))
+                    }
+                    label="Admin"
+                    active={((u!.roles ?? 0) & (1 << 0)) !== 0}
+                    onToggle={() => toggleRole(u!.id, 1 << 0)}
+                    icon={Crown}
+                  />
                   <RoleToggleButton disabled={updating} label="Create Playlists" active={((u!.roles ?? 0) & (1 << 1)) !== 0} onToggle={() => toggleRole(u!.id, 1 << 1)} icon={ListPlus} />
                   <RoleToggleButton disabled={updating} label="Trigger Downloads" active={((u!.roles ?? 0) & (1 << 2)) !== 0} onToggle={() => toggleRole(u!.id, 1 << 2)} icon={Download} />
                   <RoleToggleButton disabled={updating} label="Manage Roles" active={((u!.roles ?? 0) & (1 << 3)) !== 0} onToggle={() => toggleRole(u!.id, 1 << 3)} icon={Settings2} />

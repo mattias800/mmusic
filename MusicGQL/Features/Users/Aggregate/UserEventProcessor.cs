@@ -24,6 +24,9 @@ public class UserEventProcessor(ILogger<UserEventProcessor> logger)
             case UserRolesUpdated userRolesUpdated:
                 await HandleUserRolesUpdated(userRolesUpdated, dbContext);
                 break;
+            case UserUsernameUpdated userUsernameUpdated:
+                await HandleUserUsernameUpdated(userUsernameUpdated, dbContext);
+                break;
         }
     }
 
@@ -110,6 +113,24 @@ public class UserEventProcessor(ILogger<UserEventProcessor> logger)
         }
 
         user.Roles = ev.Roles;
+        user.UpdatedAt = DateTime.UtcNow;
+        await dbContext.SaveChangesAsync();
+    }
+
+    private async Task HandleUserUsernameUpdated(UserUsernameUpdated ev, EventDbContext dbContext)
+    {
+        var user = dbContext.Users.FirstOrDefault(u => u.UserId == ev.SubjectUserId);
+
+        if (user is null)
+        {
+            logger.LogWarning(
+                "UserUsernameUpdated event received for UserId: {UserId}, but no existing user found. Ignoring",
+                ev.SubjectUserId
+            );
+            return;
+        }
+
+        user.Username = ev.NewUsername;
         user.UpdatedAt = DateTime.UtcNow;
         await dbContext.SaveChangesAsync();
     }
