@@ -1,9 +1,13 @@
 import * as React from "react";
 import { CardFlexList } from "@/components/page-body/CardFlexList.tsx";
 import { GradientButton } from "@/components/ui/gradient-button.tsx";
-import { RefreshCcw, UserPlus2, ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown, RefreshCcw, UserPlus2 } from "lucide-react";
 import { graphql } from "@/gql";
 import { useMutation } from "urql";
+import { PhotoCard } from "@/components/cards/PhotoCard.tsx";
+import { PhotoCardCenterHeading } from "@/components/cards/PhotoCardCenterHeading.tsx";
+import { useNavigate } from "react-router";
+import { getRouteToArtist } from "@/AppRoutes.ts";
 // import { ArtistCard } from "@/features/artist/artist-card/ArtistCard.tsx";
 type SimilarArtistsTabItem = {
   name: string;
@@ -11,9 +15,6 @@ type SimilarArtistsTabItem = {
   similarityScore?: number | null;
   artist?: { id: string } | null;
 };
-import { PhotoCard } from "@/components/cards/PhotoCard.tsx";
-import { PhotoCardCenterHeading } from "@/components/cards/PhotoCardCenterHeading.tsx";
-import { PhotoCardBottomText } from "@/components/cards/PhotoCardBottomText.tsx";
 
 interface SimilarArtistsTabContentProps {
   items: SimilarArtistsTabItem[];
@@ -54,15 +55,36 @@ export const SimilarArtistsTabContent: React.FC<
         __typename
         ... on ImportSimilarArtistsSuccess {
           importedCount
-          artist { id }
+          artist {
+            id
+          }
         }
-        ... on ImportSimilarArtistsError { message }
+        ... on ImportSimilarArtistsError {
+          message
+        }
       }
     }
   `);
-  const [{ fetching: importing }, importSimilar] = useMutation(importSimilarMutation);
+  const [{ fetching: importing }, importSimilar] = useMutation(
+    importSimilarMutation,
+  );
   const [showAll, setShowAll] = React.useState(false);
-  const visibleItems = React.useMemo(() => (showAll ? items : items.slice(0, 25)), [items, showAll]);
+  const visibleItems = React.useMemo(
+    () => (showAll ? items : items.slice(0, 25)),
+    [items, showAll],
+  );
+  const navigate = useNavigate();
+
+  const maxScore = React.useMemo(() => {
+    const max = Math.max(0, ...items.map((i) => i.similarityScore ?? 0));
+    return max > 0 ? max : 1;
+  }, [items]);
+  const scaledPercent = (s?: number | null) => {
+    const v = Math.max(0, Math.min(1, s ?? 0));
+    const relative = v / maxScore;
+    return Math.round(relative * 95); // cap at 95%
+  };
+
   if (!items || items.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center text-center p-8 gap-8">
@@ -120,53 +142,65 @@ export const SimilarArtistsTabContent: React.FC<
             </GradientButton>
           )}
         </div>
-        {items.length > 25 && (
-          <GradientButton
-            onClick={() => setShowAll((v) => !v)}
-            iconLeft={showAll ? ChevronUp : ChevronDown}
-            variant="secondary"
-            size="sm"
-          >
-            {showAll ? "Show less" : `Show more (${items.length - 25})`}
-          </GradientButton>
-        )}
       </div>
 
       <CardFlexList>
-      {visibleItems.map((s, idx) => {
-        if (s.artist) {
-          // Local artist - render full ArtistCard
-          // We only fetched id; ArtistCard expects its full fragment
-          // For now, render fallback card for remote artists without full data
-          // Until we add a lightweight ArtistCard variant or fetch the full fragment here
+        {visibleItems.map((s, idx) => {
+          const bar = (
+            <div className="absolute bottom-2 left-2 right-2 z-10">
+              <div className="h-1.5 w-full rounded-full bg-white/20 overflow-hidden">
+                <div
+                  className="h-1.5 rounded-full bg-gradient-to-r from-emerald-400 to-blue-500"
+                  style={{ width: `${scaledPercent(s.similarityScore)}%` }}
+                />
+              </div>
+            </div>
+          );
+
+          if (s.artist) {
+            return (
+              <PhotoCard
+                key={s.artist.id}
+                imageUrl={s.thumb ?? ""}
+                imageAlt={s.name}
+                onClick={() => navigate(getRouteToArtist(s.artist!.id))}
+              >
+                <PhotoCardCenterHeading>{s.name}</PhotoCardCenterHeading>
+                {bar}
+              </PhotoCard>
+            );
+          }
           return (
             <PhotoCard
-              key={s.artist.id}
+              key={`${s.name}-${idx}`}
               imageUrl={s.thumb ?? ""}
               imageAlt={s.name}
+              onClick={() =>
+                window.open(
+                  `https://musicbrainz.org/search?query=${encodeURIComponent(s.name)}&type=artist&method=indexed`,
+                  "_blank",
+                )
+              }
             >
               <PhotoCardCenterHeading>{s.name}</PhotoCardCenterHeading>
-              {s.similarityScore != null && (
-                <PhotoCardBottomText>{`${(s.similarityScore * 100).toFixed(0)}% match`}</PhotoCardBottomText>
-              )}
+              {bar}
             </PhotoCard>
           );
-        }
-        // Fallback simple card with stored thumb and name
-        return (
-          <PhotoCard
-            key={`${s.name}-${idx}`}
-            imageUrl={s.thumb ?? ""}
-            imageAlt={s.name}
-          >
-            <PhotoCardCenterHeading>{s.name}</PhotoCardCenterHeading>
-            {s.similarityScore != null && (
-              <PhotoCardBottomText>{`${(s.similarityScore * 100).toFixed(0)}% match`}</PhotoCardBottomText>
-            )}
-          </PhotoCard>
-        );
-      })}
+        })}
       </CardFlexList>
+
+      {items.length > 25 && !showAll && (
+        <div className="flex justify-center">
+          <GradientButton
+            onClick={() => setShowAll(true)}
+            iconLeft={ChevronDown}
+            variant="secondary"
+            size="sm"
+          >
+            Show more
+          </GradientButton>
+        </div>
+      )}
     </div>
   );
 };
