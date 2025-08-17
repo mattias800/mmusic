@@ -29,6 +29,13 @@ public class UpdateLibraryPathMutation
             throw new UnauthorizedAccessException("User not authenticated.");
         }
 
+        // Authorization: only Admins can update server settings
+        var viewer = await dbContext.Users.FirstOrDefaultAsync(up => up.UserId == userId);
+        if (viewer is null || (viewer.Roles & Features.Users.Roles.UserRoles.Admin) == 0)
+        {
+            throw new UnauthorizedAccessException("Not authorized to update server settings");
+        }
+
         var handlerResult = await updateLibraryPathHandler.Handle(
             new UpdateLibraryPathHandler.Command(userId, input.NewLibraryPath)
         );

@@ -39,7 +39,22 @@ public class ProwlarrDownloadProvider(
 
         // 2) Prefer NZB if available; otherwise fallback to magnet
         // Prefer Prowlarr-provided downloadUrl; many setups do not include .nzb extension
-        var nzb = results.FirstOrDefault(r => !string.IsNullOrWhiteSpace(r.DownloadUrl));
+        // Extra guard: only consider results whose title clearly matches artist and release
+        bool TitleMatches(string? title)
+        {
+            if (string.IsNullOrWhiteSpace(title)) return false;
+            var t = title.ToLowerInvariant();
+            var a = (artistName ?? string.Empty).ToLowerInvariant();
+            var rel = (releaseTitle ?? string.Empty).ToLowerInvariant();
+            // Require both artist and at least half of album words
+            if (!t.Contains(a)) return false;
+            var albumWords = rel.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            var titleWords = t.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            var matchCount = albumWords.Count(w => titleWords.Any(x => x.Contains(w) || w.Contains(x)));
+            return matchCount >= Math.Max(1, albumWords.Length / 2);
+        }
+
+        var nzb = results.FirstOrDefault(r => !string.IsNullOrWhiteSpace(r.DownloadUrl) && TitleMatches(r.Title));
         if (nzb is not null && !string.IsNullOrWhiteSpace(nzb.DownloadUrl))
         {
             // Always fetch NZB bytes and upload them to SABnzbd to avoid SAB needing network access to Prowlarr
@@ -49,6 +64,12 @@ public class ProwlarrDownloadProvider(
             {
                 using var http = new HttpClient();
                 var bytes = await http.GetByteArrayAsync(url, cancellationToken);
+                // Validate the payload looks like an NZB, not a torrent
+                if (!LooksLikeNzb(bytes))
+                {
+                    logger.LogWarning("[Prowlarr] Fetched content does not look like NZB, skipping upload (likely torrent)");
+                    goto TryMagnet;
+                }
                 var fileName = (nzb.Title ?? "download").Replace(' ', '+') + ".nzb";
                 var okUpload = await sab.AddNzbByContentAsync(
                     bytes,
@@ -66,6 +87,7 @@ public class ProwlarrDownloadProvider(
             }
         }
 
+        TryMagnet:
         var magnet = results.FirstOrDefault(r => !string.IsNullOrWhiteSpace(r.MagnetUrl));
         if (magnet is not null && !string.IsNullOrWhiteSpace(magnet.MagnetUrl))
         {
@@ -124,6 +146,23 @@ public class ProwlarrDownloadProvider(
             return downloadUrl;
         }
         catch { return downloadUrl; }
+    }
+
+    private static bool LooksLikeNzb(byte[] bytes)
+    {
+        try
+        {
+            // Check for ASCII XML signature and <nzb> tag in the first few KB
+            var sampleLen = Math.Min(bytes.Length, 4096);
+            var sample = System.Text.Encoding.UTF8.GetString(bytes, 0, sampleLen);
+            if (sample.IndexOf("<nzb", StringComparison.OrdinalIgnoreCase) >= 0) return true;
+            // Common torrent indicator near start
+            if (sample.IndexOf("announce", StringComparison.OrdinalIgnoreCase) >= 0) return false;
+            // Fallback: looks like XML
+            if (sample.TrimStart().StartsWith("<?xml")) return true;
+        }
+        catch { }
+        return false;
     }
 
     private static bool IsLikelyMusicAlbum(ProwlarrRelease r, string artistName, string releaseTitle)

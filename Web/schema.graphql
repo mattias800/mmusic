@@ -955,6 +955,7 @@ type Mutation {
   updateSoulSeekSearchTimeLimit(seconds: Int!): UpdateSoulSeekSearchTimeLimitResult!
   updateTopTracksServiceSettings(input: UpdateTopTracksServiceSettingsInput!): UpdateTopTracksServiceSettingsResult!
   updateUserListenBrainzCredentials(input: UpdateUserListenBrainzCredentialsInput!): UpdateUserListenBrainzCredentialsResult!
+  updateUserRoles(input: UpdateUserRolesInput!): UpdateUserRolesResult!
 }
 
 """Information about pagination in a connection."""
@@ -1688,18 +1689,40 @@ type UpdateUserListenBrainzCredentialsSuccess {
   user: User!
 }
 
+type UpdateUserRolesError {
+  message: String!
+}
+
+input UpdateUserRolesInput {
+  roles: Int!
+  userId: UUID!
+}
+
+union UpdateUserRolesResult = UpdateUserRolesError | UpdateUserRolesSuccess
+
+type UpdateUserRolesSuccess {
+  user: User!
+}
+
 type Url {
   id: String
   resource: String
 }
 
 type User {
+  canCreatePlaylists: Boolean!
+  canEditExternalAuth: Boolean!
+  canManageUserRoles: Boolean!
+  canTriggerDownloads: Boolean!
+  canViewDownloads: Boolean!
   createdAt: DateTime!
   hasListenBrainzToken: Boolean!
   id: ID!
+  isAdmin: Boolean!
   likedSongs: [LikedSong!]!
   listenBrainzUserId: String
   playlists: [Playlist!]!
+  roles: Int!
   updatedAt: DateTime!
   username: String!
 }

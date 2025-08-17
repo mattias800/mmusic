@@ -331,12 +331,14 @@ builder.Services.AddAuthorization(options =>
         "IsAuthenticatedUser",
         policy => policy.Requirements.Add(new UserExistsRequirement())
     );
+    // Role policies (bitwise flags handled in custom handler or via claims in future)
 });
 
 builder.Services.AddSingleton<
     Microsoft.AspNetCore.Authorization.IAuthorizationHandler,
     UserExistsHandler
 >();
+builder.Services.AddSingleton<MusicGQL.Features.Authorization.UserRoleAuthorizer>();
 
 builder.Services.AddAutoMapper(typeof(Program));
 builder.Services.AddHttpContextAccessor();
@@ -476,6 +478,9 @@ builder
     .AddTypeExtension<SignOutMutation>()
     .AddType<SignOutSuccess>()
     .AddType<SignOutError>()
+    .AddTypeExtension<UpdateUserRolesMutation>()
+    .AddType<UpdateUserRolesSuccess>()
+    .AddType<UpdateUserRolesError>()
     .AddTypeExtension<CreatePlaylistMutation>()
     .AddType<CreatePlaylistSuccess>()
     .AddTypeExtension<RenamePlaylistMutation>()

@@ -33,6 +33,12 @@ public class CreatePlaylistMutation
             );
         }
 
+        // Authorization: require CreatePlaylists role or Admin
+        if ((user.Roles & (Features.Users.Roles.UserRoles.CreatePlaylists | Features.Users.Roles.UserRoles.Admin)) == 0)
+        {
+            return new CreatePlaylistNoWriteAccess();
+        }
+
         await createPlaylistHandler.Handle(new CreatePlaylistHandler.Command(userId));
 
         // Fetch the newly created playlist for this user (latest by CreatedAt)

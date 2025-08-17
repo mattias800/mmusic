@@ -31,6 +31,7 @@ const sidebarQuery = graphql(`
     viewer {
       id
       username
+      isAdmin
     }
   }
 `);
@@ -38,11 +39,10 @@ const sidebarQuery = graphql(`
 const selector = (state: RootState) => state.musicPlayers.isOpen;
 
 export const Sidebar = ({ className }: SidebarProps) => {
-  const [{ data }] = useQuery({
-    query: sidebarQuery,
-  });
+  const [{ data }] = useQuery({ query: sidebarQuery });
 
   const username = data?.viewer?.username ?? "Profile";
+  const isAdmin = data?.viewer?.isAdmin ?? false;
   const musicPlayerIsOpen = useSelector(selector);
 
   return (
@@ -128,6 +128,9 @@ export const Sidebar = ({ className }: SidebarProps) => {
         <SidebarSection heading="You" icon={User} iconColor="text-emerald-400">
           <SidebarNavButton path="/profile" icon={User} label={username} />
           <SidebarNavButton path="/settings" icon={Cog} label="Settings" />
+          {isAdmin && (
+            <SidebarNavButton path="/admin/users" icon={User} label="Admin: Users" />
+          )}
         </SidebarSection>
       </div>
     </div>

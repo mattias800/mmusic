@@ -14,6 +14,7 @@ import { SearchResultPage } from "@/app/SearchResultPage.tsx";
 import { MbArtistPage } from "@/app/MbArtistPage.tsx";
 import { PlaylistPage } from "@/app/PlaylistPage.tsx";
 import { QueuesPage } from "@/app/QueuesPage.tsx";
+import { AdminUsersPage } from "@/app/AdminUsersPage.tsx";
 
 export interface AppRouterProps {}
 
@@ -43,6 +44,7 @@ export const AppRouter: React.FC<AppRouterProps> = () => {
       <Route path="/search" element={<SearchResultPage />} />
       <Route path="/playlist/:playlistId" element={<PlaylistPage />} />
       <Route path="/queues" element={<QueuesPage />} />
+      <Route path="/admin/users" element={<AdminUsersPage />} />
     </Routes>
   );
 };

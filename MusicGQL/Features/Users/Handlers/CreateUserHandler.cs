@@ -5,6 +5,7 @@ using MusicGQL.Features.Authentication.Commands;
 using MusicGQL.Features.Authentication.Handlers;
 using MusicGQL.Features.Users.Db;
 using MusicGQL.Features.Users.Events; // Changed from Services to Handlers
+using MusicGQL.Features.Users.Roles;
 
 namespace MusicGQL.Features.Users.Handlers;
 
@@ -52,6 +53,19 @@ public class CreateUserHandler(
             return new Result.Error(
                 "Failed to create user. Projection not found after event processing."
             );
+        }
+
+        // Initialize basic roles for first user as Admin if this is the first user in system
+        var isFirstUser = !await dbContext.Users.AnyAsync(u => u.UserId != userId);
+        if (isFirstUser)
+        {
+            dbContext.Events.Add(new UserRolesUpdated
+            {
+                SubjectUserId = userId,
+                Roles = UserRoles.Admin
+            });
+            await dbContext.SaveChangesAsync();
+            await eventProcessor.ProcessEvents();
         }
 
         return new Result.Success(newUserProjection);

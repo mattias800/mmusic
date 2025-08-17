@@ -1,8 +1,8 @@
 import * as React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Input } from "@/components/ui/input.tsx";
 import { SearchPanel } from "@/features/search/search-input/SearchPanel.tsx";
 import { Search } from "lucide-react";
+import { cn } from "@/lib/utils.ts";
 
 export interface SearchInputProps {}
 
@@ -40,13 +40,55 @@ export const SearchInput: React.FC<SearchInputProps> = () => {
   return (
     <div className="relative z-[9999]">
       <form ref={formRef} onFocus={() => setInFocus(true)}>
-        <div className="relative">
-          <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-white pointer-events-none z-10" />
-          <Input
-            placeholder="Search your music library..."
+        <div
+          className={cn(
+            // IMPORTANT: no 'isolate' here — allow blending with the page/photo
+            "relative w-full rounded-4xl overflow-hidden px-4",
+            // Subtle frame
+            "ring-1 ring-white/25 shadow-lg backdrop-blur-sm",
+          )}
+        >
+          {/* Frosted glass layer */}
+          <div
+            aria-hidden
+            className={cn(
+              "pointer-events-none absolute inset-0",
+              // Liquid glass feel
+              "bg-white/10 backdrop-blur-xl backdrop-saturate-150",
+              // Slight normalization helps mid-tones without killing the photo
+              "backdrop-brightness-95 backdrop-contrast-110",
+            )}
+          />
+          {/* Inner highlight (gives depth) */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0 [mask-image:linear-gradient(#000,transparent)]"
+            style={{ boxShadow: "inset 0 1px 0 0 rgba(255,255,255,0.35)" }}
+          />
+
+          <Search
+            className={cn(
+              "pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 z-10",
+              // Dynamic contrast
+              "text-white mix-blend-difference",
+            )}
+          />
+
+          <input
+            type="text"
             value={value}
             onChange={(ev) => setValue(ev.target.value)}
-            className="w-full pl-12 pr-4 py-3 bg-gray-800/80 border-white/30 text-white placeholder-gray-100 focus:bg-gray-800/90 focus:border-blue-400/70 focus:ring-blue-400/40 focus:ring-2 transition-all duration-200 rounded-2xl text-md backdrop-blur-sm"
+            placeholder="Search your music library..."
+            className={cn(
+              "relative z-10 w-full min-w-0 pl-12 pr-3 bg-transparent border-0 outline-none",
+              "text-base leading-6 py-2",
+              // Dynamic contrast over the photo
+              "text-white mix-blend-difference",
+              // Cursor & selection
+              "caret-white selection:bg-white/30 selection:text-black",
+              // Smooth focus ring (kept inside)
+              "focus-visible:ring-2 focus-visible:ring-white/30 rounded-3xl",
+            )}
           />
         </div>
       </form>

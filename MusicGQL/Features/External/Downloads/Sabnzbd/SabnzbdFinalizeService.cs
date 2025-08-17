@@ -28,14 +28,26 @@ public class SabnzbdFinalizeService(
         }
 
         var completed = completedPath!.TrimEnd(System.IO.Path.DirectorySeparatorChar, System.IO.Path.AltDirectorySeparatorChar);
-        // SABnzbd doesn't respect the path parameter, so look for the actual folder name
-        // which is typically the NZB name (e.g., "D-A-D - Monster Philosophy")
-        var expectedFolderName = $"{artistId} - {releaseFolderName}";
-        var sourceRoot = System.IO.Path.Combine(completed, expectedFolderName);
+        // Use the NZB name convention we submit to SAB: "{artistName} - {releaseTitle}"
+        // Fetch release metadata to construct the expected job name and folder
+        var relForNames = await cache.GetReleaseByArtistAndFolderAsync(artistId, releaseFolderName);
+        if (relForNames == null)
+        {
+            logger.LogWarning("[SAB Finalize] Release not found in cache for {ArtistId}/{ReleaseFolderName}", artistId, releaseFolderName);
+            return false;
+        }
+        var expectedNzbName = $"{relForNames.ArtistName} - {relForNames.Title}";
+        var legacyNzbName = $"{artistId} - {releaseFolderName}";
+        var sourceRoot = System.IO.Path.Combine(completed, expectedNzbName);
+        if (!Directory.Exists(sourceRoot))
+        {
+            var alt = System.IO.Path.Combine(completed, legacyNzbName);
+            if (Directory.Exists(alt)) sourceRoot = alt;
+        }
         logger.LogInformation("[SAB Finalize] Checking {SourceRoot}", sourceRoot);
-        
+
         // Check SABnzbd API to see if the job is actually complete
-        var nzbName = $"{artistId} - {releaseFolderName}";
+        var nzbName = expectedNzbName;
         logger.LogInformation("[SAB Finalize] Checking SABnzbd job status for: {NzbName}", nzbName);
         
         // Wait a bit for SABnzbd to start processing, then check job status

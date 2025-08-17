@@ -1,4 +1,5 @@
 using HotChocolate;
+using System.Security.Claims;
 using MusicGQL.Features.ServerSettings.Db;
 using Microsoft.EntityFrameworkCore;
 using MusicGQL.Types;
@@ -28,10 +29,20 @@ public record UpdateTopTracksServiceSettingsMutation
 {
     public async Task<UpdateTopTracksServiceSettingsResult> UpdateTopTracksServiceSettings(
         UpdateTopTracksServiceSettingsInput input,
-        [Service] EventDbContext dbContext)
+        [Service] EventDbContext dbContext,
+        ClaimsPrincipal claims)
     {
         try
         {
+            var userIdClaim = claims.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim is null) return new UpdateTopTracksServiceSettingsError("Not authenticated");
+            var userId = Guid.Parse(userIdClaim.Value);
+            var viewer = await dbContext.Users.FirstOrDefaultAsync(u => u.UserId == userId);
+            if (viewer is null || (viewer.Roles & Features.Users.Roles.UserRoles.Admin) == 0)
+            {
+                return new UpdateTopTracksServiceSettingsError("Not authorized");
+            }
+
             var settings = await dbContext.ServerSettings.FirstOrDefaultAsync();
             if (settings == null)
             {

@@ -2,6 +2,7 @@ using MusicGQL.Db.Postgres;
 using MusicGQL.Db.Postgres.Models;
 using MusicGQL.Features.Users.Db;
 using MusicGQL.Features.Users.Events;
+using MusicGQL.Features.Users.Roles;
 
 namespace MusicGQL.Features.Users.Aggregate;
 
@@ -19,6 +20,9 @@ public class UserEventProcessor(ILogger<UserEventProcessor> logger)
                 break;
             case UserListenBrainzCredentialsUpdated userListenBrainzCredentialsUpdated:
                 await HandleUserListenBrainzCredentialsUpdated(userListenBrainzCredentialsUpdated, dbContext);
+                break;
+            case UserRolesUpdated userRolesUpdated:
+                await HandleUserRolesUpdated(userRolesUpdated, dbContext);
                 break;
         }
     }
@@ -42,6 +46,7 @@ public class UserEventProcessor(ILogger<UserEventProcessor> logger)
                 UserId = ev.SubjectUserId,
                 CreatedAt = ev.CreatedAt,
                 Username = ev.Username,
+                Roles = UserRoles.None,
             }
         );
 
@@ -87,6 +92,24 @@ public class UserEventProcessor(ILogger<UserEventProcessor> logger)
 
         user.ListenBrainzUserId = ev.ListenBrainzUserId;
         user.ListenBrainzToken = ev.ListenBrainzToken;
+        user.UpdatedAt = DateTime.UtcNow;
+        await dbContext.SaveChangesAsync();
+    }
+
+    private async Task HandleUserRolesUpdated(UserRolesUpdated ev, EventDbContext dbContext)
+    {
+        var user = dbContext.Users.FirstOrDefault(u => u.UserId == ev.SubjectUserId);
+
+        if (user is null)
+        {
+            logger.LogWarning(
+                "UserRolesUpdated event received for UserId: {UserId}, but no existing user found. Ignoring",
+                ev.SubjectUserId
+            );
+            return;
+        }
+
+        user.Roles = ev.Roles;
         user.UpdatedAt = DateTime.UtcNow;
         await dbContext.SaveChangesAsync();
     }

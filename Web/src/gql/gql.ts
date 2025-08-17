@@ -15,6 +15,8 @@ import { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/
  */
 type Documents = {
     "\n  query Bootstrap {\n    areThereAnyUsers\n    viewer {\n      id\n    }\n  }\n": typeof types.BootstrapDocument,
+    "\n  query AdminUsersPage {\n    user {\n      users {\n        nodes {\n          id\n          username\n          roles\n        }\n      }\n    }\n    viewer { id roles }\n  }\n": typeof types.AdminUsersPageDocument,
+    "\n  mutation UpdateUserRoles($input: UpdateUserRolesInput!) {\n    updateUserRoles(input: $input) {\n      __typename\n      ... on UpdateUserRolesSuccess { user { id username roles } }\n      ... on UpdateUserRolesError { message }\n    }\n  }\n": typeof types.UpdateUserRolesDocument,
     "\n  query AlbumListQuery {\n    serverLibrary {\n      allReleases {\n        id\n        ...AlbumList_Release\n      }\n    }\n  }\n": typeof types.AlbumListQueryDocument,
     "\n  query AlbumQuery($artistId: ID!, $releaseFolderName: String!) {\n    serverLibrary {\n      artistById(id: $artistId) {\n        id\n        name\n        releaseByFolderName(releaseFolderName: $releaseFolderName) {\n          id\n          title\n          ...AlbumPanel_Release\n        }\n      }\n    }\n  }\n": typeof types.AlbumQueryDocument,
     "\n  query ArtistListQuery {\n    serverLibrary {\n      allArtists {\n        id\n        ...ArtistList_Artist\n      }\n    }\n  }\n": typeof types.ArtistListQueryDocument,
@@ -142,7 +144,7 @@ type Documents = {
     "\n  fragment DirectoryTreeItem_FileSystemEntry on FileSystemEntry {\n    id\n    name\n    path\n    isDirectory\n    hasChildren\n    isAccessible\n    hasLibraryManifest\n  }\n": typeof types.DirectoryTreeItem_FileSystemEntryFragmentDoc,
     "\n  query DirectoryTreeItem($path: String) {\n    fileSystem {\n      browseFileSystem(path: $path) {\n        id\n        isDirectory\n        path\n        ...DirectoryTreeItem_FileSystemEntry\n      }\n    }\n  }\n": typeof types.DirectoryTreeItemDocument,
     "\n  query BrowseFileSystem($path: String) {\n    fileSystem {\n      browseFileSystem(path: $path) {\n        path\n        isDirectory\n        hasLibraryManifest\n        ...DirectoryTreeItem_FileSystemEntry\n      }\n    }\n  }\n": typeof types.BrowseFileSystemDocument,
-    "\n  query Sidebar {\n    viewer {\n      id\n      username\n    }\n  }\n": typeof types.SidebarDocument,
+    "\n  query Sidebar {\n    viewer {\n      id\n      username\n      isAdmin\n    }\n  }\n": typeof types.SidebarDocument,
     "\n  query ArtistImportQueuePanel_Query {\n    artistImport {\n      artistImportQueue {\n        id\n        queueLength\n        items {\n          id\n          artistName\n          songTitle\n        }\n      }\n      currentArtistImport {\n        id\n        artistName\n        songTitle\n        statusInfo {\n          id\n          text\n        }\n        totalReleases\n        completedReleases\n        errorMessage\n      }\n    }\n  }\n": typeof types.ArtistImportQueuePanel_QueryDocument,
     "\n  subscription ArtistImportQueueUpdatedSub {\n    artistImportQueueUpdated {\n      id\n      queueLength\n      items {\n        id\n        artistName\n        songTitle\n      }\n    }\n  }\n": typeof types.ArtistImportQueueUpdatedSubDocument,
     "\n  subscription CurrentArtistImportUpdatedSub {\n    currentArtistImportUpdated {\n      id\n      artistName\n      songTitle\n      statusInfo {\n        id\n        text\n      }\n      totalReleases\n      completedReleases\n      errorMessage\n    }\n  }\n": typeof types.CurrentArtistImportUpdatedSubDocument,
@@ -162,6 +164,8 @@ type Documents = {
 };
 const documents: Documents = {
     "\n  query Bootstrap {\n    areThereAnyUsers\n    viewer {\n      id\n    }\n  }\n": types.BootstrapDocument,
+    "\n  query AdminUsersPage {\n    user {\n      users {\n        nodes {\n          id\n          username\n          roles\n        }\n      }\n    }\n    viewer { id roles }\n  }\n": types.AdminUsersPageDocument,
+    "\n  mutation UpdateUserRoles($input: UpdateUserRolesInput!) {\n    updateUserRoles(input: $input) {\n      __typename\n      ... on UpdateUserRolesSuccess { user { id username roles } }\n      ... on UpdateUserRolesError { message }\n    }\n  }\n": types.UpdateUserRolesDocument,
     "\n  query AlbumListQuery {\n    serverLibrary {\n      allReleases {\n        id\n        ...AlbumList_Release\n      }\n    }\n  }\n": types.AlbumListQueryDocument,
     "\n  query AlbumQuery($artistId: ID!, $releaseFolderName: String!) {\n    serverLibrary {\n      artistById(id: $artistId) {\n        id\n        name\n        releaseByFolderName(releaseFolderName: $releaseFolderName) {\n          id\n          title\n          ...AlbumPanel_Release\n        }\n      }\n    }\n  }\n": types.AlbumQueryDocument,
     "\n  query ArtistListQuery {\n    serverLibrary {\n      allArtists {\n        id\n        ...ArtistList_Artist\n      }\n    }\n  }\n": types.ArtistListQueryDocument,
@@ -289,7 +293,7 @@ const documents: Documents = {
     "\n  fragment DirectoryTreeItem_FileSystemEntry on FileSystemEntry {\n    id\n    name\n    path\n    isDirectory\n    hasChildren\n    isAccessible\n    hasLibraryManifest\n  }\n": types.DirectoryTreeItem_FileSystemEntryFragmentDoc,
     "\n  query DirectoryTreeItem($path: String) {\n    fileSystem {\n      browseFileSystem(path: $path) {\n        id\n        isDirectory\n        path\n        ...DirectoryTreeItem_FileSystemEntry\n      }\n    }\n  }\n": types.DirectoryTreeItemDocument,
     "\n  query BrowseFileSystem($path: String) {\n    fileSystem {\n      browseFileSystem(path: $path) {\n        path\n        isDirectory\n        hasLibraryManifest\n        ...DirectoryTreeItem_FileSystemEntry\n      }\n    }\n  }\n": types.BrowseFileSystemDocument,
-    "\n  query Sidebar {\n    viewer {\n      id\n      username\n    }\n  }\n": types.SidebarDocument,
+    "\n  query Sidebar {\n    viewer {\n      id\n      username\n      isAdmin\n    }\n  }\n": types.SidebarDocument,
     "\n  query ArtistImportQueuePanel_Query {\n    artistImport {\n      artistImportQueue {\n        id\n        queueLength\n        items {\n          id\n          artistName\n          songTitle\n        }\n      }\n      currentArtistImport {\n        id\n        artistName\n        songTitle\n        statusInfo {\n          id\n          text\n        }\n        totalReleases\n        completedReleases\n        errorMessage\n      }\n    }\n  }\n": types.ArtistImportQueuePanel_QueryDocument,
     "\n  subscription ArtistImportQueueUpdatedSub {\n    artistImportQueueUpdated {\n      id\n      queueLength\n      items {\n        id\n        artistName\n        songTitle\n      }\n    }\n  }\n": types.ArtistImportQueueUpdatedSubDocument,
     "\n  subscription CurrentArtistImportUpdatedSub {\n    currentArtistImportUpdated {\n      id\n      artistName\n      songTitle\n      statusInfo {\n        id\n        text\n      }\n      totalReleases\n      completedReleases\n      errorMessage\n    }\n  }\n": types.CurrentArtistImportUpdatedSubDocument,
@@ -326,6 +330,14 @@ export function graphql(source: string): unknown;
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  query Bootstrap {\n    areThereAnyUsers\n    viewer {\n      id\n    }\n  }\n"): (typeof documents)["\n  query Bootstrap {\n    areThereAnyUsers\n    viewer {\n      id\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query AdminUsersPage {\n    user {\n      users {\n        nodes {\n          id\n          username\n          roles\n        }\n      }\n    }\n    viewer { id roles }\n  }\n"): (typeof documents)["\n  query AdminUsersPage {\n    user {\n      users {\n        nodes {\n          id\n          username\n          roles\n        }\n      }\n    }\n    viewer { id roles }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  mutation UpdateUserRoles($input: UpdateUserRolesInput!) {\n    updateUserRoles(input: $input) {\n      __typename\n      ... on UpdateUserRolesSuccess { user { id username roles } }\n      ... on UpdateUserRolesError { message }\n    }\n  }\n"): (typeof documents)["\n  mutation UpdateUserRoles($input: UpdateUserRolesInput!) {\n    updateUserRoles(input: $input) {\n      __typename\n      ... on UpdateUserRolesSuccess { user { id username roles } }\n      ... on UpdateUserRolesError { message }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -837,7 +849,7 @@ export function graphql(source: "\n  query BrowseFileSystem($path: String) {\n  
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query Sidebar {\n    viewer {\n      id\n      username\n    }\n  }\n"): (typeof documents)["\n  query Sidebar {\n    viewer {\n      id\n      username\n    }\n  }\n"];
+export function graphql(source: "\n  query Sidebar {\n    viewer {\n      id\n      username\n      isAdmin\n    }\n  }\n"): (typeof documents)["\n  query Sidebar {\n    viewer {\n      id\n      username\n      isAdmin\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
