@@ -42,7 +42,7 @@ export const CreateNewUserButton: React.FC<CreateNewUserButtonProps> = () => {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="blue">New User</Button>
+        <Button variant="blue">Create User</Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>

@@ -52,7 +52,7 @@ public class DeleteUserMutation
         await dbContext.SaveChangesAsync();
         await eventProcessor.ProcessEvents();
 
-        return new DeleteUserSuccess(input.UserId);
+        return new DeleteUserSuccess(input.UserId, new());
     }
 }
 
@@ -61,8 +61,6 @@ public record DeleteUserInput(Guid UserId);
 [UnionType]
 public abstract record DeleteUserResult;
 
-public record DeleteUserSuccess(Guid DeletedUserId) : DeleteUserResult;
+public record DeleteUserSuccess(Guid DeletedUserId, UserSearchRoot User) : DeleteUserResult;
 
 public record DeleteUserError(string Message) : DeleteUserResult;
-
-

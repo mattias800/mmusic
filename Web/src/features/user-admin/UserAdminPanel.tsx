@@ -7,10 +7,12 @@ import { CreateNewUserButton } from "@/features/user-admin/CreateNewUserButton.t
 import { sumBy } from "lodash-es";
 import { UserEditButton } from "@/features/user-admin/UserEditButton.tsx";
 import { UserRolesToggles } from "@/features/user-admin/UserRolesToggles.tsx";
+import { UserDeleteButton } from "@/features/user-admin/UserDeleteButton.tsx";
 
 export interface UserAdminPanelProps {
   viewer: FragmentType<typeof userAdminPanelViewerFragment>;
   users: Array<FragmentType<typeof userAdminPanelUserFragment>>;
+  onUsersChanged?: () => void;
 }
 
 const userAdminPanelViewerFragment = graphql(`
@@ -25,6 +27,7 @@ const userAdminPanelViewerFragment = graphql(`
 const userAdminPanelUserFragment = graphql(`
   fragment UserAdminPanel_User on User {
     id
+    ...UserDeleteButton_User
     ...UserEditButton_User
     ...UserRolesToggles_User
     ...UserAdminCard_User
@@ -62,6 +65,7 @@ export const UserAdminPanel: React.FC<UserAdminPanelProps> = (props) => {
                     canRemoveAdminRole={numAdmins > 1 && user.id !== viewer.id}
                   />
                 )}
+                renderDeleteButton={() => <UserDeleteButton user={user} />}
               />
             ))}
             <div className="flex justify-start"></div>

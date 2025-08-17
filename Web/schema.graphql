@@ -329,6 +329,21 @@ type DeleteReleaseAudioSuccess {
   release: Release!
 }
 
+type DeleteUserError {
+  message: String!
+}
+
+input DeleteUserInput {
+  userId: UUID!
+}
+
+union DeleteUserResult = DeleteUserError | DeleteUserSuccess
+
+type DeleteUserSuccess {
+  deletedUserId: UUID!
+  user: UserSearchRoot!
+}
+
 type DownloadHistoryItem {
   artistId: String!
   artistName: String
@@ -912,6 +927,7 @@ type Mutation {
   deleteArtist(input: DeleteArtistInput!): DeleteArtistResult!
   deletePlaylist(input: DeletePlaylistInput!): DeletePlaylistResult!
   deleteReleaseAudio(input: DeleteReleaseAudioInput!): DeleteReleaseAudioResult!
+  deleteUser(input: DeleteUserInput!): DeleteUserResult!
   enqueueArtist(artistName: String!, songTitle: String): Boolean!
   enqueueArtistsFromSpotifyPlaylist(input: EnqueueArtistsFromSpotifyPlaylistInput!): Boolean!
   enqueueMissingArtistsFromPlaylist(playlistId: ID!): Boolean!

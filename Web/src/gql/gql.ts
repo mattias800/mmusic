@@ -160,7 +160,9 @@ type Documents = {
     "\n  mutation AdminCreateUser($input: CreateUserInput!) {\n    createUser(input: $input) {\n      __typename\n      ... on CreateUserSuccess {\n        users {\n          id\n          ...UserAdminPanel_User\n        }\n      }\n      ... on CreateUserError {\n        message\n      }\n    }\n  }\n": typeof types.AdminCreateUserDocument,
     "\n  fragment UserAdminCard_User on User {\n    id\n    username\n    roles\n  }\n": typeof types.UserAdminCard_UserFragmentDoc,
     "\n  fragment UserAdminPanel_Viewer on User {\n    id\n    roles\n    username\n    createdAt\n  }\n": typeof types.UserAdminPanel_ViewerFragmentDoc,
-    "\n  fragment UserAdminPanel_User on User {\n    id\n    ...UserEditButton_User\n    ...UserRolesToggles_User\n    ...UserAdminCard_User\n    roles\n    username\n    createdAt\n    isAdmin\n  }\n": typeof types.UserAdminPanel_UserFragmentDoc,
+    "\n  fragment UserAdminPanel_User on User {\n    id\n    ...UserDeleteButton_User\n    ...UserEditButton_User\n    ...UserRolesToggles_User\n    ...UserAdminCard_User\n    roles\n    username\n    createdAt\n    isAdmin\n  }\n": typeof types.UserAdminPanel_UserFragmentDoc,
+    "\n  fragment UserDeleteButton_User on User {\n    id\n    username\n  }\n": typeof types.UserDeleteButton_UserFragmentDoc,
+    "\n  mutation DeleteUser($input: DeleteUserInput!) {\n    deleteUser(input: $input) {\n      __typename\n      ... on DeleteUserSuccess {\n        deletedUserId\n        user {\n          users {\n            nodes {\n              ...UserAdminPanel_User\n            }\n          }\n        }\n      }\n      ... on DeleteUserError {\n        message\n      }\n    }\n  }\n": typeof types.DeleteUserDocument,
     "\n  fragment UserEditButton_User on User {\n    id\n    username\n  }\n": typeof types.UserEditButton_UserFragmentDoc,
     "\n  mutation UpdateUserUsername($input: UpdateUserUsernameInput!) {\n    updateUserUsername(input: $input) {\n      __typename\n      ... on UpdateUserUsernameSuccess {\n        user {\n          ...UserAdminPanel_User\n        }\n      }\n      ... on UpdateUserUsernameError {\n        message\n      }\n    }\n  }\n": typeof types.UpdateUserUsernameDocument,
     "\n  mutation SetUserPassword($input: SetUserPasswordInput!) {\n    setUserPassword(input: $input) {\n      __typename\n      ... on SetUserPasswordSuccess {\n        user {\n          ...UserAdminPanel_User\n        }\n      }\n      ... on SetUserPasswordError {\n        message\n      }\n    }\n  }\n": typeof types.SetUserPasswordDocument,
@@ -317,7 +319,9 @@ const documents: Documents = {
     "\n  mutation AdminCreateUser($input: CreateUserInput!) {\n    createUser(input: $input) {\n      __typename\n      ... on CreateUserSuccess {\n        users {\n          id\n          ...UserAdminPanel_User\n        }\n      }\n      ... on CreateUserError {\n        message\n      }\n    }\n  }\n": types.AdminCreateUserDocument,
     "\n  fragment UserAdminCard_User on User {\n    id\n    username\n    roles\n  }\n": types.UserAdminCard_UserFragmentDoc,
     "\n  fragment UserAdminPanel_Viewer on User {\n    id\n    roles\n    username\n    createdAt\n  }\n": types.UserAdminPanel_ViewerFragmentDoc,
-    "\n  fragment UserAdminPanel_User on User {\n    id\n    ...UserEditButton_User\n    ...UserRolesToggles_User\n    ...UserAdminCard_User\n    roles\n    username\n    createdAt\n    isAdmin\n  }\n": types.UserAdminPanel_UserFragmentDoc,
+    "\n  fragment UserAdminPanel_User on User {\n    id\n    ...UserDeleteButton_User\n    ...UserEditButton_User\n    ...UserRolesToggles_User\n    ...UserAdminCard_User\n    roles\n    username\n    createdAt\n    isAdmin\n  }\n": types.UserAdminPanel_UserFragmentDoc,
+    "\n  fragment UserDeleteButton_User on User {\n    id\n    username\n  }\n": types.UserDeleteButton_UserFragmentDoc,
+    "\n  mutation DeleteUser($input: DeleteUserInput!) {\n    deleteUser(input: $input) {\n      __typename\n      ... on DeleteUserSuccess {\n        deletedUserId\n        user {\n          users {\n            nodes {\n              ...UserAdminPanel_User\n            }\n          }\n        }\n      }\n      ... on DeleteUserError {\n        message\n      }\n    }\n  }\n": types.DeleteUserDocument,
     "\n  fragment UserEditButton_User on User {\n    id\n    username\n  }\n": types.UserEditButton_UserFragmentDoc,
     "\n  mutation UpdateUserUsername($input: UpdateUserUsernameInput!) {\n    updateUserUsername(input: $input) {\n      __typename\n      ... on UpdateUserUsernameSuccess {\n        user {\n          ...UserAdminPanel_User\n        }\n      }\n      ... on UpdateUserUsernameError {\n        message\n      }\n    }\n  }\n": types.UpdateUserUsernameDocument,
     "\n  mutation SetUserPassword($input: SetUserPasswordInput!) {\n    setUserPassword(input: $input) {\n      __typename\n      ... on SetUserPasswordSuccess {\n        user {\n          ...UserAdminPanel_User\n        }\n      }\n      ... on SetUserPasswordError {\n        message\n      }\n    }\n  }\n": types.SetUserPasswordDocument,
@@ -929,7 +933,15 @@ export function graphql(source: "\n  fragment UserAdminPanel_Viewer on User {\n 
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment UserAdminPanel_User on User {\n    id\n    ...UserEditButton_User\n    ...UserRolesToggles_User\n    ...UserAdminCard_User\n    roles\n    username\n    createdAt\n    isAdmin\n  }\n"): (typeof documents)["\n  fragment UserAdminPanel_User on User {\n    id\n    ...UserEditButton_User\n    ...UserRolesToggles_User\n    ...UserAdminCard_User\n    roles\n    username\n    createdAt\n    isAdmin\n  }\n"];
+export function graphql(source: "\n  fragment UserAdminPanel_User on User {\n    id\n    ...UserDeleteButton_User\n    ...UserEditButton_User\n    ...UserRolesToggles_User\n    ...UserAdminCard_User\n    roles\n    username\n    createdAt\n    isAdmin\n  }\n"): (typeof documents)["\n  fragment UserAdminPanel_User on User {\n    id\n    ...UserDeleteButton_User\n    ...UserEditButton_User\n    ...UserRolesToggles_User\n    ...UserAdminCard_User\n    roles\n    username\n    createdAt\n    isAdmin\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  fragment UserDeleteButton_User on User {\n    id\n    username\n  }\n"): (typeof documents)["\n  fragment UserDeleteButton_User on User {\n    id\n    username\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  mutation DeleteUser($input: DeleteUserInput!) {\n    deleteUser(input: $input) {\n      __typename\n      ... on DeleteUserSuccess {\n        deletedUserId\n        user {\n          users {\n            nodes {\n              ...UserAdminPanel_User\n            }\n          }\n        }\n      }\n      ... on DeleteUserError {\n        message\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation DeleteUser($input: DeleteUserInput!) {\n    deleteUser(input: $input) {\n      __typename\n      ... on DeleteUserSuccess {\n        deletedUserId\n        user {\n          users {\n            nodes {\n              ...UserAdminPanel_User\n            }\n          }\n        }\n      }\n      ... on DeleteUserError {\n        message\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

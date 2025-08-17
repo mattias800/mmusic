@@ -24,9 +24,9 @@ const usersQuery = graphql(`
 `);
 
 export const AdminUsersPage: React.FC = () => {
-  const [{ error, data, fetching, stale }] = useQuery({ query: usersQuery });
+  const [{ error, data, fetching }] = useQuery({ query: usersQuery });
 
-  if (fetching || stale)
+  if (fetching)
     return (
       <PageLoading
         title="Loading Users"
