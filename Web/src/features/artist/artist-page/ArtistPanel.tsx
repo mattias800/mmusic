@@ -218,7 +218,6 @@ export const ArtistPanel: React.FC<ArtistPanelProps> = (props) => {
                 onClick={() =>
                   navigate(`/artist/${artist.id}`, { replace: true })
                 }
-                isActive={tab === "top-tracks"}
                 isActive={tab === "top-tracks" || !tab}
               />
 
