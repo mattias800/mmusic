@@ -15,6 +15,13 @@ import { MbArtistPage } from "@/app/MbArtistPage.tsx";
 import { PlaylistPage } from "@/app/PlaylistPage.tsx";
 import { QueuesPage } from "@/app/QueuesPage.tsx";
 import { AdminUsersPage } from "@/app/AdminUsersPage.tsx";
+import { TopArtistTracks } from "@/features/artist/artist-page/TopArtistTracks.tsx";
+import { SimilarArtistsTab } from "@/features/artist/artist-page/tabs/SimilarArtistsTab.tsx";
+import { ArtistAppearsOnTab } from "@/features/artist/artist-page/tabs/ArtistAppearsOnTab.tsx";
+import { ArtistStatisticsHeader } from "@/features/artist/artist-page/ArtistStatisticsHeader.tsx";
+import { AlbumListTab } from "@/features/artist/artist-page/tabs/AlbumListTab.tsx";
+import { EpListTab } from "@/features/artist/artist-page/tabs/EpListTab.tsx";
+import { SingleListTab } from "@/features/artist/artist-page/tabs/SingleListTab.tsx";
 
 export interface AppRouterProps {}
 
@@ -24,7 +31,38 @@ export const AppRouter: React.FC<AppRouterProps> = () => {
       <Route path="/" element={<IndexPage />} />
       <Route path="/albums" element={<AlbumListPage />} />
       <Route path="/artists" element={<ArtistListPage />} />
-      <Route path="/artist/:artistId" element={<ArtistPage />} />
+      <Route path="/artist/:artistId" element={<ArtistPage />}>
+        <Route
+          path={"/"}
+          element={
+            <TopArtistTracks
+              artistId={artist.id}
+              loadingTopTracks={loadingTopTracks}
+            />
+          }
+        />
+
+        <Route path={"albums"} element={<AlbumListTab />} />
+        <Route path={"eps"} element={<EpListTab />} />
+        <Route path={"singles"} element={<SingleListTab />} />
+
+        <Route path={"similar-artists"} element={<SimilarArtistsTab />} />
+
+        <Route
+          path={"appears-on"}
+          element={
+            <ArtistAppearsOnTab
+              artistId={artist.id}
+              appearsOn={artist.alsoAppearsOn}
+            />
+          }
+        />
+
+        <Route
+          path={"media-availability"}
+          element={<ArtistStatisticsHeader artist={artist} />}
+        />
+      </Route>
       <Route path="/mb-artist/:mbArtistId" element={<MbArtistPage />} />
       <Route
         path="/artist/:artistId/release/:releaseFolderName"

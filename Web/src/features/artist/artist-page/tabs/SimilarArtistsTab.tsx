@@ -3,29 +3,31 @@ import { useMemo, useState } from "react";
 import { CardFlexList } from "@/components/page-body/CardFlexList.tsx";
 import { GradientButton } from "@/components/ui/gradient-button.tsx";
 import { ChevronDown, RefreshCcw, UserPlus2 } from "lucide-react";
-import { FragmentType, graphql, useFragment } from "@/gql";
-import { useMutation } from "urql";
+import { graphql } from "@/gql";
+import { useMutation, useQuery } from "urql";
 import { PhotoCard } from "@/components/cards/PhotoCard.tsx";
 import { PhotoCardCenterHeading } from "@/components/cards/PhotoCardCenterHeading.tsx";
-import { useNavigate } from "react-router";
+import { useNavigate, useParams } from "react-router";
 import { getRouteToArtist, getRouteToMbArtist } from "@/AppRoutes.ts";
 
-interface SimilarArtistsTabContentProps {
-  similarArtists: Array<
-    FragmentType<typeof similarArtistsTabContentSimilarArtistFragment>
-  >;
-  artistId?: string;
-}
+interface SimilarArtistsTabProps {}
 
-const similarArtistsTabContentSimilarArtistFragment = graphql(`
-  fragment SimilarArtistsTabContent_SimilarArtist on SimilarArtist {
-    name
-    thumb
-    similarityScore
+const similarArtistsTabQuery = graphql(`
+  query SimilarArtistsTabContent($artistId: ID!) {
     artist {
-      id
+      byId(artistId: $artistId) {
+        id
+        similarArtists {
+          name
+          thumb
+          similarityScore
+          artist {
+            id
+          }
+          musicBrainzArtistId
+        }
+      }
     }
-    musicBrainzArtistId
   }
 `);
 
@@ -71,15 +73,20 @@ const importSimilarMutation = graphql(`
   }
 `);
 
-export const SimilarArtistsTabContent: React.FC<
-  SimilarArtistsTabContentProps
-> = ({ artistId, ...props }) => {
-  const similarArtist = useFragment(
-    similarArtistsTabContentSimilarArtistFragment,
-    props.similarArtists,
-  );
+export const SimilarArtistsTab: React.FC<SimilarArtistsTabProps> = () => {
+  const { artistId } = useParams<{ artistId: string }>();
 
-  const [{ fetching }, refresh] = useMutation(refreshSimilarArtistsMutation);
+  const navigate = useNavigate();
+
+  const [{ fetching, error, data }] = useQuery({
+    query: similarArtistsTabQuery,
+    variables: { artistId: artistId ?? "" },
+    pause: !artistId,
+  });
+
+  const [{ fetching: refreshing }, refresh] = useMutation(
+    refreshSimilarArtistsMutation,
+  );
 
   const [{ fetching: importing }, importSimilar] = useMutation(
     importSimilarMutation,
@@ -87,20 +94,20 @@ export const SimilarArtistsTabContent: React.FC<
 
   const [showAll, setShowAll] = useState(false);
 
+  const similarArtists = data?.artist?.byId?.similarArtists ?? [];
+
   const visibleItems = useMemo(
-    () => (showAll ? similarArtist : similarArtist.slice(0, 25)),
-    [similarArtist, showAll],
+    () => (showAll ? similarArtists : similarArtists.slice(0, 25)),
+    [similarArtists, showAll],
   );
 
-  const navigate = useNavigate();
-
-  const maxScore = React.useMemo(() => {
+  const maxScore = useMemo(() => {
     const max = Math.max(
       0,
-      ...similarArtist.map((i) => i.similarityScore ?? 0),
+      ...similarArtists.map((i) => i.similarityScore ?? 0),
     );
     return max > 0 ? max : 1;
-  }, [similarArtist]);
+  }, [similarArtists]);
 
   const scaledPercent = (s?: number | null) => {
     const v = Math.max(0, Math.min(1, s ?? 0));
@@ -108,7 +115,19 @@ export const SimilarArtistsTabContent: React.FC<
     return Math.round(relative * 95); // cap at 95%
   };
 
-  if (!similarArtist || similarArtist?.length === 0) {
+  if (fetching) {
+    return <div>Loading...</div>;
+  }
+
+  if (error) {
+    return <div>Error: {error.message}</div>;
+  }
+
+  if (!data) {
+    return <div>No data..</div>;
+  }
+
+  if (!similarArtists || similarArtists?.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center text-center p-8 gap-8">
         <div className="w-16 h-16 rounded-full bg-gradient-to-br from-purple-500/30 to-blue-500/30 flex items-center justify-center">
@@ -126,8 +145,8 @@ export const SimilarArtistsTabContent: React.FC<
         {artistId && (
           <GradientButton
             onClick={() => refresh({ artistId })}
-            loading={fetching}
-            disabled={fetching}
+            loading={refreshing}
+            disabled={refreshing}
             iconLeft={RefreshCcw}
           >
             Refresh similar artists
@@ -144,8 +163,8 @@ export const SimilarArtistsTabContent: React.FC<
           {artistId && (
             <GradientButton
               onClick={() => refresh({ artistId })}
-              loading={fetching}
-              disabled={fetching}
+              loading={refreshing}
+              disabled={refreshing}
               iconLeft={RefreshCcw}
               variant="secondary"
               size="sm"
@@ -200,7 +219,7 @@ export const SimilarArtistsTabContent: React.FC<
         })}
       </CardFlexList>
 
-      {similarArtist.length > 25 && !showAll && (
+      {similarArtists.length > 25 && !showAll && (
         <div className="flex justify-center">
           <GradientButton
             onClick={() => setShowAll(true)}

@@ -10,7 +10,7 @@ public record SimilarArtist(
 )
 {
     public string Name => Model.Name;
-    public string MusicBrainzArtistId => Model.MusicBrainzArtistId;
+    public string MusicBrainzArtistId => Model.MusicBrainzArtistId ?? "";
     public double? SimilarityScore => Model.SimilarityScore;
 
     public string? Thumb() =>

@@ -5,59 +5,54 @@ import { CardFlexList } from "@/components/page-body/CardFlexList.tsx";
 import { AppearsOnReleaseCard } from "@/features/artist/artist-page/AppearsOnReleaseCard.tsx";
 import { PlaylistCard } from "@/features/playlists/PlaylistCard.tsx";
 import { Section } from "@/components/page-body/Section.tsx";
+import { useParams } from "react-router";
+import { useMemo } from "react";
 
-interface ArtistAppearsOnTabContentProps {
-  artistId: string;
-  appearsOn: Array<{
-    coverArtUrl?: string | null;
-    firstReleaseDate?: string | null;
-    firstReleaseYear?: string | null;
-    musicBrainzReleaseGroupId?: string | null;
-    primaryArtistMusicBrainzId?: string | null;
-    primaryArtistName: string;
-    releaseTitle: string;
-    releaseType: string;
-    role?: string | null;
-  }>;
-}
+interface ArtistAppearsOnTabProps {}
 
-const artistPlaylistsQuery = graphql(`
-  query ArtistAppearsOn_Playlists($artistId: ID!) {
+const artistAppearsOnQuery = graphql(`
+  query ArtistAppearsOnQuery($artistId: ID!) {
     viewer {
       id
     }
-    playlist {
-      searchPlaylists(limit: 50, searchTerm: "") {
+    artist {
+      byId(artistId: $artistId) {
         id
         name
-        coverImageUrl
-        createdAt
-        items {
-          id
-          artist {
-            id
-          }
+        alsoAppearsOn {
+          
         }
       }
-    }
-    serverLibrary {
-      artistById(id: $artistId) { id }
     }
   }
 `);
 
-export const ArtistAppearsOnTabContent: React.FC<ArtistAppearsOnTabContentProps> = ({
-  artistId,
-  appearsOn,
-}) => {
-  const [{ data }] = useQuery({
-    query: artistPlaylistsQuery,
-    variables: { artistId },
+export const ArtistAppearsOnTab: React.FC<ArtistAppearsOnTabProps> = () => {
+  const { artistId } = useParams<{ artistId: string }>();
+
+  const [{ data, fetching, error }] = useQuery({
+    query: artistAppearsOnQuery,
+    variables: { artistId: artistId ?? "" },
+    pause: !artistId,
   });
 
-  const playlists = React.useMemo(() => {
+  if (fetching) {
+    return <div>Loading...</div>;
+  }
+
+  if (error) {
+    return <div>Error: {error.message}</div>;
+  }
+
+  if (!data?.artist?.byId) {
+    return <div>No data..</div>;
+  }
+
+  const playlists = useMemo(() => {
     const list = data?.playlist?.searchPlaylists ?? [];
-    return list.filter((pl) => (pl.items ?? []).some((it) => it?.artist?.id === artistId));
+    return list.filter((pl) =>
+      (pl.items ?? []).some((it) => it?.artist?.id === artistId),
+    );
   }, [data, artistId]);
 
   return (
@@ -85,5 +80,3 @@ export const ArtistAppearsOnTabContent: React.FC<ArtistAppearsOnTabContentProps>
     </div>
   );
 };
-
-

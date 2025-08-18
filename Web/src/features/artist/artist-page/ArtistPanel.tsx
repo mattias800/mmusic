@@ -1,21 +1,16 @@
 import * as React from "react";
-import { TopArtistTracks } from "@/features/artist/artist-page/TopArtistTracks.tsx";
 import { FragmentType, graphql, useFragment } from "@/gql";
 import { ArtistHeader } from "@/features/artist/artist-page/ArtistHeader.tsx";
-import { ArtistTabs, GlassCard, PageLayout } from "@/components/ui";
+import { GlassCard, PageLayout, TabMenu } from "@/components/ui";
 import { ArtistActionButtons } from "@/features/artist/artist-page/ArtistActionButtons.tsx";
-import { CardFlexList } from "@/components/page-body/CardFlexList.tsx";
-import { byStringField } from "@/common/sorting/Comparators.ts";
-import { AlbumCard } from "@/features/album/AlbumCard.tsx";
 import { useMutation, useSubscription } from "urql";
 import { ArtistServiceConnections } from "@/features/artist/artist-page/ArtistServiceConnections.tsx";
 import { ArtistNumReleasesAvailableIndicator } from "@/features/artist/artist-page/ArtistNumReleasesAvailableIndicator.tsx";
 import { ArtistDownloadAllReleasesButton } from "@/features/artist/artist-page/ArtistDownloadAllReleasesButton.tsx";
 import { ArtistImportStatusInfo } from "@/features/artist/artist-page/ArtistImportStatusInfo.tsx";
-import { ArtistStatisticsHeader } from "@/features/artist/artist-page/ArtistStatisticsHeader.tsx";
 import { BarChart3, Disc3, Music, TrendingUp } from "lucide-react";
-import { ArtistAppearsOnTabContent } from "@/features/artist/artist-page/ArtistAppearsOnTabContent.tsx";
-import { SimilarArtistsTabContent } from "@/features/artist/artist-page/SimilarArtistsTabContent.tsx";
+import { Outlet, useNavigate } from "react-router";
+import { TabItem } from "@/components/ui/TabItem.tsx";
 
 interface ArtistPanelProps {
   artist: FragmentType<typeof artistPanelArtistFragment>;
@@ -41,38 +36,15 @@ const artistPanelArtistFragment = graphql(`
     }
     albums {
       id
-      firstReleaseDate
-      isFullyMissing
-      ...AlbumCard_Release
     }
     eps {
       id
-      firstReleaseDate
-      isFullyMissing
-      ...AlbumCard_Release
     }
     singles {
       id
-      firstReleaseDate
-      isFullyMissing
-      ...AlbumCard_Release
     }
     images {
       backgrounds
-    }
-    alsoAppearsOn {
-      coverArtUrl
-      firstReleaseDate
-      firstReleaseYear
-      musicBrainzReleaseGroupId
-      primaryArtistMusicBrainzId
-      primaryArtistName
-      releaseTitle
-      releaseType
-      role
-    }
-    similarArtists {
-      ...SimilarArtistsTabContent_SimilarArtist
     }
   }
 `);
@@ -153,6 +125,8 @@ const generateArtistShareFilesMutation = graphql(`
 export const ArtistPanel: React.FC<ArtistPanelProps> = (props) => {
   const artist = useFragment(artistPanelArtistFragment, props.artist);
 
+  const navigate = useNavigate();
+
   const [{ fetching: loadingTopTracks }, refreshTopTracks] = useMutation(
     refreshTopTracksMutation,
   );
@@ -167,14 +141,11 @@ export const ArtistPanel: React.FC<ArtistPanelProps> = (props) => {
   );
 
   // Live updates: merge updated artist into cache when subscription fires
-  useSubscription(
-    {
-      query: libraryArtistUpdatedSubscription,
-      variables: { artistId: artist.id },
-      pause: !artist.id,
-    },
-    (_prev, data) => data,
-  );
+  useSubscription({
+    query: libraryArtistUpdatedSubscription,
+    variables: { artistId: artist.id },
+    pause: !artist.id,
+  });
 
   const onRefreshTopTracks = () =>
     refreshTopTracks({ input: { artistId: artist.id } });
@@ -237,109 +208,65 @@ export const ArtistPanel: React.FC<ArtistPanelProps> = (props) => {
           </GlassCard>
 
           <GlassCard>
-            <ArtistTabs
-              tabs={[
-                {
-                  id: "top-tracks",
-                  label: "Top Tracks",
-                  icon: TrendingUp,
-                  content: (
-                    <TopArtistTracks
-                      artistId={artist.id}
-                      loadingTopTracks={loadingTopTracks}
-                    />
-                  ),
-                },
-                {
-                  id: "albums",
-                  label: "Albums",
-                  icon: Disc3,
-                  content: (
-                    <CardFlexList>
-                      {artist.albums
-                        .toSorted(
-                          byStringField((a) => a.firstReleaseDate ?? ""),
-                        )
-                        .toReversed()
-                        .map((release) => (
-                          <AlbumCard release={release} key={release.id} />
-                        ))}
-                    </CardFlexList>
-                  ),
-                },
-                ...(artist.eps.length > 0
-                  ? [
-                      {
-                        id: "eps",
-                        label: "EPs",
-                        icon: Music,
-                        content: (
-                          <CardFlexList>
-                            {artist.eps
-                              .toSorted(
-                                byStringField((a) => a.firstReleaseDate ?? ""),
-                              )
-                              .toReversed()
-                              .map((release) => (
-                                <AlbumCard release={release} key={release.id} />
-                              ))}
-                          </CardFlexList>
-                        ),
-                      },
-                    ]
-                  : []),
-                ...(artist.singles.length > 0
-                  ? [
-                      {
-                        id: "singles",
-                        label: "Singles",
-                        icon: Music,
-                        content: (
-                          <CardFlexList>
-                            {artist.singles
-                              .toSorted(
-                                byStringField((a) => a.firstReleaseDate ?? ""),
-                              )
-                              .toReversed()
-                              .map((release) => (
-                                <AlbumCard release={release} key={release.id} />
-                              ))}
-                          </CardFlexList>
-                        ),
-                      },
-                    ]
-                  : []),
-                {
-                  id: "media-availability",
-                  label: "Media Availability",
-                  icon: BarChart3,
-                  content: <ArtistStatisticsHeader artist={artist} />,
-                },
-                {
-                  id: "similar-artists",
-                  label: "Similar Artists",
-                  icon: TrendingUp,
-                  content: (
-                    <SimilarArtistsTabContent
-                      artistId={artist.id}
-                      similarArtists={artist.similarArtists}
-                    />
-                  ),
-                },
-                {
-                  id: "appears-on",
-                  label: "Appears On",
-                  icon: Music,
-                  content: (
-                    <ArtistAppearsOnTabContent
-                      artistId={artist.id}
-                      appearsOn={artist.alsoAppearsOn}
-                    />
-                  ),
-                },
-              ]}
-              defaultTab="top-tracks"
-            />
+            <TabMenu>
+              <TabItem
+                label={"Top Tracks"}
+                icon={TrendingUp}
+                onClick={() => navigate(`/artist/${artist.id}/top-tracks`)}
+                isActive={true}
+              />
+
+              {artist.albums.length > 0 && (
+                <TabItem
+                  label={"Albums"}
+                  icon={Disc3}
+                  onClick={() => navigate(`/artist/${artist.id}/albums`)}
+                  isActive={false}
+                />
+              )}
+              {artist.eps.length > 0 && (
+                <TabItem
+                  label={"EPs"}
+                  icon={Music}
+                  onClick={() => navigate(`/artist/${artist.id}/eps`)}
+                  isActive={false}
+                />
+              )}
+              {artist.singles.length > 0 && (
+                <TabItem
+                  label={"Singles"}
+                  icon={Music}
+                  onClick={() => navigate(`/artist/${artist.id}/singles`)}
+                  isActive={false}
+                />
+              )}
+
+              <TabItem
+                label={"Similar Artists"}
+                icon={TrendingUp}
+                onClick={() => navigate(`/artist/${artist.id}/similar-artists`)}
+                isActive={false}
+              />
+
+              <TabItem
+                label={"Appears On"}
+                icon={Music}
+                onClick={() => navigate(`/artist/${artist.id}/appears-on`)}
+                isActive={false}
+              />
+
+              <TabItem
+                label={"Media Availability"}
+                icon={BarChart3}
+                onClick={() =>
+                  navigate(`/artist/${artist.id}/media-availability`)
+                }
+                isActive={false}
+              />
+            </TabMenu>
+            <div className="min-h-[200px]">
+              <Outlet />
+            </div>
           </GlassCard>
         </div>
       </PageLayout>
