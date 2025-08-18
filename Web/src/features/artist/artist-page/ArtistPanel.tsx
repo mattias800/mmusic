@@ -264,7 +264,7 @@ export const ArtistPanel: React.FC<ArtistPanelProps> = (props) => {
                 isActive={false}
               />
             </TabMenu>
-            <div className="min-h-[200px]">
+            <div className="min-h-[200px] pt-6">
               <Outlet />
             </div>
           </GlassCard>

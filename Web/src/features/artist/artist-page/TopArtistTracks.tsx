@@ -7,11 +7,9 @@ import { Section } from "@/components/page-body/Section.tsx";
 import { useQuery } from "urql";
 import { TopTrackShimmer } from "@/features/artist/artist-page/TopTrackShimmer.tsx";
 import { ShowMoreButton } from "@/components/buttons/ShowMoreButton.tsx";
+import { useParams } from "react-router";
 
-export interface TopArtistTracksProps {
-  artistId: string;
-  loadingTopTracks?: boolean;
-}
+export interface TopArtistTracksProps {}
 
 const topArtistTracksArtistQuery = graphql(`
   query TopArtistTracks($artistId: ID!) {
@@ -26,13 +24,13 @@ const topArtistTracksArtistQuery = graphql(`
   }
 `);
 
-export const TopArtistTracks: React.FC<TopArtistTracksProps> = ({
-  artistId,
-  loadingTopTracks,
-}) => {
-  const [{ data, fetching }] = useQuery({
+export const TopArtistTracks: React.FC<TopArtistTracksProps> = () => {
+  const { artistId } = useParams<{ artistId: string }>();
+
+  const [{ data, fetching, error }] = useQuery({
     query: topArtistTracksArtistQuery,
-    variables: { artistId },
+    variables: { artistId: artistId ?? "" },
+    pause: !artistId,
   });
 
   const [showingMore, setShowingMore] = useState(false);
@@ -42,11 +40,17 @@ export const TopArtistTracks: React.FC<TopArtistTracksProps> = ({
     showingMore ? 20 : 10,
   );
 
+  if (fetching) {
+    return <div>Loading...</div>;
+  }
+
+  if (error) {
+    return <div>Error: {error.message}</div>;
+  }
+
   if (visibleTracks.length === 0) {
     return null;
   }
-
-  const busy = fetching || (loadingTopTracks ?? false);
 
   return (
     <Section>
@@ -54,7 +58,7 @@ export const TopArtistTracks: React.FC<TopArtistTracksProps> = ({
         <SectionHeading>Popular</SectionHeading>
       </div>
 
-      {busy ? (
+      {fetching ? (
         <div>
           <TopTrackShimmer trackNumber={1} />
           <TopTrackShimmer trackNumber={2} />

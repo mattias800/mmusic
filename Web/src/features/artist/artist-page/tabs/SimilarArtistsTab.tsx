@@ -94,20 +94,23 @@ export const SimilarArtistsTab: React.FC<SimilarArtistsTabProps> = () => {
 
   const [showAll, setShowAll] = useState(false);
 
-  const similarArtists = data?.artist?.byId?.similarArtists ?? [];
-
   const visibleItems = useMemo(
-    () => (showAll ? similarArtists : similarArtists.slice(0, 25)),
-    [similarArtists, showAll],
+    () =>
+      showAll
+        ? (data?.artist?.byId?.similarArtists ?? [])
+        : (data?.artist?.byId?.similarArtists ?? []).slice(0, 25),
+    [data?.artist?.byId?.similarArtists, showAll],
   );
 
   const maxScore = useMemo(() => {
     const max = Math.max(
       0,
-      ...similarArtists.map((i) => i.similarityScore ?? 0),
+      ...(data?.artist?.byId?.similarArtists ?? []).map(
+        (i) => i.similarityScore ?? 0,
+      ),
     );
     return max > 0 ? max : 1;
-  }, [similarArtists]);
+  }, [data?.artist?.byId?.similarArtists]);
 
   const scaledPercent = (s?: number | null) => {
     const v = Math.max(0, Math.min(1, s ?? 0));
@@ -127,7 +130,10 @@ export const SimilarArtistsTab: React.FC<SimilarArtistsTabProps> = () => {
     return <div>No data..</div>;
   }
 
-  if (!similarArtists || similarArtists?.length === 0) {
+  if (
+    !(data?.artist?.byId?.similarArtists ?? []) ||
+    (data?.artist?.byId?.similarArtists ?? [])?.length === 0
+  ) {
     return (
       <div className="flex flex-col items-center justify-center text-center p-8 gap-8">
         <div className="w-16 h-16 rounded-full bg-gradient-to-br from-purple-500/30 to-blue-500/30 flex items-center justify-center">
@@ -219,7 +225,7 @@ export const SimilarArtistsTab: React.FC<SimilarArtistsTabProps> = () => {
         })}
       </CardFlexList>
 
-      {similarArtists.length > 25 && !showAll && (
+      {(data?.artist?.byId?.similarArtists ?? []).length > 25 && !showAll && (
         <div className="flex justify-center">
           <GradientButton
             onClick={() => setShowAll(true)}

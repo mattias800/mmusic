@@ -69,7 +69,7 @@ enum ApplyPolicy {
 
 type Artist implements ArtistBase {
   albums: [Release!]!
-  alsoAppearsOn: [ArtistAppearsOn!]!
+  appearsOn: ArtistAppearsOn!
   connectedExternalServices: [ArtistConnectedExternalService!]!
   eps: [Release!]!
   id: ID!
@@ -85,6 +85,11 @@ type Artist implements ArtistBase {
 }
 
 type ArtistAppearsOn {
+  playlists: [Playlist!]!
+  releases: [ArtistAppearsOnRelease!]!
+}
+
+type ArtistAppearsOnRelease {
   coverArtUrl: String
   firstReleaseDate: String
   firstReleaseYear: String

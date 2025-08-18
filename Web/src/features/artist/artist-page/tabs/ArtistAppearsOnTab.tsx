@@ -6,7 +6,6 @@ import { AppearsOnReleaseCard } from "@/features/artist/artist-page/AppearsOnRel
 import { PlaylistCard } from "@/features/playlists/PlaylistCard.tsx";
 import { Section } from "@/components/page-body/Section.tsx";
 import { useParams } from "react-router";
-import { useMemo } from "react";
 
 interface ArtistAppearsOnTabProps {}
 
@@ -19,8 +18,15 @@ const artistAppearsOnQuery = graphql(`
       byId(artistId: $artistId) {
         id
         name
-        alsoAppearsOn {
-          
+        appearsOn {
+          releases {
+            musicBrainzReleaseGroupId
+            ...AppearsOnReleaseCard_ArtistAppearsOnRelease
+          }
+          playlists {
+            id
+            ...PlaylistCard_Playlist
+          }
         }
       }
     }
@@ -48,20 +54,15 @@ export const ArtistAppearsOnTab: React.FC<ArtistAppearsOnTabProps> = () => {
     return <div>No data..</div>;
   }
 
-  const playlists = useMemo(() => {
-    const list = data?.playlist?.searchPlaylists ?? [];
-    return list.filter((pl) =>
-      (pl.items ?? []).some((it) => it?.artist?.id === artistId),
-    );
-  }, [data, artistId]);
+  const artist = data?.artist?.byId;
 
   return (
     <div className="flex flex-col gap-8">
       <Section>
         <h3 className="text-lg font-semibold">Playlists</h3>
         <CardFlexList>
-          {playlists.map((pl) => (
-            <PlaylistCard key={pl.id} playlist={pl} />
+          {artist?.appearsOn.playlists.map((playlist) => (
+            <PlaylistCard key={playlist.id} playlist={playlist} />
           ))}
         </CardFlexList>
       </Section>
@@ -69,10 +70,10 @@ export const ArtistAppearsOnTab: React.FC<ArtistAppearsOnTabProps> = () => {
       <Section>
         <h3 className="text-lg font-semibold">Other Artists' Releases</h3>
         <CardFlexList>
-          {appearsOn.map((a, idx) => (
+          {artist.appearsOn.releases.map((release) => (
             <AppearsOnReleaseCard
-              key={`${a.musicBrainzReleaseGroupId ?? a.releaseTitle}-${idx}`}
-              item={a}
+              key={release.musicBrainzReleaseGroupId}
+              release={release}
             />
           ))}
         </CardFlexList>

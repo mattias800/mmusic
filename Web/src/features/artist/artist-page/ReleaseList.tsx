@@ -12,7 +12,7 @@ export interface ReleaseListProps {
 }
 
 const releaseListQuery = graphql(`
-  query ReleaseListQuery($artistId: ID!) {}
+  query ReleaseListQuery($artistId: ID!) {
     artist {
       byId(artistId: $artistId) {
         id
@@ -27,7 +27,10 @@ const releaseListQuery = graphql(`
   }
 `);
 
-export const ReleaseList: React.FC<ReleaseListProps> = ({ artistId }) => {
+export const ReleaseList: React.FC<ReleaseListProps> = ({
+  artistId,
+  releaseType,
+}) => {
   const [{ fetching, error, data }] = useQuery({
     query: releaseListQuery,
     variables: { artistId },
@@ -47,7 +50,8 @@ export const ReleaseList: React.FC<ReleaseListProps> = ({ artistId }) => {
 
   return (
     <CardFlexList>
-      {data.artist.eps
+      {data.artist.byId.releases
+        .filter((r) => r.type === releaseType)
         .toSorted(byStringField((a) => a.firstReleaseDate ?? ""))
         .toReversed()
         .map((release) => (
