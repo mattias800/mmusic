@@ -19,7 +19,7 @@ export const TabItem: React.FC<TabItemProps> = ({
       onClick={onClick}
       className={cn(
         "flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
-        "hover:bg-white/10 hover:text-white",
+        "hover:bg-white/10 hover:text-white border border-transparent cursor-pointer",
         isActive
           ? "bg-gradient-to-r from-blue-500/20 to-purple-500/20 text-white border border-blue-500/30 shadow-lg"
           : "text-gray-300 hover:text-white",

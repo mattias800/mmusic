@@ -9,7 +9,7 @@ import { ArtistNumReleasesAvailableIndicator } from "@/features/artist/artist-pa
 import { ArtistDownloadAllReleasesButton } from "@/features/artist/artist-page/ArtistDownloadAllReleasesButton.tsx";
 import { ArtistImportStatusInfo } from "@/features/artist/artist-page/ArtistImportStatusInfo.tsx";
 import { BarChart3, Disc3, Music, TrendingUp } from "lucide-react";
-import { Outlet, useNavigate } from "react-router";
+import { Outlet, useLocation, useNavigate } from "react-router";
 import { TabItem } from "@/components/ui/TabItem.tsx";
 
 interface ArtistPanelProps {
@@ -126,6 +126,9 @@ export const ArtistPanel: React.FC<ArtistPanelProps> = (props) => {
   const artist = useFragment(artistPanelArtistFragment, props.artist);
 
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const tab = location.pathname.split("/")[3] ?? "";
 
   const [{ fetching: loadingTopTracks }, refreshTopTracks] = useMutation(
     refreshTopTracksMutation,
@@ -212,47 +215,62 @@ export const ArtistPanel: React.FC<ArtistPanelProps> = (props) => {
               <TabItem
                 label={"Top Tracks"}
                 icon={TrendingUp}
-                onClick={() => navigate(`/artist/${artist.id}/top-tracks`)}
-                isActive={true}
+                onClick={() =>
+                  navigate(`/artist/${artist.id}`, { replace: true })
+                }
+                isActive={tab === "top-tracks"}
+                isActive={tab === "top-tracks" || !tab}
               />
 
               {artist.albums.length > 0 && (
                 <TabItem
                   label={"Albums"}
                   icon={Disc3}
-                  onClick={() => navigate(`/artist/${artist.id}/albums`)}
-                  isActive={false}
+                  onClick={() =>
+                    navigate(`/artist/${artist.id}/albums`, { replace: true })
+                  }
+                  isActive={tab === "albums"}
                 />
               )}
               {artist.eps.length > 0 && (
                 <TabItem
                   label={"EPs"}
                   icon={Music}
-                  onClick={() => navigate(`/artist/${artist.id}/eps`)}
-                  isActive={false}
+                  onClick={() =>
+                    navigate(`/artist/${artist.id}/eps`, { replace: true })
+                  }
+                  isActive={tab === "eps"}
                 />
               )}
               {artist.singles.length > 0 && (
                 <TabItem
                   label={"Singles"}
                   icon={Music}
-                  onClick={() => navigate(`/artist/${artist.id}/singles`)}
-                  isActive={false}
+                  onClick={() =>
+                    navigate(`/artist/${artist.id}/singles`, { replace: true })
+                  }
+                  isActive={tab === "singles"}
                 />
               )}
 
               <TabItem
                 label={"Similar Artists"}
                 icon={TrendingUp}
-                onClick={() => navigate(`/artist/${artist.id}/similar-artists`)}
-                isActive={false}
+                onClick={() =>
+                  navigate(`/artist/${artist.id}/similar-artists`, {
+                    replace: true,
+                  })
+                }
+                isActive={tab === "similar-artists"}
               />
 
               <TabItem
                 label={"Appears On"}
                 icon={Music}
-                onClick={() => navigate(`/artist/${artist.id}/appears-on`)}
-                isActive={false}
+                onClick={() =>
+                  navigate(`/artist/${artist.id}/appears-on`, { replace: true })
+                }
+                isActive={tab === "appears-on"}
               />
 
               <TabItem
@@ -261,7 +279,7 @@ export const ArtistPanel: React.FC<ArtistPanelProps> = (props) => {
                 onClick={() =>
                   navigate(`/artist/${artist.id}/media-availability`)
                 }
-                isActive={false}
+                isActive={tab === "media-availability"}
               />
             </TabMenu>
             <div className="min-h-[200px] pt-6">
