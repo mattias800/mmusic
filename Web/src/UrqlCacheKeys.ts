@@ -14,6 +14,7 @@ export const cacheKeys: Record<TypesWithNoId, KeyGenerator> = {
   ArtistSearchRoot: () => null,
   ArtistTopTrack: () => null,
   CacheStatistics: () => null,
+  ConnectivityStatus: () => null,
   DownloadHistoryItem: () => null,
   DownloadsSearchRoot: () => null,
   ExternalServicesSearchRoot: () => null,

@@ -237,6 +237,11 @@ type CacheStatistics {
   trackCount: Int!
 }
 
+type ConnectivityStatus {
+  message: String!
+  ok: Boolean!
+}
+
 type CreateDirectoryError {
   message: String!
 }
@@ -435,6 +440,8 @@ type ExternalArtist {
 type ExternalRoot {
   id: ID!
   soulSeek: SoulSeekRoot!
+  testProwlarrConnectivity: ConnectivityStatus!
+  testQBittorrentConnectivity: ConnectivityStatus!
 }
 
 type ExternalService {

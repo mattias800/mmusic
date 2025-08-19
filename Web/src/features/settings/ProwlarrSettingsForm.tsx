@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label.tsx";
 import { Input } from "@/components/ui/input.tsx";
 import { Button } from "@/components/ui/button.tsx";
 import { Globe, RefreshCcw, Activity } from "lucide-react";
+import { useClient } from "urql";
 
 const query = graphql(`
   query ProwlarrSettings_Query {
@@ -45,6 +46,7 @@ const mutation = graphql(`
 export const ProwlarrSettingsForm: React.FC = () => {
   const [{ data }] = useQuery({ query, requestPolicy: "cache-and-network" });
   const [{ fetching }, update] = useMutation(mutation);
+  const client = useClient();
 
   const s = data?.serverSettings;
   const [baseUrl, setBaseUrl] = React.useState<string>(s?.prowlarrBaseUrl ?? "");
@@ -77,6 +79,23 @@ export const ProwlarrSettingsForm: React.FC = () => {
       maxConcurrentRequests: Math.max(1, maxConc),
     };
     await update({ input });
+  };
+
+  const testQuery = graphql(`
+    query TestProwlarrConnectivity {
+      external { testProwlarrConnectivity { ok message } }
+    }
+  `);
+  const [testMsg, setTestMsg] = React.useState<string | null>(null);
+  const [testing, setTesting] = React.useState(false);
+  const onTest = async () => {
+    setTesting(true);
+    setTestMsg(null);
+    const res = await client.query(testQuery, {}).toPromise();
+    const payload = res.data?.external?.testProwlarrConnectivity;
+    if (payload) setTestMsg(`${payload.ok ? "OK" : "FAIL"}: ${payload.message}`);
+    else setTestMsg(res.error ? `Error: ${res.error.message}` : "No response");
+    setTesting(false);
   };
 
   return (
@@ -122,10 +141,16 @@ export const ProwlarrSettingsForm: React.FC = () => {
           <input type="checkbox" checked={detailed} onChange={(e) => setDetailed(e.target.checked)} /> Enable detailed logging
         </label>
       </div>
-      <div className="flex justify-end">
-        <Button onClick={onSave} disabled={fetching} className="bg-blue-600 hover:bg-blue-700 text-white">
-          {fetching ? "Saving..." : "Save"}
-        </Button>
+      <div className="flex items-center justify-between">
+        <div className="text-xs text-gray-400 min-h-4">{testMsg}</div>
+        <div className="flex gap-2">
+          <Button onClick={onTest} disabled={testing} className="bg-gray-600 hover:bg-gray-700 text-white">
+            {testing ? "Testing..." : "Test connection"}
+          </Button>
+          <Button onClick={onSave} disabled={fetching} className="bg-blue-600 hover:bg-blue-700 text-white">
+            {fetching ? "Saving..." : "Save"}
+          </Button>
+        </div>
       </div>
       <p className="text-xs text-gray-400">API key should be provided via environment/secret store; not editable here.</p>
     </div>
