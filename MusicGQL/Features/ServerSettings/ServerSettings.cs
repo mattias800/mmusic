@@ -52,10 +52,6 @@ public record ServerSettings([property: GraphQLIgnore] DbServerSettings Model)
     public string? QBittorrentUsername() => Model.QBittorrentUsername;
     public string? QBittorrentSavePath() => Model.QBittorrentSavePath;
 
-    public string ListenBrainzUsername() => Model.ListenBrainzUsername;
-
-    public string ListenBrainzApiKey() => Model.ListenBrainzApiKey;
-
     // Top Tracks Service Configuration
     public bool ListenBrainzTopTracksEnabled() => Model.ListenBrainzTopTracksEnabled;
 
@@ -67,8 +63,7 @@ public record ServerSettings([property: GraphQLIgnore] DbServerSettings Model)
 
     // Auth tokens configured flags (read-only)
     public bool IsListenBrainzConfigured([Service] IOptions<ListenBrainzConfiguration> lbOptions) =>
-        !string.IsNullOrWhiteSpace(lbOptions.Value.ApiKey) ||
-        !string.IsNullOrWhiteSpace(Model.ListenBrainzApiKey);
+        !string.IsNullOrWhiteSpace(lbOptions.Value.ApiKey);
 
     public bool IsYouTubeConfigured([Service] IOptions<YouTubeServiceOptions> youTubeOptions) =>
         !string.IsNullOrWhiteSpace(youTubeOptions.Value.ApiKey);
@@ -85,11 +80,7 @@ public record ServerSettings([property: GraphQLIgnore] DbServerSettings Model)
 
     // Config sources
     public string ListenBrainzConfiguredSource([Service] IOptions<ListenBrainzConfiguration> lbOptions)
-    {
-        if (!string.IsNullOrWhiteSpace(lbOptions.Value.ApiKey)) return "appsettings";
-        if (!string.IsNullOrWhiteSpace(Model.ListenBrainzApiKey)) return "database";
-        return "none";
-    }
+        => !string.IsNullOrWhiteSpace(lbOptions.Value.ApiKey) ? "appsettings" : "none";
 
     public string YouTubeConfiguredSource([Service] IOptions<YouTubeServiceOptions> youTubeOptions)
         => !string.IsNullOrWhiteSpace(youTubeOptions.Value.ApiKey) ? "appsettings" : "none";

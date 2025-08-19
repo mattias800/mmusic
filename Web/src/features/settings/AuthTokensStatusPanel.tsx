@@ -1,6 +1,7 @@
 import * as React from "react";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { graphql } from "@/gql";
+import type { TypedDocumentNode } from "@graphql-typed-document-node/core";
 import { useQuery } from "urql";
 import { Button } from "@/components/ui/button.tsx";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip.tsx";
@@ -64,8 +65,6 @@ const testFanartQuery = graphql(`
 
 export const AuthTokensStatusPanel: React.FC = () => {
   const [{ data, fetching, error }] = useQuery({ query: statusQuery, requestPolicy: "network-only" });
-  const [testing, setTesting] = useState(false);
-  const [testResult, setTestResult] = useState<string | null>(null);
 
   const configured = useMemo(() => {
     const s = data?.serverSettings;
@@ -78,38 +77,13 @@ export const AuthTokensStatusPanel: React.FC = () => {
     };
   }, [data]);
 
-  async function testListenBrainz() {
-    setTesting(true);
-    setTestResult(null);
-    try {
-      const res = await fetch("/graphql", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ query: testListenBrainzQuery.loc?.source.body }),
-      });
-      const json = await res.json();
-      const status = json?.data?.external?.testListenBrainzConnectivity;
-      if (!status) setTestResult("Test failed");
-      else setTestResult(status.ok ? `OK: ${status.message}` : `Failed: ${status.message}`);
-    } catch (e) {
-      const message = e instanceof Error ? e.message : String(e);
-      setTestResult(`Error: ${message}`);
-    } finally {
-      setTesting(false);
-    }
-  }
 
   if (fetching) return <div className="text-sm opacity-70">Loading token status…</div>;
   if (error) return <div className="text-sm text-red-500">Failed to load token status</div>;
 
   return (
     <div className="space-y-3">
-      <Row label="ListenBrainz" ok={configured.listenBrainz.ok} source={configured.listenBrainz.source}>
-        <Button size="sm" onClick={testListenBrainz} disabled={!configured.listenBrainz.ok || testing}>
-          {testing ? "Testing…" : "Test connectivity"}
-        </Button>
-        {testResult && <div className="text-xs opacity-70 mt-1">{testResult}</div>}
-      </Row>
+      <TestRow label="ListenBrainz" state={configured.listenBrainz} query={testListenBrainzQuery} />
       {!configured.listenBrainz.ok && (
         <FixHelp
           serviceName="ListenBrainz"
@@ -172,41 +146,51 @@ const Row: React.FC<{ label: string; ok: boolean; source?: string; children?: Re
   );
 };
 
-type ConnectivityQueryDoc = { loc?: { source: { body: string } } };
+type ConnectivityQueryDoc = TypedDocumentNode<unknown, Record<string, never>>;
+
+function extractConnectivityStatus(data: unknown): { ok: boolean; message: string } | null {
+  if (!data || typeof data !== "object") return null;
+  const dataObj = data as { external?: unknown };
+  const external = dataObj.external;
+  if (!external || typeof external !== "object") return null;
+  const externalObj = external as Record<string, unknown>;
+  for (const key of Object.keys(externalObj)) {
+    if (key.startsWith("test")) {
+      const value = externalObj[key];
+      if (value && typeof value === "object") {
+        const v = value as Record<string, unknown>;
+        if ("ok" in v && typeof v.ok === "boolean" && "message" in v && typeof v.message === "string") {
+          return { ok: v.ok, message: v.message };
+        }
+      }
+    }
+  }
+  return null;
+}
 
 const TestRow: React.FC<{
   label: string;
   state: { ok: boolean; source: string };
   query: ConnectivityQueryDoc;
 }> = ({ label, state, query }) => {
-  const [testing, setTesting] = useState(false);
-  const [result, setResult] = useState<string | null>(null);
-  async function onTest() {
-    setTesting(true);
-    setResult(null);
-    try {
-      const res = await fetch("/graphql", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ query: query.loc?.source.body }),
-      });
-      const json = await res.json();
-      const status = json?.data?.external?.[Object.keys(json?.data?.external || {}).find(k => k.startsWith("test")) as string];
-      if (!status) setResult("Test failed");
-      else setResult(status.ok ? `OK: ${status.message}` : `Failed: ${status.message}`);
-    } catch (e) {
-      const message = e instanceof Error ? e.message : String(e);
-      setResult(`Error: ${message}`);
-    } finally {
-      setTesting(false);
-    }
-  }
+  const [{ data, fetching, error }, reexecuteQuery] = useQuery<unknown, Record<string, never>>({ query, pause: true, requestPolicy: "network-only" });
+
+  const status = React.useMemo(() => extractConnectivityStatus(data), [data]);
+
+  const message = error
+    ? `Error: ${error.message}`
+    : status
+    ? status.ok
+      ? `OK: ${status.message}`
+      : `Failed: ${status.message}`
+    : null;
+
   return (
     <Row label={label} ok={state.ok} source={state.source}>
-      <Button size="sm" onClick={onTest} disabled={!state.ok || testing}>
-        {testing ? "Testing…" : "Test connectivity"}
+      <Button size="sm" onClick={() => reexecuteQuery({ requestPolicy: "network-only" })} disabled={!state.ok || fetching}>
+        {fetching ? "Testing…" : "Test connectivity"}
       </Button>
-      {result && <div className="text-xs opacity-70 mt-1">{result}</div>}
+      {message && !fetching && <div className="text-xs opacity-70 mt-1">{message}</div>}
     </Row>
   );
 };

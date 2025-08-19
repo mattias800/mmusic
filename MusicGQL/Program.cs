@@ -362,7 +362,10 @@ builder.Services.Configure<MissingLibraryItemsDetectorOptions>(
 builder
     .AddGraphQL()
     .AddAuthorization()
-    .ModifyRequestOptions(o => { o.ExecutionTimeout = TimeSpan.FromSeconds(60); })
+    .ModifyRequestOptions(o => {
+        o.ExecutionTimeout = TimeSpan.FromSeconds(60);
+        o.IncludeExceptionDetails = builder.Environment.IsDevelopment();
+    })
     .AddRedisSubscriptions(_ =>
         ConnectionMultiplexer.Connect(
             builder.Configuration.GetConnectionString("Redis") ?? string.Empty
@@ -389,9 +392,6 @@ builder
     .AddTypeExtension<ListenBrainzMutations>()
     .AddType<SubmitListenSuccess>()
     .AddType<SubmitListenError>()
-    .AddTypeExtension<UpdateListenBrainzSettingsMutation>()
-    .AddType<UpdateListenBrainzSettingsSuccess>()
-    .AddType<UpdateListenBrainzSettingsError>()
     .AddTypeExtension<UpdateTopTracksServiceSettingsMutation>()
     .AddType<UpdateTopTracksServiceSettingsSuccess>()
     .AddType<UpdateTopTracksServiceSettingsError>()

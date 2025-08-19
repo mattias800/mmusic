@@ -28,19 +28,11 @@ public record ListenBrainzMutations
 {
     public async Task<SubmitListenResult> SubmitListen(
         SubmitListenInput input,
-        [Service] ListenBrainzService listenBrainzService,
-        [Service] ServerSettingsAccessor serverSettingsAccessor
+        [Service] ListenBrainzService listenBrainzService
     )
     {
         try
         {
-            var settings = await serverSettingsAccessor.GetAsync();
-            if (string.IsNullOrEmpty(settings.ListenBrainzUsername) || 
-                string.IsNullOrEmpty(settings.ListenBrainzApiKey))
-            {
-                return new SubmitListenError("ListenBrainz not configured. Please set username and API key in settings.");
-            }
-
             var listen = new SubmittedListen(
                 input.ListenedAt ?? DateTime.UtcNow,
                 input.TrackName,

@@ -29,10 +29,6 @@ public class DbServerSettings
     // Public base URL for building absolute links (e.g., https://mmusic.com)
     public string PublicBaseUrl { get; set; } = string.Empty;
 
-    // ListenBrainz integration settings
-    public string ListenBrainzUsername { get; set; } = string.Empty;
-    public string ListenBrainzApiKey { get; set; } = string.Empty;
-
     // Top Tracks Service Configuration
     public bool ListenBrainzTopTracksEnabled { get; set; } = true;  // Primary source
     public bool SpotifyTopTracksEnabled { get; set; } = false;      // Disabled by default
@@ -76,8 +72,6 @@ public static class DefaultDbServerSettingsProvider
             SoulSeekListeningPort = 50300,
             DownloadSlotCount = 3,
             PublicBaseUrl = "",
-            ListenBrainzUsername = "",
-            ListenBrainzApiKey = "",
             ListenBrainzTopTracksEnabled = true,
             SpotifyTopTracksEnabled = false,
             LastFmTopTracksEnabled = false,

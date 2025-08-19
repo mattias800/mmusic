@@ -42,16 +42,18 @@ public record ExternalRoot
     [GraphQLName("testListenBrainzConnectivity")]
     public async Task<ConnectivityStatus> TestListenBrainzConnectivity(
         [Service] ListenBrainzService listenBrainzService,
-        [Service] ServerSettingsAccessor serverSettingsAccessor
+        [Service] ServerSettingsAccessor serverSettingsAccessor,
+        [Service] IOptions<MusicGQL.Features.ListenBrainz.ListenBrainzConfiguration> listenBrainzOptions
     )
     {
-        var s = await serverSettingsAccessor.GetAsync();
-        if (string.IsNullOrWhiteSpace(s.ListenBrainzApiKey))
+        var apiKey = listenBrainzOptions.Value.ApiKey;
+
+        if (string.IsNullOrWhiteSpace(apiKey))
         {
             return new ConnectivityStatus(false, "API key not configured");
         }
 
-        var (isValid, user, message) = await listenBrainzService.ValidateTokenAsync(s.ListenBrainzApiKey);
+        var (isValid, user, message) = await listenBrainzService.ValidateTokenAsync(apiKey);
         if (isValid)
         {
             return new ConnectivityStatus(true, string.IsNullOrWhiteSpace(user) ? "ok" : $"ok (user: {user})");
