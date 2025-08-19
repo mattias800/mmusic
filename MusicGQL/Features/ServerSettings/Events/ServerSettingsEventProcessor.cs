@@ -31,6 +31,12 @@ public class ServerSettingsEventProcessor
             case SoulSeekConnectionUpdated soulSeekConn:
                 await HandleSoulSeekConnectionUpdated(soulSeekConn, dbContext);
                 break;
+            case ProwlarrSettingsUpdated prowlarr:
+                await HandleProwlarrSettingsUpdated(prowlarr, dbContext);
+                break;
+            case QBittorrentSettingsUpdated qbit:
+                await HandleQBittorrentSettingsUpdated(qbit, dbContext);
+                break;
         }
     }
 
@@ -166,6 +172,52 @@ public class ServerSettingsEventProcessor
         serverSettings.SoulSeekHost = updated.Host;
         serverSettings.SoulSeekPort = updated.Port;
         serverSettings.SoulSeekUsername = updated.Username;
+        await dbContext.SaveChangesAsync();
+    }
+
+    private async Task HandleProwlarrSettingsUpdated(
+        ProwlarrSettingsUpdated updated,
+        EventDbContext dbContext
+    )
+    {
+        var serverSettings = dbContext.ServerSettings.FirstOrDefault(s =>
+            s.Id == DefaultDbServerSettingsProvider.ServerSettingsSingletonId
+        );
+
+        if (serverSettings is null)
+        {
+            serverSettings = DefaultDbServerSettingsProvider.GetDefault();
+            dbContext.ServerSettings.Add(serverSettings);
+        }
+
+        serverSettings.ProwlarrBaseUrl = updated.BaseUrl;
+        serverSettings.ProwlarrTimeoutSeconds = updated.TimeoutSeconds;
+        serverSettings.ProwlarrMaxRetries = updated.MaxRetries;
+        serverSettings.ProwlarrRetryDelaySeconds = updated.RetryDelaySeconds;
+        serverSettings.ProwlarrTestConnectivityFirst = updated.TestConnectivityFirst;
+        serverSettings.ProwlarrEnableDetailedLogging = updated.EnableDetailedLogging;
+        serverSettings.ProwlarrMaxConcurrentRequests = updated.MaxConcurrentRequests;
+        await dbContext.SaveChangesAsync();
+    }
+
+    private async Task HandleQBittorrentSettingsUpdated(
+        QBittorrentSettingsUpdated updated,
+        EventDbContext dbContext
+    )
+    {
+        var serverSettings = dbContext.ServerSettings.FirstOrDefault(s =>
+            s.Id == DefaultDbServerSettingsProvider.ServerSettingsSingletonId
+        );
+
+        if (serverSettings is null)
+        {
+            serverSettings = DefaultDbServerSettingsProvider.GetDefault();
+            dbContext.ServerSettings.Add(serverSettings);
+        }
+
+        serverSettings.QBittorrentBaseUrl = updated.BaseUrl;
+        serverSettings.QBittorrentUsername = updated.Username;
+        serverSettings.QBittorrentSavePath = updated.SavePath;
         await dbContext.SaveChangesAsync();
     }
 }

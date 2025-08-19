@@ -33,6 +33,20 @@ public record ServerSettings([property: GraphQLIgnore] DbServerSettings Model)
     public int SoulSeekPort() => Model.SoulSeekPort;
     public string SoulSeekUsername() => Model.SoulSeekUsername;
 
+    // Prowlarr (non-secret)
+    public string? ProwlarrBaseUrl() => Model.ProwlarrBaseUrl;
+    public int ProwlarrTimeoutSeconds() => Model.ProwlarrTimeoutSeconds;
+    public int ProwlarrMaxRetries() => Model.ProwlarrMaxRetries;
+    public int ProwlarrRetryDelaySeconds() => Model.ProwlarrRetryDelaySeconds;
+    public bool ProwlarrTestConnectivityFirst() => Model.ProwlarrTestConnectivityFirst;
+    public bool ProwlarrEnableDetailedLogging() => Model.ProwlarrEnableDetailedLogging;
+    public int ProwlarrMaxConcurrentRequests() => Model.ProwlarrMaxConcurrentRequests;
+
+    // qBittorrent (non-secret)
+    public string? QBittorrentBaseUrl() => Model.QBittorrentBaseUrl;
+    public string? QBittorrentUsername() => Model.QBittorrentUsername;
+    public string? QBittorrentSavePath() => Model.QBittorrentSavePath;
+
     public string ListenBrainzUsername() => Model.ListenBrainzUsername;
 
     public string ListenBrainzApiKey() => Model.ListenBrainzApiKey;
