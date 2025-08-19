@@ -35,9 +35,13 @@ export const LibraryPathForm: React.FC<LibraryPathFormProps> = (props) => {
       {serverSettings.storageStats && (
         <DiskUsagePanel
           totalBytes={serverSettings.storageStats.totalDiskBytes ?? undefined}
-          freeBytes={serverSettings.storageStats.availableFreeBytes ?? undefined}
+          freeBytes={
+            serverSettings.storageStats.availableFreeBytes ?? undefined
+          }
           libraryBytes={serverSettings.storageStats.librarySizeBytes ?? 0}
-          estimatedTotalLibraryBytes={serverSettings.storageStats.estimatedTotalLibrarySizeBytes ?? 0}
+          estimatedTotalLibraryBytes={
+            serverSettings.storageStats.estimatedTotalLibrarySizeBytes ?? 0
+          }
         />
       )}
 

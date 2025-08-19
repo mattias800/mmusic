@@ -16,8 +16,15 @@ const importSpotifyPlaylistByIdMutation = graphql(`
   mutation ImportSpotifyPlaylist($playlistId: String!, $userId: UUID!) {
     importSpotifyPlaylist(input: { playlistId: $playlistId, userId: $userId }) {
       __typename
-      ... on ImportSpotifyPlaylistSuccess { playlist { id name } }
-      ... on ImportSpotifyPlaylistError { message }
+      ... on ImportSpotifyPlaylistSuccess {
+        playlist {
+          id
+          name
+        }
+      }
+      ... on ImportSpotifyPlaylistError {
+        message
+      }
     }
   }
 `);

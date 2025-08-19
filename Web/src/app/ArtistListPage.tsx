@@ -23,20 +23,26 @@ export const ArtistListPage: React.FC<ArtistListPageProps> = () => {
     query: artistListQuery,
   });
 
-  if (fetching || stale) return <PageLoading
-    title="Loading Artists"
-    subtitle="Fetching your artist collection"
-    icon={Users}
-    iconBgColor="bg-blue-500/20"
-  />;
+  if (fetching || stale)
+    return (
+      <PageLoading
+        title="Loading Artists"
+        subtitle="Fetching your artist collection"
+        icon={Users}
+        iconBgColor="bg-blue-500/20"
+      />
+    );
 
-  if (error) return <PageError
-    title="Failed to Load Artists"
-    message="We couldn't load your artist collection"
-    error={error}
-    icon={AlertTriangle}
-    iconBgColor="bg-red-500/20"
-  />;
+  if (error)
+    return (
+      <PageError
+        title="Failed to Load Artists"
+        message="We couldn't load your artist collection"
+        error={error}
+        icon={AlertTriangle}
+        iconBgColor="bg-red-500/20"
+      />
+    );
 
   if (!data?.serverLibrary.allArtists?.length) return <PageNoArtists />;
 

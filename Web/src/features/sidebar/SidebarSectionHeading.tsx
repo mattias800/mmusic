@@ -26,11 +26,7 @@ export const SidebarSectionHeading: React.FC<SidebarSectionHeadingProps> = ({
           {children}
         </h3>
       </div>
-      {right && (
-        <div className="flex items-center">
-          {right}
-        </div>
-      )}
+      {right && <div className="flex items-center">{right}</div>}
     </div>
   );
 };

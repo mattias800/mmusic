@@ -16,16 +16,18 @@ export const GlassCard: React.FC<GlassCardProps> = ({
   icon: Icon,
   iconBgColor = "bg-blue-500/20",
   className = "",
-  padding = "lg"
+  padding = "lg",
 }) => {
   const paddingClasses = {
     sm: "p-4",
     md: "p-6",
-    lg: "p-8"
+    lg: "p-8",
   };
 
   return (
-    <div className={`bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl ${paddingClasses[padding]} shadow-2xl ${className}`}>
+    <div
+      className={`bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl ${paddingClasses[padding]} shadow-2xl ${className}`}
+    >
       {title && (
         <div className="flex items-center gap-3 mb-6">
           {Icon && (

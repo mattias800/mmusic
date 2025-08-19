@@ -6,8 +6,20 @@ import { Link } from "react-router";
 import { ReleaseCoverArt } from "@/components/images/ReleaseCoverArt.tsx";
 import { ProgressIndicator } from "@/components/progress/ProgressIndicator";
 import { DownloadStatus } from "@/gql/graphql.ts";
-import { PageLayout, PageHeader, GlassCard, InfoSection } from "@/components/ui";
-import { Download, Clock, ListOrdered, CheckCircle, XCircle, AlertTriangle } from "lucide-react";
+import {
+  PageLayout,
+  PageHeader,
+  GlassCard,
+  InfoSection,
+} from "@/components/ui";
+import {
+  Download,
+  Clock,
+  ListOrdered,
+  CheckCircle,
+  XCircle,
+  AlertTriangle,
+} from "lucide-react";
 
 // Type for the actual query result structure
 type QueuesPageDownloadSlot = {
@@ -149,7 +161,7 @@ const query = graphql(`
           id
           artistName
           songTitle
-            releaseFolderName
+          releaseFolderName
           queueKey
         }
       }
@@ -272,10 +284,10 @@ export const QueuesPage: React.FC = () => {
   return (
     <PageLayout>
       {/* Header Section */}
-      <PageHeader 
-        icon={AlertTriangle} 
-        title="Queues & Activity" 
-        subtitle="Monitor downloads, imports, and system activity" 
+      <PageHeader
+        icon={AlertTriangle}
+        title="Queues & Activity"
+        subtitle="Monitor downloads, imports, and system activity"
       />
 
       {/* Main Content Grid */}
@@ -283,9 +295,9 @@ export const QueuesPage: React.FC = () => {
         {/* Left Column - Downloads */}
         <div className="space-y-8">
           {/* Download Slots */}
-          <GlassCard 
-            title="Download Slots" 
-            icon={Download} 
+          <GlassCard
+            title="Download Slots"
+            icon={Download}
             iconBgColor="bg-green-500/20"
           >
             <div className="space-y-4">
@@ -302,9 +314,9 @@ export const QueuesPage: React.FC = () => {
           </GlassCard>
 
           {/* Download Queue */}
-          <GlassCard 
-            title="Download Queue" 
-            icon={Clock} 
+          <GlassCard
+            title="Download Queue"
+            icon={Clock}
             iconBgColor="bg-blue-500/20"
           >
             <div className="space-y-3">
@@ -312,20 +324,24 @@ export const QueuesPage: React.FC = () => {
                 <QueueItem
                   key={q.queueKey}
                   item={q}
-                  onRemove={() => q.queueKey && removeDownload({ queueKey: q.queueKey })}
+                  onRemove={() =>
+                    q.queueKey && removeDownload({ queueKey: q.queueKey })
+                  }
                   type="download"
                 />
               ))}
               {dl.downloadQueue.items.length === 0 && (
-                <div className="text-sm text-gray-400 text-center py-4">Queue is empty</div>
+                <div className="text-sm text-gray-400 text-center py-4">
+                  Queue is empty
+                </div>
               )}
             </div>
           </GlassCard>
 
           {/* Download History */}
-          <GlassCard 
-            title="Download History" 
-            icon={CheckCircle} 
+          <GlassCard
+            title="Download History"
+            icon={CheckCircle}
             iconBgColor="bg-emerald-500/20"
           >
             <div className="space-y-3">
@@ -333,7 +349,9 @@ export const QueuesPage: React.FC = () => {
                 <HistoryItem key={idx} item={h} type="download" />
               ))}
               {dl.downloadHistory.length === 0 && (
-                <div className="text-sm text-gray-400 text-center py-4">No recent downloads</div>
+                <div className="text-sm text-gray-400 text-center py-4">
+                  No recent downloads
+                </div>
               )}
             </div>
           </GlassCard>
@@ -342,9 +360,9 @@ export const QueuesPage: React.FC = () => {
         {/* Right Column - Artist Import */}
         <div className="space-y-8">
           {/* Current Import */}
-          <GlassCard 
-            title="Current Import" 
-            icon={ListOrdered} 
+          <GlassCard
+            title="Current Import"
+            icon={ListOrdered}
             iconBgColor="bg-purple-500/20"
           >
             {ai.currentArtistImport ? (
@@ -355,9 +373,9 @@ export const QueuesPage: React.FC = () => {
           </GlassCard>
 
           {/* Import Queue */}
-          <GlassCard 
-            title="Import Queue" 
-            icon={Clock} 
+          <GlassCard
+            title="Import Queue"
+            icon={Clock}
             iconBgColor="bg-orange-500/20"
           >
             <div className="space-y-3">
@@ -365,20 +383,24 @@ export const QueuesPage: React.FC = () => {
                 <QueueItem
                   key={q.queueKey ?? idx}
                   item={q}
-                  onRemove={() => q.queueKey && removeImport({ queueKey: q.queueKey })}
+                  onRemove={() =>
+                    q.queueKey && removeImport({ queueKey: q.queueKey })
+                  }
                   type="import"
                 />
               ))}
               {ai.artistImportQueue.items.length === 0 && (
-                <div className="text-sm text-gray-400 text-center py-4">Queue is empty</div>
+                <div className="text-sm text-gray-400 text-center py-4">
+                  Queue is empty
+                </div>
               )}
             </div>
           </GlassCard>
 
           {/* Import History */}
-          <GlassCard 
-            title="Import History" 
-            icon={CheckCircle} 
+          <GlassCard
+            title="Import History"
+            icon={CheckCircle}
             iconBgColor="bg-indigo-500/20"
           >
             <div className="space-y-3">
@@ -386,7 +408,9 @@ export const QueuesPage: React.FC = () => {
                 <HistoryItem key={idx} item={h} type="import" />
               ))}
               {ai.artistImportHistory.length === 0 && (
-                <div className="text-sm text-gray-400 text-center py-4">No recent imports</div>
+                <div className="text-sm text-gray-400 text-center py-4">
+                  No recent imports
+                </div>
               )}
             </div>
           </GlassCard>
@@ -394,37 +418,42 @@ export const QueuesPage: React.FC = () => {
       </div>
 
       {/* Bottom Info Section */}
-      <InfoSection 
-        icon={AlertTriangle} 
-        title="About Queues & Activity" 
+      <InfoSection
+        icon={AlertTriangle}
+        title="About Queues & Activity"
         variant="blue"
       >
-        This page shows real-time information about your mmusic system. Download slots display active downloads with progress bars, 
-        queues show pending jobs waiting to be processed, and history provides a record of completed operations. 
-        All data updates automatically via live subscriptions.
+        This page shows real-time information about your mmusic system. Download
+        slots display active downloads with progress bars, queues show pending
+        jobs waiting to be processed, and history provides a record of completed
+        operations. All data updates automatically via live subscriptions.
       </InfoSection>
     </PageLayout>
   );
 };
 
 // Helper Components
-const DownloadSlotCard: React.FC<{ slot: QueuesPageDownloadSlot }> = ({ slot }) => (
+const DownloadSlotCard: React.FC<{ slot: QueuesPageDownloadSlot }> = ({
+  slot,
+}) => (
   <div className="p-4 bg-white/5 rounded-lg border border-white/10">
     <div className="flex items-center justify-between mb-3">
       <div className="flex items-center gap-2">
         <span className="text-sm font-medium text-white">
           Slot {slot.id} - {slot.status || "Idle"}
         </span>
-        <div className={`px-2 py-1 rounded-full text-xs ${
-          slot.isActive 
-            ? "bg-green-500/20 text-green-400" 
-            : "bg-gray-500/20 text-gray-400"
-        }`}>
+        <div
+          className={`px-2 py-1 rounded-full text-xs ${
+            slot.isActive
+              ? "bg-green-500/20 text-green-400"
+              : "bg-gray-500/20 text-gray-400"
+          }`}
+        >
           {slot.isActive ? "Active" : "Inactive"}
         </div>
       </div>
     </div>
-    
+
     {slot.isWorking && slot.currentWork && slot.currentProgress ? (
       <div className="space-y-3">
         <div className="flex items-center gap-4">
@@ -456,25 +485,32 @@ const DownloadSlotCard: React.FC<{ slot: QueuesPageDownloadSlot }> = ({ slot }) 
                 to={`/artist/${slot.currentWork.artistId}/release/${slot.currentWork.releaseFolderName}`}
                 className="hover:underline"
               >
-                {slot.currentProgress.releaseTitle ?? slot.currentWork.releaseFolderName}
+                {slot.currentProgress.releaseTitle ??
+                  slot.currentWork.releaseFolderName}
               </Link>
             </div>
             <div className="text-sm text-gray-300 mt-1">
               {slot.currentProgress.status}{" "}
               {slot.currentProgress.status === DownloadStatus.Downloading && (
                 <>
-                  — {slot.currentProgress.completedTracks}/{slot.currentProgress.totalTracks}
+                  — {slot.currentProgress.completedTracks}/
+                  {slot.currentProgress.totalTracks}
                 </>
               )}
-              {slot.currentProgress.currentProvider && slot.currentProgress.totalProviders && (
-                <span className="ml-2 text-gray-400">
-                  via {slot.currentProgress.currentProvider} ({slot.currentProgress.currentProviderIndex}/{slot.currentProgress.totalProviders})
-                </span>
-              )}
+              {slot.currentProgress.currentProvider &&
+                slot.currentProgress.totalProviders && (
+                  <span className="ml-2 text-gray-400">
+                    via {slot.currentProgress.currentProvider} (
+                    {slot.currentProgress.currentProviderIndex}/
+                    {slot.currentProgress.totalProviders})
+                  </span>
+                )}
             </div>
-            {typeof slot.currentProgress.currentDownloadSpeedKbps === "number" && (
+            {typeof slot.currentProgress.currentDownloadSpeedKbps ===
+              "number" && (
               <div className="text-xs text-gray-400 mt-1">
-                Speed: {slot.currentProgress.currentDownloadSpeedKbps.toFixed(1)} KB/s
+                Speed:{" "}
+                {slot.currentProgress.currentDownloadSpeedKbps.toFixed(1)} KB/s
               </div>
             )}
           </div>
@@ -489,7 +525,9 @@ const DownloadSlotCard: React.FC<{ slot: QueuesPageDownloadSlot }> = ({ slot }) 
                     ? Math.min(
                         100,
                         Math.round(
-                          (slot.currentProgress.completedTracks / slot.currentProgress.totalTracks) * 100,
+                          (slot.currentProgress.completedTracks /
+                            slot.currentProgress.totalTracks) *
+                            100,
                         ),
                       )
                     : 0
@@ -497,14 +535,20 @@ const DownloadSlotCard: React.FC<{ slot: QueuesPageDownloadSlot }> = ({ slot }) 
               />
             </div>
 
-            {typeof slot.currentProgress.currentTrackProgressPercent === "number" && (
+            {typeof slot.currentProgress.currentTrackProgressPercent ===
+              "number" && (
               <div className="text-xs text-gray-400">
-                Current track: {Math.max(1, slot.currentProgress.completedTracks)} / {slot.currentProgress.totalTracks}
+                Current track:{" "}
+                {Math.max(1, slot.currentProgress.completedTracks)} /{" "}
+                {slot.currentProgress.totalTracks}
                 <div className="mt-1">
                   <ProgressIndicator
                     progressPercent={Math.max(
                       0,
-                      Math.min(100, slot.currentProgress.currentTrackProgressPercent),
+                      Math.min(
+                        100,
+                        slot.currentProgress.currentTrackProgressPercent,
+                      ),
                     )}
                   />
                 </div>
@@ -527,7 +571,9 @@ const DownloadSlotCard: React.FC<{ slot: QueuesPageDownloadSlot }> = ({ slot }) 
   </div>
 );
 
-const CurrentImportCard: React.FC<{ import: QueuesPageImport }> = ({ import: importItem }) => (
+const CurrentImportCard: React.FC<{ import: QueuesPageImport }> = ({
+  import: importItem,
+}) => (
   <div className="space-y-4">
     <div className="flex items-center gap-4">
       <Link to={`/artist/${importItem.artistName}`}>
@@ -552,7 +598,8 @@ const CurrentImportCard: React.FC<{ import: QueuesPageImport }> = ({ import: imp
           )}
         </div>
         <div className="text-sm text-gray-300 mt-1">
-          {importItem.statusInfo.text} — {importItem.completedReleases}/{importItem.totalReleases}
+          {importItem.statusInfo.text} — {importItem.completedReleases}/
+          {importItem.totalReleases}
         </div>
       </div>
     </div>
@@ -564,7 +611,8 @@ const CurrentImportCard: React.FC<{ import: QueuesPageImport }> = ({ import: imp
             ? Math.min(
                 100,
                 Math.round(
-                  (importItem.completedReleases / importItem.totalReleases) * 100,
+                  (importItem.completedReleases / importItem.totalReleases) *
+                    100,
                 ),
               )
             : 0
@@ -580,14 +628,18 @@ const CurrentImportCard: React.FC<{ import: QueuesPageImport }> = ({ import: imp
   </div>
 );
 
-const QueueItem: React.FC<{ item: QueuesPageQueueItem; onRemove: () => void; type: 'download' | 'import' }> = ({ item, onRemove, type }) => (
+const QueueItem: React.FC<{
+  item: QueuesPageQueueItem;
+  onRemove: () => void;
+  type: "download" | "import";
+}> = ({ item, onRemove, type }) => (
   <div className="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/10">
     <div className="flex items-center gap-3">
-      {type === 'download' ? (
+      {type === "download" ? (
         <Link to={`/artist/${item.artistId}/release/${item.releaseFolderName}`}>
           <ReleaseCoverArt
             srcUrl={`/library/${item.artistId}/releases/${item.releaseFolderName}/coverart`}
-            titleForPlaceholder={item.releaseFolderName || 'Release'}
+            titleForPlaceholder={item.releaseFolderName || "Release"}
             className="w-8 h-8 rounded object-cover border border-white/20"
           />
         </Link>
@@ -595,7 +647,7 @@ const QueueItem: React.FC<{ item: QueuesPageQueueItem; onRemove: () => void; typ
         <div className="w-8 h-8 rounded bg-white/10 border border-white/20" />
       )}
       <div className="text-sm text-gray-300">
-        {type === 'download' ? (
+        {type === "download" ? (
           <>
             {item.artistId && (
               <Link to={`/artist/${item.artistId}`} className="hover:underline">
@@ -617,7 +669,10 @@ const QueueItem: React.FC<{ item: QueuesPageQueueItem; onRemove: () => void; typ
         ) : (
           <>
             {item.artistName && (
-              <Link to={`/artist/${item.artistName}`} className="hover:underline">
+              <Link
+                to={`/artist/${item.artistName}`}
+                className="hover:underline"
+              >
                 {item.artistName}
               </Link>
             )}
@@ -641,20 +696,21 @@ const QueueItem: React.FC<{ item: QueuesPageQueueItem; onRemove: () => void; typ
   </div>
 );
 
-const HistoryItem: React.FC<{ item: QueuesPageHistoryItem; type: 'download' | 'import' }> = ({ item, type }) => (
+const HistoryItem: React.FC<{
+  item: QueuesPageHistoryItem;
+  type: "download" | "import";
+}> = ({ item, type }) => (
   <div className="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/10">
     <div className="flex items-center gap-3">
-      {type === 'download' && item.releaseFolderName ? (
-        <Link
-          to={`/artist/${item.artistId}/release/${item.releaseFolderName}`}
-        >
+      {type === "download" && item.releaseFolderName ? (
+        <Link to={`/artist/${item.artistId}/release/${item.releaseFolderName}`}>
           <ReleaseCoverArt
             srcUrl={`/library/${item.artistId}/releases/${item.releaseFolderName}/coverart`}
             titleForPlaceholder={item.releaseTitle ?? item.releaseFolderName}
             className="w-8 h-8 rounded object-cover border border-white/20"
           />
         </Link>
-      ) : type === 'import' && item.releaseFolderName ? (
+      ) : type === "import" && item.releaseFolderName ? (
         <Link
           to={`/artist/${item.localArtistId ?? item.artistName}/release/${item.releaseFolderName}`}
         >
@@ -671,7 +727,7 @@ const HistoryItem: React.FC<{ item: QueuesPageHistoryItem; type: 'download' | 'i
         <div className="text-xs text-gray-400 mb-1">
           {new Date(item.timestampUtc).toLocaleString()}
         </div>
-        {type === 'download' ? (
+        {type === "download" ? (
           <>
             <Link to={`/artist/${item.artistId}`} className="hover:underline">
               {item.artistName ?? item.artistId}
@@ -712,9 +768,11 @@ const HistoryItem: React.FC<{ item: QueuesPageHistoryItem; type: 'download' | 'i
       </div>
     </div>
     <div className="flex flex-col items-end text-right">
-      <div className={`flex items-center gap-1 ${
-        item.success ? "text-green-400" : "text-red-400"
-      }`}>
+      <div
+        className={`flex items-center gap-1 ${
+          item.success ? "text-green-400" : "text-red-400"
+        }`}
+      >
         {item.success ? (
           <>
             <CheckCircle className="w-4 h-4" />
@@ -727,7 +785,7 @@ const HistoryItem: React.FC<{ item: QueuesPageHistoryItem; type: 'download' | 'i
           </>
         )}
       </div>
-      {type === 'download' && item.providerUsed && (
+      {type === "download" && item.providerUsed && (
         <div className="text-xs text-gray-400 mt-1">
           via {item.providerUsed}
         </div>

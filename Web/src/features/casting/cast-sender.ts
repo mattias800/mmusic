@@ -103,8 +103,9 @@ export const ensureCastInitialized = () => {
     const context = window.cast.framework.CastContext.getInstance();
     context.setOptions({
       receiverApplicationId:
-        window.chrome?.cast?.media?.DEFAULT_MEDIA_RECEIVER_APP_ID || 'CC1AD845',
-      autoJoinPolicy: window.chrome?.cast?.AutoJoinPolicy?.TAB_AND_ORIGIN_SCOPED,
+        window.chrome?.cast?.media?.DEFAULT_MEDIA_RECEIVER_APP_ID || "CC1AD845",
+      autoJoinPolicy:
+        window.chrome?.cast?.AutoJoinPolicy?.TAB_AND_ORIGIN_SCOPED,
     });
     notify();
     // Subscribe to state changes
@@ -126,45 +127,50 @@ export interface LoadMediaParams {
   contentType?: string;
   title?: string;
   imageUrl?: string;
-  streamType?: 'BUFFERED' | 'LIVE' | 'OTHER';
+  streamType?: "BUFFERED" | "LIVE" | "OTHER";
   autoplay?: boolean;
   startTime?: number;
 }
 
 export const loadMediaOnCast = async (params: LoadMediaParams) => {
   const cast = window.cast;
-  if (!cast?.framework) throw new Error('Cast not ready');
+  if (!cast?.framework) throw new Error("Cast not ready");
   const context = cast.framework.CastContext.getInstance();
   const session = context.getCurrentSession();
-  if (!session) throw new Error('No cast session');
+  if (!session) throw new Error("No cast session");
 
   const chromeCast = window.chrome?.cast;
-  if (!chromeCast?.media) throw new Error('Cast media API not ready');
+  if (!chromeCast?.media) throw new Error("Cast media API not ready");
   const mediaNs = chromeCast.media;
   type MediaInfoLike = { streamType?: unknown; metadata?: unknown };
   const mediaInfo = new mediaNs.MediaInfo(
     params.contentUrl,
-    params.contentType || 'audio/mpeg',
+    params.contentType || "audio/mpeg",
   ) as MediaInfoLike;
   if (params.title || params.imageUrl) {
     const md = new mediaNs.MusicTrackMediaMetadata();
     if (params.title) (md as { title?: string }).title = params.title;
     if (params.imageUrl)
-      (md as { images?: Array<unknown> }).images = [new chromeCast.Image(params.imageUrl)];
+      (md as { images?: Array<unknown> }).images = [
+        new chromeCast.Image(params.imageUrl),
+      ];
     (mediaInfo as { metadata?: unknown }).metadata = md;
   }
-  mediaInfo.streamType = mediaNs.StreamType[params.streamType || 'BUFFERED'];
+  mediaInfo.streamType = mediaNs.StreamType[params.streamType || "BUFFERED"];
 
-  const request = new mediaNs.LoadRequest(mediaInfo) as { autoplay?: boolean; currentTime?: number };
+  const request = new mediaNs.LoadRequest(mediaInfo) as {
+    autoplay?: boolean;
+    currentTime?: number;
+  };
   request.autoplay = params.autoplay ?? true;
   request.currentTime = params.startTime ?? 0;
 
   // Some sender SDKs require calling loadMedia via getSessionObj().loadMedia; we try both
-  if (typeof session.loadMedia === 'function') {
+  if (typeof session.loadMedia === "function") {
     await session.loadMedia(request);
   } else {
     const raw = session.getSessionObj?.();
-    if (raw && typeof raw.loadMedia === 'function') {
+    if (raw && typeof raw.loadMedia === "function") {
       await raw.loadMedia(request);
     }
   }
@@ -194,9 +200,8 @@ export const castSeek = (seconds: number) => {
 };
 
 export const castSetVolume = (volume0to1: number, muted: boolean) => {
-  const session = window.cast?.framework
-    ?.CastContext.getInstance?.()
-    ?.getCurrentSession?.();
+  const session =
+    window.cast?.framework?.CastContext.getInstance?.()?.getCurrentSession?.();
   const media = session?.getMediaSession?.();
   const receiver = session?.getSessionObj?.();
   if (media?.setVolume) {
@@ -204,16 +209,24 @@ export const castSetVolume = (volume0to1: number, muted: boolean) => {
     if (!chromeCast?.media) return;
     const req = new chromeCast.media.VolumeRequest() as { volume?: unknown };
     req.volume = new chromeCast.Volume(volume0to1, muted);
-    media.setVolume(req, () => {}, () => {});
+    media.setVolume(
+      req,
+      () => {},
+      () => {},
+    );
   } else if (receiver?.setReceiverVolumeLevel) {
-    receiver.setReceiverVolumeLevel(volume0to1, () => {}, () => {});
+    receiver.setReceiverVolumeLevel(
+      volume0to1,
+      () => {},
+      () => {},
+    );
     if (muted && receiver.setReceiverMuted) receiver.setReceiverMuted(true);
   }
 };
 
 export const startCastSession = async () => {
   const cast = window.cast;
-  if (!cast?.framework) throw new Error('Cast not ready');
+  if (!cast?.framework) throw new Error("Cast not ready");
   const context = cast.framework.CastContext.getInstance();
   await context.requestSession();
   notify();
@@ -224,5 +237,3 @@ export const endCastSession = () => {
   context?.endCurrentSession?.(true);
   notify();
 };
-
-

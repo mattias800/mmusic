@@ -65,9 +65,7 @@ export const UserChangePasswordButton: React.FC<
   return (
     <Dialog open={open} onOpenChange={(v) => (setOpen(v), setPassword(""))}>
       <DialogTrigger asChild>
-        <Button variant="blue">
-          Change password
-        </Button>
+        <Button variant="blue">Change password</Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>

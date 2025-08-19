@@ -54,7 +54,11 @@ export const ArtistServiceConnections: React.FC<
         }
 
         return (
-          <span key={c.externalService.id} className={classNameBase} title={c.externalService.name}>
+          <span
+            key={c.externalService.id}
+            className={classNameBase}
+            title={c.externalService.name}
+          >
             <CircleDashed className={"w-4 h-4 mr-1"} />
             {c.externalService.name}
           </span>

@@ -53,9 +53,9 @@ export const GradientButton: React.FC<GradientButtonProps> = ({
     >
       {loading ? (
         <LoaderCircle className="animate-spin size-4 mr-2" />
-      ) : (
-        IconLeft ? <IconLeft className="w-4 h-4 mr-2" /> : null
-      )}
+      ) : IconLeft ? (
+        <IconLeft className="w-4 h-4 mr-2" />
+      ) : null}
       {children}
     </button>
   );

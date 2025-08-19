@@ -129,7 +129,11 @@ export const Sidebar = ({ className }: SidebarProps) => {
           <SidebarNavButton path="/profile" icon={User} label={username} />
           <SidebarNavButton path="/settings" icon={Cog} label="Settings" />
           {isAdmin && (
-            <SidebarNavButton path="/admin/users" icon={User} label="Admin: Users" />
+            <SidebarNavButton
+              path="/admin/users"
+              icon={User}
+              label="Admin: Users"
+            />
           )}
         </SidebarSection>
       </div>

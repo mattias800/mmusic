@@ -132,13 +132,14 @@ export const DownloadOverviewFetcher: React.FC<
   };
 
   // Calculate working slots and total download speed
-  const workingSlots = slots?.filter(slot => slot.isWorking && slot.currentProgress) || [];
+  const workingSlots =
+    slots?.filter((slot) => slot.isWorking && slot.currentProgress) || [];
   const totalSlots = slots?.length || 0;
   const workingCount = workingSlots.length;
 
   // Calculate total download speed from all working slots
   let totalSpeedKbps = 0;
-  workingSlots.forEach(slot => {
+  workingSlots.forEach((slot) => {
     if (slot.currentProgress?.currentDownloadSpeedKbps) {
       totalSpeedKbps += slot.currentProgress.currentDownloadSpeedKbps;
     }
@@ -151,8 +152,7 @@ export const DownloadOverviewFetcher: React.FC<
         <div className="font-medium text-zinc-200">
           {workingCount > 0
             ? `${workingCount}/${totalSlots} slots working`
-            : `${totalSlots} slots idle`
-          }
+            : `${totalSlots} slots idle`}
         </div>
       </div>
 
@@ -160,9 +160,7 @@ export const DownloadOverviewFetcher: React.FC<
       {totalSpeedKbps > 0 && (
         <div>
           <div className="font-medium text-zinc-200">Total Speed</div>
-          <div className="text-zinc-400">
-            {totalSpeedKbps.toFixed(1)} KB/s
-          </div>
+          <div className="text-zinc-400">{totalSpeedKbps.toFixed(1)} KB/s</div>
         </div>
       )}
 
@@ -178,7 +176,7 @@ export const DownloadOverviewFetcher: React.FC<
       {/* Quick Status Summary */}
       {workingCount > 0 && (
         <div className="text-xs text-zinc-400">
-          {workingSlots.map(slot => {
+          {workingSlots.map((slot) => {
             const progress = slot.currentProgress!;
             return (
               <div key={slot.id} className="truncate">

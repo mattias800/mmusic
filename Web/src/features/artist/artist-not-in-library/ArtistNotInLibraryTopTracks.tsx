@@ -39,11 +39,15 @@ export const ArtistNotInLibraryTopTracks: React.FC<
         >
           {/* Track Number Badge */}
           <div className="absolute top-4 left-4">
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-              idx === 0 ? 'bg-gradient-to-br from-yellow-500/20 to-orange-500/20 border border-yellow-500/30 text-yellow-400' :
-              idx === 1 ? 'bg-gradient-to-br from-gray-500/20 to-gray-400/20 border border-gray-500/30 text-gray-400' :
-              'bg-gradient-to-br from-amber-500/20 to-yellow-500/20 border border-amber-500/30 text-amber-400'
-            }`}>
+            <div
+              className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                idx === 0
+                  ? "bg-gradient-to-br from-yellow-500/20 to-orange-500/20 border border-yellow-500/30 text-yellow-400"
+                  : idx === 1
+                    ? "bg-gradient-to-br from-gray-500/20 to-gray-400/20 border border-gray-500/30 text-gray-400"
+                    : "bg-gradient-to-br from-amber-500/20 to-yellow-500/20 border border-amber-500/30 text-amber-400"
+              }`}
+            >
               {idx + 1}
             </div>
           </div>

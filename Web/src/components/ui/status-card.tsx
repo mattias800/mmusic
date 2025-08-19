@@ -12,17 +12,17 @@ export const StatusCard: React.FC<StatusCardProps> = ({
   label,
   value,
   icon: Icon,
-  className = ""
+  className = "",
 }) => {
   return (
-    <div className={`p-4 bg-white/5 rounded-lg border border-white/10 ${className}`}>
+    <div
+      className={`p-4 bg-white/5 rounded-lg border border-white/10 ${className}`}
+    >
       <div className="flex items-center gap-2 mb-2">
         {Icon && <Icon className="w-4 h-4 text-gray-400" />}
         <span className="text-gray-400 text-sm font-medium">{label}</span>
       </div>
-      <div className="text-white font-medium">
-        {value}
-      </div>
+      <div className="text-white font-medium">{value}</div>
     </div>
   );
 };
@@ -36,13 +36,13 @@ export interface StatusGridProps {
 export const StatusGrid: React.FC<StatusGridProps> = ({
   children,
   columns = 2,
-  className = ""
+  className = "",
 }) => {
   const gridClasses = {
     1: "grid-cols-1",
     2: "grid-cols-1 md:grid-cols-2",
     3: "grid-cols-1 md:grid-cols-2 lg:grid-cols-3",
-    4: "grid-cols-1 md:grid-cols-2 lg:grid-cols-4"
+    4: "grid-cols-1 md:grid-cols-2 lg:grid-cols-4",
   };
 
   return (

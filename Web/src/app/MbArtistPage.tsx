@@ -29,33 +29,39 @@ export const MbArtistPage = () => {
   });
 
   if (!mbArtistId) {
-    return <PageError 
-      title="Invalid Artist ID" 
-      message="The MusicBrainz artist ID provided is not valid"
-      icon={AlertTriangle}
-      iconBgColor="bg-red-500/20"
-    />;
+    return (
+      <PageError
+        title="Invalid Artist ID"
+        message="The MusicBrainz artist ID provided is not valid"
+        icon={AlertTriangle}
+        iconBgColor="bg-red-500/20"
+      />
+    );
   }
 
   if (fetching || stale) {
-    return <PageLoading 
-      title="Loading Artist Information" 
-      subtitle="Fetching artist details from MusicBrainz"
-      icon={Music}
-      iconBgColor="bg-green-500/20"
-    />;
+    return (
+      <PageLoading
+        title="Loading Artist Information"
+        subtitle="Fetching artist details from MusicBrainz"
+        icon={Music}
+        iconBgColor="bg-green-500/20"
+      />
+    );
   }
-  
+
   if (error) {
-    return <PageError 
-      title="Failed to Load Artist" 
-      message="We couldn't load the artist information from MusicBrainz"
-      error={error}
-      icon={AlertTriangle}
-      iconBgColor="bg-red-500/20"
-    />;
+    return (
+      <PageError
+        title="Failed to Load Artist"
+        message="We couldn't load the artist information from MusicBrainz"
+        error={error}
+        icon={AlertTriangle}
+        iconBgColor="bg-red-500/20"
+      />
+    );
   }
-  
+
   if (!data?.musicBrainz.artist.byId) {
     return <ArtistNotFound />;
   }

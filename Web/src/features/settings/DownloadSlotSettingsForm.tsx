@@ -29,11 +29,15 @@ interface DownloadSlotSettingsFormProps {
   };
 }
 
-export const DownloadSlotSettingsForm: React.FC<DownloadSlotSettingsFormProps> = ({ serverSettings }) => {
+export const DownloadSlotSettingsForm: React.FC<
+  DownloadSlotSettingsFormProps
+> = ({ serverSettings }) => {
   const [slotCount, setSlotCount] = useState(serverSettings.downloadSlotCount);
   const [isUpdating, setIsUpdating] = useState(false);
 
-  const [, updateDownloadSlotCount] = useMutation(updateDownloadSlotCountMutation);
+  const [, updateDownloadSlotCount] = useMutation(
+    updateDownloadSlotCountMutation,
+  );
 
   const handleSave = async () => {
     if (slotCount < 1 || slotCount > 10) {
@@ -44,12 +48,15 @@ export const DownloadSlotSettingsForm: React.FC<DownloadSlotSettingsFormProps> =
     setIsUpdating(true);
     try {
       const result = await updateDownloadSlotCount({
-        input: { newSlotCount: slotCount }
+        input: { newSlotCount: slotCount },
       });
 
       if (result.error) {
         alert(`Error updating download slot count: ${result.error.message}`);
-      } else if (result.data?.updateDownloadSlotCount.__typename === "UpdateDownloadSlotCountError") {
+      } else if (
+        result.data?.updateDownloadSlotCount.__typename ===
+        "UpdateDownloadSlotCountError"
+      ) {
         alert(`Error: ${result.data.updateDownloadSlotCount.message}`);
       } else {
         // Success - the query will automatically refetch
@@ -76,17 +83,23 @@ export const DownloadSlotSettingsForm: React.FC<DownloadSlotSettingsFormProps> =
           <div className="p-2 bg-green-500/20 rounded-lg">
             <Download className="w-5 h-5 text-green-400" />
           </div>
-          <h3 className="text-lg font-semibold text-white">Download Configuration</h3>
+          <h3 className="text-lg font-semibold text-white">
+            Download Configuration
+          </h3>
         </div>
         <p className="text-gray-300 text-sm">
-          Configure the number of concurrent downloads that can run simultaneously. Each slot can download one release at a time.
+          Configure the number of concurrent downloads that can run
+          simultaneously. Each slot can download one release at a time.
         </p>
       </div>
 
       {/* Settings Form */}
       <div className="space-y-4">
         <div>
-          <Label htmlFor="slotCount" className="text-gray-200 text-sm font-medium">
+          <Label
+            htmlFor="slotCount"
+            className="text-gray-200 text-sm font-medium"
+          >
             Number of Download Slots
           </Label>
           <div className="mt-2 flex items-center gap-3">
@@ -102,7 +115,8 @@ export const DownloadSlotSettingsForm: React.FC<DownloadSlotSettingsFormProps> =
             <span className="text-sm text-gray-400">slots (1-10)</span>
           </div>
           <p className="mt-2 text-xs text-gray-400">
-            More slots mean faster downloads but higher resource usage. Current setting: {serverSettings.downloadSlotCount} slots
+            More slots mean faster downloads but higher resource usage. Current
+            setting: {serverSettings.downloadSlotCount} slots
           </p>
         </div>
 
@@ -134,7 +148,8 @@ export const DownloadSlotSettingsForm: React.FC<DownloadSlotSettingsFormProps> =
             <div className="flex items-center gap-2">
               <AlertTriangle className="w-4 h-4 text-amber-400" />
               <span className="text-sm text-amber-200">
-                Changes will take effect immediately. Active downloads may be affected.
+                Changes will take effect immediately. Active downloads may be
+                affected.
               </span>
             </div>
           </div>

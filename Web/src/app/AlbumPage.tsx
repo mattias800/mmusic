@@ -32,29 +32,38 @@ export const AlbumPage = () => {
     pause: !artistId || !releaseFolderName,
   });
 
-  if (fetching || stale) return <PageLoading 
-    title="Loading Album" 
-    subtitle="Fetching album information and track listing"
-    icon={Music}
-    iconBgColor="bg-purple-500/20"
-  />;
-  
-  if (error) return <PageError 
-    title="Failed to Load Album" 
-    message="We couldn't load the album information"
-    error={error}
-    icon={AlertTriangle}
-    iconBgColor="bg-red-500/20"
-  />;
-  
+  if (fetching || stale)
+    return (
+      <PageLoading
+        title="Loading Album"
+        subtitle="Fetching album information and track listing"
+        icon={Music}
+        iconBgColor="bg-purple-500/20"
+      />
+    );
+
+  if (error)
+    return (
+      <PageError
+        title="Failed to Load Album"
+        message="We couldn't load the album information"
+        error={error}
+        icon={AlertTriangle}
+        iconBgColor="bg-red-500/20"
+      />
+    );
+
   const release = data?.serverLibrary.artistById?.releaseByFolderName;
 
-  if (!release) return <PageNoData 
-    title="Album Not Found" 
-    message="The album you're looking for doesn't exist or may have been removed"
-    icon={Disc3}
-    iconBgColor="bg-yellow-500/20"
-  />;
+  if (!release)
+    return (
+      <PageNoData
+        title="Album Not Found"
+        message="The album you're looking for doesn't exist or may have been removed"
+        icon={Disc3}
+        iconBgColor="bg-yellow-500/20"
+      />
+    );
 
   return (
     <>

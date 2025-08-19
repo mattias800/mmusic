@@ -25,7 +25,8 @@ export const RoleToggleButton: React.FC<RoleToggleButtonProps> = ({
       className={cn(
         "inline-flex items-center gap-2 px-3 py-2 rounded-lg border transition-all",
         "bg-white/5 text-gray-200 border-white/10 hover:bg-white/10 hover:border-white/20",
-        active && "bg-gradient-to-r from-blue-500/20 to-purple-500/20 text-white border-blue-500/30",
+        active &&
+          "bg-gradient-to-r from-blue-500/20 to-purple-500/20 text-white border-blue-500/30",
         disabled && "opacity-60 cursor-not-allowed",
       )}
       aria-pressed={active}
@@ -42,10 +43,10 @@ export const RoleToggleButton: React.FC<RoleToggleButtonProps> = ({
           <Minus className="w-4 h-4 text-gray-400" />
         )}
       </span>
-      <Icon className={cn("w-4 h-4", active ? "text-blue-300" : "text-gray-400")} />
+      <Icon
+        className={cn("w-4 h-4", active ? "text-blue-300" : "text-gray-400")}
+      />
       <span className="text-sm font-medium">{label}</span>
     </button>
   );
 };
-
-

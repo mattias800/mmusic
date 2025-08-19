@@ -70,17 +70,16 @@ export const SearchResultRelease: React.FC<SearchResultReleaseProps> = ({
                   <Music className="w-3.5 h-3.5 text-white" />
                 </div>
               </div>
-              
+
               {/* Album Info */}
               <div className="flex-1 min-w-0 space-y-2">
                 <p className="text-white font-semibold text-base truncate group-hover:text-green-300 transition-colors">
                   {release.title}
                 </p>
                 <div className="text-sm text-gray-300">
-                  {release.artistName !== release.artist.name 
+                  {release.artistName !== release.artist.name
                     ? `${release.artistName} (${release.artist.name})`
-                    : release.artistName
-                  }
+                    : release.artistName}
                 </div>
               </div>
             </div>

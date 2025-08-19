@@ -28,7 +28,11 @@ const renamePlaylistMutation = graphql(`
     ) {
       __typename
       ... on RenamePlaylistSuccess {
-        playlist { id name createdAt }
+        playlist {
+          id
+          name
+          createdAt
+        }
       }
     }
   }

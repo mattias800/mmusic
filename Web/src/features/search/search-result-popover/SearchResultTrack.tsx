@@ -72,7 +72,7 @@ export const SearchResultTrack: React.FC<SearchResultTrackProps> = ({
                     <Play className="w-5 h-5 text-purple-400" />
                   </div>
                 )}
-                
+
                 {/* Runtime Badge Below Cover */}
                 {track.trackLength && (
                   <div className="mt-2 flex items-center justify-center gap-1 text-xs text-gray-400 bg-gray-700/80 px-2 py-1 rounded-full border border-white/10">
@@ -81,27 +81,26 @@ export const SearchResultTrack: React.FC<SearchResultTrackProps> = ({
                   </div>
                 )}
               </div>
-              
+
               {/* Track Info */}
               <div className="flex-1 min-w-0 space-y-2">
                 {/* Song Title */}
                 <p className="text-white font-semibold text-base truncate group-hover:text-purple-300 transition-colors">
                   {track.title}
                 </p>
-                
+
                 {/* Artist Name */}
                 <div className="text-sm text-gray-300">
                   <Link
                     to={getRouteToArtist(track.release.artist.id)}
                     className="hover:underline hover:text-purple-300 transition-colors"
                   >
-                    {track.release.artistName !== track.release.artist.name 
+                    {track.release.artistName !== track.release.artist.name
                       ? `${track.release.artistName} (${track.release.artist.name})`
-                      : track.release.artistName
-                    }
+                      : track.release.artistName}
                   </Link>
                 </div>
-                
+
                 {/* Album Name */}
                 {track.release && (
                   <div className="text-xs text-gray-400">

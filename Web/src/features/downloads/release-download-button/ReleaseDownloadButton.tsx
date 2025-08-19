@@ -134,10 +134,7 @@ export const ReleaseDownloadButton: React.FC<ReleaseDownloadButtonProps> = (
 
     case ReleaseDownloadStatus.Idle:
       return (
-        <GradientButton
-          onClick={onClickDownload}
-          iconLeft={Download}
-        >
+        <GradientButton onClick={onClickDownload} iconLeft={Download}>
           {queued ? "Queued" : "Download"}
         </GradientButton>
       );
@@ -146,10 +143,7 @@ export const ReleaseDownloadButton: React.FC<ReleaseDownloadButtonProps> = (
       return (
         <div className={"flex items-center gap-4 text-red-500"}>
           <Tag variant={"error"}>Could not find release.</Tag>
-          <GradientButton
-            onClick={onClickDownload}
-            iconLeft={Download}
-          >
+          <GradientButton onClick={onClickDownload} iconLeft={Download}>
             {queued ? "Queued" : "Download"}
           </GradientButton>
         </div>

@@ -1,5 +1,10 @@
 import * as React from "react";
-import { PageLayout, PageHeader, GlassCard, InfoSection } from "@/components/ui";
+import {
+  PageLayout,
+  PageHeader,
+  GlassCard,
+  InfoSection,
+} from "@/components/ui";
 import {
   PageLoading,
   PageError,
@@ -156,7 +161,8 @@ export const PageStatesDemo: React.FC = () => {
                 >
                   <div className="space-y-3">
                     <p className="text-gray-300 text-sm">
-                      Beautiful loading states with customizable icons, titles, and sizes
+                      Beautiful loading states with customizable icons, titles,
+                      and sizes
                     </p>
                     <Button
                       onClick={() => setCurrentState("loading")}
@@ -292,9 +298,12 @@ export const PageStatesDemo: React.FC = () => {
                 title="About Page State Components"
                 variant="purple"
               >
-                These beautiful, consistent page state components provide a unified user experience across your entire application. 
-                They handle loading states, error conditions, and empty data scenarios with professional styling and helpful messaging. 
-                Each component is customizable with icons, colors, and action buttons to fit your specific use case.
+                These beautiful, consistent page state components provide a
+                unified user experience across your entire application. They
+                handle loading states, error conditions, and empty data
+                scenarios with professional styling and helpful messaging. Each
+                component is customizable with icons, colors, and action buttons
+                to fit your specific use case.
               </InfoSection>
             </div>
           </PageLayout>

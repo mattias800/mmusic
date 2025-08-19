@@ -3,7 +3,10 @@ import { graphql } from "@/gql";
 
 const q = graphql(`
   query ServerPublicBaseUrl {
-    serverSettings { id publicBaseUrl }
+    serverSettings {
+      id
+      publicBaseUrl
+    }
   }
 `);
 
@@ -29,5 +32,3 @@ export const useCast = () => {
   }, []);
   return state;
 };
-
-

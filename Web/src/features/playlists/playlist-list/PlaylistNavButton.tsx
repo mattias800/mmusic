@@ -89,8 +89,16 @@ export const PlaylistNavButton: React.FC<PlaylistNavButtonProps> = ({
         });
         if (result.error) {
           console.error("Failed to add track to playlist:", result.error);
-        } else if (result.data?.addTrackToPlaylist?.__typename === "AddTrackToPlaylistError") {
-          const msg = (result.data.addTrackToPlaylist as { __typename: string; message?: string }).message;
+        } else if (
+          result.data?.addTrackToPlaylist?.__typename ===
+          "AddTrackToPlaylistError"
+        ) {
+          const msg = (
+            result.data.addTrackToPlaylist as {
+              __typename: string;
+              message?: string;
+            }
+          ).message;
           console.error("AddTrackToPlaylist error:", msg ?? "unknown error");
         } else {
           console.log("Track added to playlist", {
@@ -124,7 +132,7 @@ export const PlaylistNavButton: React.FC<PlaylistNavButtonProps> = ({
                 ? "rounded-md ring-2 ring-green-500/70 bg-green-500/10"
                 : ""
             }
-         >
+          >
             <SidebarNavButton
               path={"/playlist/" + playlistId}
               label={playlistName ?? "New playlist"}

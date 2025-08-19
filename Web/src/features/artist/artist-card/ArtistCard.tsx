@@ -40,15 +40,20 @@ export const ArtistCard: React.FC<ArtistCardProps> = (props) => {
 
   const navigate = useNavigate();
   const totalAlbums = artist.albums?.length ?? 0;
-  const availableAlbums = artist.albums?.filter((r) => !r.isFullyMissing).length ?? 0;
+  const availableAlbums =
+    artist.albums?.filter((r) => !r.isFullyMissing).length ?? 0;
   const allAlbumsAvailable = totalAlbums > 0 && availableAlbums === totalAlbums;
 
-  const totalReleases = (artist.albums?.length ?? 0) + (artist.eps?.length ?? 0) + (artist.singles?.length ?? 0);
+  const totalReleases =
+    (artist.albums?.length ?? 0) +
+    (artist.eps?.length ?? 0) +
+    (artist.singles?.length ?? 0);
   const availableReleases =
     (artist.albums?.filter((r) => !r.isFullyMissing).length ?? 0) +
     (artist.eps?.filter((r) => !r.isFullyMissing).length ?? 0) +
     (artist.singles?.filter((r) => !r.isFullyMissing).length ?? 0);
-  const allReleasesAvailable = totalReleases > 0 && availableReleases === totalReleases;
+  const allReleasesAvailable =
+    totalReleases > 0 && availableReleases === totalReleases;
 
   return (
     <PhotoCard

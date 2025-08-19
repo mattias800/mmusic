@@ -18,7 +18,9 @@ const topTracksServiceSettingsQuery = graphql(`
 `);
 
 const updateTopTracksServiceSettingsMutation = graphql(`
-  mutation UpdateTopTracksServiceSettings($input: UpdateTopTracksServiceSettingsInput!) {
+  mutation UpdateTopTracksServiceSettings(
+    $input: UpdateTopTracksServiceSettingsInput!
+  ) {
     updateTopTracksServiceSettings(input: $input) {
       ... on UpdateTopTracksServiceSettingsSuccess {
         success
@@ -41,7 +43,9 @@ export const TopTracksServiceSettingsForm: React.FC = () => {
     query: topTracksServiceSettingsQuery,
   });
 
-  const [, updateSettings] = useMutation(updateTopTracksServiceSettingsMutation);
+  const [, updateSettings] = useMutation(
+    updateTopTracksServiceSettingsMutation,
+  );
 
   React.useEffect(() => {
     if (data?.serverSettings) {
@@ -64,9 +68,12 @@ export const TopTracksServiceSettingsForm: React.FC = () => {
 
       if (result.data?.updateTopTracksServiceSettings) {
         const resultData = result.data.updateTopTracksServiceSettings;
-        if ('success' in resultData && resultData.success) {
-          toast.success(resultData.message || "Top tracks service settings updated successfully");
-        } else if ('message' in resultData) {
+        if ("success" in resultData && resultData.success) {
+          toast.success(
+            resultData.message ||
+              "Top tracks service settings updated successfully",
+          );
+        } else if ("message" in resultData) {
           toast.error(resultData.message);
         }
       }
@@ -84,10 +91,13 @@ export const TopTracksServiceSettingsForm: React.FC = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-semibold text-white mb-2">Top Tracks Data Sources</h3>
+        <h3 className="text-lg font-semibold text-white mb-2">
+          Top Tracks Data Sources
+        </h3>
         <p className="text-sm text-gray-400">
-          Configure which services to use for fetching top tracks when importing artists. 
-          At least one service should be enabled for top tracks functionality.
+          Configure which services to use for fetching top tracks when importing
+          artists. At least one service should be enabled for top tracks
+          functionality.
         </p>
       </div>
 
@@ -100,7 +110,9 @@ export const TopTracksServiceSettingsForm: React.FC = () => {
                 <Music className="w-5 h-5 text-orange-400" />
               </div>
               <div>
-                <h4 className="text-white text-base font-medium">ListenBrainz</h4>
+                <h4 className="text-white text-base font-medium">
+                  ListenBrainz
+                </h4>
                 <p className="text-gray-400 text-sm">
                   Community-driven music listening database
                 </p>
@@ -171,14 +183,15 @@ export const TopTracksServiceSettingsForm: React.FC = () => {
       {/* Warning if no services enabled */}
       {!listenBrainzEnabled && !spotifyEnabled && !lastFmEnabled && (
         <Alert variant="warning" title="No services enabled">
-          No top tracks services are enabled. Top tracks functionality will not work.
+          No top tracks services are enabled. Top tracks functionality will not
+          work.
         </Alert>
       )}
 
       {/* Save Button */}
       <div className="flex justify-end">
-        <Button 
-          onClick={handleSave} 
+        <Button
+          onClick={handleSave}
           disabled={isUpdating}
           className="bg-blue-600 hover:bg-blue-700 text-white"
         >

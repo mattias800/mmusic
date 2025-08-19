@@ -11,7 +11,11 @@ const mutation = graphql(`
     createPlaylist(input: {}) {
       __typename
       ... on CreatePlaylistSuccess {
-        playlist { id name createdAt }
+        playlist {
+          id
+          name
+          createdAt
+        }
       }
     }
   }

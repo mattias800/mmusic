@@ -21,7 +21,9 @@ export function SearchResultGroup<T extends { id: string }>({
       {/* Section Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <h3 className="text-base font-semibold text-white tracking-tight">{heading}</h3>
+          <h3 className="text-base font-semibold text-white tracking-tight">
+            {heading}
+          </h3>
           {fetching && items && (
             <div className="flex items-center gap-2">
               <Spinner size="sm" />
@@ -31,7 +33,7 @@ export function SearchResultGroup<T extends { id: string }>({
         </div>
         {items && items.length > 0 && (
           <div className="text-xs text-gray-400 bg-gray-800/80 px-3 py-1.5 rounded-full border border-white/10">
-            {items.length} result{items.length !== 1 ? 's' : ''}
+            {items.length} result{items.length !== 1 ? "s" : ""}
           </div>
         )}
       </div>
@@ -46,9 +48,7 @@ export function SearchResultGroup<T extends { id: string }>({
           </div>
         )}
 
-        {!fetching && (!items || items.length === 0) && (
-          <NoResultsFound />
-        )}
+        {!fetching && (!items || items.length === 0) && <NoResultsFound />}
 
         {items && items.length > 0 && (
           <div className="space-y-2">

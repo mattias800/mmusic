@@ -1,6 +1,11 @@
 import * as React from "react";
 import { StatusCard, StatusGrid } from "@/components/ui";
-import { HardDrive, TrendingUp, AlertTriangle, CheckCircle } from "lucide-react";
+import {
+  HardDrive,
+  TrendingUp,
+  AlertTriangle,
+  CheckCircle,
+} from "lucide-react";
 
 export interface DiskUsagePanelProps {
   totalBytes?: number;
@@ -9,7 +14,12 @@ export interface DiskUsagePanelProps {
   estimatedTotalLibraryBytes: number;
 }
 
-export const DiskUsagePanel: React.FC<DiskUsagePanelProps> = ({ totalBytes, freeBytes, libraryBytes, estimatedTotalLibraryBytes }) => {
+export const DiskUsagePanel: React.FC<DiskUsagePanelProps> = ({
+  totalBytes,
+  freeBytes,
+  libraryBytes,
+  estimatedTotalLibraryBytes,
+}) => {
   return (
     <div className="space-y-6">
       {/* Storage Overview */}
@@ -19,21 +29,21 @@ export const DiskUsagePanel: React.FC<DiskUsagePanelProps> = ({ totalBytes, free
           Storage Overview
         </h3>
         <StatusGrid columns={2}>
-          <StatusCard 
-            label="Total Disk Space" 
-            value={totalBytes ? formatBytes(totalBytes) : "—"} 
+          <StatusCard
+            label="Total Disk Space"
+            value={totalBytes ? formatBytes(totalBytes) : "—"}
           />
-          <StatusCard 
-            label="Free Space" 
-            value={freeBytes ? formatBytes(freeBytes) : "Not available"} 
+          <StatusCard
+            label="Free Space"
+            value={freeBytes ? formatBytes(freeBytes) : "Not available"}
           />
-          <StatusCard 
-            label="Current Library" 
-            value={formatBytes(libraryBytes)} 
+          <StatusCard
+            label="Current Library"
+            value={formatBytes(libraryBytes)}
           />
-          <StatusCard 
-            label="Estimated Total" 
-            value={formatBytes(estimatedTotalLibraryBytes)} 
+          <StatusCard
+            label="Estimated Total"
+            value={formatBytes(estimatedTotalLibraryBytes)}
           />
         </StatusGrid>
       </div>
@@ -62,10 +72,10 @@ export const DiskUsagePanel: React.FC<DiskUsagePanelProps> = ({ totalBytes, free
           </div>
         </div>
       )}
-      
+
       {/* Storage Warning */}
       {totalBytes && freeBytes && estimatedTotalLibraryBytes > libraryBytes && (
-        <StorageWarning 
+        <StorageWarning
           totalBytes={totalBytes}
           freeBytes={freeBytes}
           currentLibraryBytes={libraryBytes}
@@ -83,7 +93,8 @@ const DiskUsageBar: React.FC<{
 }> = ({ totalBytes, freeBytes, libraryBytes }) => {
   const usedBytes = Math.max(0, totalBytes - freeBytes);
   const lib = Math.min(libraryBytes, usedBytes);
-  const toPct = (n: number) => (totalBytes > 0 ? Math.max(0, Math.min(100, (n / totalBytes) * 100)) : 0);
+  const toPct = (n: number) =>
+    totalBytes > 0 ? Math.max(0, Math.min(100, (n / totalBytes) * 100)) : 0;
   const libPct = toPct(lib);
   const otherUsedPct = toPct(usedBytes - lib);
   const freePct = toPct(freeBytes);
@@ -114,15 +125,27 @@ const DiskUsageBar: React.FC<{
         )}
       </div>
       <div className="mt-3 grid grid-cols-3 gap-3 text-sm">
-        <LegendItem colorClass="bg-gradient-to-r from-emerald-500 to-blue-500" label={`Library ${formatBytes(libraryBytes)}`} />
-        <LegendItem colorClass="bg-gray-600" label={`Other used ${formatBytes(Math.max(0, usedBytes - libraryBytes))}`} />
-        <LegendItem colorClass="bg-white/20" label={`Free ${formatBytes(freeBytes)}`} />
+        <LegendItem
+          colorClass="bg-gradient-to-r from-emerald-500 to-blue-500"
+          label={`Library ${formatBytes(libraryBytes)}`}
+        />
+        <LegendItem
+          colorClass="bg-gray-600"
+          label={`Other used ${formatBytes(Math.max(0, usedBytes - libraryBytes))}`}
+        />
+        <LegendItem
+          colorClass="bg-white/20"
+          label={`Free ${formatBytes(freeBytes)}`}
+        />
       </div>
     </div>
   );
 };
 
-const LegendItem: React.FC<{ colorClass: string; label: string }> = ({ colorClass, label }) => (
+const LegendItem: React.FC<{ colorClass: string; label: string }> = ({
+  colorClass,
+  label,
+}) => (
   <div className="flex items-center gap-2 text-gray-300">
     <span className={`inline-block w-3 h-3 rounded-sm ${colorClass}`} />
     <span className="text-xs">{label}</span>
@@ -134,10 +157,16 @@ const StorageWarning: React.FC<{
   freeBytes: number;
   currentLibraryBytes: number;
   estimatedTotalLibraryBytes: number;
-}> = ({ totalBytes, freeBytes, currentLibraryBytes, estimatedTotalLibraryBytes }) => {
-  const additionalSpaceNeeded = estimatedTotalLibraryBytes - currentLibraryBytes;
+}> = ({
+  totalBytes,
+  freeBytes,
+  currentLibraryBytes,
+  estimatedTotalLibraryBytes,
+}) => {
+  const additionalSpaceNeeded =
+    estimatedTotalLibraryBytes - currentLibraryBytes;
   const hasEnoughSpace = freeBytes >= additionalSpaceNeeded;
-  
+
   if (hasEnoughSpace) {
     return (
       <div className="p-4 bg-gradient-to-r from-emerald-500/10 to-blue-500/10 border border-emerald-500/20 rounded-xl">
@@ -148,9 +177,13 @@ const StorageWarning: React.FC<{
             </div>
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className="text-sm font-medium text-emerald-200">Storage Planning Complete</h3>
+            <h3 className="text-sm font-medium text-emerald-200">
+              Storage Planning Complete
+            </h3>
             <p className="mt-1 text-sm text-emerald-300">
-              You have sufficient free space ({formatBytes(freeBytes)}) to accommodate the estimated library growth of {formatBytes(additionalSpaceNeeded)}.
+              You have sufficient free space ({formatBytes(freeBytes)}) to
+              accommodate the estimated library growth of{" "}
+              {formatBytes(additionalSpaceNeeded)}.
             </p>
           </div>
         </div>
@@ -160,7 +193,7 @@ const StorageWarning: React.FC<{
 
   const spaceShortfall = additionalSpaceNeeded - freeBytes;
   const shortfallPercentage = Math.round((spaceShortfall / totalBytes) * 100);
-  
+
   return (
     <div className="p-4 bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20 rounded-xl">
       <div className="flex items-start gap-3">
@@ -170,9 +203,13 @@ const StorageWarning: React.FC<{
           </div>
         </div>
         <div className="flex-1 min-w-0">
-          <h3 className="text-sm font-medium text-amber-200">Storage Planning Required</h3>
+          <h3 className="text-sm font-medium text-amber-200">
+            Storage Planning Required
+          </h3>
           <p className="mt-1 text-sm text-amber-300">
-            To fully populate your library, you'll need an additional <span className="font-semibold">{formatBytes(spaceShortfall)}</span> of disk space.
+            To fully populate your library, you'll need an additional{" "}
+            <span className="font-semibold">{formatBytes(spaceShortfall)}</span>{" "}
+            of disk space.
           </p>
           <div className="mt-3 space-y-2">
             <div className="flex items-center justify-between text-xs">
@@ -181,11 +218,16 @@ const StorageWarning: React.FC<{
             </div>
             <div className="flex items-center justify-between text-xs">
               <span className="text-amber-400">Additional space needed:</span>
-              <span className="text-amber-300">{formatBytes(additionalSpaceNeeded)}</span>
+              <span className="text-amber-300">
+                {formatBytes(additionalSpaceNeeded)}
+              </span>
             </div>
             <div className="flex items-center justify-between text-xs">
               <span className="text-amber-400">Shortfall:</span>
-              <span className="text-amber-300 font-semibold">{formatBytes(spaceShortfall)} ({shortfallPercentage}% of total disk)</span>
+              <span className="text-amber-300 font-semibold">
+                {formatBytes(spaceShortfall)} ({shortfallPercentage}% of total
+                disk)
+              </span>
             </div>
           </div>
         </div>
@@ -205,5 +247,3 @@ function formatBytes(bytes: number): string {
   const formatted = n >= 100 ? Math.round(n).toString() : n.toFixed(1);
   return `${formatted} ${units[i]}`;
 }
-
-

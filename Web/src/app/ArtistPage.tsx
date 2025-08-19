@@ -27,33 +27,39 @@ export const ArtistPage = () => {
   });
 
   if (!artistId) {
-    return <PageError 
-      title="Invalid Artist ID" 
-      message="The artist ID provided is not valid"
-      icon={AlertTriangle}
-      iconBgColor="bg-red-500/20"
-    />;
+    return (
+      <PageError
+        title="Invalid Artist ID"
+        message="The artist ID provided is not valid"
+        icon={AlertTriangle}
+        iconBgColor="bg-red-500/20"
+      />
+    );
   }
 
   if (fetching || stale) {
-    return <PageLoading 
-      title="Loading Artist" 
-      subtitle="Fetching artist information and discography"
-      icon={Music}
-      iconBgColor="bg-purple-500/20"
-    />;
+    return (
+      <PageLoading
+        title="Loading Artist"
+        subtitle="Fetching artist information and discography"
+        icon={Music}
+        iconBgColor="bg-purple-500/20"
+      />
+    );
   }
-  
+
   if (error) {
-    return <PageError 
-      title="Failed to Load Artist" 
-      message="We couldn't load the artist information"
-      error={error}
-      icon={AlertTriangle}
-      iconBgColor="bg-red-500/20"
-    />;
+    return (
+      <PageError
+        title="Failed to Load Artist"
+        message="We couldn't load the artist information"
+        error={error}
+        icon={AlertTriangle}
+        iconBgColor="bg-red-500/20"
+      />
+    );
   }
-  
+
   if (!data?.serverLibrary.artistById) {
     return <ArtistNotFound />;
   }

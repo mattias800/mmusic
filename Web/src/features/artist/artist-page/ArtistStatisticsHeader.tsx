@@ -1,12 +1,6 @@
 import * as React from "react";
 import { FragmentType, graphql, useFragment } from "@/gql";
-import { 
-  Disc3, 
-  Music, 
-  Album, 
-  CheckCircle2, 
-  AlertCircle 
-} from "lucide-react";
+import { Disc3, Music, Album, CheckCircle2, AlertCircle } from "lucide-react";
 
 export interface ArtistStatisticsHeaderProps {
   artist: FragmentType<typeof artistStatisticsHeaderArtistFragment>;
@@ -31,42 +25,55 @@ const artistStatisticsHeaderArtistFragment = graphql(`
   }
 `);
 
-export const ArtistStatisticsHeader: React.FC<ArtistStatisticsHeaderProps> = (props) => {
-  const artist = useFragment(artistStatisticsHeaderArtistFragment, props.artist);
+export const ArtistStatisticsHeader: React.FC<ArtistStatisticsHeaderProps> = (
+  props,
+) => {
+  const artist = useFragment(
+    artistStatisticsHeaderArtistFragment,
+    props.artist,
+  );
 
   // Calculate statistics
   const totalAlbums = artist.albums?.length ?? 0;
-  const availableAlbums = artist.albums?.filter(r => !r.isFullyMissing).length ?? 0;
-  const albumProgress = totalAlbums > 0 ? (availableAlbums / totalAlbums) * 100 : 0;
+  const availableAlbums =
+    artist.albums?.filter((r) => !r.isFullyMissing).length ?? 0;
+  const albumProgress =
+    totalAlbums > 0 ? (availableAlbums / totalAlbums) * 100 : 0;
 
   const totalEps = artist.eps?.length ?? 0;
-  const availableEps = artist.eps?.filter(r => !r.isFullyMissing).length ?? 0;
+  const availableEps = artist.eps?.filter((r) => !r.isFullyMissing).length ?? 0;
   const epProgress = totalEps > 0 ? (availableEps / totalEps) * 100 : 0;
 
   const totalSingles = artist.singles?.length ?? 0;
-  const availableSingles = artist.singles?.filter(r => !r.isFullyMissing).length ?? 0;
-  const singleProgress = totalSingles > 0 ? (availableSingles / totalSingles) * 100 : 0;
+  const availableSingles =
+    artist.singles?.filter((r) => !r.isFullyMissing).length ?? 0;
+  const singleProgress =
+    totalSingles > 0 ? (availableSingles / totalSingles) * 100 : 0;
 
   const totalReleases = totalAlbums + totalEps + totalSingles;
   const availableReleases = availableAlbums + availableEps + availableSingles;
-  const overallProgress = totalReleases > 0 ? (availableReleases / totalReleases) * 100 : 0;
+  const overallProgress =
+    totalReleases > 0 ? (availableReleases / totalReleases) * 100 : 0;
 
   // Helper function to render progress bar
-  const renderProgressBar = (progress: number, total: number, available: number, color: string) => {
+  const renderProgressBar = (
+    progress: number,
+    total: number,
+    available: number,
+    color: string,
+  ) => {
     if (total === 0) return null;
-    
+
     return (
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between text-sm mb-1">
           <span className="text-zinc-300 font-medium">
             {available} / {total}
           </span>
-          <span className="text-zinc-400 text-xs">
-            {Math.round(progress)}%
-          </span>
+          <span className="text-zinc-400 text-xs">{Math.round(progress)}%</span>
         </div>
         <div className="w-full bg-zinc-700 rounded-full h-2">
-          <div 
+          <div
             className={`h-2 rounded-full transition-all duration-300 ${color}`}
             style={{ width: `${progress}%` }}
           />
@@ -82,16 +89,14 @@ export const ArtistStatisticsHeader: React.FC<ArtistStatisticsHeaderProps> = (pr
     total: number,
     available: number,
     progress: number,
-    color: string
+    color: string,
   ) => {
     if (total === 0) return null;
 
     return (
       <div className="bg-zinc-800/50 border border-zinc-700 rounded-lg p-4 flex-1 min-w-0">
         <div className="flex items-center gap-3 mb-3">
-          <div className="p-2 bg-zinc-700 rounded-lg">
-            {icon}
-          </div>
+          <div className="p-2 bg-zinc-700 rounded-lg">{icon}</div>
           <div>
             <h3 className="font-semibold text-zinc-200">{title}</h3>
             <p className="text-sm text-zinc-400">
@@ -116,7 +121,7 @@ export const ArtistStatisticsHeader: React.FC<ArtistStatisticsHeaderProps> = (pr
             </span>
           </div>
           <div className="w-full bg-zinc-700 rounded-full h-3">
-            <div 
+            <div
               className="h-3 rounded-full bg-gradient-to-r from-green-500 to-blue-500 transition-all duration-500"
               style={{ width: `${overallProgress}%` }}
             />
@@ -128,10 +133,9 @@ export const ArtistStatisticsHeader: React.FC<ArtistStatisticsHeaderProps> = (pr
               <AlertCircle className="w-4 h-4 text-yellow-400" />
             )}
             <span className="text-sm text-zinc-400">
-              {overallProgress === 100 
-                ? "All releases have complete media files!" 
-                : `${totalReleases - availableReleases} releases need media files`
-              }
+              {overallProgress === 100
+                ? "All releases have complete media files!"
+                : `${totalReleases - availableReleases} releases need media files`}
             </span>
           </div>
         </div>
@@ -145,47 +149,55 @@ export const ArtistStatisticsHeader: React.FC<ArtistStatisticsHeaderProps> = (pr
           totalAlbums,
           availableAlbums,
           albumProgress,
-          "bg-blue-500"
+          "bg-blue-500",
         )}
-        
+
         {renderReleaseTypeCard(
           <Disc3 className="w-5 h-5 text-purple-400" />,
           "EPs",
           totalEps,
           availableEps,
           epProgress,
-          "bg-purple-500"
+          "bg-purple-500",
         )}
-        
+
         {renderReleaseTypeCard(
           <Music className="w-5 h-5 text-green-400" />,
           "Singles",
           totalSingles,
           availableSingles,
           singleProgress,
-          "bg-green-500"
+          "bg-green-500",
         )}
       </div>
 
       {/* Quick Stats */}
       <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
         <div className="bg-zinc-800/30 border border-zinc-700 rounded-lg p-3">
-          <div className="text-2xl font-bold text-zinc-100">{totalReleases}</div>
+          <div className="text-2xl font-bold text-zinc-100">
+            {totalReleases}
+          </div>
           <div className="text-xs text-zinc-400">Total Releases</div>
         </div>
-        
+
         <div className="bg-zinc-800/30 border border-zinc-700 rounded-lg p-3">
-          <div className="text-2xl font-bold text-green-400">{availableReleases}</div>
+          <div className="text-2xl font-bold text-green-400">
+            {availableReleases}
+          </div>
           <div className="text-xs text-zinc-400">Available</div>
         </div>
-        
+
         <div className="bg-zinc-800/30 border border-zinc-700 rounded-lg p-3">
-          <div className="text-2xl font-bold text-yellow-400">{totalReleases - availableReleases}</div>
+          <div className="text-2xl font-bold text-yellow-400">
+            {totalReleases - availableReleases}
+          </div>
           <div className="text-xs text-zinc-400">Missing</div>
         </div>
-        
+
         <div className="bg-zinc-800/30 border border-zinc-700 rounded-lg p-3">
-          <div className="text-2xl font-bold text-blue-400">{Math.round(overallProgress)}%</div>
+          <div className="text-2xl font-bold text-blue-400">
+            {Math.round(overallProgress)}%
+          </div>
           <div className="text-xs text-zinc-400">Complete</div>
         </div>
       </div>

@@ -20,7 +20,11 @@ export const PlaylistSummaryHeader: React.FC<PlaylistSummaryHeaderProps> = ({
   return (
     <div className="flex items-center gap-6">
       {coverImageUrl ? (
-        <img src={coverImageUrl} alt={title} className="h-32 w-32 rounded shadow" />
+        <img
+          src={coverImageUrl}
+          alt={title}
+          className="h-32 w-32 rounded shadow"
+        />
       ) : null}
       <div className="flex flex-col gap-2">
         <h1 className="text-2xl font-bold">{title}</h1>
@@ -28,12 +32,13 @@ export const PlaylistSummaryHeader: React.FC<PlaylistSummaryHeaderProps> = ({
           <p className="text-white/60 max-w-xl">{description}</p>
         ) : null}
         <div className="text-sm text-white/60">
-          {trackCount} tracks{totalMinutes != null ? ` • ${Math.round(totalMinutes)} min` : ""}
+          {trackCount} tracks
+          {totalMinutes != null ? ` • ${Math.round(totalMinutes)} min` : ""}
         </div>
-        {actions ? <div className="flex flex-wrap gap-2 mt-2">{actions}</div> : null}
+        {actions ? (
+          <div className="flex flex-wrap gap-2 mt-2">{actions}</div>
+        ) : null}
       </div>
     </div>
   );
 };
-
-

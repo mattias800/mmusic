@@ -20,18 +20,22 @@ export const optimisticCacheExchange = cacheExchange({
         // Update the slot progress in the downloads data
         cache.updateQuery({ query: QueuesPage_QueryDocument }, (data) => {
           if (!data?.downloads?.downloadSlots) return data;
-          
-          const slotIndex = data.downloads.downloadSlots.findIndex(slot => slot.id === slotId);
+
+          const slotIndex = data.downloads.downloadSlots.findIndex(
+            (slot) => slot.id === slotId,
+          );
           if (slotIndex >= 0) {
             // Update the existing slot
             data.downloads.downloadSlots[slotIndex] = {
               ...data.downloads.downloadSlots[slotIndex],
               currentProgress: progress,
               isWorking: progress !== null,
-              lastActivityAt: progress ? new Date().toISOString() : data.downloads.downloadSlots[slotIndex].lastActivityAt
+              lastActivityAt: progress
+                ? new Date().toISOString()
+                : data.downloads.downloadSlots[slotIndex].lastActivityAt,
             };
           }
-          
+
           return data;
         });
       },

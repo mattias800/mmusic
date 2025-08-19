@@ -21,7 +21,7 @@ export {
   PageNotFound,
   PageLoadingSimple,
   PageErrorSimple,
-  PageNoDataSimple
+  PageNoDataSimple,
 } from "./page-states";
 
 // Demo Components

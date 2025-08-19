@@ -79,7 +79,9 @@ export const UserEditButton: React.FC<UserEditButtonProps> = () => {
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
-          <div className="text-sm text-gray-400">This dialog is deprecated. Use Change username/password buttons.</div>
+          <div className="text-sm text-gray-400">
+            This dialog is deprecated. Use Change username/password buttons.
+          </div>
         </div>
         <DialogFooter>
           <Button

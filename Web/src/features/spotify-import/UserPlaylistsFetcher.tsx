@@ -52,7 +52,9 @@ export const UserPlaylistsFetcher: React.FC<UserPlaylistsFetcherProps> = ({
         error={error}
         icon={AlertTriangle}
         iconBgColor="bg-red-500/20"
-        onRetry={() => executeFetchUserPlaylists({ requestPolicy: "network-only" })}
+        onRetry={() =>
+          executeFetchUserPlaylists({ requestPolicy: "network-only" })
+        }
         retryText="Try Again"
       />
     );
@@ -83,5 +85,10 @@ export const UserPlaylistsFetcher: React.FC<UserPlaylistsFetcherProps> = ({
     );
   }
 
-  return <SpotifyPlaylistsList playlists={playlists} spotifyUsername={spotifyUsername} />;
+  return (
+    <SpotifyPlaylistsList
+      playlists={playlists}
+      spotifyUsername={spotifyUsername}
+    />
+  );
 };

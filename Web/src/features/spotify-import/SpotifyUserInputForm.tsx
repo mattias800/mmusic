@@ -24,7 +24,7 @@ export const SpotifyUserInputForm: React.FC<SpotifyUserInputFormProps> = ({
         <div className="inline-flex items-center justify-center w-12 h-12 bg-gradient-to-br from-green-500/20 to-emerald-500/20 rounded-xl border border-green-500/30 mb-3">
           <User className="w-6 h-6 text-green-400" />
         </div>
-        <Label 
+        <Label
           htmlFor={inputId}
           className="text-lg font-semibold text-white block mb-2"
         >

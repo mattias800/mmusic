@@ -72,7 +72,7 @@ export const SearchResultArtist: React.FC<SearchResultArtistProps> = ({
                   </div>
                 </div>
               )}
-              
+
               {/* Artist Info */}
               <div className="flex-1 min-w-0 space-y-2">
                 <p className="text-white font-semibold text-lg truncate group-hover:text-blue-300 transition-colors">

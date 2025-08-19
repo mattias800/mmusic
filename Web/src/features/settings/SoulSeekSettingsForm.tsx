@@ -20,9 +20,14 @@ const mutation = graphql(`
     updateSoulSeekSearchTimeLimit(seconds: $seconds) {
       __typename
       ... on UpdateSoulSeekSearchTimeLimitSuccess {
-        serverSettings { id soulSeekSearchTimeLimitSeconds }
+        serverSettings {
+          id
+          soulSeekSearchTimeLimitSeconds
+        }
       }
-      ... on UpdateSoulSeekSearchTimeLimitError { message }
+      ... on UpdateSoulSeekSearchTimeLimitError {
+        message
+      }
     }
   }
 `);
@@ -33,7 +38,9 @@ export const SoulSeekSettingsForm: React.FC = () => {
   const [value, setValue] = React.useState<number>(current);
   const [{ fetching }, update] = useMutation(mutation);
 
-  React.useEffect(() => { setValue(current); }, [current]);
+  React.useEffect(() => {
+    setValue(current);
+  }, [current]);
 
   const onSave = async () => {
     const seconds = Math.max(5, Math.min(600, Math.floor(value)));
@@ -48,17 +55,23 @@ export const SoulSeekSettingsForm: React.FC = () => {
           <div className="p-2 bg-purple-500/20 rounded-lg">
             <Search className="w-5 h-5 text-purple-400" />
           </div>
-          <h3 className="text-lg font-semibold text-white">SoulSeek Search Configuration</h3>
+          <h3 className="text-lg font-semibold text-white">
+            SoulSeek Search Configuration
+          </h3>
         </div>
         <p className="text-gray-300 text-sm">
-          Configure how long SoulSeek searches can run before timing out. Longer timeouts allow for more thorough searches but may impact performance.
+          Configure how long SoulSeek searches can run before timing out. Longer
+          timeouts allow for more thorough searches but may impact performance.
         </p>
       </div>
 
       {/* Settings Form */}
       <div className="space-y-4">
         <div>
-          <Label htmlFor="slsk-time" className="text-gray-200 text-sm font-medium">
+          <Label
+            htmlFor="slsk-time"
+            className="text-gray-200 text-sm font-medium"
+          >
             Search Time Limit
           </Label>
           <div className="mt-2 flex items-center gap-3">
@@ -80,18 +93,16 @@ export const SoulSeekSettingsForm: React.FC = () => {
             Current setting: {current} seconds
           </p>
         </div>
-        
-        <GradientButton 
-          onClick={onSave} 
+
+        <GradientButton
+          onClick={onSave}
           disabled={fetching}
           variant="primary"
           className="w-full"
         >
-          {fetching ? 'Saving...' : 'Save Settings'}
+          {fetching ? "Saving..." : "Save Settings"}
         </GradientButton>
       </div>
     </div>
   );
 };
-
-

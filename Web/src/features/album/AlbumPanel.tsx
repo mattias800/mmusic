@@ -265,7 +265,9 @@ export const AlbumPanel: React.FC<AlbumPanelProps> = (props) => {
                 {release.labels[0].catalogNumber && (
                   <>
                     <span>•</span>
-                    <span className="text-xs opacity-75">{release.labels[0].catalogNumber}</span>
+                    <span className="text-xs opacity-75">
+                      {release.labels[0].catalogNumber}
+                    </span>
                   </>
                 )}
               </>
@@ -273,7 +275,9 @@ export const AlbumPanel: React.FC<AlbumPanelProps> = (props) => {
             {(!release.labels || release.labels.length === 0) && (
               <>
                 <span>•</span>
-                <span className="opacity-50">Label information unavailable</span>
+                <span className="opacity-50">
+                  Label information unavailable
+                </span>
               </>
             )}
           </div>

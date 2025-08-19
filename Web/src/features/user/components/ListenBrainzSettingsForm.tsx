@@ -1,15 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import { useMutation } from 'urql';
-import { graphql } from '@/gql';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Alert } from '@/components/ui/Alert';
-import { CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
-import { GradientButton } from '@/components/ui';
+import React, { useState, useEffect } from "react";
+import { useMutation } from "urql";
+import { graphql } from "@/gql";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Alert } from "@/components/ui/Alert";
+import { CheckCircle, AlertCircle, Loader2 } from "lucide-react";
+import { GradientButton } from "@/components/ui";
 
 const UPDATE_LISTENBRAINZ_CREDENTIALS = graphql(`
-  mutation UpdateUserListenBrainzCredentials($input: UpdateUserListenBrainzCredentialsInput!) {
+  mutation UpdateUserListenBrainzCredentials(
+    $input: UpdateUserListenBrainzCredentialsInput!
+  ) {
     updateUserListenBrainzCredentials(input: $input) {
       ... on UpdateUserListenBrainzCredentialsSuccess {
         user {
@@ -37,40 +39,47 @@ export function ListenBrainzSettingsForm({
   userId,
   currentListenBrainzUserId,
   hasListenBrainzToken,
-  onUpdate
+  onUpdate,
 }: ListenBrainzSettingsFormProps) {
-  const [listenBrainzUserId, setListenBrainzUserId] = useState(currentListenBrainzUserId || '');
-  const [tokenInput, setTokenInput] = useState('');
+  const [listenBrainzUserId, setListenBrainzUserId] = useState(
+    currentListenBrainzUserId || "",
+  );
+  const [tokenInput, setTokenInput] = useState("");
   const [isEditing, setIsEditing] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
-  const [updateCredentialsResult, updateCredentials] = useMutation(UPDATE_LISTENBRAINZ_CREDENTIALS);
+  const [updateCredentialsResult, updateCredentials] = useMutation(
+    UPDATE_LISTENBRAINZ_CREDENTIALS,
+  );
 
   // Reset form when props change
   useEffect(() => {
-    setListenBrainzUserId(currentListenBrainzUserId || '');
-    setTokenInput('');
+    setListenBrainzUserId(currentListenBrainzUserId || "");
+    setTokenInput("");
     setIsEditing(false);
     setShowSuccess(false);
   }, [currentListenBrainzUserId, hasListenBrainzToken]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     const input = {
       userId,
       listenBrainzUserId: listenBrainzUserId || null,
-      listenBrainzToken: tokenInput || null
+      listenBrainzToken: tokenInput || null,
     };
 
     const result = await updateCredentials({ input });
-    
-    if (result.data?.updateUserListenBrainzCredentials.__typename === 'UpdateUserListenBrainzCredentialsSuccess') {
+
+    if (
+      result.data?.updateUserListenBrainzCredentials.__typename ===
+      "UpdateUserListenBrainzCredentialsSuccess"
+    ) {
       setShowSuccess(true);
-      setTokenInput(''); // Clear token input after successful save
+      setTokenInput(""); // Clear token input after successful save
       setIsEditing(false);
       onUpdate?.();
-      
+
       // Hide success message after 3 seconds
       setTimeout(() => setShowSuccess(false), 3000);
     }
@@ -83,8 +92,8 @@ export function ListenBrainzSettingsForm({
 
   const handleCancel = () => {
     setIsEditing(false);
-    setTokenInput('');
-    setListenBrainzUserId(currentListenBrainzUserId || '');
+    setTokenInput("");
+    setListenBrainzUserId(currentListenBrainzUserId || "");
     setShowSuccess(false);
   };
 
@@ -94,12 +103,15 @@ export function ListenBrainzSettingsForm({
   return (
     <div className="w-full">
       <div className="mb-6">
-        <h3 className="text-lg font-semibold text-white mb-2">Manage Credentials</h3>
+        <h3 className="text-lg font-semibold text-white mb-2">
+          Manage Credentials
+        </h3>
         <p className="text-gray-300 text-sm">
-          Update your ListenBrainz account credentials to enable automatic listening history reporting.
+          Update your ListenBrainz account credentials to enable automatic
+          listening history reporting.
         </p>
       </div>
-      
+
       {showSuccess && (
         <Alert variant="success" className="mb-6">
           <div className="flex items-center gap-2">
@@ -121,31 +133,36 @@ export function ListenBrainzSettingsForm({
       {!isEditing ? (
         <div className="space-y-4">
           <div className="p-4 bg-white/5 rounded-lg border border-white/10">
-            <Label className="text-sm font-medium text-gray-300">ListenBrainz Username</Label>
+            <Label className="text-sm font-medium text-gray-300">
+              ListenBrainz Username
+            </Label>
             <div className="mt-2 text-white font-medium">
-              {currentListenBrainzUserId || 'Not configured'}
+              {currentListenBrainzUserId || "Not configured"}
             </div>
           </div>
-          
+
           <div className="p-4 bg-white/5 rounded-lg border border-white/10">
-            <Label className="text-sm font-medium text-gray-300">API Token</Label>
+            <Label className="text-sm font-medium text-gray-300">
+              API Token
+            </Label>
             <div className="mt-2 text-white font-medium">
-              {hasListenBrainzToken ? '••••••••••••••••' : 'Not configured'}
+              {hasListenBrainzToken ? "••••••••••••••••" : "Not configured"}
             </div>
           </div>
-          
-          <GradientButton 
-            onClick={handleEdit} 
-            variant="primary" 
-            fullWidth
-          >
+
+          <GradientButton onClick={handleEdit} variant="primary" fullWidth>
             Edit Settings
           </GradientButton>
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="p-4 bg-white/5 rounded-lg border border-white/10">
-            <Label htmlFor="listenBrainzUserId" className="text-gray-200 text-sm font-medium">ListenBrainz Username</Label>
+            <Label
+              htmlFor="listenBrainzUserId"
+              className="text-gray-200 text-sm font-medium"
+            >
+              ListenBrainz Username
+            </Label>
             <Input
               id="listenBrainzUserId"
               type="text"
@@ -156,30 +173,38 @@ export function ListenBrainzSettingsForm({
               className="mt-2 bg-white/10 border-white/20 text-white placeholder-gray-400 focus:border-blue-400 focus:ring-blue-400"
             />
           </div>
-          
+
           <div className="p-4 bg-white/5 rounded-lg border border-white/10">
-            <Label htmlFor="tokenInput" className="text-gray-200 text-sm font-medium">API Token</Label>
+            <Label
+              htmlFor="tokenInput"
+              className="text-gray-200 text-sm font-medium"
+            >
+              API Token
+            </Label>
             <Input
               id="tokenInput"
               type="password"
               value={tokenInput}
               onChange={(e) => setTokenInput(e.target.value)}
-              placeholder={hasListenBrainzToken ? "Enter new token (or leave empty to keep current)" : "Enter your ListenBrainz API token"}
+              placeholder={
+                hasListenBrainzToken
+                  ? "Enter new token (or leave empty to keep current)"
+                  : "Enter your ListenBrainz API token"
+              }
               disabled={isLoading}
               className="mt-2 bg-white/10 border-white/20 text-white placeholder-gray-400 focus:border-blue-400 focus:ring-blue-400"
             />
             <p className="mt-3 text-xs text-gray-400">
-              {hasListenBrainzToken 
-                ? "Leave empty to keep your current token" 
-                : "You can find your API token in your ListenBrainz account settings"
-              }
+              {hasListenBrainzToken
+                ? "Leave empty to keep your current token"
+                : "You can find your API token in your ListenBrainz account settings"}
             </p>
           </div>
-          
+
           <div className="flex gap-3">
-            <GradientButton 
-              type="submit" 
-              disabled={isLoading} 
+            <GradientButton
+              type="submit"
+              disabled={isLoading}
               variant="success"
               fullWidth
             >
@@ -189,12 +214,12 @@ export function ListenBrainzSettingsForm({
                   Saving...
                 </>
               ) : (
-                'Save Changes'
+                "Save Changes"
               )}
             </GradientButton>
-            <Button 
-              type="button" 
-              variant="outline" 
+            <Button
+              type="button"
+              variant="outline"
               onClick={handleCancel}
               disabled={isLoading}
               className="flex-1 border-white/20 text-white hover:bg-white/10 hover:border-white/30"

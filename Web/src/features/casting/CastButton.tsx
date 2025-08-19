@@ -2,7 +2,10 @@ import * as React from "react";
 import { Button } from "@/components/ui/button.tsx";
 import { Cast } from "lucide-react";
 import { useCast } from "@/features/casting/useCast.ts";
-import { endCastSession, startCastSession } from "@/features/casting/cast-sender.ts";
+import {
+  endCastSession,
+  startCastSession,
+} from "@/features/casting/cast-sender.ts";
 
 export interface CastButtonProps {
   className?: string;
@@ -24,5 +27,3 @@ export const CastButton: React.FC<CastButtonProps> = ({ className }) => {
     </Button>
   );
 };
-
-

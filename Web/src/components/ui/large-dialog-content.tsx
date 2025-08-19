@@ -12,5 +12,3 @@ export const LargeDialogContent: React.FC<
     />
   );
 };
-
-

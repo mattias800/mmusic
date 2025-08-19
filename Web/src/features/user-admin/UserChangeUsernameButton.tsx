@@ -40,9 +40,9 @@ const updateUsernameMutation = graphql(`
   }
 `);
 
-export const UserChangeUsernameButton: React.FC<UserChangeUsernameButtonProps> = (
-  props,
-) => {
+export const UserChangeUsernameButton: React.FC<
+  UserChangeUsernameButtonProps
+> = (props) => {
   const user = useFragment(userChangeUsernameUserFragment, props.user);
   const [open, setOpen] = React.useState(false);
   const [username, setUsername] = React.useState(user.username ?? "");
@@ -61,7 +61,10 @@ export const UserChangeUsernameButton: React.FC<UserChangeUsernameButtonProps> =
   };
 
   return (
-    <Dialog open={open} onOpenChange={(v) => (setOpen(v), setUsername(user.username ?? ""))}>
+    <Dialog
+      open={open}
+      onOpenChange={(v) => (setOpen(v), setUsername(user.username ?? ""))}
+    >
       <DialogTrigger asChild>
         <Button variant="blue">Change username</Button>
       </DialogTrigger>
@@ -73,14 +76,22 @@ export const UserChangeUsernameButton: React.FC<UserChangeUsernameButtonProps> =
         <div className="space-y-4">
           <div>
             <label className="block text-sm text-gray-300 mb-1">Username</label>
-            <Input value={username} onChange={(e) => setUsername(e.target.value)} />
+            <Input
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+            />
           </div>
         </div>
         <DialogFooter>
           <Button variant="secondary" onClick={() => setOpen(false)}>
             Cancel
           </Button>
-          <Button variant="blue" loading={fetching} onClick={onSave} disabled={!username.trim()}>
+          <Button
+            variant="blue"
+            loading={fetching}
+            onClick={onSave}
+            disabled={!username.trim()}
+          >
             Save
           </Button>
         </DialogFooter>
@@ -88,5 +99,3 @@ export const UserChangeUsernameButton: React.FC<UserChangeUsernameButtonProps> =
     </Dialog>
   );
 };
-
-

@@ -1,15 +1,15 @@
 import * as React from "react";
 import { FragmentType, graphql, useFragment } from "@/gql";
-import { 
-  Disc3, 
-  Music, 
-  Album, 
-  BarChart3, 
-  CheckCircle2, 
+import {
+  Disc3,
+  Music,
+  Album,
+  BarChart3,
+  CheckCircle2,
   AlertCircle,
   Database,
   Clock,
-  Users
+  Users,
 } from "lucide-react";
 import { StatusCard, StatusGrid } from "@/components/ui";
 
@@ -34,8 +34,13 @@ const serverLibraryStatisticsHeaderFragment = graphql(`
   }
 `);
 
-export const ServerLibraryStatisticsHeader: React.FC<ServerLibraryStatisticsHeaderProps> = (props) => {
-  const serverLibrary = useFragment(serverLibraryStatisticsHeaderFragment, props.serverLibrary);
+export const ServerLibraryStatisticsHeader: React.FC<
+  ServerLibraryStatisticsHeaderProps
+> = (props) => {
+  const serverLibrary = useFragment(
+    serverLibraryStatisticsHeaderFragment,
+    props.serverLibrary,
+  );
   const stats = serverLibrary.libraryStatistics;
   const releases = serverLibrary.allReleases;
 
@@ -45,22 +50,25 @@ export const ServerLibraryStatisticsHeader: React.FC<ServerLibraryStatisticsHead
   const totalTracks = stats.trackCount;
 
   // Calculate media availability from releases
-  const releasesWithMedia = releases.filter(r => !r.isFullyMissing).length;
+  const releasesWithMedia = releases.filter((r) => !r.isFullyMissing).length;
   const releasesWithoutMedia = totalReleases - releasesWithMedia;
-  const mediaProgress = totalReleases > 0 ? (releasesWithMedia / totalReleases) * 100 : 0;
+  const mediaProgress =
+    totalReleases > 0 ? (releasesWithMedia / totalReleases) * 100 : 0;
 
   // Calculate release type breakdown
-  const albums = releases.filter(r => r.type === "ALBUM");
-  const eps = releases.filter(r => r.type === "EP");
-  const singles = releases.filter(r => r.type === "SINGLE");
+  const albums = releases.filter((r) => r.type === "ALBUM");
+  const eps = releases.filter((r) => r.type === "EP");
+  const singles = releases.filter((r) => r.type === "SINGLE");
 
-  const albumsWithMedia = albums.filter(r => !r.isFullyMissing).length;
-  const epsWithMedia = eps.filter(r => !r.isFullyMissing).length;
-  const singlesWithMedia = singles.filter(r => !r.isFullyMissing).length;
+  const albumsWithMedia = albums.filter((r) => !r.isFullyMissing).length;
+  const epsWithMedia = eps.filter((r) => !r.isFullyMissing).length;
+  const singlesWithMedia = singles.filter((r) => !r.isFullyMissing).length;
 
-  const albumProgress = albums.length > 0 ? (albumsWithMedia / albums.length) * 100 : 0;
+  const albumProgress =
+    albums.length > 0 ? (albumsWithMedia / albums.length) * 100 : 0;
   const epProgress = eps.length > 0 ? (epsWithMedia / eps.length) * 100 : 0;
-  const singleProgress = singles.length > 0 ? (singlesWithMedia / singles.length) * 100 : 0;
+  const singleProgress =
+    singles.length > 0 ? (singlesWithMedia / singles.length) * 100 : 0;
 
   // Format last updated time
   const formatLastUpdated = (dateTime: string) => {
@@ -72,27 +80,32 @@ export const ServerLibraryStatisticsHeader: React.FC<ServerLibraryStatisticsHead
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
     if (diffMins < 1) return "Just now";
-    if (diffMins < 60) return `${diffMins} minute${diffMins !== 1 ? 's' : ''} ago`;
-    if (diffHours < 24) return `${diffHours} hour${diffHours !== 1 ? 's' : ''} ago`;
-    return `${diffDays} day${diffDays !== 1 ? 's' : ''} ago`;
+    if (diffMins < 60)
+      return `${diffMins} minute${diffMins !== 1 ? "s" : ""} ago`;
+    if (diffHours < 24)
+      return `${diffHours} hour${diffHours !== 1 ? "s" : ""} ago`;
+    return `${diffDays} day${diffDays !== 1 ? "s" : ""} ago`;
   };
 
   // Helper function to render progress bar
-  const renderProgressBar = (progress: number, total: number, available: number, color: string) => {
+  const renderProgressBar = (
+    progress: number,
+    total: number,
+    available: number,
+    color: string,
+  ) => {
     if (total === 0) return null;
-    
+
     return (
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between text-sm mb-2">
           <span className="text-white font-medium">
             {available} / {total}
           </span>
-          <span className="text-gray-400 text-xs">
-            {Math.round(progress)}%
-          </span>
+          <span className="text-gray-400 text-xs">{Math.round(progress)}%</span>
         </div>
         <div className="w-full bg-white/10 rounded-full h-2">
-          <div 
+          <div
             className={`h-2 rounded-full transition-all duration-300 ${color}`}
             style={{ width: `${progress}%` }}
           />
@@ -108,16 +121,14 @@ export const ServerLibraryStatisticsHeader: React.FC<ServerLibraryStatisticsHead
     total: number,
     available: number,
     progress: number,
-    color: string
+    color: string,
   ) => {
     if (total === 0) return null;
 
     return (
       <div className="p-4 bg-white/5 rounded-lg border border-white/10 flex-1 min-w-0">
         <div className="flex items-center gap-3 mb-3">
-          <div className="p-2 bg-white/10 rounded-lg">
-            {icon}
-          </div>
+          <div className="p-2 bg-white/10 rounded-lg">{icon}</div>
           <div>
             <h3 className="font-semibold text-white">{title}</h3>
             <p className="text-sm text-gray-300">
@@ -138,8 +149,12 @@ export const ServerLibraryStatisticsHeader: React.FC<ServerLibraryStatisticsHead
             <Database className="w-6 h-6 text-amber-400" />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-white">Library Initializing</h2>
-            <p className="text-gray-300">Please wait while the library is being set up...</p>
+            <h2 className="text-xl font-bold text-white">
+              Library Initializing
+            </h2>
+            <p className="text-gray-300">
+              Please wait while the library is being set up...
+            </p>
           </div>
         </div>
       </div>
@@ -155,9 +170,12 @@ export const ServerLibraryStatisticsHeader: React.FC<ServerLibraryStatisticsHead
             <BarChart3 className="w-6 h-6 text-blue-400" />
           </div>
           <div className="flex-1">
-            <h2 className="text-xl font-bold text-white">Server Library Overview</h2>
+            <h2 className="text-xl font-bold text-white">
+              Server Library Overview
+            </h2>
             <p className="text-gray-300">
-              {releasesWithMedia} of {totalReleases} releases have complete media files
+              {releasesWithMedia} of {totalReleases} releases have complete
+              media files
             </p>
           </div>
           <div className="text-right">
@@ -172,13 +190,15 @@ export const ServerLibraryStatisticsHeader: React.FC<ServerLibraryStatisticsHead
         {totalReleases > 0 && (
           <div className="mb-6">
             <div className="flex items-center justify-between text-sm mb-2">
-              <span className="text-white font-medium">Overall Media Availability</span>
+              <span className="text-white font-medium">
+                Overall Media Availability
+              </span>
               <span className="text-gray-300">
                 {releasesWithMedia} / {totalReleases} releases
               </span>
             </div>
             <div className="w-full bg-white/10 rounded-full h-3">
-              <div 
+              <div
                 className="h-3 rounded-full bg-gradient-to-r from-green-500 to-blue-500 transition-all duration-500"
                 style={{ width: `${mediaProgress}%` }}
               />
@@ -190,10 +210,9 @@ export const ServerLibraryStatisticsHeader: React.FC<ServerLibraryStatisticsHead
                 <AlertCircle className="w-4 h-4 text-amber-400" />
               )}
               <span className="text-sm text-gray-300">
-                {mediaProgress === 100 
-                  ? "All releases have complete media files!" 
-                  : `${releasesWithoutMedia} releases need media files`
-                }
+                {mediaProgress === 100
+                  ? "All releases have complete media files!"
+                  : `${releasesWithoutMedia} releases need media files`}
               </span>
             </div>
           </div>
@@ -207,48 +226,36 @@ export const ServerLibraryStatisticsHeader: React.FC<ServerLibraryStatisticsHead
             albums.length,
             albumsWithMedia,
             albumProgress,
-            "bg-blue-500"
+            "bg-blue-500",
           )}
-          
+
           {renderReleaseTypeCard(
             <Disc3 className="w-5 h-5 text-purple-400" />,
             "EPs",
             eps.length,
             epsWithMedia,
             epProgress,
-            "bg-purple-500"
+            "bg-purple-500",
           )}
-          
+
           {renderReleaseTypeCard(
             <Music className="w-5 h-5 text-green-400" />,
             "Singles",
             singles.length,
             singlesWithMedia,
             singleProgress,
-            "bg-green-500"
+            "bg-green-500",
           )}
         </div>
 
         {/* Library Statistics Grid */}
         <StatusGrid columns={4}>
-          <StatusCard 
-            label="Artists" 
-            value={totalArtists} 
-            icon={Users}
-          />
-          <StatusCard 
-            label="Releases" 
-            value={totalReleases} 
-            icon={Disc3}
-          />
-          <StatusCard 
-            label="Tracks" 
-            value={totalTracks} 
-            icon={Music}
-          />
-          <StatusCard 
-            label="Complete" 
-            value={`${Math.round(mediaProgress)}%`} 
+          <StatusCard label="Artists" value={totalArtists} icon={Users} />
+          <StatusCard label="Releases" value={totalReleases} icon={Disc3} />
+          <StatusCard label="Tracks" value={totalTracks} icon={Music} />
+          <StatusCard
+            label="Complete"
+            value={`${Math.round(mediaProgress)}%`}
             icon={CheckCircle2}
           />
         </StatusGrid>
