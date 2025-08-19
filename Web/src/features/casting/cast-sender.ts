@@ -50,13 +50,13 @@ declare global {
           LoadRequest: new (mediaInfo: unknown) => unknown;
           SeekRequest: new () => { currentTime: number };
           VolumeRequest: new () => unknown;
-          Volume: new (level?: number, muted?: boolean) => unknown;
           StreamType: Record<string, unknown>;
           MusicTrackMediaMetadata: new () => {
             title?: string;
             images?: Array<unknown>;
           };
         };
+        Volume: new (level?: number, muted?: boolean) => unknown;
         Image: new (url: string) => unknown;
       };
     };
@@ -108,14 +108,11 @@ export const ensureCastInitialized = () => {
     });
     notify();
     // Subscribe to state changes
-    context.addEventListener(
-      window.cast.framework.CastContextEventType.CAST_STATE_CHANGED,
-      notify,
-    );
-    context.addEventListener(
-      window.cast.framework.CastContextEventType.SESSION_STATE_CHANGED,
-      notify,
-    );
+    const eventTypes = window.cast.framework.CastContextEventType;
+    if (eventTypes) {
+      context.addEventListener(eventTypes.CAST_STATE_CHANGED, notify);
+      context.addEventListener(eventTypes.SESSION_STATE_CHANGED, notify);
+    }
   };
   if (window.cast?.framework) {
     onAvailable(true);
@@ -141,23 +138,24 @@ export const loadMediaOnCast = async (params: LoadMediaParams) => {
   const session = context.getCurrentSession();
   if (!session) throw new Error('No cast session');
 
-  const mediaInfo = new window.chrome.cast.media.MediaInfo(
+  const chromeCast = window.chrome?.cast;
+  if (!chromeCast?.media) throw new Error('Cast media API not ready');
+  const mediaNs = chromeCast.media;
+  const mediaInfo = new mediaNs.MediaInfo(
     params.contentUrl,
     params.contentType || 'audio/mpeg',
   );
   if (params.title || params.imageUrl) {
-    const md = new window.chrome.cast.media.MusicTrackMediaMetadata();
+    const md = new mediaNs.MusicTrackMediaMetadata();
     if (params.title) (md as { title?: string }).title = params.title;
     if (params.imageUrl)
-      (md as { images?: Array<unknown> }).images = [
-        new window.chrome.cast.Image(params.imageUrl),
-      ];
+      (md as { images?: Array<unknown> }).images = [new chromeCast.Image(params.imageUrl)];
     (mediaInfo as { metadata?: unknown }).metadata = md;
   }
   mediaInfo.streamType =
-    window.chrome.cast.media.StreamType[params.streamType || 'BUFFERED'];
+    mediaNs.StreamType[params.streamType || 'BUFFERED'];
 
-  const request = new window.chrome.cast.media.LoadRequest(mediaInfo);
+  const request = new mediaNs.LoadRequest(mediaInfo) as { autoplay?: boolean; currentTime?: number };
   request.autoplay = params.autoplay ?? true;
   request.currentTime = params.startTime ?? 0;
 
@@ -188,7 +186,9 @@ export const castSeek = (seconds: number) => {
   const context = window.cast?.framework?.CastContext.getInstance?.();
   const media = context?.getCurrentSession?.()?.getMediaSession?.();
   if (!media?.seek) return;
-  const req = new window.chrome.cast.media.SeekRequest();
+  const chromeCast = window.chrome?.cast;
+  if (!chromeCast?.media) return;
+  const req = new chromeCast.media.SeekRequest();
   req.currentTime = seconds;
   media.seek(req);
 };
@@ -200,8 +200,10 @@ export const castSetVolume = (volume0to1: number, muted: boolean) => {
   const media = session?.getMediaSession?.();
   const receiver = session?.getSessionObj?.();
   if (media?.setVolume) {
-    const req = new window.chrome.cast.media.VolumeRequest();
-    req.volume = new window.chrome.cast.Volume(volume0to1, muted);
+    const chromeCast = window.chrome?.cast;
+    if (!chromeCast?.media) return;
+    const req = new chromeCast.media.VolumeRequest() as { volume?: unknown };
+    req.volume = new chromeCast.Volume(volume0to1, muted);
     media.setVolume(req, () => {}, () => {});
   } else if (receiver?.setReceiverVolumeLevel) {
     receiver.setReceiverVolumeLevel(volume0to1, () => {}, () => {});
