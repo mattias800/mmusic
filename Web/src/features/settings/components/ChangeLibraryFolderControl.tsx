@@ -12,7 +12,7 @@ import {
 import { DirectoryBrowserModal } from "../components/DirectoryBrowser/DirectoryBrowserModal.tsx";
 import { FragmentType, graphql, useFragment } from "@/gql";
 import { useClient, useMutation } from "urql";
-import { CheckCircle2, FolderOpen, AlertTriangle } from "lucide-react";
+import { AlertTriangle, CheckCircle2, FolderOpen } from "lucide-react";
 import { GradientButton } from "@/components/ui";
 
 export interface ChangeLibraryFolderControlProps {
@@ -120,9 +120,11 @@ export const ChangeLibraryFolderControl: React.FC<
           <div className="p-2 bg-blue-500/20 rounded-lg">
             <FolderOpen className="w-5 h-5 text-blue-400" />
           </div>
-          <h3 className="text-lg font-semibold text-white">Current Library Path</h3>
+          <h3 className="text-lg font-semibold text-white">
+            Current Library Path
+          </h3>
         </div>
-        
+
         <div className="flex items-center gap-3 mb-4">
           <div className="flex-1 p-3 bg-white/5 rounded-lg border border-white/10">
             <span className="text-gray-300">
@@ -141,7 +143,7 @@ export const ChangeLibraryFolderControl: React.FC<
             </div>
           )}
         </div>
-        
+
         <GradientButton
           variant="primary"
           onClick={() => setIsConfirmOpen(true)}
@@ -162,12 +164,14 @@ export const ChangeLibraryFolderControl: React.FC<
               </div>
             </div>
             <div className="flex-1 min-w-0">
-              <h3 className="text-sm font-medium text-amber-200">No Library Manifest Found</h3>
+              <h3 className="text-sm font-medium text-amber-200">
+                No Library Manifest Found
+              </h3>
               <p className="mt-1 text-sm text-amber-300">
-                The configured folder does not contain a mmusic library manifest.
-                Writing is disabled until a manifest is created, to prevent
-                accidental writing to the wrong folder, since mmusic downloads media
-                automatically.
+                The configured folder does not contain a mmusic library
+                manifest. Writing is disabled until a manifest is created, to
+                prevent accidental writing to the wrong folder, since mmusic
+                downloads media automatically.
               </p>
               <div className="mt-3">
                 <GradientButton
@@ -190,7 +194,9 @@ export const ChangeLibraryFolderControl: React.FC<
       <Dialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
         <DialogContent className="bg-gray-800 border-gray-700">
           <DialogHeader>
-            <DialogTitle className="text-white">Change Library Folder?</DialogTitle>
+            <DialogTitle className="text-white">
+              Change Library Folder?
+            </DialogTitle>
             <DialogDescription className="text-gray-300">
               Changing the library path is a dangerous operation. Make sure the
               new folder contains your existing media, or the library may appear
@@ -198,8 +204,8 @@ export const ChangeLibraryFolderControl: React.FC<
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => setIsConfirmOpen(false)}
               className="border-gray-600 text-gray-300 hover:bg-gray-700"
             >
@@ -249,7 +255,9 @@ export const ChangeLibraryFolderControl: React.FC<
       >
         <DialogContent className="bg-gray-800 border-gray-700">
           <DialogHeader>
-            <DialogTitle className="text-white">No Manifest Found in Folder</DialogTitle>
+            <DialogTitle className="text-white">
+              No Manifest Found in Folder
+            </DialogTitle>
             <DialogDescription className="text-gray-300">
               The selected folder does not contain a mmusic library manifest. To
               enable safe writes here, a manifest will be created. Are you sure

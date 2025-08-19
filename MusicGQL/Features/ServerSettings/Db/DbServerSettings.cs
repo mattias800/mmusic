@@ -26,6 +26,9 @@ public class DbServerSettings
     // Number of concurrent download slots to use
     public int DownloadSlotCount { get; set; } = 3;
 
+    // Public base URL for building absolute links (e.g., https://mmusic.com)
+    public string PublicBaseUrl { get; set; } = string.Empty;
+
     // ListenBrainz integration settings
     public string ListenBrainzUsername { get; set; } = string.Empty;
     public string ListenBrainzApiKey { get; set; } = string.Empty;
@@ -53,6 +56,7 @@ public static class DefaultDbServerSettingsProvider
             SoulSeekLibrarySharingEnabled = true,
             SoulSeekListeningPort = 50300,
             DownloadSlotCount = 3,
+            PublicBaseUrl = "",
             ListenBrainzUsername = "",
             ListenBrainzApiKey = "",
             ListenBrainzTopTracksEnabled = true,

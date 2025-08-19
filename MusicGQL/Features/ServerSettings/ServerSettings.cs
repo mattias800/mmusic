@@ -26,6 +26,8 @@ public record ServerSettings([property: GraphQLIgnore] DbServerSettings Model)
 
     public int DownloadSlotCount() => Model.DownloadSlotCount;
 
+    public string PublicBaseUrl() => Model.PublicBaseUrl;
+
     public string ListenBrainzUsername() => Model.ListenBrainzUsername;
 
     public string ListenBrainzApiKey() => Model.ListenBrainzApiKey;

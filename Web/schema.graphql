@@ -380,9 +380,11 @@ type DownloadProgress {
 
 type DownloadQueueItem {
   artistId: String!
+  artistName: String
   id: String!
   queueKey: String
   releaseFolderName: String!
+  releaseTitle: String
 }
 
 type DownloadQueueState {
@@ -974,6 +976,7 @@ type Mutation {
   updateDownloadSlotCount(input: UpdateDownloadSlotCountInput!): UpdateDownloadSlotCountResult!
   updateLibraryPath(input: UpdateLibraryPathInput!): UpdateLibraryPathResult!
   updateListenBrainzSettings(input: UpdateListenBrainzSettingsInput!): UpdateListenBrainzSettingsResult!
+  updatePublicBaseUrl(input: UpdatePublicBaseUrlInput!): UpdatePublicBaseUrlResult!
   updateSoulSeekNoDataTimeout(input: UpdateSoulSeekNoDataTimeoutInput!): UpdateSoulSeekNoDataTimeoutResult!
   updateSoulSeekSearchTimeLimit(seconds: Int!): UpdateSoulSeekSearchTimeLimitResult!
   updateTopTracksServiceSettings(input: UpdateTopTracksServiceSettingsInput!): UpdateTopTracksServiceSettingsResult!
@@ -1262,6 +1265,7 @@ type ServerSettings {
   listenBrainzApiKey: String!
   listenBrainzTopTracksEnabled: Boolean!
   listenBrainzUsername: String!
+  publicBaseUrl: String!
   serverLibraryManifestStatus: ServerLibraryManifestStatus!
   soulSeekBatchDownloadingEnabled: Boolean!
   soulSeekLibrarySharingEnabled: Boolean!
@@ -1669,6 +1673,20 @@ union UpdateListenBrainzSettingsResult = UpdateListenBrainzSettingsError | Updat
 
 type UpdateListenBrainzSettingsSuccess {
   success: Boolean!
+}
+
+type UpdatePublicBaseUrlError {
+  message: String!
+}
+
+input UpdatePublicBaseUrlInput {
+  publicBaseUrl: String!
+}
+
+union UpdatePublicBaseUrlResult = UpdatePublicBaseUrlError | UpdatePublicBaseUrlSuccess
+
+type UpdatePublicBaseUrlSuccess {
+  serverSettings: ServerSettings!
 }
 
 type UpdateSoulSeekNoDataTimeoutError {

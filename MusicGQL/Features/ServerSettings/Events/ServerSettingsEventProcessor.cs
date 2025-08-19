@@ -25,6 +25,9 @@ public class ServerSettingsEventProcessor
             case DownloadSlotCountUpdated slotCountUpdated:
                 await HandleDownloadSlotCountUpdated(slotCountUpdated, dbContext);
                 break;
+            case PublicBaseUrlUpdated publicBaseUrlUpdated:
+                await HandlePublicBaseUrlUpdated(publicBaseUrlUpdated, dbContext);
+                break;
         }
     }
 
@@ -120,6 +123,25 @@ public class ServerSettingsEventProcessor
         }
 
         serverSettings.DownloadSlotCount = updated.NewSlotCount;
+        await dbContext.SaveChangesAsync();
+    }
+
+    private async Task HandlePublicBaseUrlUpdated(
+        PublicBaseUrlUpdated updated,
+        EventDbContext dbContext
+    )
+    {
+        var serverSettings = dbContext.ServerSettings.FirstOrDefault(s =>
+            s.Id == DefaultDbServerSettingsProvider.ServerSettingsSingletonId
+        );
+
+        if (serverSettings is null)
+        {
+            serverSettings = DefaultDbServerSettingsProvider.GetDefault();
+            dbContext.ServerSettings.Add(serverSettings);
+        }
+
+        serverSettings.PublicBaseUrl = updated.NewPublicBaseUrl;
         await dbContext.SaveChangesAsync();
     }
 }
