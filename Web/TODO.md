@@ -68,17 +68,17 @@ The user will create a git commit manually.
 
 ## Show status of auth tokens
 
-* [ ] Add a status page in server settings, that can show the status of auth tokens.
+* [x] Add a status page in server settings, that can show the status of auth tokens.
     * Tokens cannot be edited, the server admin must add these as env variables.
-* [ ] Add a UI for testing connectivity to these services.
+* [x] Add a UI for testing connectivity to these services.
 
 * This applies to the following external services:
-    * [ ] ListenBrainz
-    * [ ] YouTube
-    * [ ] Spotify
-    * [ ] Spotify
-    * [ ] Lastfm
-    * [ ] Fanart
+    * [x] ListenBrainz
+    * [x] YouTube
+    * [x] Spotify
+    * [x] Spotify
+    * [x] Lastfm
+    * [x] Fanart
 
 ## Installation wizard
 

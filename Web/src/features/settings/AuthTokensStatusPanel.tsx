@@ -3,6 +3,8 @@ import { useMemo, useState } from "react";
 import { graphql } from "@/gql";
 import { useQuery } from "urql";
 import { Button } from "@/components/ui/button.tsx";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip.tsx";
+import { Alert } from "@/components/ui/Alert.tsx";
 
 const statusQuery = graphql(`
   query AuthTokensStatusPanel {
@@ -108,10 +110,33 @@ export const AuthTokensStatusPanel: React.FC = () => {
         </Button>
         {testResult && <div className="text-xs opacity-70 mt-1">{testResult}</div>}
       </Row>
+      {!configured.listenBrainz.ok && (
+        <FixHelp
+          serviceName="ListenBrainz"
+          envVars={["ListenBrainz__ApiKey"]}
+          extra="Also set ListenBrainz username in Server settings if needed."
+        />
+      )}
       <TestRow label="YouTube" state={configured.youTube} query={testYouTubeQuery} />
+      {!configured.youTube.ok && (
+        <FixHelp serviceName="YouTube" envVars={["YouTube__ApiKey"]} />
+      )}
       <TestRow label="Spotify" state={configured.spotify} query={testSpotifyQuery} />
+      {!configured.spotify.ok && (
+        <FixHelp serviceName="Spotify" envVars={["Spotify__ClientId", "Spotify__ClientSecret"]} />
+      )}
       <TestRow label="Last.fm" state={configured.lastfm} query={testLastfmQuery} />
+      {!configured.lastfm.ok && (
+        <FixHelp serviceName="Last.fm" envVars={["Lastfm__ApiKey"]} />
+      )}
       <TestRow label="Fanart.tv" state={configured.fanart} query={testFanartQuery} />
+      {!configured.fanart.ok && (
+        <FixHelp
+          serviceName="Fanart.tv"
+          envVars={["Fanart__ApiKey"]}
+          extra="BaseAddress is optional; default will be used if omitted."
+        />
+      )}
     </div>
   );
 };
@@ -122,7 +147,25 @@ const Row: React.FC<{ label: string; ok: boolean; source?: string; children?: Re
       <div className="flex items-center gap-2">
         <span className={`inline-block h-2.5 w-2.5 rounded-full ${ok ? "bg-green-500" : "bg-zinc-400"}`} />
         <span className="text-sm">{label}</span>
-        {source && <span className="text-xs opacity-60">({source})</span>}
+        {source && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="text-xs opacity-60 cursor-help">({source})</span>
+            </TooltipTrigger>
+            <TooltipContent>
+              <div className="max-w-xs">
+                <div className="font-semibold mb-1">Configured source</div>
+                <div>
+                  {source === "appsettings"
+                    ? "Read from appsettings.development.json or environment variables."
+                    : source === "database"
+                    ? "Stored in server settings (database)."
+                    : "Not configured. Add credentials to appsettings or environment."}
+                </div>
+              </div>
+            </TooltipContent>
+          </Tooltip>
+        )}
       </div>
       <div className="flex items-center gap-2">{children}</div>
     </div>
@@ -165,6 +208,26 @@ const TestRow: React.FC<{
       </Button>
       {result && <div className="text-xs opacity-70 mt-1">{result}</div>}
     </Row>
+  );
+};
+
+const FixHelp: React.FC<{
+  serviceName: string;
+  envVars: string[];
+  extra?: string;
+}> = ({ serviceName, envVars, extra }) => {
+  return (
+    <Alert variant="warning" title={`${serviceName} is not configured`}>
+      <div className="space-y-2">
+        <div>Set the following environment variable(s) on the server:</div>
+        <ul className="list-disc pl-6">
+          {envVars.map((v) => (
+            <li key={v} className="font-mono text-xs">{v}</li>
+          ))}
+        </ul>
+        {extra && <div className="text-xs opacity-80">{extra}</div>}
+      </div>
+    </Alert>
   );
 };
 
