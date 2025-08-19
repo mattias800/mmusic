@@ -40,16 +40,16 @@ The user will create a git commit manually.
 
 ## New server settings
 
-* [ ] Add user roles, so some users can be admins
-* [ ] Add roles for:
-    * [ ] Allowing users to create playlists
-    * [ ] Allowing users to trigger downloads
-    * [ ] Allowing users to change user roles on other users
-    * [ ] Allowing users to see current downloads and queues page
-    * [ ] Allowing users to edit auth tokens for external services
-* [ ] Add a new page for administrating users.
-* [ ] Add UI for adding and editing users in the new page.
-* [ ] Add UI for changing user roles in the new page.
+* [x] Add user roles, so some users can be admins
+* [x] Add roles for:
+    * [x] Allowing users to create playlists
+    * [x] Allowing users to trigger downloads
+    * [x] Allowing users to change user roles on other users
+    * [x] Allowing users to see current downloads and queues page
+    * [x] Allowing users to edit auth tokens for external services
+* [x] Add a new page for administrating users.
+* [x] Add UI for adding and editing users in the new page.
+* [x] Add UI for changing user roles in the new page.
 
 ## Migrate appsettings.development.json to server settings
 * [ ] Move all appsettings.development.json to server settings, while still allowing appsettings.development.json to
