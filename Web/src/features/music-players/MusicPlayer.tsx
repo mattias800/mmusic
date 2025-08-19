@@ -30,6 +30,16 @@ import {
   VolumeX,
 } from "lucide-react";
 import { Tag } from "@/components/text/Tag.tsx";
+import {
+  loadMediaOnCast,
+  castPlay,
+  castPause,
+  castSeek,
+  castSetVolume,
+} from "@/features/casting/cast-sender.ts";
+import { useCast } from "@/features/casting/useCast.ts";
+import { CastButton } from "@/features/casting/CastButton.tsx";
+import { getCastAbsoluteUrl } from "@/features/casting/cast-url.ts";
 
 export interface MusicPlayerProps {}
 
@@ -53,16 +63,16 @@ export const MusicPlayer: React.FC<MusicPlayerProps> = () => {
   const [scrubValue, setScrubValue] = useState<number | null>(null);
   const [positionSec, setPositionSec] = useState(0);
   const [durationSec, setDurationSec] = useState(0);
+  const { isReady: castReady, hasSession: castSession } = useCast();
 
   const commitScrub = useCallback(() => {
     if (scrubValue != null) {
       setPositionSec(scrubValue);
-      if (audioRef.current) {
-        audioRef.current.currentTime = scrubValue;
-      }
+      if (castSession) castSeek(scrubValue);
+      else if (audioRef.current) audioRef.current.currentTime = scrubValue;
     }
     setScrubValue(null);
-  }, [scrubValue]);
+  }, [scrubValue, castSession]);
 
   const src = useMemo(
     () =>
@@ -74,17 +84,41 @@ export const MusicPlayer: React.FC<MusicPlayerProps> = () => {
     [currentTrack],
   );
 
-  useEffect(() => {
-    if (!audioRef.current) return;
-    audioRef.current.volume = volume;
-    audioRef.current.muted = muted;
-  }, [volume, muted]);
+  // Cast initialization handled by useCast
 
   useEffect(() => {
-    if (!audioRef.current) return;
-    if (isPlaying) audioRef.current.play().catch(() => {});
-    else audioRef.current.pause();
-  }, [isPlaying, src]);
+    if (castSession) {
+      castSetVolume(volume, muted);
+    } else if (audioRef.current) {
+      audioRef.current.volume = volume;
+      audioRef.current.muted = muted;
+    }
+  }, [volume, muted, castSession]);
+
+  useEffect(() => {
+    if (castSession) {
+      if (isPlaying) castPlay();
+      else castPause();
+    } else if (audioRef.current) {
+      if (isPlaying) audioRef.current.play().catch(() => {});
+      else audioRef.current.pause();
+    }
+  }, [isPlaying, src, castSession]);
+
+  useEffect(() => {
+    if (!castSession || !src || !currentTrack) return;
+    const absoluteUrl = getCastAbsoluteUrl(src);
+    loadMediaOnCast({
+      contentUrl: absoluteUrl,
+      title: currentTrack.title,
+      imageUrl: currentTrack.coverArtUrl,
+      contentType: "audio/mpeg",
+      autoplay: isPlaying,
+      startTime: positionSec,
+    }).catch(() => {});
+    // We do not depend on positionSec continuously to avoid reloading
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [castSession, src, currentTrack]);
 
   if (!isOpen) {
     return null;
@@ -136,6 +170,7 @@ export const MusicPlayer: React.FC<MusicPlayerProps> = () => {
             >
               <SkipBack className="h-5 w-5" />
             </Button>
+            {castReady && <CastButton className="h-10 w-10" />}
             {isPlaying ? (
               <Button
                 variant="default"
@@ -256,19 +291,21 @@ export const MusicPlayer: React.FC<MusicPlayerProps> = () => {
         </SheetContent>
       </Sheet>
 
-      <audio
-        ref={audioRef}
-        src={src}
-        autoPlay
-        onDurationChange={() => {
-          setDurationSec(audioRef.current?.duration ?? 0);
-        }}
-        onTimeUpdate={() => {
-          setPositionSec(audioRef.current?.currentTime ?? 0);
-        }}
-        onEnded={() => dispatch(musicPlayerSlice.actions.next())}
-        style={{ width: "100%" }}
-      />
+      {!castSession && (
+        <audio
+          ref={audioRef}
+          src={src}
+          autoPlay
+          onDurationChange={() => {
+            setDurationSec(audioRef.current?.duration ?? 0);
+          }}
+          onTimeUpdate={() => {
+            setPositionSec(audioRef.current?.currentTime ?? 0);
+          }}
+          onEnded={() => dispatch(musicPlayerSlice.actions.next())}
+          style={{ width: "100%" }}
+        />
+      )}
     </div>
   );
 };

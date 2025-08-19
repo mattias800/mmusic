@@ -25,6 +25,8 @@ export interface MusicPlayerState {
   isPlaying: boolean;
   volume: number; // 0..1
   muted: boolean;
+  // Whether playback is on a cast session; UI stores only for quick access
+  // Single source of truth remains CastContext at runtime
 }
 
 const initialState: MusicPlayerState = {
