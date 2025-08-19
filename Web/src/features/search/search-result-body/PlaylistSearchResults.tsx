@@ -40,7 +40,9 @@ export const PlaylistSearchResults: React.FC<PlaylistSearchResultsProps> = ({
         <PlaylistCard playlist={playlist} key={playlist.id} />
       )}
     >
-      {showMoreButtonVisible && <ShowMoreButton onClick={onClickMore} />}
+      {showMoreButtonVisible && (
+        <ShowMoreButton onClick={onClickMore} />
+      )}
     </SearchResultGroup>
   );
 };

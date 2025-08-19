@@ -141,10 +141,11 @@ export const loadMediaOnCast = async (params: LoadMediaParams) => {
   const chromeCast = window.chrome?.cast;
   if (!chromeCast?.media) throw new Error('Cast media API not ready');
   const mediaNs = chromeCast.media;
+  type MediaInfoLike = { streamType?: unknown; metadata?: unknown };
   const mediaInfo = new mediaNs.MediaInfo(
     params.contentUrl,
     params.contentType || 'audio/mpeg',
-  );
+  ) as MediaInfoLike;
   if (params.title || params.imageUrl) {
     const md = new mediaNs.MusicTrackMediaMetadata();
     if (params.title) (md as { title?: string }).title = params.title;
@@ -152,8 +153,7 @@ export const loadMediaOnCast = async (params: LoadMediaParams) => {
       (md as { images?: Array<unknown> }).images = [new chromeCast.Image(params.imageUrl)];
     (mediaInfo as { metadata?: unknown }).metadata = md;
   }
-  mediaInfo.streamType =
-    mediaNs.StreamType[params.streamType || 'BUFFERED'];
+  mediaInfo.streamType = mediaNs.StreamType[params.streamType || 'BUFFERED'];
 
   const request = new mediaNs.LoadRequest(mediaInfo) as { autoplay?: boolean; currentTime?: number };
   request.autoplay = params.autoplay ?? true;
