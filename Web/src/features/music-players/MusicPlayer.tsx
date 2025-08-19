@@ -38,6 +38,7 @@ import {
   castSetVolume,
 } from "@/features/casting/cast-sender.ts";
 import { useCast } from "@/features/casting/useCast.ts";
+import { useServerPublicBaseUrl } from "@/features/casting/useServerPublicBaseUrl.ts";
 import { CastButton } from "@/features/casting/CastButton.tsx";
 import { getCastAbsoluteUrl } from "@/features/casting/cast-url.ts";
 
@@ -64,6 +65,7 @@ export const MusicPlayer: React.FC<MusicPlayerProps> = () => {
   const [positionSec, setPositionSec] = useState(0);
   const [durationSec, setDurationSec] = useState(0);
   const { isReady: castReady, hasSession: castSession } = useCast();
+  const publicBaseUrl = useServerPublicBaseUrl();
 
   const commitScrub = useCallback(() => {
     if (scrubValue != null) {
@@ -107,7 +109,7 @@ export const MusicPlayer: React.FC<MusicPlayerProps> = () => {
 
   useEffect(() => {
     if (!castSession || !src || !currentTrack) return;
-    const absoluteUrl = getCastAbsoluteUrl(src);
+    const absoluteUrl = getCastAbsoluteUrl(src, publicBaseUrl);
     loadMediaOnCast({
       contentUrl: absoluteUrl,
       title: currentTrack.title,
