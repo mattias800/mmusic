@@ -1162,7 +1162,9 @@ export type Mutation = {
   updateDownloadSlotCount: UpdateDownloadSlotCountResult;
   updateLibraryPath: UpdateLibraryPathResult;
   updateListenBrainzSettings: UpdateListenBrainzSettingsResult;
+  updateProwlarrSettings: UpdateProwlarrSettingsResult;
   updatePublicBaseUrl: UpdatePublicBaseUrlResult;
+  updateQBittorrentSettings: UpdateQBittorrentSettingsResult;
   updateSoulSeekConnectionSettings: UpdateSoulSeekConnectionSettingsResult;
   updateSoulSeekNoDataTimeout: UpdateSoulSeekNoDataTimeoutResult;
   updateSoulSeekSearchTimeLimit: UpdateSoulSeekSearchTimeLimitResult;
@@ -1409,8 +1411,18 @@ export type MutationUpdateListenBrainzSettingsArgs = {
 };
 
 
+export type MutationUpdateProwlarrSettingsArgs = {
+  input: UpdateProwlarrSettingsInput;
+};
+
+
 export type MutationUpdatePublicBaseUrlArgs = {
   input: UpdatePublicBaseUrlInput;
+};
+
+
+export type MutationUpdateQBittorrentSettingsArgs = {
+  input: UpdateQBittorrentSettingsInput;
 };
 
 
@@ -1813,7 +1825,17 @@ export type ServerSettings = {
   listenBrainzApiKey: Scalars['String']['output'];
   listenBrainzTopTracksEnabled: Scalars['Boolean']['output'];
   listenBrainzUsername: Scalars['String']['output'];
+  prowlarrBaseUrl?: Maybe<Scalars['String']['output']>;
+  prowlarrEnableDetailedLogging: Scalars['Boolean']['output'];
+  prowlarrMaxConcurrentRequests: Scalars['Int']['output'];
+  prowlarrMaxRetries: Scalars['Int']['output'];
+  prowlarrRetryDelaySeconds: Scalars['Int']['output'];
+  prowlarrTestConnectivityFirst: Scalars['Boolean']['output'];
+  prowlarrTimeoutSeconds: Scalars['Int']['output'];
   publicBaseUrl: Scalars['String']['output'];
+  qBittorrentBaseUrl?: Maybe<Scalars['String']['output']>;
+  qBittorrentSavePath?: Maybe<Scalars['String']['output']>;
+  qBittorrentUsername?: Maybe<Scalars['String']['output']>;
   serverLibraryManifestStatus: ServerLibraryManifestStatus;
   soulSeekBatchDownloadingEnabled: Scalars['Boolean']['output'];
   soulSeekHost: Scalars['String']['output'];
@@ -2360,6 +2382,28 @@ export type UpdateListenBrainzSettingsSuccess = {
   success: Scalars['Boolean']['output'];
 };
 
+export type UpdateProwlarrSettingsError = {
+  __typename?: 'UpdateProwlarrSettingsError';
+  message: Scalars['String']['output'];
+};
+
+export type UpdateProwlarrSettingsInput = {
+  baseUrl?: InputMaybe<Scalars['String']['input']>;
+  enableDetailedLogging: Scalars['Boolean']['input'];
+  maxConcurrentRequests: Scalars['Int']['input'];
+  maxRetries: Scalars['Int']['input'];
+  retryDelaySeconds: Scalars['Int']['input'];
+  testConnectivityFirst: Scalars['Boolean']['input'];
+  timeoutSeconds: Scalars['Int']['input'];
+};
+
+export type UpdateProwlarrSettingsResult = UpdateProwlarrSettingsError | UpdateProwlarrSettingsSuccess;
+
+export type UpdateProwlarrSettingsSuccess = {
+  __typename?: 'UpdateProwlarrSettingsSuccess';
+  serverSettings: ServerSettings;
+};
+
 export type UpdatePublicBaseUrlError = {
   __typename?: 'UpdatePublicBaseUrlError';
   message: Scalars['String']['output'];
@@ -2373,6 +2417,24 @@ export type UpdatePublicBaseUrlResult = UpdatePublicBaseUrlError | UpdatePublicB
 
 export type UpdatePublicBaseUrlSuccess = {
   __typename?: 'UpdatePublicBaseUrlSuccess';
+  serverSettings: ServerSettings;
+};
+
+export type UpdateQBittorrentSettingsError = {
+  __typename?: 'UpdateQBittorrentSettingsError';
+  message: Scalars['String']['output'];
+};
+
+export type UpdateQBittorrentSettingsInput = {
+  baseUrl?: InputMaybe<Scalars['String']['input']>;
+  savePath?: InputMaybe<Scalars['String']['input']>;
+  username?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type UpdateQBittorrentSettingsResult = UpdateQBittorrentSettingsError | UpdateQBittorrentSettingsSuccess;
+
+export type UpdateQBittorrentSettingsSuccess = {
+  __typename?: 'UpdateQBittorrentSettingsSuccess';
   serverSettings: ServerSettings;
 };
 
@@ -3333,12 +3395,36 @@ export type LibraryPathForm_ServerSettingsFragment = (
   & { ' $fragmentRefs'?: { 'ChangeLibraryFolderControl_ServerSettingsFragment': ChangeLibraryFolderControl_ServerSettingsFragment } }
 ) & { ' $fragmentName'?: 'LibraryPathForm_ServerSettingsFragment' };
 
+export type ProwlarrSettings_QueryQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type ProwlarrSettings_QueryQuery = { __typename?: 'Query', serverSettings: { __typename?: 'ServerSettings', id: string, prowlarrBaseUrl?: string | null, prowlarrTimeoutSeconds: number, prowlarrMaxRetries: number, prowlarrRetryDelaySeconds: number, prowlarrTestConnectivityFirst: boolean, prowlarrEnableDetailedLogging: boolean, prowlarrMaxConcurrentRequests: number } };
+
+export type UpdateProwlarrSettingsMutationVariables = Exact<{
+  input: UpdateProwlarrSettingsInput;
+}>;
+
+
+export type UpdateProwlarrSettingsMutation = { __typename?: 'Mutation', updateProwlarrSettings: { __typename: 'UpdateProwlarrSettingsError', message: string } | { __typename: 'UpdateProwlarrSettingsSuccess', serverSettings: { __typename?: 'ServerSettings', id: string, prowlarrBaseUrl?: string | null, prowlarrTimeoutSeconds: number, prowlarrMaxRetries: number, prowlarrRetryDelaySeconds: number, prowlarrTestConnectivityFirst: boolean, prowlarrEnableDetailedLogging: boolean, prowlarrMaxConcurrentRequests: number } } };
+
 export type UpdatePublicBaseUrlMutationVariables = Exact<{
   input: UpdatePublicBaseUrlInput;
 }>;
 
 
 export type UpdatePublicBaseUrlMutation = { __typename?: 'Mutation', updatePublicBaseUrl: { __typename?: 'UpdatePublicBaseUrlError', message: string } | { __typename?: 'UpdatePublicBaseUrlSuccess', serverSettings: { __typename?: 'ServerSettings', id: string, publicBaseUrl: string } } };
+
+export type QBittorrentSettings_QueryQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type QBittorrentSettings_QueryQuery = { __typename?: 'Query', serverSettings: { __typename?: 'ServerSettings', id: string, qBittorrentBaseUrl?: string | null, qBittorrentUsername?: string | null, qBittorrentSavePath?: string | null } };
+
+export type UpdateQBittorrentSettingsMutationVariables = Exact<{
+  input: UpdateQBittorrentSettingsInput;
+}>;
+
+
+export type UpdateQBittorrentSettingsMutation = { __typename?: 'Mutation', updateQBittorrentSettings: { __typename: 'UpdateQBittorrentSettingsError', message: string } | { __typename: 'UpdateQBittorrentSettingsSuccess', serverSettings: { __typename?: 'ServerSettings', id: string, qBittorrentBaseUrl?: string | null, qBittorrentUsername?: string | null, qBittorrentSavePath?: string | null } } };
 
 export type SoulSeekConnectionSettings_QueryQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -3708,7 +3794,11 @@ export const SearchResultReleaseSearchDocument = {"kind":"Document","definitions
 export const SearchResultTrackSearchDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"SearchResultTrackSearch"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"text"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"serverLibrary"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"searchTracks"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"searchTerm"},"value":{"kind":"Variable","name":{"kind":"Name","value":"text"}}},{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"IntValue","value":"5"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"trackLength"}},{"kind":"Field","name":{"kind":"Name","value":"release"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"coverArtUrl"}},{"kind":"Field","name":{"kind":"Name","value":"folderName"}},{"kind":"Field","name":{"kind":"Name","value":"artistName"}},{"kind":"Field","name":{"kind":"Name","value":"artist"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}}]}}]}}]}}]}}]} as unknown as DocumentNode<SearchResultTrackSearchQuery, SearchResultTrackSearchQueryVariables>;
 export const UpdateDownloadPathDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"UpdateDownloadPath"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"newDownloadPath"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"updateDownloadPath"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"newDownloadPath"},"value":{"kind":"Variable","name":{"kind":"Name","value":"newDownloadPath"}}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"UpdateDownloadPathSuccess"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"serverSettings"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"downloadPath"}}]}}]}}]}}]}}]} as unknown as DocumentNode<UpdateDownloadPathMutation, UpdateDownloadPathMutationVariables>;
 export const UpdateDownloadSlotCountDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"UpdateDownloadSlotCount"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"UpdateDownloadSlotCountInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"updateDownloadSlotCount"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"UpdateDownloadSlotCountSuccess"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"serverSettings"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"downloadSlotCount"}}]}}]}},{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"UpdateDownloadSlotCountError"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"message"}}]}}]}}]}}]} as unknown as DocumentNode<UpdateDownloadSlotCountMutation, UpdateDownloadSlotCountMutationVariables>;
+export const ProwlarrSettings_QueryDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"ProwlarrSettings_Query"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"serverSettings"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"prowlarrBaseUrl"}},{"kind":"Field","name":{"kind":"Name","value":"prowlarrTimeoutSeconds"}},{"kind":"Field","name":{"kind":"Name","value":"prowlarrMaxRetries"}},{"kind":"Field","name":{"kind":"Name","value":"prowlarrRetryDelaySeconds"}},{"kind":"Field","name":{"kind":"Name","value":"prowlarrTestConnectivityFirst"}},{"kind":"Field","name":{"kind":"Name","value":"prowlarrEnableDetailedLogging"}},{"kind":"Field","name":{"kind":"Name","value":"prowlarrMaxConcurrentRequests"}}]}}]}}]} as unknown as DocumentNode<ProwlarrSettings_QueryQuery, ProwlarrSettings_QueryQueryVariables>;
+export const UpdateProwlarrSettingsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"UpdateProwlarrSettings"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"UpdateProwlarrSettingsInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"updateProwlarrSettings"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"__typename"}},{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"UpdateProwlarrSettingsSuccess"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"serverSettings"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"prowlarrBaseUrl"}},{"kind":"Field","name":{"kind":"Name","value":"prowlarrTimeoutSeconds"}},{"kind":"Field","name":{"kind":"Name","value":"prowlarrMaxRetries"}},{"kind":"Field","name":{"kind":"Name","value":"prowlarrRetryDelaySeconds"}},{"kind":"Field","name":{"kind":"Name","value":"prowlarrTestConnectivityFirst"}},{"kind":"Field","name":{"kind":"Name","value":"prowlarrEnableDetailedLogging"}},{"kind":"Field","name":{"kind":"Name","value":"prowlarrMaxConcurrentRequests"}}]}}]}},{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"UpdateProwlarrSettingsError"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"message"}}]}}]}}]}}]} as unknown as DocumentNode<UpdateProwlarrSettingsMutation, UpdateProwlarrSettingsMutationVariables>;
 export const UpdatePublicBaseUrlDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"UpdatePublicBaseUrl"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"UpdatePublicBaseUrlInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"updatePublicBaseUrl"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"UpdatePublicBaseUrlSuccess"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"serverSettings"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"publicBaseUrl"}}]}}]}},{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"UpdatePublicBaseUrlError"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"message"}}]}}]}}]}}]} as unknown as DocumentNode<UpdatePublicBaseUrlMutation, UpdatePublicBaseUrlMutationVariables>;
+export const QBittorrentSettings_QueryDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"QBittorrentSettings_Query"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"serverSettings"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"qBittorrentBaseUrl"}},{"kind":"Field","name":{"kind":"Name","value":"qBittorrentUsername"}},{"kind":"Field","name":{"kind":"Name","value":"qBittorrentSavePath"}}]}}]}}]} as unknown as DocumentNode<QBittorrentSettings_QueryQuery, QBittorrentSettings_QueryQueryVariables>;
+export const UpdateQBittorrentSettingsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"UpdateQBittorrentSettings"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"UpdateQBittorrentSettingsInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"updateQBittorrentSettings"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"__typename"}},{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"UpdateQBittorrentSettingsSuccess"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"serverSettings"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"qBittorrentBaseUrl"}},{"kind":"Field","name":{"kind":"Name","value":"qBittorrentUsername"}},{"kind":"Field","name":{"kind":"Name","value":"qBittorrentSavePath"}}]}}]}},{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"UpdateQBittorrentSettingsError"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"message"}}]}}]}}]}}]} as unknown as DocumentNode<UpdateQBittorrentSettingsMutation, UpdateQBittorrentSettingsMutationVariables>;
 export const SoulSeekConnectionSettings_QueryDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"SoulSeekConnectionSettings_Query"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"serverSettings"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"soulSeekHost"}},{"kind":"Field","name":{"kind":"Name","value":"soulSeekPort"}},{"kind":"Field","name":{"kind":"Name","value":"soulSeekUsername"}}]}}]}}]} as unknown as DocumentNode<SoulSeekConnectionSettings_QueryQuery, SoulSeekConnectionSettings_QueryQueryVariables>;
 export const UpdateSoulSeekConnectionSettingsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"UpdateSoulSeekConnectionSettings"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"UpdateSoulSeekConnectionSettingsInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"updateSoulSeekConnectionSettings"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"__typename"}},{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"UpdateSoulSeekConnectionSettingsSuccess"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"serverSettings"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"soulSeekHost"}},{"kind":"Field","name":{"kind":"Name","value":"soulSeekPort"}},{"kind":"Field","name":{"kind":"Name","value":"soulSeekUsername"}}]}}]}},{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"UpdateSoulSeekConnectionSettingsError"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"message"}}]}}]}}]}}]} as unknown as DocumentNode<UpdateSoulSeekConnectionSettingsMutation, UpdateSoulSeekConnectionSettingsMutationVariables>;
 export const SoulSeekSettings_QueryDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"SoulSeekSettings_Query"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"serverSettings"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"soulSeekSearchTimeLimitSeconds"}}]}}]}}]} as unknown as DocumentNode<SoulSeekSettings_QueryQuery, SoulSeekSettings_QueryQueryVariables>;

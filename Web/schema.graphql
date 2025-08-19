@@ -976,7 +976,9 @@ type Mutation {
   updateDownloadSlotCount(input: UpdateDownloadSlotCountInput!): UpdateDownloadSlotCountResult!
   updateLibraryPath(input: UpdateLibraryPathInput!): UpdateLibraryPathResult!
   updateListenBrainzSettings(input: UpdateListenBrainzSettingsInput!): UpdateListenBrainzSettingsResult!
+  updateProwlarrSettings(input: UpdateProwlarrSettingsInput!): UpdateProwlarrSettingsResult!
   updatePublicBaseUrl(input: UpdatePublicBaseUrlInput!): UpdatePublicBaseUrlResult!
+  updateQBittorrentSettings(input: UpdateQBittorrentSettingsInput!): UpdateQBittorrentSettingsResult!
   updateSoulSeekConnectionSettings(input: UpdateSoulSeekConnectionSettingsInput!): UpdateSoulSeekConnectionSettingsResult!
   updateSoulSeekNoDataTimeout(input: UpdateSoulSeekNoDataTimeoutInput!): UpdateSoulSeekNoDataTimeoutResult!
   updateSoulSeekSearchTimeLimit(seconds: Int!): UpdateSoulSeekSearchTimeLimitResult!
@@ -1266,7 +1268,17 @@ type ServerSettings {
   listenBrainzApiKey: String!
   listenBrainzTopTracksEnabled: Boolean!
   listenBrainzUsername: String!
+  prowlarrBaseUrl: String
+  prowlarrEnableDetailedLogging: Boolean!
+  prowlarrMaxConcurrentRequests: Int!
+  prowlarrMaxRetries: Int!
+  prowlarrRetryDelaySeconds: Int!
+  prowlarrTestConnectivityFirst: Boolean!
+  prowlarrTimeoutSeconds: Int!
   publicBaseUrl: String!
+  qBittorrentBaseUrl: String
+  qBittorrentSavePath: String
+  qBittorrentUsername: String
   serverLibraryManifestStatus: ServerLibraryManifestStatus!
   soulSeekBatchDownloadingEnabled: Boolean!
   soulSeekHost: String!
@@ -1679,6 +1691,26 @@ type UpdateListenBrainzSettingsSuccess {
   success: Boolean!
 }
 
+type UpdateProwlarrSettingsError {
+  message: String!
+}
+
+input UpdateProwlarrSettingsInput {
+  baseUrl: String
+  enableDetailedLogging: Boolean!
+  maxConcurrentRequests: Int!
+  maxRetries: Int!
+  retryDelaySeconds: Int!
+  testConnectivityFirst: Boolean!
+  timeoutSeconds: Int!
+}
+
+union UpdateProwlarrSettingsResult = UpdateProwlarrSettingsError | UpdateProwlarrSettingsSuccess
+
+type UpdateProwlarrSettingsSuccess {
+  serverSettings: ServerSettings!
+}
+
 type UpdatePublicBaseUrlError {
   message: String!
 }
@@ -1690,6 +1722,22 @@ input UpdatePublicBaseUrlInput {
 union UpdatePublicBaseUrlResult = UpdatePublicBaseUrlError | UpdatePublicBaseUrlSuccess
 
 type UpdatePublicBaseUrlSuccess {
+  serverSettings: ServerSettings!
+}
+
+type UpdateQBittorrentSettingsError {
+  message: String!
+}
+
+input UpdateQBittorrentSettingsInput {
+  baseUrl: String
+  savePath: String
+  username: String
+}
+
+union UpdateQBittorrentSettingsResult = UpdateQBittorrentSettingsError | UpdateQBittorrentSettingsSuccess
+
+type UpdateQBittorrentSettingsSuccess {
   serverSettings: ServerSettings!
 }
 

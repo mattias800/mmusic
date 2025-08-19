@@ -16,6 +16,8 @@ import { AlertTriangle, Cog, Settings } from "lucide-react";
 import { PublicBaseUrlForm } from "@/features/settings/PublicBaseUrlForm.tsx";
 import { graphql } from "@/gql";
 import { SoulSeekConnectionForm } from "@/features/settings/SoulSeekConnectionForm.tsx";
+import { ProwlarrSettingsForm } from "@/features/settings/ProwlarrSettingsForm.tsx";
+import { QBittorrentSettingsForm } from "@/features/settings/QBittorrentSettingsForm.tsx";
 
 export interface SettingsPageProps {}
 
@@ -116,6 +118,24 @@ export const SettingsPage: React.FC<SettingsPageProps> = () => {
           iconBgColor="bg-purple-500/20"
         >
           <SoulSeekConnectionForm />
+        </GlassCard>
+
+        {/* Prowlarr Settings */}
+        <GlassCard
+          title="Prowlarr"
+          icon={Settings}
+          iconBgColor="bg-green-500/20"
+        >
+          <ProwlarrSettingsForm />
+        </GlassCard>
+
+        {/* qBittorrent Settings */}
+        <GlassCard
+          title="qBittorrent"
+          icon={Settings}
+          iconBgColor="bg-yellow-500/20"
+        >
+          <QBittorrentSettingsForm />
         </GlassCard>
 
         {/* Public Base URL for Casting */}
