@@ -51,6 +51,10 @@ The user will create a git commit manually.
 * [x] Add UI for adding and editing users in the new page.
 * [x] Add UI for changing user roles in the new page.
 
+## Casting
+
+* [x] Add Public Base URL server setting for Google Cast and use it in the web player
+
 ## Migrate appsettings.development.json to server settings
 
 * [ ] Add server settings event sourcing events and project model for all settings available in

@@ -15,6 +15,7 @@ import {
 import { AlertTriangle, Cog, Settings } from "lucide-react";
 import { PublicBaseUrlForm } from "@/features/settings/PublicBaseUrlForm.tsx";
 import { graphql } from "@/gql";
+import { SoulSeekConnectionForm } from "@/features/settings/SoulSeekConnectionForm.tsx";
 
 export interface SettingsPageProps {}
 
@@ -106,6 +107,15 @@ export const SettingsPage: React.FC<SettingsPageProps> = () => {
           iconBgColor="bg-purple-500/20"
         >
           <TopTracksServiceSettingsForm />
+        </GlassCard>
+
+        {/* SoulSeek Connection Settings */}
+        <GlassCard
+          title="SoulSeek Connection"
+          icon={Settings}
+          iconBgColor="bg-purple-500/20"
+        >
+          <SoulSeekConnectionForm />
         </GlassCard>
 
         {/* Public Base URL for Casting */}

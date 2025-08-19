@@ -28,6 +28,11 @@ public record ServerSettings([property: GraphQLIgnore] DbServerSettings Model)
 
     public string PublicBaseUrl() => Model.PublicBaseUrl;
 
+    // SoulSeek connection settings (non-secret)
+    public string SoulSeekHost() => Model.SoulSeekHost;
+    public int SoulSeekPort() => Model.SoulSeekPort;
+    public string SoulSeekUsername() => Model.SoulSeekUsername;
+
     public string ListenBrainzUsername() => Model.ListenBrainzUsername;
 
     public string ListenBrainzApiKey() => Model.ListenBrainzApiKey;

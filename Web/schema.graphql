@@ -977,6 +977,7 @@ type Mutation {
   updateLibraryPath(input: UpdateLibraryPathInput!): UpdateLibraryPathResult!
   updateListenBrainzSettings(input: UpdateListenBrainzSettingsInput!): UpdateListenBrainzSettingsResult!
   updatePublicBaseUrl(input: UpdatePublicBaseUrlInput!): UpdatePublicBaseUrlResult!
+  updateSoulSeekConnectionSettings(input: UpdateSoulSeekConnectionSettingsInput!): UpdateSoulSeekConnectionSettingsResult!
   updateSoulSeekNoDataTimeout(input: UpdateSoulSeekNoDataTimeoutInput!): UpdateSoulSeekNoDataTimeoutResult!
   updateSoulSeekSearchTimeLimit(seconds: Int!): UpdateSoulSeekSearchTimeLimitResult!
   updateTopTracksServiceSettings(input: UpdateTopTracksServiceSettingsInput!): UpdateTopTracksServiceSettingsResult!
@@ -1268,10 +1269,13 @@ type ServerSettings {
   publicBaseUrl: String!
   serverLibraryManifestStatus: ServerLibraryManifestStatus!
   soulSeekBatchDownloadingEnabled: Boolean!
+  soulSeekHost: String!
   soulSeekLibrarySharingEnabled: Boolean!
   soulSeekListeningPort: Int!
   soulSeekNoDataTimeoutSeconds: Int!
+  soulSeekPort: Int!
   soulSeekSearchTimeLimitSeconds: Int!
+  soulSeekUsername: String!
   spotifyTopTracksEnabled: Boolean!
   storageStats: StorageStats
 }
@@ -1686,6 +1690,22 @@ input UpdatePublicBaseUrlInput {
 union UpdatePublicBaseUrlResult = UpdatePublicBaseUrlError | UpdatePublicBaseUrlSuccess
 
 type UpdatePublicBaseUrlSuccess {
+  serverSettings: ServerSettings!
+}
+
+type UpdateSoulSeekConnectionSettingsError {
+  message: String!
+}
+
+input UpdateSoulSeekConnectionSettingsInput {
+  host: String!
+  port: Int!
+  username: String!
+}
+
+union UpdateSoulSeekConnectionSettingsResult = UpdateSoulSeekConnectionSettingsError | UpdateSoulSeekConnectionSettingsSuccess
+
+type UpdateSoulSeekConnectionSettingsSuccess {
   serverSettings: ServerSettings!
 }
 

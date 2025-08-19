@@ -37,6 +37,25 @@ public class DbServerSettings
     public bool ListenBrainzTopTracksEnabled { get; set; } = true;  // Primary source
     public bool SpotifyTopTracksEnabled { get; set; } = false;      // Disabled by default
     public bool LastFmTopTracksEnabled { get; set; } = false;      // Disabled by default
+
+    // SoulSeek connection (non-secret settings)
+    public string SoulSeekHost { get; set; } = "vps.slsknet.org";
+    public int SoulSeekPort { get; set; } = 2271;
+    public string SoulSeekUsername { get; set; } = string.Empty;
+
+    // Prowlarr (non-secret settings; API key should come from env/secret store)
+    public string? ProwlarrBaseUrl { get; set; }
+    public int ProwlarrTimeoutSeconds { get; set; } = 30;
+    public int ProwlarrMaxRetries { get; set; } = 2;
+    public int ProwlarrRetryDelaySeconds { get; set; } = 1;
+    public bool ProwlarrTestConnectivityFirst { get; set; } = true;
+    public bool ProwlarrEnableDetailedLogging { get; set; } = false;
+    public int ProwlarrMaxConcurrentRequests { get; set; } = 1;
+
+    // qBittorrent (non-secret settings; password should come from env/secret store)
+    public string? QBittorrentBaseUrl { get; set; }
+    public string? QBittorrentUsername { get; set; }
+    public string? QBittorrentSavePath { get; set; }
 }
 
 public static class DefaultDbServerSettingsProvider
@@ -62,6 +81,19 @@ public static class DefaultDbServerSettingsProvider
             ListenBrainzTopTracksEnabled = true,
             SpotifyTopTracksEnabled = false,
             LastFmTopTracksEnabled = false,
+            SoulSeekHost = "vps.slsknet.org",
+            SoulSeekPort = 2271,
+            SoulSeekUsername = "",
+            ProwlarrBaseUrl = null,
+            ProwlarrTimeoutSeconds = 30,
+            ProwlarrMaxRetries = 2,
+            ProwlarrRetryDelaySeconds = 1,
+            ProwlarrTestConnectivityFirst = true,
+            ProwlarrEnableDetailedLogging = false,
+            ProwlarrMaxConcurrentRequests = 1,
+            QBittorrentBaseUrl = null,
+            QBittorrentUsername = null,
+            QBittorrentSavePath = null,
         };
     }
 }

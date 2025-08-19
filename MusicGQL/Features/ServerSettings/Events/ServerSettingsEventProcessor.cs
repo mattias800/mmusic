@@ -28,6 +28,9 @@ public class ServerSettingsEventProcessor
             case PublicBaseUrlUpdated publicBaseUrlUpdated:
                 await HandlePublicBaseUrlUpdated(publicBaseUrlUpdated, dbContext);
                 break;
+            case SoulSeekConnectionUpdated soulSeekConn:
+                await HandleSoulSeekConnectionUpdated(soulSeekConn, dbContext);
+                break;
         }
     }
 
@@ -142,6 +145,27 @@ public class ServerSettingsEventProcessor
         }
 
         serverSettings.PublicBaseUrl = updated.NewPublicBaseUrl;
+        await dbContext.SaveChangesAsync();
+    }
+
+    private async Task HandleSoulSeekConnectionUpdated(
+        SoulSeekConnectionUpdated updated,
+        EventDbContext dbContext
+    )
+    {
+        var serverSettings = dbContext.ServerSettings.FirstOrDefault(s =>
+            s.Id == DefaultDbServerSettingsProvider.ServerSettingsSingletonId
+        );
+
+        if (serverSettings is null)
+        {
+            serverSettings = DefaultDbServerSettingsProvider.GetDefault();
+            dbContext.ServerSettings.Add(serverSettings);
+        }
+
+        serverSettings.SoulSeekHost = updated.Host;
+        serverSettings.SoulSeekPort = updated.Port;
+        serverSettings.SoulSeekUsername = updated.Username;
         await dbContext.SaveChangesAsync();
     }
 }
