@@ -57,14 +57,14 @@ The user will create a git commit manually.
 
 ## Migrate appsettings.development.json to server settings
 
-* [ ] Add server settings event sourcing events and project model for all settings available in
+* [x] Add server settings event sourcing events and project model for all settings available in
   appsettings.development.json for the following self-hosted services:
-    * [ ] SoulSeek
-    * [ ] Prowlarr
-    * [ ] QBittorrent
-* [ ] Mutations and queries in GraphQL for changing reading and writing these settings.
-* [ ] Add UI for editing server settings in the new page.
-* [ ] Add ability to test these settings in the new page, so the user can easily verify that they are working.
+    * [x] SoulSeek
+    * [x] Prowlarr
+    * [x] QBittorrent
+* [x] Mutations and queries in GraphQL for changing reading and writing these settings.
+* [x] Add UI for editing server settings in the new page.
+* [x] Add ability to test these settings in the new page, so the user can easily verify that they are working.
 
 ## Show status of auth tokens
 
