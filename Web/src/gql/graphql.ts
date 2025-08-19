@@ -1174,7 +1174,6 @@ export type Mutation = {
   updateDownloadPath: UpdateDownloadPathResult;
   updateDownloadSlotCount: UpdateDownloadSlotCountResult;
   updateLibraryPath: UpdateLibraryPathResult;
-  updateListenBrainzSettings: UpdateListenBrainzSettingsResult;
   updateProwlarrSettings: UpdateProwlarrSettingsResult;
   updatePublicBaseUrl: UpdatePublicBaseUrlResult;
   updateQBittorrentSettings: UpdateQBittorrentSettingsResult;
@@ -1416,11 +1415,6 @@ export type MutationUpdateDownloadSlotCountArgs = {
 
 export type MutationUpdateLibraryPathArgs = {
   input: UpdateLibraryPathInput;
-};
-
-
-export type MutationUpdateListenBrainzSettingsArgs = {
-  input: UpdateListenBrainzSettingsInput;
 };
 
 
@@ -1842,10 +1836,8 @@ export type ServerSettings = {
   lastFmTopTracksEnabled: Scalars['Boolean']['output'];
   lastfmConfiguredSource: Scalars['String']['output'];
   libraryPath: Scalars['String']['output'];
-  listenBrainzApiKey: Scalars['String']['output'];
   listenBrainzConfiguredSource: Scalars['String']['output'];
   listenBrainzTopTracksEnabled: Scalars['Boolean']['output'];
-  listenBrainzUsername: Scalars['String']['output'];
   prowlarrBaseUrl?: Maybe<Scalars['String']['output']>;
   prowlarrEnableDetailedLogging: Scalars['Boolean']['output'];
   prowlarrMaxConcurrentRequests: Scalars['Int']['output'];
@@ -2386,23 +2378,6 @@ export type UpdateLibraryPathResult = UpdateLibraryPathSuccess;
 export type UpdateLibraryPathSuccess = {
   __typename?: 'UpdateLibraryPathSuccess';
   serverSettings: ServerSettings;
-};
-
-export type UpdateListenBrainzSettingsError = {
-  __typename?: 'UpdateListenBrainzSettingsError';
-  message: Scalars['String']['output'];
-};
-
-export type UpdateListenBrainzSettingsInput = {
-  apiKey: Scalars['String']['input'];
-  username: Scalars['String']['input'];
-};
-
-export type UpdateListenBrainzSettingsResult = UpdateListenBrainzSettingsError | UpdateListenBrainzSettingsSuccess;
-
-export type UpdateListenBrainzSettingsSuccess = {
-  __typename?: 'UpdateListenBrainzSettingsSuccess';
-  success: Scalars['Boolean']['output'];
 };
 
 export type UpdateProwlarrSettingsError = {
