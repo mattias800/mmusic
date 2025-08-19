@@ -98,14 +98,17 @@ The user will create a git commit manually.
 ## Keep track of online clients
 
 * [ ] For each user, keep track of online clients. Do not store in database, just in memory.
-* [ ] Add ability to set a name for the client. For example, "Chrome on Windows". Or "iPhone app". The names should have sane defaults, and setting them should be optional.
+* [ ] Add ability to set a name for the client. For example, "Chrome on Windows". Or "iPhone app". The names should have
+  sane defaults, and setting them should be optional.
 * [ ] Add a UI for showing online clients.
 
 ## Trigger playback of track from backend
+
 * [ ] Backend should be able to trigger playback of a track on a client.
-  * I am not sure how this should be implemented. Maybe GraphQL subscription?
+    * I am not sure how this should be implemented. Maybe GraphQL subscription?
 * [ ] The user should be able to allow or disallow triggering playback from the backend per client.
-  * The user should not have to interact with the client for playback to start, if backend triggers playback and it is allowed by setting.
+    * The user should not have to interact with the client for playback to start, if backend triggers playback and it is
+      allowed by setting.
 
 ## MCP server
 
@@ -116,7 +119,8 @@ The user will create a git commit manually.
 * [ ] Agents should be able to fetch all tracks in a release.
 * [ ] Agents should be able to list all connected clients.
 * [ ] Agents should be able to start playback on any connected client that allows it.
-* [ ] Agents should be able to trigger downloads of all releases for an artist, all releases of a type (album, ep, single) for an artist, or a particular release for artist.
+* [ ] Agents should be able to trigger downloads of all releases for an artist, all releases of a type (album, ep,
+  single) for an artist, or a particular release for artist.
 * [ ] Agents should be able to import new artists to the server library.
 * [ ] Agents should be able to create new playlists, and give them names.
 * [ ] Agents should be able to add tracks to playlists. Any track the user mentions, or currently playing track.
@@ -124,3 +128,6 @@ The user will create a git commit manually.
 * [ ] Agents should be able to push tracks to the playback queue.
 * [ ] Agents should be able to check the currently playing track on any client.
 * [ ] Agents should be able to get top tracks on an artist.
+* [ ] Add a UI for the MCP server. Add anything that might be useful to the user.
+* [ ] Add logging of MCP calls
+* [ ] Add information to the user on how to use the MCP server.
