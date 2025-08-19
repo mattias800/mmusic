@@ -84,12 +84,12 @@ The user will create a git commit manually.
 
 * When starting the server for the first time, the user is presented with a couple of steps.
 
-* [ ] Show a welcome page with a link to the documentation, Github, etc.
-* [ ] Show status for auth tokens for external services. This should be the same React component as in status page, so that we get the same UI and information if setup is not correct.
-* [ ] Inform the server admin that the connection to these external services can be tested from the status page.
-* [ ] Also inform that integration with download services must be configured in the server settings page.
+* [x] Show a welcome page with a link to the documentation, Github, etc.
+* [x] Show status for auth tokens for external services. This should be the same React component as in status page, so that we get the same UI and information if setup is not correct.
+* [x] Inform the server admin that the connection to these external services can be tested from the status page.
+* [x] Also inform that integration with download services must be configured in the server settings page.
 
-* [ ] Ask the user to create an admin account. This page is already done, just make sure it comes last in this wizard.
+* [x] Ask the user to create an admin account. This page is already done, just make sure it comes last in this wizard.
 
 ## Keep track of online clients
 
