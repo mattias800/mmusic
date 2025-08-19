@@ -1,7 +1,7 @@
 # TODO
 
 After each task is done, compile the backend to see that there are no errors.
-If there are updates to GraphQL schema, we need to restart the backend and 
+If there are updates to GraphQL schema, we need to restart the backend and
 run "bun types:once" while the backend is running. Ask user for help if needed.
 
 If there are changes to the database, make sure to update migrations.
@@ -52,9 +52,41 @@ The user will create a git commit manually.
 * [x] Add UI for changing user roles in the new page.
 
 ## Migrate appsettings.development.json to server settings
-* [ ] Move all appsettings.development.json to server settings, while still allowing appsettings.development.json to
-  override server settings, for local development. This should be done in ServerSettingsAccessor.
-* [ ] Limit access to server settings to users with admin role. Both in UI, and in the API. Authenticate the user in
-  both queries and mutations.
-* [ ] Add UI for editing the new server settings from appsettings.development.json
-* [ ] Connection strings should be read from a config file, and not be stored in server settings.
+
+* [ ] Add server settings event sourcing events and project model for all settings available in
+  appsettings.development.json for the following self-hosted services:
+    * [ ] SoulSeek
+    * [ ] Prowlarr
+    * [ ] QBittorrent
+* [ ] Mutations and queries in GraphQL for changing reading and writing these settings.
+* [ ] Add UI for editing server settings in the new page.
+* [ ] Add ability to test these settings in the new page, so the user can easily verify that they are working.
+
+## Show status of auth tokens
+
+* [ ] Add a status page in server settings, that can show the status of auth tokens.
+    * Tokens cannot be edited, the server admin must add these as env variables.
+* [ ] Add a UI for testing connectivity to these services.
+
+* This applies to the following external services:
+    * [ ] ListenBrainz
+    * [ ] YouTube
+    * [ ] Spotify
+    * [ ] Spotify
+    * [ ] Lastfm
+    * [ ] Fanart
+
+## Installation wizard
+
+* When starting the server for the first time, the user is presented with a couple of steps.
+
+1. Show a welcome page with a link to the documentation, Github, etc.
+2. Show status for auth tokens for external services.
+
+* If token exists, show a check mark.
+* For each service, show a box with some information about what the service is used for.
+* UI should be as beautiful as the rest of the app.
+* Inform the server admin that the connection to these external services can be tested from the status page.
+* Also inform that integration with download services must be configured in the server settings page.
+
+3. Ask the user to create an admin account. This page is already done, just make sure it comes last in this wizard.
