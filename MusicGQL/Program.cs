@@ -577,7 +577,8 @@ builder.Services.AddFanArtTVClient(options =>
 {
     var fanartOptions = builder.Configuration.GetSection("Fanart").Get<FanartOptions>();
     options.ApiKey = fanartOptions?.ApiKey;
-    options.BaseAddress = fanartOptions?.BaseAddress;
+    // BaseAddress optional; when not provided, client default is used
+    options.BaseAddress = string.IsNullOrWhiteSpace(fanartOptions?.BaseAddress) ? null : fanartOptions!.BaseAddress;
 });
 
 builder.Services.AddHostedService<ScheduledTaskPublisher>();

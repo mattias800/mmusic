@@ -18,6 +18,7 @@ import { graphql } from "@/gql";
 import { SoulSeekConnectionForm } from "@/features/settings/SoulSeekConnectionForm.tsx";
 import { ProwlarrSettingsForm } from "@/features/settings/ProwlarrSettingsForm.tsx";
 import { QBittorrentSettingsForm } from "@/features/settings/QBittorrentSettingsForm.tsx";
+import { AuthTokensStatusPanel } from "@/features/settings/AuthTokensStatusPanel.tsx";
 
 export interface SettingsPageProps {}
 
@@ -32,6 +33,11 @@ const settingsPageQuery = graphql(`
       spotifyTopTracksEnabled
       lastFmTopTracksEnabled
       publicBaseUrl
+      isListenBrainzConfigured
+      isYouTubeConfigured
+      isSpotifyConfigured
+      isLastfmConfigured
+      isFanartConfigured
     }
   }
 `);
@@ -145,6 +151,15 @@ export const SettingsPage: React.FC<SettingsPageProps> = () => {
           iconBgColor="bg-blue-500/20"
         >
           <PublicBaseUrlForm serverSettings={data.serverSettings} />
+        </GlassCard>
+
+        {/* Auth Tokens Status */}
+        <GlassCard
+          title="External Services Tokens"
+          icon={Settings}
+          iconBgColor="bg-blue-500/20"
+        >
+          <AuthTokensStatusPanel />
         </GlassCard>
       </div>
 

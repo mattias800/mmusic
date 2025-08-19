@@ -2,6 +2,11 @@ using MusicGQL.Features.ServerSettings.Db;
 using System.IO;
 using System.Runtime.InteropServices;
 using MusicGQL.Features.ServerLibrary;
+using Microsoft.Extensions.Options;
+using MusicGQL.Integration.Youtube.Configuration;
+using MusicGQL.Integration.Spotify.Configuration;
+using MusicGQL;
+using MusicGQL.Features.ListenBrainz;
 
 namespace MusicGQL.Features.ServerSettings;
 
@@ -59,6 +64,48 @@ public record ServerSettings([property: GraphQLIgnore] DbServerSettings Model)
     public bool LastFmTopTracksEnabled() => Model.LastFmTopTracksEnabled;
 
     public ServerLibraryManifestStatus ServerLibraryManifestStatus() => new();
+
+    // Auth tokens configured flags (read-only)
+    public bool IsListenBrainzConfigured([Service] IOptions<ListenBrainzConfiguration> lbOptions) =>
+        !string.IsNullOrWhiteSpace(lbOptions.Value.ApiKey) ||
+        !string.IsNullOrWhiteSpace(Model.ListenBrainzApiKey);
+
+    public bool IsYouTubeConfigured([Service] IOptions<YouTubeServiceOptions> youTubeOptions) =>
+        !string.IsNullOrWhiteSpace(youTubeOptions.Value.ApiKey);
+
+    public bool IsSpotifyConfigured([Service] IOptions<SpotifyClientOptions> spotifyOptions) =>
+        !string.IsNullOrWhiteSpace(spotifyOptions.Value.ClientId) &&
+        !string.IsNullOrWhiteSpace(spotifyOptions.Value.ClientSecret);
+
+    public bool IsLastfmConfigured([Service] IOptions<LastfmOptions> lastfmOptions) =>
+        !string.IsNullOrWhiteSpace(lastfmOptions.Value.ApiKey);
+
+    public bool IsFanartConfigured([Service] IOptions<FanartOptions> fanartOptions) =>
+        !string.IsNullOrWhiteSpace(fanartOptions.Value.ApiKey);
+
+    // Config sources
+    public string ListenBrainzConfiguredSource([Service] IOptions<ListenBrainzConfiguration> lbOptions)
+    {
+        if (!string.IsNullOrWhiteSpace(lbOptions.Value.ApiKey)) return "appsettings";
+        if (!string.IsNullOrWhiteSpace(Model.ListenBrainzApiKey)) return "database";
+        return "none";
+    }
+
+    public string YouTubeConfiguredSource([Service] IOptions<YouTubeServiceOptions> youTubeOptions)
+        => !string.IsNullOrWhiteSpace(youTubeOptions.Value.ApiKey) ? "appsettings" : "none";
+
+    public string SpotifyConfiguredSource([Service] IOptions<SpotifyClientOptions> spotifyOptions)
+        => !string.IsNullOrWhiteSpace(spotifyOptions.Value.ClientId) && !string.IsNullOrWhiteSpace(spotifyOptions.Value.ClientSecret)
+            ? "appsettings"
+            : "none";
+
+    public string LastfmConfiguredSource([Service] IOptions<LastfmOptions> lastfmOptions)
+        => !string.IsNullOrWhiteSpace(lastfmOptions.Value.ApiKey) ? "appsettings" : "none";
+
+    public string FanartConfiguredSource([Service] IOptions<FanartOptions> fanartOptions)
+        => !string.IsNullOrWhiteSpace(fanartOptions.Value.ApiKey)
+            ? "appsettings"
+            : "none";
 
     [GraphQLName("storageStats")]
     public async Task<StorageStats?> GetStorageStats([Service] ServerSettingsAccessor serverSettingsAccessor)

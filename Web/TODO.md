@@ -110,7 +110,7 @@ The user will create a git commit manually.
 ## MCP server
 
 * [ ] Create MCP server functionality, so that AI agents can play music using mmusic.
-* [ ] Agents should be able to search artists, albums, tracks and playlists
+* [ ] Agents should be able to search artists, albums, tracks and playlists by name.
 * [ ] Agents should be able to list all connected clients.
 * [ ] Agents should be able to start playback on any connected client that allows it.
 * [ ] Agents should be able to trigger downloads of all releases for an artist, all releases of a type (album, ep, single) for an artist, or a particular release for artist.
@@ -120,3 +120,4 @@ The user will create a git commit manually.
 * [ ] Agents should be able to like a track on the users behalf.
 * [ ] Agents should be able to push tracks to the playback queue.
 * [ ] Agents should be able to check the currently playing track on any client.
+* [ ] Agents should be able to get top tracks on an artist.

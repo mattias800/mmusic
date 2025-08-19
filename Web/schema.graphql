@@ -440,8 +440,13 @@ type ExternalArtist {
 type ExternalRoot {
   id: ID!
   soulSeek: SoulSeekRoot!
+  testFanartConnectivity: ConnectivityStatus!
+  testLastfmConnectivity: ConnectivityStatus!
+  testListenBrainzConnectivity: ConnectivityStatus!
   testProwlarrConnectivity: ConnectivityStatus!
   testQBittorrentConnectivity: ConnectivityStatus!
+  testSpotifyConnectivity: ConnectivityStatus!
+  testYouTubeConnectivity: ConnectivityStatus!
 }
 
 type ExternalService {
@@ -1269,10 +1274,18 @@ type ServerLibrarySearchRoot {
 type ServerSettings {
   downloadPath: String!
   downloadSlotCount: Int!
+  fanartConfiguredSource: String!
   id: ID!
+  isFanartConfigured: Boolean!
+  isLastfmConfigured: Boolean!
+  isListenBrainzConfigured: Boolean!
+  isSpotifyConfigured: Boolean!
+  isYouTubeConfigured: Boolean!
   lastFmTopTracksEnabled: Boolean!
+  lastfmConfiguredSource: String!
   libraryPath: String!
   listenBrainzApiKey: String!
+  listenBrainzConfiguredSource: String!
   listenBrainzTopTracksEnabled: Boolean!
   listenBrainzUsername: String!
   prowlarrBaseUrl: String
@@ -1295,8 +1308,10 @@ type ServerSettings {
   soulSeekPort: Int!
   soulSeekSearchTimeLimitSeconds: Int!
   soulSeekUsername: String!
+  spotifyConfiguredSource: String!
   spotifyTopTracksEnabled: Boolean!
   storageStats: StorageStats
+  youTubeConfiguredSource: String!
 }
 
 type SetArtistMusicBrainzMatchError {
