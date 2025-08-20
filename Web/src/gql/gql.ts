@@ -107,6 +107,7 @@ type Documents = {
     "\n  fragment LikedSongRow_LikedSong on LikedSong {\n    id\n    recording {\n      id\n      title\n      length\n      artists {\n        id\n        name\n      }\n      mainAlbum {\n        id\n        title\n        coverArtUri\n        artists {\n          id\n        }\n      }\n    }\n  }\n": typeof types.LikedSongRow_LikedSongFragmentDoc,
     "\n  fragment LikedSongsList_User on User {\n    id\n    likedSongs {\n      id\n      ...LikedSongRow_LikedSong\n    }\n  }\n": typeof types.LikedSongsList_UserFragmentDoc,
     "\n  fragment MusicPlayerTrackFactory_Track on Track {\n    id\n    title\n    trackLength\n    trackNumber\n    media {\n      id\n      audioQualityLabel\n    }\n    release {\n      id\n      folderName\n      coverArtUrl\n      artist {\n        id\n        name\n      }\n    }\n    trackNumber\n  }\n": typeof types.MusicPlayerTrackFactory_TrackFragmentDoc,
+    "\n  subscription OnPlaybackTriggered {\n    onPlaybackTriggered {\n      clientId\n      playback { artistId releaseFolderName trackNumber trackTitle }\n    }\n  }\n": typeof types.OnPlaybackTriggeredDocument,
     "\n  mutation CreatePlaylist {\n    createPlaylist(input: {}) {\n      __typename\n      ... on CreatePlaylistSuccess {\n        playlist {\n          id\n          name\n          createdAt\n        }\n      }\n    }\n  }\n": typeof types.CreatePlaylistDocument,
     "\n  fragment MissingArtistsInPlaylistBox_Playlist on Playlist {\n    id\n    items {\n      id\n      artist {\n        id\n      }\n    }\n  }\n": typeof types.MissingArtistsInPlaylistBox_PlaylistFragmentDoc,
     "\n  mutation EnqueueMissingArtistsFromPlaylist($playlistId: ID!) {\n    enqueueMissingArtistsFromPlaylist(playlistId: $playlistId)\n  }\n": typeof types.EnqueueMissingArtistsFromPlaylistDocument,
@@ -289,6 +290,7 @@ const documents: Documents = {
     "\n  fragment LikedSongRow_LikedSong on LikedSong {\n    id\n    recording {\n      id\n      title\n      length\n      artists {\n        id\n        name\n      }\n      mainAlbum {\n        id\n        title\n        coverArtUri\n        artists {\n          id\n        }\n      }\n    }\n  }\n": types.LikedSongRow_LikedSongFragmentDoc,
     "\n  fragment LikedSongsList_User on User {\n    id\n    likedSongs {\n      id\n      ...LikedSongRow_LikedSong\n    }\n  }\n": types.LikedSongsList_UserFragmentDoc,
     "\n  fragment MusicPlayerTrackFactory_Track on Track {\n    id\n    title\n    trackLength\n    trackNumber\n    media {\n      id\n      audioQualityLabel\n    }\n    release {\n      id\n      folderName\n      coverArtUrl\n      artist {\n        id\n        name\n      }\n    }\n    trackNumber\n  }\n": types.MusicPlayerTrackFactory_TrackFragmentDoc,
+    "\n  subscription OnPlaybackTriggered {\n    onPlaybackTriggered {\n      clientId\n      playback { artistId releaseFolderName trackNumber trackTitle }\n    }\n  }\n": types.OnPlaybackTriggeredDocument,
     "\n  mutation CreatePlaylist {\n    createPlaylist(input: {}) {\n      __typename\n      ... on CreatePlaylistSuccess {\n        playlist {\n          id\n          name\n          createdAt\n        }\n      }\n    }\n  }\n": types.CreatePlaylistDocument,
     "\n  fragment MissingArtistsInPlaylistBox_Playlist on Playlist {\n    id\n    items {\n      id\n      artist {\n        id\n      }\n    }\n  }\n": types.MissingArtistsInPlaylistBox_PlaylistFragmentDoc,
     "\n  mutation EnqueueMissingArtistsFromPlaylist($playlistId: ID!) {\n    enqueueMissingArtistsFromPlaylist(playlistId: $playlistId)\n  }\n": types.EnqueueMissingArtistsFromPlaylistDocument,
@@ -764,6 +766,10 @@ export function graphql(source: "\n  fragment LikedSongsList_User on User {\n   
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  fragment MusicPlayerTrackFactory_Track on Track {\n    id\n    title\n    trackLength\n    trackNumber\n    media {\n      id\n      audioQualityLabel\n    }\n    release {\n      id\n      folderName\n      coverArtUrl\n      artist {\n        id\n        name\n      }\n    }\n    trackNumber\n  }\n"): (typeof documents)["\n  fragment MusicPlayerTrackFactory_Track on Track {\n    id\n    title\n    trackLength\n    trackNumber\n    media {\n      id\n      audioQualityLabel\n    }\n    release {\n      id\n      folderName\n      coverArtUrl\n      artist {\n        id\n        name\n      }\n    }\n    trackNumber\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  subscription OnPlaybackTriggered {\n    onPlaybackTriggered {\n      clientId\n      playback { artistId releaseFolderName trackNumber trackTitle }\n    }\n  }\n"): (typeof documents)["\n  subscription OnPlaybackTriggered {\n    onPlaybackTriggered {\n      clientId\n      playback { artistId releaseFolderName trackNumber trackTitle }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

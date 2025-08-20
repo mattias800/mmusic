@@ -237,6 +237,11 @@ type CacheStatistics {
   trackCount: Int!
 }
 
+type ClientPlaybackCommand {
+  clientId: String!
+  playback: ClientPlaybackState!
+}
+
 type ClientPlaybackState {
   artistId: String
   releaseFolderName: String
@@ -991,6 +996,7 @@ type Mutation {
   startBulkDownloadForArtist(input: StartBulkDownloadForArtistInput!): StartBulkDownloadForArtistResult!
   startDownloadRelease(input: StartDownloadReleaseInput!): StartDownloadReleaseResult!
   submitListen(input: SubmitListenInput!): SubmitListenResult!
+  triggerPlayback(input: TriggerPlaybackInput!): TriggerPlaybackPayload!
   unlikeSong(input: UnlikedSongInput!): UnlikeSongResult!
   updateDownloadPath(input: UpdateDownloadPathInput!): UpdateDownloadPathResult!
   updateDownloadSlotCount(input: UpdateDownloadSlotCountInput!): UpdateDownloadSlotCountResult!
@@ -1620,6 +1626,7 @@ type Subscription {
   libraryReleaseUpdated(artistId: String!, releaseFolderName: String!): Release!
   libraryTrackUpdated(artistId: String!, releaseFolderName: String!, trackNumber: Int!): Track!
   onClientsUpdated: [OnlineClient!]!
+  onPlaybackTriggered: ClientPlaybackCommand!
   ping: Ping!
   playlistItemUpdated(playlistId: ID!): PlaylistItem!
   slotProgressUpdated: SlotProgressUpdate!
@@ -1660,6 +1667,20 @@ type TrackMedia {
 type TrackStatistics {
   listeners: Long!
   playCount: Long!
+}
+
+input TriggerPlaybackInput {
+  artistId: String!
+  clientId: String!
+  releaseFolderName: String!
+  trackNumber: Int!
+  trackTitle: String
+}
+
+type TriggerPlaybackPayload {
+  accepted: Boolean!
+  clientId: String!
+  message: String
 }
 
 scalar UUID

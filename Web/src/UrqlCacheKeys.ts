@@ -48,6 +48,7 @@ export const cacheKeys: Record<TypesWithNoId, KeyGenerator> = {
   RecommendationsSearchRoot: () => null,
   ClientPlaybackState: () => null,
   OnlineClient: () => null,
+  ClientPlaybackCommand: () => null,
   ReleaseServiceConnections: () => null,
   ScoredRelease: () => null,
   ServerLibrarySearchRoot: () => null,
