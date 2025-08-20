@@ -9,7 +9,7 @@ import { MusicPlayer } from "@/features/music-players/MusicPlayer.tsx";
 import { Bootstrap } from "@/Bootstrap.tsx";
 import { SetupPage } from "@/app/SetupPage.tsx";
 import { SignInPage } from "@/app/SignInPage.tsx";
-import { Sidebar } from "@/features/sidebar/Sidebar.tsx";
+import { SidebarSwitcher } from "@/features/sidebar/SidebarSwitcher.tsx";
 import { ThemeProvider } from "@/components/theme-provider.tsx";
 import { SearchInput } from "@/features/search/search-input/SearchInput.tsx";
 import { PlaybackSubscription } from "@/features/music-players/PlaybackSubscription.tsx";
@@ -26,7 +26,7 @@ function App() {
                 <MusicPlayer />
                 <BrowserRouter>
                   <GlobalPageLayout
-                    renderSidebar={() => <Sidebar />}
+                    renderSidebar={() => <SidebarSwitcher />}
                     renderSearch={() => <SearchInput />}
                   >
                     <AppRouter />
