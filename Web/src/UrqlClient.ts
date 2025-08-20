@@ -16,7 +16,7 @@ const fetchWithRedirect = async (
   o.redirect = "follow";
   o.credentials = "include";
 
-  const response = await fetch(url, options);
+  const response = await fetch(url, o);
   if (response.redirected && response.url !== window.location.href) {
     window.location.href = response.url;
   }

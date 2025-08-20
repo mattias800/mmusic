@@ -21,6 +21,7 @@ import { MmusicLogo } from "@/components/logo/MmusicLogo.tsx";
 import { PlaylistList } from "@/features/playlists/playlist-list/PlaylistList.tsx";
 import { RootState } from "@/Store.ts";
 import { useSelector } from "react-redux";
+import { OnlineClientsPanel } from "@/features/sidebar/OnlineClientsPanel.tsx";
 
 export interface SidebarProps {
   className?: string;
@@ -128,6 +129,11 @@ export const Sidebar = ({ className }: SidebarProps) => {
         <SidebarSection heading="You" icon={User} iconColor="text-emerald-400">
           <SidebarNavButton path="/profile" icon={User} label={username} />
           <SidebarNavButton path="/settings" icon={Cog} label="Settings" />
+          {isAdmin && (
+            <div className="pt-4">
+              <OnlineClientsPanel />
+            </div>
+          )}
           {isAdmin && (
             <SidebarNavButton
               path="/admin/users"

@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 using MusicGQL.Db.Postgres;
+using MusicGQL.Features.Clients;
 
 namespace MusicGQL.Features.Users;
 
@@ -21,5 +22,19 @@ public record UserSearchRoot
 
         var projections = await dbContext.Users.ToListAsync();
         return projections.Select(p => new User(p));
+    }
+
+    public async Task<IEnumerable<OnlineClient>> OnlineClients(
+        [Service] EventDbContext dbContext,
+        [Service] ClientPresenceService presence,
+        ClaimsPrincipal claims
+    )
+    {
+        var userIdClaim = claims.FindFirst(ClaimTypes.NameIdentifier);
+        if (userIdClaim is null) return [];
+        var userId = Guid.Parse(userIdClaim.Value);
+        var viewer = await dbContext.Users.AsNoTracking().FirstOrDefaultAsync(u => u.UserId == userId);
+        if (viewer is null || (viewer.Roles & Roles.UserRoles.Admin) == 0) return [];
+        return presence.GetAllOnlineClients();
     }
 }

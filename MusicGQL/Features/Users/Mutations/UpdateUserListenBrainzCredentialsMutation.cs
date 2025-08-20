@@ -4,8 +4,11 @@ using MusicGQL.Db.Postgres.Models;
 using MusicGQL.Features.Users.Db;
 using MusicGQL.Features.Users.Events;
 using MusicGQL.Features.Users.Services;
+using MusicGQL.Features.Clients;
 using MusicGQL.Types;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
+using HotChocolate.Subscriptions;
 
 namespace MusicGQL.Features.Users.Mutations;
 
@@ -92,6 +95,38 @@ public class UpdateUserListenBrainzCredentialsMutation
         {
             return new UpdateUserListenBrainzCredentialsError($"Failed to update ListenBrainz credentials: {ex.Message}");
         }
+    }
+
+    public async Task<UpdateUserListenBrainzCredentialsResult> Heartbeat(
+        string clientId,
+        string? name,
+        string? artistId,
+        string? releaseFolderName,
+        int? trackNumber,
+        string? trackTitle,
+        ClaimsPrincipal claims,
+        [Service] EventDbContext dbContext,
+        [Service] ClientPresenceService presence,
+        [Service] ITopicEventSender sender
+    )
+    {
+        var userIdClaim = claims.FindFirst(ClaimTypes.NameIdentifier);
+        if (userIdClaim is null)
+        {
+            return new UpdateUserListenBrainzCredentialsError("Not authenticated");
+        }
+        var userId = Guid.Parse(userIdClaim.Value);
+        var viewer = await dbContext.Users.AsNoTracking().FirstOrDefaultAsync(u => u.UserId == userId);
+        if (viewer is null)
+        {
+            return new UpdateUserListenBrainzCredentialsError("User not found");
+        }
+
+        var playback = new ClientPlaybackState(artistId, releaseFolderName, trackNumber, trackTitle);
+        presence.Heartbeat(userId, clientId, name, playback);
+        // Broadcast the full clients list for now (simple approach)
+        await sender.SendAsync("ClientsUpdated", presence.GetAllOnlineClients());
+        return new UpdateUserListenBrainzCredentialsSuccess(new(viewer));
     }
 }
 

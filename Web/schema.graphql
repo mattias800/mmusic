@@ -237,6 +237,13 @@ type CacheStatistics {
   trackCount: Int!
 }
 
+type ClientPlaybackState {
+  artistId: String
+  releaseFolderName: String
+  trackNumber: Int
+  trackTitle: String
+}
+
 type ConnectivityStatus {
   message: String!
   ok: Boolean!
@@ -952,6 +959,7 @@ type Mutation {
   enqueueMissingArtistsFromPlaylist(playlistId: ID!): Boolean!
   fixReleaseType(input: FixReleaseTypeInput!): FixReleaseTypeResult!
   generateArtistShareFiles(input: GenerateArtistShareFilesInput!): GenerateArtistShareFilesResult!
+  heartbeat(artistId: String, clientId: String!, name: String, releaseFolderName: String, trackNumber: Int, trackTitle: String): UpdateUserListenBrainzCredentialsResult!
   importArtist(input: ImportArtistInput!): ImportArtistResult!
   importArtistReleases(artistId: String!): ImportReleasesResult!
   importArtistsFromSpotifyPlaylist(input: ImportArtistsFromSpotifyPlaylistInput!): ImportArtistsFromSpotifyPlaylistResult!
@@ -987,7 +995,6 @@ type Mutation {
   updateDownloadPath(input: UpdateDownloadPathInput!): UpdateDownloadPathResult!
   updateDownloadSlotCount(input: UpdateDownloadSlotCountInput!): UpdateDownloadSlotCountResult!
   updateLibraryPath(input: UpdateLibraryPathInput!): UpdateLibraryPathResult!
-  updateListenBrainzSettings(input: UpdateListenBrainzSettingsInput!): UpdateListenBrainzSettingsResult!
   updateProwlarrSettings(input: UpdateProwlarrSettingsInput!): UpdateProwlarrSettingsResult!
   updatePublicBaseUrl(input: UpdatePublicBaseUrlInput!): UpdatePublicBaseUrlResult!
   updateQBittorrentSettings(input: UpdateQBittorrentSettingsInput!): UpdateQBittorrentSettingsResult!
@@ -998,6 +1005,14 @@ type Mutation {
   updateUserListenBrainzCredentials(input: UpdateUserListenBrainzCredentialsInput!): UpdateUserListenBrainzCredentialsResult!
   updateUserRoles(input: UpdateUserRolesInput!): UpdateUserRolesResult!
   updateUserUsername(input: UpdateUserUsernameInput!): UpdateUserUsernameResult!
+}
+
+type OnlineClient {
+  clientId: String!
+  lastSeenAt: DateTime!
+  name: String!
+  playback: ClientPlaybackState
+  userId: UUID!
 }
 
 """Information about pagination in a connection."""
@@ -1284,10 +1299,8 @@ type ServerSettings {
   lastFmTopTracksEnabled: Boolean!
   lastfmConfiguredSource: String!
   libraryPath: String!
-  listenBrainzApiKey: String!
   listenBrainzConfiguredSource: String!
   listenBrainzTopTracksEnabled: Boolean!
-  listenBrainzUsername: String!
   prowlarrBaseUrl: String
   prowlarrEnableDetailedLogging: Boolean!
   prowlarrMaxConcurrentRequests: Int!
@@ -1606,6 +1619,7 @@ type Subscription {
   libraryReleaseMetadataUpdated(artistId: String!, releaseFolderName: String!): Release!
   libraryReleaseUpdated(artistId: String!, releaseFolderName: String!): Release!
   libraryTrackUpdated(artistId: String!, releaseFolderName: String!, trackNumber: Int!): Track!
+  onClientsUpdated: [OnlineClient!]!
   ping: Ping!
   playlistItemUpdated(playlistId: ID!): PlaylistItem!
   slotProgressUpdated: SlotProgressUpdate!
@@ -1696,21 +1710,6 @@ union UpdateLibraryPathResult = UpdateLibraryPathSuccess
 
 type UpdateLibraryPathSuccess {
   serverSettings: ServerSettings!
-}
-
-type UpdateListenBrainzSettingsError {
-  message: String!
-}
-
-input UpdateListenBrainzSettingsInput {
-  apiKey: String!
-  username: String!
-}
-
-union UpdateListenBrainzSettingsResult = UpdateListenBrainzSettingsError | UpdateListenBrainzSettingsSuccess
-
-type UpdateListenBrainzSettingsSuccess {
-  success: Boolean!
 }
 
 type UpdateProwlarrSettingsError {
@@ -1890,6 +1889,7 @@ type User {
 }
 
 type UserSearchRoot {
+  onlineClients: [OnlineClient!]!
   users(
     """Returns the elements in the list that come after the specified cursor."""
     after: String
