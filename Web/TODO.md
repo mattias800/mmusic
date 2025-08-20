@@ -93,11 +93,11 @@ The user will create a git commit manually.
 
 ## Keep track of online clients
 
-* [ ] For each user, keep track of online clients. Do not store in database, just in memory.
-* [ ] For each client, keep track of what music it is playing. Do not store in database, just in memory.
+* [x] For each user, keep track of online clients. Do not store in database, just in memory.
+* [x] For each client, keep track of what music it is playing. Do not store in database, just in memory.
 * [ ] Add ability to set a name for the client. For example, "Chrome on Windows". Or "iPhone app". The names should have
   sane defaults, and setting them should be optional. Store this in some way that is local to the client and session.
-* [ ] Add an admin UI for showing clients per user, and showing online status, and what music each client is playing.
+* [x] Add an admin UI for showing clients per user, and showing online status, and what music each client is playing.
 
 ## Trigger playback of track from backend
 
