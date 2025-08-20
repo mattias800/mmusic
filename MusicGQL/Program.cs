@@ -63,6 +63,7 @@ using Soulseek.Diagnostics;
 using SpotifyAPI.Web;
 using StackExchange.Redis;
 using YouTubeService = MusicGQL.Integration.Youtube.YouTubeService;
+using ModelContextProtocol.Server;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -348,6 +349,11 @@ builder.Services.AddSingleton<MusicGQL.Features.Assets.ExternalAssetStorage>();
 builder.Services.AddSingleton<DownloadCancellationService>();
 builder.Services.AddSingleton<MusicGQL.Features.ServerLibrary.Services.ArtistDeletionService>();
 
+// MCP server registration
+builder.Services.AddMcpServer()
+    .WithHttpTransport()
+    .WithToolsFromAssembly(typeof(Program).Assembly);
+
 // Add MVC controllers for asset endpoints
 builder.Services.AddControllers();
 
@@ -589,6 +595,8 @@ builder.Services.AddHostedService<ScheduledTaskPublisher>();
 builder.Services.AddHostedService<LibraryImportWorker>();
 
 var app = builder.Build();
+// Initialize MCP service accessor for static tools
+MusicGQL.Features.McpServer.McpServiceAccessor.Initialize(app.Services);
 app.UseCors("AllowFrontend");
 app.UseRouting(); // Ensure UseRouting is called before UseAuthentication and UseAuthorization
 app.UseAuthentication();
@@ -770,6 +778,9 @@ app.MapGraphQL();
 
 // Map attribute-routed controllers (serves /library/* endpoints)
 app.MapControllers();
+
+// Map MCP endpoint
+app.MapMcp();
 
 app.MapPost("/test-cors", () => Results.Ok("ok"));
 
