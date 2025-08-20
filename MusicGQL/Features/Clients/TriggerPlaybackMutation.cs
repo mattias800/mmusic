@@ -15,7 +15,16 @@ public sealed class TriggerPlaybackMutation
         var online = presence.GetAllOnlineClients().Any(c => c.ClientId == input.ClientId);
         await sender.SendAsync("PlaybackTriggered", new ClientPlaybackCommand(
             input.ClientId,
-            new ClientPlaybackState(input.ArtistId, input.ReleaseFolderName, input.TrackNumber, input.TrackTitle)
+            new ClientPlaybackState(
+                input.ArtistId,
+                input.ReleaseFolderName,
+                input.TrackNumber,
+                input.TrackTitle,
+                input.ArtistName,
+                input.CoverArtUrl,
+                input.TrackLengthMs,
+                input.QualityLabel
+            )
         ));
         return new TriggerPlaybackPayload(input.ClientId, online, online ? null : "Client offline");
     }
@@ -26,7 +35,11 @@ public record TriggerPlaybackInput(
     string ArtistId,
     string ReleaseFolderName,
     int TrackNumber,
-    string? TrackTitle
+    string? TrackTitle,
+    string? ArtistName,
+    string? CoverArtUrl,
+    int? TrackLengthMs,
+    string? QualityLabel
 );
 
 public record TriggerPlaybackPayload(string ClientId, bool Accepted, string? Message);

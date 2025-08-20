@@ -104,6 +104,10 @@ public class UpdateUserListenBrainzCredentialsMutation
         string? releaseFolderName,
         int? trackNumber,
         string? trackTitle,
+        string? artistName,
+        string? coverArtUrl,
+        int? trackLengthMs,
+        string? qualityLabel,
         ClaimsPrincipal claims,
         [Service] EventDbContext dbContext,
         [Service] ClientPresenceService presence,
@@ -122,7 +126,16 @@ public class UpdateUserListenBrainzCredentialsMutation
             return new UpdateUserListenBrainzCredentialsError("User not found");
         }
 
-        var playback = new ClientPlaybackState(artistId, releaseFolderName, trackNumber, trackTitle);
+        var playback = new ClientPlaybackState(
+            artistId,
+            releaseFolderName,
+            trackNumber,
+            trackTitle,
+            artistName,
+            coverArtUrl,
+            trackLengthMs,
+            qualityLabel
+        );
         presence.Heartbeat(userId, clientId, name, playback);
         // Broadcast the full clients list for now (simple approach)
         await sender.SendAsync("ClientsUpdated", presence.GetAllOnlineClients());

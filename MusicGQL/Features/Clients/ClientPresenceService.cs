@@ -1,5 +1,8 @@
 using System.Collections.Concurrent;
 using System.Security.Claims;
+using MusicGQL.Features.Artists;
+using MusicGQL.Features.ServerLibrary;
+using MusicGQL.Features.ServerLibrary.Cache;
 
 namespace MusicGQL.Features.Clients;
 
@@ -7,8 +10,35 @@ public record ClientPlaybackState(
     string? ArtistId,
     string? ReleaseFolderName,
     int? TrackNumber,
-    string? TrackTitle
-);
+    string? TrackTitle,
+    string? ArtistName,
+    string? CoverArtUrl,
+    int? TrackLengthMs,
+    string? QualityLabel
+)
+{
+    public async Task<Artist?> Artist([Service] ServerLibraryCache cache)
+    {
+        if (string.IsNullOrWhiteSpace(ArtistId)) return null;
+        var a = await cache.GetArtistByIdAsync(ArtistId);
+        return a is null ? null : new Artist(a);
+    }
+
+    public async Task<Release?> Release([Service] ServerLibraryCache cache)
+    {
+        if (string.IsNullOrWhiteSpace(ArtistId) || string.IsNullOrWhiteSpace(ReleaseFolderName)) return null;
+        var r = await cache.GetReleaseByArtistAndFolderAsync(ArtistId!, ReleaseFolderName!);
+        return r is null ? null : new Release(r);
+    }
+
+    public async Task<Track?> Track([Service] ServerLibraryCache cache)
+    {
+        if (string.IsNullOrWhiteSpace(ArtistId) || string.IsNullOrWhiteSpace(ReleaseFolderName) || TrackNumber is null)
+            return null;
+        var t = await cache.GetTrackByArtistReleaseAndNumberAsync(ArtistId!, ReleaseFolderName!, TrackNumber.Value);
+        return t is null ? null : new Track(t);
+    }
+}
 
 public class OnlineClient
 {

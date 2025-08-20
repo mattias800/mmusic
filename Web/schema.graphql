@@ -243,8 +243,15 @@ type ClientPlaybackCommand {
 }
 
 type ClientPlaybackState {
+  artist: Artist
   artistId: String
+  artistName: String
+  coverArtUrl: String
+  qualityLabel: String
+  release: Release
   releaseFolderName: String
+  track: Track
+  trackLengthMs: Int
   trackNumber: Int
   trackTitle: String
 }
@@ -964,7 +971,7 @@ type Mutation {
   enqueueMissingArtistsFromPlaylist(playlistId: ID!): Boolean!
   fixReleaseType(input: FixReleaseTypeInput!): FixReleaseTypeResult!
   generateArtistShareFiles(input: GenerateArtistShareFilesInput!): GenerateArtistShareFilesResult!
-  heartbeat(artistId: String, clientId: String!, name: String, releaseFolderName: String, trackNumber: Int, trackTitle: String): UpdateUserListenBrainzCredentialsResult!
+  heartbeat(artistId: String, artistName: String, clientId: String!, coverArtUrl: String, name: String, qualityLabel: String, releaseFolderName: String, trackLengthMs: Int, trackNumber: Int, trackTitle: String): UpdateUserListenBrainzCredentialsResult!
   importArtist(input: ImportArtistInput!): ImportArtistResult!
   importArtistReleases(artistId: String!): ImportReleasesResult!
   importArtistsFromSpotifyPlaylist(input: ImportArtistsFromSpotifyPlaylistInput!): ImportArtistsFromSpotifyPlaylistResult!
@@ -1671,8 +1678,12 @@ type TrackStatistics {
 
 input TriggerPlaybackInput {
   artistId: String!
+  artistName: String
   clientId: String!
+  coverArtUrl: String
+  qualityLabel: String
   releaseFolderName: String!
+  trackLengthMs: Int
   trackNumber: Int!
   trackTitle: String
 }
