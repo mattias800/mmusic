@@ -101,7 +101,7 @@ The user will create a git commit manually.
 
 ## Trigger playback of track from backend
 
-* [ ] Backend should be able to trigger playback of a track on a client.
+* [x] Backend should be able to trigger playback of a track on a client.
     * I am not sure how this should be implemented. Maybe GraphQL subscription?
 * [ ] The user should be able to allow or disallow triggering playback from the backend per client.
     * The user should not have to interact with the client for playback to start, if backend triggers playback and it is
