@@ -413,6 +413,8 @@ builder
     .AddTypeExtension<DownloadQueueMutations>()
     .AddTypeExtension<PlaylistSubscription>()
     .AddTypeExtension<MusicGQL.Features.Clients.ClientPresenceSubscription>()
+    .AddTypeExtension<MusicGQL.Features.Clients.TriggerPlaybackMutation>()
+    .AddTypeExtension<MusicGQL.Features.Clients.ClientPlaybackSubscription>()
     .AddTypeExtension<SetPlaylistItemArtistMusicBrainzMatchMutation>()
     .AddType<SetPlaylistItemArtistMusicBrainzMatchSuccess>()
     .AddType<SetPlaylistItemArtistMusicBrainzMatchNotFound>()

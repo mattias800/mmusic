@@ -12,6 +12,7 @@ import { SignInPage } from "@/app/SignInPage.tsx";
 import { Sidebar } from "@/features/sidebar/Sidebar.tsx";
 import { ThemeProvider } from "@/components/theme-provider.tsx";
 import { SearchInput } from "@/features/search/search-input/SearchInput.tsx";
+import { PlaybackSubscription } from "@/features/music-players/PlaybackSubscription.tsx";
 
 function App() {
   return (
@@ -29,6 +30,7 @@ function App() {
                     renderSearch={() => <SearchInput />}
                   >
                     <AppRouter />
+                    <PlaybackSubscription />
                   </GlobalPageLayout>
                 </BrowserRouter>
               </>
