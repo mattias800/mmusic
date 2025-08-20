@@ -1,7 +1,6 @@
 import { TopArtistRecommendations } from "@/features/recommendations/top-artists/TopArtistRecommendations.tsx";
 import { TopTrackRecommendations } from "@/features/recommendations/top-tracks/TopTrackRecommendations.tsx";
-import { ServerLibraryStatisticsHeader } from "@/features/server-library/ServerLibraryStatisticsHeader.tsx";
-import { graphql } from "@/gql";
+import { SidebarDocument } from "@/gql/graphql.ts";
 import { useQuery } from "urql";
 import {
   PageLayout,
@@ -14,13 +13,7 @@ import {
 } from "@/components/ui";
 import { Music, Users, TrendingUp, Star, AlertTriangle } from "lucide-react";
 
-const indexPageQuery = graphql(`
-  query IndexPageQuery {
-    serverLibrary {
-      ...ServerLibraryStatisticsHeader_ServerLibrary
-    }
-  }
-`);
+const indexPageQuery = SidebarDocument;
 
 export const IndexPage = () => {
   const [{ data, fetching, error }] = useQuery({
@@ -48,11 +41,11 @@ export const IndexPage = () => {
       />
     );
 
-  if (!data?.serverLibrary)
+  if (!data?.viewer)
     return (
       <PageNoData
-        title="No Library Data Available"
-        message="Your music library data couldn't be loaded. This might be a temporary issue."
+        title="No Data Available"
+        message="Your dashboard couldn't be loaded. This might be a temporary issue."
         icon={Music}
         iconBgColor="bg-yellow-500/20"
       />
@@ -67,10 +60,7 @@ export const IndexPage = () => {
         subtitle="Discover your music collection and get personalized recommendations"
       />
 
-      {/* Server Library Statistics */}
-      <div className="mb-12">
-        <ServerLibraryStatisticsHeader serverLibrary={data.serverLibrary} />
-      </div>
+      {/* Server Library Statistics moved to Admin Overview */}
 
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 max-w-7xl mx-auto">

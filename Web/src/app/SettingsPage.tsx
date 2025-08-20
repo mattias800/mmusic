@@ -1,7 +1,7 @@
 import * as React from "react";
 import { useQuery } from "urql";
 import { LibraryPathForm } from "@/features/settings/LibraryPathForm.tsx";
-import { DownloadSlotSettingsForm } from "@/features/settings/DownloadSlotSettingsForm.tsx";
+// Download configuration moved to Admin → Downloads
 import { TopTracksServiceSettingsForm } from "@/features/settings/TopTracksServiceSettingsForm.tsx";
 import {
   GlassCard,
@@ -15,10 +15,7 @@ import {
 import { AlertTriangle, Cog, Settings } from "lucide-react";
 import { PublicBaseUrlForm } from "@/features/settings/PublicBaseUrlForm.tsx";
 import { graphql } from "@/gql";
-import { SoulSeekConnectionForm } from "@/features/settings/SoulSeekConnectionForm.tsx";
-import { ProwlarrSettingsForm } from "@/features/settings/ProwlarrSettingsForm.tsx";
-import { QBittorrentSettingsForm } from "@/features/settings/QBittorrentSettingsForm.tsx";
-import { AuthTokensStatusPanel } from "@/features/settings/AuthTokensStatusPanel.tsx";
+// Integrations components moved to Admin → Integrations
 
 export interface SettingsPageProps {}
 
@@ -99,14 +96,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = () => {
           <LibraryPathForm serverSettings={data.serverSettings} />
         </GlassCard>
 
-        {/* Download Settings */}
-        <GlassCard
-          title="Download Configuration"
-          icon={Settings}
-          iconBgColor="bg-green-500/20"
-        >
-          <DownloadSlotSettingsForm serverSettings={data.serverSettings} />
-        </GlassCard>
+        
 
         {/* Top Tracks Settings */}
         <GlassCard
@@ -117,32 +107,6 @@ export const SettingsPage: React.FC<SettingsPageProps> = () => {
           <TopTracksServiceSettingsForm />
         </GlassCard>
 
-        {/* SoulSeek Connection Settings */}
-        <GlassCard
-          title="SoulSeek Connection"
-          icon={Settings}
-          iconBgColor="bg-purple-500/20"
-        >
-          <SoulSeekConnectionForm />
-        </GlassCard>
-
-        {/* Prowlarr Settings */}
-        <GlassCard
-          title="Prowlarr"
-          icon={Settings}
-          iconBgColor="bg-green-500/20"
-        >
-          <ProwlarrSettingsForm />
-        </GlassCard>
-
-        {/* qBittorrent Settings */}
-        <GlassCard
-          title="qBittorrent"
-          icon={Settings}
-          iconBgColor="bg-yellow-500/20"
-        >
-          <QBittorrentSettingsForm />
-        </GlassCard>
 
         {/* Public Base URL for Casting */}
         <GlassCard
@@ -153,14 +117,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = () => {
           <PublicBaseUrlForm serverSettings={data.serverSettings} />
         </GlassCard>
 
-        {/* Auth Tokens Status */}
-        <GlassCard
-          title="External Services Tokens"
-          icon={Settings}
-          iconBgColor="bg-blue-500/20"
-        >
-          <AuthTokensStatusPanel />
-        </GlassCard>
+        
       </div>
 
       {/* Bottom Info Section */}

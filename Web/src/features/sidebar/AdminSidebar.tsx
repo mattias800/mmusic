@@ -1,5 +1,6 @@
 import {
   Cog,
+  Download,
   Gauge,
   Home,
   MonitorDot,
@@ -57,6 +58,11 @@ export const AdminSidebar = ({ className }: AdminSidebarProps) => {
           iconColor="text-blue-400"
         >
           <SidebarNavButton path="/admin" label="Overview" icon={Gauge} />
+          <SidebarNavButton
+            path="/admin/downloads"
+            label="Downloads"
+            icon={Download}
+          />
           <SidebarNavButton
             path="/admin/server"
             label="Server Settings"

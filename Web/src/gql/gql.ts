@@ -20,7 +20,6 @@ type Documents = {
     "\n  query AlbumQuery($artistId: ID!, $releaseFolderName: String!) {\n    serverLibrary {\n      artistById(id: $artistId) {\n        id\n        name\n        releaseByFolderName(releaseFolderName: $releaseFolderName) {\n          id\n          title\n          ...AlbumPanel_Release\n        }\n      }\n    }\n  }\n": typeof types.AlbumQueryDocument,
     "\n  query ArtistListQuery {\n    serverLibrary {\n      allArtists {\n        id\n        ...ArtistList_Artist\n      }\n    }\n  }\n": typeof types.ArtistListQueryDocument,
     "\n  query ArtistQuery($artistId: ID!) {\n    serverLibrary {\n      artistById(id: $artistId) {\n        id\n        name\n        ...ArtistPanel_Artist\n      }\n    }\n  }\n": typeof types.ArtistQueryDocument,
-    "\n  query IndexPageQuery {\n    serverLibrary {\n      ...ServerLibraryStatisticsHeader_ServerLibrary\n    }\n  }\n": typeof types.IndexPageQueryDocument,
     "\n  query LikedSongsQuery {\n    viewer {\n      id\n      ...LikedSongsList_User\n    }\n  }\n": typeof types.LikedSongsQueryDocument,
     "\n  query MbArtistQuery($mbArtistId: ID!) {\n    musicBrainz {\n      artist {\n        byId(id: $mbArtistId) {\n          id\n          name\n          ...ArtistNotInLibraryPanel_MbArtist\n        }\n      }\n    }\n  }\n": typeof types.MbArtistQueryDocument,
     "\n  query PlaylistQuery($playlistId: ID!) {\n    playlist {\n      byId(playlistId: $playlistId) {\n        id\n        name\n        ...PlaylistPanel_Playlist\n      }\n    }\n  }\n": typeof types.PlaylistQueryDocument,
@@ -35,6 +34,8 @@ type Documents = {
     "\n  query SpotifyPlaylistDetails($playlistId: String!) {\n    playlist {\n      importPlaylists {\n        spotify {\n          byId: spotifyPlaylistById(id: $playlistId) {\n            id\n            ...SpotifyPlaylistPanel_SpotifyPlaylist\n          }\n        }\n      }\n    }\n  }\n": typeof types.SpotifyPlaylistDetailsDocument,
     "\n  query ProfilePage {\n    viewer {\n      id\n      username\n      ...UserProfilePanel_User\n    }\n  }\n": typeof types.ProfilePageDocument,
     "\n  mutation ImportArtist($musicBrainzArtistId: String!) {\n    importArtist(input: { musicBrainzArtistId: $musicBrainzArtistId }) {\n      __typename\n      ... on ImportArtistSuccess {\n        artist {\n          id\n          name\n        }\n      }\n      ... on ImportArtistError {\n        message\n      }\n    }\n  }\n": typeof types.ImportArtistDocument,
+    "\n  query AdminDownloadsSettings {\n    serverSettings {\n      downloadSlotCount\n    }\n  }\n": typeof types.AdminDownloadsSettingsDocument,
+    "\n  query AdminOverviewTabQuery {\n    serverLibrary {\n      ...ServerLibraryStatisticsHeader_ServerLibrary\n    }\n  }\n": typeof types.AdminOverviewTabQueryDocument,
     "\n  fragment AlbumCard_Release on Release {\n    id\n    title\n    firstReleaseYear\n    coverArtUrl\n    folderName\n    isFullyMissing\n    artistName\n    artist {\n      id\n      images {\n        thumbs\n      }\n    }\n  }\n": typeof types.AlbumCard_ReleaseFragmentDoc,
     "\n  fragment AlbumHeader_Release on Release {\n    id\n    title\n    type\n    coverArtUrl\n    firstReleaseYear\n    artistName\n    artist {\n      id\n      name\n      images {\n        thumbs\n      }\n    }\n    tracks {\n      id\n      trackLength\n    }\n  }\n": typeof types.AlbumHeader_ReleaseFragmentDoc,
     "\n  fragment AlbumPanel_Release on Release {\n    id\n    folderName\n    isFullyMissing\n    ...PlayAlbumButton_Release\n    ...ReleaseDownloadButton_Release\n    ...AlbumHeader_Release\n    ...AlbumTrackList_Release\n    firstReleaseYear\n    labels {\n      name\n      id\n      catalogNumber\n      disambiguation\n    }\n    artist {\n      id\n    }\n  }\n": typeof types.AlbumPanel_ReleaseFragmentDoc,
@@ -203,7 +204,6 @@ const documents: Documents = {
     "\n  query AlbumQuery($artistId: ID!, $releaseFolderName: String!) {\n    serverLibrary {\n      artistById(id: $artistId) {\n        id\n        name\n        releaseByFolderName(releaseFolderName: $releaseFolderName) {\n          id\n          title\n          ...AlbumPanel_Release\n        }\n      }\n    }\n  }\n": types.AlbumQueryDocument,
     "\n  query ArtistListQuery {\n    serverLibrary {\n      allArtists {\n        id\n        ...ArtistList_Artist\n      }\n    }\n  }\n": types.ArtistListQueryDocument,
     "\n  query ArtistQuery($artistId: ID!) {\n    serverLibrary {\n      artistById(id: $artistId) {\n        id\n        name\n        ...ArtistPanel_Artist\n      }\n    }\n  }\n": types.ArtistQueryDocument,
-    "\n  query IndexPageQuery {\n    serverLibrary {\n      ...ServerLibraryStatisticsHeader_ServerLibrary\n    }\n  }\n": types.IndexPageQueryDocument,
     "\n  query LikedSongsQuery {\n    viewer {\n      id\n      ...LikedSongsList_User\n    }\n  }\n": types.LikedSongsQueryDocument,
     "\n  query MbArtistQuery($mbArtistId: ID!) {\n    musicBrainz {\n      artist {\n        byId(id: $mbArtistId) {\n          id\n          name\n          ...ArtistNotInLibraryPanel_MbArtist\n        }\n      }\n    }\n  }\n": types.MbArtistQueryDocument,
     "\n  query PlaylistQuery($playlistId: ID!) {\n    playlist {\n      byId(playlistId: $playlistId) {\n        id\n        name\n        ...PlaylistPanel_Playlist\n      }\n    }\n  }\n": types.PlaylistQueryDocument,
@@ -218,6 +218,8 @@ const documents: Documents = {
     "\n  query SpotifyPlaylistDetails($playlistId: String!) {\n    playlist {\n      importPlaylists {\n        spotify {\n          byId: spotifyPlaylistById(id: $playlistId) {\n            id\n            ...SpotifyPlaylistPanel_SpotifyPlaylist\n          }\n        }\n      }\n    }\n  }\n": types.SpotifyPlaylistDetailsDocument,
     "\n  query ProfilePage {\n    viewer {\n      id\n      username\n      ...UserProfilePanel_User\n    }\n  }\n": types.ProfilePageDocument,
     "\n  mutation ImportArtist($musicBrainzArtistId: String!) {\n    importArtist(input: { musicBrainzArtistId: $musicBrainzArtistId }) {\n      __typename\n      ... on ImportArtistSuccess {\n        artist {\n          id\n          name\n        }\n      }\n      ... on ImportArtistError {\n        message\n      }\n    }\n  }\n": types.ImportArtistDocument,
+    "\n  query AdminDownloadsSettings {\n    serverSettings {\n      downloadSlotCount\n    }\n  }\n": types.AdminDownloadsSettingsDocument,
+    "\n  query AdminOverviewTabQuery {\n    serverLibrary {\n      ...ServerLibraryStatisticsHeader_ServerLibrary\n    }\n  }\n": types.AdminOverviewTabQueryDocument,
     "\n  fragment AlbumCard_Release on Release {\n    id\n    title\n    firstReleaseYear\n    coverArtUrl\n    folderName\n    isFullyMissing\n    artistName\n    artist {\n      id\n      images {\n        thumbs\n      }\n    }\n  }\n": types.AlbumCard_ReleaseFragmentDoc,
     "\n  fragment AlbumHeader_Release on Release {\n    id\n    title\n    type\n    coverArtUrl\n    firstReleaseYear\n    artistName\n    artist {\n      id\n      name\n      images {\n        thumbs\n      }\n    }\n    tracks {\n      id\n      trackLength\n    }\n  }\n": types.AlbumHeader_ReleaseFragmentDoc,
     "\n  fragment AlbumPanel_Release on Release {\n    id\n    folderName\n    isFullyMissing\n    ...PlayAlbumButton_Release\n    ...ReleaseDownloadButton_Release\n    ...AlbumHeader_Release\n    ...AlbumTrackList_Release\n    firstReleaseYear\n    labels {\n      name\n      id\n      catalogNumber\n      disambiguation\n    }\n    artist {\n      id\n    }\n  }\n": types.AlbumPanel_ReleaseFragmentDoc,
@@ -421,10 +423,6 @@ export function graphql(source: "\n  query ArtistQuery($artistId: ID!) {\n    se
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query IndexPageQuery {\n    serverLibrary {\n      ...ServerLibraryStatisticsHeader_ServerLibrary\n    }\n  }\n"): (typeof documents)["\n  query IndexPageQuery {\n    serverLibrary {\n      ...ServerLibraryStatisticsHeader_ServerLibrary\n    }\n  }\n"];
-/**
- * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
- */
 export function graphql(source: "\n  query LikedSongsQuery {\n    viewer {\n      id\n      ...LikedSongsList_User\n    }\n  }\n"): (typeof documents)["\n  query LikedSongsQuery {\n    viewer {\n      id\n      ...LikedSongsList_User\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
@@ -478,6 +476,14 @@ export function graphql(source: "\n  query ProfilePage {\n    viewer {\n      id
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  mutation ImportArtist($musicBrainzArtistId: String!) {\n    importArtist(input: { musicBrainzArtistId: $musicBrainzArtistId }) {\n      __typename\n      ... on ImportArtistSuccess {\n        artist {\n          id\n          name\n        }\n      }\n      ... on ImportArtistError {\n        message\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation ImportArtist($musicBrainzArtistId: String!) {\n    importArtist(input: { musicBrainzArtistId: $musicBrainzArtistId }) {\n      __typename\n      ... on ImportArtistSuccess {\n        artist {\n          id\n          name\n        }\n      }\n      ... on ImportArtistError {\n        message\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query AdminDownloadsSettings {\n    serverSettings {\n      downloadSlotCount\n    }\n  }\n"): (typeof documents)["\n  query AdminDownloadsSettings {\n    serverSettings {\n      downloadSlotCount\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query AdminOverviewTabQuery {\n    serverLibrary {\n      ...ServerLibraryStatisticsHeader_ServerLibrary\n    }\n  }\n"): (typeof documents)["\n  query AdminOverviewTabQuery {\n    serverLibrary {\n      ...ServerLibraryStatisticsHeader_ServerLibrary\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

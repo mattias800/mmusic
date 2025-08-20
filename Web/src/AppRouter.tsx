@@ -21,6 +21,7 @@ import { AdminServerSettingsTab } from "@/features/admin/tabs/AdminServerSetting
 import { AdminIntegrationsTab } from "@/features/admin/tabs/AdminIntegrationsTab.tsx";
 import { AdminClientsTab } from "@/features/admin/tabs/AdminClientsTab.tsx";
 import { AdminUsersTab } from "@/features/admin/tabs/AdminUsersTab.tsx";
+import { AdminDownloadsTab } from "@/features/admin/tabs/AdminDownloadsTab.tsx";
 import { TopArtistTracks } from "@/features/artist/artist-page/TopArtistTracks.tsx";
 import { SimilarArtistsTab } from "@/features/artist/artist-page/tabs/SimilarArtistsTab.tsx";
 import { ArtistAppearsOnTab } from "@/features/artist/artist-page/tabs/ArtistAppearsOnTab.tsx";
@@ -71,6 +72,7 @@ export const AppRouter: React.FC<AppRouterProps> = () => {
       <Route path="/admin" element={<AdminPage />}>
         <Route index element={<AdminOverviewTab />} />
         <Route path="server" element={<AdminServerSettingsTab />} />
+        <Route path="downloads" element={<AdminDownloadsTab />} />
         <Route path="integrations" element={<AdminIntegrationsTab />} />
         <Route path="clients" element={<AdminClientsTab />} />
         <Route path="users" element={<AdminUsersTab />} />
