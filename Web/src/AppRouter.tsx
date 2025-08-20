@@ -14,7 +14,13 @@ import { SearchResultPage } from "@/app/SearchResultPage.tsx";
 import { MbArtistPage } from "@/app/MbArtistPage.tsx";
 import { PlaylistPage } from "@/app/PlaylistPage.tsx";
 import { QueuesPage } from "@/app/QueuesPage.tsx";
-import { AdminUsersPage } from "@/app/AdminUsersPage.tsx";
+// import { AdminUsersPage } from "@/app/AdminUsersPage.tsx";
+import { AdminPage } from "@/app/AdminPage.tsx";
+import { AdminOverviewTab } from "@/features/admin/tabs/AdminOverviewTab.tsx";
+import { AdminServerSettingsTab } from "@/features/admin/tabs/AdminServerSettingsTab.tsx";
+import { AdminIntegrationsTab } from "@/features/admin/tabs/AdminIntegrationsTab.tsx";
+import { AdminClientsTab } from "@/features/admin/tabs/AdminClientsTab.tsx";
+import { AdminUsersTab } from "@/features/admin/tabs/AdminUsersTab.tsx";
 import { TopArtistTracks } from "@/features/artist/artist-page/TopArtistTracks.tsx";
 import { SimilarArtistsTab } from "@/features/artist/artist-page/tabs/SimilarArtistsTab.tsx";
 import { ArtistAppearsOnTab } from "@/features/artist/artist-page/tabs/ArtistAppearsOnTab.tsx";
@@ -62,7 +68,13 @@ export const AppRouter: React.FC<AppRouterProps> = () => {
       <Route path="/search" element={<SearchResultPage />} />
       <Route path="/playlist/:playlistId" element={<PlaylistPage />} />
       <Route path="/queues" element={<QueuesPage />} />
-      <Route path="/admin/users" element={<AdminUsersPage />} />
+      <Route path="/admin" element={<AdminPage />}>
+        <Route index element={<AdminOverviewTab />} />
+        <Route path="server" element={<AdminServerSettingsTab />} />
+        <Route path="integrations" element={<AdminIntegrationsTab />} />
+        <Route path="clients" element={<AdminClientsTab />} />
+        <Route path="users" element={<AdminUsersTab />} />
+      </Route>
     </Routes>
   );
 };
