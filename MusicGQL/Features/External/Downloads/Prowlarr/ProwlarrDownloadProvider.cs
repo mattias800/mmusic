@@ -10,6 +10,7 @@ public class ProwlarrDownloadProvider(
     QBittorrentClient qb,
     SabnzbdClient sab,
     IOptions<ProwlarrOptions> prowlarrOptions,
+    MusicGQL.Features.ServerSettings.ServerSettingsAccessor serverSettingsAccessor,
     ILogger<ProwlarrDownloadProvider> logger
 ) : IDownloadProvider
 {
@@ -24,6 +25,11 @@ public class ProwlarrDownloadProvider(
         CancellationToken cancellationToken
     )
     {
+        // Read toggles
+        var settings = await serverSettingsAccessor.GetAsync();
+        var allowSab = settings.EnableSabnzbdDownloader;
+        var allowQbit = settings.EnableQBittorrentDownloader;
+
         // 1) Search Prowlarr for nzb/magnet results
         logger.LogInformation("[Prowlarr] Begin provider for {Artist} - {Release}", artistName, releaseTitle);
         var results = await prowlarr.SearchAlbumAsync(artistName, releaseTitle, cancellationToken);
@@ -54,8 +60,13 @@ public class ProwlarrDownloadProvider(
             return matchCount >= Math.Max(1, albumWords.Length / 2);
         }
 
-        var nzb = results.FirstOrDefault(r => !string.IsNullOrWhiteSpace(r.DownloadUrl) && TitleMatches(r.Title));
-        if (nzb is not null && !string.IsNullOrWhiteSpace(nzb.DownloadUrl))
+        // Prefer NZB for SAB, but explicitly avoid .torrent URLs here
+        var nzb = results.FirstOrDefault(r =>
+            !string.IsNullOrWhiteSpace(r.DownloadUrl)
+            && !LooksLikeTorrentUrl(r.DownloadUrl!)
+            && TitleMatches(r.Title)
+        );
+        if (allowSab && nzb is not null && !string.IsNullOrWhiteSpace(nzb.DownloadUrl))
         {
             // Always fetch NZB bytes and upload them to SABnzbd to avoid SAB needing network access to Prowlarr
             var url = EnsureProwlarrApiKey(nzb.DownloadUrl!);
@@ -89,7 +100,7 @@ public class ProwlarrDownloadProvider(
 
         TryMagnet:
         var magnet = results.FirstOrDefault(r => !string.IsNullOrWhiteSpace(r.MagnetUrl));
-        if (magnet is not null && !string.IsNullOrWhiteSpace(magnet.MagnetUrl))
+        if (allowQbit && magnet is not null && !string.IsNullOrWhiteSpace(magnet.MagnetUrl))
         {
             logger.LogInformation("[Prowlarr] Handing off magnet to qBittorrent: {Title}", magnet.Title ?? "(no title)");
             var ok = await qb.AddMagnetAsync(magnet.MagnetUrl!, null, cancellationToken);
@@ -97,14 +108,20 @@ public class ProwlarrDownloadProvider(
             logger.LogWarning("[Prowlarr] qBittorrent did not accept magnet handoff");
         }
 
-        // Fallback: try guid or commentUrl as download targets
-        var fallback = results.FirstOrDefault(r => !string.IsNullOrWhiteSpace(r.Guid))?.Guid
-                       ?? results.FirstOrDefault(r => !string.IsNullOrWhiteSpace(r.DownloadUrl))?.DownloadUrl
-                       ?? results.FirstOrDefault(r => !string.IsNullOrWhiteSpace(r.MagnetUrl))?.MagnetUrl;
-        if (!string.IsNullOrWhiteSpace(fallback) && (fallback!.StartsWith("http://") || fallback.StartsWith("https://")))
+        // Fallbacks by type: if we have a torrent URL, send to qBittorrent; if generic HTTP and NZB-like, send to SAB
+        var torrentUrl = results.FirstOrDefault(r => !string.IsNullOrWhiteSpace(r.DownloadUrl) && LooksLikeTorrentUrl(r.DownloadUrl!))?.DownloadUrl;
+        if (allowQbit && !string.IsNullOrWhiteSpace(torrentUrl))
         {
-            var url2 = EnsureProwlarrApiKey(fallback);
-            logger.LogInformation("[Prowlarr] Attempting SABnzbd handoff using fallback URL: {Url}", url2);
+            logger.LogInformation("[Prowlarr] Handing off .torrent URL to qBittorrent");
+            var okT = await qb.AddByUrlAsync(EnsureProwlarrApiKey(torrentUrl!), null, cancellationToken);
+            if (okT) return true;
+        }
+
+        var httpUrl = results.FirstOrDefault(r => !string.IsNullOrWhiteSpace(r.DownloadUrl))?.DownloadUrl;
+        if (allowSab && !string.IsNullOrWhiteSpace(httpUrl) && (httpUrl!.StartsWith("http://") || httpUrl.StartsWith("https://")))
+        {
+            var url2 = EnsureProwlarrApiKey(httpUrl);
+            logger.LogInformation("[Prowlarr] Attempting SABnzbd handoff using HTTP URL: {Url}", url2);
             var ok2 = await sab.AddNzbByUrlAsync(url2, $"{artistName} - {releaseTitle}", cancellationToken);
             if (ok2) return true;
         }
@@ -163,6 +180,16 @@ public class ProwlarrDownloadProvider(
         }
         catch { }
         return false;
+    }
+
+    private static bool LooksLikeTorrentUrl(string downloadUrl)
+    {
+        try
+        {
+            return downloadUrl.EndsWith(".torrent", StringComparison.OrdinalIgnoreCase)
+                   || downloadUrl.Contains("torrent", StringComparison.OrdinalIgnoreCase);
+        }
+        catch { return false; }
     }
 
     private static bool IsLikelyMusicAlbum(ProwlarrRelease r, string artistName, string releaseTitle)

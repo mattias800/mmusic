@@ -81,6 +81,42 @@ public class QBittorrentClient(HttpClient httpClient, IOptions<QBittorrentOption
             return false;
         }
     }
+
+    public async Task<bool> AddByUrlAsync(string torrentUrl, string? savePath, CancellationToken cancellationToken)
+    {
+        var baseUrl = options.Value.BaseUrl?.TrimEnd('/');
+        if (string.IsNullOrWhiteSpace(baseUrl)) return false;
+        if (!await EnsureLoginAsync(cancellationToken)) return false;
+        try
+        {
+            var url = $"{baseUrl}/api/v2/torrents/add";
+            using var req = new HttpRequestMessage(HttpMethod.Post, url);
+            if (!string.IsNullOrWhiteSpace(cookie)) req.Headers.Add("Cookie", cookie);
+            var form = new MultipartFormDataContent
+            {
+                { new StringContent(torrentUrl), "urls" }
+            };
+            if (!string.IsNullOrWhiteSpace(savePath))
+            {
+                form.Add(new StringContent(savePath), "savepath");
+            }
+            req.Content = form;
+            logger.LogDebug("[qBittorrent] POST {Url} (add by url)", url);
+            var resp = await httpClient.SendAsync(req, cancellationToken);
+            var ok = resp.IsSuccessStatusCode;
+            if (!ok)
+            {
+                var body = await resp.Content.ReadAsStringAsync(cancellationToken);
+                logger.LogWarning("[qBittorrent] Add by url failed HTTP {Status}. Body: {Body}", (int)resp.StatusCode, body);
+            }
+            return ok;
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "qBittorrent add by url failed");
+            return false;
+        }
+    }
 }
 
 

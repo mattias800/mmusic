@@ -1007,6 +1007,7 @@ type Mutation {
   unlikeSong(input: UnlikedSongInput!): UnlikeSongResult!
   updateDownloadPath(input: UpdateDownloadPathInput!): UpdateDownloadPathResult!
   updateDownloadSlotCount(input: UpdateDownloadSlotCountInput!): UpdateDownloadSlotCountResult!
+  updateDownloaderSettings(input: UpdateDownloaderSettingsInput!): UpdateDownloaderSettingsResult!
   updateLibraryPath(input: UpdateLibraryPathInput!): UpdateLibraryPathResult!
   updateProwlarrSettings(input: UpdateProwlarrSettingsInput!): UpdateProwlarrSettingsResult!
   updatePublicBaseUrl(input: UpdatePublicBaseUrlInput!): UpdatePublicBaseUrlResult!
@@ -1302,6 +1303,9 @@ type ServerLibrarySearchRoot {
 type ServerSettings {
   downloadPath: String!
   downloadSlotCount: Int!
+  enableQBittorrentDownloader: Boolean!
+  enableSabnzbdDownloader: Boolean!
+  enableSoulSeekDownloader: Boolean!
   fanartConfiguredSource: String!
   id: ID!
   isFanartConfigured: Boolean!
@@ -1731,6 +1735,22 @@ input UpdateDownloadSlotCountInput {
 union UpdateDownloadSlotCountResult = UpdateDownloadSlotCountError | UpdateDownloadSlotCountSuccess
 
 type UpdateDownloadSlotCountSuccess {
+  serverSettings: ServerSettings!
+}
+
+type UpdateDownloaderSettingsError {
+  message: String!
+}
+
+input UpdateDownloaderSettingsInput {
+  enableQBittorrentDownloader: Boolean!
+  enableSabnzbdDownloader: Boolean!
+  enableSoulSeekDownloader: Boolean!
+}
+
+union UpdateDownloaderSettingsResult = UpdateDownloaderSettingsError | UpdateDownloaderSettingsSuccess
+
+type UpdateDownloaderSettingsSuccess {
   serverSettings: ServerSettings!
 }
 

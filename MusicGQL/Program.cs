@@ -200,6 +200,7 @@ builder
     .AddSingleton<MusicGQL.Features.External.Downloads.DownloadProviderCatalog>(sp =>
     {
         var configuration = sp.GetRequiredService<IConfiguration>();
+        var serverSettingsAccessor = sp.GetRequiredService<MusicGQL.Features.ServerSettings.ServerSettingsAccessor>();
         var logger = sp.GetRequiredService<ILogger<MusicGQL.Features.External.Downloads.DownloadProviderCatalog>>();
         bool skipSoulSeek = false;
         bool preferProwlarrFirst = false;
@@ -225,9 +226,20 @@ builder
 
         var providers = new List<MusicGQL.Features.External.Downloads.IDownloadProvider>();
 
-        // Always try Prowlarr first, then Soulseek
-        providers.Add(prowlarrProvider);
-        if (!skipSoulSeek) providers.Add(soulSeekProvider);
+        // Apply toggles from server settings
+        var toggles = serverSettingsAccessor.GetAsync().GetAwaiter().GetResult();
+
+        // Always include Prowlarr if any downloader is enabled (it routes to SAB/qBittorrent accordingly)
+        if (toggles.EnableSabnzbdDownloader || toggles.EnableQBittorrentDownloader)
+        {
+            providers.Add(prowlarrProvider);
+        }
+
+        // Conditionally include Soulseek provider
+        if (!skipSoulSeek && toggles.EnableSoulSeekDownloader)
+        {
+            providers.Add(soulSeekProvider);
+        }
 
         // Note: preferProwlarrFirst is now always true by default
 
@@ -408,6 +420,9 @@ builder
     .AddTypeExtension<UpdateQBittorrentSettingsMutation>()
     .AddType<UpdateQBittorrentSettingsSuccess>()
     .AddType<UpdateQBittorrentSettingsError>()
+    .AddTypeExtension<UpdateDownloaderSettingsMutation>()
+    .AddType<UpdateDownloaderSettingsSuccess>()
+    .AddType<UpdateDownloaderSettingsError>()
     .AddTypeExtension<DownloadsSearchRoot>()
     .AddTypeExtension<DownloadsSubscription>()
     .AddTypeExtension<DownloadQueueMutations>()

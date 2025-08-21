@@ -52,6 +52,11 @@ public record ServerSettings([property: GraphQLIgnore] DbServerSettings Model)
     public string? QBittorrentUsername() => Model.QBittorrentUsername;
     public string? QBittorrentSavePath() => Model.QBittorrentSavePath;
 
+    // Downloader toggles
+    public bool EnableSabnzbdDownloader() => Model.EnableSabnzbdDownloader;
+    public bool EnableQBittorrentDownloader() => Model.EnableQBittorrentDownloader;
+    public bool EnableSoulSeekDownloader() => Model.EnableSoulSeekDownloader;
+
     // Top Tracks Service Configuration
     public bool ListenBrainzTopTracksEnabled() => Model.ListenBrainzTopTracksEnabled;
 

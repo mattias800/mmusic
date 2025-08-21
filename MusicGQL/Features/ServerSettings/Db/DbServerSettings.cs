@@ -52,6 +52,11 @@ public class DbServerSettings
     public string? QBittorrentBaseUrl { get; set; }
     public string? QBittorrentUsername { get; set; }
     public string? QBittorrentSavePath { get; set; }
+
+    // Downloader enable toggles
+    public bool EnableSabnzbdDownloader { get; set; } = true;
+    public bool EnableQBittorrentDownloader { get; set; } = true;
+    public bool EnableSoulSeekDownloader { get; set; } = true;
 }
 
 public static class DefaultDbServerSettingsProvider
@@ -88,6 +93,9 @@ public static class DefaultDbServerSettingsProvider
             QBittorrentBaseUrl = null,
             QBittorrentUsername = null,
             QBittorrentSavePath = null,
+            EnableSabnzbdDownloader = true,
+            EnableQBittorrentDownloader = true,
+            EnableSoulSeekDownloader = true,
         };
     }
 }

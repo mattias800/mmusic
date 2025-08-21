@@ -4,6 +4,7 @@ import { graphql } from "@/gql";
 import { Download, Settings } from "lucide-react";
 import { GlassCard, PageLayout, PageHeader, PageLoading, PageError, PageNoData } from "@/components/ui";
 import { DownloadSlotSettingsForm } from "@/features/settings/DownloadSlotSettingsForm.tsx";
+import { DownloadersTogglesCard } from "@/features/settings/DownloadersTogglesCard.tsx";
 import { AlertTriangle } from "lucide-react";
 
 const adminDownloadsQuery = graphql(`
@@ -55,7 +56,8 @@ export const AdminDownloadsTab: React.FC = () => {
         title="Downloads"
         subtitle="Configure concurrent downloads and behavior"
       />
-      <div className="pt-4 max-w-4xl mx-auto">
+      <div className="pt-4 max-w-4xl mx-auto space-y-8">
+        <DownloadersTogglesCard />
         <GlassCard
           title="Download Configuration"
           icon={Settings}
