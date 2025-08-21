@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useMutation, useQuery, useSubscription } from "urql";
 import { graphql } from "@/gql";
 import { GlassCard } from "@/components/ui";
+import { Switch } from "@/components/ui/switch.tsx";
 
 const onlineClientsQuery = graphql(`
   query OnlineClients {
@@ -88,11 +89,7 @@ export const OnlineClientsPanel: React.FC = () => {
               placeholder="Client name"
             />
             <label className="flex items-center gap-2 text-xs">
-              <input
-                type="checkbox"
-                checked={allowRemote}
-                onChange={(e) => setAllowRemote(e.target.checked)}
-              />
+              <Switch checked={allowRemote} onCheckedChange={setAllowRemote} ariaLabel="Allow remote playback" />
               Allow remote playback
             </label>
           </div>

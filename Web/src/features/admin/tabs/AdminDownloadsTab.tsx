@@ -10,6 +10,7 @@ import { AlertTriangle } from "lucide-react";
 const adminDownloadsQuery = graphql(`
   query AdminDownloadsSettings {
     serverSettings {
+      id
       downloadSlotCount
     }
   }

@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input.tsx";
 import { Button } from "@/components/ui/button.tsx";
 import { Globe, RefreshCcw, Activity } from "lucide-react";
 import { useClient } from "urql";
+import { Switch } from "@/components/ui/switch.tsx";
 
 const query = graphql(`
   query ProwlarrSettings_Query {
@@ -135,10 +136,10 @@ export const ProwlarrSettingsForm: React.FC = () => {
       </div>
       <div className="flex items-center gap-6">
         <label className="flex items-center gap-2 text-gray-300">
-          <input type="checkbox" checked={testFirst} onChange={(e) => setTestFirst(e.target.checked)} /> Test connectivity first
+          <Switch checked={testFirst} onCheckedChange={setTestFirst} ariaLabel="Test connectivity first" /> Test connectivity first
         </label>
         <label className="flex items-center gap-2 text-gray-300">
-          <input type="checkbox" checked={detailed} onChange={(e) => setDetailed(e.target.checked)} /> Enable detailed logging
+          <Switch checked={detailed} onCheckedChange={setDetailed} ariaLabel="Enable detailed logging" /> Enable detailed logging
         </label>
       </div>
       <div className="flex items-center justify-between">

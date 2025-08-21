@@ -1,21 +1,94 @@
 import * as React from "react";
+import { useEffect, useState } from "react"; // Use generated documents
 import { useMutation, useQuery } from "urql";
-import { UpdateDownloaderSettingsDocument, DownloadersTogglesCardDocument } from "@/features/admin/graphql/Downloaders.gql.ts";
+import {
+  DownloadersTogglesCardDocument,
+  UpdateDownloaderSettingsDocument,
+} from "@/features/admin/graphql/Downloaders.gql.ts";
 import { GlassCard, GradientButton } from "@/components/ui";
-import { Settings } from "lucide-react";
+import { Switch } from "@/components/ui/switch.tsx";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip.tsx";
+import {
+  Cloud,
+  HardDriveDownload,
+  Magnet,
+  RefreshCcw,
+  Server,
+  Settings,
+} from "lucide-react";
+import { graphql } from "@/gql";
 
 // Use generated documents
 
+const testSabnzbdConnectivityQuery = graphql(`
+  query TestSabnzbdConnectivity {
+    external {
+      testSabnzbdConnectivity {
+        ok
+        message
+      }
+    }
+  }
+`);
+
+const testProwlarrConnectivityQuery = graphql(`
+  query TestProwlarrConnectivity {
+    external {
+      testProwlarrConnectivity {
+        ok
+        message
+      }
+    }
+  }
+`);
+
+const testQBittorrentConnectivityQuery = graphql(`
+  query TestQBittorrentConnectivity {
+    external {
+      testQBittorrentConnectivity {
+        ok
+        message
+      }
+    }
+  }
+`);
+
 export const DownloadersTogglesCard: React.FC = () => {
-  const [{ data, fetching }] = useQuery({ query: DownloadersTogglesCardDocument, requestPolicy: "network-only" });
+  const [{ data, fetching }] = useQuery({
+    query: DownloadersTogglesCardDocument,
+    requestPolicy: "network-only",
+  });
+
   const [, update] = useMutation(UpdateDownloaderSettingsDocument);
 
-  const [sab, setSab] = React.useState(false);
-  const [qbit, setQbit] = React.useState(false);
-  const [soul, setSoul] = React.useState(false);
-  const [saving, setSaving] = React.useState(false);
+  const [{ data: prow, fetching: prowLoading }, reexecProw] = useQuery({
+    query: testProwlarrConnectivityQuery,
+    pause: false,
+    context: { requestPolicy: "network-only" },
+  });
 
-  React.useEffect(() => {
+  const [{ data: qbitConn, fetching: qbitLoading }, reexecQbit] = useQuery({
+    query: testQBittorrentConnectivityQuery,
+    pause: false,
+    context: { requestPolicy: "network-only" },
+  });
+
+  const [{ data: sabConn, fetching: sabLoading }, reexecSab] = useQuery({
+    query: testSabnzbdConnectivityQuery,
+    pause: false,
+    context: { requestPolicy: "network-only" },
+  });
+
+  const [sab, setSab] = useState(false);
+  const [qbit, setQbit] = useState(false);
+  const [soul, setSoul] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
     if (data?.serverSettings) {
       setSab(!!data.serverSettings.enableSabnzbdDownloader);
       setQbit(!!data.serverSettings.enableQBittorrentDownloader);
@@ -40,33 +113,50 @@ export const DownloadersTogglesCard: React.FC = () => {
   return (
     <GlassCard title="Downloaders" icon={Settings} iconBgColor="bg-blue-500/20">
       <div className="space-y-4">
-        <label className="flex items-center gap-3 text-gray-200">
-          <input
-            type="checkbox"
-            checked={sab}
-            onChange={(e) => setSab(e.target.checked)}
-            disabled={fetching || saving}
-          />
-          Enable SABnzbd (Usenet)
-        </label>
-        <label className="flex items-center gap-3 text-gray-200">
-          <input
-            type="checkbox"
-            checked={qbit}
-            onChange={(e) => setQbit(e.target.checked)}
-            disabled={fetching || saving}
-          />
-          Enable qBittorrent (Torrents)
-        </label>
-        <label className="flex items-center gap-3 text-gray-200">
-          <input
-            type="checkbox"
-            checked={soul}
-            onChange={(e) => setSoul(e.target.checked)}
-            disabled={fetching || saving}
-          />
-          Enable Soulseek
-        </label>
+        <StatusRow
+          icon={Server}
+          title="Prowlarr"
+          availability={deriveStatus(
+            prowLoading,
+            prow?.external?.testProwlarrConnectivity,
+          )}
+          onTest={() => reexecProw({ requestPolicy: "network-only" })}
+        />
+        <ServiceRow
+          icon={HardDriveDownload}
+          title="SABnzbd (Usenet)"
+          enabled={sab}
+          onToggle={setSab}
+          disabled={fetching || saving}
+          availability={deriveStatus(
+            sabLoading,
+            sabConn?.external?.testSabnzbdConnectivity,
+          )}
+          onTest={() => reexecSab({ requestPolicy: "network-only" })}
+        />
+        <ServiceRow
+          icon={Magnet}
+          title="qBittorrent (Torrents)"
+          enabled={qbit}
+          onToggle={setQbit}
+          disabled={fetching || saving}
+          availability={deriveStatus(
+            qbitLoading,
+            qbitConn?.external?.testQBittorrentConnectivity,
+          )}
+          onTest={() => reexecQbit({ requestPolicy: "network-only" })}
+        />
+        <ServiceRow
+          icon={Cloud}
+          title="Soulseek"
+          enabled={soul}
+          onToggle={setSoul}
+          disabled={fetching || saving}
+          availability={{
+            state: "info",
+            message: "Status shown on Soulseek panel",
+          }}
+        />
         <div>
           <GradientButton onClick={onSave} disabled={fetching || saving}>
             {saving ? "Saving..." : "Save"}
@@ -77,4 +167,167 @@ export const DownloadersTogglesCard: React.FC = () => {
   );
 };
 
+type Availability = {
+  state: "ok" | "error" | "unknown" | "info";
+  message?: string;
+};
 
+function deriveStatus(
+  loading: boolean,
+  payload?: { ok: boolean; message: string } | null,
+): Availability {
+  if (loading) return { state: "info", message: "Checking..." };
+  if (!payload) return { state: "unknown", message: "Not tested" };
+  if (payload.ok)
+    return { state: "ok", message: payload.message || "Available" };
+  return { state: "error", message: payload.message || "Unavailable" };
+}
+
+interface ServiceRowProps {
+  icon: React.ComponentType<{ className?: string }>;
+  title: string;
+  enabled: boolean;
+  onToggle: (v: boolean) => void;
+  disabled?: boolean;
+  availability: Availability;
+  onTest?: () => void;
+}
+
+const ServiceRow: React.FC<ServiceRowProps> = ({
+  icon: Icon,
+  title,
+  enabled,
+  onToggle,
+  disabled,
+  availability,
+  onTest,
+}) => {
+  const pill =
+    availability.state === "ok"
+      ? "bg-green-500/20 text-green-300 border-green-500/30"
+      : availability.state === "error"
+        ? "bg-red-500/20 text-red-300 border-red-500/30"
+        : availability.state === "info"
+          ? "bg-blue-500/20 text-blue-300 border-blue-500/30"
+          : "bg-gray-500/20 text-gray-300 border-gray-500/30";
+
+  return (
+    <div
+      className={
+        "flex items-center justify-between rounded-lg border px-3 py-2 " +
+        (enabled
+          ? "border-green-500/30 bg-green-500/5"
+          : "border-white/10 bg-white/5")
+      }
+    >
+      <div className="flex items-center gap-3">
+        <div
+          className={
+            "w-8 h-8 rounded-md flex items-center justify-center " +
+            (enabled ? "bg-green-500/20" : "bg-white/10")
+          }
+        >
+          <Icon
+            className={
+              "w-4 h-4 " + (enabled ? "text-green-300" : "text-gray-300")
+            }
+          />
+        </div>
+        <div>
+          <div className="text-white text-sm font-medium">{title}</div>
+          {availability.message && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div
+                  className={`inline-flex items-center gap-2 mt-1 text-[11px] px-2 py-0.5 rounded-full border ${pill}`}
+                >
+                  {availability.message}
+                  {onTest && (
+                    <button
+                      type="button"
+                      title="Test now"
+                      onClick={() => onTest()}
+                      className="ml-1 inline-flex items-center text-xs text-white/80 hover:text-white"
+                    >
+                      <RefreshCcw className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
+              </TooltipTrigger>
+              <TooltipContent sideOffset={8}>
+                {availability.message}
+              </TooltipContent>
+            </Tooltip>
+          )}
+        </div>
+      </div>
+      <Switch
+        checked={enabled}
+        onCheckedChange={onToggle}
+        disabled={disabled}
+        ariaLabel={`Enable ${title}`}
+      />
+    </div>
+  );
+};
+
+interface StatusRowProps {
+  icon: React.ComponentType<{ className?: string }>;
+  title: string;
+  availability: Availability;
+  onTest?: () => void;
+}
+
+const StatusRow: React.FC<StatusRowProps> = ({
+  icon: Icon,
+  title,
+  availability,
+  onTest,
+}) => {
+  const pill =
+    availability.state === "ok"
+      ? "bg-green-500/20 text-green-300 border-green-500/30"
+      : availability.state === "error"
+        ? "bg-red-500/20 text-red-300 border-red-500/30"
+        : availability.state === "info"
+          ? "bg-blue-500/20 text-blue-300 border-blue-500/30"
+          : "bg-gray-500/20 text-gray-300 border-gray-500/30";
+
+  return (
+    <div className="flex items-center justify-between rounded-lg border px-3 py-2 border-white/10 bg-white/5">
+      <div className="flex items-center gap-3">
+        <div className="w-8 h-8 rounded-md flex items-center justify-center bg-white/10">
+          <Icon className="w-4 h-4 text-gray-300" />
+        </div>
+        <div>
+          <div className="text-white text-sm font-medium">{title}</div>
+          {availability.message && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div
+                  className={`inline-flex items-center gap-2 mt-1 text-[11px] px-2 py-0.5 rounded-full border ${pill}`}
+                >
+                  {availability.message}
+                  {onTest && (
+                    <button
+                      type="button"
+                      title="Test now"
+                      onClick={() => onTest()}
+                      className="ml-1 inline-flex items-center text-xs text-white/80 hover:text-white"
+                    >
+                      <RefreshCcw className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
+              </TooltipTrigger>
+              <TooltipContent sideOffset={8}>
+                {availability.message}
+              </TooltipContent>
+            </Tooltip>
+          )}
+        </div>
+      </div>
+      <div />
+    </div>
+  );
+};

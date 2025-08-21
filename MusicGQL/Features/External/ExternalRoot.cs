@@ -4,6 +4,7 @@ using MusicGQL.Features.ServerSettings;
 using Microsoft.Extensions.Options;
 using MusicGQL.Integration.Youtube.Configuration;
 using MusicGQL.Integration.Spotify.Configuration;
+using MusicGQL.Features.External.Downloads.Sabnzbd.Configuration;
 using SpotifyAPI.Web;
 using MusicGQL;
 
@@ -15,6 +16,34 @@ public record ExternalRoot
     public string Id => "External";
 
     public SoulSeekRoot SoulSeek() => new();
+
+    [GraphQLName("testSabnzbdConnectivity")]
+    public async Task<ConnectivityStatus> TestSabnzbdConnectivity(
+        [Service] IOptions<SabnzbdOptions> options,
+        [Service] IHttpClientFactory httpClientFactory
+    )
+    {
+        var baseUrl = options.Value.BaseUrl?.TrimEnd('/');
+        if (string.IsNullOrWhiteSpace(baseUrl))
+            return new ConnectivityStatus(false, "BaseUrl not configured");
+
+        var apiKey = options.Value.ApiKey;
+        if (string.IsNullOrWhiteSpace(apiKey))
+            return new ConnectivityStatus(false, "API key not configured");
+
+        try
+        {
+            var client = httpClientFactory.CreateClient();
+            client.Timeout = TimeSpan.FromSeconds(5);
+            var url = baseUrl + "/api?mode=version&output=json&apikey=" + Uri.EscapeDataString(apiKey);
+            using var resp = await client.GetAsync(url);
+            return new ConnectivityStatus(resp.IsSuccessStatusCode, $"HTTP {(int)resp.StatusCode}");
+        }
+        catch (Exception ex)
+        {
+            return new ConnectivityStatus(false, ex.Message);
+        }
+    }
 
     [GraphQLName("testProwlarrConnectivity")]
     public async Task<ConnectivityStatus> TestProwlarrConnectivity(

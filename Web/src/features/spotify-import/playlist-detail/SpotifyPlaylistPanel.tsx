@@ -18,6 +18,7 @@ import { FragmentType, graphql, useFragment } from "@/gql";
 import { useMutation, useQuery } from "urql";
 import { ExternalPlaylistTrackListHeading } from "@/features/spotify-import/playlist-detail/ExternalPlaylistTrackListHeading.tsx";
 import { ExternalPlaylistTrackItem } from "@/features/spotify-import/playlist-detail/ExternalPlaylistTrackItem.tsx";
+import { Checkbox } from "@/components/ui/checkbox.tsx";
 
 export interface SpotifyPlaylistPanelProps {
   playlist: FragmentType<typeof spotifyPlaylistPanelPlaylistFragment>;
@@ -201,17 +202,15 @@ export const SpotifyPlaylistPanel: React.FC<SpotifyPlaylistPanelProps> = (
                   )}
                   renderSubtitle={() => <span>{t.artistNames.join(", ")}</span>}
                   renderCheckbox={() => (
-                    <input
-                      type="checkbox"
-                      className="mr-3 ml-4"
-                      checked={selected[t.id]}
-                      onChange={(e) =>
-                        setSelected((prev) => ({
-                          ...prev,
-                          [t.id]: e.target.checked,
-                        }))
-                      }
-                    />
+                    <div className="mr-3 ml-4">
+                      <Checkbox
+                        checked={selected[t.id]}
+                        onCheckedChange={(checked) =>
+                          setSelected((prev) => ({ ...prev, [t.id]: checked }))
+                        }
+                        aria-label={`Select ${t.title}`}
+                      />
+                    </div>
                   )}
                 />
               ))}

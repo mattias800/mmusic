@@ -7,6 +7,8 @@ export { GradientButton } from "./gradient-button";
 export { InfoSection } from "./info-section";
 export { RoleToggleButton } from "./role-toggle-button";
 export { TabMenu } from "./TabMenu.tsx";
+export { Switch } from "./switch.tsx";
+export { Checkbox } from "./checkbox.tsx";
 
 // Page State Components
 export {

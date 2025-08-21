@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Alert } from "@/components/ui/Alert";
 import { Music } from "lucide-react";
 import { toast } from "sonner";
+import { Switch } from "@/components/ui/switch.tsx";
 
 const topTracksServiceSettingsQuery = graphql(`
   query TopTracksServiceSettings {
@@ -119,12 +120,7 @@ export const TopTracksServiceSettingsForm: React.FC = () => {
               </div>
             </div>
             <label className="flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                checked={listenBrainzEnabled}
-                onChange={(e) => setListenBrainzEnabled(e.target.checked)}
-                className="w-4 h-4 text-orange-500 bg-gray-700 border-gray-600 rounded focus:ring-orange-500 focus:ring-2"
-              />
+              <Switch checked={listenBrainzEnabled} onCheckedChange={setListenBrainzEnabled} ariaLabel="Enable ListenBrainz" />
             </label>
           </div>
         </div>
@@ -144,12 +140,7 @@ export const TopTracksServiceSettingsForm: React.FC = () => {
               </div>
             </div>
             <label className="flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                checked={spotifyEnabled}
-                onChange={(e) => setSpotifyEnabled(e.target.checked)}
-                className="w-4 h-4 text-green-500 bg-gray-700 border-gray-600 rounded focus:ring-green-500 focus:ring-2"
-              />
+              <Switch checked={spotifyEnabled} onCheckedChange={setSpotifyEnabled} ariaLabel="Enable Spotify" />
             </label>
           </div>
         </div>
@@ -169,12 +160,7 @@ export const TopTracksServiceSettingsForm: React.FC = () => {
               </div>
             </div>
             <label className="flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                checked={lastFmEnabled}
-                onChange={(e) => setLastFmEnabled(e.target.checked)}
-                className="w-4 h-4 text-red-500 bg-gray-700 border-gray-600 rounded focus:ring-red-500 focus:ring-2"
-              />
+              <Switch checked={lastFmEnabled} onCheckedChange={setLastFmEnabled} ariaLabel="Enable Last.fm" />
             </label>
           </div>
         </div>
