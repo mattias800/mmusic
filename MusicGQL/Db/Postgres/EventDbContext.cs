@@ -46,7 +46,16 @@ public class EventDbContext(DbContextOptions<EventDbContext> options) : DbContex
             .HasValue<UserRolesUpdated>("UserRolesUpdated")
             .HasValue<UserUsernameUpdated>("UserUsernameUpdated")
             .HasValue<UserDeleted>("UserDeleted")
-            .HasValue<LibraryPathUpdated>("LibraryPathUpdated");
+            .HasValue<LibraryPathUpdated>("LibraryPathUpdated")
+            .HasValue<DownloadPathUpdated>("DownloadPathUpdated")
+            .HasValue<SoulSeekSearchTimeLimitUpdated>("SoulSeekSearchTimeLimitUpdated")
+            .HasValue<SoulSeekNoDataTimeoutUpdated>("SoulSeekNoDataTimeoutUpdated")
+            .HasValue<DownloadSlotCountUpdated>("DownloadSlotCountUpdated")
+            .HasValue<PublicBaseUrlUpdated>("PublicBaseUrlUpdated")
+            .HasValue<SoulSeekConnectionUpdated>("SoulSeekConnectionUpdated")
+            .HasValue<ProwlarrSettingsUpdated>("ProwlarrSettingsUpdated")
+            .HasValue<QBittorrentSettingsUpdated>("QBittorrentSettingsUpdated")
+            .HasValue<LogsFolderPathUpdated>("LogsFolderPathUpdated");
         modelBuilder.Entity<DbTrackPlayCount>(b =>
         {
             b.ToTable("TrackPlayCounts");

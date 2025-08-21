@@ -37,6 +37,9 @@ public class ServerSettingsEventProcessor
             case QBittorrentSettingsUpdated qbit:
                 await HandleQBittorrentSettingsUpdated(qbit, dbContext);
                 break;
+            case LogsFolderPathUpdated logsPath:
+                await HandleLogsFolderPathUpdated(logsPath, dbContext);
+                break;
         }
     }
 
@@ -132,6 +135,25 @@ public class ServerSettingsEventProcessor
         }
 
         serverSettings.DownloadSlotCount = updated.NewSlotCount;
+        await dbContext.SaveChangesAsync();
+    }
+
+    private async Task HandleLogsFolderPathUpdated(
+        LogsFolderPathUpdated updated,
+        EventDbContext dbContext
+    )
+    {
+        var serverSettings = dbContext.ServerSettings.FirstOrDefault(s =>
+            s.Id == DefaultDbServerSettingsProvider.ServerSettingsSingletonId
+        );
+
+        if (serverSettings is null)
+        {
+            serverSettings = DefaultDbServerSettingsProvider.GetDefault();
+            dbContext.ServerSettings.Add(serverSettings);
+        }
+
+        serverSettings.LogsFolderPath = updated.NewPath;
         await dbContext.SaveChangesAsync();
     }
 

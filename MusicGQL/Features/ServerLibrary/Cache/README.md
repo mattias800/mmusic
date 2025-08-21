@@ -1,5 +1,9 @@
 # ServerLibrary2 Cache System
 
+Logging for Downloads
+---------------------
+Per-release logs can be enabled by setting `LogsFolderPath` via Server Settings (GraphQL). Logs are written to `<LogsFolderPath>/Downloads/<Artist>/<Release>.log`. See `Features/Downloads/README.md` for details. If the setting is empty, no log files are created.
+
 This caching system provides fast in-memory access to music library data read from JSON files.
 
 ## Features

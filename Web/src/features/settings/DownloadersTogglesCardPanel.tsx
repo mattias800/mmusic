@@ -21,7 +21,6 @@ import { updateDownloaderSettingsMutation } from "@/features/settings/Downloader
 const testSabnzbdConnectivityQuery = graphql(`
   query TestSabnzbdConnectivity {
     external {
-      id
       testSabnzbdConnectivity {
         ok
         message
@@ -33,7 +32,6 @@ const testSabnzbdConnectivityQuery = graphql(`
 const testProwlarrConnectivityQuery = graphql(`
   query TestProwlarrConnectivity {
     external {
-      id
       testProwlarrConnectivity {
         ok
         message
@@ -45,7 +43,6 @@ const testProwlarrConnectivityQuery = graphql(`
 const testQBittorrentConnectivityQuery = graphql(`
   query TestQBittorrentConnectivity {
     external {
-      id
       testQBittorrentConnectivity {
         ok
         message

@@ -22,7 +22,8 @@ public class SoulSeekReleaseDownloader(
     ServerSettings.ServerSettingsAccessor settingsAccessor,
     ServerSettings.LibraryManifestService manifestService,
     SoulSeekUserDiscoveryService userDiscoveryService,
-    ILogger<SoulSeekReleaseDownloader> logger
+    ILogger<SoulSeekReleaseDownloader> logger,
+    DownloadLogPathProvider logPathProvider
 )
 {
     public async Task<bool> DownloadReleaseAsync(
@@ -61,15 +62,30 @@ public class SoulSeekReleaseDownloader(
             releaseTitle
         );
 
+        // Initialize per-release logger
+        IDownloadLogger relLogger = new NullDownloadLogger();
+        try
+        {
+            var logPath = await logPathProvider.GetReleaseLogFilePathAsync(artistName, releaseTitle, cancellationToken);
+            if (!string.IsNullOrWhiteSpace(logPath))
+            {
+                relLogger = new DownloadLogger(logPath!);
+                relLogger.Info($"Start download session for {artistName} - {releaseTitle}");
+            }
+        }
+        catch { }
+
         // Normalize base query (e.g., remove punctuation) to improve matching
         string normArtist = NormalizeForSearch(artistName);
         string normTitle = NormalizeForSearch(releaseTitle);
         var baseQuery = $"{normArtist} - {normTitle}".Trim();
         logger.LogInformation("[SoulSeek] Normalized search query: {Query}", baseQuery);
+        try { relLogger.Info($"Normalized search query: {baseQuery}"); } catch { }
 
         // Determine expected track count from cache (if available)
         var cachedRelease = await cache.GetReleaseByArtistAndFolderAsync(artistId, releaseFolderName);
         int expectedTrackCount = cachedRelease?.Tracks?.Count ?? 0;
+        try { relLogger.Info($"ExpectedTrackCount={expectedTrackCount}"); } catch { }
         progress.Set(new DownloadProgress
         {
             ArtistId = artistId,
@@ -91,6 +107,7 @@ public class SoulSeekReleaseDownloader(
             minRequiredTracks = 0;
         }
         logger.LogInformation("[SoulSeek] Expected tracks={Expected}, minRequiredTracks={Min} (strictAllowedCounts={Strict})", expectedTrackCount, minRequiredTracks, useStrictAllowedCounts);
+        try { relLogger.Info($"MinRequiredTracks={minRequiredTracks} StrictAllowedCounts={useStrictAllowedCounts}"); } catch { }
         if (allowedOfficialCounts.Count > 0)
         {
             try { logger.LogInformation("[SoulSeek] Allowed official track counts: {Counts}", string.Join(", ", allowedOfficialCounts)); } catch { }
@@ -102,6 +119,7 @@ public class SoulSeekReleaseDownloader(
 
         // Discover (optional) year for ranking (we already have expectedTrackCount above)
         var expectedYear = cachedRelease?.JsonRelease?.FirstReleaseYear;
+        try { if (!string.IsNullOrWhiteSpace(expectedYear)) relLogger.Info($"ExpectedYear={expectedYear}"); } catch { }
 
         // Try multiple query forms: base "Artist - Title", folder-style separators, and optionally with year
         var queries = new List<string> { baseQuery };

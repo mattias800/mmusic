@@ -2,6 +2,7 @@ using Microsoft.Extensions.Options;
 using MusicGQL.Features.External.Downloads.QBittorrent;
 using MusicGQL.Features.External.Downloads.Sabnzbd;
 using MusicGQL.Features.External.Downloads.Prowlarr.Configuration;
+using MusicGQL.Features.Downloads.Services;
 
 namespace MusicGQL.Features.External.Downloads.Prowlarr;
 
@@ -11,7 +12,8 @@ public class ProwlarrDownloadProvider(
     SabnzbdClient sab,
     IOptions<ProwlarrOptions> prowlarrOptions,
     ServerSettings.ServerSettingsAccessor serverSettingsAccessor,
-    ILogger<ProwlarrDownloadProvider> logger
+    ILogger<ProwlarrDownloadProvider> logger,
+    DownloadLogPathProvider logPathProvider
 ) : IDownloadProvider
 {
     public async Task<bool> TryDownloadReleaseAsync(
@@ -25,15 +27,33 @@ public class ProwlarrDownloadProvider(
         CancellationToken cancellationToken
     )
     {
-        // Read toggles
-        var settings = await serverSettingsAccessor.GetAsync();
+        // Initialize per-release log
+        DownloadLogger? relLoggerImpl = null;
+        IDownloadLogger relLogger = new NullDownloadLogger();
+        try
+        {
+            var logPath = await logPathProvider.GetReleaseLogFilePathAsync(artistName, releaseTitle, cancellationToken);
+            if (!string.IsNullOrWhiteSpace(logPath))
+            {
+                relLoggerImpl = new DownloadLogger(logPath!);
+                relLogger = relLoggerImpl;
+            }
+        }
+        catch { }
+
+        try
+        {
+            // Read toggles
+            var settings = await serverSettingsAccessor.GetAsync();
         var allowSab = settings.EnableSabnzbdDownloader;
         var allowQbit = settings.EnableQBittorrentDownloader;
 
-        // 1) Search Prowlarr for nzb/magnet results
-        logger.LogInformation("[Prowlarr] Begin provider for {Artist} - {Release}", artistName, releaseTitle);
-        var results = await prowlarr.SearchAlbumAsync(artistName, releaseTitle, cancellationToken);
-        logger.LogInformation("[Prowlarr] Search returned {Count} results for {Artist} - {Release}", results.Count, artistName, releaseTitle);
+            // 1) Search Prowlarr for nzb/magnet results
+            logger.LogInformation("[Prowlarr] Begin provider for {Artist} - {Release}", artistName, releaseTitle);
+            try { relLogger.Info($"[Prowlarr] Begin provider for {artistName} - {releaseTitle}"); } catch { }
+            var results = await prowlarr.SearchAlbumAsync(artistName, releaseTitle, cancellationToken);
+            logger.LogInformation("[Prowlarr] Search returned {Count} results for {Artist} - {Release}", results.Count, artistName, releaseTitle);
+            try { relLogger.Info($"[Prowlarr] Search returned {results.Count} results"); } catch { }
         // Prefer items that look like full releases and larger sizes first
         // Filter and score results for music albums only; reject obvious mismatches (e.g., TV packs)
         results = results
@@ -41,7 +61,7 @@ public class ProwlarrDownloadProvider(
             .OrderByDescending(r => Score(r, artistName, releaseTitle))
             .ThenByDescending(r => r.Size ?? 0)
             .ToList();
-        if (results.Count == 0) return false;
+            if (results.Count == 0) { try { relLogger.Warn("[Prowlarr] No results after filtering"); } catch { } return false; }
 
         // 2) Prefer NZB if available; otherwise fallback to magnet
         // Prefer Prowlarr-provided downloadUrl; many setups do not include .nzb extension
@@ -66,19 +86,21 @@ public class ProwlarrDownloadProvider(
             && !LooksLikeTorrentUrl(r.DownloadUrl!)
             && TitleMatches(r.Title)
         );
-        if (allowSab && nzb is not null && !string.IsNullOrWhiteSpace(nzb.DownloadUrl))
+            if (allowSab && nzb is not null && !string.IsNullOrWhiteSpace(nzb.DownloadUrl))
         {
             // Always fetch NZB bytes and upload them to SABnzbd to avoid SAB needing network access to Prowlarr
             var url = EnsureProwlarrApiKey(nzb.DownloadUrl!);
             logger.LogInformation("[Prowlarr] Uploading NZB to SABnzbd: {Title}", nzb.Title ?? "(no title)");
             try
             {
+                try { relLogger.Info($"[Prowlarr] Uploading NZB to SABnzbd: {nzb.Title}"); } catch { }
                 using var http = new HttpClient();
                 var bytes = await http.GetByteArrayAsync(url, cancellationToken);
                 // Validate the payload looks like an NZB, not a torrent
                 if (!LooksLikeNzb(bytes))
                 {
                     logger.LogWarning("[Prowlarr] Fetched content does not look like NZB, skipping upload (likely torrent)");
+                    try { relLogger.Warn("[Prowlarr] Content not NZB; skipping"); } catch { }
                     goto TryMagnet;
                 }
                 var fileName = (nzb.Title ?? "download").Replace(' ', '+') + ".nzb";
@@ -89,12 +111,14 @@ public class ProwlarrDownloadProvider(
                     pathOverride: $"mmusic/{artistId}/{releaseFolderName}",
                     nzbName: $"{artistName} - {releaseTitle}"
                 );
-                if (okUpload) return true;
+                if (okUpload) { try { relLogger.Info("[Prowlarr] SABnzbd accepted NZB upload"); } catch { } return true; }
                 logger.LogWarning("[Prowlarr] SABnzbd rejected NZB content upload");
+                try { relLogger.Warn("[Prowlarr] SABnzbd rejected NZB content upload"); } catch { }
             }
             catch (Exception ex)
             {
                 logger.LogWarning(ex, "[Prowlarr] Failed fetching/uploading NZB content");
+                try { relLogger.Error($"[Prowlarr] Exception during NZB upload: {ex.Message}"); } catch { }
             }
         }
 
@@ -103,9 +127,11 @@ public class ProwlarrDownloadProvider(
         if (allowQbit && magnet is not null && !string.IsNullOrWhiteSpace(magnet.MagnetUrl))
         {
             logger.LogInformation("[Prowlarr] Handing off magnet to qBittorrent: {Title}", magnet.Title ?? "(no title)");
+            try { relLogger.Info($"[Prowlarr] Handing off magnet to qBittorrent: {magnet.Title}"); } catch { }
             var ok = await qb.AddMagnetAsync(magnet.MagnetUrl!, null, cancellationToken);
-            if (ok) return true;
+            if (ok) { try { relLogger.Info("[Prowlarr] qBittorrent accepted magnet"); } catch { } return true; }
             logger.LogWarning("[Prowlarr] qBittorrent did not accept magnet handoff");
+            try { relLogger.Warn("[Prowlarr] qBittorrent did not accept magnet"); } catch { }
         }
 
         // Fallbacks by type: if we have a torrent URL, send to qBittorrent; if generic HTTP and NZB-like, send to SAB
@@ -113,8 +139,9 @@ public class ProwlarrDownloadProvider(
         if (allowQbit && !string.IsNullOrWhiteSpace(torrentUrl))
         {
             logger.LogInformation("[Prowlarr] Handing off .torrent URL to qBittorrent");
+            try { relLogger.Info("[Prowlarr] Handing off .torrent URL to qBittorrent"); } catch { }
             var okT = await qb.AddByUrlAsync(EnsureProwlarrApiKey(torrentUrl!), null, cancellationToken);
-            if (okT) return true;
+            if (okT) { try { relLogger.Info("[Prowlarr] qBittorrent accepted .torrent URL"); } catch { } return true; }
         }
 
         var httpUrl = results.FirstOrDefault(r => !string.IsNullOrWhiteSpace(r.DownloadUrl))?.DownloadUrl;
@@ -122,24 +149,32 @@ public class ProwlarrDownloadProvider(
         {
             var url2 = EnsureProwlarrApiKey(httpUrl);
             logger.LogInformation("[Prowlarr] Attempting SABnzbd handoff using HTTP URL: {Url}", url2);
+            try { relLogger.Info($"[Prowlarr] Attempting SABnzbd handoff using HTTP URL: {url2}"); } catch { }
             var ok2 = await sab.AddNzbByUrlAsync(url2, $"{artistName} - {releaseTitle}", cancellationToken);
-            if (ok2) return true;
+            if (ok2) { try { relLogger.Info("[Prowlarr] SABnzbd accepted HTTP handoff"); } catch { } return true; }
         }
 
-        // Diagnostic: log first item details when present
-        try
-        {
-            var first = results.FirstOrDefault();
-            if (first != null)
+            // Diagnostic: log first item details when present
+            try
             {
-                logger.LogInformation("[Prowlarr] First result details: title={Title}, indexerId={IndexerId}, guid={Guid}, downloadUrl={DownloadUrl}, hasMagnet={HasMagnet}",
-                    first.Title ?? "", first.IndexerId, first.Guid ?? "", first.DownloadUrl ?? "", !string.IsNullOrWhiteSpace(first.MagnetUrl));
+                var first = results.FirstOrDefault();
+                if (first != null)
+                {
+                    logger.LogInformation("[Prowlarr] First result details: title={Title}, indexerId={IndexerId}, guid={Guid}, downloadUrl={DownloadUrl}, hasMagnet={HasMagnet}",
+                        first.Title ?? "", first.IndexerId, first.Guid ?? "", first.DownloadUrl ?? "", !string.IsNullOrWhiteSpace(first.MagnetUrl));
+                    try { relLogger.Info($"[Prowlarr] First candidate: title={first.Title} size={first.Size} magnet={(first.MagnetUrl!=null)} url={(first.DownloadUrl!=null)}"); } catch { }
+                }
             }
-        }
-        catch { }
+            catch { }
 
-        logger.LogInformation("Prowlarr provider found results but failed to hand off to downloader");
-        return false;
+            logger.LogInformation("Prowlarr provider found results but failed to hand off to downloader");
+            try { relLogger.Warn("Prowlarr provider found results but failed to hand off to downloader"); } catch { }
+            return false;
+        }
+        finally
+        {
+            relLoggerImpl?.Dispose();
+        }
     }
 
     private string EnsureProwlarrApiKey(string downloadUrl)

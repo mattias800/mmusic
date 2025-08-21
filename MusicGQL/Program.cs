@@ -124,6 +124,7 @@ builder
     .AddSingleton<DownloadQueueService>()
     .AddSingleton<CurrentDownloadStateService>()
     .AddSingleton<DownloadHistoryService>()
+    .AddSingleton<DownloadLogPathProvider>()
     .AddHostedService(sp => sp.GetRequiredService<DownloadSlotManager>())
     // .AddHostedService<DownloadWorker>() // Disabled - now using DownloadSlotManager
     .AddHostedService<MissingLibraryItemsDetectorWorker>()
@@ -164,6 +165,7 @@ builder
     .AddScoped<UnlikeSongHandler>()
     .AddScoped<UpdateLibraryPathHandler>()
     .AddScoped<UpdateDownloadPathHandler>()
+    .AddScoped<UpdateLogsFolderPathHandler>()
     .AddScoped<UpdateDownloadSlotCountHandler>()
     // Top Tracks Services
     .AddScoped<TopTracksServiceManager>()
@@ -468,6 +470,9 @@ builder
     .AddTypeExtension<UpdateDownloadSlotCountMutation>()
     .AddType<UpdateDownloadSlotCountSuccess>()
     .AddType<UpdateDownloadSlotCountError>()
+    .AddTypeExtension<UpdateLogsFolderPathMutation>()
+    .AddType<UpdateLogsFolderPathSuccess>()
+    .AddType<UpdateLogsFolderPathError>()
     .AddTypeExtension<UpdateSoulSeekSearchTimeLimitMutation>()
     .AddType<UpdateSoulSeekSearchTimeLimitSuccess>()
     .AddType<UpdateSoulSeekSearchTimeLimitError>()

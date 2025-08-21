@@ -4,6 +4,7 @@ using MusicGQL.Features.External.Downloads.Sabnzbd.Configuration;
 using MusicGQL.Features.ServerLibrary.Cache;
 using MusicGQL.Features.ServerLibrary.Writer;
 using System.IO;
+using MusicGQL.Features.Downloads.Services;
 
 namespace MusicGQL.Features.External.Downloads.Sabnzbd;
 
@@ -13,17 +14,37 @@ public class SabnzbdFinalizeService(
     ServerLibraryCache cache,
     ServerSettings.ServerSettingsAccessor serverSettingsAccessor,
     IServiceScopeFactory scopeFactory,
-    SabnzbdClient sabnzbdClient
+    SabnzbdClient sabnzbdClient,
+    DownloadLogPathProvider logPathProvider
 )
 {
     private static readonly string[] AudioExtensions = new[] { ".mp3", ".flac", ".m4a", ".wav", ".ogg" };
 
     public async Task<bool> FinalizeReleaseAsync(string artistId, string releaseFolderName, CancellationToken ct)
     {
+        // Prepare per-release logger
+        IDownloadLogger relLogger = new NullDownloadLogger();
+        DownloadLogger? relLoggerImpl = null;
+        try
+        {
+            var rel = await cache.GetReleaseByArtistAndFolderAsync(artistId, releaseFolderName);
+            if (rel != null)
+            {
+                var logPath = await logPathProvider.GetReleaseLogFilePathAsync(rel.ArtistName, rel.Title, ct);
+                if (!string.IsNullOrWhiteSpace(logPath))
+                {
+                    relLoggerImpl = new DownloadLogger(logPath!);
+                    relLogger = relLoggerImpl;
+                }
+            }
+        }
+        catch { }
+
         var completedPath = options.Value.CompletedPath;
         if (string.IsNullOrWhiteSpace(completedPath) || !Directory.Exists(completedPath))
         {
             logger.LogDebug("[SAB Finalize] CompletedPath not configured/existing; skip");
+            try { relLogger.Warn("[SAB Finalize] CompletedPath not configured/existing"); } catch { }
             return false;
         }
 
@@ -45,10 +66,12 @@ public class SabnzbdFinalizeService(
             if (Directory.Exists(alt)) sourceRoot = alt;
         }
         logger.LogInformation("[SAB Finalize] Checking {SourceRoot}", sourceRoot);
+        try { relLogger.Info($"[SAB Finalize] Checking {sourceRoot}"); } catch { }
 
         // Check SABnzbd API to see if the job is actually complete
         var nzbName = expectedNzbName;
         logger.LogInformation("[SAB Finalize] Checking SABnzbd job status for: {NzbName}", nzbName);
+        try { relLogger.Info($"[SAB Finalize] Checking SABnzbd job status for: {nzbName}"); } catch { }
         
         // Wait a bit for SABnzbd to start processing, then check job status
         for (int attempt = 1; attempt <= 5; attempt++)
@@ -56,6 +79,7 @@ public class SabnzbdFinalizeService(
             if (attempt > 1)
             {
                 logger.LogInformation("[SAB Finalize] Attempt {Attempt}/5, waiting 15s before checking job status", attempt);
+                try { relLogger.Info($"[SAB Finalize] Attempt {attempt}/5 waiting 15s"); } catch { }
                 await Task.Delay(TimeSpan.FromSeconds(15), ct);
             }
             
@@ -74,12 +98,14 @@ public class SabnzbdFinalizeService(
             }
             
             logger.LogInformation("[SAB Finalize] Attempt {Attempt}/5: SABnzbd reports job complete, attempting to finalize files", attempt);
+            try { relLogger.Info($"[SAB Finalize] Attempt {attempt}/5: job complete; finalizing"); } catch { }
             
             // Job is complete, now try to finalize the files
-            var result = await TryFinalizeReleaseCoreAsync(artistId, releaseFolderName, sourceRoot, ct);
+            var result = await TryFinalizeReleaseCoreAsync(artistId, releaseFolderName, sourceRoot, relLogger, ct);
             if (result)
             {
                 logger.LogInformation("[SAB Finalize] Successfully finalized on attempt {Attempt}", attempt);
+                try { relLogger.Info($"[SAB Finalize] Success on attempt {attempt}"); } catch { }
                 return true; // SUCCESS - exit immediately, don't continue with more attempts
             }
             
@@ -90,15 +116,18 @@ public class SabnzbdFinalizeService(
         }
         
         logger.LogInformation("[SAB Finalize] All attempts failed, job may still be processing or files may be inaccessible");
+        try { relLogger.Warn("[SAB Finalize] All attempts failed"); } catch { }
         return false;
     }
 
-    private async Task<bool> TryFinalizeReleaseCoreAsync(string artistId, string releaseFolderName, string sourceRoot, CancellationToken ct)
+    private async Task<bool> TryFinalizeReleaseCoreAsync(string artistId, string releaseFolderName, string sourceRoot, IDownloadLogger relLogger, CancellationToken ct)
     {
         try
         {
             logger.LogInformation("[SAB Finalize] Starting finalization for {ArtistId}/{ReleaseFolderName}", artistId, releaseFolderName);
+            try { relLogger.Info($"[SAB Finalize] Starting finalization for {artistId}/{releaseFolderName}"); } catch { }
             logger.LogInformation("[SAB Finalize] Source root: {SourceRoot}", sourceRoot);
+            try { relLogger.Info($"[SAB Finalize] Source root: {sourceRoot}"); } catch { }
             
             var release = await cache.GetReleaseByArtistAndFolderAsync(artistId, releaseFolderName);
             if (release == null)
@@ -109,6 +138,7 @@ public class SabnzbdFinalizeService(
             
             var targetDir = release.ReleasePath;
             logger.LogInformation("[SAB Finalize] Target directory: {TargetDir}", targetDir);
+            try { relLogger.Info($"[SAB Finalize] Target directory: {targetDir}"); } catch { }
             
             if (string.IsNullOrWhiteSpace(targetDir))
             {
@@ -118,6 +148,7 @@ public class SabnzbdFinalizeService(
             
             Directory.CreateDirectory(targetDir);
             logger.LogInformation("[SAB Finalize] Created target directory: {TargetDir}", targetDir);
+            try { relLogger.Info($"[SAB Finalize] Created target directory: {targetDir}"); } catch { }
             
             if (!Directory.Exists(sourceRoot))
             {
@@ -126,6 +157,7 @@ public class SabnzbdFinalizeService(
             }
             
             logger.LogInformation("[SAB Finalize] Source root directory exists, scanning for audio files...");
+            try { relLogger.Info("[SAB Finalize] Scanning for audio files in source root"); } catch { }
             
             var sourceFiles = Directory
                 .EnumerateFiles(sourceRoot, "*", SearchOption.AllDirectories)
@@ -133,6 +165,7 @@ public class SabnzbdFinalizeService(
                 .ToList();
                 
             logger.LogInformation("[SAB Finalize] Found {Count} audio files in source directory", sourceFiles.Count);
+            try { relLogger.Info($"[SAB Finalize] Found {sourceFiles.Count} audio files"); } catch { }
             
             if (sourceFiles.Count == 0)
             {
@@ -167,6 +200,7 @@ public class SabnzbdFinalizeService(
                     catch (IOException) { File.Copy(src, destFinal, overwrite: false); try { File.Delete(src); } catch { } }
                     movedAny = true;
                     logger.LogInformation("[SAB Finalize] Moved {Src} -> {Dst}", src, destFinal);
+                    try { relLogger.Info($"[SAB Finalize] Moved {src} -> {destFinal}"); } catch { }
                 }
                 catch (Exception ex)
                 {
@@ -174,6 +208,7 @@ public class SabnzbdFinalizeService(
                 }
             }
             logger.LogInformation("[SAB Finalize] Successfully moved {Count} files", movedAny ? "some" : "0");
+            try { relLogger.Info($"[SAB Finalize] Moved any: {movedAny}"); } catch { }
             
             if (!movedAny)
             {
@@ -228,6 +263,7 @@ public class SabnzbdFinalizeService(
         catch (Exception ex)
         {
             logger.LogWarning(ex, "[SAB Finalize] Finalize failed for {ArtistId}/{Release}", artistId, releaseFolderName);
+            try { relLogger.Error($"[SAB Finalize] Exception: {ex.Message}"); } catch { }
             return false;
         }
     }
