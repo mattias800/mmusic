@@ -1,5 +1,4 @@
 import * as React from "react";
-import { useEffect, useState } from "react"; // Use generated documents
 import { useMutation, useQuery } from "urql";
 import {
   DownloadersTogglesCardDocument,
@@ -60,10 +59,11 @@ const testQBittorrentConnectivityQuery = graphql(`
 export const DownloadersTogglesCard: React.FC = () => {
   const [{ data, fetching }] = useQuery({
     query: DownloadersTogglesCardDocument,
-    requestPolicy: "network-only",
   });
 
-  const [, update] = useMutation(UpdateDownloaderSettingsDocument);
+  const [{ fetching: saving }, update] = useMutation(
+    UpdateDownloaderSettingsDocument,
+  );
 
   const [{ data: prow, fetching: prowLoading }, reexecProw] = useQuery({
     query: testProwlarrConnectivityQuery,
@@ -83,31 +83,44 @@ export const DownloadersTogglesCard: React.FC = () => {
     context: { requestPolicy: "network-only" },
   });
 
-  const [sab, setSab] = useState(false);
-  const [qbit, setQbit] = useState(false);
-  const [soul, setSoul] = useState(false);
-  const [saving, setSaving] = useState(false);
+  const serverSettings = data?.serverSettings;
+  const sab = !!serverSettings?.enableSabnzbdDownloader;
+  const qbit = !!serverSettings?.enableQBittorrentDownloader;
+  const soul = !!serverSettings?.enableSoulSeekDownloader;
 
-  useEffect(() => {
-    if (data?.serverSettings) {
-      setSab(!!data.serverSettings.enableSabnzbdDownloader);
-      setQbit(!!data.serverSettings.enableQBittorrentDownloader);
-      setSoul(!!data.serverSettings.enableSoulSeekDownloader);
-    }
-  }, [data?.serverSettings]);
+  const disabled = fetching || saving || !serverSettings;
 
-  const onSave = async () => {
-    setSaving(true);
+  const toggleSab = async (next: boolean) => {
     const res = await update({
       input: {
-        enableSabnzbdDownloader: sab,
+        enableSabnzbdDownloader: next,
         enableQBittorrentDownloader: qbit,
         enableSoulSeekDownloader: soul,
       },
     });
-    setSaving(false);
     if (res.error) alert(res.error.message);
-    // optimistic enough; query is network-only
+  };
+
+  const toggleQbit = async (next: boolean) => {
+    const res = await update({
+      input: {
+        enableSabnzbdDownloader: sab,
+        enableQBittorrentDownloader: next,
+        enableSoulSeekDownloader: soul,
+      },
+    });
+    if (res.error) alert(res.error.message);
+  };
+
+  const toggleSoul = async (next: boolean) => {
+    const res = await update({
+      input: {
+        enableSabnzbdDownloader: sab,
+        enableQBittorrentDownloader: qbit,
+        enableSoulSeekDownloader: next,
+      },
+    });
+    if (res.error) alert(res.error.message);
   };
 
   return (
@@ -126,8 +139,8 @@ export const DownloadersTogglesCard: React.FC = () => {
           icon={HardDriveDownload}
           title="SABnzbd (Usenet)"
           enabled={sab}
-          onToggle={setSab}
-          disabled={fetching || saving}
+          onToggle={toggleSab}
+          disabled={disabled}
           availability={deriveStatus(
             sabLoading,
             sabConn?.external?.testSabnzbdConnectivity,
@@ -138,8 +151,8 @@ export const DownloadersTogglesCard: React.FC = () => {
           icon={Magnet}
           title="qBittorrent (Torrents)"
           enabled={qbit}
-          onToggle={setQbit}
-          disabled={fetching || saving}
+          onToggle={toggleQbit}
+          disabled={disabled}
           availability={deriveStatus(
             qbitLoading,
             qbitConn?.external?.testQBittorrentConnectivity,
@@ -150,18 +163,13 @@ export const DownloadersTogglesCard: React.FC = () => {
           icon={Cloud}
           title="Soulseek"
           enabled={soul}
-          onToggle={setSoul}
-          disabled={fetching || saving}
+          onToggle={toggleSoul}
+          disabled={disabled}
           availability={{
             state: "info",
             message: "Status shown on Soulseek panel",
           }}
         />
-        <div>
-          <GradientButton onClick={onSave} disabled={fetching || saving}>
-            {saving ? "Saving..." : "Save"}
-          </GradientButton>
-        </div>
       </div>
     </GlassCard>
   );
