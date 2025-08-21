@@ -8,3 +8,4 @@ events.db-shm
 events.db-wal
 Library/
 ExternalAssets/
+Migrations/
