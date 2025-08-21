@@ -3,7 +3,7 @@ using MusicGQL.Types;
 
 namespace MusicGQL.Features.Clients;
 
-[ExtendObjectType(typeof(MusicGQL.Types.Mutation))]
+[ExtendObjectType(typeof(Mutation))]
 public sealed class TriggerPlaybackMutation
 {
     public async Task<TriggerPlaybackPayload> TriggerPlayback(
@@ -49,7 +49,7 @@ public record ClientPlaybackCommand(
     ClientPlaybackState Playback
 );
 
-[ExtendObjectType(typeof(MusicGQL.Types.Subscription))]
+[ExtendObjectType(typeof(Subscription))]
 public sealed class ClientPlaybackSubscription
 {
     [Subscribe]

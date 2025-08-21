@@ -70,7 +70,7 @@ public class UpdateUserRolesMutation
         await eventProcessor.ProcessEvents();
 
         var updated = await dbContext.Users.FirstAsync(u => u.UserId == input.UserId);
-        return new UpdateUserRolesSuccess(new Users.User(updated));
+        return new UpdateUserRolesSuccess(new User(updated));
     }
 }
 
@@ -79,7 +79,7 @@ public record UpdateUserRolesInput(Guid UserId, int Roles);
 [UnionType]
 public abstract record UpdateUserRolesResult;
 
-public record UpdateUserRolesSuccess(Users.User User) : UpdateUserRolesResult;
+public record UpdateUserRolesSuccess(User User) : UpdateUserRolesResult;
 
 public record UpdateUserRolesError(string Message) : UpdateUserRolesResult;
 

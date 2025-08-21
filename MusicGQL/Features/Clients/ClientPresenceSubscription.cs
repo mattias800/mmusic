@@ -4,7 +4,7 @@ using MusicGQL.Types;
 
 namespace MusicGQL.Features.Clients;
 
-[ExtendObjectType(typeof(MusicGQL.Types.Subscription))]
+[ExtendObjectType(typeof(Subscription))]
 public sealed class ClientPresenceSubscription
 {
     // Field name will be onClientsUpdated (camelCase of method name)

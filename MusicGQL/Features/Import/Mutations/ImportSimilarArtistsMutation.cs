@@ -6,12 +6,12 @@ using HotChocolate.Types;
 
 namespace MusicGQL.Features.Import.Mutations;
 
-[ExtendObjectType(typeof(MusicGQL.Types.Mutation))]
+[ExtendObjectType(typeof(Types.Mutation))]
 public class ImportSimilarArtistsMutation
 {
     public async Task<ImportSimilarArtistsResult> ImportSimilarArtists(
         ImportSimilarArtistsInput input,
-        [Service] ServerLibrary.Cache.ServerLibraryCache cache,
+        [Service] ServerLibraryCache cache,
         [Service] LibraryImportService importService,
         [Service] ILogger<ImportSimilarArtistsMutation> logger
     )

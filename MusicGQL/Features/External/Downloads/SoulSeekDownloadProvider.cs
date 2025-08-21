@@ -4,7 +4,7 @@ namespace MusicGQL.Features.External.Downloads;
 
 public class SoulSeekDownloadProvider(
     SoulSeekReleaseDownloader downloader,
-    MusicGQL.Features.ServerSettings.ServerSettingsAccessor serverSettingsAccessor
+    ServerSettings.ServerSettingsAccessor serverSettingsAccessor
 ) : IDownloadProvider
 {
     public Task<bool> TryDownloadReleaseAsync(

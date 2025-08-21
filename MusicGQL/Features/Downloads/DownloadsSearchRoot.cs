@@ -16,7 +16,7 @@ public class DownloadsSearchRoot
         if (userIdClaim is null) return new DownloadQueueState { QueueLength = 0, Items = [] };
         var userId = Guid.Parse(userIdClaim.Value);
         var user = dbContext.Users.AsNoTracking().FirstOrDefault(u => u.UserId == userId);
-        var canView = user is not null && (user.Roles & (Features.Users.Roles.UserRoles.ViewDownloads | Features.Users.Roles.UserRoles.Admin)) != 0;
+        var canView = user is not null && (user.Roles & (Users.Roles.UserRoles.ViewDownloads | Users.Roles.UserRoles.Admin)) != 0;
         return canView ? queue.Snapshot() : new DownloadQueueState { QueueLength = 0, Items = [] };
     }
 
@@ -29,7 +29,7 @@ public class DownloadsSearchRoot
         if (userIdClaim is null) return [];
         var userId = Guid.Parse(userIdClaim.Value);
         var user = dbContext.Users.AsNoTracking().FirstOrDefault(u => u.UserId == userId);
-        var canView = user is not null && (user.Roles & (Features.Users.Roles.UserRoles.ViewDownloads | Features.Users.Roles.UserRoles.Admin)) != 0;
+        var canView = user is not null && (user.Roles & (Users.Roles.UserRoles.ViewDownloads | Users.Roles.UserRoles.Admin)) != 0;
         return canView ? history.List() : [];
     }
 
@@ -43,7 +43,7 @@ public class DownloadsSearchRoot
         if (userIdClaim is null) return new Dictionary<int, DownloadProgress>();
         var userId = Guid.Parse(userIdClaim.Value);
         var user = dbContext.Users.AsNoTracking().FirstOrDefault(u => u.UserId == userId);
-        var canView = user is not null && (user.Roles & (Features.Users.Roles.UserRoles.ViewDownloads | Features.Users.Roles.UserRoles.Admin)) != 0;
+        var canView = user is not null && (user.Roles & (Users.Roles.UserRoles.ViewDownloads | Users.Roles.UserRoles.Admin)) != 0;
         return canView ? state.GetAllSlotProgress() : new Dictionary<int, DownloadProgress>();
     }
 
@@ -57,7 +57,7 @@ public class DownloadsSearchRoot
         if (userIdClaim is null) return null;
         var userId = Guid.Parse(userIdClaim.Value);
         var user = dbContext.Users.AsNoTracking().FirstOrDefault(u => u.UserId == userId);
-        var canView = user is not null && (user.Roles & (Features.Users.Roles.UserRoles.ViewDownloads | Features.Users.Roles.UserRoles.Admin)) != 0;
+        var canView = user is not null && (user.Roles & (Users.Roles.UserRoles.ViewDownloads | Users.Roles.UserRoles.Admin)) != 0;
         return canView ? state.GetSlotProgress(slotId) : null;
     }
 
@@ -70,7 +70,7 @@ public class DownloadsSearchRoot
         if (userIdClaim is null) return [];
         var userId = Guid.Parse(userIdClaim.Value);
         var user = dbContext.Users.AsNoTracking().FirstOrDefault(u => u.UserId == userId);
-        var canView = user is not null && (user.Roles & (Features.Users.Roles.UserRoles.ViewDownloads | Features.Users.Roles.UserRoles.Admin)) != 0;
+        var canView = user is not null && (user.Roles & (Users.Roles.UserRoles.ViewDownloads | Users.Roles.UserRoles.Admin)) != 0;
         return canView ? slotManager.GetSlotsInfo() : [];
     }
 }

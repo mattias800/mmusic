@@ -51,7 +51,7 @@ public class SetUserPasswordMutation
         await eventProcessor.ProcessEvents();
 
         var updated = await dbContext.Users.FirstAsync(u => u.UserId == input.UserId);
-        return new SetUserPasswordSuccess(new Users.User(updated));
+        return new SetUserPasswordSuccess(new User(updated));
     }
 }
 
@@ -60,7 +60,7 @@ public record SetUserPasswordInput(Guid UserId, string NewPassword);
 [UnionType]
 public abstract record SetUserPasswordResult;
 
-public record SetUserPasswordSuccess(Users.User User) : SetUserPasswordResult;
+public record SetUserPasswordSuccess(User User) : SetUserPasswordResult;
 
 public record SetUserPasswordError(string Message) : SetUserPasswordResult;
 

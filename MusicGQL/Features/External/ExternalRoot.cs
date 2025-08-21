@@ -47,7 +47,7 @@ public record ExternalRoot
 
     [GraphQLName("testProwlarrConnectivity")]
     public async Task<ConnectivityStatus> TestProwlarrConnectivity(
-        [Service] Microsoft.Extensions.Options.IOptions<MusicGQL.Features.External.Downloads.Prowlarr.Configuration.ProwlarrOptions> options,
+        [Service] IOptions<Downloads.Prowlarr.Configuration.ProwlarrOptions> options,
         [Service] IHttpClientFactory httpClientFactory
     )
     {
@@ -72,7 +72,7 @@ public record ExternalRoot
     public async Task<ConnectivityStatus> TestListenBrainzConnectivity(
         [Service] ListenBrainzService listenBrainzService,
         [Service] ServerSettingsAccessor serverSettingsAccessor,
-        [Service] IOptions<MusicGQL.Features.ListenBrainz.ListenBrainzConfiguration> listenBrainzOptions
+        [Service] IOptions<ListenBrainz.ListenBrainzConfiguration> listenBrainzOptions
     )
     {
         var apiKey = listenBrainzOptions.Value.ApiKey;
@@ -120,7 +120,7 @@ public record ExternalRoot
 
     [GraphQLName("testQBittorrentConnectivity")]
     public async Task<ConnectivityStatus> TestQBittorrentConnectivity(
-        [Service] Microsoft.Extensions.Options.IOptions<MusicGQL.Features.External.Downloads.QBittorrent.Configuration.QBittorrentOptions> options,
+        [Service] IOptions<Downloads.QBittorrent.Configuration.QBittorrentOptions> options,
         [Service] IHttpClientFactory httpClientFactory
     )
     {

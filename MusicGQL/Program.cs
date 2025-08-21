@@ -134,7 +134,7 @@ builder
     .AddSingleton<ListenBrainzService>()
     .AddSingleton<UserListenBrainzService>()
     .AddSingleton<ListenBrainzPopularityClient>()
-    .AddSingleton<MusicGQL.Integration.ListenBrainz.ListenBrainzSimilarityClient>()
+    .AddSingleton<ListenBrainzSimilarityClient>()
     .AddSingleton<ArtistImportQueueService>()
     .AddSingleton<CurrentArtistImportStateService>()
     .AddSingleton<ImportHistoryService>()
@@ -351,7 +351,7 @@ builder.Services.AddSingleton<
     Microsoft.AspNetCore.Authorization.IAuthorizationHandler,
     UserExistsHandler
 >();
-builder.Services.AddSingleton<MusicGQL.Features.Authorization.UserRoleAuthorizer>();
+builder.Services.AddSingleton<UserRoleAuthorizer>();
 
 builder.Services.AddAutoMapper(typeof(Program));
 builder.Services.AddHttpContextAccessor();
@@ -452,9 +452,9 @@ builder
     .AddType<IArtistBase>()
     .AddType<ImportArtistSuccess>()
     .AddType<ImportArtistError>()
-    .AddTypeExtension<MusicGQL.Features.Import.Mutations.ImportSimilarArtistsMutation>()
-    .AddType<MusicGQL.Features.Import.Mutations.ImportSimilarArtistsSuccess>()
-    .AddType<MusicGQL.Features.Import.Mutations.ImportSimilarArtistsError>()
+    .AddTypeExtension<ImportSimilarArtistsMutation>()
+    .AddType<ImportSimilarArtistsSuccess>()
+    .AddType<ImportSimilarArtistsError>()
     .AddType<LikeSongSuccess>()
     .AddType<LikeSongAlreadyLiked>()
     .AddType<LikeSongSongDoesNotExist>()

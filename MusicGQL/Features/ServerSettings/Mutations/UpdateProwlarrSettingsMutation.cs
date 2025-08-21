@@ -36,10 +36,10 @@ public class UpdateProwlarrSettingsMutation
             return new UpdateProwlarrSettingsError("Not authenticated");
 
         var viewer = await dbContext.Users.FirstOrDefaultAsync(u => u.UserId == userId);
-        if (viewer is null || (viewer.Roles & Features.Users.Roles.UserRoles.Admin) == 0)
+        if (viewer is null || (viewer.Roles & Users.Roles.UserRoles.Admin) == 0)
             return new UpdateProwlarrSettingsError("Not authorized");
 
-        dbContext.Events.Add(new Features.ServerSettings.Events.ProwlarrSettingsUpdated
+        dbContext.Events.Add(new Events.ProwlarrSettingsUpdated
         {
             ActorUserId = userId,
             BaseUrl = input.BaseUrl,

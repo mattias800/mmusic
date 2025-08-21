@@ -18,7 +18,7 @@ public sealed class DownloadQueueMutations
         if (userIdClaim is null) return false;
         var userId = Guid.Parse(userIdClaim.Value);
         var user = dbContext.Users.AsNoTracking().FirstOrDefault(u => u.UserId == userId);
-        var canManage = user is not null && (user.Roles & (Features.Users.Roles.UserRoles.TriggerDownloads | Features.Users.Roles.UserRoles.Admin)) != 0;
+        var canManage = user is not null && (user.Roles & (Users.Roles.UserRoles.TriggerDownloads | Users.Roles.UserRoles.Admin)) != 0;
         if (!canManage) return false;
         return queue.TryRemove(queueKey);
     }

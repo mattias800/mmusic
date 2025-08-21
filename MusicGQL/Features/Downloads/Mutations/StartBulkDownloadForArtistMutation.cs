@@ -34,7 +34,7 @@ public class StartBulkDownloadForArtistMutation
             return new StartBulkDownloadForArtistError("User not found");
         }
 
-        var canTrigger = (user.Roles & (Features.Users.Roles.UserRoles.TriggerDownloads | Features.Users.Roles.UserRoles.Admin)) != 0;
+        var canTrigger = (user.Roles & (Users.Roles.UserRoles.TriggerDownloads | Users.Roles.UserRoles.Admin)) != 0;
         if (!canTrigger)
         {
             return new StartBulkDownloadForArtistError("Not authorized to trigger downloads");

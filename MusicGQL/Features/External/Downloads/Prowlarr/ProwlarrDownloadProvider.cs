@@ -10,7 +10,7 @@ public class ProwlarrDownloadProvider(
     QBittorrentClient qb,
     SabnzbdClient sab,
     IOptions<ProwlarrOptions> prowlarrOptions,
-    MusicGQL.Features.ServerSettings.ServerSettingsAccessor serverSettingsAccessor,
+    ServerSettings.ServerSettingsAccessor serverSettingsAccessor,
     ILogger<ProwlarrDownloadProvider> logger
 ) : IDownloadProvider
 {

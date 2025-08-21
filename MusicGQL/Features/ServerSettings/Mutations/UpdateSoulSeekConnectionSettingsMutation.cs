@@ -30,12 +30,12 @@ public class UpdateSoulSeekConnectionSettingsMutation
         }
 
         var viewer = await dbContext.Users.FirstOrDefaultAsync(u => u.UserId == userId);
-        if (viewer is null || (viewer.Roles & Features.Users.Roles.UserRoles.Admin) == 0)
+        if (viewer is null || (viewer.Roles & Users.Roles.UserRoles.Admin) == 0)
         {
             return new UpdateSoulSeekConnectionSettingsError("Not authorized");
         }
 
-        dbContext.Events.Add(new Features.ServerSettings.Events.SoulSeekConnectionUpdated
+        dbContext.Events.Add(new Events.SoulSeekConnectionUpdated
         {
             ActorUserId = userId,
             Host = input.Host,

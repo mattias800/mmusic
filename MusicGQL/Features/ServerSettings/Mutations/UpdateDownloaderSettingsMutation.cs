@@ -14,10 +14,10 @@ public record UpdateDownloaderSettingsInput(
 
 [UnionType]
 public abstract record UpdateDownloaderSettingsResult;
-public record UpdateDownloaderSettingsSuccess(MusicGQL.Features.ServerSettings.ServerSettings ServerSettings) : UpdateDownloaderSettingsResult;
+public record UpdateDownloaderSettingsSuccess(ServerSettings ServerSettings) : UpdateDownloaderSettingsResult;
 public record UpdateDownloaderSettingsError(string Message) : UpdateDownloaderSettingsResult;
 
-[ExtendObjectType(typeof(MusicGQL.Types.Mutation))]
+[ExtendObjectType(typeof(Mutation))]
 public class UpdateDownloaderSettingsMutation
 {
     public async Task<UpdateDownloaderSettingsResult> UpdateDownloaderSettings(
@@ -31,7 +31,7 @@ public class UpdateDownloaderSettingsMutation
             if (userIdClaim is null) return new UpdateDownloaderSettingsError("Not authenticated");
             var userId = Guid.Parse(userIdClaim.Value);
             var viewer = await dbContext.Users.FirstOrDefaultAsync(u => u.UserId == userId);
-            if (viewer is null || (viewer.Roles & Features.Users.Roles.UserRoles.Admin) == 0)
+            if (viewer is null || (viewer.Roles & Users.Roles.UserRoles.Admin) == 0)
             {
                 return new UpdateDownloaderSettingsError("Not authorized");
             }

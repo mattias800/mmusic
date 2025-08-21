@@ -38,7 +38,7 @@ public record UpdateTopTracksServiceSettingsMutation
             if (userIdClaim is null) return new UpdateTopTracksServiceSettingsError("Not authenticated");
             var userId = Guid.Parse(userIdClaim.Value);
             var viewer = await dbContext.Users.FirstOrDefaultAsync(u => u.UserId == userId);
-            if (viewer is null || (viewer.Roles & Features.Users.Roles.UserRoles.Admin) == 0)
+            if (viewer is null || (viewer.Roles & Users.Roles.UserRoles.Admin) == 0)
             {
                 return new UpdateTopTracksServiceSettingsError("Not authorized");
             }

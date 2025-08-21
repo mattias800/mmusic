@@ -319,7 +319,7 @@ public sealed class MusicBrainzImportExecutor(
                 // Complete missing fields (releaseTitle/cover art) using Spotify data
                 try
                 {
-                    var completer = new TopTracks.TopTracksCompleter(spotifyService, lastfmClient, logger);
+                    var completer = new TopTracksCompleter(spotifyService, lastfmClient, logger);
                     await completer.CompleteAsync(artistDir, jsonArtist);
                 }
                 catch { }

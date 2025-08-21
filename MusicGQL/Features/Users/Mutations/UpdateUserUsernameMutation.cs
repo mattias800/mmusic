@@ -47,7 +47,7 @@ public class UpdateUserUsernameMutation
         await eventProcessor.ProcessEvents();
 
         var updated = await dbContext.Users.FirstAsync(u => u.UserId == input.UserId);
-        return new UpdateUserUsernameSuccess(new Users.User(updated));
+        return new UpdateUserUsernameSuccess(new User(updated));
     }
 }
 
@@ -56,7 +56,7 @@ public record UpdateUserUsernameInput(Guid UserId, string NewUsername);
 [UnionType]
 public abstract record UpdateUserUsernameResult;
 
-public record UpdateUserUsernameSuccess(Users.User User) : UpdateUserUsernameResult;
+public record UpdateUserUsernameSuccess(User User) : UpdateUserUsernameResult;
 
 public record UpdateUserUsernameError(string Message) : UpdateUserUsernameResult;
 

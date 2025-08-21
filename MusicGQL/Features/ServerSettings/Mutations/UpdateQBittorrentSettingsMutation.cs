@@ -32,10 +32,10 @@ public class UpdateQBittorrentSettingsMutation
             return new UpdateQBittorrentSettingsError("Not authenticated");
 
         var viewer = await dbContext.Users.FirstOrDefaultAsync(u => u.UserId == userId);
-        if (viewer is null || (viewer.Roles & Features.Users.Roles.UserRoles.Admin) == 0)
+        if (viewer is null || (viewer.Roles & Users.Roles.UserRoles.Admin) == 0)
             return new UpdateQBittorrentSettingsError("Not authorized");
 
-        dbContext.Events.Add(new Features.ServerSettings.Events.QBittorrentSettingsUpdated
+        dbContext.Events.Add(new Events.QBittorrentSettingsUpdated
         {
             ActorUserId = userId,
             BaseUrl = input.BaseUrl,

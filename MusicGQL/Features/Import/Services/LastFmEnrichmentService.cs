@@ -106,7 +106,7 @@ public class LastFmEnrichmentService(
         // Complete missing fields using Spotify as fallback (releaseTitle, cover art download)
         try
         {
-            var completer = new TopTracks.TopTracksCompleter(spotifyService, lastfmClient, logger);
+            var completer = new TopTracksCompleter(spotifyService, lastfmClient, logger);
             await completer.CompleteAsync(artistDir, jsonArtist);
         }
         catch (Exception ex)

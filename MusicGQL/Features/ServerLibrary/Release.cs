@@ -25,9 +25,9 @@ public record Release([property: GraphQLIgnore] CachedRelease Model)
     public ReleaseType? Type() =>
         Model.Type switch
         {
-            Json.JsonReleaseType.Album => ReleaseType.Album,
-            Json.JsonReleaseType.Ep => ReleaseType.Ep,
-            Json.JsonReleaseType.Single => ReleaseType.Single,
+            JsonReleaseType.Album => ReleaseType.Album,
+            JsonReleaseType.Ep => ReleaseType.Ep,
+            JsonReleaseType.Single => ReleaseType.Single,
             _ => null,
         };
 
@@ -75,7 +75,7 @@ public record Release([property: GraphQLIgnore] CachedRelease Model)
     /// <summary>
     /// Gets the label information for this release
     /// </summary>
-    public IEnumerable<Json.JsonLabelInfo> Labels() => Model.JsonRelease.Labels ?? [];
+    public IEnumerable<JsonLabelInfo> Labels() => Model.JsonRelease.Labels ?? [];
 
     /// <summary>
     /// MusicBrainz connections for this release. These are persisted in the underlying JSON.
