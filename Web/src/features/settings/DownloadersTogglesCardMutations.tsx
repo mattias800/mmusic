@@ -22,10 +22,7 @@ export const updateDownloaderSettingsMutation = graphql(`
 export const downloadersTogglesCardQuery = graphql(`
   query DownloadersTogglesCard {
     serverSettings {
-      id
-      enableSabnzbdDownloader
-      enableQBittorrentDownloader
-      enableSoulSeekDownloader
+      ...DownloadersTogglesCard_ServerSettings
     }
   }
 `);

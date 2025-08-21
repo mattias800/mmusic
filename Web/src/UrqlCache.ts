@@ -12,10 +12,7 @@ import {
   TypedDocumentNode,
   VariablesOf,
 } from "@graphql-typed-document-node/core";
-import {
-  downloadersTogglesCardQuery,
-  updateDownloaderSettingsMutation,
-} from "@/features/settings/DownloadersTogglesCardMutations.tsx";
+import { updateDownloaderSettingsMutation } from "@/features/settings/DownloadersTogglesCardMutations.tsx";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -89,14 +86,13 @@ export const optimisticCacheExchange = cacheExchange({
       typeof updateDownloaderSettingsMutation
     >(
       (cache, variables) => {
-        const existing = cache.readQuery({
-          query: downloadersTogglesCardQuery,
-        });
-        const id = existing?.serverSettings?.id;
-
-        if (id == null) {
-          return null;
-        }
+        // Resolve ServerSettings id without coupling to a query document
+        const serverSettingsKey = cache.resolve("Query", "serverSettings") as
+          | string
+          | null;
+        if (!serverSettingsKey) return null;
+        const id = cache.resolve(serverSettingsKey, "id") as string | null;
+        if (!id) return null;
 
         return {
           __typename: "Mutation",
