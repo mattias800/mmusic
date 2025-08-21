@@ -1,10 +1,6 @@
 import * as React from "react";
 import { useMutation, useQuery } from "urql";
-import {
-  DownloadersTogglesCardDocument,
-  UpdateDownloaderSettingsDocument,
-} from "@/features/admin/graphql/Downloaders.gql.ts";
-import { GlassCard, GradientButton } from "@/components/ui";
+import { GlassCard } from "@/components/ui";
 import { Switch } from "@/components/ui/switch.tsx";
 import {
   Tooltip,
@@ -20,8 +16,10 @@ import {
   Settings,
 } from "lucide-react";
 import { graphql } from "@/gql";
-
-// Use generated documents
+import {
+  downloadersTogglesCardQuery,
+  updateDownloaderSettingsMutation,
+} from "@/features/settings/DownloadersTogglesCardMutations.tsx";
 
 const testSabnzbdConnectivityQuery = graphql(`
   query TestSabnzbdConnectivity {
@@ -58,11 +56,11 @@ const testQBittorrentConnectivityQuery = graphql(`
 
 export const DownloadersTogglesCard: React.FC = () => {
   const [{ data, fetching }] = useQuery({
-    query: DownloadersTogglesCardDocument,
+    query: downloadersTogglesCardQuery,
   });
 
   const [{ fetching: saving }, update] = useMutation(
-    UpdateDownloaderSettingsDocument,
+    updateDownloaderSettingsMutation,
   );
 
   const [{ data: prow, fetching: prowLoading }, reexecProw] = useQuery({

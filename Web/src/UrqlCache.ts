@@ -1,38 +1,59 @@
-import { cacheExchange } from "@urql/exchange-graphcache";
+import {
+  Cache,
+  cacheExchange,
+  ResolveInfo,
+  Variables,
+} from "@urql/exchange-graphcache";
 import introspection from "./gql/introspection.json";
 import { cacheKeys } from "./UrqlCacheKeys";
 import { QueuesPage_QueryDocument } from "@/gql/graphql";
-import { DownloadersTogglesCardDocument } from "@/features/admin/graphql/Downloaders.gql.ts";
+import {
+  ResultOf,
+  TypedDocumentNode,
+  VariablesOf,
+} from "@graphql-typed-document-node/core";
+import {
+  downloadersTogglesCardQuery,
+  updateDownloaderSettingsMutation,
+} from "@/features/settings/DownloadersTogglesCardMutations.tsx";
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
+const createOptimistic = <
+  TDocumentNode extends TypedDocumentNode<any, any>,
+  TOptimisticFieldValue extends {
+    __typename: string;
+  } = {
+    __typename: string;
+  },
+>(
+  factory: (
+    cache: Cache,
+    variables: VariablesOf<TDocumentNode>,
+  ) => ResultOf<TDocumentNode> | null,
+  mutationFieldResolver: (
+    result: ResultOf<TDocumentNode>,
+  ) => TOptimisticFieldValue,
+) => {
+  return (
+    _args: Variables,
+    cache: Cache,
+    info: ResolveInfo & { variables: VariablesOf<TDocumentNode> },
+  ) => {
+    const fullOptimisticResponse = factory(cache, info.variables);
+    return fullOptimisticResponse == null
+      ? null
+      : mutationFieldResolver(fullOptimisticResponse);
+  };
+};
 
 export const optimisticCacheExchange = cacheExchange({
   schema: introspection,
   keys: cacheKeys,
   updates: {
-    Mutation: {
-      // Merge serverSettings from mutation result back into the cache
-      updateDownloaderSettings: (result, _args, cache) => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const payload = (result as any)?.updateDownloaderSettings ?? null;
-        if (!payload || payload.__typename !== "UpdateDownloaderSettingsSuccess") {
-          return;
-        }
-
-        const updated = payload.serverSettings;
-        if (!updated?.id) return;
-
-        cache.writeFragment(
-          {
-            id: cache.keyOfEntity({ __typename: "ServerSettings", id: updated.id }),
-            fragment: `fragment _ServerSettings_Downloaders on ServerSettings { id enableSabnzbdDownloader enableQBittorrentDownloader enableSoulSeekDownloader }`,
-          },
-          updated,
-        );
-      },
-    },
     Subscription: {
       // Handle slot progress updates for the multi-slot download system
       slotProgressUpdated: (result, _args, cache) => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const payload = (result as any)?.slotProgressUpdated ?? null;
         if (!payload) return;
 
@@ -64,23 +85,36 @@ export const optimisticCacheExchange = cacheExchange({
     },
   },
   optimistic: {
-    // Provide an optimistic response for toggling downloader settings
-    updateDownloaderSettings: (_args, cache) => {
-      // Graphcache optimistic resolvers should mirror the mutation payload
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const input = (_args as any)?.input ?? {};
-      const existing = cache.readQuery({ query: DownloadersTogglesCardDocument });
-      const id = existing?.serverSettings?.id;
-      return {
-        __typename: "UpdateDownloaderSettingsSuccess",
-        serverSettings: {
-          __typename: "ServerSettings",
-          id: id,
-          enableSabnzbdDownloader: !!input.enableSabnzbdDownloader ?? null,
-          enableQBittorrentDownloader: !!input.enableQBittorrentDownloader ?? null,
-          enableSoulSeekDownloader: !!input.enableSoulSeekDownloader ?? null,
-        },
-      } as const;
-    },
+    updateDownloaderSettings: createOptimistic<
+      typeof updateDownloaderSettingsMutation
+    >(
+      (cache, variables) => {
+        const existing = cache.readQuery({
+          query: downloadersTogglesCardQuery,
+        });
+        const id = existing?.serverSettings?.id;
+
+        if (id == null) {
+          return null;
+        }
+
+        return {
+          __typename: "Mutation",
+          updateDownloaderSettings: {
+            __typename: "UpdateDownloaderSettingsSuccess",
+            serverSettings: {
+              __typename: "ServerSettings",
+              id,
+              enableSabnzbdDownloader: variables.input.enableSabnzbdDownloader,
+              enableQBittorrentDownloader:
+                variables.input.enableQBittorrentDownloader,
+              enableSoulSeekDownloader:
+                variables.input.enableSoulSeekDownloader,
+            },
+          },
+        } as const;
+      },
+      (r) => r.updateDownloaderSettings,
+    ),
   },
 });

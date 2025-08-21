@@ -1,17 +1,6 @@
 import { graphql } from "@/gql";
 
-export const DownloadersTogglesCardDocument = graphql(`
-  query DownloadersTogglesCard {
-    serverSettings {
-      id
-      enableSabnzbdDownloader
-      enableQBittorrentDownloader
-      enableSoulSeekDownloader
-    }
-  }
-`);
-
-export const UpdateDownloaderSettingsDocument = graphql(`
+export const updateDownloaderSettingsMutation = graphql(`
   mutation UpdateDownloaderSettings($input: UpdateDownloaderSettingsInput!) {
     updateDownloaderSettings(input: $input) {
       __typename
@@ -30,4 +19,13 @@ export const UpdateDownloaderSettingsDocument = graphql(`
   }
 `);
 
-
+export const downloadersTogglesCardQuery = graphql(`
+  query DownloadersTogglesCard {
+    serverSettings {
+      id
+      enableSabnzbdDownloader
+      enableQBittorrentDownloader
+      enableSoulSeekDownloader
+    }
+  }
+`);
