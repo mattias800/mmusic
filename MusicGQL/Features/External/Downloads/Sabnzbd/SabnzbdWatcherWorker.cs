@@ -278,40 +278,79 @@ public class SabnzbdWatcherWorker(
                     releaseFolderName,
                     rel =>
                     {
-                        if (rel.Tracks is null) return;
-
-                        int ExtractLeadingNumber(string? name)
+                        // Extract disc and track numbers from filename
+                        static (int disc, int track) ExtractDiscTrack(string? name)
                         {
-                            if (string.IsNullOrWhiteSpace(name)) return -1;
-                            var span = name.AsSpan();
-                            int pos = 0;
-                            while (pos < span.Length && !char.IsDigit(span[pos])) pos++;
-                            int start = pos;
-                            while (pos < span.Length && char.IsDigit(span[pos])) pos++;
-                            if (pos > start && int.TryParse(span.Slice(start, pos - start), out var n))
+                            int disc = 1;
+                            int track = -1;
+                            try
                             {
-                                if (n > 99)
+                                if (!string.IsNullOrWhiteSpace(name))
                                 {
-                                    var lastTwo = n % 100;
-                                    if (lastTwo > 0) return lastTwo;
+                                    var lower = name!.ToLowerInvariant();
+                                    var m = System.Text.RegularExpressions.Regex.Match(lower, @"\b(?:cd|disc|disk|digital\s*media)\s*(\d+)\b", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                                    if (m.Success && int.TryParse(m.Groups[1].Value, out var d)) disc = d;
+                                    var m2 = System.Text.RegularExpressions.Regex.Match(name, @"-\s*(\d{1,3})\s*-", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                                    if (m2.Success && int.TryParse(m2.Groups[1].Value, out var t2)) track = t2;
+                                    if (track < 0)
+                                    {
+                                        var span = name.AsSpan();
+                                        int pos = 0;
+                                        while (pos < span.Length && !char.IsDigit(span[pos])) pos++;
+                                        int start = pos;
+                                        while (pos < span.Length && char.IsDigit(span[pos])) pos++;
+                                        if (pos > start && int.TryParse(span.Slice(start, pos - start), out var n))
+                                        {
+                                            track = n > 99 ? (n % 100 == 0 ? n : n % 100) : n;
+                                        }
+                                    }
                                 }
-                                return n;
                             }
-                            return -1;
+                            catch { }
+                            return (disc, track);
                         }
 
-                        var byTrackNo = new Dictionary<int, string>();
+                        var byDiscTrack = new Dictionary<int, Dictionary<int, string>>();
                         foreach (var f in audioFiles)
                         {
-                            var n = ExtractLeadingNumber(f);
-                            if (n > 0 && !byTrackNo.ContainsKey(n)) byTrackNo[n] = f;
+                            var (disc, track) = ExtractDiscTrack(f);
+                            if (track <= 0) continue;
+                            if (!byDiscTrack.TryGetValue(disc, out var inner))
+                            {
+                                inner = new Dictionary<int, string>();
+                                byDiscTrack[disc] = inner;
+                            }
+                            if (!inner.ContainsKey(track)) inner[track] = f;
                         }
 
-                        foreach (var t in rel.Tracks)
+                        if (rel.Discs is { Count: > 0 })
                         {
-                            if (byTrackNo.TryGetValue(t.TrackNumber, out var fname))
+                            foreach (var d in rel.Discs)
                             {
-                                t.AudioFilePath = "./" + fname;
+                                if (d.Tracks == null) continue;
+                                var discNum = d.DiscNumber > 0 ? d.DiscNumber : 1;
+                                if (byDiscTrack.TryGetValue(discNum, out var inner))
+                                {
+                                    foreach (var t in d.Tracks)
+                                    {
+                                        if (t.TrackNumber > 0 && inner.TryGetValue(t.TrackNumber, out var fname))
+                                        {
+                                            t.AudioFilePath = "./" + System.IO.Path.GetFileName(fname);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        if (rel.Tracks is { Count: > 0 })
+                        {
+                            foreach (var t in rel.Tracks)
+                            {
+                                var discNum = t.DiscNumber ?? 1;
+                                if (byDiscTrack.TryGetValue(discNum, out var inner) && inner.TryGetValue(t.TrackNumber, out var fname))
+                                {
+                                    t.AudioFilePath = "./" + System.IO.Path.GetFileName(fname);
+                                }
                             }
                         }
                     }

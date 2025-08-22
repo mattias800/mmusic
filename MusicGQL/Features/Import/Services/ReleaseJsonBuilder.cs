@@ -275,56 +275,80 @@ public class ReleaseJsonBuilder(
             
             var recById = recordings.ToDictionary(r => r.Id, r => r);
 
-            // 9. Build tracks
+            // 9. Build tracks and discs
             logger.LogInformation("[ReleaseBuilder] 🎼 Step 9: Building track list from {RecordingCount} recordings", recordings.Count);
             var tracksStart = DateTime.UtcNow;
-            
-            var tracks = selected
-                .Media
-                .SelectMany(m => m.Tracks ?? new List<Hqub.MusicBrainz.Entities.Track>())
-                .Where(t => t != null)
-                .Select(t =>
-                {
-                    var recordingId = t.Recording?.Id;
-                    var trackCredits = new List<JsonTrackCredit>();
 
-                    if (recById.TryGetValue(recordingId!, out var recording))
+            var discs = new List<JsonDisc>();
+            if (selected.Media != null && selected.Media.Any())
+            {
+                foreach (var medium in selected.Media)
+                {
+                    var discTracks = new List<JsonTrack>();
+                    if (medium.Tracks != null)
                     {
-                        // Add artist credits
-                        if (recording.Credits != null)
+                        foreach (var t in medium.Tracks)
                         {
-                            foreach (var ac in recording.Credits)
+                            if (t == null) continue;
+                            var recordingId = t.Recording?.Id;
+                            var trackCredits = new List<JsonTrackCredit>();
+
+                            if (!string.IsNullOrWhiteSpace(recordingId) && recById.TryGetValue(recordingId, out var recording))
                             {
-                                if (mbToLocalArtistId.TryGetValue(ac.Artist.Id, out var localId))
+                                if (recording.Credits != null)
                                 {
-                                    trackCredits.Add(new JsonTrackCredit
+                                    foreach (var ac in recording.Credits)
                                     {
-                                        ArtistName = ac.Name ?? ac.Artist.Name ?? string.Empty,
-                                        ArtistId = localId,
-                                        MusicBrainzArtistId = ac.Artist.Id,
-                                    });
+                                        if (ac?.Artist?.Id != null && mbToLocalArtistId.TryGetValue(ac.Artist.Id, out var localId))
+                                        {
+                                            trackCredits.Add(new JsonTrackCredit
+                                            {
+                                                ArtistName = ac.Name ?? ac.Artist.Name ?? string.Empty,
+                                                ArtistId = localId,
+                                                MusicBrainzArtistId = ac.Artist.Id,
+                                            });
+                                        }
+                                    }
                                 }
+                            }
+
+                            if (t.Position > 0)
+                            {
+                                discTracks.Add(new JsonTrack
+                                {
+                                    Title = t.Recording?.Title ?? string.Empty,
+                                    TrackNumber = t.Position,
+                                    TrackLength = t.Length,
+                                    Connections = string.IsNullOrWhiteSpace(recordingId)
+                                        ? null
+                                        : new JsonTrackServiceConnections { MusicBrainzRecordingId = recordingId },
+                                    Credits = trackCredits,
+                                    DiscNumber = medium.Position > 0 ? medium.Position : null,
+                                });
                             }
                         }
                     }
 
-                    return new JsonTrack
+                    if (discTracks.Count > 0)
                     {
-                        Title = t.Recording?.Title ?? string.Empty,
-                        TrackNumber = t.Position,
-                        TrackLength = t.Length,
-                        Connections = string.IsNullOrWhiteSpace(recordingId)
-                            ? null
-                            : new JsonTrackServiceConnections { MusicBrainzRecordingId = recordingId },
-                        Credits = trackCredits,
-                    };
-                })
-                .Where(t => t.TrackNumber > 0)
-                .OrderBy(t => t.TrackNumber)
-                .ToList();
+                        discs.Add(new JsonDisc
+                        {
+                            DiscNumber = medium.Position > 0 ? medium.Position : discs.Count + 1,
+                            Title = string.IsNullOrWhiteSpace(medium.Title) ? null : medium.Title,
+                            Tracks = discTracks.OrderBy(x => x.TrackNumber).ToList(),
+                        });
+                    }
+                }
+            }
+
+            // Build a flattened track list for compatibility (optional)
+            var tracks = discs.Count > 0
+                ? discs.SelectMany(d => d.Tracks.Select(t => { t.DiscNumber ??= d.DiscNumber; return t; }))
+                    .OrderBy(t => t.DiscNumber).ThenBy(t => t.TrackNumber).ToList()
+                : new List<JsonTrack>();
 
             var tracksDuration = DateTime.UtcNow - tracksStart;
-            logger.LogInformation("[ReleaseBuilder] ✅ Built {TrackCount} tracks in {DurationMs}ms", tracks.Count, tracksDuration.TotalMilliseconds);
+            logger.LogInformation("[ReleaseBuilder] ✅ Built {DiscCount} discs with {TrackCount} total tracks in {DurationMs}ms", discs.Count, tracks.Count, tracksDuration.TotalMilliseconds);
 
             // 10. Enrich with Last.fm statistics
             logger.LogInformation("[ReleaseBuilder] 📊 Step 10: Enriching tracks with Last.fm statistics");
@@ -493,7 +517,9 @@ public class ReleaseJsonBuilder(
                         : null,
                 CoverArt = coverArtRelPath,
                 Labels = labels.Count > 0 ? labels : null,
-                Tracks = tracks != null && tracks.Count > 0 ? tracks : null,
+                // Prefer discs as source of truth; include flattened tracks for compatibility
+                Discs = discs.Count > 0 ? discs : null,
+                Tracks = tracks.Count > 0 ? tracks : null,
                 Connections = new ReleaseServiceConnections
                 {
                     MusicBrainzReleaseGroupId = releaseGroupId,
