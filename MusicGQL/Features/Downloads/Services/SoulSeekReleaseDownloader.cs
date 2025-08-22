@@ -37,11 +37,51 @@ public class SoulSeekReleaseDownloader(
         CancellationToken cancellationToken = default
     )
     {
+        // Initialize per-release logger as early as possible
+        IDownloadLogger relLogger = new NullDownloadLogger();
+        try
+        {
+            var logPath = await logPathProvider.GetReleaseLogFilePathAsync(artistName, releaseTitle, cancellationToken);
+            if (!string.IsNullOrWhiteSpace(logPath))
+            {
+                relLogger = new DownloadLogger(logPath!);
+                relLogger.Info($"Start download session for {artistName} - {releaseTitle}");
+            }
+        }
+        catch { }
+
+        // Ensure SoulSeek network is online (connect and wait with timeout)
         if (service.State.NetworkState != SoulSeekNetworkState.Online)
         {
             logger.LogInformation("[SoulSeek] Client not online. Connecting...");
+            try { relLogger.Info("[SoulSeek] Client not online. Connecting…"); } catch { }
             await service.Connect();
             logger.LogInformation("[SoulSeek] Client network state after connect: {State}", service.State.NetworkState);
+
+            // Wait up to a bounded timeout for the network to come online
+            int connectWaitSeconds = 20;
+            try
+            {
+                var s = await settingsAccessor.GetAsync();
+                // Reuse search time limit as an upper bound within reasonable limits
+                connectWaitSeconds = Math.Clamp(s.SoulSeekSearchTimeLimitSeconds, 5, 120);
+            }
+            catch { }
+
+            try { relLogger.Info($"[SoulSeek] Waiting up to {connectWaitSeconds}s for network to become Online"); } catch { }
+            var start = DateTime.UtcNow;
+            while (service.State.NetworkState != SoulSeekNetworkState.Online &&
+                   (DateTime.UtcNow - start).TotalSeconds < connectWaitSeconds)
+            {
+                try { await Task.Delay(250, cancellationToken); } catch { break; }
+            }
+            if (service.State.NetworkState != SoulSeekNetworkState.Online)
+            {
+                logger.LogWarning("[SoulSeek] Network not online after {Seconds}s; aborting search", connectWaitSeconds);
+                try { relLogger.Warn($"[SoulSeek] Network not online after {connectWaitSeconds}s; aborting search"); } catch { }
+                return false;
+            }
+            try { relLogger.Info("[SoulSeek] Network is Online"); } catch { }
         }
 
         // Guard: ensure manifest exists at library root before any write
@@ -57,18 +97,6 @@ public class SoulSeekReleaseDownloader(
         }
         Directory.CreateDirectory(targetDirectory);
 
-        // Initialize per-release logger BEFORE writing any per-release log lines
-        IDownloadLogger relLogger = new NullDownloadLogger();
-        try
-        {
-            var logPath = await logPathProvider.GetReleaseLogFilePathAsync(artistName, releaseTitle, cancellationToken);
-            if (!string.IsNullOrWhiteSpace(logPath))
-            {
-                relLogger = new DownloadLogger(logPath!);
-                relLogger.Info($"Start download session for {artistName} - {releaseTitle}");
-            }
-        }
-        catch { }
 
         logger.LogInformation(
             "[SoulSeek] Searching: {Artist} - {Release}",

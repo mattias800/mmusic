@@ -28,7 +28,9 @@ type QueuesPageDownloadSlot = {
   isWorking: boolean;
   currentWork?: {
     artistId: string;
+    artistName?: string | null;
     releaseFolderName: string;
+    releaseTitle?: string | null;
   } | null;
   currentProgress?: {
     id: string;
@@ -89,6 +91,34 @@ type QueuesPageHistoryItem = {
   musicBrainzArtistId?: string | null;
 };
 
+// Derive a user-friendly DownloadResult-like label from legacy history fields
+function classifyDownloadResult(
+  success: boolean,
+  errorMessage?: string | null,
+): { label: string; color: "green" | "red" | "amber" | "sky" } {
+  if (success) return { label: "Success", color: "green" };
+  const msg = (errorMessage || "").toLowerCase();
+  if (msg.includes("no suitable download found") || msg.includes("no search result")) {
+    return { label: "Not found", color: "amber" };
+  }
+  if (msg.includes("no matching release group")) {
+    return { label: "No matching releases", color: "amber" };
+  }
+  if (msg.includes("track count mismatch")) {
+    return { label: "Track count mismatch", color: "amber" };
+  }
+  if (msg.includes("metadata refresh failed")) {
+    return { label: "Metadata refresh failed", color: "red" };
+  }
+  if (msg.includes("all candidates failed")) {
+    return { label: "All candidates failed", color: "red" };
+  }
+  if (msg.includes("sab finalization")) {
+    return { label: "SAB finalize issue", color: "sky" };
+  }
+  return { label: "Unknown error", color: "red" };
+}
+
 const query = graphql(`
   query QueuesPage_Query {
     downloads {
@@ -98,7 +128,9 @@ const query = graphql(`
         isWorking
         currentWork {
           artistId
+          artistName
           releaseFolderName
+          releaseTitle
         }
         currentProgress {
           id
@@ -478,14 +510,17 @@ const DownloadSlotCard: React.FC<{ slot: QueuesPageDownloadSlot }> = ({
                 to={`/artist/${slot.currentWork.artistId}`}
                 className="hover:underline"
               >
-                {slot.currentProgress.artistName ?? slot.currentWork.artistId}
+                {slot.currentProgress?.artistName ??
+                  slot.currentWork.artistName ??
+                  slot.currentWork.artistId}
               </Link>
               {" - "}
               <Link
                 to={`/artist/${slot.currentWork.artistId}/release/${slot.currentWork.releaseFolderName}`}
                 className="hover:underline"
               >
-                {slot.currentProgress.releaseTitle ??
+                {slot.currentProgress?.releaseTitle ??
+                  slot.currentWork.releaseTitle ??
                   slot.currentWork.releaseFolderName}
               </Link>
             </div>
@@ -699,97 +734,116 @@ const QueueItem: React.FC<{
 const HistoryItem: React.FC<{
   item: QueuesPageHistoryItem;
   type: "download" | "import";
-}> = ({ item, type }) => (
-  <div className="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/10">
-    <div className="flex items-center gap-3">
-      {type === "download" && item.releaseFolderName ? (
-        <Link to={`/artist/${item.artistId}/release/${item.releaseFolderName}`}>
-          <ReleaseCoverArt
-            srcUrl={`/library/${item.artistId}/releases/${item.releaseFolderName}/coverart`}
-            titleForPlaceholder={item.releaseTitle ?? item.releaseFolderName}
-            className="w-8 h-8 rounded object-cover border border-white/20"
-          />
-        </Link>
-      ) : type === "import" && item.releaseFolderName ? (
-        <Link
-          to={`/artist/${item.localArtistId ?? item.artistName}/release/${item.releaseFolderName}`}
+}> = ({ item, type }) => {
+  const result = type === "download" ? classifyDownloadResult(item.success, item.errorMessage) : null;
+  return (
+    <div className="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/10">
+      <div className="flex items-center gap-3">
+        {type === "download" && item.releaseFolderName ? (
+          <Link to={`/artist/${item.artistId}/release/${item.releaseFolderName}`}>
+            <ReleaseCoverArt
+              srcUrl={`/library/${item.artistId}/releases/${item.releaseFolderName}/coverart`}
+              titleForPlaceholder={item.releaseTitle ?? item.releaseFolderName}
+              className="w-8 h-8 rounded object-cover border border-white/20"
+            />
+          </Link>
+        ) : type === "import" && item.releaseFolderName ? (
+          <Link
+            to={`/artist/${item.localArtistId ?? item.artistName}/release/${item.releaseFolderName}`}
+          >
+            <ReleaseCoverArt
+              srcUrl={`/library/${item.localArtistId ?? item.artistName}/releases/${item.releaseFolderName}/coverart`}
+              titleForPlaceholder={item.releaseFolderName}
+              className="w-8 h-8 rounded object-cover border border-white/20"
+            />
+          </Link>
+        ) : (
+          <div className="w-8 h-8" />
+        )}
+        <div className="text-sm text-gray-300">
+          <div className="text-xs text-gray-400 mb-1">
+            {new Date(item.timestampUtc).toLocaleString()}
+          </div>
+          {type === "download" ? (
+            <>
+              <Link to={`/artist/${item.artistId}`} className="hover:underline">
+                {item.artistName ?? item.artistId}
+              </Link>
+              {item.releaseFolderName ? (
+                <>
+                  {" - "}
+                  <Link
+                    to={`/artist/${item.artistId}/release/${item.releaseFolderName}`}
+                    className="hover:underline"
+                  >
+                    {item.releaseTitle ?? item.releaseFolderName}
+                  </Link>
+                </>
+              ) : null}
+            </>
+          ) : (
+            <>
+              <Link
+                to={`/artist/${item.localArtistId ?? item.artistName}`}
+                className="hover:underline"
+              >
+                {item.artistName}
+              </Link>
+              {item.releaseFolderName ? (
+                <>
+                  {" - "}
+                  <Link
+                    to={`/artist/${item.localArtistId ?? item.artistName}/release/${item.releaseFolderName}`}
+                    className="hover:underline"
+                  >
+                    {item.releaseFolderName}
+                  </Link>
+                </>
+              ) : null}
+            </>
+          )}
+        </div>
+      </div>
+      <div className="flex flex-col items-end text-right">
+        <div
+          className={`flex items-center gap-2 ${
+            item.success ? "text-green-400" : "text-red-400"
+          }`}
         >
-          <ReleaseCoverArt
-            srcUrl={`/library/${item.localArtistId ?? item.artistName}/releases/${item.releaseFolderName}/coverart`}
-            titleForPlaceholder={item.releaseFolderName}
-            className="w-8 h-8 rounded object-cover border border-white/20"
-          />
-        </Link>
-      ) : (
-        <div className="w-8 h-8" />
-      )}
-      <div className="text-sm text-gray-300">
-        <div className="text-xs text-gray-400 mb-1">
-          {new Date(item.timestampUtc).toLocaleString()}
-        </div>
-        {type === "download" ? (
-          <>
-            <Link to={`/artist/${item.artistId}`} className="hover:underline">
-              {item.artistName ?? item.artistId}
-            </Link>
-            {item.releaseFolderName ? (
-              <>
-                {" - "}
-                <Link
-                  to={`/artist/${item.artistId}/release/${item.releaseFolderName}`}
-                  className="hover:underline"
-                >
-                  {item.releaseTitle ?? item.releaseFolderName}
-                </Link>
-              </>
-            ) : null}
-          </>
-        ) : (
-          <>
-            <Link
-              to={`/artist/${item.localArtistId ?? item.artistName}`}
-              className="hover:underline"
+          {item.success ? (
+            <>
+              <CheckCircle className="w-4 h-4" />
+              <span className="text-xs">Completed</span>
+            </>
+          ) : (
+            <>
+              <XCircle className="w-4 h-4" />
+              <span className="text-xs">Failed</span>
+            </>
+          )}
+          {type === "download" && result && (
+            <span
+              title={item.errorMessage || undefined}
+              className={`text-[10px] px-2 py-0.5 rounded-full border inline-block ${
+                result.color === "green"
+                  ? "border-green-400 text-green-300 bg-green-500/10"
+                  : result.color === "amber"
+                  ? "border-amber-400 text-amber-300 bg-amber-500/10"
+                  : result.color === "sky"
+                  ? "border-sky-400 text-sky-300 bg-sky-500/10"
+                  : "border-red-400 text-red-300 bg-red-500/10"
+              }`}
             >
-              {item.artistName}
-            </Link>
-            {item.releaseFolderName ? (
-              <>
-                {" - "}
-                <Link
-                  to={`/artist/${item.localArtistId ?? item.artistName}/release/${item.releaseFolderName}`}
-                  className="hover:underline"
-                >
-                  {item.releaseFolderName}
-                </Link>
-              </>
-            ) : null}
-          </>
-        )}
-      </div>
-    </div>
-    <div className="flex flex-col items-end text-right">
-      <div
-        className={`flex items-center gap-1 ${
-          item.success ? "text-green-400" : "text-red-400"
-        }`}
-      >
-        {item.success ? (
-          <>
-            <CheckCircle className="w-4 h-4" />
-            <span className="text-xs">Completed</span>
-          </>
-        ) : (
-          <>
-            <XCircle className="w-4 h-4" />
-            <span className="text-xs">Failed</span>
-          </>
-        )}
-      </div>
-      {type === "download" && item.providerUsed && (
-        <div className="text-xs text-gray-400 mt-1">
-          via {item.providerUsed}
+              {result.label}
+            </span>
+          )}
         </div>
-      )}
+        {type === "download" && item.providerUsed && (
+          <div className="text-xs text-gray-400 mt-1">
+            via {item.providerUsed}
+          </div>
+        )}
+      </div>
     </div>
-  </div>
-);
+  );
+};

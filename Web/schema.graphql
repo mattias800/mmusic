@@ -1367,6 +1367,7 @@ type ServerSettings {
   soulSeekListeningPort: Int!
   soulSeekNoDataTimeoutSeconds: Int!
   soulSeekPort: Int!
+  soulSeekQueueWaitTimeoutSeconds: Int!
   soulSeekSearchTimeLimitSeconds: Int!
   soulSeekUsername: String!
   spotifyConfiguredSource: String!

@@ -49,6 +49,7 @@ public class SabnzbdFinalizeService(
         }
 
         var completed = completedPath!.TrimEnd(System.IO.Path.DirectorySeparatorChar, System.IO.Path.AltDirectorySeparatorChar);
+        try { relLogger.Info($"[SAB Finalize] Using CompletedPath root: {completed}"); } catch { }
         // Use the NZB name convention we submit to SAB: "{artistName} - {releaseTitle}"
         // Fetch release metadata to construct the expected job name and folder
         var relForNames = await cache.GetReleaseByArtistAndFolderAsync(artistId, releaseFolderName);

@@ -16,7 +16,9 @@ const downloadOverviewFetcherQuery = graphql(`
         items {
           id
           artistId
+          artistName
           releaseFolderName
+          releaseTitle
         }
       }
       downloadSlots {
@@ -25,12 +27,16 @@ const downloadOverviewFetcherQuery = graphql(`
         isWorking
         currentWork {
           artistId
+          artistName
           releaseFolderName
+          releaseTitle
         }
         currentProgress {
           id
           artistId
+          artistName
           releaseFolderName
+          releaseTitle
           status
           totalTracks
           completedTracks
@@ -178,20 +184,32 @@ export const DownloadOverviewFetcher: React.FC<
         <div className="text-xs text-zinc-400">
           {workingSlots.map((slot) => {
             const progress = slot.currentProgress!;
+            const artistDisplay =
+              progress.artistName ||
+              slot.currentWork?.artistName ||
+              progress.artistId ||
+              slot.currentWork?.artistId ||
+              "";
+            const releaseDisplay =
+              progress.releaseTitle ||
+              slot.currentWork?.releaseTitle ||
+              progress.releaseFolderName ||
+              slot.currentWork?.releaseFolderName ||
+              "";
             return (
               <div key={slot.id} className="truncate">
                 <Link
-                  to={`/artist/${progress.artistId}`}
+                  to={`/artist/${progress.artistId || slot.currentWork?.artistId}`}
                   className="hover:underline"
                 >
-                  {progress.artistId}
+                  {artistDisplay}
                 </Link>
                 {" - "}
                 <Link
-                  to={`/artist/${progress.artistId}/release/${progress.releaseFolderName}`}
+                  to={`/artist/${(progress.artistId || slot.currentWork?.artistId)}/release/${progress.releaseFolderName || slot.currentWork?.releaseFolderName}`}
                   className="hover:underline"
                 >
-                  {progress.releaseFolderName}
+                  {releaseDisplay}
                 </Link>
                 : {statusText(progress.status)}
               </div>
