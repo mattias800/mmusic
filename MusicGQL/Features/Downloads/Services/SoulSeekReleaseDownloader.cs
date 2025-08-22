@@ -125,34 +125,8 @@ public class SoulSeekReleaseDownloader(
         var expectedYear = cachedRelease?.JsonRelease?.FirstReleaseYear;
         try { if (!string.IsNullOrWhiteSpace(expectedYear)) relLogger.Info($"ExpectedYear={expectedYear}"); } catch { }
 
-        // Try multiple query forms: base "Artist - Title", folder-style separators, and optionally with year
-        var queries = new List<string> { baseQuery };
-        queries.Add($"{normArtist}\\{normTitle}");
-        queries.Add($"{normArtist}/{normTitle}");
-
-        // Accent-insensitive alternatives (e.g., Skeletá -> Skeleta)
-        string foldArtist = RemoveDiacritics(normArtist);
-        string foldTitle = RemoveDiacritics(normTitle);
-        var baseQueryFold = $"{foldArtist} - {foldTitle}".Trim();
-        if (!string.Equals(baseQueryFold, baseQuery, StringComparison.Ordinal))
-        {
-            queries.Add(baseQueryFold);
-            queries.Add($"{foldArtist}\\{foldTitle}");
-            queries.Add($"{foldArtist}/{foldTitle}");
-        }
-        if (!string.IsNullOrWhiteSpace(expectedYear))
-        {
-            queries.Add($"{normArtist} - {normTitle} ({expectedYear})");
-            queries.Add($"{normArtist}\\{normTitle} ({expectedYear})");
-            queries.Add($"{normArtist}/{normTitle} ({expectedYear})");
-
-            if (!string.Equals(baseQueryFold, baseQuery, StringComparison.Ordinal))
-            {
-                queries.Add($"{foldArtist} - {foldTitle} ({expectedYear})");
-                queries.Add($"{foldArtist}\\{foldTitle} ({expectedYear})");
-                queries.Add($"{foldArtist}/{foldTitle} ({expectedYear})");
-            }
-        }
+        // Use a single canonical query: "Artist Title"
+        var distinctQueries = new List<string> { baseQuery };
 
         List<SearchResponse> rankedCandidates = new();
         // Time-slicing: if queue has waiting jobs, enforce a time limit for search to avoid blocking
@@ -166,10 +140,6 @@ public class SoulSeekReleaseDownloader(
         // Shared time budget across all query forms when queue has waiting items
         TimeSpan totalSearchBudget = TimeSpan.FromSeconds(timeLimitSec);
         var budgetStartUtc = DateTime.UtcNow;
-        // Add a couple of extra common separators to increase hit rate
-        queries.Add($"{normArtist} - {normTitle} [FLAC]");
-        queries.Add($"{foldArtist} - {foldTitle} [FLAC]");
-        var distinctQueries = queries.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
         logger.LogInformation("[SoulSeek] Starting search across {QueryForms} query forms (queueDepth={QueueDepth}, sharedTimeBudgetSec={Budget})", distinctQueries.Count, queueDepth, timeLimitSec);
         try { relLogger.Info($"Starting search across {distinctQueries.Count} query forms (queueDepth={queueDepth}, timeBudgetSec={timeLimitSec})"); } catch { }
         for (int qi = 0; qi < distinctQueries.Count; qi++)
