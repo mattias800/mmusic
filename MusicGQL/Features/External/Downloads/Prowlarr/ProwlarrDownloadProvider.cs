@@ -54,13 +54,44 @@ public class ProwlarrDownloadProvider(
             var results = await prowlarr.SearchAlbumAsync(artistName, releaseTitle, cancellationToken);
             logger.LogInformation("[Prowlarr] Search returned {Count} results for {Artist} - {Release}", results.Count, artistName, releaseTitle);
             try { relLogger.Info($"[Prowlarr] Search returned {results.Count} results"); } catch { }
-        // Prefer items that look like full releases and larger sizes first
-        // Filter and score results for music albums only; reject obvious mismatches (e.g., TV packs)
-        results = results
-            .Where(r => IsLikelyMusicAlbum(r, artistName, releaseTitle))
-            .OrderByDescending(r => Score(r, artistName, releaseTitle))
-            .ThenByDescending(r => r.Size ?? 0)
-            .ToList();
+            try
+            {
+                int i = 0;
+                foreach (var r in results)
+                {
+                    if (i++ >= 10) { relLogger.Info("[Prowlarr] (more results omitted)…"); break; }
+                    relLogger.Info($"[Prowlarr] Raw result: title={r.Title} size={r.Size} magnet={(string.IsNullOrWhiteSpace(r.MagnetUrl)?"no":"yes")} url={(string.IsNullOrWhiteSpace(r.DownloadUrl)?"no":"yes")} idx={r.IndexerId}");
+                }
+            }
+            catch { }
+
+            // Prefer items that look like full releases and larger sizes first
+            // Filter and score results for music albums only; reject obvious mismatches (e.g., TV packs)
+            var preFilter = results;
+            var filtered = preFilter
+                .Where(r => IsLikelyMusicAlbum(r, artistName, releaseTitle))
+                .OrderByDescending(r => Score(r, artistName, releaseTitle))
+                .ThenByDescending(r => r.Size ?? 0)
+                .ToList();
+
+            // Log before/after with rejection reasons
+            try
+            {
+                relLogger.Info($"[Prowlarr] Filtered results: before={preFilter.Count} after={filtered.Count}");
+                if (filtered.Count == 0 && preFilter.Count > 0)
+                {
+                    int shown = 0;
+                    foreach (var r in preFilter)
+                    {
+                        if (shown++ >= 10) { relLogger.Info("[Prowlarr] (more rejected omitted)…"); break; }
+                        var reasons = GetProviderRejectionReasons(r, artistName, releaseTitle);
+                        relLogger.Info($"[Prowlarr] Rejected: title={r.Title} reasons=[{string.Join(',', reasons)}]");
+                    }
+                }
+            }
+            catch { }
+
+            results = filtered;
             if (results.Count == 0) { try { relLogger.Warn("[Prowlarr] No results after filtering"); } catch { } return false; }
 
         // 2) Prefer NZB if available; otherwise fallback to magnet
@@ -224,6 +255,33 @@ public class ProwlarrDownloadProvider(
         }
     }
 
+    private static IEnumerable<string> GetProviderRejectionReasons(ProwlarrRelease r, string artistName, string releaseTitle)
+    {
+        var reasons = new List<string>();
+        try
+        {
+            bool titleOk = TitleMatchesLocal(r.Title, artistName, releaseTitle);
+            if (!titleOk) reasons.Add("titleMismatch");
+            if (LooksLikeDiscography(r.Title)) reasons.Add("discography");
+            if (string.IsNullOrWhiteSpace(r.DownloadUrl) && string.IsNullOrWhiteSpace(r.MagnetUrl)) reasons.Add("noLink");
+        }
+        catch { }
+        return reasons;
+    }
+
+    private static bool TitleMatchesLocal(string? title, string artistName, string releaseTitle)
+    {
+        if (string.IsNullOrWhiteSpace(title)) return false;
+        var t = title.ToLowerInvariant();
+        var a = (artistName ?? string.Empty).ToLowerInvariant();
+        var rel = (releaseTitle ?? string.Empty).ToLowerInvariant();
+        if (!t.Contains(a)) return false;
+        var albumWords = rel.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        var titleWords = t.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        var matchCount = albumWords.Count(w => titleWords.Any(x => x.Contains(w) || w.Contains(x)));
+        return matchCount >= Math.Max(1, albumWords.Length / 2);
+    }
+
     private string EnsureProwlarrApiKey(string downloadUrl)
     {
         try
@@ -272,6 +330,17 @@ public class ProwlarrDownloadProvider(
                    || downloadUrl.Contains("torrent", StringComparison.OrdinalIgnoreCase);
         }
         catch { return false; }
+    }
+
+    private static bool LooksLikeDiscography(string? title)
+    {
+        if (string.IsNullOrWhiteSpace(title)) return false;
+        var t = title.ToLowerInvariant();
+        string[] bad = [
+            "discography", "collection", "anthology", "complete", "box set", "boxset",
+            "complete works", "singles collection", "mega pack"
+        ];
+        return bad.Any(k => t.Contains(k));
     }
 
     private static bool IsLikelyMusicAlbum(ProwlarrRelease r, string artistName, string releaseTitle)

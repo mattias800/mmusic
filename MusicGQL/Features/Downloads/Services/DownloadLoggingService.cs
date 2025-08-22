@@ -71,6 +71,16 @@ public class DownloadLogPathProvider(ServerSettingsAccessor serverSettingsAccess
         return Path.Combine(artistDir, $"{safeRelease}.log");
     }
 
+    public async Task<string?> GetServiceLogFilePathAsync(string serviceName, CancellationToken cancellationToken = default)
+    {
+        var settings = await serverSettingsAccessor.GetAsync();
+        var root = settings.LogsFolderPath;
+        if (string.IsNullOrWhiteSpace(root)) return null;
+        Directory.CreateDirectory(root);
+        var safe = SanitizeForFileName(serviceName);
+        return Path.Combine(root, $"{safe}.log");
+    }
+
     private static string SanitizeForFileName(string input)
     {
         if (string.IsNullOrWhiteSpace(input)) return string.Empty;

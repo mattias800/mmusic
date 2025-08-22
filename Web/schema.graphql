@@ -1006,6 +1006,7 @@ type Mutation {
   submitListen(input: SubmitListenInput!): SubmitListenResult!
   triggerPlayback(input: TriggerPlaybackInput!): TriggerPlaybackPayload!
   unlikeSong(input: UnlikedSongInput!): UnlikeSongResult!
+  updateDiscographySettings(input: UpdateDiscographySettingsInput!): UpdateDiscographySettingsResult!
   updateDownloadPath(input: UpdateDownloadPathInput!): UpdateDownloadPathResult!
   updateDownloadSlotCount(input: UpdateDownloadSlotCountInput!): UpdateDownloadSlotCountResult!
   updateDownloaderSettings(input: UpdateDownloaderSettingsInput!): UpdateDownloaderSettingsResult!
@@ -1303,6 +1304,8 @@ type ServerLibrarySearchRoot {
 }
 
 type ServerSettings {
+  discographyEnabled: Boolean!
+  discographyStagingPath: String
   downloadPath: String!
   downloadSlotCount: Int!
   enableQBittorrentDownloader: Boolean!
@@ -1715,6 +1718,21 @@ type UnlikeSongSuccess {
 
 input UnlikedSongInput {
   recordingId: String!
+}
+
+type UpdateDiscographySettingsError {
+  message: String!
+}
+
+input UpdateDiscographySettingsInput {
+  enabled: Boolean!
+  stagingPath: String
+}
+
+union UpdateDiscographySettingsResult = UpdateDiscographySettingsError | UpdateDiscographySettingsSuccess
+
+type UpdateDiscographySettingsSuccess {
+  serverSettings: ServerSettings!
 }
 
 input UpdateDownloadPathInput {

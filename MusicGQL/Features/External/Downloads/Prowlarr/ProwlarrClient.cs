@@ -5,8 +5,10 @@ using Microsoft.Extensions.Options;
 
 namespace MusicGQL.Features.External.Downloads.Prowlarr;
 
-public class ProwlarrClient(HttpClient httpClient, IOptions<ProwlarrOptions> options, ILogger<ProwlarrClient> logger)
+public class ProwlarrClient(HttpClient httpClient, IOptions<ProwlarrOptions> options, ILogger<ProwlarrClient> logger, MusicGQL.Features.Downloads.Services.DownloadLogPathProvider logPathProvider)
 {
+    private MusicGQL.Features.Downloads.Services.DownloadLogger? serviceLogger;
+
     private async Task<bool> TestConnectivityAsync(CancellationToken cancellationToken)
     {
         try
@@ -32,22 +34,33 @@ public class ProwlarrClient(HttpClient httpClient, IOptions<ProwlarrOptions> opt
                 // Some setups expect the API key in a header
                 try { req.Headers.Add("X-Api-Key", apiKey); } catch { }
             }
-            
+            try
+            {
+                if (serviceLogger == null)
+                {
+                    var path = await logPathProvider.GetServiceLogFilePathAsync("prowlarr", cancellationToken);
+                    if (!string.IsNullOrWhiteSpace(path)) serviceLogger = new MusicGQL.Features.Downloads.Services.DownloadLogger(path!);
+                }
+                serviceLogger?.Info($"Connectivity: GET {pingUrl}");
+            }
+            catch { }
+
             logger.LogDebug("[Prowlarr] Testing connectivity to {Url}", pingUrl);
-            
+
             // Create a timeout for just the connectivity test (shorter than the HttpClient default)
             var connectivityTimeoutSeconds = 10;
             using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(connectivityTimeoutSeconds));
             using var combinedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeoutCts.Token);
-            
+
             var startTime = DateTime.UtcNow;
             var resp = await httpClient.SendAsync(req, combinedCts.Token);
             var duration = DateTime.UtcNow - startTime;
-            
+
             if (resp.IsSuccessStatusCode)
             {
                 logger.LogInformation("[Prowlarr] Connectivity test to {BaseUrl}: {Status} in {Duration:0.00}s (Connected)", 
                     baseUrl, (int)resp.StatusCode, duration.TotalSeconds);
+                try { serviceLogger?.Info($"Connectivity OK HTTP {(int)resp.StatusCode} in {duration.TotalSeconds:0.00}s"); } catch { }
                 return true;
             }
             else
@@ -59,11 +72,13 @@ public class ProwlarrClient(HttpClient httpClient, IOptions<ProwlarrOptions> opt
                     // and let the search endpoint test validate the API key correctness.
                     logger.LogWarning("[Prowlarr] Auth response from {BaseUrl}: {Status} in {Duration:0.00}s. Server is reachable.", 
                         baseUrl, (int)resp.StatusCode, duration.TotalSeconds);
+                    try { serviceLogger?.Warn($"Connectivity auth response HTTP {(int)resp.StatusCode} in {duration.TotalSeconds:0.00}s"); } catch { }
                     return true;
                 }
-                
+
                 logger.LogWarning("[Prowlarr] Connectivity test to {BaseUrl}: {Status} in {Duration:0.00}s (Failed - Server responded but with error)", 
                     baseUrl, (int)resp.StatusCode, duration.TotalSeconds);
+                try { serviceLogger?.Warn($"Connectivity failed HTTP {(int)resp.StatusCode} in {duration.TotalSeconds:0.00}s"); } catch { }
                 return false;
             }
         }
@@ -72,7 +87,17 @@ public class ProwlarrClient(HttpClient httpClient, IOptions<ProwlarrOptions> opt
             var connectivityTimeoutSeconds = 10; // matches the CTS above
             logger.LogWarning("[Prowlarr] Connectivity test failed to {BaseUrl} - Request timed out after {Timeout}s. This usually indicates network connectivity issues or the server is not responding.", 
                 options.Value.BaseUrl, connectivityTimeoutSeconds);
-            
+            try
+            {
+                if (serviceLogger == null)
+                {
+                    var path = await logPathProvider.GetServiceLogFilePathAsync("prowlarr", cancellationToken);
+                    if (!string.IsNullOrWhiteSpace(path)) serviceLogger = new MusicGQL.Features.Downloads.Services.DownloadLogger(path!);
+                }
+                serviceLogger?.Warn($"Connectivity timeout after {connectivityTimeoutSeconds}s");
+            }
+            catch { }
+
             // Add specific timeout diagnostics
             logger.LogWarning("[Prowlarr] TIMEOUT DIAGNOSTICS:");
             logger.LogWarning("[Prowlarr] - Request was sent but no response received within {Timeout}s", connectivityTimeoutSeconds);
@@ -80,25 +105,55 @@ public class ProwlarrClient(HttpClient httpClient, IOptions<ProwlarrOptions> opt
             logger.LogWarning("[Prowlarr]   * Not running (check if Prowlarr service is started)");
             logger.LogWarning("[Prowlarr]   * Not accessible from this machine (check network/firewall)");
             logger.LogWarning("[Prowlarr]   * Overloaded and not responding (check server resources)");
-            
+
             return false;
         }
         catch (TaskCanceledException)
         {
             logger.LogWarning("[Prowlarr] Connectivity test failed to {BaseUrl} - Request was canceled. This may indicate network connectivity issues.", 
                 options.Value.BaseUrl);
+            try
+            {
+                if (serviceLogger == null)
+                {
+                    var path = await logPathProvider.GetServiceLogFilePathAsync("prowlarr", cancellationToken);
+                    if (!string.IsNullOrWhiteSpace(path)) serviceLogger = new MusicGQL.Features.Downloads.Services.DownloadLogger(path!);
+                }
+                serviceLogger?.Warn("Connectivity request canceled");
+            }
+            catch { }
             return false;
         }
         catch (HttpRequestException ex)
         {
             logger.LogWarning(ex, "[Prowlarr] Connectivity test failed to {BaseUrl} - HTTP request error. This may indicate network connectivity issues or the server is unreachable.", 
                 options.Value.BaseUrl);
+            try
+            {
+                if (serviceLogger == null)
+                {
+                    var path = await logPathProvider.GetServiceLogFilePathAsync("prowlarr", cancellationToken);
+                    if (!string.IsNullOrWhiteSpace(path)) serviceLogger = new MusicGQL.Features.Downloads.Services.DownloadLogger(path!);
+                }
+                serviceLogger?.Error($"Connectivity HTTP exception: {ex.Message}");
+            }
+            catch { }
             return false;
         }
         catch (Exception ex)
         {
             logger.LogWarning(ex, "[Prowlarr] Connectivity test failed to {BaseUrl} - Unexpected error during connectivity test.", 
                 options.Value.BaseUrl);
+            try
+            {
+                if (serviceLogger == null)
+                {
+                    var path = await logPathProvider.GetServiceLogFilePathAsync("prowlarr", cancellationToken);
+                    if (!string.IsNullOrWhiteSpace(path)) serviceLogger = new MusicGQL.Features.Downloads.Services.DownloadLogger(path!);
+                }
+                serviceLogger?.Error($"Connectivity exception: {ex.Message}");
+            }
+            catch { }
             return false;
         }
     }
@@ -117,46 +172,86 @@ public class ProwlarrClient(HttpClient httpClient, IOptions<ProwlarrOptions> opt
             using var req = new HttpRequestMessage(HttpMethod.Get, testUrl);
             req.Headers.Accept.Clear();
             req.Headers.Accept.ParseAdd("application/json");
-            
-            logger.LogDebug("[Prowlarr] Testing search endpoint: {Url}", testUrl);
-            var startTime = DateTime.UtcNow;
+            try
+            {
+                if (serviceLogger == null)
+                {
+                    var path = await logPathProvider.GetServiceLogFilePathAsync("prowlarr", cancellationToken);
+                    if (!string.IsNullOrWhiteSpace(path)) serviceLogger = new MusicGQL.Features.Downloads.Services.DownloadLogger(path!);
+                }
+                serviceLogger?.Info($"Search test: GET {testUrl}");
+            }
+            catch { }
+
+            var start = DateTime.UtcNow;
             var resp = await httpClient.SendAsync(req, cancellationToken);
-            var duration = DateTime.UtcNow - startTime;
-            
-            var isWorking = resp.IsSuccessStatusCode;
-            logger.LogInformation("[Prowlarr] Search endpoint test: {Status} in {Duration:0.00}s ({Working})", 
-                (int)resp.StatusCode, duration.TotalSeconds, isWorking ? "Working" : "Failed");
-            return isWorking;
+            var dur = DateTime.UtcNow - start;
+            if (resp.IsSuccessStatusCode)
+            {
+                try { serviceLogger?.Info($"Search test OK HTTP {(int)resp.StatusCode} in {dur.TotalSeconds:0.00}s"); } catch { }
+                return true;
+            }
+            else
+            {
+                var body = await resp.Content.ReadAsStringAsync(cancellationToken);
+                try { serviceLogger?.Warn($"Search test failed HTTP {(int)resp.StatusCode}. Body: {body}"); } catch { }
+                return false;
+            }
         }
         catch (Exception ex)
         {
-            logger.LogWarning(ex, "[Prowlarr] Search endpoint test failed");
+            try
+            {
+                if (serviceLogger == null)
+                {
+                    var path = await logPathProvider.GetServiceLogFilePathAsync("prowlarr", cancellationToken);
+                    if (!string.IsNullOrWhiteSpace(path)) serviceLogger = new MusicGQL.Features.Downloads.Services.DownloadLogger(path!);
+                }
+                serviceLogger?.Error($"Search test exception: {ex.Message}");
+            }
+            catch { }
             return false;
         }
     }
 
-    private void LogCurrentConfiguration()
+    public void LogCurrentConfiguration()
     {
-        if (options.Value.EnableDetailedLogging)
+        logger.LogInformation("[Prowlarr] Current configuration: BaseUrl={BaseUrl}, ApiKeyConfigured={HasApiKey}, Timeout={TimeoutSeconds}s, MaxRetries={MaxRetries}, TestConnectivityFirst={TestConnectivity}",
+            options.Value.BaseUrl, !string.IsNullOrWhiteSpace(options.Value.ApiKey), options.Value.TimeoutSeconds, options.Value.MaxRetries, options.Value.TestConnectivityFirst);
+    }
+
+    public string GetConfigurationSummary()
+    {
+        return string.Join("; ", new[]
         {
-            logger.LogDebug("[Prowlarr] Current configuration: BaseUrl={BaseUrl}, Timeout={Timeout}s, MaxRetries={MaxRetries}, " +
-                "TestConnectivityFirst={TestConnectivity}, RetryDelay={RetryDelay}s, EnableDetailedLogging={DetailedLogging}, MaxConcurrent={MaxConcurrent}",
-                options.Value.BaseUrl, options.Value.TimeoutSeconds, options.Value.MaxRetries, 
-                options.Value.TestConnectivityFirst, options.Value.RetryDelaySeconds, 
-                options.Value.EnableDetailedLogging, options.Value.MaxConcurrentRequests);
+            $"BaseUrl={options.Value.BaseUrl}",
+            $"ApiKeyConfigured={!string.IsNullOrWhiteSpace(options.Value.ApiKey)}",
+            $"HttpClient Timeout: {httpClient.Timeout.TotalSeconds}s",
+            $"MaxRetries={options.Value.MaxRetries}",
+            $"TestConnectivityFirst={options.Value.TestConnectivityFirst}",
+            $"RetryDelay={options.Value.RetryDelaySeconds}s"
+        });
+    }
+
+    public async Task<(bool ok, string message)> TestConnectivityAsyncPublic(CancellationToken cancellationToken)
+    {
+        try
+        {
+            var isConnected = await TestConnectivityAsync(cancellationToken);
+            if (!isConnected) return (false, "Connectivity failed");
+            var isSearchOk = await TestSearchEndpointAsync(cancellationToken);
+            return (isSearchOk, isSearchOk ? "OK" : "Search endpoint failed");
+        }
+        catch (Exception ex)
+        {
+            return (false, ex.Message);
         }
     }
 
     /// <summary>
     /// Provides a summary of the current Prowlarr configuration for debugging purposes.
     /// </summary>
-    public string GetConfigurationSummary()
-    {
-        return $"Prowlarr Configuration: BaseUrl={options.Value.BaseUrl}, Timeout={options.Value.TimeoutSeconds}s, " +
-               $"MaxRetries={options.Value.MaxRetries}, TestConnectivityFirst={options.Value.TestConnectivityFirst}, " +
-               $"RetryDelay={options.Value.RetryDelaySeconds}s, EnableDetailedLogging={options.Value.EnableDetailedLogging}, " +
-               $"MaxConcurrentRequests={options.Value.MaxConcurrentRequests}";
-    }
+    // Duplicate method removed (single summary method above)
 
     /// <summary>
     /// Tests basic connectivity to the Prowlarr server and returns diagnostic information.

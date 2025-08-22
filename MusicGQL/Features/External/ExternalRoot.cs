@@ -7,6 +7,7 @@ using MusicGQL.Integration.Spotify.Configuration;
 using MusicGQL.Features.External.Downloads.Sabnzbd.Configuration;
 using SpotifyAPI.Web;
 using MusicGQL;
+using MusicGQL.Features.Downloads.Services;
 
 namespace MusicGQL.Features.External;
 
@@ -19,53 +20,20 @@ public record ExternalRoot
 
     [GraphQLName("testSabnzbdConnectivity")]
     public async Task<ConnectivityStatus> TestSabnzbdConnectivity(
-        [Service] IOptions<SabnzbdOptions> options,
-        [Service] IHttpClientFactory httpClientFactory
+        [Service] MusicGQL.Features.External.Downloads.Sabnzbd.SabnzbdClient client
     )
     {
-        var baseUrl = options.Value.BaseUrl?.TrimEnd('/');
-        if (string.IsNullOrWhiteSpace(baseUrl))
-            return new ConnectivityStatus(false, "BaseUrl not configured");
-
-        var apiKey = options.Value.ApiKey;
-        if (string.IsNullOrWhiteSpace(apiKey))
-            return new ConnectivityStatus(false, "API key not configured");
-
-        try
-        {
-            var client = httpClientFactory.CreateClient();
-            client.Timeout = TimeSpan.FromSeconds(5);
-            var url = baseUrl + "/api?mode=version&output=json&apikey=" + Uri.EscapeDataString(apiKey);
-            using var resp = await client.GetAsync(url);
-            return new ConnectivityStatus(resp.IsSuccessStatusCode, $"HTTP {(int)resp.StatusCode}");
-        }
-        catch (Exception ex)
-        {
-            return new ConnectivityStatus(false, ex.Message);
-        }
+        var (ok, msg) = await client.TestConnectivityAsync(CancellationToken.None);
+        return new ConnectivityStatus(ok, msg);
     }
 
     [GraphQLName("testProwlarrConnectivity")]
     public async Task<ConnectivityStatus> TestProwlarrConnectivity(
-        [Service] IOptions<Downloads.Prowlarr.Configuration.ProwlarrOptions> options,
-        [Service] IHttpClientFactory httpClientFactory
+        [Service] MusicGQL.Features.External.Downloads.Prowlarr.ProwlarrClient client
     )
     {
-        var baseUrl = options.Value.BaseUrl?.TrimEnd('/');
-        if (string.IsNullOrWhiteSpace(baseUrl))
-            return new ConnectivityStatus(false, "BaseUrl not configured");
-
-        try
-        {
-            var client = httpClientFactory.CreateClient();
-            client.Timeout = TimeSpan.FromSeconds(Math.Max(2, options.Value.TimeoutSeconds));
-            using var resp = await client.GetAsync(baseUrl);
-            return new ConnectivityStatus(resp.IsSuccessStatusCode, $"HTTP {(int)resp.StatusCode}");
-        }
-        catch (Exception ex)
-        {
-            return new ConnectivityStatus(false, ex.Message);
-        }
+        var (ok, msg) = await client.TestConnectivityAsyncPublic(CancellationToken.None);
+        return new ConnectivityStatus(ok, msg);
     }
 
     [GraphQLName("testListenBrainzConnectivity")]
@@ -120,26 +88,11 @@ public record ExternalRoot
 
     [GraphQLName("testQBittorrentConnectivity")]
     public async Task<ConnectivityStatus> TestQBittorrentConnectivity(
-        [Service] IOptions<Downloads.QBittorrent.Configuration.QBittorrentOptions> options,
-        [Service] IHttpClientFactory httpClientFactory
+        [Service] MusicGQL.Features.External.Downloads.QBittorrent.QBittorrentClient client
     )
     {
-        var baseUrl = options.Value.BaseUrl?.TrimEnd('/');
-        if (string.IsNullOrWhiteSpace(baseUrl))
-            return new ConnectivityStatus(false, "BaseUrl not configured");
-
-        var url = baseUrl + "/api/v2/app/webapiVersion";
-        try
-        {
-            var client = httpClientFactory.CreateClient();
-            client.Timeout = TimeSpan.FromSeconds(5);
-            using var resp = await client.GetAsync(url);
-            return new ConnectivityStatus(resp.IsSuccessStatusCode, $"HTTP {(int)resp.StatusCode}");
-        }
-        catch (Exception ex)
-        {
-            return new ConnectivityStatus(false, ex.Message);
-        }
+        var (ok, msg) = await client.TestConnectivityAsync(CancellationToken.None);
+        return new ConnectivityStatus(ok, msg);
     }
 }
 

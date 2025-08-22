@@ -1195,6 +1195,7 @@ export type Mutation = {
   submitListen: SubmitListenResult;
   triggerPlayback: TriggerPlaybackPayload;
   unlikeSong: UnlikeSongResult;
+  updateDiscographySettings: UpdateDiscographySettingsResult;
   updateDownloadPath: UpdateDownloadPathResult;
   updateDownloadSlotCount: UpdateDownloadSlotCountResult;
   updateDownloaderSettings: UpdateDownloaderSettingsResult;
@@ -1445,6 +1446,11 @@ export type MutationTriggerPlaybackArgs = {
 
 export type MutationUnlikeSongArgs = {
   input: UnlikedSongInput;
+};
+
+
+export type MutationUpdateDiscographySettingsArgs = {
+  input: UpdateDiscographySettingsInput;
 };
 
 
@@ -1888,6 +1894,8 @@ export type ServerLibrarySearchRootTracksForArtistArgs = {
 
 export type ServerSettings = {
   __typename?: 'ServerSettings';
+  discographyEnabled: Scalars['Boolean']['output'];
+  discographyStagingPath?: Maybe<Scalars['String']['output']>;
   downloadPath: Scalars['String']['output'];
   downloadSlotCount: Scalars['Int']['output'];
   enableQBittorrentDownloader: Scalars['Boolean']['output'];
@@ -2429,6 +2437,23 @@ export type UnlikeSongSuccess = {
 
 export type UnlikedSongInput = {
   recordingId: Scalars['String']['input'];
+};
+
+export type UpdateDiscographySettingsError = {
+  __typename?: 'UpdateDiscographySettingsError';
+  message: Scalars['String']['output'];
+};
+
+export type UpdateDiscographySettingsInput = {
+  enabled: Scalars['Boolean']['input'];
+  stagingPath?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type UpdateDiscographySettingsResult = UpdateDiscographySettingsError | UpdateDiscographySettingsSuccess;
+
+export type UpdateDiscographySettingsSuccess = {
+  __typename?: 'UpdateDiscographySettingsSuccess';
+  serverSettings: ServerSettings;
 };
 
 export type UpdateDownloadPathInput = {

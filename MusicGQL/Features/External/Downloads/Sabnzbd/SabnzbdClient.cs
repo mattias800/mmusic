@@ -3,8 +3,9 @@ using MusicGQL.Features.External.Downloads.Sabnzbd.Configuration;
 
 namespace MusicGQL.Features.External.Downloads.Sabnzbd;
 
-public class SabnzbdClient(HttpClient httpClient, IOptions<SabnzbdOptions> options, ILogger<SabnzbdClient> logger)
+public class SabnzbdClient(HttpClient httpClient, IOptions<SabnzbdOptions> options, ILogger<SabnzbdClient> logger, MusicGQL.Features.Downloads.Services.DownloadLogPathProvider logPathProvider)
 {
+    private MusicGQL.Features.Downloads.Services.DownloadLogger? serviceLogger;
     public async Task<bool> AddNzbByUrlAsync(string nzbUrl, string? nzbName, CancellationToken cancellationToken, string? pathOverride = null)
     {
         var baseUrl = options.Value.BaseUrl?.TrimEnd('/');
@@ -12,6 +13,7 @@ public class SabnzbdClient(HttpClient httpClient, IOptions<SabnzbdOptions> optio
         if (string.IsNullOrWhiteSpace(baseUrl) || string.IsNullOrWhiteSpace(apiKey))
         {
             logger.LogWarning("[SABnzbd] Missing BaseUrl or ApiKey; cannot send NZB");
+            try { serviceLogger?.Warn("Missing BaseUrl or ApiKey"); } catch { }
             return false;
         }
         var category = options.Value.Category ?? "music";
@@ -28,7 +30,17 @@ public class SabnzbdClient(HttpClient httpClient, IOptions<SabnzbdOptions> optio
                 url += "&path=" + Uri.EscapeDataString(pathOverride);
                 url += "&dir=" + Uri.EscapeDataString(pathOverride);
             }
+            try
+            {
+                var path = await logPathProvider.GetServiceLogFilePathAsync("sabnzbd", cancellationToken);
+                if (!string.IsNullOrWhiteSpace(path) && serviceLogger == null)
+                {
+                    serviceLogger = new MusicGQL.Features.Downloads.Services.DownloadLogger(path!);
+                }
+            }
+            catch { }
             logger.LogDebug("[SABnzbd] GET {Url}", url);
+            try { serviceLogger?.Info($"GET {url}"); } catch { }
             using var req = new HttpRequestMessage(HttpMethod.Get, url);
             var resp = await httpClient.SendAsync(req, cancellationToken);
             var body = await resp.Content.ReadAsStringAsync(cancellationToken);
@@ -36,6 +48,7 @@ public class SabnzbdClient(HttpClient httpClient, IOptions<SabnzbdOptions> optio
             {
                 var trimmed = body?.Length > 500 ? body[..500] + "…" : body;
                 logger.LogWarning("[SABnzbd] Add URL failed HTTP {Status}. Body: {Body}", (int)resp.StatusCode, trimmed);
+                try { serviceLogger?.Warn($"Add URL failed HTTP {(int)resp.StatusCode}. Body: {trimmed}"); } catch { }
                 return false;
             }
             try
@@ -46,6 +59,7 @@ public class SabnzbdClient(HttpClient httpClient, IOptions<SabnzbdOptions> optio
                 if (!okJson)
                 {
                     logger.LogWarning("[SABnzbd] Add URL returned status=false. Body: {Body}", body);
+                    try { serviceLogger?.Warn($"Add URL returned status=false. Body: {body}"); } catch { }
                 }
                 return okJson;
             }
@@ -58,6 +72,7 @@ public class SabnzbdClient(HttpClient httpClient, IOptions<SabnzbdOptions> optio
         catch (Exception ex)
         {
             logger.LogWarning(ex, "SABnzbd addurl failed");
+            try { serviceLogger?.Error($"Add URL exception: {ex.Message}"); } catch { }
             return false;
         }
     }
@@ -89,6 +104,7 @@ public class SabnzbdClient(HttpClient httpClient, IOptions<SabnzbdOptions> optio
             content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/x-nzb");
             form.Add(content, "nzbfile", fileName);
             logger.LogDebug("[SABnzbd] POST {Url} (addfile) filename={File}", url, fileName);
+            try { serviceLogger?.Info($"POST {url} (addfile) filename={fileName}"); } catch { }
             var resp = await httpClient.PostAsync(url, form, cancellationToken);
             var ok = resp.IsSuccessStatusCode;
             if (!ok)
@@ -97,12 +113,14 @@ public class SabnzbdClient(HttpClient httpClient, IOptions<SabnzbdOptions> optio
                 try { body = await resp.Content.ReadAsStringAsync(cancellationToken); } catch { }
                 if (!string.IsNullOrWhiteSpace(body) && body.Length > 500) body = body[..500] + "…";
                 logger.LogWarning("[SABnzbd] Add file failed HTTP {Status}. Body: {Body}", (int)resp.StatusCode, body);
+                try { serviceLogger?.Warn($"Add file failed HTTP {(int)resp.StatusCode}. Body: {body}"); } catch { }
             }
             return ok;
         }
         catch (Exception ex)
         {
             logger.LogWarning(ex, "[SABnzbd] addfile failed");
+            try { serviceLogger?.Error($"Add file exception: {ex.Message}"); } catch { }
             return false;
         }
     }
@@ -284,6 +302,39 @@ public class SabnzbdClient(HttpClient httpClient, IOptions<SabnzbdOptions> optio
         {
             logger.LogWarning(ex, "[SABnzbd] Job status check failed");
             return null;
+        }
+    }
+
+    public async Task<(bool ok, string message)> TestConnectivityAsync(CancellationToken cancellationToken)
+    {
+        var baseUrl = options.Value.BaseUrl?.TrimEnd('/');
+        var apiKey = options.Value.ApiKey;
+        if (string.IsNullOrWhiteSpace(baseUrl)) return (false, "BaseUrl not configured");
+        if (string.IsNullOrWhiteSpace(apiKey)) return (false, "API key not configured");
+        try
+        {
+            if (serviceLogger == null)
+            {
+                var path = await logPathProvider.GetServiceLogFilePathAsync("sabnzbd", cancellationToken);
+                if (!string.IsNullOrWhiteSpace(path)) serviceLogger = new MusicGQL.Features.Downloads.Services.DownloadLogger(path!);
+            }
+        }
+        catch { }
+
+        var url = $"{baseUrl}/api?mode=version&output=json&apikey={Uri.EscapeDataString(apiKey)}";
+        try
+        {
+            try { serviceLogger?.Info($"Test connectivity: GET {url}"); } catch { }
+            using var req = new HttpRequestMessage(HttpMethod.Get, url);
+            var resp = await httpClient.SendAsync(req, cancellationToken);
+            var msg = $"HTTP {(int)resp.StatusCode}";
+            try { serviceLogger?.Info($"Result: {msg}"); } catch { }
+            return (resp.IsSuccessStatusCode, msg);
+        }
+        catch (Exception ex)
+        {
+            try { serviceLogger?.Error($"Exception: {ex.Message}"); } catch { }
+            return (false, ex.Message);
         }
     }
 }

@@ -125,6 +125,7 @@ builder
     .AddSingleton<CurrentDownloadStateService>()
     .AddSingleton<DownloadHistoryService>()
     .AddSingleton<DownloadLogPathProvider>()
+    .AddHostedService<MusicGQL.Features.Downloads.Services.DownloadServicesStartupLogger>()
     .AddHostedService(sp => sp.GetRequiredService<DownloadSlotManager>())
     // .AddHostedService<DownloadWorker>() // Disabled - now using DownloadSlotManager
     .AddHostedService<MissingLibraryItemsDetectorWorker>()
