@@ -25,6 +25,8 @@ public record ServerSettings([property: GraphQLIgnore] DbServerSettings Model)
 
     public int SoulSeekNoDataTimeoutSeconds() => Model.SoulSeekNoDataTimeoutSeconds;
 
+    public int SoulSeekQueueWaitTimeoutSeconds() => Model.SoulSeekQueueWaitTimeoutSeconds;
+
     public bool SoulSeekBatchDownloadingEnabled() => Model.SoulSeekBatchDownloadingEnabled;
 
     public bool SoulSeekLibrarySharingEnabled() => Model.SoulSeekLibrarySharingEnabled;

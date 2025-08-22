@@ -44,6 +44,18 @@ const currentArtistImportSubscription = graphql(`
   }
 `);
 
+// Background import progress (new flow)
+const backgroundProgressSubscription = graphql(`
+  subscription ArtistImportStatusInfo_Background($artistId: String!) {
+    artistImportBackgroundProgress(artistId: $artistId) {
+      artistId
+      message
+      percentage
+      hasError
+    }
+  }
+`);
+
 export const ArtistImportStatusInfo: React.FC<ArtistImportStatusProps> = ({
   renderWhenNoInfo,
   ...props
@@ -56,8 +68,30 @@ export const ArtistImportStatusInfo: React.FC<ArtistImportStatusProps> = ({
     query: currentArtistImportQuery,
   });
 
+  // Subscribe to legacy queue progress (still supported)
   useSubscription({ query: currentArtistImportSubscription });
 
+  // Subscribe to background progress for this artist (new flow)
+  const [bgProgress] = useSubscription({
+    query: backgroundProgressSubscription,
+    variables: { artistId: artist.id },
+    pause: !artist.id,
+  });
+
+  // If background progress is available for this artist, show it with percentage
+  const bg = bgProgress.data?.artistImportBackgroundProgress;
+  if (bg && bg.artistId === artist.id) {
+    return (
+      <div className="flex items-center gap-2 text-sm text-white/80">
+        <Spinner size="sm" />
+        <span>
+          {bg.message} {bg.percentage != null ? `(${bg.percentage}%)` : null}
+        </span>
+      </div>
+    );
+  }
+
+  // Fallback to legacy current-artist-import view
   const st = data?.artistImport?.currentArtistImport;
 
   if (!st) {

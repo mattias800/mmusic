@@ -80,7 +80,7 @@ public class SoulSeekReleaseDownloader(
         // Normalize base query (e.g., remove punctuation) to improve matching
         string normArtist = NormalizeForSearch(artistName);
         string normTitle = NormalizeForSearch(releaseTitle);
-        var baseQuery = $"{normArtist} - {normTitle}".Trim();
+        var baseQuery = $"{normArtist} {normTitle}".Trim();
         logger.LogInformation("[SoulSeek] Normalized search query: {Query}", baseQuery);
         try { relLogger.Info($"Normalized search query: {baseQuery}"); } catch { }
 
@@ -161,7 +161,8 @@ public class SoulSeekReleaseDownloader(
         // Read setting via cache of server settings through DI (access via separate resolver)
         int timeLimitSec = 60;
         int noDataTimeoutSec = 20;
-        try { var s = await settingsAccessor.GetAsync(); timeLimitSec = Math.Max(5, s.SoulSeekSearchTimeLimitSeconds); noDataTimeoutSec = Math.Max(5, s.SoulSeekNoDataTimeoutSeconds); } catch { }
+        int queueWaitTimeoutSec = 600;
+        try { var s = await settingsAccessor.GetAsync(); timeLimitSec = Math.Max(5, s.SoulSeekSearchTimeLimitSeconds); noDataTimeoutSec = Math.Max(5, s.SoulSeekNoDataTimeoutSeconds); queueWaitTimeoutSec = Math.Max(60, s.SoulSeekQueueWaitTimeoutSeconds); } catch { }
         // Shared time budget across all query forms when queue has waiting items
         TimeSpan totalSearchBudget = TimeSpan.FromSeconds(timeLimitSec);
         var budgetStartUtc = DateTime.UtcNow;
@@ -383,7 +384,8 @@ var queue = DownloadQueueFactory.Create(
 
             // Reset no-data timeout for each new candidate user
             var userLastDataTick = DateTime.UtcNow;
-            logger.LogDebug("[SoulSeek] Starting download session for user '{User}' with no-data timeout of {Timeout}s", candidate.Username, noDataTimeoutSec);
+            var userStartTick = DateTime.UtcNow;
+            logger.LogDebug("[SoulSeek] Starting download session for user '{User}' with no-data timeout of {Timeout}s and queue-wait timeout of {QueueTimeout}s", candidate.Username, noDataTimeoutSec, queueWaitTimeoutSec);
 
             while (queue.Any())
             {
@@ -413,6 +415,8 @@ var queue = DownloadQueueFactory.Create(
                 // Declare variables outside try block so they're accessible in catch block
                 var lastDataTick = DateTime.UtcNow;
                 var sw = System.Diagnostics.Stopwatch.StartNew();
+                bool hasAnyBytesForUser = false;
+                bool loggedExtendedWaitMessage = false;
                 
                 try
                 {
@@ -428,8 +432,20 @@ var queue = DownloadQueueFactory.Create(
                                 // Check both per-file and per-user no-data timeouts
                                 var fileNoDataElapsed = (DateTime.UtcNow - lastDataTick).TotalSeconds;
                                 var userNoDataElapsed = (DateTime.UtcNow - userLastDataTick).TotalSeconds;
+                                var userQueueElapsed = (DateTime.UtcNow - userStartTick).TotalSeconds;
                                 
-                                if (fileNoDataElapsed >= noDataTimeoutSec || userNoDataElapsed >= noDataTimeoutSec)
+                                // Allow extended waiting if we're still queued by the remote user (no data at all yet in this session)
+                                var allowExtendedWait = !hasAnyBytesForUser;
+                                if (allowExtendedWait && !loggedExtendedWaitMessage)
+                                {
+                                    var minutes = Math.Max(1, (int)Math.Round(queueWaitTimeoutSec / 60.0));
+                                    logger.LogInformation("[SoulSeek] No data yet from user '{User}'. Assuming remote queue — waiting up to {Minutes} minutes for download to start", candidate.Username, minutes);
+                                    try { relLogger.Info($"[SoulSeek] No data yet from user '{candidate.Username}'. Assuming remote queue — will wait up to {minutes} minutes for availability"); } catch { }
+                                    loggedExtendedWaitMessage = true;
+                                }
+                                var userThreshold = allowExtendedWait ? Math.Max(noDataTimeoutSec, queueWaitTimeoutSec) : noDataTimeoutSec;
+                                
+                                if (fileNoDataElapsed >= noDataTimeoutSec || userNoDataElapsed >= userThreshold)
                                 {
                                     try { perFileCts.Cancel(); } catch { }
                                     break;
@@ -465,6 +481,7 @@ var queue = DownloadQueueFactory.Create(
                                     // Reset both per-file and per-user no-data timers when data is received
                                     lastDataTick = DateTime.UtcNow;
                                     userLastDataTick = DateTime.UtcNow;
+                                    hasAnyBytesForUser = true;
                                 }
                                 else
                                 {
@@ -568,8 +585,9 @@ var sizeBytes = new System.IO.FileInfo(localPath).Length;
                     // Determine which timeout occurred (per-file or per-user)
                     var fileNoDataElapsed = (DateTime.UtcNow - lastDataTick).TotalSeconds;
                     var userNoDataElapsed = (DateTime.UtcNow - userLastDataTick).TotalSeconds;
+                    var userQueueElapsed = (DateTime.UtcNow - userStartTick).TotalSeconds;
                     
-                    if (userNoDataElapsed >= noDataTimeoutSec)
+                    if (userNoDataElapsed >= Math.Max(noDataTimeoutSec, queueWaitTimeoutSec) && !hasAnyBytesForUser)
                     {
                         logger.LogWarning(ocex, "[SoulSeek] Download cancelled due to per-user no-data timeout ({Seconds}s) for user {User}", noDataTimeoutSec, candidate.Username);
                         try { relLogger.Warn($"Per-user no-data timeout {noDataTimeoutSec}s for user '{candidate.Username}'"); } catch { }

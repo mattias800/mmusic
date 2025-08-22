@@ -63,11 +63,21 @@ const currentSub = graphql(`
   }
 `);
 
+// Background queue subscription (new flow)
+const bgQueueSub = graphql(`
+  subscription ArtistImportBackgroundQueueUpdatedSub {
+    artistImportBackgroundQueueUpdated {
+      queueLength
+    }
+  }
+`);
+
 export const ArtistImportQueuePanel: React.FC = () => {
   const [{ data, error, fetching }] = useQuery({ query });
 
   useSubscription({ query: queueSub });
   useSubscription({ query: currentSub });
+  const [bgQueue] = useSubscription({ query: bgQueueSub });
 
   if (fetching) {
     return <Spinner />;
@@ -83,6 +93,7 @@ export const ArtistImportQueuePanel: React.FC = () => {
 
   const queue = data.artistImport.artistImportQueue;
   const current = data.artistImport.currentArtistImport;
+  const bgLen = bgQueue.data?.artistImportBackgroundQueueUpdated?.queueLength ?? 0;
 
   return (
     <div className="space-y-3 text-sm">
@@ -108,9 +119,10 @@ export const ArtistImportQueuePanel: React.FC = () => {
 
       <div>
         <div className="font-medium text-zinc-200">
-          {queue?.queueLength
-            ? `${queue.queueLength} in queue`
-            : "Queue is empty"}
+          {queue?.queueLength ? `${queue.queueLength} in legacy queue` : "Legacy queue is empty"}
+        </div>
+        <div className="font-medium text-zinc-200">
+          {bgLen > 0 ? `${bgLen} in background queue` : "Background queue is empty"}
         </div>
       </div>
     </div>
