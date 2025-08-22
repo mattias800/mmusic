@@ -106,10 +106,10 @@ public record Release([property: GraphQLIgnore] CachedRelease Model)
     public string? MusicBrainzReleaseIdOverride() => Model.JsonRelease.Connections?.MusicBrainzReleaseIdOverride;
 };
 
-public record Disc(Release Release, int DiscNumber, string? Title)
+public record Disc(Release Release, int DNumber, string? DTitle)
 {
-    public int DiscNumber() => DiscNumber;
-    public string? Title() => Title;
+    public int DiscNumber() => DNumber;
+    public string? Title() => DTitle;
     public async Task<IEnumerable<Track>> Tracks(ServerLibrary.Cache.ServerLibraryCache cache)
     {
         // Use cached tracks for this release and filter by disc number
@@ -118,7 +118,7 @@ public record Disc(Release Release, int DiscNumber, string? Title)
             Release.Model.FolderName
         );
         return tracks
-            .Where(t => (t.DiscNumber > 0 ? t.DiscNumber : 1) == DiscNumber)
+            .Where(t => (t.DiscNumber > 0 ? t.DiscNumber : 1) == DNumber)
             .OrderBy(t => t.JsonTrack.TrackNumber)
             .Select(t => new Track(t));
     }

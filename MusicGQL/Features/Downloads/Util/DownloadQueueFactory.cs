@@ -160,6 +160,10 @@ var orderedAnnotated = filtered
             .Select(a =>
             {
                 var rawLead = ExtractLeadingTrackNumber(a.BaseNameWithoutExt);
+                if (!rawLead.HasValue)
+                {
+                    rawLead = ExtractEmbeddedTrackNumber(a.BaseNameWithoutExt);
+                }
                 var normalizedLead = NormalizeLeadingTrackNumber(rawLead, expectedTrackCount);
                 return new { a, lead = normalizedLead, rawLead };
             })
@@ -203,10 +207,14 @@ var orderedAnnotated = filtered
             .Select(file => AnnotateFile(file.Filename))
             .ToList();
 
-        var orderedAnnotated = annotated
+var orderedAnnotated = annotated
             .Select(a =>
             {
                 var rawLead = ExtractLeadingTrackNumber(a.BaseNameWithoutExt);
+                if (!rawLead.HasValue)
+                {
+                    rawLead = ExtractEmbeddedTrackNumber(a.BaseNameWithoutExt);
+                }
                 var normalizedLead = NormalizeLeadingTrackNumber(rawLead, expectedTrackCount: null);
                 return new { a, lead = normalizedLead, rawLead };
             })
@@ -310,7 +318,7 @@ var orderedAnnotated = filtered
         return name;
     }
 
-    private static int? NormalizeLeadingTrackNumber(int? rawLead, int? expectedTrackCount)
+private static int? NormalizeLeadingTrackNumber(int? rawLead, int? expectedTrackCount)
     {
         if (!rawLead.HasValue) return null;
         var n = rawLead.Value;
@@ -338,13 +346,24 @@ var orderedAnnotated = filtered
         return n;
     }
 
+    private static int? ExtractEmbeddedTrackNumber(string name)
+    {
+        // Look for patterns like " - 01 - " or "- 7 -" within the string
+        var m = Regex.Match(name, @"-\s*([0-9]{1,2})\s*-", RegexOptions.Compiled);
+        if (m.Success && int.TryParse(m.Groups[1].Value, out var n))
+        {
+            return n;
+        }
+        return null;
+    }
+
     private static int? TryExtractDiscNumber(List<string> segments, int startIndex)
     {
         for (int i = startIndex; i < segments.Count; i++)
         {
             var s = segments[i];
-            // Common patterns: "CD - 1", "CD1", "Disc 1", "Disk 1"
-            var m = Regex.Match(s, @"\b(?:cd|disc|disk)[\s_-]*([0-9]+)\b", RegexOptions.IgnoreCase);
+// Common patterns: "CD - 1", "CD1", "Disc 1", "Disk 1", "Digital Media 1"
+            var m = Regex.Match(s, @"\b(?:cd|disc|disk|digital\s*media)[\s_-]*([0-9]+)\b", RegexOptions.IgnoreCase);
             if (m.Success && int.TryParse(m.Groups[1].Value, out int d))
             {
                 return d;

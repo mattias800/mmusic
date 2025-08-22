@@ -331,10 +331,10 @@ public class ReleaseJsonBuilder(
 
                     if (discTracks.Count > 0)
                     {
-                        discs.Add(new JsonDisc
+discs.Add(new JsonDisc
                         {
                             DiscNumber = medium.Position > 0 ? medium.Position : discs.Count + 1,
-                            Title = string.IsNullOrWhiteSpace(medium.Title) ? null : medium.Title,
+                            Title = null,
                             Tracks = discTracks.OrderBy(x => x.TrackNumber).ToList(),
                         });
                     }
