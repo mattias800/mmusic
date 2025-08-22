@@ -114,6 +114,8 @@ builder
             minimumDiagnosticLevel: DiagnosticLevel.Debug
         )
     ))
+    // Expose the concrete as interface for services that depend on ISoulseekClient
+    .AddSingleton<ISoulseekClient>(sp => sp.GetRequiredService<SoulseekClient>())
     .AddSingleton<SoulSeekService>()
     .AddSingleton<SoulSeekUserDiscoveryService>()
     .AddSingleton<SoulSeekLibrarySharingService>()

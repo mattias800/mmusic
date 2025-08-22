@@ -63,6 +63,9 @@ public class SoulSeekService(
 
         try
         {
+            // Configure client for sharing (listener + resolvers) before connecting
+            await librarySharingService.ConfigureClientAsync();
+
             await client.ConnectAsync(
                 options.Value.Host,
                 options.Value.Port,

@@ -9,7 +9,7 @@ namespace MusicGQL.Features.Downloads.Services;
 /// Service for discovering additional releases from Soulseek users after successful downloads
 /// </summary>
 public class SoulSeekUserDiscoveryService(
-    ISoulseekClient client,
+    SoulseekClient client,
     ServerLibraryCache cache,
     DownloadQueueService downloadQueue,
     ILogger<SoulSeekUserDiscoveryService> logger
