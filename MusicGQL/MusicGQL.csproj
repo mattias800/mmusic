@@ -40,6 +40,8 @@
   <ItemGroup>
     <Folder Include="Features\Users\Handlers\" />
     <Folder Include="Features\YouTube\" />
+    <Folder Include="Logs\" />
+    <Folder Include="Logs\Downloads\" />
     <Folder Include="Migrations\" />
   </ItemGroup>
   <ItemGroup>

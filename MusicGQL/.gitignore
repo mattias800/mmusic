@@ -7,5 +7,6 @@ events.db
 events.db-shm
 events.db-wal
 Library/
+Logs/
 ExternalAssets/
 Migrations/

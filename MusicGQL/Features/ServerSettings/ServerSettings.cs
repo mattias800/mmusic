@@ -59,6 +59,10 @@ public record ServerSettings([property: GraphQLIgnore] DbServerSettings Model)
     public bool EnableQBittorrentDownloader() => Model.EnableQBittorrentDownloader;
     public bool EnableSoulSeekDownloader() => Model.EnableSoulSeekDownloader;
 
+    // Discography
+    public bool DiscographyEnabled() => Model.DiscographyEnabled;
+    public string? DiscographyStagingPath() => Model.DiscographyStagingPath;
+
     // Top Tracks Service Configuration
     public bool ListenBrainzTopTracksEnabled() => Model.ListenBrainzTopTracksEnabled;
 

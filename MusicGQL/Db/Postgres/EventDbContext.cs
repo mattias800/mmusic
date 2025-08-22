@@ -55,6 +55,7 @@ public class EventDbContext(DbContextOptions<EventDbContext> options) : DbContex
             .HasValue<SoulSeekConnectionUpdated>("SoulSeekConnectionUpdated")
             .HasValue<ProwlarrSettingsUpdated>("ProwlarrSettingsUpdated")
             .HasValue<QBittorrentSettingsUpdated>("QBittorrentSettingsUpdated")
+            .HasValue<DiscographySettingsUpdated>("DiscographySettingsUpdated")
             .HasValue<LogsFolderPathUpdated>("LogsFolderPathUpdated");
         modelBuilder.Entity<DbTrackPlayCount>(b =>
         {

@@ -167,6 +167,7 @@ builder
     .AddScoped<UpdateDownloadPathHandler>()
     .AddScoped<UpdateLogsFolderPathHandler>()
     .AddScoped<UpdateDownloadSlotCountHandler>()
+    .AddScoped<DiscographyImporter>()
     // Top Tracks Services
     .AddScoped<TopTracksServiceManager>()
     .AddScoped<TopTracksListenBrainzImporter>()
@@ -473,6 +474,9 @@ builder
     .AddTypeExtension<UpdateLogsFolderPathMutation>()
     .AddType<UpdateLogsFolderPathSuccess>()
     .AddType<UpdateLogsFolderPathError>()
+    .AddTypeExtension<UpdateDiscographySettingsMutation>()
+    .AddType<UpdateDiscographySettingsSuccess>()
+    .AddType<UpdateDiscographySettingsError>()
     .AddTypeExtension<UpdateSoulSeekSearchTimeLimitMutation>()
     .AddType<UpdateSoulSeekSearchTimeLimitSuccess>()
     .AddType<UpdateSoulSeekSearchTimeLimitError>()

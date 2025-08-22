@@ -60,6 +60,10 @@ public class DbServerSettings
     public bool EnableSabnzbdDownloader { get; set; } = true;
     public bool EnableQBittorrentDownloader { get; set; } = true;
     public bool EnableSoulSeekDownloader { get; set; } = true;
+
+    // Discography handling
+    public bool DiscographyEnabled { get; set; } = true;
+    public string? DiscographyStagingPath { get; set; } = string.Empty;
 }
 
 public static class DefaultDbServerSettingsProvider
@@ -100,6 +104,8 @@ public static class DefaultDbServerSettingsProvider
             EnableSabnzbdDownloader = true,
             EnableQBittorrentDownloader = true,
             EnableSoulSeekDownloader = true,
+            DiscographyEnabled = true,
+            DiscographyStagingPath = "",
         };
     }
 }

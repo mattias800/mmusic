@@ -15,6 +15,7 @@ import {
 import { AlertTriangle, Cog, Settings } from "lucide-react";
 import { PublicBaseUrlForm } from "@/features/settings/PublicBaseUrlForm.tsx";
 import { graphql } from "@/gql";
+import { LogsFolderPathForm } from "@/features/settings/LogsFolderPathForm.tsx";
 // Integrations components moved to Admin → Integrations
 
 export interface SettingsPageProps {}
@@ -24,6 +25,7 @@ const settingsPageQuery = graphql(`
     serverSettings {
       id
       ...LibraryPathForm_ServerSettings
+      ...LogsFolderPathForm_ServerSettings
       libraryPath
       downloadSlotCount
       listenBrainzTopTracksEnabled
@@ -94,6 +96,15 @@ export const SettingsPage: React.FC<SettingsPageProps> = () => {
           iconBgColor="bg-blue-500/20"
         >
           <LibraryPathForm serverSettings={data.serverSettings} />
+        </GlassCard>
+
+        {/* Logs Folder Path */}
+        <GlassCard
+          title="Logs Folder"
+          icon={Settings}
+          iconBgColor="bg-green-500/20"
+        >
+          <LogsFolderPathForm serverSettings={data.serverSettings} />
         </GlassCard>
 
         

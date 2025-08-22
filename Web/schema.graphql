@@ -1010,6 +1010,7 @@ type Mutation {
   updateDownloadSlotCount(input: UpdateDownloadSlotCountInput!): UpdateDownloadSlotCountResult!
   updateDownloaderSettings(input: UpdateDownloaderSettingsInput!): UpdateDownloaderSettingsResult!
   updateLibraryPath(input: UpdateLibraryPathInput!): UpdateLibraryPathResult!
+  updateLogsFolderPath(input: UpdateLogsFolderPathInput!): UpdateLogsFolderPathResult!
   updateProwlarrSettings(input: UpdateProwlarrSettingsInput!): UpdateProwlarrSettingsResult!
   updatePublicBaseUrl(input: UpdatePublicBaseUrlInput!): UpdatePublicBaseUrlResult!
   updateQBittorrentSettings(input: UpdateQBittorrentSettingsInput!): UpdateQBittorrentSettingsResult!
@@ -1319,6 +1320,7 @@ type ServerSettings {
   libraryPath: String!
   listenBrainzConfiguredSource: String!
   listenBrainzTopTracksEnabled: Boolean!
+  logsFolderPath: String
   prowlarrBaseUrl: String
   prowlarrEnableDetailedLogging: Boolean!
   prowlarrMaxConcurrentRequests: Int!
@@ -1762,6 +1764,20 @@ input UpdateLibraryPathInput {
 union UpdateLibraryPathResult = UpdateLibraryPathSuccess
 
 type UpdateLibraryPathSuccess {
+  serverSettings: ServerSettings!
+}
+
+type UpdateLogsFolderPathError {
+  message: String!
+}
+
+input UpdateLogsFolderPathInput {
+  newPath: String
+}
+
+union UpdateLogsFolderPathResult = UpdateLogsFolderPathError | UpdateLogsFolderPathSuccess
+
+type UpdateLogsFolderPathSuccess {
   serverSettings: ServerSettings!
 }
 
