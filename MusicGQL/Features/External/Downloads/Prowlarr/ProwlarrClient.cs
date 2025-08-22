@@ -959,21 +959,13 @@ public class ProwlarrClient(HttpClient httpClient, IOptions<ProwlarrOptions> opt
         {
             logger.LogDebug(ex, "Prowlarr alternative search failed");
         }
-        logger.LogWarning("Prowlarr search failed for all URL variants for query '{Query}'. " +
-            "This may indicate: 1) Prowlarr server is down/unreachable, 2) API key is invalid, 3) Server is overloaded, or 4) Network connectivity issues. " +
-            "Troubleshooting: Check if Prowlarr is running at {BaseUrl}, verify the API key, check server logs for errors, and ensure network connectivity. " +
-            "Current configuration: Timeout={Timeout}s, MaxRetries={MaxRetries}, TestConnectivityFirst={TestConnectivity}. " +
-            "Try increasing TimeoutSeconds or MaxRetries in configuration if the server is slow. " +
+        logger.LogInformation("Prowlarr returned no results for query '{Query}' across all URL variants. " +
+            "If you expected results, verify that audio indexers and category mappings are configured correctly, and consider loosening the search terms. " +
+            "Configuration: Timeout={Timeout}s, MaxRetries={MaxRetries}, TestConnectivityFirst={TestConnectivity}. " +
             "Configuration summary: {ConfigSummary}. " +
-            "Use GetDiagnosticInfoAsync() method for detailed diagnostics. " +
             "Health check result: {HealthStatus}. " +
             "HttpClient timeout: {HttpTimeout}s. " +
-            "Use DiagnoseConnectionIssueAsync() for comprehensive diagnostics. " +
-            "Use GetTroubleshootingRecommendations() for step-by-step fixes. " +
             "Configuration valid: {ConfigValid}. " +
-            "Use GetStatusSummaryAsync() for current status. " +
-            "Consider calling ResetConnection() if experiencing persistent connection issues. " +
-            "Use QuickHealthCheckAsync() for monitoring purposes. " +
             "Client info: {ClientInfo}", 
             query, options.Value.BaseUrl, options.Value.TimeoutSeconds, options.Value.MaxRetries, options.Value.TestConnectivityFirst, 
             GetConfigurationSummary(), await IsHealthyAsync(cancellationToken) ? "HEALTHY" : "UNHEALTHY", GetCurrentTimeout().TotalSeconds, IsConfigurationValid(), GetClientInfo());
