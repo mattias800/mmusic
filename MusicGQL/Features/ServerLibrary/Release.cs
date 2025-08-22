@@ -65,6 +65,25 @@ public record Release([property: GraphQLIgnore] CachedRelease Model)
 
     public ReleaseDownloadStatus DownloadStatus() => Model.DownloadStatus.ToGql();
 
+    public int DiscCount()
+    {
+        var discs = Model.JsonRelease.Discs;
+        return (discs is { Count: > 0 }) ? discs.Count : 1;
+    }
+
+    public IEnumerable<Disc> Discs()
+    {
+        var discs = Model.JsonRelease.Discs;
+        if (discs is { Count: > 0 })
+        {
+            return discs
+                .OrderBy(d => d.DiscNumber)
+                .Select(d => new Disc(this, d.DiscNumber, d.Title));
+        }
+        // Fallback single-disc view
+        return new[] { new Disc(this, 1, null) };
+    }
+
     public async Task<bool> IsFullyMissing(ServerLibraryCache cache)
     {
         var tracks = await cache.GetAllTracksForReleaseAsync(Model.ArtistId, Model.FolderName);
@@ -86,3 +105,21 @@ public record Release([property: GraphQLIgnore] CachedRelease Model)
 
     public string? MusicBrainzReleaseIdOverride() => Model.JsonRelease.Connections?.MusicBrainzReleaseIdOverride;
 };
+
+public record Disc(Release Release, int DiscNumber, string? Title)
+{
+    public int DiscNumber() => DiscNumber;
+    public string? Title() => Title;
+    public async Task<IEnumerable<Track>> Tracks(ServerLibrary.Cache.ServerLibraryCache cache)
+    {
+        // Use cached tracks for this release and filter by disc number
+        var tracks = await cache.GetAllTracksForReleaseAsync(
+            Release.Model.ArtistId,
+            Release.Model.FolderName
+        );
+        return tracks
+            .Where(t => (t.DiscNumber > 0 ? t.DiscNumber : 1) == DiscNumber)
+            .OrderBy(t => t.JsonTrack.TrackNumber)
+            .Select(t => new Track(t));
+    }
+}

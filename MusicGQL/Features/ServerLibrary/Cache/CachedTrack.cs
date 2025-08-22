@@ -7,6 +7,7 @@ public class CachedTrack
     public string Title { get; set; } = string.Empty;
     public string? SortTitle { get; set; }
     public int TrackNumber { get; set; }
+    public int DiscNumber { get; set; } = 1;
     public string? AudioFilePath { get; set; }
 
     public string ArtistId { get; set; } = string.Empty;

@@ -77,7 +77,8 @@ public class ServerLibraryCache(ServerLibraryJsonReader reader, ITopicEventSende
                     previousReleaseStatuses[$"{artistKey}|{releaseKey}"] = release.DownloadStatus;
                     foreach (var t in release.Tracks)
                     {
-                        var k = $"{artistKey}|{releaseKey}|{t.TrackNumber}";
+                        var disc = t.DiscNumber > 0 ? t.DiscNumber : 1;
+                        var k = $"{artistKey}|{releaseKey}|{disc}|{t.TrackNumber}";
                         previousStatuses[k] = t.CachedMediaAvailabilityStatus;
                     }
                 }
@@ -130,8 +131,65 @@ public class ServerLibraryCache(ServerLibraryJsonReader reader, ITopicEventSende
                         cachedRelease.DownloadStatus = prevRelStatus;
                     }
 
-                    // Process tracks if they exist
-                    if (releaseJson.Tracks != null)
+                    // Process tracks from discs if present, otherwise use top-level tracks
+                    if (releaseJson.Discs is { Count: > 0 })
+                    {
+                        foreach (var disc in releaseJson.Discs.OrderBy(d => d.DiscNumber))
+                        {
+                            var discNumber = disc.DiscNumber <= 0 ? 1 : disc.DiscNumber;
+                            if (disc.Tracks == null) continue;
+                            foreach (var trackJson in disc.Tracks)
+                            {
+                                var cachedTrack = new CachedTrack
+                                {
+                                    Title = trackJson.Title,
+                                    SortTitle = trackJson.SortTitle,
+                                    TrackNumber = trackJson.TrackNumber,
+                                    DiscNumber = discNumber,
+                                    AudioFilePath = trackJson.AudioFilePath,
+                                    ArtistId = artistJson.Id,
+                                    ArtistName = releaseJson.ArtistName, // Use the artist name from release.json (historical name)
+                                    ReleaseFolderName = folderName,
+                                    ReleaseTitle = releaseJson.Title,
+                                    JsonReleaseType = releaseJson.Type,
+                                    JsonTrack = trackJson,
+                                };
+
+                                // Preserve previous media availability status if present; otherwise infer from disk
+                                var statusKey =
+                                    $"{artistJson.Id.ToLowerInvariant()}|{folderName.ToLowerInvariant()}|{cachedTrack.DiscNumber}|{cachedTrack.TrackNumber}";
+                                if (previousStatuses.TryGetValue(statusKey, out var prevStatus))
+                                {
+                                    cachedTrack.CachedMediaAvailabilityStatus = prevStatus;
+                                }
+                                else
+                                {
+                                    try
+                                    {
+                                        var audioRef = trackJson.AudioFilePath;
+                                        if (!string.IsNullOrWhiteSpace(audioRef))
+                                        {
+                                            string resolved = audioRef!;
+                                            if (!Path.IsPathRooted(resolved))
+                                            {
+                                                if (resolved.StartsWith("./"))
+                                                    resolved = resolved.Substring(2);
+                                                resolved = Path.Combine(releasePath, resolved);
+                                            }
+                                            cachedTrack.CachedMediaAvailabilityStatus = File.Exists(resolved)
+                                                ? CachedMediaAvailabilityStatus.Available
+                                                : CachedMediaAvailabilityStatus.Missing;
+                                        }
+                                    }
+                                    catch { }
+                                }
+
+                                cachedRelease.Tracks.Add(cachedTrack);
+                                newAllTracks.Add(cachedTrack);
+                            }
+                        }
+                    }
+                    else if (releaseJson.Tracks != null)
                     {
                         foreach (var trackJson in releaseJson.Tracks)
                         {
@@ -140,6 +198,7 @@ public class ServerLibraryCache(ServerLibraryJsonReader reader, ITopicEventSende
                                 Title = trackJson.Title,
                                 SortTitle = trackJson.SortTitle,
                                 TrackNumber = trackJson.TrackNumber,
+                                DiscNumber = trackJson.DiscNumber ?? 1,
                                 AudioFilePath = trackJson.AudioFilePath,
                                 ArtistId = artistJson.Id,
                                 ArtistName = releaseJson.ArtistName, // Use the artist name from release.json (historical name)
@@ -149,9 +208,8 @@ public class ServerLibraryCache(ServerLibraryJsonReader reader, ITopicEventSende
                                 JsonTrack = trackJson,
                             };
 
-                            // Preserve previous media availability status if present; otherwise infer from disk
                             var statusKey =
-                                $"{artistJson.Id.ToLowerInvariant()}|{folderName.ToLowerInvariant()}|{cachedTrack.TrackNumber}";
+                                $"{artistJson.Id.ToLowerInvariant()}|{folderName.ToLowerInvariant()}|{cachedTrack.DiscNumber}|{cachedTrack.TrackNumber}";
                             if (previousStatuses.TryGetValue(statusKey, out var prevStatus))
                             {
                                 cachedTrack.CachedMediaAvailabilityStatus = prevStatus;
@@ -166,25 +224,16 @@ public class ServerLibraryCache(ServerLibraryJsonReader reader, ITopicEventSende
                                         string resolved = audioRef!;
                                         if (!Path.IsPathRooted(resolved))
                                         {
-                                            // Treat leading "./" as relative to release folder
                                             if (resolved.StartsWith("./"))
                                                 resolved = resolved.Substring(2);
                                             resolved = Path.Combine(releasePath, resolved);
                                         }
-                                        if (File.Exists(resolved))
-                                        {
-                                            cachedTrack.CachedMediaAvailabilityStatus = CachedMediaAvailabilityStatus.Available;
-                                        }
-                                        else
-                                        {
-                                            cachedTrack.CachedMediaAvailabilityStatus = CachedMediaAvailabilityStatus.Missing;
-                                        }
+                                        cachedTrack.CachedMediaAvailabilityStatus = File.Exists(resolved)
+                                            ? CachedMediaAvailabilityStatus.Available
+                                            : CachedMediaAvailabilityStatus.Missing;
                                     }
                                 }
-                                catch
-                                {
-                                    // Leave as Unknown on any inference error
-                                }
+                                catch { }
                             }
 
                             cachedRelease.Tracks.Add(cachedTrack);
@@ -341,7 +390,8 @@ public class ServerLibraryCache(ServerLibraryJsonReader reader, ITopicEventSende
 
             foreach (var t in oldRelease.Tracks)
             {
-                previousStatusesByTrackNumber[t.TrackNumber] = t.CachedMediaAvailabilityStatus;
+                var disc = t.DiscNumber > 0 ? t.DiscNumber : 1;
+                previousStatusesByTrackNumber[(disc * 1000) + t.TrackNumber] = t.CachedMediaAvailabilityStatus;
             }
         }
 
@@ -372,7 +422,40 @@ public class ServerLibraryCache(ServerLibraryJsonReader reader, ITopicEventSende
             DownloadStatus = oldRelease.DownloadStatus,
         };
 
-        if (releaseJson.Tracks != null)
+        if (releaseJson.Discs is { Count: > 0 })
+        {
+            foreach (var disc in releaseJson.Discs.OrderBy(d => d.DiscNumber))
+            {
+                var dnum = disc.DiscNumber <= 0 ? 1 : disc.DiscNumber;
+                if (disc.Tracks == null) continue;
+                foreach (var jt in disc.Tracks)
+                {
+                    var ct = new CachedTrack
+                    {
+                        Title = jt.Title,
+                        SortTitle = jt.SortTitle,
+                        TrackNumber = jt.TrackNumber,
+                        DiscNumber = dnum,
+                        AudioFilePath = jt.AudioFilePath,
+                        ArtistId = artist.Id,
+                        ArtistName = artist.Name,
+                        ReleaseFolderName = releaseFolderName,
+                        ReleaseTitle = newRelease.Title,
+                        JsonReleaseType = releaseJson.Type,
+                        JsonTrack = jt,
+                    };
+
+                    var key = (dnum * 1000) + ct.TrackNumber;
+                    if (previousStatusesByTrackNumber.TryGetValue(key, out var prev))
+                    {
+                        ct.CachedMediaAvailabilityStatus = prev;
+                    }
+
+                    newRelease.Tracks.Add(ct);
+                }
+            }
+        }
+        else if (releaseJson.Tracks != null)
         {
             foreach (var jt in releaseJson.Tracks)
             {
@@ -381,6 +464,7 @@ public class ServerLibraryCache(ServerLibraryJsonReader reader, ITopicEventSende
                     Title = jt.Title,
                     SortTitle = jt.SortTitle,
                     TrackNumber = jt.TrackNumber,
+                    DiscNumber = jt.DiscNumber ?? 1,
                     AudioFilePath = jt.AudioFilePath,
                     ArtistId = artist.Id,
                     ArtistName = artist.Name,
@@ -390,7 +474,8 @@ public class ServerLibraryCache(ServerLibraryJsonReader reader, ITopicEventSende
                     JsonTrack = jt,
                 };
 
-                if (previousStatusesByTrackNumber.TryGetValue(ct.TrackNumber, out var prev))
+                var key = (ct.DiscNumber * 1000) + ct.TrackNumber;
+                if (previousStatusesByTrackNumber.TryGetValue(key, out var prev))
                 {
                     ct.CachedMediaAvailabilityStatus = prev;
                 }

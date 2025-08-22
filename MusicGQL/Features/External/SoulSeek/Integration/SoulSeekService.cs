@@ -117,6 +117,7 @@ public class SoulSeekService(
         PublishUpdate();
         logger.LogInformation("Connected to Soulseek");
         try { serviceLogger?.Info("Connected to Soulseek"); } catch { }
+        try { serviceLogger?.Info("Ready: Soulseek network is Online — downloads/searches may proceed"); } catch { }
 
         // Start sharing the library after connection
         try
@@ -137,6 +138,7 @@ public class SoulSeekService(
             await librarySharingService.PublishSharedCountsAsync();
             await librarySharingService.CheckReachabilityAsync();
             try { serviceLogger?.Info("Published share counts post-login and ran reachability check"); } catch { }
+            try { serviceLogger?.Info("Ready: Logged in to Soulseek — downloads/searches may proceed"); } catch { }
         }
         catch (Exception ex)
         {

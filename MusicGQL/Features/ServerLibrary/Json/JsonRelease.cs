@@ -8,6 +8,7 @@ public class JsonRelease
     public string? ArtistId { get; set; }
     public JsonReleaseType Type { get; set; }
     public List<JsonTrack>? Tracks { get; set; }
+    public List<JsonDisc>? Discs { get; set; }
     public string? FirstReleaseDate { get; set; }
     public string? FirstReleaseYear { get; set; }
     public string? CoverArt { get; set; }
@@ -44,6 +45,7 @@ public class JsonTrack
     public string Title { get; set; }
     public string? SortTitle { get; set; }
     public int TrackNumber { get; set; }
+    public int? DiscNumber { get; set; }
     public int? TrackLength { get; set; }
     public string? AudioFilePath { get; set; }
     public long? PlayCount { get; set; }
@@ -70,4 +72,11 @@ public class JsonTrackStatistics
 {
     public long Listeners { get; set; }
     public long PlayCount { get; set; }
+}
+
+public class JsonDisc
+{
+    public int DiscNumber { get; set; }
+    public string? Title { get; set; }
+    public List<JsonTrack> Tracks { get; set; } = new();
 }

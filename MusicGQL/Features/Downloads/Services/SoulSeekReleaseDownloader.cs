@@ -73,7 +73,7 @@ public class SoulSeekReleaseDownloader(
             while (service.State.NetworkState != SoulSeekNetworkState.Online &&
                    (DateTime.UtcNow - start).TotalSeconds < connectWaitSeconds)
             {
-                try { await Task.Delay(250, cancellationToken); } catch { break; }
+                await Task.Delay(250); // bounded wait, independent of provider cancellation
             }
             if (service.State.NetworkState != SoulSeekNetworkState.Online)
             {
