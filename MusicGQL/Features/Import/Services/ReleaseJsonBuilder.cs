@@ -329,11 +329,13 @@ public class ReleaseJsonBuilder(
                         }
                     }
 
-                    if (discTracks.Count > 0)
+if (discTracks.Count > 0)
                     {
-discs.Add(new JsonDisc
+                        var discNumToAdd = medium.Position > 0 ? medium.Position : discs.Count + 1;
+                        logger.LogInformation("[ReleaseBuilder]   • Built disc {DiscNumber} with {TrackCount} tracks", discNumToAdd, discTracks.Count);
+                        discs.Add(new JsonDisc
                         {
-                            DiscNumber = medium.Position > 0 ? medium.Position : discs.Count + 1,
+                            DiscNumber = discNumToAdd,
                             Title = null,
                             Tracks = discTracks.OrderBy(x => x.TrackNumber).ToList(),
                         });
@@ -398,22 +400,108 @@ discs.Add(new JsonDisc
             var lastfmDuration = DateTime.UtcNow - lastfmStart;
             logger.LogInformation("[ReleaseBuilder] ⏱️ Last.fm enrichment completed in {DurationMs}ms", lastfmDuration.TotalMilliseconds);
 
-            // 11. Map audio file paths
+// 11. Map audio file paths
             logger.LogInformation("[ReleaseBuilder] 🎵 Step 11: Mapping audio file paths to tracks");
-            if (tracks != null && tracks.Count > 0 && audioFiles.Count > 0)
+            if (audioFiles.Count > 0)
             {
-                var fileNames = audioFiles.Select(Path.GetFileName).ToList();
-                var mappedTracks = 0;
-                foreach (var track in tracks)
+                var fileNames = audioFiles.Select(Path.GetFileName).Where(n => !string.IsNullOrWhiteSpace(n)).ToList();
+
+                // Extract disc/track numbers from filenames, supporting "Digital Media" and embedded "- NN -" patterns
+                static (int disc, int track) ExtractDiscTrack(string? name)
                 {
-                    var index = track.TrackNumber - 1;
-                    if (index >= 0 && index < fileNames.Count)
+                    int disc = 1;
+                    int track = -1;
+                    try
                     {
-                        track.AudioFilePath = "./" + fileNames[index];
-                        mappedTracks++;
+                        if (!string.IsNullOrWhiteSpace(name))
+                        {
+                            var lower = name!.ToLowerInvariant();
+                            var m = System.Text.RegularExpressions.Regex.Match(
+                                lower,
+                                "\\b(?:cd|disc|disk|digital\\s*media)\\s*(\\d+)\\b",
+                                System.Text.RegularExpressions.RegexOptions.IgnoreCase
+                            );
+                            if (m.Success && int.TryParse(m.Groups[1].Value, out var d)) disc = d;
+
+                            // Try embedded "- NN -"
+                            var m2 = System.Text.RegularExpressions.Regex.Match(
+                                name,
+                                "-\\s*(\\d{1,3})\\s*-",
+                                System.Text.RegularExpressions.RegexOptions.IgnoreCase
+                            );
+                            if (m2.Success && int.TryParse(m2.Groups[1].Value, out var t2)) track = t2;
+
+                            if (track < 0)
+                            {
+                                // Fallback to first leading number
+                                var span = name.AsSpan();
+                                int pos = 0;
+                                while (pos < span.Length && !char.IsDigit(span[pos])) pos++;
+                                int start = pos;
+                                while (pos < span.Length && char.IsDigit(span[pos])) pos++;
+                                if (pos > start && int.TryParse(span.Slice(start, pos - start), out var n))
+                                {
+                                    // Normalize 3-4 digit encodings (e.g., 1103) to last two digits when plausible
+                                    track = n > 99 ? (n % 100 == 0 ? n : n % 100) : n;
+                                }
+                            }
+                        }
+                    }
+                    catch { }
+                    return (disc, track);
+                }
+
+                var byDiscTrack = new Dictionary<int, Dictionary<int, string>>();
+                foreach (var f in fileNames)
+                {
+                    var (disc, track) = ExtractDiscTrack(f);
+                    if (track <= 0) continue;
+                    if (!byDiscTrack.TryGetValue(disc, out var inner))
+                    {
+                        inner = new Dictionary<int, string>();
+                        byDiscTrack[disc] = inner;
+                    }
+                    if (!inner.ContainsKey(track)) inner[track] = f!;
+                }
+
+                var mapped = 0;
+
+                // Update discs when present
+                if (discs.Count > 0)
+                {
+                    foreach (var d in discs)
+                    {
+                        var dnum = d.DiscNumber > 0 ? d.DiscNumber : 1;
+                        if (d.Tracks == null) continue;
+                        if (byDiscTrack.TryGetValue(dnum, out var inner))
+                        {
+                            foreach (var t in d.Tracks)
+                            {
+                                if (t.TrackNumber > 0 && inner.TryGetValue(t.TrackNumber, out var fname))
+                                {
+                                    t.AudioFilePath = "./" + fname;
+                                    mapped++;
+                                }
+                            }
+                        }
                     }
                 }
-                logger.LogInformation("[ReleaseBuilder] ✅ Mapped audio files to {MappedCount}/{TotalTracks} tracks", mappedTracks, tracks.Count);
+
+                // Also update flattened tracks when present
+                if (tracks != null && tracks.Count > 0)
+                {
+                    foreach (var t in tracks)
+                    {
+                        var dnum = t.DiscNumber ?? 1;
+                        if (byDiscTrack.TryGetValue(dnum, out var inner) && inner.TryGetValue(t.TrackNumber, out var fname))
+                        {
+                            t.AudioFilePath = "./" + fname;
+                            mapped++;
+                        }
+                    }
+                }
+
+                logger.LogInformation("[ReleaseBuilder] ✅ Mapped {MappedCount} audio files to tracks using disc/track extraction", mapped);
             }
             else
             {
