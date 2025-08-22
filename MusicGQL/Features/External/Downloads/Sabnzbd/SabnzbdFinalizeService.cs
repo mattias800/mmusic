@@ -362,8 +362,9 @@ public class SabnzbdFinalizeService(
                     var byDiscTrack = new Dictionary<int, HashSet<int>>();
 foreach (var f in audioFiles)
                     {
-                        var (disc, track) = ExtractDiscTrackFromName(f);
+                        var (disc, track) = MusicGQL.Features.Downloads.Util.FileNameParsing.ExtractDiscTrackFromName(f);
                         if (track <= 0) continue;
+                       if (track <= 0) continue;
                         if (!byDiscTrack.TryGetValue(disc, out var set))
                         {
                             set = new HashSet<int>();
