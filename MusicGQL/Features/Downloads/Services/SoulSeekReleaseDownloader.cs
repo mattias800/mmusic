@@ -343,12 +343,13 @@ public class SoulSeekReleaseDownloader(
         {
             logger.LogDebug("[SoulSeek] Starting download attempt with candidate user: {User}", candidate.Username);
             bool userFailed = false;
-            var queue = DownloadQueueFactory.Create(
+var queue = DownloadQueueFactory.Create(
                 candidate,
                 artistName,
                 releaseTitle,
                 expectedTrackCount,
-                cachedRelease?.Tracks?.Where(t => !string.IsNullOrWhiteSpace(t.Title)).Select(t => t.Title!)
+                cachedRelease?.Tracks?.Where(t => !string.IsNullOrWhiteSpace(t.Title)).Select(t => t.Title!),
+                relLogger
             );
             int trackIndex = 0;
 
@@ -541,7 +542,7 @@ public class SoulSeekReleaseDownloader(
                         });
                         try
                         {
-                            var sizeBytes = new FileInfo(localPath).Length;
+var sizeBytes = new System.IO.FileInfo(localPath).Length;
                             var avgKbps = sizeBytes > 0 ? (sizeBytes / 1024.0) / Math.Max(0.001, sw.Elapsed.TotalSeconds) : 0;
                             logger.LogInformation(
                                 "[SoulSeek] Finished track {Track}/{Total} in {Seconds:n1}s at avg ~{AvgKbps:n0} KB/s",

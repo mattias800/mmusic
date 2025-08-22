@@ -14,19 +14,23 @@ public static class DownloadQueueFactory
         string artistName,
         string releaseTitle,
         int? expectedTrackCount = null,
-        IEnumerable<string>? expectedTrackTitles = null
+        IEnumerable<string>? expectedTrackTitles = null,
+        MusicGQL.Features.Downloads.Services.IDownloadLogger? logger = null
     )
     {
+        logger ??= new MusicGQL.Features.Downloads.Services.NullDownloadLogger();
+        logger.Info($"[QueueFactory] Begin create for {artistName} - {releaseTitle} (expectedCount={(expectedTrackCount?.ToString() ?? "null")}) from user={searchResponse.Username}");
         var nArtist = NormalizeForCompare(artistName);
         var nTitle = NormalizeForCompare(releaseTitle);
 
-        var annotated = searchResponse.Files
+var annotated = searchResponse.Files
             .Where(file => file.Extension.Equals("mp3", StringComparison.OrdinalIgnoreCase) && file.BitRate == 320)
             .Select(file => AnnotateFile(file.Filename))
             .ToList();
-
+        try { logger.Info($"[QueueFactory] Annotated candidate files={annotated.Count}"); } catch { }
         if (annotated.Count == 0)
         {
+            try { logger.Warn("[QueueFactory] No MP3 320 files in response"); } catch { }
             return new Queue<DownloadQueueItem>();
         }
 
@@ -35,8 +39,9 @@ public static class DownloadQueueFactory
         {
             var normSegs = a.NormalizedSegments;
             int idxArtist = normSegs.FindIndex(s => s.Equals(nArtist, StringComparison.OrdinalIgnoreCase));
-            if (idxArtist < 0)
+if (idxArtist < 0)
             {
+                try { logger.Info($"[QueueFactory] Reject path (no artist segment match): {a.NormalizedPath}"); } catch { }
                 continue;
             }
 
@@ -50,8 +55,9 @@ public static class DownloadQueueFactory
                     break;
                 }
             }
-            if (idxAlbum < 0)
+if (idxAlbum < 0)
             {
+                try { logger.Info($"[QueueFactory] Reject path (no title segment match after artist): {a.NormalizedPath}"); } catch { }
                 continue;
             }
 
@@ -67,11 +73,20 @@ public static class DownloadQueueFactory
         }
 
         // Prefer single-disc (disc null or 1), then digital-friendly folder names implicitly via count
-        var primary = groups
+var primary = groups
             .OrderByDescending(g => !g.Key.disc.HasValue || g.Key.disc.Value == 1)
             .ThenByDescending(g => g.Value.Count)
             .ThenBy(g => g.Key.disc ?? 0)
             .FirstOrDefault();
+
+        try
+        {
+            foreach (var kv in groups.OrderByDescending(g => g.Value.Count).Take(5))
+            {
+                logger.Info($"[QueueFactory] Group albumKey='{kv.Key.albumKey}' disc={(kv.Key.disc?.ToString() ?? "null")} count={kv.Value.Count}");
+            }
+        }
+        catch { }
 
         List<AnnotatedFile> inPrimary = primary.Value ?? new List<AnnotatedFile>();
         if (inPrimary.Count == 0)
@@ -102,9 +117,24 @@ public static class DownloadQueueFactory
             "bonus", "live", "re-recorded", "rerecorded", "re recorded", "demo", "karaoke", "instrumental", "remix"
         ];
 
-        var filtered = (expectedTitlesList.Count > 0)
+var filtered = (expectedTitlesList.Count > 0)
             ? inPrimary.Where(a => titleIsExpected(a)).ToList()
             : inPrimary.Where(a => !PathContainsHints(a, exclusionHints)).ToList();
+        try
+        {
+            logger.Info($"[QueueFactory] Filtered inPrimary: before={inPrimary.Count} after={filtered.Count} mode={(expectedTitlesList.Count>0?"expected-titles":"hint-exclusion")}");
+            if (filtered.Count == 0 && inPrimary.Count > 0)
+            {
+                foreach (var a in inPrimary.Take(10))
+                {
+                    var baseNoQualifiers = StripQualifiers(a.BaseNameWithoutExt);
+                    bool exp = expectedTitlesList.Count>0 && expectedTitlesList.Any(t => AreTitlesEquivalent(baseNoQualifiers, t));
+                    bool hinted = PathContainsHints(a, exclusionHints);
+                    logger.Info($"[QueueFactory] Rejected: file='{a.JustFile}' expectedMatch={exp} hinted={hinted}");
+                }
+            }
+        }
+        catch { }
 
         // If strict expected-title matching yields too few tracks, relax to hint-based filter
         int fallbackMin = expectedTrackCount.HasValue && expectedTrackCount.Value > 0
@@ -120,12 +150,13 @@ public static class DownloadQueueFactory
         }
 
         // If still nothing, fall back to all annotated files for this candidate (last resort)
-        if (filtered.Count == 0)
+if (filtered.Count == 0)
         {
+            try { logger.Warn("[QueueFactory] Filter produced zero items; falling back to inPrimary/annotated"); } catch { }
             filtered = inPrimary.Count > 0 ? inPrimary : annotated;
         }
 
-        var orderedAnnotated = filtered
+var orderedAnnotated = filtered
             .Select(a =>
             {
                 var rawLead = ExtractLeadingTrackNumber(a.BaseNameWithoutExt);
@@ -135,6 +166,14 @@ public static class DownloadQueueFactory
             .OrderBy(x => x.lead ?? int.MaxValue)
             .ThenBy(x => x.a.JustFile, StringComparer.OrdinalIgnoreCase)
             .ToList();
+        try
+        {
+            foreach (var x in orderedAnnotated.Take(20))
+            {
+                logger.Info($"[QueueFactory] Order: file='{x.a.JustFile}' rawLead={(x.rawLead?.ToString() ?? "null")} lead={(x.lead?.ToString() ?? "null")}");
+            }
+        }
+        catch { }
 
         var ordered = orderedAnnotated.Select(x => x.a).ToList();
 

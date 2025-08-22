@@ -3,6 +3,7 @@ using MusicGQL.Db.Postgres;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using MusicGQL.Types;
+using MusicGQL.Features.Downloads.Services;
 
 namespace MusicGQL.Features.ServerSettings.Mutations;
 
@@ -23,7 +24,9 @@ public class UpdateDownloaderSettingsMutation
     public async Task<UpdateDownloaderSettingsResult> UpdateDownloaderSettings(
         UpdateDownloaderSettingsInput input,
         [Service] EventDbContext dbContext,
-        ClaimsPrincipal claims)
+        ClaimsPrincipal claims,
+        [Service] DownloadLogPathProvider logPathProvider
+    )
     {
         try
         {
@@ -42,11 +45,44 @@ public class UpdateDownloaderSettingsMutation
                 return new UpdateDownloaderSettingsError("Server settings not found");
             }
 
+            bool prevSab = settings.EnableSabnzbdDownloader;
+            bool prevQb = settings.EnableQBittorrentDownloader;
+            bool prevSlsk = settings.EnableSoulSeekDownloader;
+
             settings.EnableSabnzbdDownloader = input.EnableSabnzbdDownloader;
             settings.EnableQBittorrentDownloader = input.EnableQBittorrentDownloader;
             settings.EnableSoulSeekDownloader = input.EnableSoulSeekDownloader;
 
             await dbContext.SaveChangesAsync();
+
+            // Log changes to per-service logs
+            try
+            {
+                if (prevSab != settings.EnableSabnzbdDownloader)
+                {
+                    var path = await logPathProvider.GetServiceLogFilePathAsync("sabnzbd");
+                    if (!string.IsNullOrWhiteSpace(path)) using (var l = new DownloadLogger(path!)) l.Info($"Toggle changed: enabled={settings.EnableSabnzbdDownloader} by user={userId}");
+                }
+            }
+            catch { }
+            try
+            {
+                if (prevQb != settings.EnableQBittorrentDownloader)
+                {
+                    var path = await logPathProvider.GetServiceLogFilePathAsync("qbittorrent");
+                    if (!string.IsNullOrWhiteSpace(path)) using (var l = new DownloadLogger(path!)) l.Info($"Toggle changed: enabled={settings.EnableQBittorrentDownloader} by user={userId}");
+                }
+            }
+            catch { }
+            try
+            {
+                if (prevSlsk != settings.EnableSoulSeekDownloader)
+                {
+                    var path = await logPathProvider.GetServiceLogFilePathAsync("soulseek");
+                    if (!string.IsNullOrWhiteSpace(path)) using (var l = new DownloadLogger(path!)) l.Info($"Toggle changed: enabled={settings.EnableSoulSeekDownloader} by user={userId}");
+                }
+            }
+            catch { }
 
             return new UpdateDownloaderSettingsSuccess(new(settings));
         }
@@ -56,5 +92,4 @@ public class UpdateDownloaderSettingsMutation
         }
     }
 }
-
 
