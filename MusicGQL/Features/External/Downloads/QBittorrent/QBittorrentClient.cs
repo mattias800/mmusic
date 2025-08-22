@@ -155,8 +155,15 @@ public class QBittorrentClient(HttpClient httpClient, IOptions<QBittorrentOption
         var url = baseUrl + "/api/v2/app/webapiVersion";
         try
         {
+            // Ensure we have a session cookie; newer qBittorrent setups may require auth even for this endpoint
+            var loggedIn = await EnsureLoginAsync(cancellationToken);
+            if (!loggedIn)
+            {
+                try { serviceLogger?.Warn("Login failed before connectivity test"); } catch { }
+            }
             try { serviceLogger?.Info($"Test connectivity: GET {url}"); } catch { }
             using var req = new HttpRequestMessage(HttpMethod.Get, url);
+            if (!string.IsNullOrWhiteSpace(cookie)) req.Headers.Add("Cookie", cookie);
             var resp = await httpClient.SendAsync(req, cancellationToken);
             var msg = $"HTTP {(int)resp.StatusCode}";
             try { serviceLogger?.Info($"Result: {msg}"); } catch { }

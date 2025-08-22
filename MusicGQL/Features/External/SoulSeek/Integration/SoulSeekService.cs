@@ -2,6 +2,7 @@ using HotChocolate.Subscriptions;
 using Microsoft.Extensions.Options;
 using MusicGQL.Features.ServerSettings;
 using Soulseek;
+using MusicGQL.Features.Downloads.Services;
 
 namespace MusicGQL.Features.External.SoulSeek.Integration;
 
@@ -15,11 +16,32 @@ public class SoulSeekService(
 )
 {
     public SoulSeekState State { get; set; } = new(SoulSeekNetworkState.Offline);
+    private DownloadLogger? serviceLogger;
+    private readonly object _connectSync = new();
+    private bool _eventsHooked = false;
+    private bool _isConnecting = false;
 
     public async Task Connect()
     {
-        client.Connected += OnConnected;
-        client.Disconnected += OnDisconnected;
+        // Prevent duplicate event subscriptions and concurrent connects
+        lock (_connectSync)
+        {
+            if (!_eventsHooked)
+            {
+                client.Connected += OnConnected;
+                client.Disconnected += OnDisconnected;
+                _eventsHooked = true;
+            }
+
+            if (_isConnecting || State.NetworkState == SoulSeekNetworkState.Connecting || State.NetworkState == SoulSeekNetworkState.Online)
+            {
+                logger.LogDebug("[SoulSeek] Connect() ignored (state: {State}, isConnecting={IsConnecting})", State.NetworkState, _isConnecting);
+                try { serviceLogger?.Info($"Connect ignored (state={State.NetworkState}, isConnecting={_isConnecting})"); } catch { }
+                return;
+            }
+
+            _isConnecting = true;
+        }
 
         await Task.Delay(1000);
 
@@ -27,6 +49,17 @@ public class SoulSeekService(
 
         PublishUpdate();
         logger.LogInformation("Connecting to Soulseek...");
+        try
+        {
+            if (serviceLogger == null)
+            {
+                var path = await new DownloadLogPathProvider(serverSettingsAccessor).GetServiceLogFilePathAsync("soulseek");
+                if (!string.IsNullOrWhiteSpace(path)) serviceLogger = new DownloadLogger(path!);
+            }
+            serviceLogger?.Info("Connecting to Soulseek...");
+            serviceLogger?.Info($"Host={options.Value.Host}:{options.Value.Port} Username={options.Value.Username}");
+        }
+        catch { }
 
         try
         {
@@ -36,6 +69,7 @@ public class SoulSeekService(
                 options.Value.Username,
                 options.Value.Password
             );
+            try { serviceLogger?.Info("Connected successfully"); } catch { }
 
             // Initialize library sharing after successful connection
             await librarySharingService.InitializeAsync();
@@ -48,8 +82,16 @@ public class SoulSeekService(
                 options.Value.Host,
                 options.Value.Port
             );
+            try { serviceLogger?.Error($"Connect failed: {ex.Message}"); } catch { }
             State = new(SoulSeekNetworkState.Offline);
             PublishUpdate();
+        }
+        finally
+        {
+            lock (_connectSync)
+            {
+                _isConnecting = false;
+            }
         }
     }
 
@@ -62,6 +104,7 @@ public class SoulSeekService(
             e.Message,
             e.Exception?.Message
         );
+        try { serviceLogger?.Warn($"Disconnected: {e.Message} Exception={e.Exception?.Message}"); } catch { }
     }
 
     private async void OnConnected(object? sender, EventArgs eventArgs)
@@ -69,6 +112,7 @@ public class SoulSeekService(
         State = new(SoulSeekNetworkState.Online);
         PublishUpdate();
         logger.LogInformation("Connected to Soulseek");
+        try { serviceLogger?.Info("Connected to Soulseek"); } catch { }
 
         // Start sharing the library after connection
         try
