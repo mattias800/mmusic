@@ -56,7 +56,7 @@ public class DeleteReleaseAudioMutation
             errors.Add(ex.Message);
         }
 
-        // Clear AudioFilePath from release.json
+        // Clear AudioFilePath from release.json (support discs[] and tracks[])
         try
         {
             await writer.UpdateReleaseAsync(
@@ -64,11 +64,23 @@ public class DeleteReleaseAudioMutation
                 input.ReleaseFolderName,
                 r =>
                 {
-                    if (r.Tracks == null)
-                        return;
-                    foreach (var jt in r.Tracks)
+                    if (r.Discs is { Count: > 0 })
                     {
-                        jt.AudioFilePath = null;
+                        foreach (var d in r.Discs)
+                        {
+                            if (d.Tracks == null) continue;
+                            foreach (var jt in d.Tracks)
+                            {
+                                jt.AudioFilePath = null;
+                            }
+                        }
+                    }
+                    if (r.Tracks != null)
+                    {
+                        foreach (var jt in r.Tracks)
+                        {
+                            jt.AudioFilePath = null;
+                        }
                     }
                 }
             );
@@ -81,16 +93,21 @@ public class DeleteReleaseAudioMutation
         // Update cache for this release
         await cache.UpdateReleaseFromJsonAsync(input.ArtistId, input.ReleaseFolderName);
 
-        // Mark each track as Missing in cache (and notify subscribers)
-        if (release.JsonRelease.Tracks != null)
+        // Mark each track as Missing in cache (and notify subscribers) — disc-aware
+        var updatedRelease = await cache.GetReleaseByArtistAndFolderAsync(
+            input.ArtistId,
+            input.ReleaseFolderName
+        );
+        if (updatedRelease?.Tracks != null)
         {
-            foreach (var t in release.JsonRelease.Tracks)
+            foreach (var t in updatedRelease.Tracks)
             {
                 try
                 {
                     await cache.UpdateMediaAvailabilityStatus(
                         input.ArtistId,
                         input.ReleaseFolderName,
+                        t.DiscNumber,
                         t.TrackNumber,
                         CachedMediaAvailabilityStatus.Missing
                     );

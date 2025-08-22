@@ -491,18 +491,83 @@ public class StartDownloadReleaseService(
 
                 // Now publish availability status updates to reflect current runtime state
                 var relAfterCount = audioFiles.Count; // used for bounds below
-                await Task.WhenAll(
-                    Enumerable
-                        .Range(0, relAfterCount)
-                        .Select(i =>
-                            cache.UpdateMediaAvailabilityStatus(
+                // Disc-aware availability updates: use the same mapping used above
+                try
+                {
+                    static (int disc, int track) ExtractDiscTrackFromName(string? name)
+                    {
+                        int disc = 1;
+                        int track = -1;
+                        try
+                        {
+                            if (!string.IsNullOrWhiteSpace(name))
+                            {
+                                var lower = name!.ToLowerInvariant();
+                                var m = System.Text.RegularExpressions.Regex.Match(lower, @"\b(?:cd|disc|disk|digital\s*media)\s*(\d+)\b", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                                if (m.Success && int.TryParse(m.Groups[1].Value, out var d)) disc = d;
+                                var m2 = System.Text.RegularExpressions.Regex.Match(name, @"-\s*(\d{1,3})\s*-", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                                if (m2.Success && int.TryParse(m2.Groups[1].Value, out var t2)) track = t2;
+                                if (track < 0)
+                                {
+                                    var span = name.AsSpan();
+                                    int pos = 0;
+                                    while (pos < span.Length && !char.IsDigit(span[pos])) pos++;
+                                    int start = pos;
+                                    while (pos < span.Length && char.IsDigit(span[pos])) pos++;
+                                    if (pos > start && int.TryParse(span.Slice(start, pos - start), out var n))
+                                    {
+                                        track = n > 99 ? (n % 100 == 0 ? n : n % 100) : n;
+                                    }
+                                }
+                            }
+                        }
+                        catch { }
+                        return (disc, track);
+                    }
+
+                    var byDiscTrack = new Dictionary<int, HashSet<int>>();
+                    foreach (var f in audioFiles)
+                    {
+                        var (disc, track) = ExtractDiscTrackFromName(f);
+                        if (track <= 0) continue;
+                        if (!byDiscTrack.TryGetValue(disc, out var set))
+                        {
+                            set = new HashSet<int>();
+                            byDiscTrack[disc] = set;
+                        }
+                        set.Add(track);
+                    }
+
+                    foreach (var (disc, set) in byDiscTrack)
+                    {
+                        foreach (var tnum in set)
+                        {
+                            await cache.UpdateMediaAvailabilityStatus(
                                 artistId,
                                 releaseFolderName,
-                                i + 1,
+                                disc,
+                                tnum,
                                 CachedMediaAvailabilityStatus.Available
+                            );
+                        }
+                    }
+                }
+                catch
+                {
+                    // Fallback to sequential in case mapping fails
+                    await Task.WhenAll(
+                        Enumerable
+                            .Range(0, relAfterCount)
+                            .Select(i =>
+                                cache.UpdateMediaAvailabilityStatus(
+                                    artistId,
+                                    releaseFolderName,
+                                    i + 1,
+                                    CachedMediaAvailabilityStatus.Available
+                                )
                             )
-                        )
-                );
+                    );
+                }
                 logger.LogInformation("[StartDownload] Marked {Count} tracks as Available", relAfterCount);
                 try { relLogger.Info($"[Orchestrator] Marked {relAfterCount} tracks as Available"); } catch { }
 

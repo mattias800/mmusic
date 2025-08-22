@@ -294,7 +294,19 @@ public class ServerLibraryCache(ServerLibraryJsonReader reader, ITopicEventSende
         CachedMediaAvailabilityStatus status
     )
     {
-        CachedTrack? track;
+        await UpdateMediaAvailabilityStatus(artistId, releaseFolderName, discNumber: null, trackNumber, status);
+    }
+
+    // New overload: disc-aware availability update
+    public async Task UpdateMediaAvailabilityStatus(
+        string artistId,
+        string releaseFolderName,
+        int? discNumber,
+        int trackNumber,
+        CachedMediaAvailabilityStatus status
+    )
+    {
+        CachedTrack? track = null;
         CachedRelease? releaseRef = null;
         lock (_lockObject)
         {
@@ -309,7 +321,17 @@ public class ServerLibraryCache(ServerLibraryJsonReader reader, ITopicEventSende
             if (!artistReleases.TryGetValue(releaseFolderName.ToLowerInvariant(), out var release))
                 return;
 
-            track = release.Tracks.FirstOrDefault(t => t.TrackNumber == trackNumber);
+            if (discNumber.HasValue)
+            {
+                var d = discNumber.Value <= 0 ? 1 : discNumber.Value;
+                track = release.Tracks.FirstOrDefault(t => t.TrackNumber == trackNumber && (t.DiscNumber > 0 ? t.DiscNumber : 1) == d);
+            }
+            else
+            {
+                // Back-compat: first match on trackNumber regardless of disc
+                track = release.Tracks.FirstOrDefault(t => t.TrackNumber == trackNumber);
+            }
+
             if (track != null)
             {
                 track.CachedMediaAvailabilityStatus = status;

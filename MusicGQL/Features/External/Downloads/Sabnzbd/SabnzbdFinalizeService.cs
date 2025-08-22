@@ -20,6 +20,44 @@ public class SabnzbdFinalizeService(
 {
     private static readonly string[] AudioExtensions = new[] { ".mp3", ".flac", ".m4a", ".wav", ".ogg" };
 
+    // Helper: extract disc and track numbers from a file name
+    private static (int disc, int track) ExtractDiscTrackFromName(string? name)
+    {
+        int disc = 1;
+        int track = -1;
+        try
+        {
+            if (!string.IsNullOrWhiteSpace(name))
+            {
+                var lower = name!.ToLowerInvariant();
+                var m = System.Text.RegularExpressions.Regex.Match(
+                    lower,
+                    "\\b(?:cd|disc|disk|digital\\s*media)\\s*(\\d+)\\b",
+                    System.Text.RegularExpressions.RegexOptions.IgnoreCase
+                );
+                if (m.Success && int.TryParse(m.Groups[1].Value, out var d)) disc = d;
+                var m2 = System.Text.RegularExpressions.Regex.Match(
+                    name,
+                    "-\\s*(\\d{1,3})\\s*-",
+                    System.Text.RegularExpressions.RegexOptions.IgnoreCase
+                );
+                if (m2.Success && int.TryParse(m2.Groups[1].Value, out var t2)) track = t2;
+                if (track < 0)
+                {
+                    var span = name.AsSpan();
+                    int pos = 0; while (pos < span.Length && !char.IsDigit(span[pos])) pos++;
+                    int start = pos; while (pos < span.Length && char.IsDigit(span[pos])) pos++;
+                    if (pos > start && int.TryParse(span.Slice(start, pos - start), out var n))
+                    {
+                        track = n > 99 ? (n % 100 == 0 ? n : n % 100) : n;
+                    }
+                }
+            }
+        }
+        catch { }
+        return (disc, track);
+    }
+
     public async Task<bool> FinalizeReleaseAsync(string artistId, string releaseFolderName, CancellationToken ct)
     {
         // Prepare per-release logger
@@ -314,8 +352,49 @@ public class SabnzbdFinalizeService(
             }
 
             await cache.UpdateReleaseFromJsonAsync(artistId, releaseFolderName);
-            await Task.WhenAll(audioFiles.Select((_, i) => cache.UpdateMediaAvailabilityStatus(
-                artistId, releaseFolderName, i + 1, CachedMediaAvailabilityStatus.Available)));
+
+            // Mark availability using disc-aware mapping
+            try
+            {
+                if (File.Exists(releaseJsonPath))
+                {
+                    // Build a map from disc->track->file again to drive status updates
+                    var byDiscTrack = new Dictionary<int, HashSet<int>>();
+foreach (var f in audioFiles)
+                    {
+                        var (disc, track) = ExtractDiscTrackFromName(f);
+                        if (track <= 0) continue;
+                        if (!byDiscTrack.TryGetValue(disc, out var set))
+                        {
+                            set = new HashSet<int>();
+                            byDiscTrack[disc] = set;
+                        }
+                        set.Add(track);
+                    }
+
+                    foreach (var (disc, set) in byDiscTrack)
+                    {
+                        foreach (var track in set)
+                        {
+                            await cache.UpdateMediaAvailabilityStatus(
+                                artistId,
+                                releaseFolderName,
+                                disc,
+                                track,
+                                CachedMediaAvailabilityStatus.Available
+                            );
+                        }
+                    }
+                }
+                else
+                {
+                    // Fallback: sequential marking
+                    await Task.WhenAll(audioFiles.Select((_, i) => cache.UpdateMediaAvailabilityStatus(
+                        artistId, releaseFolderName, i + 1, CachedMediaAvailabilityStatus.Available)));
+                }
+            }
+            catch { }
+
             return true;
         }
         catch (Exception ex)
