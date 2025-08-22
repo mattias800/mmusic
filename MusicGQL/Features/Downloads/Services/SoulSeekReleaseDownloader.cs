@@ -56,13 +56,8 @@ public class SoulSeekReleaseDownloader(
             return false;
         }
         Directory.CreateDirectory(targetDirectory);
-        logger.LogInformation(
-            "[SoulSeek] Searching: {Artist} - {Release}",
-            artistName,
-            releaseTitle
-        );
 
-        // Initialize per-release logger
+        // Initialize per-release logger BEFORE writing any per-release log lines
         IDownloadLogger relLogger = new NullDownloadLogger();
         try
         {
@@ -74,6 +69,13 @@ public class SoulSeekReleaseDownloader(
             }
         }
         catch { }
+
+        logger.LogInformation(
+            "[SoulSeek] Searching: {Artist} - {Release}",
+            artistName,
+            releaseTitle
+        );
+        try { relLogger.Info($"[SoulSeek] Searching: {artistName} - {releaseTitle}"); } catch { }
 
         // Normalize base query (e.g., remove punctuation) to improve matching
         string normArtist = NormalizeForSearch(artistName);
@@ -111,10 +113,12 @@ public class SoulSeekReleaseDownloader(
         if (allowedOfficialCounts.Count > 0)
         {
             try { logger.LogInformation("[SoulSeek] Allowed official track counts: {Counts}", string.Join(", ", allowedOfficialCounts)); } catch { }
+            try { relLogger.Info($"Allowed official track counts: {string.Join(", ", allowedOfficialCounts)}"); } catch { }
         }
         if (allowedOfficialDigitalCounts.Count > 0)
         {
             try { logger.LogInformation("[SoulSeek] Allowed official DIGITAL track counts: {Counts}", string.Join(", ", allowedOfficialDigitalCounts)); } catch { }
+            try { relLogger.Info($"Allowed official DIGITAL track counts: {string.Join(", ", allowedOfficialDigitalCounts)}"); } catch { }
         }
 
         // Discover (optional) year for ranking (we already have expectedTrackCount above)
@@ -166,9 +170,11 @@ public class SoulSeekReleaseDownloader(
         queries.Add($"{foldArtist} - {foldTitle} [FLAC]");
         var distinctQueries = queries.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
         logger.LogInformation("[SoulSeek] Starting search across {QueryForms} query forms (queueDepth={QueueDepth}, sharedTimeBudgetSec={Budget})", distinctQueries.Count, queueDepth, timeLimitSec);
+        try { relLogger.Info($"Starting search across {distinctQueries.Count} query forms (queueDepth={queueDepth}, timeBudgetSec={timeLimitSec})"); } catch { }
         for (int qi = 0; qi < distinctQueries.Count; qi++)
         {
             var q = distinctQueries[qi];
+            try { relLogger.Info($"Query: {q}"); } catch { }
             var searchTask = client.SearchAsync(new SearchQuery(q));
             try
             {
@@ -189,6 +195,7 @@ public class SoulSeekReleaseDownloader(
                     if (completed != searchTask)
                     {
                         logger.LogInformation("[SoulSeek] Query slice timed out (moving to next form): {Query} (sliceMs={SliceMs:n0})", q, slice.TotalMilliseconds);
+                        try { relLogger.Info($"Query slice timed out: {q} ({slice.TotalMilliseconds:n0} ms)"); } catch { }
                         continue;
                     }
                 }
@@ -199,6 +206,19 @@ public class SoulSeekReleaseDownloader(
                 continue;
             }
             var result = await searchTask;
+            try { relLogger.Info($"Responses={(result.Responses?.Count ?? 0)} for '{q}'"); } catch { }
+            // Log a small sample of responses for diagnostics
+            try
+            {
+                var sample = (result.Responses ?? new List<SearchResponse>())
+                    .OrderByDescending(r => r.UploadSpeed)
+                    .ThenBy(r => r.QueueLength)
+                    .Take(5)
+                    .Select(r => $"user={r.Username} files={r.Files?.Count ?? 0} freeSlot={r.HasFreeUploadSlot} queue={r.QueueLength} up={r.UploadSpeed:n0}")
+                    .ToList();
+                if (sample.Count > 0) relLogger.Info($"Response sample: {string.Join(" | ", sample)}");
+            }
+            catch { }
             if (result.Responses == null || result.Responses.Count == 0)
             {
                 logger.LogDebug("[SoulSeek] No responses for query '{Query}'", q);
@@ -210,8 +230,9 @@ public class SoulSeekReleaseDownloader(
                 .Where(r => HasAlbumFolderMatch(r, artistName, releaseTitle, expectedYear))
                 .ToList();
             logger.LogDebug("[SoulSeek] Structurally matching responses for '{Query}': {Count}", q, structurallyMatching.Count);
+            try { relLogger.Info($"Structural matches={structurallyMatching.Count} for '{q}'"); } catch { }
 
-            var ranked = structurallyMatching
+            var candidateDetails = structurallyMatching
                 .Select(r => new
                 {
                     Response = r,
@@ -251,18 +272,32 @@ public class SoulSeekReleaseDownloader(
                 })
                 // Under load, skip responses that have no free slot and long queues
                 .Where(x => !hasWaiting || x.Response.HasFreeUploadSlot || x.Response.QueueLength <= 3)
+                .ToList();
+
+            var rankedWithScore = candidateDetails
                 .OrderByDescending(x => x.Score)
                 .ThenByDescending(x => x.Response.HasFreeUploadSlot)
                 .ThenBy(x => x.Response.QueueLength)
                 .ThenByDescending(x => x.Response.UploadSpeed)
                 .ThenByDescending(x => x.AudioTracks.Count)
-                .Select(x => x.Response)
                 .ToList();
+
+            var ranked = rankedWithScore.Select(x => x.Response).ToList();
             logger.LogDebug("[SoulSeek] Ranked candidates for '{Query}': {Count}", q, ranked.Count);
+            try
+            {
+                relLogger.Info($"Ranked candidates={ranked.Count} for '{q}'");
+                foreach (var (x, idx) in rankedWithScore.Take(10).Select((v, i) => (v, i + 1)))
+                {
+                    relLogger.Info($"  #{idx}: user={x.Response.Username} files={x.Response.Files?.Count ?? 0} audioTracks={x.AudioTracks.Count} score={x.Score} freeSlot={x.Response.HasFreeUploadSlot} queue={x.Response.QueueLength} up={x.Response.UploadSpeed:n0}");
+                }
+            }
+            catch { }
 
             if (ranked.Count > 0)
             {
                 rankedCandidates = ranked;
+                try { relLogger.Info($"Selected query: '{q}' with {ranked.Count} candidates"); } catch { }
                 break;
             }
         }
@@ -277,6 +312,7 @@ public class SoulSeekReleaseDownloader(
                 artistName,
                 releaseTitle
             );
+            try { relLogger.Warn($"No suitable album candidates for: {artistName} - {releaseTitle}"); } catch { }
             // Record not found in history
             try
             {
@@ -321,11 +357,13 @@ public class SoulSeekReleaseDownloader(
                 candidate.Username,
                 queue.Count
             );
+            try { relLogger.Info($"Trying user '{candidate.Username}' with {queue.Count} files"); } catch { }
             logger.LogDebug("[SoulSeek] Prepared download queue for user '{User}' with {Count} items (expectedTrackCount={Expected})", candidate.Username, queue.Count, expectedTrackCount);
 
             if (queue.Count == 0)
             {
                 logger.LogInformation("[SoulSeek] Skipping user '{User}' because no candidate audio files were found", candidate.Username);
+                try { relLogger.Info($"Skipping user '{candidate.Username}' (no candidate audio files)"); } catch { }
                 continue;
             }
 
@@ -338,6 +376,7 @@ public class SoulSeekReleaseDownloader(
                     queue.Count,
                     minRequiredTracks
                 );
+                try { relLogger.Info($"Skipping user '{candidate.Username}' due to insufficient tracks: {queue.Count} < {minRequiredTracks}"); } catch { }
                 continue;
             }
 
@@ -451,17 +490,18 @@ public class SoulSeekReleaseDownloader(
                                     CurrentTrackProgressPercent = percent,
                                     CurrentDownloadSpeedKbps = kbps,
                                 });
-                                if (logger.IsEnabled(LogLevel.Debug) && percent - lastLoggedPercent >= 25)
-                                {
-                                    lastLoggedPercent = percent;
-                                    logger.LogDebug(
-                                        "[SoulSeek] Progress {Percent:n0}% on track {Track}/{Total} at ~{Kbps:n0} KB/s",
-                                        percent,
-                                        trackIndex + 1,
-                                        expectedTrackCount,
-                                        kbps
-                                    );
-                                }
+                if (logger.IsEnabled(LogLevel.Debug) && percent - lastLoggedPercent >= 25)
+                {
+                    lastLoggedPercent = percent;
+                    logger.LogDebug(
+                        "[SoulSeek] Progress {Percent:n0}% on track {Track}/{Total} at ~{Kbps:n0} KB/s",
+                        percent,
+                        trackIndex + 1,
+                        expectedTrackCount,
+                        kbps
+                    );
+                    try { relLogger.Info($"Progress {percent:n0}% on track {trackIndex + 1}/{expectedTrackCount} at ~{kbps:n0} KB/s"); } catch { }
+                }
                             }
                             catch { }
                         }
@@ -531,10 +571,12 @@ public class SoulSeekReleaseDownloader(
                     if (userNoDataElapsed >= noDataTimeoutSec)
                     {
                         logger.LogWarning(ocex, "[SoulSeek] Download cancelled due to per-user no-data timeout ({Seconds}s) for user {User}", noDataTimeoutSec, candidate.Username);
+                        try { relLogger.Warn($"Per-user no-data timeout {noDataTimeoutSec}s for user '{candidate.Username}'"); } catch { }
                     }
                     else
                     {
                         logger.LogWarning(ocex, "[SoulSeek] Download cancelled due to per-file no-data timeout ({Seconds}s) for file {File}", noDataTimeoutSec, item.FileName);
+                        try { relLogger.Warn($"Per-file no-data timeout {noDataTimeoutSec}s for file '{item.FileName}'"); } catch { }
                     }
                     userFailed = true;
                 }
@@ -547,6 +589,7 @@ public class SoulSeekReleaseDownloader(
                         item.Username,
                         item.FileName
                     );
+                    try { relLogger.Warn($"Download failed from user '{item.Username}' for file '{item.FileName}'"); } catch { }
                     userFailed = true;
                 }
 
@@ -648,6 +691,7 @@ public class SoulSeekReleaseDownloader(
                 "[SoulSeek] Moving to next candidate user after failure: {User}",
                 candidate.Username
             );
+            try { relLogger.Info($"Moving to next candidate user after failure: '{candidate.Username}'"); } catch { }
             logger.LogDebug("[SoulSeek] No-data timeout will be reset for the next candidate user");
         }
 
@@ -656,6 +700,7 @@ public class SoulSeekReleaseDownloader(
             artistName,
             releaseTitle
         );
+        try { relLogger.Warn($"All candidates failed for: {artistName} - {releaseTitle}"); } catch { }
         progress.SetStatus(DownloadStatus.Failed);
         try
         {
