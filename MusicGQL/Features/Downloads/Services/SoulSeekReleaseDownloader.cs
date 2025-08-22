@@ -13,7 +13,7 @@ namespace MusicGQL.Features.Downloads.Services;
 
 public class SoulSeekReleaseDownloader(
     SoulSeekService service,
-    ISoulseekClient client,
+    SoulseekClient client,
     ITopicEventSender eventSender,
     ServerLibraryCache cache,
     CurrentDownloadStateService progress,

@@ -7,7 +7,7 @@ using MusicGQL.Features.Downloads.Services;
 namespace MusicGQL.Features.External.SoulSeek.Integration;
 
 public class SoulSeekService(
-    ISoulseekClient client,
+    SoulseekClient client,
     IOptions<SoulSeekConnectOptions> options,
     ITopicEventSender eventSender,
     ILogger<SoulSeekService> logger,

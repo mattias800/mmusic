@@ -107,7 +107,7 @@ builder
         options.MaximumPayloadBytes = 10485760; // 10 MB
     })
     .Services.AddSingleton<IMemoryCache, MemoryCache>()
-    .AddSingleton<ISoulseekClient, SoulseekClient>(_ => new SoulseekClient(
+    .AddSingleton<SoulseekClient>(_ => new SoulseekClient(
         options: new SoulseekClientOptions(
             maximumConcurrentUploads: 5,
             maximumConcurrentDownloads: 5,
