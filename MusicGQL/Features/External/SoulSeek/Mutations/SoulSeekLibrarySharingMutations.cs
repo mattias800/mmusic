@@ -63,14 +63,33 @@ public class SoulSeekLibrarySharingMutations
             return new RefreshSoulSeekSharesError(ex.Message);
         }
     }
+
+    /// <summary>
+    /// Triggers a reachability check and returns the latest sharing statistics (including reachability info)
+    /// </summary>
+    public async Task<CheckSoulSeekReachabilityResult> CheckSoulSeekReachability(
+        [Service] SoulSeekLibrarySharingService sharingService
+    )
+    {
+        try
+        {
+            await sharingService.CheckReachabilityAsync();
+            var stats = await sharingService.GetSharingStatisticsAsync();
+            return new CheckSoulSeekReachabilitySuccess(stats);
+        }
+        catch (Exception ex)
+        {
+            return new CheckSoulSeekReachabilityError(ex.Message);
+        }
+    }
 }
 
 #region Start Sharing
 
-[UnionType]
+[UnionType("StartSoulSeekSharingResult")]
 public abstract record StartSoulSeekSharingResult;
 
-public record StartSoulSeekSharingSuccess : StartSoulSeekSharingResult;
+public record StartSoulSeekSharingSuccess(bool Ok = true) : StartSoulSeekSharingResult;
 
 public record StartSoulSeekSharingError(string Message) : StartSoulSeekSharingResult;
 
@@ -78,10 +97,10 @@ public record StartSoulSeekSharingError(string Message) : StartSoulSeekSharingRe
 
 #region Stop Sharing
 
-[UnionType]
+[UnionType("StopSoulSeekSharingResult")]
 public abstract record StopSoulSeekSharingResult;
 
-public record StopSoulSeekSharingSuccess : StopSoulSeekSharingResult;
+public record StopSoulSeekSharingSuccess(bool Ok = true) : StopSoulSeekSharingResult;
 
 public record StopSoulSeekSharingError(string Message) : StopSoulSeekSharingResult;
 
@@ -89,11 +108,22 @@ public record StopSoulSeekSharingError(string Message) : StopSoulSeekSharingResu
 
 #region Refresh Shares
 
-[UnionType]
+[UnionType("RefreshSoulSeekSharesResult")]
 public abstract record RefreshSoulSeekSharesResult;
 
-public record RefreshSoulSeekSharesSuccess : RefreshSoulSeekSharesResult;
+public record RefreshSoulSeekSharesSuccess(bool Ok = true) : RefreshSoulSeekSharesResult;
 
 public record RefreshSoulSeekSharesError(string Message) : RefreshSoulSeekSharesResult;
+
+#endregion
+
+#region Check Reachability
+
+[UnionType("CheckSoulSeekReachabilityResult")]
+public abstract record CheckSoulSeekReachabilityResult;
+
+public record CheckSoulSeekReachabilitySuccess(SharingStatistics Statistics) : CheckSoulSeekReachabilityResult;
+
+public record CheckSoulSeekReachabilityError(string Message) : CheckSoulSeekReachabilityResult;
 
 #endregion

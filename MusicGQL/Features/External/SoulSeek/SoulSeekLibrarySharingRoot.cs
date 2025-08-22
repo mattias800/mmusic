@@ -13,6 +13,7 @@ public class SoulSeekLibrarySharingRoot
     /// <summary>
     /// Gets the current Soulseek library sharing statistics
     /// </summary>
+    [GraphQLName("soulSeekSharingStatistics")]
     public async Task<SharingStatistics> GetSoulSeekSharingStatistics(
         [Service] SoulSeekLibrarySharingService sharingService
     )

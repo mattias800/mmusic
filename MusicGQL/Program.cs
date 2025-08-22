@@ -22,6 +22,7 @@ using MusicGQL.Features.External.Downloads.Sabnzbd.Configuration;
 using MusicGQL.Features.External.Downloads.Sabnzbd;
 using MusicGQL.Features.External.SoulSeek;
 using MusicGQL.Features.External.SoulSeek.Integration;
+using MusicGQL.Features.External.SoulSeek.Mutations;
 using MusicGQL.Features.FileSystem;
 using MusicGQL.Features.FileSystem.Mutations;
 using MusicGQL.Features.Import;
@@ -402,8 +403,18 @@ builder
     .AddTypeExtension<ImportSpotifyPlaylistArtistsMutation>()
     .AddType<ImportArtistsFromSpotifyPlaylistSuccess>()
     .AddType<ImportArtistsFromSpotifyPlaylistError>()
-    .AddTypeExtension<SoulSeekSubscription>()
-    .AddTypeExtension<LibrarySubscription>()
+.AddTypeExtension<SoulSeekSubscription>()
+    .AddTypeExtension<SoulSeekLibrarySharingRoot>()
+.AddTypeExtension<MusicGQL.Features.External.SoulSeek.Mutations.SoulSeekLibrarySharingMutations>()
+    .AddType<MusicGQL.Features.External.SoulSeek.Mutations.StartSoulSeekSharingSuccess>()
+    .AddType<MusicGQL.Features.External.SoulSeek.Mutations.StartSoulSeekSharingError>()
+    .AddType<MusicGQL.Features.External.SoulSeek.Mutations.StopSoulSeekSharingSuccess>()
+    .AddType<MusicGQL.Features.External.SoulSeek.Mutations.StopSoulSeekSharingError>()
+    .AddType<MusicGQL.Features.External.SoulSeek.Mutations.RefreshSoulSeekSharesSuccess>()
+    .AddType<MusicGQL.Features.External.SoulSeek.Mutations.RefreshSoulSeekSharesError>()
+    .AddType<MusicGQL.Features.External.SoulSeek.Mutations.CheckSoulSeekReachabilitySuccess>()
+    .AddType<MusicGQL.Features.External.SoulSeek.Mutations.CheckSoulSeekReachabilityError>()
+.AddTypeExtension<LibrarySubscription>()
     .AddTypeExtension<ImportSubscription>()
     .AddTypeExtension<ArtistImportSearchRoot>()
     .AddTypeExtension<ArtistImportMutations>()

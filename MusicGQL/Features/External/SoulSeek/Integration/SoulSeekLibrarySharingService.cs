@@ -2,6 +2,7 @@ using MusicGQL.Features.ServerSettings;
 using Soulseek;
 using System.IO;
 using System.Net;
+using MusicGQL.Features.Downloads.Services;
 using SystemIOPath = System.IO.Path;
 using SystemIODirectory = System.IO.Directory;
 using SystemIOFile = System.IO.File;
@@ -15,12 +16,15 @@ namespace MusicGQL.Features.External.SoulSeek.Integration;
 public class SoulSeekLibrarySharingService(
     SoulseekClient client,
     ServerSettingsAccessor serverSettingsAccessor,
-    ILogger<SoulSeekLibrarySharingService> logger
+    ILogger<SoulSeekLibrarySharingService> logger,
+    DownloadLogPathProvider logPathProvider
 )
 {
     private bool _isSharingEnabled = false;
     private int _listeningPort = 50300; // Default Soulseek port
     private string? _rootAlias;
+    private IDownloadLogger? _fileLogger;
+    private ReachabilityInfo? _lastReachability;
 
     private static readonly string[] AudioExtensions = new[] { ".mp3", ".flac", ".m4a", ".wav", ".ogg", ".aac", ".wma", ".webm" };
 
@@ -47,6 +51,9 @@ public class SoulSeekLibrarySharingService(
     {
         try
         {
+            // Initialize file logger lazily
+            await EnsureFileLoggerAsync();
+
             var settings = await serverSettingsAccessor.GetAsync();
 
             if (!settings.SoulSeekLibrarySharingEnabled)
@@ -82,10 +89,12 @@ public class SoulSeekLibrarySharingService(
             await client.ReconfigureOptionsAsync(patch);
 
             logger.LogInformation("[SoulSeek] Client configured for sharing on port {Port}; alias={Alias}", _listeningPort, _rootAlias);
+            try { _fileLogger?.Info($"Client configured for sharing on port {_listeningPort}; alias={_rootAlias}"); } catch { }
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "[SoulSeek] Failed to configure client for library sharing");
+            try { _fileLogger?.Error($"Configure client failed: {ex.Message}"); } catch { }
         }
     }
 
@@ -106,12 +115,15 @@ public class SoulSeekLibrarySharingService(
 
             await ConfigureClientAsync();
 
-            logger.LogInformation("[SoulSeek] Using SDK {Version}", typeof(SoulseekClient).Assembly.GetName().Version?.ToString());
+            var ver = typeof(SoulseekClient).Assembly.GetName().Version?.ToString();
+            logger.LogInformation("[SoulSeek] Using SDK {Version}", ver);
             logger.LogInformation("[SoulSeek] Library sharing service initialized");
+            try { _fileLogger?.Info($"Using SDK {ver}"); _fileLogger?.Info("Library sharing service initialized"); } catch { }
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "[SoulSeek] Failed to initialize library sharing service");
+            try { _fileLogger?.Error($"Initialize failed: {ex.Message}"); } catch { }
         }
     }
 
@@ -145,20 +157,12 @@ public class SoulSeekLibrarySharingService(
             }
 
             logger.LogInformation("[SoulSeek] Sharing library path: {Path}", libraryPath);
+            try { _fileLogger?.Info($"Sharing library path: {libraryPath}"); } catch { }
 
-            // Compute and publish share counts
+            // Compute share counts
             var (dirCount, fileCount) = await CountLibraryAsync(libraryPath);
             SharedFileCount = fileCount;
-
-            try
-            {
-                await client.SetSharedCountsAsync(dirCount, fileCount);
-                logger.LogInformation("[SoulSeek] Published share counts: {Dirs} directories, {Files} files", dirCount, fileCount);
-            }
-            catch (Exception ex)
-            {
-                logger.LogWarning(ex, "[SoulSeek] Failed to publish shared counts; will continue");
-            }
+            try { _fileLogger?.Info($"Share counts computed: directories={dirCount} files={fileCount}"); } catch { }
 
             _isSharingEnabled = true;
 
@@ -166,10 +170,12 @@ public class SoulSeekLibrarySharingService(
                 "[SoulSeek] Library sharing started successfully. Shared files from {Path}",
                 libraryPath
             );
+            try { _fileLogger?.Info($"Library sharing started successfully. Shared files from {libraryPath}"); } catch { }
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "[SoulSeek] Failed to start library sharing");
+            try { _fileLogger?.Error($"Start sharing failed: {ex.Message}"); } catch { }
             _isSharingEnabled = false;
         }
     }
@@ -187,6 +193,7 @@ public class SoulSeekLibrarySharingService(
             try { await client.SetSharedCountsAsync(0, 0); } catch { }
 
             logger.LogInformation("[SoulSeek] Library sharing stopped");
+            try { _fileLogger?.Info("Library sharing stopped"); } catch { }
         }
         catch (Exception ex)
         {
@@ -202,6 +209,7 @@ public class SoulSeekLibrarySharingService(
         if (_isSharingEnabled)
         {
             logger.LogInformation("[SoulSeek] Refreshing share index...");
+            try { _fileLogger?.Info("Refreshing share index..."); } catch { }
             await StartSharingAsync();
         }
     }
@@ -239,6 +247,7 @@ public class SoulSeekLibrarySharingService(
         try
         {
             var directories = await BuildBrowseDirectoriesAsync();
+            try { _fileLogger?.Info($"Browse response built: directories={directories.Count()} "); } catch { }
             return new BrowseResponse(directories);
         }
         catch (Exception ex)
@@ -256,6 +265,7 @@ public class SoulSeekLibrarySharingService(
         try
         {
             var list = await BuildDirectoryListingAsync(directory);
+            try { _fileLogger?.Info($"Directory listing for '{directory}' with {list.Files?.Count() ?? 0} files"); } catch { }
             return new[] { list };
         }
         catch (Exception ex)
@@ -300,10 +310,12 @@ public class SoulSeekLibrarySharingService(
                 );
 
                 logger.LogInformation("[SoulSeek] Completed upload to {User}: {File}", username, filename);
+                try { _fileLogger?.Info($"Upload to {username} completed: {filename} ({size} bytes)"); } catch { }
             }
             catch (Exception ex)
             {
                 logger.LogWarning(ex, "[SoulSeek] Upload failed for {User}: {File}", username, filename);
+                try { _fileLogger?.Warn($"Upload failed for {username}: {filename} - {ex.Message}"); } catch { }
             }
         });
 
@@ -513,7 +525,12 @@ public class SoulSeekLibrarySharingService(
             SharedFileCount = fileCount,
             LibraryPath = libraryPath,
             ListeningPort = _listeningPort,
-            TotalLibrarySize = totalSize
+            TotalLibrarySize = totalSize,
+            ObservedIp = _lastReachability?.ObservedIp ?? string.Empty,
+            ObservedPort = _lastReachability?.ObservedPort,
+            ObservedAtUtc = _lastReachability?.TimestampUtc,
+            IsPrivateIp = _lastReachability?.IsPrivateIp ?? false,
+            PortMatches = _lastReachability?.PortMatches ?? false
         };
     }
 
@@ -567,7 +584,112 @@ public class SoulSeekLibrarySharingService(
         catch (Exception ex)
         {
             logger.LogError(ex, "[SoulSeek] Error during service disposal");
+            try { _fileLogger?.Error($"Dispose error: {ex.Message}"); } catch { }
         }
+        finally
+        {
+            ( _fileLogger as IDisposable )?.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Called after login to publish shared counts reliably (server must consider us logged in).
+    /// </summary>
+    public async Task PublishSharedCountsAsync()
+    {
+        try
+        {
+            var settings = await serverSettingsAccessor.GetAsync();
+            if (string.IsNullOrWhiteSpace(settings.LibraryPath) || !SystemIODirectory.Exists(settings.LibraryPath)) return;
+
+            var (dirs, files) = await CountLibraryAsync(settings.LibraryPath);
+            await client.SetSharedCountsAsync(dirs, files);
+            logger.LogInformation("[SoulSeek] Published share counts after login: {Dirs} directories, {Files} files", dirs, files);
+            try { _fileLogger?.Info($"Published share counts after login: directories={dirs} files={files}"); } catch { }
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "[SoulSeek] Failed to publish shared counts after login");
+            try { _fileLogger?.Warn($"Failed to publish counts after login: {ex.Message}"); } catch { }
+        }
+    }
+
+    /// <summary>
+    /// Performs a best-effort reachability heuristic and logs guidance for NAT/port-forwarding.
+    /// </summary>
+    public async Task CheckReachabilityAsync()
+    {
+        try
+        {
+            var settings = await serverSettingsAccessor.GetAsync();
+            var listenPort = settings.SoulSeekListeningPort > 0 ? settings.SoulSeekListeningPort : _listeningPort;
+
+            var endpoint = await client.GetUserEndPointAsync(client.Username);
+            if (endpoint == null)
+            {
+                try { _fileLogger?.Warn("Reachability: server did not provide an endpoint for this user."); } catch { }
+                return;
+            }
+
+            var ip = endpoint.Address;
+            var port = endpoint.Port;
+            var isPrivate = IsPrivateIPv4(ip);
+            var portMatch = port == listenPort && listenPort > 0;
+
+            _lastReachability = new ReachabilityInfo
+            {
+                ObservedIp = ip.ToString(),
+                ObservedPort = port,
+                ListenPort = listenPort,
+                IsPrivateIp = isPrivate,
+                PortMatches = portMatch,
+                TimestampUtc = DateTime.UtcNow
+            };
+
+            var msg = $"Server sees you at {ip}:{port}. ListenPort={listenPort}. PrivateIP={isPrivate}. PortMatch={portMatch}";
+            logger.LogInformation("[SoulSeek] {Message}", msg);
+            try { _fileLogger?.Info($"Reachability: {msg}"); } catch { }
+
+            if (isPrivate || !portMatch)
+            {
+                var guidance = "Likely behind NAT or port mismatch; other users may not be able to reach your share directly. Configure port forwarding for the listen port to this machine, or enable UPnP/NAT-PMP on your router.";
+                logger.LogWarning("[SoulSeek] {Guidance}", guidance);
+                try { _fileLogger?.Warn($"{guidance}"); } catch { }
+            }
+            else
+            {
+                try { _fileLogger?.Info("Reachability heuristic OK (public IP and port match). This does not guarantee external reachability but is a good sign."); } catch { }
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogDebug(ex, "[SoulSeek] Reachability check failed");
+            try { _fileLogger?.Warn($"Reachability check failed: {ex.Message}"); } catch { }
+        }
+    }
+
+    private static bool IsPrivateIPv4(IPAddress ip)
+    {
+        if (ip.AddressFamily != System.Net.Sockets.AddressFamily.InterNetwork) return false;
+        var b = ip.GetAddressBytes();
+        return b[0] == 10
+            || (b[0] == 172 && b[1] >= 16 && b[1] <= 31)
+            || (b[0] == 192 && b[1] == 168)
+            || (b[0] == 169 && b[1] == 254); // link-local
+    }
+
+    private async Task EnsureFileLoggerAsync()
+    {
+        if (_fileLogger != null) return;
+        try
+        {
+            var path = await logPathProvider.GetServiceLogFilePathAsync("soulseek");
+            if (!string.IsNullOrWhiteSpace(path))
+            {
+                _fileLogger = new DownloadLogger(path!);
+            }
+        }
+        catch { }
     }
 }
 
@@ -581,4 +703,21 @@ public class SharingStatistics
     public string LibraryPath { get; set; } = string.Empty;
     public int ListeningPort { get; set; }
     public long TotalLibrarySize { get; set; }
+
+    // Reachability fields
+    public string ObservedIp { get; set; } = string.Empty;
+    public int? ObservedPort { get; set; }
+    public DateTime? ObservedAtUtc { get; set; }
+    public bool IsPrivateIp { get; set; }
+    public bool PortMatches { get; set; }
+}
+
+internal class ReachabilityInfo
+{
+    public string ObservedIp { get; set; } = string.Empty;
+    public int ObservedPort { get; set; }
+    public int ListenPort { get; set; }
+    public bool IsPrivateIp { get; set; }
+    public bool PortMatches { get; set; }
+    public DateTime TimestampUtc { get; set; }
 }

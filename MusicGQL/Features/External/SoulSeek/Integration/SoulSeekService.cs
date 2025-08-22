@@ -30,6 +30,7 @@ public class SoulSeekService(
             {
                 client.Connected += OnConnected;
                 client.Disconnected += OnDisconnected;
+                client.LoggedIn += OnLoggedIn;
                 _eventsHooked = true;
             }
 
@@ -125,6 +126,21 @@ public class SoulSeekService(
         catch (Exception ex)
         {
             logger.LogWarning(ex, "Failed to start library sharing after connection");
+        }
+    }
+
+    // Subscribe to LoggedIn to publish share counts and run reachability check
+    private async void OnLoggedIn(object? sender, EventArgs e)
+    {
+        try
+        {
+            await librarySharingService.PublishSharedCountsAsync();
+            await librarySharingService.CheckReachabilityAsync();
+            try { serviceLogger?.Info("Published share counts post-login and ran reachability check"); } catch { }
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Post-login share publish/reachability failed");
         }
     }
 

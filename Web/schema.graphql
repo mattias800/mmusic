@@ -237,6 +237,16 @@ type CacheStatistics {
   trackCount: Int!
 }
 
+type CheckSoulSeekReachabilityError {
+  message: String!
+}
+
+union CheckSoulSeekReachabilityResult = CheckSoulSeekReachabilityError | CheckSoulSeekReachabilitySuccess
+
+type CheckSoulSeekReachabilitySuccess {
+  statistics: SharingStatistics!
+}
+
 type ClientPlaybackCommand {
   clientId: String!
   playback: ClientPlaybackState!
@@ -959,6 +969,7 @@ type MusicBrainzSearchRoot {
 
 type Mutation {
   addTrackToPlaylist(input: AddTrackToPlaylistInput!): AddTrackToPlaylistResult!
+  checkSoulSeekReachability: CheckSoulSeekReachabilityResult!
   createDirectory(input: CreateDirectoryInput!): CreateDirectoryResult!
   createLibraryManifest: CreateLibraryManifestResult!
   createPlaylist(input: CreatePlaylistInput!): CreatePlaylistResult!
@@ -986,6 +997,7 @@ type Mutation {
   refreshArtistMetaData(input: RefreshArtistMetaDataInput!): RefreshArtistMetaDataResult!
   refreshArtistTopTracks(input: RefreshArtistTopTracksInput!): RefreshArtistTopTracksResult!
   refreshRelease(input: RefreshReleaseInput!): RefreshReleaseResult!
+  refreshSoulSeekShares: RefreshSoulSeekSharesResult!
   removeArtistImportJob(queueKey: String!): Boolean!
   removeDownloadJob(queueKey: String!): Boolean!
   removeItemFromPlaylist(input: RemoveItemFromPlaylistInput!): RemoveItemFromPlaylistResult!
@@ -1003,6 +1015,8 @@ type Mutation {
   signOut(input: SignOutInput!): SignOutResult!
   startBulkDownloadForArtist(input: StartBulkDownloadForArtistInput!): StartBulkDownloadForArtistResult!
   startDownloadRelease(input: StartDownloadReleaseInput!): StartDownloadReleaseResult!
+  startSoulSeekSharing: StartSoulSeekSharingResult!
+  stopSoulSeekSharing: StopSoulSeekSharingResult!
   submitListen(input: SubmitListenInput!): SubmitListenResult!
   triggerPlayback(input: TriggerPlaybackInput!): TriggerPlaybackPayload!
   unlikeSong(input: UnlikedSongInput!): UnlikeSongResult!
@@ -1102,6 +1116,7 @@ type Query {
   releasesWithScores(artistId: String!, releaseFolderName: String!, releaseGroupId: String!): [ScoredRelease!]!
   serverLibrary: ServerLibrarySearchRoot!
   serverSettings: ServerSettings!
+  soulSeekSharingStatistics: SharingStatistics!
   spotify: SpotifyArtistSearchRoot!
   user: UserSearchRoot!
   viewer: User
@@ -1180,6 +1195,16 @@ union RefreshReleaseResult = RefreshReleaseError | RefreshReleaseSuccess
 
 type RefreshReleaseSuccess {
   release: Release!
+}
+
+type RefreshSoulSeekSharesError {
+  message: String!
+}
+
+union RefreshSoulSeekSharesResult = RefreshSoulSeekSharesError | RefreshSoulSeekSharesSuccess
+
+type RefreshSoulSeekSharesSuccess {
+  ok: Boolean!
 }
 
 type Release {
@@ -1463,6 +1488,19 @@ type SetUserPasswordSuccess {
   user: User!
 }
 
+type SharingStatistics {
+  isPrivateIp: Boolean!
+  isSharingEnabled: Boolean!
+  libraryPath: String!
+  listeningPort: Int!
+  observedAtUtc: DateTime
+  observedIp: String!
+  observedPort: Int
+  portMatches: Boolean!
+  sharedFileCount: Int!
+  totalLibrarySize: Long!
+}
+
 type SignInError {
   message: String!
 }
@@ -1599,6 +1637,26 @@ type StartDownloadReleaseSuccess {
 
 type StartDownloadReleaseUnknownError {
   message: String!
+}
+
+type StartSoulSeekSharingError {
+  message: String!
+}
+
+union StartSoulSeekSharingResult = StartSoulSeekSharingError | StartSoulSeekSharingSuccess
+
+type StartSoulSeekSharingSuccess {
+  ok: Boolean!
+}
+
+type StopSoulSeekSharingError {
+  message: String!
+}
+
+union StopSoulSeekSharingResult = StopSoulSeekSharingError | StopSoulSeekSharingSuccess
+
+type StopSoulSeekSharingSuccess {
+  ok: Boolean!
 }
 
 type StorageStats {

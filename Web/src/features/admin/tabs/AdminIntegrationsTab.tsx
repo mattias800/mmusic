@@ -3,8 +3,9 @@ import { AuthTokensStatusPanel } from "@/features/settings/AuthTokensStatusPanel
 import { SoulSeekConnectionForm } from "@/features/settings/SoulSeekConnectionForm.tsx";
 import { ProwlarrSettingsForm } from "@/features/settings/ProwlarrSettingsForm.tsx";
 import { QBittorrentSettingsForm } from "@/features/settings/QBittorrentSettingsForm.tsx";
+import { SoulSeekReachabilityCard } from "@/features/settings/SoulSeekReachabilityCard.tsx";
 import { GlassCard, PageLayout, PageHeader, InfoSection } from "@/components/ui";
-import { PlugZap, Settings } from "lucide-react";
+import { PlugZap, Settings, Network } from "lucide-react";
 
 export const AdminIntegrationsTab: React.FC = () => {
   return (
@@ -21,6 +22,14 @@ export const AdminIntegrationsTab: React.FC = () => {
           iconBgColor="bg-purple-500/20"
         >
           <SoulSeekConnectionForm />
+        </GlassCard>
+
+        <GlassCard
+          title="SoulSeek Reachability"
+          icon={Network}
+          iconBgColor="bg-blue-500/20"
+        >
+          <SoulSeekReachabilityCard />
         </GlassCard>
 
         <GlassCard title="Prowlarr" icon={Settings} iconBgColor="bg-green-500/20">

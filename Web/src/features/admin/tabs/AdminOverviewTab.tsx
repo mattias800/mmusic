@@ -10,6 +10,7 @@ import {
   PageNoData,
 } from "@/components/ui";
 import { Gauge, AlertTriangle } from "lucide-react";
+import { SoulSeekReachabilitySummary } from "@/features/soul-seek-network-status/SoulSeekReachabilitySummary.tsx";
 
 const adminOverviewQuery = graphql(`
   query AdminOverviewTabQuery {
@@ -56,8 +57,9 @@ export const AdminOverviewTab: React.FC = () => {
   return (
     <PageLayout>
       <PageHeader icon={Gauge} title="Overview" subtitle="Server library status" />
-      <div className="pt-4">
+      <div className="pt-4 space-y-4">
         <ServerLibraryStatisticsHeader serverLibrary={data.serverLibrary} />
+        <SoulSeekReachabilitySummary />
       </div>
     </PageLayout>
   );

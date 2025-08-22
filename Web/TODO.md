@@ -107,6 +107,20 @@ The user will create a git commit manually.
     * The user should not have to interact with the client for playback to start, if backend triggers playback and it is
       allowed by setting.
 
+## Artist import process
+
+* [ ] When importing an artist, we should refresh the cache after artist metadata fetch, and after every release metadata fetch.
+* [ ] When the cache refreshes, verify that we publish updates to the subscriptions for artists and releases respectively.
+
+## Handling releases that have the same name
+
+Sometimes artists have an album with a name, and then a single with the same name.
+This might cause us to download a single, instead of the album.
+The download process was searching for an album, but found an invalid number of tracks, so it cancels.
+Instead, it should check if there are other releases that match the name, and if so, check if there is a
+MusicBrainz release with the same number of tracks. If artist name, release name and number of tracks match,
+then we should download the release, but it should be imported as a single instead of the album.
+
 ## MCP server
 
 * [ ] Create MCP server functionality, so that AI agents can play music using mmusic.

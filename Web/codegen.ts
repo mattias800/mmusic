@@ -1,10 +1,10 @@
 import type { CodegenConfig } from "@graphql-codegen/cli";
 import { resolve } from "path";
 
+const endpoint = process.env.MMUSIC_GRAPHQL_URL ?? "http://localhost:5095/graphql";
+
 const config: CodegenConfig = {
-  schema: [
-    "http://localhost:5095/graphql"
-  ],
+  schema: [endpoint],
   documents: ["src/**/*.{ts,tsx}"],
   generates: {
     "./src/gql/": {

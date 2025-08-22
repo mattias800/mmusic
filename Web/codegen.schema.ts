@@ -14,10 +14,10 @@ const scalarConfig = {
   },
 };
 
+const endpoint = process.env.MMUSIC_GRAPHQL_URL ?? "http://localhost:5095/graphql";
+
 const config: CodegenConfig = {
-  schema: [
-    "http://localhost:5095/graphql"
-  ],
+  schema: [endpoint],
   generates: {
     "./schema.graphql": {
       config: scalarConfig,

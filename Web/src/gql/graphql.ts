@@ -266,6 +266,18 @@ export type CacheStatistics = {
   trackCount: Scalars['Int']['output'];
 };
 
+export type CheckSoulSeekReachabilityError = {
+  __typename?: 'CheckSoulSeekReachabilityError';
+  message: Scalars['String']['output'];
+};
+
+export type CheckSoulSeekReachabilityResult = CheckSoulSeekReachabilityError | CheckSoulSeekReachabilitySuccess;
+
+export type CheckSoulSeekReachabilitySuccess = {
+  __typename?: 'CheckSoulSeekReachabilitySuccess';
+  statistics: SharingStatistics;
+};
+
 export type ClientPlaybackCommand = {
   __typename?: 'ClientPlaybackCommand';
   clientId: Scalars['String']['output'];
@@ -1148,6 +1160,7 @@ export type MusicBrainzSearchRoot = {
 export type Mutation = {
   __typename?: 'Mutation';
   addTrackToPlaylist: AddTrackToPlaylistResult;
+  checkSoulSeekReachability: CheckSoulSeekReachabilityResult;
   createDirectory: CreateDirectoryResult;
   createLibraryManifest: CreateLibraryManifestResult;
   createPlaylist: CreatePlaylistResult;
@@ -1175,6 +1188,7 @@ export type Mutation = {
   refreshArtistMetaData: RefreshArtistMetaDataResult;
   refreshArtistTopTracks: RefreshArtistTopTracksResult;
   refreshRelease: RefreshReleaseResult;
+  refreshSoulSeekShares: RefreshSoulSeekSharesResult;
   removeArtistImportJob: Scalars['Boolean']['output'];
   removeDownloadJob: Scalars['Boolean']['output'];
   removeItemFromPlaylist: RemoveItemFromPlaylistResult;
@@ -1192,6 +1206,8 @@ export type Mutation = {
   signOut: SignOutResult;
   startBulkDownloadForArtist: StartBulkDownloadForArtistResult;
   startDownloadRelease: StartDownloadReleaseResult;
+  startSoulSeekSharing: StartSoulSeekSharingResult;
+  stopSoulSeekSharing: StopSoulSeekSharingResult;
   submitListen: SubmitListenResult;
   triggerPlayback: TriggerPlaybackPayload;
   unlikeSong: UnlikeSongResult;
@@ -1617,6 +1633,7 @@ export type Query = {
   releasesWithScores: Array<ScoredRelease>;
   serverLibrary: ServerLibrarySearchRoot;
   serverSettings: ServerSettings;
+  soulSeekSharingStatistics: SharingStatistics;
   spotify: SpotifyArtistSearchRoot;
   user: UserSearchRoot;
   viewer?: Maybe<User>;
@@ -1713,6 +1730,18 @@ export type RefreshReleaseResult = RefreshReleaseError | RefreshReleaseSuccess;
 export type RefreshReleaseSuccess = {
   __typename?: 'RefreshReleaseSuccess';
   release: Release;
+};
+
+export type RefreshSoulSeekSharesError = {
+  __typename?: 'RefreshSoulSeekSharesError';
+  message: Scalars['String']['output'];
+};
+
+export type RefreshSoulSeekSharesResult = RefreshSoulSeekSharesError | RefreshSoulSeekSharesSuccess;
+
+export type RefreshSoulSeekSharesSuccess = {
+  __typename?: 'RefreshSoulSeekSharesSuccess';
+  ok: Scalars['Boolean']['output'];
 };
 
 export type Release = {
@@ -2068,6 +2097,20 @@ export type SetUserPasswordSuccess = {
   user: User;
 };
 
+export type SharingStatistics = {
+  __typename?: 'SharingStatistics';
+  isPrivateIp: Scalars['Boolean']['output'];
+  isSharingEnabled: Scalars['Boolean']['output'];
+  libraryPath: Scalars['String']['output'];
+  listeningPort: Scalars['Int']['output'];
+  observedAtUtc?: Maybe<Scalars['DateTime']['output']>;
+  observedIp: Scalars['String']['output'];
+  observedPort?: Maybe<Scalars['Int']['output']>;
+  portMatches: Scalars['Boolean']['output'];
+  sharedFileCount: Scalars['Int']['output'];
+  totalLibrarySize: Scalars['Long']['output'];
+};
+
 export type SignInError = {
   __typename?: 'SignInError';
   message: Scalars['String']['output'];
@@ -2246,6 +2289,30 @@ export type StartDownloadReleaseSuccess = {
 export type StartDownloadReleaseUnknownError = {
   __typename?: 'StartDownloadReleaseUnknownError';
   message: Scalars['String']['output'];
+};
+
+export type StartSoulSeekSharingError = {
+  __typename?: 'StartSoulSeekSharingError';
+  message: Scalars['String']['output'];
+};
+
+export type StartSoulSeekSharingResult = StartSoulSeekSharingError | StartSoulSeekSharingSuccess;
+
+export type StartSoulSeekSharingSuccess = {
+  __typename?: 'StartSoulSeekSharingSuccess';
+  ok: Scalars['Boolean']['output'];
+};
+
+export type StopSoulSeekSharingError = {
+  __typename?: 'StopSoulSeekSharingError';
+  message: Scalars['String']['output'];
+};
+
+export type StopSoulSeekSharingResult = StopSoulSeekSharingError | StopSoulSeekSharingSuccess;
+
+export type StopSoulSeekSharingSuccess = {
+  __typename?: 'StopSoulSeekSharingSuccess';
+  ok: Scalars['Boolean']['output'];
 };
 
 export type StorageStats = {
@@ -3666,6 +3733,16 @@ export type UpdateSoulSeekConnectionSettingsMutationVariables = Exact<{
 
 export type UpdateSoulSeekConnectionSettingsMutation = { __typename?: 'Mutation', updateSoulSeekConnectionSettings: { __typename: 'UpdateSoulSeekConnectionSettingsError', message: string } | { __typename: 'UpdateSoulSeekConnectionSettingsSuccess', serverSettings: { __typename?: 'ServerSettings', id: string, soulSeekHost: string, soulSeekPort: number, soulSeekUsername: string } } };
 
+export type SoulSeekReachabilityCard_QueryQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type SoulSeekReachabilityCard_QueryQuery = { __typename?: 'Query', soulSeekSharingStatistics: { __typename?: 'SharingStatistics', isSharingEnabled: boolean, sharedFileCount: number, libraryPath: string, listeningPort: number, totalLibrarySize: any, observedIp: string, observedPort?: number | null, observedAtUtc?: any | null, isPrivateIp: boolean, portMatches: boolean } };
+
+export type SoulSeekReachabilityCard_CheckMutationVariables = Exact<{ [key: string]: never; }>;
+
+
+export type SoulSeekReachabilityCard_CheckMutation = { __typename?: 'Mutation', checkSoulSeekReachability: { __typename: 'CheckSoulSeekReachabilityError', message: string } | { __typename: 'CheckSoulSeekReachabilitySuccess', statistics: { __typename?: 'SharingStatistics', isSharingEnabled: boolean, sharedFileCount: number, libraryPath: string, listeningPort: number, totalLibrarySize: any, observedIp: string, observedPort?: number | null, observedAtUtc?: any | null, isPrivateIp: boolean, portMatches: boolean } } };
+
 export type SoulSeekSettings_QueryQueryVariables = Exact<{ [key: string]: never; }>;
 
 
@@ -3792,6 +3869,11 @@ export type SoulSeekNetworkStatusQueryQuery = { __typename?: 'Query', external: 
         { __typename?: 'SoulSeekStatus' }
         & { ' $fragmentRefs'?: { 'SoulSeekNetworkStatus_SoulSeekStatusFragment': SoulSeekNetworkStatus_SoulSeekStatusFragment } }
       ) } } };
+
+export type SoulSeekReachabilitySummary_QueryQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type SoulSeekReachabilitySummary_QueryQuery = { __typename?: 'Query', soulSeekSharingStatistics: { __typename?: 'SharingStatistics', isSharingEnabled: boolean, listeningPort: number, observedIp: string, observedPort?: number | null, observedAtUtc?: any | null, isPrivateIp: boolean, portMatches: boolean } };
 
 export type ImportSpotifyPlaylistMutationVariables = Exact<{
   playlistId: Scalars['String']['input'];
@@ -4067,6 +4149,8 @@ export const QBittorrentSettings_QueryDocument = {"kind":"Document","definitions
 export const UpdateQBittorrentSettingsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"UpdateQBittorrentSettings"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"UpdateQBittorrentSettingsInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"updateQBittorrentSettings"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"__typename"}},{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"UpdateQBittorrentSettingsSuccess"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"serverSettings"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"qBittorrentBaseUrl"}},{"kind":"Field","name":{"kind":"Name","value":"qBittorrentUsername"}},{"kind":"Field","name":{"kind":"Name","value":"qBittorrentSavePath"}}]}}]}},{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"UpdateQBittorrentSettingsError"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"message"}}]}}]}}]}}]} as unknown as DocumentNode<UpdateQBittorrentSettingsMutation, UpdateQBittorrentSettingsMutationVariables>;
 export const SoulSeekConnectionSettings_QueryDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"SoulSeekConnectionSettings_Query"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"serverSettings"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"soulSeekHost"}},{"kind":"Field","name":{"kind":"Name","value":"soulSeekPort"}},{"kind":"Field","name":{"kind":"Name","value":"soulSeekUsername"}}]}}]}}]} as unknown as DocumentNode<SoulSeekConnectionSettings_QueryQuery, SoulSeekConnectionSettings_QueryQueryVariables>;
 export const UpdateSoulSeekConnectionSettingsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"UpdateSoulSeekConnectionSettings"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"UpdateSoulSeekConnectionSettingsInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"updateSoulSeekConnectionSettings"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"__typename"}},{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"UpdateSoulSeekConnectionSettingsSuccess"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"serverSettings"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"soulSeekHost"}},{"kind":"Field","name":{"kind":"Name","value":"soulSeekPort"}},{"kind":"Field","name":{"kind":"Name","value":"soulSeekUsername"}}]}}]}},{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"UpdateSoulSeekConnectionSettingsError"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"message"}}]}}]}}]}}]} as unknown as DocumentNode<UpdateSoulSeekConnectionSettingsMutation, UpdateSoulSeekConnectionSettingsMutationVariables>;
+export const SoulSeekReachabilityCard_QueryDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"SoulSeekReachabilityCard_Query"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"soulSeekSharingStatistics"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"isSharingEnabled"}},{"kind":"Field","name":{"kind":"Name","value":"sharedFileCount"}},{"kind":"Field","name":{"kind":"Name","value":"libraryPath"}},{"kind":"Field","name":{"kind":"Name","value":"listeningPort"}},{"kind":"Field","name":{"kind":"Name","value":"totalLibrarySize"}},{"kind":"Field","name":{"kind":"Name","value":"observedIp"}},{"kind":"Field","name":{"kind":"Name","value":"observedPort"}},{"kind":"Field","name":{"kind":"Name","value":"observedAtUtc"}},{"kind":"Field","name":{"kind":"Name","value":"isPrivateIp"}},{"kind":"Field","name":{"kind":"Name","value":"portMatches"}}]}}]}}]} as unknown as DocumentNode<SoulSeekReachabilityCard_QueryQuery, SoulSeekReachabilityCard_QueryQueryVariables>;
+export const SoulSeekReachabilityCard_CheckDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"SoulSeekReachabilityCard_Check"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"checkSoulSeekReachability"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"__typename"}},{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"CheckSoulSeekReachabilitySuccess"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"statistics"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"isSharingEnabled"}},{"kind":"Field","name":{"kind":"Name","value":"sharedFileCount"}},{"kind":"Field","name":{"kind":"Name","value":"libraryPath"}},{"kind":"Field","name":{"kind":"Name","value":"listeningPort"}},{"kind":"Field","name":{"kind":"Name","value":"totalLibrarySize"}},{"kind":"Field","name":{"kind":"Name","value":"observedIp"}},{"kind":"Field","name":{"kind":"Name","value":"observedPort"}},{"kind":"Field","name":{"kind":"Name","value":"observedAtUtc"}},{"kind":"Field","name":{"kind":"Name","value":"isPrivateIp"}},{"kind":"Field","name":{"kind":"Name","value":"portMatches"}}]}}]}},{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"CheckSoulSeekReachabilityError"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"message"}}]}}]}}]}}]} as unknown as DocumentNode<SoulSeekReachabilityCard_CheckMutation, SoulSeekReachabilityCard_CheckMutationVariables>;
 export const SoulSeekSettings_QueryDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"SoulSeekSettings_Query"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"serverSettings"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"soulSeekSearchTimeLimitSeconds"}}]}}]}}]} as unknown as DocumentNode<SoulSeekSettings_QueryQuery, SoulSeekSettings_QueryQueryVariables>;
 export const UpdateSoulSeekSearchTimeLimitDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"UpdateSoulSeekSearchTimeLimit"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"seconds"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"updateSoulSeekSearchTimeLimit"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"seconds"},"value":{"kind":"Variable","name":{"kind":"Name","value":"seconds"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"__typename"}},{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"UpdateSoulSeekSearchTimeLimitSuccess"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"serverSettings"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"soulSeekSearchTimeLimitSeconds"}}]}}]}},{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"UpdateSoulSeekSearchTimeLimitError"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"message"}}]}}]}}]}}]} as unknown as DocumentNode<UpdateSoulSeekSearchTimeLimitMutation, UpdateSoulSeekSearchTimeLimitMutationVariables>;
 export const TopTracksServiceSettingsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"TopTracksServiceSettings"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"serverSettings"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"listenBrainzTopTracksEnabled"}},{"kind":"Field","name":{"kind":"Name","value":"spotifyTopTracksEnabled"}},{"kind":"Field","name":{"kind":"Name","value":"lastFmTopTracksEnabled"}}]}}]}}]} as unknown as DocumentNode<TopTracksServiceSettingsQuery, TopTracksServiceSettingsQueryVariables>;
@@ -4085,6 +4169,7 @@ export const ArtistImportQueueUpdatedSubDocument = {"kind":"Document","definitio
 export const CurrentArtistImportUpdatedSubDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"subscription","name":{"kind":"Name","value":"CurrentArtistImportUpdatedSub"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"currentArtistImportUpdated"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"artistName"}},{"kind":"Field","name":{"kind":"Name","value":"songTitle"}},{"kind":"Field","name":{"kind":"Name","value":"statusInfo"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"text"}}]}},{"kind":"Field","name":{"kind":"Name","value":"totalReleases"}},{"kind":"Field","name":{"kind":"Name","value":"completedReleases"}},{"kind":"Field","name":{"kind":"Name","value":"errorMessage"}}]}}]}}]} as unknown as DocumentNode<CurrentArtistImportUpdatedSubSubscription, CurrentArtistImportUpdatedSubSubscriptionVariables>;
 export const SoulSeekNetworkStatusSubscriptionDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"subscription","name":{"kind":"Name","value":"SoulSeekNetworkStatusSubscription"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"soulSeekStatusUpdated"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"SoulSeekNetworkStatus_SoulSeekStatus"}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"SoulSeekNetworkStatus_SoulSeekStatus"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"SoulSeekStatus"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"status"}}]}}]} as unknown as DocumentNode<SoulSeekNetworkStatusSubscriptionSubscription, SoulSeekNetworkStatusSubscriptionSubscriptionVariables>;
 export const SoulSeekNetworkStatusQueryDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"SoulSeekNetworkStatusQuery"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"external"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"soulSeek"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"status"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"SoulSeekNetworkStatus_SoulSeekStatus"}}]}}]}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"SoulSeekNetworkStatus_SoulSeekStatus"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"SoulSeekStatus"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"status"}}]}}]} as unknown as DocumentNode<SoulSeekNetworkStatusQueryQuery, SoulSeekNetworkStatusQueryQueryVariables>;
+export const SoulSeekReachabilitySummary_QueryDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"SoulSeekReachabilitySummary_Query"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"soulSeekSharingStatistics"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"isSharingEnabled"}},{"kind":"Field","name":{"kind":"Name","value":"listeningPort"}},{"kind":"Field","name":{"kind":"Name","value":"observedIp"}},{"kind":"Field","name":{"kind":"Name","value":"observedPort"}},{"kind":"Field","name":{"kind":"Name","value":"observedAtUtc"}},{"kind":"Field","name":{"kind":"Name","value":"isPrivateIp"}},{"kind":"Field","name":{"kind":"Name","value":"portMatches"}}]}}]}}]} as unknown as DocumentNode<SoulSeekReachabilitySummary_QueryQuery, SoulSeekReachabilitySummary_QueryQueryVariables>;
 export const ImportSpotifyPlaylistDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"ImportSpotifyPlaylist"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"playlistId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"userId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"UUID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"importSpotifyPlaylist"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"playlistId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"playlistId"}}},{"kind":"ObjectField","name":{"kind":"Name","value":"userId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"userId"}}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"__typename"}},{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"ImportSpotifyPlaylistSuccess"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"playlist"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}}]}},{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"ImportSpotifyPlaylistError"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"message"}}]}}]}}]}}]} as unknown as DocumentNode<ImportSpotifyPlaylistMutation, ImportSpotifyPlaylistMutationVariables>;
 export const UserPlaylistsLoader_QueryDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"UserPlaylistsLoader_Query"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"spotifyUsername"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"playlist"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"importPlaylists"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"spotify"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"spotifyPlaylistsForUser"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"username"},"value":{"kind":"Variable","name":{"kind":"Name","value":"spotifyUsername"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"SpotifyPlaylistsList_SpotifyPlaylist"}}]}}]}}]}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"SpotifyPlaylistsList_SpotifyPlaylist"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"SpotifyPlaylist"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"coverImageUrl"}}]}}]} as unknown as DocumentNode<UserPlaylistsLoader_QueryQuery, UserPlaylistsLoader_QueryQueryVariables>;
 export const ViewerIdForSpotifyImportDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"ViewerIdForSpotifyImport"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"viewer"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}}]}}]} as unknown as DocumentNode<ViewerIdForSpotifyImportQuery, ViewerIdForSpotifyImportQueryVariables>;
