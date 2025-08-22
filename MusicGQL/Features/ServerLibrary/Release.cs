@@ -67,21 +67,42 @@ public record Release([property: GraphQLIgnore] CachedRelease Model)
 
     public int DiscCount()
     {
+        // Prefer cached discs if present
+        if (Model.Discs is { Count: > 0 }) return Model.Discs.Count;
         var discs = Model.JsonRelease.Discs;
         return (discs is { Count: > 0 }) ? discs.Count : 1;
     }
 
     public IEnumerable<Disc> Discs()
     {
-        var discs = Model.JsonRelease.Discs;
+        // Prefer cached discs if present; fallback to single synthetic disc using cached tracks
+        var discs = Model.Discs;
         if (discs is { Count: > 0 })
         {
             return discs
                 .OrderBy(d => d.DiscNumber)
-                .Select(d => new Disc(this, d.DiscNumber, d.Title));
+                .Select(d => new Disc(d));
         }
-        // Fallback single-disc view
-        return new[] { new Disc(this, 1, null) };
+
+        // If JSON contains discs but cached discs are not built (e.g., direct construction in tests), map minimal discs from JSON
+        var jsonDiscs = Model.JsonRelease.Discs;
+        if (jsonDiscs is { Count: > 0 })
+        {
+            return jsonDiscs
+                .OrderBy(d => d.DiscNumber)
+                .Select(d => new Disc(new CachedDisc { DiscNumber = d.DiscNumber <= 0 ? 1 : d.DiscNumber, Title = d.Title, Tracks = new() }));
+        }
+
+        // Fallback: group cached tracks by disc number
+        var groups = Model.Tracks
+            .GroupBy(t => t.DiscNumber > 0 ? t.DiscNumber : 1)
+            .OrderBy(g => g.Key)
+            .ToList();
+        if (groups.Count == 0)
+        {
+            return new[] { new Disc(new CachedDisc { DiscNumber = 1, Title = null, Tracks = new() }) };
+        }
+        return groups.Select(g => new Disc(new CachedDisc { DiscNumber = g.Key, Title = null, Tracks = g.OrderBy(t => t.TrackNumber).ToList() }));
     }
 
     public async Task<bool> IsFullyMissing(ServerLibraryCache cache)
@@ -106,20 +127,9 @@ public record Release([property: GraphQLIgnore] CachedRelease Model)
     public string? MusicBrainzReleaseIdOverride() => Model.JsonRelease.Connections?.MusicBrainzReleaseIdOverride;
 };
 
-public record Disc(Release Release, int DNumber, string? DTitle)
+public record Disc([property: GraphQLIgnore] CachedDisc Model)
 {
-    public int DiscNumber() => DNumber;
-    public string? Title() => DTitle;
-    public async Task<IEnumerable<Track>> Tracks(ServerLibrary.Cache.ServerLibraryCache cache)
-    {
-        // Use cached tracks for this release and filter by disc number
-        var tracks = await cache.GetAllTracksForReleaseAsync(
-            Release.Model.ArtistId,
-            Release.Model.FolderName
-        );
-        return tracks
-            .Where(t => (t.DiscNumber > 0 ? t.DiscNumber : 1) == DNumber)
-            .OrderBy(t => t.JsonTrack.TrackNumber)
-            .Select(t => new Track(t));
-    }
+    public int DiscNumber() => Model.DiscNumber;
+    public string? Title() => Model.Title;
+    public IEnumerable<Track> Tracks() => Model.Tracks.OrderBy(t => t.TrackNumber).Select(t => new Track(t));
 }

@@ -13,6 +13,7 @@ public class CachedRelease
     public string ArtistName { get; set; } = string.Empty;
     public JsonRelease JsonRelease { get; set; } = new();
     public List<CachedTrack> Tracks { get; set; } = new();
+    public List<CachedDisc> Discs { get; set; } = new();
 
     // Download workflow status for the whole release
     public CachedReleaseDownloadStatus DownloadStatus { get; set; } =
