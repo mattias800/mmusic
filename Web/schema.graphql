@@ -383,6 +383,12 @@ type DeleteUserSuccess {
   user: UserSearchRoot!
 }
 
+type Disc {
+  discNumber: Int!
+  title: String
+  tracks: [Track!]!
+}
+
 type DownloadHistoryItem {
   artistId: String!
   artistName: String
@@ -627,6 +633,12 @@ type ImportedRelease {
   title: String!
 }
 
+type JsonDisc {
+  discNumber: Int!
+  title: String
+  tracks: [JsonTrack!]!
+}
+
 type JsonLabelInfo {
   catalogNumber: String
   disambiguation: String
@@ -639,6 +651,7 @@ type JsonRelease {
   artistName: String!
   connections: ReleaseServiceConnections
   coverArt: String
+  discs: [JsonDisc!]
   firstReleaseDate: String
   firstReleaseYear: String
   labels: [JsonLabelInfo!]
@@ -658,6 +671,7 @@ type JsonTrack {
   audioFilePath: String
   connections: JsonTrackServiceConnections
   credits: [JsonTrackCredit!]
+  discNumber: Int
   playCount: Long
   sortTitle: String
   statistics: JsonTrackStatistics
@@ -1211,6 +1225,8 @@ type Release {
   artist: Artist!
   artistName: String!
   coverArtUrl: String!
+  discCount: Int!
+  discs: [Disc!]!
   downloadStatus: ReleaseDownloadStatus!
   firstReleaseDate: String
   firstReleaseYear: String
@@ -1712,6 +1728,7 @@ type Subscription {
 
 type Track {
   credits: [TrackCredit!]!
+  discNumber: Int!
   id: ID!
   isMissing: Boolean!
   media: TrackMedia

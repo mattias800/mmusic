@@ -7,6 +7,7 @@ using MusicGQL.Integration.MusicBrainz;
 using MusicGQL.Features.ArtistImportQueue;
 using MusicGQL.Features.ArtistImportQueue.Services;
 using MusicGQL.Features.Import.Services.TopTracks;
+using MusicGQL.Features.Downloads.Util;
 using Path = System.IO.Path;
 
 namespace MusicGQL.Features.Import.Services;
@@ -942,7 +943,7 @@ public sealed class MusicBrainzImportExecutor(
                 existingText,
                 GetJsonOptions()
             );
-            if (jsonRelease?.Tracks == null || jsonRelease.Tracks.Count == 0)
+            if (jsonRelease == null)
             {
                 return;
             }
@@ -954,17 +955,60 @@ public sealed class MusicBrainzImportExecutor(
                 .Select(Path.GetFileName)
                 .ToList();
 
-            bool anyUpdated = false;
-            foreach (var track in jsonRelease.Tracks)
+            if (audioFiles.Count == 0)
             {
-                if (!string.IsNullOrEmpty(track.AudioFilePath))
-                    continue;
+                return;
+            }
 
-                var index = track.TrackNumber - 1;
-                if (index >= 0 && index < audioFiles.Count)
+            // Build a map disc -> track -> filename using robust filename parsing
+            var byDiscTrack = new Dictionary<int, Dictionary<int, string>>();
+            foreach (var f in audioFiles)
+            {
+                var (disc, track) = FileNameParsing.ExtractDiscTrackFromName(f);
+                if (track <= 0) continue;
+                if (!byDiscTrack.TryGetValue(disc, out var inner))
                 {
-                    track.AudioFilePath = "./" + audioFiles[index];
-                    anyUpdated = true;
+                    inner = new Dictionary<int, string>();
+                    byDiscTrack[disc] = inner;
+                }
+                if (!inner.ContainsKey(track)) inner[track] = f!;
+            }
+
+            bool anyUpdated = false;
+
+            // Update discs[] when present
+            if (jsonRelease.Discs is { Count: > 0 })
+            {
+                foreach (var d in jsonRelease.Discs)
+                {
+                    var discNum = d.DiscNumber > 0 ? d.DiscNumber : 1;
+                    if (d.Tracks == null) continue;
+                    if (!byDiscTrack.TryGetValue(discNum, out var inner)) continue;
+
+                    foreach (var t in d.Tracks)
+                    {
+                        if (!string.IsNullOrWhiteSpace(t.AudioFilePath)) continue;
+                        if (t.TrackNumber > 0 && inner.TryGetValue(t.TrackNumber, out var fname))
+                        {
+                            t.AudioFilePath = "./" + fname;
+                            anyUpdated = true;
+                        }
+                    }
+                }
+            }
+
+            // Update flattened tracks[] for compatibility when present
+            if (jsonRelease.Tracks is { Count: > 0 })
+            {
+                foreach (var t in jsonRelease.Tracks)
+                {
+                    if (!string.IsNullOrWhiteSpace(t.AudioFilePath)) continue;
+                    var discNum = t.DiscNumber ?? 1;
+                    if (byDiscTrack.TryGetValue(discNum, out var inner) && inner.TryGetValue(t.TrackNumber, out var fname))
+                    {
+                        t.AudioFilePath = "./" + fname;
+                        anyUpdated = true;
+                    }
                 }
             }
 

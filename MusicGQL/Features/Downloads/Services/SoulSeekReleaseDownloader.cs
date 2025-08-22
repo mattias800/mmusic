@@ -403,12 +403,28 @@ var queue = DownloadQueueFactory.Create(
                     expectedTrackCount
                 );
 
-                await cache.UpdateMediaAvailabilityStatus(
-                    artistId,
-                    releaseFolderName,
-                    displayTrack,
-                    CachedMediaAvailabilityStatus.Downloading
-                );
+                // Disc-aware status update when possible
+                var (discForStatus, trackForStatus) = FileNameParsing.ExtractDiscTrackFromName(item.FileName);
+                if (trackForStatus > 0)
+                {
+                    await cache.UpdateMediaAvailabilityStatus(
+                        artistId,
+                        releaseFolderName,
+                        discForStatus,
+                        trackForStatus,
+                        CachedMediaAvailabilityStatus.Downloading
+                    );
+                }
+                else
+                {
+                    // Fallback to legacy single-disc behavior
+                    await cache.UpdateMediaAvailabilityStatus(
+                        artistId,
+                        releaseFolderName,
+                        displayTrack,
+                        CachedMediaAvailabilityStatus.Downloading
+                    );
+                }
 
                 // Declare variables outside try block so they're accessible in catch block
                 var lastDataTick = DateTime.UtcNow;
@@ -615,13 +631,29 @@ var sizeBytes = new System.IO.FileInfo(localPath).Length;
                     break;
                 }
 
-                await cache.UpdateMediaAvailabilityStatus(
-                    artistId,
-                    releaseFolderName,
-                    displayTrack,
-                    CachedMediaAvailabilityStatus.Processing
-                );
-                logger.LogDebug("[SoulSeek] Marked track {Track} as Processing", displayTrack);
+                // Disc-aware processing status when possible
+                var (discForProcessing, trackForProcessing) = FileNameParsing.ExtractDiscTrackFromName(item.FileName);
+                if (trackForProcessing > 0)
+                {
+                    await cache.UpdateMediaAvailabilityStatus(
+                        artistId,
+                        releaseFolderName,
+                        discForProcessing,
+                        trackForProcessing,
+                        CachedMediaAvailabilityStatus.Processing
+                    );
+                    logger.LogDebug("[SoulSeek] Marked disc {Disc} track {Track} as Processing", discForProcessing, trackForProcessing);
+                }
+                else
+                {
+                    await cache.UpdateMediaAvailabilityStatus(
+                        artistId,
+                        releaseFolderName,
+                        displayTrack,
+                        CachedMediaAvailabilityStatus.Processing
+                    );
+                    logger.LogDebug("[SoulSeek] Marked track {Track} as Processing", displayTrack);
+                }
 
                 trackIndex++;
                 try
