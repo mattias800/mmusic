@@ -62,24 +62,16 @@ internal static class ProwlarrResultFilter
 
     private static bool ContainsArtistName(string title, string artistName)
     {
+        // Simple fuzzy: require artist token containment or close similarity on at least half of words
         var artistWords = artistName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
         var titleWords = title.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-
-        var matchingWords = artistWords.Count(word => titleWords.Any(titleWord =>
-            titleWord.Contains(word) || word.Contains(titleWord)));
-
+        var matchingWords = artistWords.Count(word => titleWords.Any(titleWord => ProwlarrTextMatch.FuzzyWordMatch(titleWord, word)));
         return matchingWords >= Math.Max(1, artistWords.Length / 2);
     }
 
     private static bool ContainsAlbumTitle(string title, string albumTitle)
     {
-        var albumWords = albumTitle.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-        var titleWords = title.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-
-        var matchingWords = albumWords.Count(word => titleWords.Any(titleWord =>
-            titleWord.Contains(word) || word.Contains(titleWord)));
-
-        return matchingWords >= Math.Max(1, albumWords.Length / 2);
+        return ProwlarrTextMatch.ContainsAlbumTitleFuzzy(title, albumTitle);
     }
 }
 

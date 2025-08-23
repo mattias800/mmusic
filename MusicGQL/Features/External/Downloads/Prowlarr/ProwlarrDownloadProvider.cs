@@ -305,16 +305,12 @@ public class ProwlarrDownloadProvider(
                 return bad.Any(k => t.Contains(k));
             }
 
-            var nzb = results.FirstOrDefault(r =>
-                !string.IsNullOrWhiteSpace(r.DownloadUrl)
-                && !LooksLikeTorrentUrl(r.DownloadUrl!)
-                && TitleMatches(r.Title)
-                && !LooksLikeDiscography(r.Title)
-            );
-            if (allowSab && nzb is not null && !string.IsNullOrWhiteSpace(nzb.DownloadUrl))
+            var selection = ProwlarrSelectionLogic.Decide(results, artistName, releaseTitle, allowSab, allowQbit, settings.DiscographyEnabled);
+
+            if (selection.Type == ProwlarrSelectionType.Nzb && selection.Release is not null && !string.IsNullOrWhiteSpace(selection.UrlOrMagnet))
             {
-                // Always fetch NZB bytes and upload them to SABnzbd to avoid SAB needing network access to Prowlarr
-                var url = EnsureProwlarrApiKey(nzb.DownloadUrl!);
+                var nzb = selection.Release;
+                var url = EnsureProwlarrApiKey(selection.UrlOrMagnet!);
                 logger.LogInformation("[Prowlarr] Uploading NZB to SABnzbd: {Title}", nzb.Title ?? "(no title)");
                 try
                 {
@@ -388,12 +384,10 @@ public class ProwlarrDownloadProvider(
             }
 
             TryMagnet:
-            var magnet = results.FirstOrDefault(r =>
-                !string.IsNullOrWhiteSpace(r.MagnetUrl) && TitleMatches(r.Title) && !LooksLikeDiscography(r.Title));
-            if (allowQbit && magnet is not null && !string.IsNullOrWhiteSpace(magnet.MagnetUrl))
+            if (selection.Type == ProwlarrSelectionType.Magnet && selection.UrlOrMagnet is not null && selection.Release is not null)
             {
-                logger.LogInformation("[Prowlarr] Handing off magnet to qBittorrent: {Title}",
-                    magnet.Title ?? "(no title)");
+                var magnet = selection.Release;
+                logger.LogInformation("[Prowlarr] Handing off magnet to qBittorrent: {Title}", magnet.Title ?? "(no title)");
                 try
                 {
                     relLogger.Info($"[Prowlarr] Handing off magnet to qBittorrent: {magnet.Title}");
@@ -402,7 +396,7 @@ public class ProwlarrDownloadProvider(
                 {
                 }
 
-                var ok = await qb.AddMagnetAsync(magnet.MagnetUrl!, null, cancellationToken);
+                var ok = await qb.AddMagnetAsync(selection.UrlOrMagnet!, null, cancellationToken);
                 if (ok)
                 {
                     try
@@ -427,10 +421,7 @@ public class ProwlarrDownloadProvider(
             }
 
             // Fallbacks by type: if we have a torrent URL, send to qBittorrent; if generic HTTP and NZB-like, send to SAB
-            var torrentUrl = results.FirstOrDefault(r =>
-                !string.IsNullOrWhiteSpace(r.DownloadUrl) && LooksLikeTorrentUrl(r.DownloadUrl!) &&
-                TitleMatches(r.Title) && !LooksLikeDiscography(r.Title))?.DownloadUrl;
-            if (allowQbit && !string.IsNullOrWhiteSpace(torrentUrl))
+            if (selection.Type == ProwlarrSelectionType.Torrent && !string.IsNullOrWhiteSpace(selection.UrlOrMagnet))
             {
                 logger.LogInformation("[Prowlarr] Handing off .torrent URL to qBittorrent");
                 try
@@ -441,7 +432,7 @@ public class ProwlarrDownloadProvider(
                 {
                 }
 
-                var okT = await qb.AddByUrlAsync(EnsureProwlarrApiKey(torrentUrl!), null, cancellationToken);
+                var okT = await qb.AddByUrlAsync(EnsureProwlarrApiKey(selection.UrlOrMagnet!), null, cancellationToken);
                 if (okT)
                 {
                     try
@@ -456,10 +447,7 @@ public class ProwlarrDownloadProvider(
                 }
             }
 
-            var httpUrl = results.FirstOrDefault(r =>
-                    !string.IsNullOrWhiteSpace(r.DownloadUrl) && TitleMatches(r.Title) &&
-                    !LooksLikeDiscography(r.Title))
-                ?.DownloadUrl;
+            var httpUrl = selection.Type == ProwlarrSelectionType.Nzb ? selection.UrlOrMagnet : null;
 
             // Discography path (transparent): if discography-like and allowed, handoff to SAB/qBit into staging
             var anyDiscography = results.FirstOrDefault(r => LooksLikeDiscography(r.Title));
