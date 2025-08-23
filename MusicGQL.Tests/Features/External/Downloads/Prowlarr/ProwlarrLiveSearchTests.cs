@@ -6,6 +6,13 @@ namespace MusicGQL.Tests.Features.External.Downloads.Prowlarr;
 
 public class ProwlarrLiveSearchTests
 {
+    private static (string Artist, string Album) ReadTestCase()
+    {
+        var artist = Environment.GetEnvironmentVariable("PROWLARR__TEST_ARTIST") ?? "Zara Larsson";
+        var album = Environment.GetEnvironmentVariable("PROWLARR__TEST_ALBUM") ?? "Introducing";
+        return (artist, album);
+    }
+
     private static (string? BaseUrl, string? ApiKey) ReadConfig()
     {
         // Prefer environment variables: PROWLARR__BASEURL and PROWLARR__APIKEY
@@ -30,8 +37,7 @@ public class ProwlarrLiveSearchTests
 
         baseUrl = baseUrl!.TrimEnd('/');
 
-        var artist = "Zara Larsson";
-        var album = "Introducing";
+        var (artist, album) = ReadTestCase();
         var query = $"{artist} {album}";
 
         var urls = new List<string>

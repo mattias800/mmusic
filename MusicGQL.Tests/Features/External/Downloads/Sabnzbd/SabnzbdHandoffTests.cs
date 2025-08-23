@@ -6,6 +6,13 @@ namespace MusicGQL.Tests.Features.External.Downloads.Sabnzbd;
 
 public class SabnzbdHandoffTests
 {
+    private static (string Artist, string Album) ReadTestCase()
+    {
+        var artist = Environment.GetEnvironmentVariable("PROWLARR__TEST_ARTIST") ?? "Zara Larsson";
+        var album = Environment.GetEnvironmentVariable("PROWLARR__TEST_ALBUM") ?? "Introducing";
+        return (artist, album);
+    }
+
     private static (string? BaseUrl, string? ApiKey, string Category) ReadSabEnv()
     {
         var baseUrl = Environment.GetEnvironmentVariable("SABNZBD__BASEURL")
@@ -42,9 +49,13 @@ public class SabnzbdHandoffTests
         prowBase = prowBase!.TrimEnd('/');
         sabBase = sabBase!.TrimEnd('/');
 
-        var artist = "Zara Larsson";
-        var album = "Introducing";
-        var queries = new[] { $"{artist} Introducing", $"{artist} Introduction" };
+        var (artist, album) = ReadTestCase();
+        var queries = new List<string> { $"{artist} {album}" };
+        // Add a fallback variant for common naming differences (e.g., Introducing vs Introduction)
+        if (!string.Equals(album, "Introduction", StringComparison.OrdinalIgnoreCase))
+        {
+            queries.Add($"{artist} Introduction");
+        }
 
         using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(20) };
 

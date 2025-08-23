@@ -1376,11 +1376,13 @@ type ServerSettings {
   qBittorrentBaseUrl: String
   qBittorrentSavePath: String
   qBittorrentUsername: String
+  searchEnhanceShortTitles: Boolean!
   serverLibraryManifestStatus: ServerLibraryManifestStatus!
   soulSeekBatchDownloadingEnabled: Boolean!
   soulSeekHost: String!
   soulSeekLibrarySharingEnabled: Boolean!
   soulSeekListeningPort: Int!
+  soulSeekMaxReleasesPerUserDiscovery: Int!
   soulSeekNoDataTimeoutSeconds: Int!
   soulSeekPort: Int!
   soulSeekQueueWaitTimeoutSeconds: Int!

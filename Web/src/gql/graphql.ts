@@ -1972,11 +1972,13 @@ export type ServerSettings = {
   qBittorrentBaseUrl?: Maybe<Scalars['String']['output']>;
   qBittorrentSavePath?: Maybe<Scalars['String']['output']>;
   qBittorrentUsername?: Maybe<Scalars['String']['output']>;
+  searchEnhanceShortTitles: Scalars['Boolean']['output'];
   serverLibraryManifestStatus: ServerLibraryManifestStatus;
   soulSeekBatchDownloadingEnabled: Scalars['Boolean']['output'];
   soulSeekHost: Scalars['String']['output'];
   soulSeekLibrarySharingEnabled: Scalars['Boolean']['output'];
   soulSeekListeningPort: Scalars['Int']['output'];
+  soulSeekMaxReleasesPerUserDiscovery: Scalars['Int']['output'];
   soulSeekNoDataTimeoutSeconds: Scalars['Int']['output'];
   soulSeekPort: Scalars['Int']['output'];
   soulSeekQueueWaitTimeoutSeconds: Scalars['Int']['output'];

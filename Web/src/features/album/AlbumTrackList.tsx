@@ -1,4 +1,4 @@
-import { FragmentType, useFragment } from "@/gql";
+import { FragmentType, graphql, useFragment } from "@/gql";
 import * as React from "react";
 import { TrackItem } from "@/components/track-item/TrackItem.tsx";
 import { useAppDispatch, useAppSelector } from "@/ReduxAppHooks.ts";
@@ -6,9 +6,46 @@ import { musicPlayerSlice } from "@/features/music-players/MusicPlayerSlice.ts";
 import { createMusicPlayerTrack } from "@/features/music-players/MusicPlayerTrackFactory.ts";
 import { TrackCreditLinks } from "@/features/album/TrackCreditLinks.tsx";
 import { AlbumTrackTag } from "@/features/album/AlbumTrackTag.tsx";
-import { AlbumTrackList_ReleaseFragmentDoc, MusicPlayerTrackFactory_TrackFragmentDoc } from "@/gql/graphql.ts";
+import { MusicPlayerTrackFactory_TrackFragmentDoc } from "@/gql/graphql.ts";
 
-const albumTrackListReleaseFragment = AlbumTrackList_ReleaseFragmentDoc;
+const albumTrackListReleaseFragment = graphql(`
+  fragment AlbumTrackList_Release on Release {
+    id
+    title
+    folderName
+    artist { id }
+    discCount
+    discs {
+      discNumber
+      title
+      tracks {
+        id
+        title
+        trackLength
+        isMissing
+        media { id audioUrl audioQualityLabel }
+        ...TrackCreditLinks_Track
+        ...MusicPlayerTrackFactory_Track
+        ...AlbumTrackTag_Track
+        credits { artistName artist { id } mbArtist { id } }
+        statistics { listeners playCount }
+      }
+    }
+    # Flattened tracks remain for single-disc and back-compat flows
+    tracks {
+      id
+      title
+      trackLength
+      isMissing
+      media { id audioUrl audioQualityLabel }
+      ...TrackCreditLinks_Track
+      ...MusicPlayerTrackFactory_Track
+      ...AlbumTrackTag_Track
+      credits { artistName artist { id } mbArtist { id } }
+      statistics { listeners playCount }
+    }
+  }
+`);
 
 interface AlbumTrackListProps {
   releaseGroup: FragmentType<typeof albumTrackListReleaseFragment>;

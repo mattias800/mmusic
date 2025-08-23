@@ -15861,6 +15861,22 @@
             "deprecationReason": null
           },
           {
+            "name": "searchEnhanceShortTitles",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "Boolean",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
             "name": "serverLibraryManifestStatus",
             "description": null,
             "args": [],
@@ -15926,6 +15942,22 @@
           },
           {
             "name": "soulSeekListeningPort",
+            "description": null,
+            "args": [],
+            "type": {
+              "kind": "NON_NULL",
+              "name": null,
+              "ofType": {
+                "kind": "SCALAR",
+                "name": "Int",
+                "ofType": null
+              }
+            },
+            "isDeprecated": false,
+            "deprecationReason": null
+          },
+          {
+            "name": "soulSeekMaxReleasesPerUserDiscovery",
             "description": null,
             "args": [],
             "type": {
