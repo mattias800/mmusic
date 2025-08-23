@@ -176,8 +176,12 @@ public class ProwlarrClient(
                 return false;
 
             // Test the actual search endpoint with a simple query
-            var testUrl =
-                $"{baseUrl}/api/v1/search?apikey={Uri.EscapeDataString(apiKey)}&term=test&categories=3000&categories=3010&categories=3030";
+            // Use query and repeated Audio categories; optionally restrict to configured indexers
+            var testUrlBase = $"{baseUrl}/api/v1/search?apikey={Uri.EscapeDataString(apiKey)}&query=test&categories=3000&categories=3010&categories=3040";
+            var indexers = options.Value.IndexerIds;
+            var testUrl = testUrlBase + (indexers is { Length: > 0 }
+                ? string.Concat(indexers.Select(i => $"&indexers={i}"))
+                : string.Empty);
             using var req = new HttpRequestMessage(HttpMethod.Get, testUrl);
             req.Headers.Accept.Clear();
             req.Headers.Accept.ParseAdd("application/json");
@@ -911,29 +915,15 @@ public class ProwlarrClient(
             return Array.Empty<ProwlarrRelease>();
         }
 
-        // Try a few parameter variants to handle API changes/configs
-        var candidateUrls = new List<string>
-        {
-            // Prioritize searches WITHOUT category filters first (as they work better for manual searches)
-            $"{baseUrl}/api/v1/search?apikey={Uri.EscapeDataString(apiKey)}&query={Uri.EscapeDataString(query)}",
-            $"{baseUrl}/api/v1/search?apikey={Uri.EscapeDataString(apiKey)}&query={Uri.EscapeDataString(query)}&type=search",
-            $"{baseUrl}/api/v1/search?apikey={Uri.EscapeDataString(apiKey)}&query={Uri.EscapeDataString(query)}&limit=50",
-            // Alternate param names without categories
-            $"{baseUrl}/api/v1/search?apikey={Uri.EscapeDataString(apiKey)}&term={Uri.EscapeDataString(query)}",
-            $"{baseUrl}/api/v1/search?apikey={Uri.EscapeDataString(apiKey)}&q={Uri.EscapeDataString(query)}",
-            $"{baseUrl}/api/v1/search?apikey={Uri.EscapeDataString(apiKey)}&Query={Uri.EscapeDataString(query)}",
-            // Fallback to category-specific searches only if broad searches fail
-            $"{baseUrl}/api/v1/search?apikey={Uri.EscapeDataString(apiKey)}&query={Uri.EscapeDataString(query)}&categories=3000&categories=3010&categories=3030&categories=3040",
-            $"{baseUrl}/api/v1/search?apikey={Uri.EscapeDataString(apiKey)}&query={Uri.EscapeDataString(query)}&categories=3000&categories=3010&categories=3030&categories=3040&limit=50",
-            $"{baseUrl}/api/v1/search?apikey={Uri.EscapeDataString(apiKey)}&term={Uri.EscapeDataString(query)}&categories=3000&categories=3010&categories=3030&categories=3040",
-            $"{baseUrl}/api/v1/search?apikey={Uri.EscapeDataString(apiKey)}&term={Uri.EscapeDataString(query)}&categories=3000&categories=3010&categories=3030&categories=3040&limit=50",
-        };
+        // Build candidate URLs via shared builder for verifiable composition
+        var candidateUrls = ProwlarrQueryBuilder.BuildCandidateUrls(baseUrl!, apiKey!, query, options.Value.IndexerIds, logger);
 
+        int attemptNumber = 0;
         foreach (var url in candidateUrls)
         {
             try
             {
-                var attemptNumber = candidateUrls.IndexOf(url) + 1;
+                attemptNumber++;
                 logger.LogInformation("[Prowlarr] ===== URL ATTEMPT #{Attempt}/{Total} =====", attemptNumber,
                     candidateUrls.Count);
                 relLogger?.Info($"[Prowlarr] ===== URL ATTEMPT #{attemptNumber}/{candidateUrls.Count} =====");
@@ -1113,7 +1103,7 @@ public class ProwlarrClient(
                               "HttpClient timeout: {HttpTimeout}s. " +
                               "Configuration valid: {ConfigValid}. " +
                               "Client info: {ClientInfo}",
-            query, options.Value.BaseUrl, options.Value.TimeoutSeconds, options.Value.MaxRetries,
+            query, options.Value.TimeoutSeconds, options.Value.MaxRetries,
             options.Value.TestConnectivityFirst,
             GetConfigurationSummary(), await IsHealthyAsync(cancellationToken) ? "HEALTHY" : "UNHEALTHY",
             GetCurrentTimeout().TotalSeconds, IsConfigurationValid(), GetClientInfo());

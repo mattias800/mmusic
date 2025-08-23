@@ -8,6 +8,12 @@ public class ProwlarrOptions
     public string? ApiKey { get; set; }
     
     /// <summary>
+    /// Optional list of indexer IDs to restrict searches to (matches Prowlarr indexer IDs).
+    /// If provided, the client will repeat indexers=ID for each value in API calls.
+    /// </summary>
+    public int[]? IndexerIds { get; set; }
+    
+    /// <summary>
     /// Timeout in seconds for Prowlarr API requests. Default is 30 seconds.
     /// </summary>
     public int TimeoutSeconds { get; set; } = 30;
@@ -37,5 +43,4 @@ public class ProwlarrOptions
     /// </summary>
     public int MaxConcurrentRequests { get; set; } = 1;
 }
-
 

@@ -48,8 +48,8 @@ public class ProwlarrLiveSearchTests
             $"{baseUrl}/api/v1/search?apikey={Uri.EscapeDataString(apiKey!)}&term={Uri.EscapeDataString(query)}",
             $"{baseUrl}/api/v1/search?apikey={Uri.EscapeDataString(apiKey!)}&q={Uri.EscapeDataString(query)}",
             $"{baseUrl}/api/v1/search?apikey={Uri.EscapeDataString(apiKey!)}&Query={Uri.EscapeDataString(query)}",
-            $"{baseUrl}/api/v1/search?apikey={Uri.EscapeDataString(apiKey!)}&query={Uri.EscapeDataString(query)}&categories=3000&categories=3010&categories=3030&categories=3040",
-            $"{baseUrl}/api/v1/search?apikey={Uri.EscapeDataString(apiKey!)}&term={Uri.EscapeDataString(query)}&categories=3000&categories=3010&categories=3030&categories=3040",
+            $"{baseUrl}/api/v1/search?apikey={Uri.EscapeDataString(apiKey!)}&query={Uri.EscapeDataString(query)}&categories=3000&categories=3010&categories=3040",
+            $"{baseUrl}/api/v1/search?apikey={Uri.EscapeDataString(apiKey!)}&term={Uri.EscapeDataString(query)}&categories=3000&categories=3010&categories=3040",
         };
 
         using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(20) };
