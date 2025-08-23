@@ -18,7 +18,8 @@ public class DbServerSettings
     public int SoulSeekNoDataTimeoutSeconds { get; set; } = 20;
 
     // Max seconds to wait in a remote user's upload queue before cancelling (no data yet)
-    public int SoulSeekQueueWaitTimeoutSeconds { get; set; } = 600;
+    // Default increased to 15 minutes as some users may have very long queues
+    public int SoulSeekQueueWaitTimeoutSeconds { get; set; } = 900;
 
     // Enable batch downloading from Soulseek users (discover additional releases after successful downloads)
     public bool SoulSeekBatchDownloadingEnabled { get; set; } = true;
@@ -89,7 +90,7 @@ public static class DefaultDbServerSettingsProvider
             LogsFolderPath = "",
             SoulSeekSearchTimeLimitSeconds = 60,
             SoulSeekNoDataTimeoutSeconds = 20,
-            SoulSeekQueueWaitTimeoutSeconds = 600,
+            SoulSeekQueueWaitTimeoutSeconds = 900,
             SoulSeekBatchDownloadingEnabled = true,
             SoulSeekMaxReleasesPerUserDiscovery = 5,
             SearchEnhanceShortTitles = true,

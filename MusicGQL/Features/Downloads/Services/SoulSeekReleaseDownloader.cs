@@ -180,6 +180,11 @@ public class SoulSeekReleaseDownloader(
         int noDataTimeoutSec = 20;
         int queueWaitTimeoutSec = 600;
         try { var s = await settingsAccessor.GetAsync(); timeLimitSec = Math.Max(5, s.SoulSeekSearchTimeLimitSeconds); noDataTimeoutSec = Math.Max(5, s.SoulSeekNoDataTimeoutSeconds); queueWaitTimeoutSec = Math.Max(60, s.SoulSeekQueueWaitTimeoutSeconds); } catch { }
+
+        // Log the timeout settings for debugging
+        logger.LogInformation("[SoulSeek] Using timeouts - NoData: {NoData}s, QueueWait: {QueueWait}s", noDataTimeoutSec, queueWaitTimeoutSec);
+        try { relLogger.Info($"Timeout settings - NoData: {noDataTimeoutSec}s, QueueWait: {queueWaitTimeoutSec}s"); } catch { }
+
         // Shared time budget across all query forms when queue has waiting items
         TimeSpan totalSearchBudget = TimeSpan.FromSeconds(timeLimitSec);
         var budgetStartUtc = DateTime.UtcNow;
@@ -467,9 +472,9 @@ var queue = DownloadQueueFactory.Create(
                                 var allowExtendedWait = !hasAnyBytesForUser;
                                 if (allowExtendedWait && !loggedExtendedWaitMessage)
                                 {
-                                    var minutes = Math.Max(1, (int)Math.Round(queueWaitTimeoutSec / 60.0));
-                                    logger.LogInformation("[SoulSeek] No data yet from user '{User}'. Assuming remote queue — waiting up to {Minutes} minutes for download to start", candidate.Username, minutes);
-                                    try { relLogger.Info($"[SoulSeek] No data yet from user '{candidate.Username}'. Assuming remote queue — will wait up to {minutes} minutes for availability"); } catch { }
+                                    var minutes = Math.Max(1, (int)Math.Ceiling(queueWaitTimeoutSec / 60.0));
+                                    logger.LogInformation("[SoulSeek] No data yet from user '{User}'. Assuming remote queue — waiting up to {Minutes} minutes ({TotalSeconds}s) for download to start", candidate.Username, minutes, queueWaitTimeoutSec);
+                                    try { relLogger.Info($"[SoulSeek] No data yet from user '{candidate.Username}'. Assuming remote queue — will wait up to {minutes} minutes ({queueWaitTimeoutSec}s) for availability"); } catch { }
                                     loggedExtendedWaitMessage = true;
                                 }
                                 var userThreshold = allowExtendedWait ? Math.Max(noDataTimeoutSec, queueWaitTimeoutSec) : noDataTimeoutSec;

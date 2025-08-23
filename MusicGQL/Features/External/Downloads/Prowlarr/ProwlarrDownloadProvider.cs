@@ -41,18 +41,26 @@ public class ProwlarrDownloadProvider(
                 relLogger = relLoggerImpl;
             }
         }
-        catch { }
+        catch
+        {
+        }
 
         try
         {
             // Read toggles
             var settings = await serverSettingsAccessor.GetAsync();
-        var allowSab = settings.EnableSabnzbdDownloader;
-        var allowQbit = settings.EnableQBittorrentDownloader;
+            var allowSab = settings.EnableSabnzbdDownloader;
+            var allowQbit = settings.EnableQBittorrentDownloader;
 
             // 1) Search Prowlarr for nzb/magnet results
             logger.LogInformation("[Prowlarr] Begin provider for {Artist} - {Release}", artistName, releaseTitle);
-            try { relLogger.Info($"[Prowlarr] Begin provider for {artistName} - {releaseTitle}"); } catch { }
+            try
+            {
+                relLogger.Info($"[Prowlarr] Begin provider for {artistName} - {releaseTitle}");
+            }
+            catch
+            {
+            }
 
             // Get year information from cache for better search specificity
             var cachedRelease = await cache.GetReleaseByArtistAndFolderAsync(artistId, releaseFolderName);
@@ -63,19 +71,55 @@ public class ProwlarrDownloadProvider(
                 year = parsedYear;
             }
 
+            // Validate configuration before searching, to avoid silent fast-fail
+            var baseUrl = prowlarrOptions.Value.BaseUrl;
+            var apiKey = prowlarrOptions.Value.ApiKey;
+            if (string.IsNullOrWhiteSpace(baseUrl) || string.IsNullOrWhiteSpace(apiKey))
+            {
+                logger.LogWarning(
+                    "[Prowlarr] Skipping search due to missing configuration. BaseUrl='{BaseUrl}', ApiKeyConfigured={HasApiKey}",
+                    baseUrl ?? "", !string.IsNullOrWhiteSpace(apiKey));
+                try
+                {
+                    relLogger.Warn(
+                        $"[Prowlarr] Skipping: missing configuration. BaseUrl='{baseUrl ?? ""}', ApiKeyConfigured={!string.IsNullOrWhiteSpace(apiKey)}");
+                }
+                catch
+                {
+                }
+
+                return false;
+            }
+
             var results = await prowlarr.SearchAlbumAsync(artistName, releaseTitle, year, cancellationToken);
-            logger.LogInformation("[Prowlarr] Search returned {Count} results for {Artist} - {Release}", results.Count, artistName, releaseTitle);
-            try { relLogger.Info($"[Prowlarr] Search returned {results.Count} results"); } catch { }
+            logger.LogInformation("[Prowlarr] Search returned {Count} results for {Artist} - {Release}", results.Count,
+                artistName, releaseTitle);
+            try
+            {
+                relLogger.Info($"[Prowlarr] Search returned {results.Count} results");
+            }
+            catch
+            {
+            }
+
             try
             {
                 int i = 0;
                 foreach (var r in results)
                 {
-                    if (i++ >= 10) { relLogger.Info("[Prowlarr] (more results omitted)…"); break; }
-                    relLogger.Info($"[Prowlarr] Raw result: title={r.Title} size={r.Size} magnet={(string.IsNullOrWhiteSpace(r.MagnetUrl)?"no":"yes")} url={(string.IsNullOrWhiteSpace(r.DownloadUrl)?"no":"yes")} idx={r.IndexerId}");
+                    if (i++ >= 10)
+                    {
+                        relLogger.Info("[Prowlarr] (more results omitted)…");
+                        break;
+                    }
+
+                    relLogger.Info(
+                        $"[Prowlarr] Raw result: title={r.Title} size={r.Size} magnet={(string.IsNullOrWhiteSpace(r.MagnetUrl) ? "no" : "yes")} url={(string.IsNullOrWhiteSpace(r.DownloadUrl) ? "no" : "yes")} idx={r.IndexerId}");
                 }
             }
-            catch { }
+            catch
+            {
+            }
 
             // Prefer items that look like full releases and larger sizes first
             // Filter and score results for music albums only; reject obvious mismatches (e.g., TV packs)
@@ -95,152 +139,315 @@ public class ProwlarrDownloadProvider(
                     int shown = 0;
                     foreach (var r in preFilter)
                     {
-                        if (shown++ >= 10) { relLogger.Info("[Prowlarr] (more rejected omitted)…"); break; }
+                        if (shown++ >= 10)
+                        {
+                            relLogger.Info("[Prowlarr] (more rejected omitted)…");
+                            break;
+                        }
+
                         var reasons = GetProviderRejectionReasons(r, artistName, releaseTitle);
                         relLogger.Info($"[Prowlarr] Rejected: title={r.Title} reasons=[{string.Join(',', reasons)}]");
                     }
                 }
             }
-            catch { }
+            catch
+            {
+            }
 
             results = filtered;
-            if (results.Count == 0) { try { relLogger.Warn("[Prowlarr] No results after filtering"); } catch { } return false; }
-
-        // 2) Prefer NZB if available; otherwise fallback to magnet
-        // Prefer Prowlarr-provided downloadUrl; many setups do not include .nzb extension
-        // Extra guard: only consider results whose title clearly matches artist and release
-        bool TitleMatches(string? title)
-        {
-            if (string.IsNullOrWhiteSpace(title)) return false;
-            var t = title.ToLowerInvariant();
-            var a = (artistName ?? string.Empty).ToLowerInvariant();
-            var rel = (releaseTitle ?? string.Empty).ToLowerInvariant();
-            // Require both artist and at least half of album words
-            if (!t.Contains(a)) return false;
-            var albumWords = rel.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-            var titleWords = t.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-            var matchCount = albumWords.Count(w => titleWords.Any(x => x.Contains(w) || w.Contains(x)));
-            return matchCount >= Math.Max(1, albumWords.Length / 2);
-        }
-
-        // Prefer NZB for SAB, but explicitly avoid .torrent URLs here
-        static bool LooksLikeDiscography(string? title)
-        {
-            if (string.IsNullOrWhiteSpace(title)) return false;
-            var t = title.ToLowerInvariant();
-            string[] bad = ["discography", "collection", "anthology", "complete", "box set", "boxset", "complete works", "singles collection", "mega pack"];
-            return bad.Any(k => t.Contains(k));
-        }
-        var nzb = results.FirstOrDefault(r =>
-            !string.IsNullOrWhiteSpace(r.DownloadUrl)
-            && !LooksLikeTorrentUrl(r.DownloadUrl!)
-            && TitleMatches(r.Title)
-            && !LooksLikeDiscography(r.Title)
-        );
-            if (allowSab && nzb is not null && !string.IsNullOrWhiteSpace(nzb.DownloadUrl))
-        {
-            // Always fetch NZB bytes and upload them to SABnzbd to avoid SAB needing network access to Prowlarr
-            var url = EnsureProwlarrApiKey(nzb.DownloadUrl!);
-            logger.LogInformation("[Prowlarr] Uploading NZB to SABnzbd: {Title}", nzb.Title ?? "(no title)");
-            try
+            if (results.Count == 0)
             {
-                try { relLogger.Info($"[Prowlarr] Uploading NZB to SABnzbd: {nzb.Title}"); } catch { }
-                using var http = new HttpClient();
-                var bytes = await http.GetByteArrayAsync(url, cancellationToken);
-                // Validate the payload looks like an NZB, not a torrent
-                if (!LooksLikeNzb(bytes))
+                try
                 {
-                    logger.LogWarning("[Prowlarr] Fetched content does not look like NZB, skipping upload (likely torrent)");
-                    try { relLogger.Warn("[Prowlarr] Content not NZB; skipping"); } catch { }
-                    goto TryMagnet;
+                    relLogger.Warn("[Prowlarr] No results after filtering");
                 }
-                var fileName = (nzb.Title ?? "download").Replace(' ', '+') + ".nzb";
-                var okUpload = await sab.AddNzbByContentAsync(
-                    bytes,
-                    fileName,
-                    cancellationToken,
-                    pathOverride: $"mmusic/{artistId}/{releaseFolderName}",
-                    nzbName: $"{artistName} - {releaseTitle}"
-                );
-                if (okUpload) { try { relLogger.Info("[Prowlarr] SABnzbd accepted NZB upload"); } catch { } return true; }
-                logger.LogWarning("[Prowlarr] SABnzbd rejected NZB content upload");
-                try { relLogger.Warn("[Prowlarr] SABnzbd rejected NZB content upload"); } catch { }
+                catch
+                {
+                }
+
+                return false;
             }
-            catch (Exception ex)
+
+            // 2) Prefer NZB if available; otherwise fallback to magnet
+            // Prefer Prowlarr-provided downloadUrl; many setups do not include .nzb extension
+            // Extra guard: only consider results whose title clearly matches artist and release
+            bool TitleMatches(string? title)
             {
-                logger.LogWarning(ex, "[Prowlarr] Failed fetching/uploading NZB content");
-                try { relLogger.Error($"[Prowlarr] Exception during NZB upload: {ex.Message}"); } catch { }
+                if (string.IsNullOrWhiteSpace(title)) return false;
+                var t = title.ToLowerInvariant();
+                var a = (artistName ?? string.Empty).ToLowerInvariant();
+                var rel = (releaseTitle ?? string.Empty).ToLowerInvariant();
+                // Require both artist and at least half of album words
+                if (!t.Contains(a)) return false;
+                var albumWords = rel.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                var titleWords = t.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                var matchCount = albumWords.Count(w => titleWords.Any(x => x.Contains(w) || w.Contains(x)));
+                return matchCount >= Math.Max(1, albumWords.Length / 2);
             }
-        }
 
-        TryMagnet:
-        var magnet = results.FirstOrDefault(r => !string.IsNullOrWhiteSpace(r.MagnetUrl) && TitleMatches(r.Title) && !LooksLikeDiscography(r.Title));
-        if (allowQbit && magnet is not null && !string.IsNullOrWhiteSpace(magnet.MagnetUrl))
-        {
-            logger.LogInformation("[Prowlarr] Handing off magnet to qBittorrent: {Title}", magnet.Title ?? "(no title)");
-            try { relLogger.Info($"[Prowlarr] Handing off magnet to qBittorrent: {magnet.Title}"); } catch { }
-            var ok = await qb.AddMagnetAsync(magnet.MagnetUrl!, null, cancellationToken);
-            if (ok) { try { relLogger.Info("[Prowlarr] qBittorrent accepted magnet"); } catch { } return true; }
-            logger.LogWarning("[Prowlarr] qBittorrent did not accept magnet handoff");
-            try { relLogger.Warn("[Prowlarr] qBittorrent did not accept magnet"); } catch { }
-        }
-
-        // Fallbacks by type: if we have a torrent URL, send to qBittorrent; if generic HTTP and NZB-like, send to SAB
-        var torrentUrl = results.FirstOrDefault(r => !string.IsNullOrWhiteSpace(r.DownloadUrl) && LooksLikeTorrentUrl(r.DownloadUrl!) && TitleMatches(r.Title) && !LooksLikeDiscography(r.Title))?.DownloadUrl;
-        if (allowQbit && !string.IsNullOrWhiteSpace(torrentUrl))
-        {
-            logger.LogInformation("[Prowlarr] Handing off .torrent URL to qBittorrent");
-            try { relLogger.Info("[Prowlarr] Handing off .torrent URL to qBittorrent"); } catch { }
-            var okT = await qb.AddByUrlAsync(EnsureProwlarrApiKey(torrentUrl!), null, cancellationToken);
-            if (okT) { try { relLogger.Info("[Prowlarr] qBittorrent accepted .torrent URL"); } catch { } return true; }
-        }
-
-        var httpUrl = results.FirstOrDefault(r => !string.IsNullOrWhiteSpace(r.DownloadUrl) && TitleMatches(r.Title) && !LooksLikeDiscography(r.Title))?.DownloadUrl;
-
-        // Discography path (transparent): if discography-like and allowed, handoff to SAB/qBit into staging
-        var anyDiscography = results.FirstOrDefault(r => LooksLikeDiscography(r.Title));
-        if (anyDiscography != null && settings.DiscographyEnabled)
-        {
-            var staging = settings.DiscographyStagingPath;
-            if (!string.IsNullOrWhiteSpace(staging))
+            // Prefer NZB for SAB, but explicitly avoid .torrent URLs here
+            static bool LooksLikeDiscography(string? title)
             {
-                // Prefer NZB otherwise magnet/torrent URL
-                var discNzb = results.FirstOrDefault(r => LooksLikeDiscography(r.Title) && !string.IsNullOrWhiteSpace(r.DownloadUrl) && !LooksLikeTorrentUrl(r.DownloadUrl!));
-                if (allowSab && discNzb is not null)
+                if (string.IsNullOrWhiteSpace(title)) return false;
+                var t = title.ToLowerInvariant();
+                string[] bad =
+                [
+                    "discography", "collection", "anthology", "complete", "box set", "boxset", "complete works",
+                    "singles collection", "mega pack"
+                ];
+                return bad.Any(k => t.Contains(k));
+            }
+
+            var nzb = results.FirstOrDefault(r =>
+                !string.IsNullOrWhiteSpace(r.DownloadUrl)
+                && !LooksLikeTorrentUrl(r.DownloadUrl!)
+                && TitleMatches(r.Title)
+                && !LooksLikeDiscography(r.Title)
+            );
+            if (allowSab && nzb is not null && !string.IsNullOrWhiteSpace(nzb.DownloadUrl))
+            {
+                // Always fetch NZB bytes and upload them to SABnzbd to avoid SAB needing network access to Prowlarr
+                var url = EnsureProwlarrApiKey(nzb.DownloadUrl!);
+                logger.LogInformation("[Prowlarr] Uploading NZB to SABnzbd: {Title}", nzb.Title ?? "(no title)");
+                try
                 {
                     try
                     {
-                        var url = EnsureProwlarrApiKey(discNzb.DownloadUrl!);
-                        using var http = new HttpClient();
-                        var bytes = await http.GetByteArrayAsync(url, cancellationToken);
-                        if (LooksLikeNzb(bytes))
-                        {
-                            var ok = await sab.AddNzbByContentAsync(bytes, (discNzb.Title ?? "discography").Replace(' ', '+') + ".nzb", cancellationToken, pathOverride: $"discography/{artistId}", nzbName: $"{artistName} - DISCography bundle");
-                            if (ok) { try { relLogger.Info("[Prowlarr] Discography NZB handed to SAB for staging"); } catch { } }
-                        }
+                        relLogger.Info($"[Prowlarr] Uploading NZB to SABnzbd: {nzb.Title}");
                     }
-                    catch { }
-                }
-                else if (allowQbit)
-                {
-                    var discTorrent = results.FirstOrDefault(r => LooksLikeDiscography(r.Title) && !string.IsNullOrWhiteSpace(r.DownloadUrl) && LooksLikeTorrentUrl(r.DownloadUrl!))?.DownloadUrl
-                                     ?? results.FirstOrDefault(r => LooksLikeDiscography(r.Title) && !string.IsNullOrWhiteSpace(r.MagnetUrl))?.MagnetUrl;
-                    if (!string.IsNullOrWhiteSpace(discTorrent))
+                    catch
                     {
-                        try { relLogger.Info("[Prowlarr] Discography torrent/magnet handed to qBittorrent for staging"); } catch { }
-                        await qb.AddByUrlAsync(EnsureProwlarrApiKey(discTorrent!), null, cancellationToken);
+                    }
+
+                    using var http = new HttpClient();
+                    var bytes = await http.GetByteArrayAsync(url, cancellationToken);
+                    // Validate the payload looks like an NZB, not a torrent
+                    if (!LooksLikeNzb(bytes))
+                    {
+                        logger.LogWarning(
+                            "[Prowlarr] Fetched content does not look like NZB, skipping upload (likely torrent)");
+                        try
+                        {
+                            relLogger.Warn("[Prowlarr] Content not NZB; skipping");
+                        }
+                        catch
+                        {
+                        }
+
+                        goto TryMagnet;
+                    }
+
+                    var fileName = (nzb.Title ?? "download").Replace(' ', '+') + ".nzb";
+                    var okUpload = await sab.AddNzbByContentAsync(
+                        bytes,
+                        fileName,
+                        cancellationToken,
+                        pathOverride: $"mmusic/{artistId}/{releaseFolderName}",
+                        nzbName: $"{artistName} - {releaseTitle}"
+                    );
+                    if (okUpload)
+                    {
+                        try
+                        {
+                            relLogger.Info("[Prowlarr] SABnzbd accepted NZB upload");
+                        }
+                        catch
+                        {
+                        }
+
+                        return true;
+                    }
+
+                    logger.LogWarning("[Prowlarr] SABnzbd rejected NZB content upload");
+                    try
+                    {
+                        relLogger.Warn("[Prowlarr] SABnzbd rejected NZB content upload");
+                    }
+                    catch
+                    {
+                    }
+                }
+                catch (Exception ex)
+                {
+                    logger.LogWarning(ex, "[Prowlarr] Failed fetching/uploading NZB content");
+                    try
+                    {
+                        relLogger.Error($"[Prowlarr] Exception during NZB upload: {ex.Message}");
+                    }
+                    catch
+                    {
                     }
                 }
             }
-        }
-        if (allowSab && !string.IsNullOrWhiteSpace(httpUrl) && (httpUrl!.StartsWith("http://") || httpUrl.StartsWith("https://")))
-        {
-            var url2 = EnsureProwlarrApiKey(httpUrl);
-            logger.LogInformation("[Prowlarr] Attempting SABnzbd handoff using HTTP URL: {Url}", url2);
-            try { relLogger.Info($"[Prowlarr] Attempting SABnzbd handoff using HTTP URL: {url2}"); } catch { }
-            var ok2 = await sab.AddNzbByUrlAsync(url2, $"{artistName} - {releaseTitle}", cancellationToken);
-            if (ok2) { try { relLogger.Info("[Prowlarr] SABnzbd accepted HTTP handoff"); } catch { } return true; }
-        }
+
+            TryMagnet:
+            var magnet = results.FirstOrDefault(r =>
+                !string.IsNullOrWhiteSpace(r.MagnetUrl) && TitleMatches(r.Title) && !LooksLikeDiscography(r.Title));
+            if (allowQbit && magnet is not null && !string.IsNullOrWhiteSpace(magnet.MagnetUrl))
+            {
+                logger.LogInformation("[Prowlarr] Handing off magnet to qBittorrent: {Title}",
+                    magnet.Title ?? "(no title)");
+                try
+                {
+                    relLogger.Info($"[Prowlarr] Handing off magnet to qBittorrent: {magnet.Title}");
+                }
+                catch
+                {
+                }
+
+                var ok = await qb.AddMagnetAsync(magnet.MagnetUrl!, null, cancellationToken);
+                if (ok)
+                {
+                    try
+                    {
+                        relLogger.Info("[Prowlarr] qBittorrent accepted magnet");
+                    }
+                    catch
+                    {
+                    }
+
+                    return true;
+                }
+
+                logger.LogWarning("[Prowlarr] qBittorrent did not accept magnet handoff");
+                try
+                {
+                    relLogger.Warn("[Prowlarr] qBittorrent did not accept magnet");
+                }
+                catch
+                {
+                }
+            }
+
+            // Fallbacks by type: if we have a torrent URL, send to qBittorrent; if generic HTTP and NZB-like, send to SAB
+            var torrentUrl = results.FirstOrDefault(r =>
+                !string.IsNullOrWhiteSpace(r.DownloadUrl) && LooksLikeTorrentUrl(r.DownloadUrl!) &&
+                TitleMatches(r.Title) && !LooksLikeDiscography(r.Title))?.DownloadUrl;
+            if (allowQbit && !string.IsNullOrWhiteSpace(torrentUrl))
+            {
+                logger.LogInformation("[Prowlarr] Handing off .torrent URL to qBittorrent");
+                try
+                {
+                    relLogger.Info("[Prowlarr] Handing off .torrent URL to qBittorrent");
+                }
+                catch
+                {
+                }
+
+                var okT = await qb.AddByUrlAsync(EnsureProwlarrApiKey(torrentUrl!), null, cancellationToken);
+                if (okT)
+                {
+                    try
+                    {
+                        relLogger.Info("[Prowlarr] qBittorrent accepted .torrent URL");
+                    }
+                    catch
+                    {
+                    }
+
+                    return true;
+                }
+            }
+
+            var httpUrl = results.FirstOrDefault(r =>
+                    !string.IsNullOrWhiteSpace(r.DownloadUrl) && TitleMatches(r.Title) &&
+                    !LooksLikeDiscography(r.Title))
+                ?.DownloadUrl;
+
+            // Discography path (transparent): if discography-like and allowed, handoff to SAB/qBit into staging
+            var anyDiscography = results.FirstOrDefault(r => LooksLikeDiscography(r.Title));
+            if (anyDiscography != null && settings.DiscographyEnabled)
+            {
+                var staging = settings.DiscographyStagingPath;
+                if (!string.IsNullOrWhiteSpace(staging))
+                {
+                    // Prefer NZB otherwise magnet/torrent URL
+                    var discNzb = results.FirstOrDefault(r =>
+                        LooksLikeDiscography(r.Title) && !string.IsNullOrWhiteSpace(r.DownloadUrl) &&
+                        !LooksLikeTorrentUrl(r.DownloadUrl!));
+                    if (allowSab && discNzb is not null)
+                    {
+                        try
+                        {
+                            var url = EnsureProwlarrApiKey(discNzb.DownloadUrl!);
+                            using var http = new HttpClient();
+                            var bytes = await http.GetByteArrayAsync(url, cancellationToken);
+                            if (LooksLikeNzb(bytes))
+                            {
+                                var ok = await sab.AddNzbByContentAsync(bytes,
+                                    (discNzb.Title ?? "discography").Replace(' ', '+') + ".nzb", cancellationToken,
+                                    pathOverride: $"discography/{artistId}",
+                                    nzbName: $"{artistName} - DISCography bundle");
+                                if (ok)
+                                {
+                                    try
+                                    {
+                                        relLogger.Info("[Prowlarr] Discography NZB handed to SAB for staging");
+                                    }
+                                    catch
+                                    {
+                                    }
+                                }
+                            }
+                        }
+                        catch
+                        {
+                        }
+                    }
+                    else if (allowQbit)
+                    {
+                        var discTorrent = results.FirstOrDefault(r =>
+                                              LooksLikeDiscography(r.Title) &&
+                                              !string.IsNullOrWhiteSpace(r.DownloadUrl) &&
+                                              LooksLikeTorrentUrl(r.DownloadUrl!))?.DownloadUrl
+                                          ?? results.FirstOrDefault(r =>
+                                                  LooksLikeDiscography(r.Title) &&
+                                                  !string.IsNullOrWhiteSpace(r.MagnetUrl))
+                                              ?.MagnetUrl;
+                        if (!string.IsNullOrWhiteSpace(discTorrent))
+                        {
+                            try
+                            {
+                                relLogger.Info(
+                                    "[Prowlarr] Discography torrent/magnet handed to qBittorrent for staging");
+                            }
+                            catch
+                            {
+                            }
+
+                            await qb.AddByUrlAsync(EnsureProwlarrApiKey(discTorrent!), null, cancellationToken);
+                        }
+                    }
+                }
+            }
+
+            if (allowSab && !string.IsNullOrWhiteSpace(httpUrl) &&
+                (httpUrl!.StartsWith("http://") || httpUrl.StartsWith("https://")))
+            {
+                var url2 = EnsureProwlarrApiKey(httpUrl);
+                logger.LogInformation("[Prowlarr] Attempting SABnzbd handoff using HTTP URL: {Url}", url2);
+                try
+                {
+                    relLogger.Info($"[Prowlarr] Attempting SABnzbd handoff using HTTP URL: {url2}");
+                }
+                catch
+                {
+                }
+
+                var ok2 = await sab.AddNzbByUrlAsync(url2, $"{artistName} - {releaseTitle}", cancellationToken);
+                if (ok2)
+                {
+                    try
+                    {
+                        relLogger.Info("[Prowlarr] SABnzbd accepted HTTP handoff");
+                    }
+                    catch
+                    {
+                    }
+
+                    return true;
+                }
+            }
 
             // Diagnostic: log a few candidates and reasons
             try
@@ -250,15 +457,35 @@ public class ProwlarrDownloadProvider(
                     var reasons = new List<string>();
                     if (!TitleMatches(r.Title)) reasons.Add("titleMismatch");
                     if (LooksLikeDiscography(r.Title)) reasons.Add("discography");
-                    if (string.IsNullOrWhiteSpace(r.DownloadUrl) && string.IsNullOrWhiteSpace(r.MagnetUrl)) reasons.Add("noLink");
-                    logger.LogInformation("[Prowlarr] Candidate: title={Title} size={Size} reasons={Reasons}", r.Title ?? "", r.Size, string.Join(',', reasons));
-                    try { relLogger.Info($"[Prowlarr] Candidate: title={r.Title} size={r.Size} reasons=[{string.Join(',', reasons)}]"); } catch { }
+                    if (string.IsNullOrWhiteSpace(r.DownloadUrl) && string.IsNullOrWhiteSpace(r.MagnetUrl))
+                        reasons.Add("noLink");
+                    logger.LogInformation("[Prowlarr] Candidate: title={Title} size={Size} reasons={Reasons}",
+                        r.Title ?? "", r.Size, string.Join(',', reasons));
+                    try
+                    {
+                        relLogger.Info(
+                            $"[Prowlarr] Candidate: title={r.Title} size={r.Size} reasons=[{string.Join(',', reasons)}]");
+                    }
+                    catch
+                    {
+                    }
                 }
             }
-            catch { }
+            catch
+            {
+            }
 
-            logger.LogInformation("Prowlarr provider found results but failed to hand off to downloader (no acceptable candidates)");
-            try { relLogger.Warn("[Prowlarr] No acceptable candidates after filtering. First few candidates were logged above with reasons."); } catch { }
+            logger.LogInformation(
+                "Prowlarr provider found results but failed to hand off to downloader (no acceptable candidates)");
+            try
+            {
+                relLogger.Warn(
+                    "[Prowlarr] No acceptable candidates after filtering. First few candidates were logged above with reasons.");
+            }
+            catch
+            {
+            }
+
             return false;
         }
         finally
@@ -267,7 +494,8 @@ public class ProwlarrDownloadProvider(
         }
     }
 
-    private static IEnumerable<string> GetProviderRejectionReasons(ProwlarrRelease r, string artistName, string releaseTitle)
+    private static IEnumerable<string> GetProviderRejectionReasons(ProwlarrRelease r, string artistName,
+        string releaseTitle)
     {
         var reasons = new List<string>();
         try
@@ -275,9 +503,13 @@ public class ProwlarrDownloadProvider(
             bool titleOk = TitleMatchesLocal(r.Title, artistName, releaseTitle);
             if (!titleOk) reasons.Add("titleMismatch");
             if (LooksLikeDiscography(r.Title)) reasons.Add("discography");
-            if (string.IsNullOrWhiteSpace(r.DownloadUrl) && string.IsNullOrWhiteSpace(r.MagnetUrl)) reasons.Add("noLink");
+            if (string.IsNullOrWhiteSpace(r.DownloadUrl) && string.IsNullOrWhiteSpace(r.MagnetUrl))
+                reasons.Add("noLink");
         }
-        catch { }
+        catch
+        {
+        }
+
         return reasons;
     }
 
@@ -307,14 +539,20 @@ public class ProwlarrDownloadProvider(
             {
                 downloadUrl = baseUrl + downloadUrl;
             }
-            if (downloadUrl.StartsWith(baseUrl, StringComparison.OrdinalIgnoreCase) && downloadUrl.IndexOf("apikey=", StringComparison.OrdinalIgnoreCase) < 0)
+
+            if (downloadUrl.StartsWith(baseUrl, StringComparison.OrdinalIgnoreCase) &&
+                downloadUrl.IndexOf("apikey=", StringComparison.OrdinalIgnoreCase) < 0)
             {
                 var sep = downloadUrl.Contains('?') ? '&' : '?';
                 return downloadUrl + sep + "apikey=" + Uri.EscapeDataString(apiKey);
             }
+
             return downloadUrl;
         }
-        catch { return downloadUrl; }
+        catch
+        {
+            return downloadUrl;
+        }
     }
 
     private static bool LooksLikeNzb(byte[] bytes)
@@ -330,7 +568,10 @@ public class ProwlarrDownloadProvider(
             // Fallback: looks like XML
             if (sample.TrimStart().StartsWith("<?xml")) return true;
         }
-        catch { }
+        catch
+        {
+        }
+
         return false;
     }
 
@@ -341,14 +582,18 @@ public class ProwlarrDownloadProvider(
             return downloadUrl.EndsWith(".torrent", StringComparison.OrdinalIgnoreCase)
                    || downloadUrl.Contains("torrent", StringComparison.OrdinalIgnoreCase);
         }
-        catch { return false; }
+        catch
+        {
+            return false;
+        }
     }
 
     private static bool LooksLikeDiscography(string? title)
     {
         if (string.IsNullOrWhiteSpace(title)) return false;
         var t = title.ToLowerInvariant();
-        string[] bad = [
+        string[] bad =
+        [
             "discography", "collection", "anthology", "complete", "box set", "boxset",
             "complete works", "singles collection", "mega pack"
         ];
@@ -359,21 +604,27 @@ public class ProwlarrDownloadProvider(
     {
         var title = (r.Title ?? string.Empty).ToLowerInvariant();
         // Reject obvious non-music signals
-        if (title.Contains("s01") || title.Contains("s1 ") || title.Contains(" s11 ") || title.Contains("season ") || title.Contains("s11-s") || title.Contains("e01") || title.Contains("1080p") || title.Contains("2160p"))
+        if (title.Contains("s01") || title.Contains("s1 ") || title.Contains(" s11 ") || title.Contains("season ") ||
+            title.Contains("s11-s") || title.Contains("e01") || title.Contains("1080p") || title.Contains("2160p"))
         {
             // Allow resolution presence for music only if artist and release tokens both match strongly
             if (Score(r, artistName, releaseTitle) < 5) return false;
         }
-        if (title.Contains("simpsons") || title.Contains("spongebob") || title.Contains("season") || title.Contains("episode")) return false;
+
+        if (title.Contains("simpsons") || title.Contains("spongebob") || title.Contains("season") ||
+            title.Contains("episode")) return false;
         if (title.Contains("x264") || title.Contains("x265") || title.Contains("h264") || title.Contains("h265"))
         {
             if (Score(r, artistName, releaseTitle) < 6) return false;
         }
+
         // Prefer music-specific tags
-        if (title.Contains("flac") || title.Contains("mp3") || title.Contains("lossless") || title.Contains("album") || title.Contains("disc "))
+        if (title.Contains("flac") || title.Contains("mp3") || title.Contains("lossless") || title.Contains("album") ||
+            title.Contains("disc "))
         {
             return true;
         }
+
         // Fallback: require both artist and release tokens
         return Score(r, artistName, releaseTitle) >= 4;
     }
@@ -388,8 +639,10 @@ public class ProwlarrDownloadProvider(
             {
                 if (char.IsLetterOrDigit(ch) || char.IsWhiteSpace(ch)) keep.Append(ch);
             }
+
             return System.Text.RegularExpressions.Regex.Replace(keep.ToString(), "\\s+", " ").Trim();
         }
+
         var title = Norm(r.Title ?? string.Empty);
         var artist = Norm(artistName);
         var rel = Norm(releaseTitle);
@@ -404,5 +657,3 @@ public class ProwlarrDownloadProvider(
         return score;
     }
 }
-
-

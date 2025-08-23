@@ -1,4 +1,5 @@
 using System.Text;
+using System.Collections.Concurrent;
 using MusicGQL.Features.ServerLibrary.Cache;
 using MusicGQL.Features.ServerSettings;
 using Directory = System.IO.Directory;
@@ -22,13 +23,20 @@ public class NullDownloadLogger : IDownloadLogger
 
 public class DownloadLogger : IDownloadLogger, IDisposable
 {
+    // Global, per-file locks to serialize writes across all logger instances
+    private static readonly ConcurrentDictionary<string, SemaphoreSlim> FileLocks = new(StringComparer.OrdinalIgnoreCase);
+
     private readonly StreamWriter _writer;
-    private readonly object _lock = new();
+    private readonly SemaphoreSlim _fileLock;
+    private readonly string _path;
 
     public DownloadLogger(string logFilePath)
     {
         Directory.CreateDirectory(Path.GetDirectoryName(logFilePath)!);
-        _writer = new StreamWriter(new FileStream(logFilePath, FileMode.Append, FileAccess.Write, FileShare.Read))
+        _path = Path.GetFullPath(logFilePath);
+        _fileLock = FileLocks.GetOrAdd(_path, _ => new SemaphoreSlim(1, 1));
+        // Allow shared write access; we rely on the per-file semaphore to serialize lines
+        _writer = new StreamWriter(new FileStream(_path, FileMode.Append, FileAccess.Write, FileShare.ReadWrite))
         {
             AutoFlush = true,
             NewLine = Environment.NewLine
@@ -43,15 +51,23 @@ public class DownloadLogger : IDownloadLogger, IDisposable
     private void Write(string level, string message)
     {
         var line = $"{DateTime.UtcNow:O} [{level}] {message}";
-        lock (_lock)
+        _fileLock.Wait();
+        try
         {
             _writer.WriteLine(line);
+            // Ensure the underlying stream flushes promptly in multi-writer scenarios
+            _writer.Flush();
+        }
+        finally
+        {
+            _fileLock.Release();
         }
     }
 
     public void Dispose()
     {
         try { _writer?.Dispose(); } catch { }
+        // Do not remove the semaphore from the dictionary to avoid races while other instances may be using it
     }
 }
 
@@ -91,5 +107,4 @@ public class DownloadLogPathProvider(ServerSettingsAccessor serverSettingsAccess
         return filtered.Trim();
     }
 }
-
 
