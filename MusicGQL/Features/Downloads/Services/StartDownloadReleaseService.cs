@@ -6,6 +6,7 @@ using MusicGQL.Features.ServerLibrary.Cache;
 using MusicGQL.Features.ServerLibrary.Writer;
 using Path = System.IO.Path;
 using MusicGQL.Features.ServerSettings;
+using MusicGQL.Features.Import.Services;
 
 namespace MusicGQL.Features.Downloads.Services;
 
@@ -660,13 +661,16 @@ var (disc, track) = MusicGQL.Features.Downloads.Util.FileNameParsing.ExtractDisc
                     .ThenBy(rg => SafeDateKey(rg.FirstReleaseDate))
                     .FirstOrDefault();
 
-            if (match is not null)
-            {
-                // Update state to show release group match found
-                downloadHistory.UpdateState(artistId, releaseFolderName, DownloadState.MatchingRelease, $"Found matching release group: {match.Title} ({match.Id})");
-                try { relLogger.Info($"[Orchestrator] Matched MusicBrainz RG: {match.Title} ({match.Id})"); } catch { }
-                
-                // Rebuild using this RG; builder will pick the best matching release considering local audio files
+                MusicBrainzReleaseGroupResult? alternativeMatch = null;
+                bool primaryMatchFailed = false;
+
+                if (match is not null)
+                {
+                    // Update state to show release group match found
+                    downloadHistory.UpdateState(artistId, releaseFolderName, DownloadState.MatchingRelease, $"Found matching release group: {match.Title} ({match.Id})");
+                    try { relLogger.Info($"[Orchestrator] Matched MusicBrainz RG: {match.Title} ({match.Id})"); } catch { }
+
+                    // Rebuild using this RG; builder will pick the best matching release considering local audio files
                     var importResult = await releaseImporter.ImportReleaseGroupInPlaceAsync(
                         match.Id,
                         match.Title,
@@ -675,16 +679,17 @@ var (disc, track) = MusicGQL.Features.Downloads.Util.FileNameParsing.ExtractDisc
                         artistId,
                         rel.FolderName
                     );
+
                     if (importResult.Success)
                     {
                         // Update state to show import completed successfully
                         downloadHistory.UpdateState(artistId, releaseFolderName, DownloadState.MatchingRelease, "Release import completed successfully");
-                        
+
                         await cache.UpdateReleaseFromJsonAsync(artistId, releaseFolderName);
-                        
+
                         // Update state to ValidatingTracks
                         downloadHistory.UpdateState(artistId, releaseFolderName, DownloadState.ValidatingTracks, "Starting track count validation");
-                        
+
                         // Verify that the refreshed release has tracks that match our audio files
                         var refreshedRelease = await cache.GetReleaseByArtistAndFolderAsync(artistId, releaseFolderName);
                         if (refreshedRelease?.Tracks != null)
@@ -695,42 +700,75 @@ var (disc, track) = MusicGQL.Features.Downloads.Util.FileNameParsing.ExtractDisc
                                     Path.GetExtension(f).ToLowerInvariant()
                                 ))
                                 .ToList();
-                            
+
                             var trackCount = refreshedRelease.Tracks.Count;
                             var audioFileCount = audioFiles.Count;
-                            
-                            logger.LogInformation("[StartDownload] Track count validation: MusicBrainz release has {TrackCount} tracks, found {AudioFileCount} audio files in {TargetDir}", 
+
+                            logger.LogInformation("[StartDownload] Track count validation: MusicBrainz release has {TrackCount} tracks, found {AudioFileCount} audio files in {TargetDir}",
                                 trackCount, audioFileCount, targetDir);
-                            
+
                             if (trackCount == audioFileCount)
                             {
                                 metadataRefreshSuccess = true;
                                 logger.LogInformation("[StartDownload] Metadata refresh successful - track count matches: {TrackCount} tracks, {AudioFileCount} audio files", trackCount, audioFileCount);
                                 try { relLogger.Info($"[Orchestrator] Metadata refresh OK — track count matches: {trackCount}"); } catch { }
-                                
+
                                 // Update state to show track validation successful
                                 downloadHistory.UpdateState(artistId, releaseFolderName, DownloadState.ValidatingTracks, $"Track validation successful: {trackCount} tracks match {audioFileCount} audio files");
                             }
                             else
                             {
-                                metadataError = $"Track count mismatch: expected {trackCount} tracks, found {audioFileCount} audio files";
+                                // Primary match failed due to track count mismatch - look for alternatives
+                                primaryMatchFailed = true;
+                                metadataError = $"Track count mismatch: expected {trackCount} tracks, found {audioFileCount} audio files. Looking for alternative releases with same title...";
                                 logger.LogWarning("[StartDownload] {Error}", metadataError);
                                 try { relLogger.Warn($"[Orchestrator] {metadataError}"); } catch { }
-                                
-                                // Update state to show track validation failed
-                                downloadHistory.UpdateState(artistId, releaseFolderName, DownloadState.ValidatingTracks, $"Track validation failed: {metadataError}");
-                                
+
                                 // Log additional diagnostic information
                                 if (audioFiles.Count > 0)
                                 {
                                     var audioFileNames = audioFiles.Select(Path.GetFileName).Take(5).ToList();
                                     logger.LogWarning("[StartDownload] Audio files found: {AudioFiles}...", string.Join(", ", audioFileNames));
                                 }
-                                
+
                                 if (refreshedRelease.Tracks.Count > 0)
                                 {
                                     var trackNames = refreshedRelease.Tracks.Take(5).Select(t => t.Title).ToList();
                                     logger.LogWarning("[StartDownload] Expected tracks: {Tracks}...", string.Join(", ", trackNames));
+                                }
+
+                                // Search for alternative release groups with same title that might have matching track count
+                                var allReleaseGroupsWithTitle = rgs
+                                    .Where(rg => AreTitlesEquivalent(rg.Title, rel.Title ?? string.Empty))
+                                    .Where(rg => !(rg.SecondaryTypes?.Any(t => t.Equals("Demo", StringComparison.OrdinalIgnoreCase)) ?? false))
+                                    .ToList();
+
+                                foreach (var alternativeRg in allReleaseGroupsWithTitle)
+                                {
+                                    if (alternativeRg.Id == match.Id) continue; // Skip the one we already tried
+
+                                    try
+                                    {
+                                        var (altOfficialCounts, _) = await mbImport.GetPossibleTrackCountsForReleaseGroupAsync(alternativeRg.Id);
+                                        if (altOfficialCounts.Contains(audioFileCount))
+                                        {
+                                            alternativeMatch = alternativeRg;
+                                            logger.LogInformation("[StartDownload] Found alternative release group '{Title}' ({Id}) with matching track count {AudioFileCount}",
+                                                alternativeRg.Title, alternativeRg.Id, audioFileCount);
+                                            try { relLogger.Info($"[Orchestrator] Found alternative RG: {alternativeRg.Title} ({alternativeRg.Id})"); } catch { }
+                                            break;
+                                        }
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        logger.LogDebug(ex, "[StartDownload] Failed to get track counts for alternative release group {Id}", alternativeRg.Id);
+                                    }
+                                }
+
+                                if (alternativeMatch is null)
+                                {
+                                    // Update state to show track validation failed
+                                    downloadHistory.UpdateState(artistId, releaseFolderName, DownloadState.ValidatingTracks, $"Track validation failed: {metadataError}");
                                 }
                             }
                         }
@@ -739,10 +777,10 @@ var (disc, track) = MusicGQL.Features.Downloads.Util.FileNameParsing.ExtractDisc
                             metadataError = "Refreshed release has no tracks";
                             logger.LogWarning("[StartDownload] {Error}", metadataError);
                         }
-                        
+
                         // Update state to show metadata events being published
                         downloadHistory.UpdateState(artistId, releaseFolderName, DownloadState.ValidatingTracks, "Publishing metadata update events");
-                        
+
                         // Publish metadata updated event
                         var updated = await cache.GetReleaseByArtistAndFolderAsync(
                             artistId,
@@ -772,7 +810,7 @@ var (disc, track) = MusicGQL.Features.Downloads.Util.FileNameParsing.ExtractDisc
                                 ),
                                 new ServerLibrary.Release(updated)
                             );
-                            
+
                             // Update state to show metadata events published successfully
                             downloadHistory.UpdateState(artistId, releaseFolderName, DownloadState.ValidatingTracks, "Metadata update events published successfully");
                         }
@@ -782,7 +820,7 @@ var (disc, track) = MusicGQL.Features.Downloads.Util.FileNameParsing.ExtractDisc
                         metadataError = $"Metadata import failed: {importResult.ErrorMessage}";
                         logger.LogWarning("[StartDownload] {Error}", metadataError);
                         try { relLogger.Warn($"[Orchestrator] {metadataError}"); } catch { }
-                        
+
                         // Update state to show import failed
                         downloadHistory.UpdateState(artistId, releaseFolderName, DownloadState.MatchingRelease, $"Release import failed: {metadataError}");
                     }
@@ -792,9 +830,97 @@ var (disc, track) = MusicGQL.Features.Downloads.Util.FileNameParsing.ExtractDisc
                     metadataError = "No matching release group found in MusicBrainz";
                     logger.LogWarning("[StartDownload] {Error}", metadataError);
                     try { relLogger.Warn($"[Orchestrator] {metadataError}"); } catch { }
-                    
+
                     // Update state to show no matching release group found
                     downloadHistory.UpdateState(artistId, releaseFolderName, DownloadState.MatchingRelease, "No matching release group found in MusicBrainz");
+                }
+
+                // Try alternative match if primary match failed due to track count mismatch
+                if (primaryMatchFailed && alternativeMatch is not null)
+                {
+                    logger.LogInformation("[StartDownload] Attempting alternative release group: {Title} ({Id})", alternativeMatch.Title, alternativeMatch.Id);
+                    downloadHistory.UpdateState(artistId, releaseFolderName, DownloadState.MatchingRelease, $"Attempting alternative release group: {alternativeMatch.Title} ({alternativeMatch.Id})");
+
+                    var altImportResult = await releaseImporter.ImportReleaseGroupInPlaceAsync(
+                        alternativeMatch.Id,
+                        alternativeMatch.Title,
+                        alternativeMatch.PrimaryType,
+                        Path.GetDirectoryName(rel.ReleasePath) ?? Path.Combine((await serverSettingsAccessor.GetAsync()).LibraryPath, artistId),
+                        artistId,
+                        rel.FolderName
+                    );
+
+                    if (altImportResult.Success)
+                    {
+                        logger.LogInformation("[StartDownload] Alternative release group import successful");
+                        downloadHistory.UpdateState(artistId, releaseFolderName, DownloadState.MatchingRelease, "Alternative release import completed successfully");
+
+                        await cache.UpdateReleaseFromJsonAsync(artistId, releaseFolderName);
+
+                        // Verify the alternative release has matching track count
+                        var altRefreshedRelease = await cache.GetReleaseByArtistAndFolderAsync(artistId, releaseFolderName);
+                        if (altRefreshedRelease?.Tracks != null)
+                        {
+                            var audioFiles = Directory
+                                .GetFiles(targetDir)
+                                .Where(f => new[] { ".mp3", ".flac", ".wav", ".m4a", ".ogg" }.Contains(
+                                    Path.GetExtension(f).ToLowerInvariant()
+                                ))
+                                .ToList();
+
+                            var trackCount = altRefreshedRelease.Tracks.Count;
+                            var audioFileCount = audioFiles.Count;
+
+                            if (trackCount == audioFileCount)
+                            {
+                                metadataRefreshSuccess = true;
+                                metadataError = null; // Clear the error since we succeeded with alternative
+                                logger.LogInformation("[StartDownload] Alternative metadata refresh successful - track count matches: {TrackCount} tracks, {AudioFileCount} audio files", trackCount, audioFileCount);
+                                try { relLogger.Info($"[Orchestrator] Alternative metadata refresh OK — track count matches: {trackCount}"); } catch { }
+
+                                downloadHistory.UpdateState(artistId, releaseFolderName, DownloadState.ValidatingTracks, $"Alternative track validation successful: {trackCount} tracks match {audioFileCount} audio files");
+
+                                // Publish metadata updated event for alternative match
+                                var altUpdated = await cache.GetReleaseByArtistAndFolderAsync(artistId, releaseFolderName);
+                                if (altUpdated != null)
+                                {
+                                    await eventSender.SendAsync(
+                                        ServerLibrary.Subscription.LibrarySubscription.LibraryReleaseMetadataUpdatedTopic(
+                                            artistId,
+                                            releaseFolderName
+                                        ),
+                                        new ServerLibrary.Release(altUpdated)
+                                    );
+
+                                    await eventSender.SendAsync(
+                                        ServerLibrary.Subscription.LibrarySubscription.LibraryReleaseUpdatedTopic(
+                                            artistId,
+                                            releaseFolderName
+                                        ),
+                                        new ServerLibrary.Release(altUpdated)
+                                    );
+                                    await eventSender.SendAsync(
+                                        ServerLibrary.Subscription.LibrarySubscription.LibraryArtistReleaseUpdatedTopic(
+                                            artistId
+                                        ),
+                                        new ServerLibrary.Release(altUpdated)
+                                    );
+                                }
+                            }
+                            else
+                            {
+                                metadataError = $"Alternative release also has track count mismatch: expected {trackCount} tracks, found {audioFileCount} audio files";
+                                logger.LogWarning("[StartDownload] {Error}", metadataError);
+                                try { relLogger.Warn($"[Orchestrator] {metadataError}"); } catch { }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        metadataError = $"Alternative release import failed: {altImportResult.ErrorMessage}";
+                        logger.LogWarning("[StartDownload] {Error}", metadataError);
+                        try { relLogger.Warn($"[Orchestrator] {metadataError}"); } catch { }
+                    }
                 }
             }
             else
