@@ -25,6 +25,15 @@ public class ProwlarrLiveSearchTests
         return (baseUrl, apiKey);
     }
 
+    private static int? ReadYear()
+    {
+        var y = Environment.GetEnvironmentVariable("PROWLARR__TEST_YEAR")
+                ?? Environment.GetEnvironmentVariable("Prowlarr__TestYear")
+                ?? Environment.GetEnvironmentVariable("Prowlarr:TestYear");
+        if (int.TryParse(y, out var year)) return year;
+        return null;
+    }
+
     [Fact]
     public async Task Live_Search_ZaraLarsson_Introduction_SelectsCandidate()
     {
@@ -38,45 +47,62 @@ public class ProwlarrLiveSearchTests
         baseUrl = baseUrl!.TrimEnd('/');
 
         var (artist, album) = ReadTestCase();
-        var query = $"{artist} {album}";
+        var baseQuery = $"{artist} {album}";
+        var testYear = ReadYear();
 
-        var urls = new List<string>
-        {
-            $"{baseUrl}/api/v1/search?apikey={Uri.EscapeDataString(apiKey!)}&query={Uri.EscapeDataString(query)}",
-            $"{baseUrl}/api/v1/search?apikey={Uri.EscapeDataString(apiKey!)}&query={Uri.EscapeDataString(query)}&type=search",
-            $"{baseUrl}/api/v1/search?apikey={Uri.EscapeDataString(apiKey!)}&query={Uri.EscapeDataString(query)}&limit=50",
-            $"{baseUrl}/api/v1/search?apikey={Uri.EscapeDataString(apiKey!)}&term={Uri.EscapeDataString(query)}",
-            $"{baseUrl}/api/v1/search?apikey={Uri.EscapeDataString(apiKey!)}&q={Uri.EscapeDataString(query)}",
-            $"{baseUrl}/api/v1/search?apikey={Uri.EscapeDataString(apiKey!)}&Query={Uri.EscapeDataString(query)}",
-            $"{baseUrl}/api/v1/search?apikey={Uri.EscapeDataString(apiKey!)}&query={Uri.EscapeDataString(query)}&categories=3000&categories=3010&categories=3040",
-            $"{baseUrl}/api/v1/search?apikey={Uri.EscapeDataString(apiKey!)}&term={Uri.EscapeDataString(query)}&categories=3000&categories=3010&categories=3040",
-        };
+        // Build search queries with new broad-first strategy
+        var queries = ProwlarrSearchStrategy.BuildQueries(artist, album, testYear, NullLogger.Instance).ToList();
+        Assert.True(queries.Count >= 3);
+        Assert.Equal(baseQuery, queries[0]);
 
         using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(20) };
         List<ProwlarrRelease>? parsed = null;
-        foreach (var url in urls)
+
+        foreach (var q in queries)
         {
-            try
+            var urls = ProwlarrQueryBuilder.BuildCandidateUrls(
+                baseUrl: baseUrl!,
+                apiKey: apiKey!,
+                query: q,
+                indexerIds: null,
+                logger: null
+            ).ToList();
+
+            // Sanity: ensure we only use 'query' and repeated audio categories (including 3050)
+            Assert.All(urls, u => Assert.Contains("query=", u));
+            Assert.All(urls, u => Assert.DoesNotContain("&q=", u, StringComparison.OrdinalIgnoreCase));
+            Assert.All(urls, u => Assert.DoesNotContain("&term=", u, StringComparison.OrdinalIgnoreCase));
+            Assert.All(urls, u => Assert.Contains("categories=3000", u));
+            Assert.All(urls, u => Assert.Contains("categories=3010", u));
+            Assert.All(urls, u => Assert.Contains("categories=3040", u));
+            Assert.All(urls, u => Assert.Contains("categories=3050", u));
+
+            foreach (var url in urls)
             {
-                var resp = await http.GetAsync(url);
-                if (!resp.IsSuccessStatusCode)
+                try
+                {
+                    var resp = await http.GetAsync(url);
+                    if (!resp.IsSuccessStatusCode)
+                    {
+                        await Task.Delay(300);
+                        continue;
+                    }
+                    var json = await resp.Content.ReadAsStringAsync();
+                    using var doc = JsonDocument.Parse(json);
+                    var list = ProwlarrJsonParser.ParseResults(doc.RootElement, artist, album, NullLogger.Instance);
+                    if (list.Count > 0)
+                    {
+                        parsed = list;
+                        break;
+                    }
+                }
+                catch
                 {
                     await Task.Delay(300);
-                    continue;
-                }
-                var json = await resp.Content.ReadAsStringAsync();
-                using var doc = JsonDocument.Parse(json);
-                var list = ProwlarrJsonParser.ParseResults(doc.RootElement, artist, album, NullLogger.Instance);
-                if (list.Count > 0)
-                {
-                    parsed = list;
-                    break;
                 }
             }
-            catch
-            {
-                await Task.Delay(300);
-            }
+
+            if (parsed is not null) break;
         }
 
         Assert.NotNull(parsed);

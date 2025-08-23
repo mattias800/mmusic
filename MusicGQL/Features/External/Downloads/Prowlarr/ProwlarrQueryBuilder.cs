@@ -5,7 +5,8 @@ namespace MusicGQL.Features.External.Downloads.Prowlarr;
 
 internal static class ProwlarrQueryBuilder
 {
-    private static readonly int[] AudioCategories = [3000, 3010, 3040];
+    // Audio categories to request from Prowlarr. Repeated categories are required, not comma-separated.
+    private static readonly int[] AudioCategories = [3000, 3010, 3040, 3050];
 
     public static IReadOnlyList<string> BuildCandidateUrls(
         string baseUrl,
@@ -23,18 +24,11 @@ internal static class ProwlarrQueryBuilder
             ? string.Concat(indexerIds.Select(i => $"&indexers={i}"))
             : string.Empty;
 
+        // Simplified, deterministic URL set using only 'query' param with repeated audio categories.
         var urls = new List<string>
         {
-            // Strongly scoped first
             $"{safeBase}/api/v1/search?apikey={key}&query={q}{CatParams()}{IndexerParams()}",
-            $"{safeBase}/api/v1/search?apikey={key}&query={q}{CatParams()}{IndexerParams()}&limit=50",
-            $"{safeBase}/api/v1/search?apikey={key}&query={q}&type=search{CatParams()}{IndexerParams()}",
-            $"{safeBase}/api/v1/search?apikey={key}&term={q}{CatParams()}{IndexerParams()}",
-            // Broader fallbacks
-            $"{safeBase}/api/v1/search?apikey={key}&query={q}{IndexerParams()}",
-            $"{safeBase}/api/v1/search?apikey={key}&query={q}&limit=50{IndexerParams()}",
-            $"{safeBase}/api/v1/search?apikey={key}&term={q}{IndexerParams()}",
-            $"{safeBase}/api/v1/search?apikey={key}&q={q}{IndexerParams()}"
+            $"{safeBase}/api/v1/search?apikey={key}&query={q}{CatParams()}{IndexerParams()}&limit=50"
         };
 
         logger?.LogDebug("[Prowlarr] Built {Count} candidate URLs (indexers: {Idx})", urls.Count,

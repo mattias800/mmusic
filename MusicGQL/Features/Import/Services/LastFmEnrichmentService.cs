@@ -140,25 +140,91 @@ public class LastFmEnrichmentService(
                         continue;
                     }
 
-                    if (releaseJson?.Tracks == null)
+                    if (releaseJson is null)
                         continue;
 
                     var folderName = Path.GetFileName(releaseDir) ?? string.Empty;
+
+                    // Build a candidate list of tracks from both flattened Tracks and Discs
+                    var candidateTracks = new List<(JsonTrack track, int discNumber)>();
+                    if (releaseJson.Tracks != null)
+                    {
+                        foreach (var t in releaseJson.Tracks)
+                        {
+                            candidateTracks.Add((t, t.DiscNumber ?? 1));
+                        }
+                    }
+                    if (releaseJson.Discs != null)
+                    {
+                        foreach (var disc in releaseJson.Discs)
+                        {
+                            var dnum = disc.DiscNumber <= 0 ? 1 : disc.DiscNumber;
+                            if (disc.Tracks != null)
+                            {
+                                foreach (var t in disc.Tracks)
+                                {
+                                    candidateTracks.Add((t, t.DiscNumber ?? dnum));
+                                }
+                            }
+                        }
+                    }
+
                     foreach (var topTrack in jsonArtist.TopTracks)
                     {
                         if (topTrack.ReleaseFolderName != null && topTrack.TrackNumber != null)
                             continue;
 
-                        var match = releaseJson.Tracks.FirstOrDefault(t =>
-                            !string.IsNullOrWhiteSpace(t.Title)
-                            && AreTitlesEquivalent(t.Title, topTrack.Title)
-                        );
+                        // Find all title matches
+                        var titleMatches = candidateTracks.Where(ct =>
+                            !string.IsNullOrWhiteSpace(ct.track.Title)
+                            && AreTitlesEquivalent(ct.track.Title, topTrack.Title)
+                        ).ToList();
 
-                        if (match != null)
+                        if (titleMatches.Count == 0)
+                            continue;
+
+                        // Prefer a match that has an assigned audio file present on disk
+                        (JsonTrack track, int discNumber)? best = null;
+                        foreach (var ct in titleMatches)
+                        {
+                            var audioRef = ct.track.AudioFilePath;
+                            bool hasAudio = false;
+                            try
+                            {
+                                if (!string.IsNullOrWhiteSpace(audioRef))
+                                {
+                                    var rel = audioRef!;
+                                    if (rel.StartsWith("./")) rel = rel[2..];
+                                    var full = Path.Combine(releaseDir, rel);
+                                    hasAudio = File.Exists(full);
+                                }
+                            }
+                            catch { }
+
+                            if (best is null)
+                            {
+                                best = ct;
+                                if (hasAudio)
+                                {
+                                    // First good audio-backed match, take it
+                                    break;
+                                }
+                            }
+                            else if (hasAudio)
+                            {
+                                // Prefer an audio-backed match over a previous non-audio match
+                                best = ct;
+                                break;
+                            }
+                        }
+
+                        if (best is { } chosen)
                         {
                             topTrack.ReleaseFolderName = folderName;
-                            topTrack.TrackNumber = match.TrackNumber;
+                            topTrack.TrackNumber = chosen.track.TrackNumber;
                             topTrack.ReleaseTitle = releaseJson.Title;
+
+                            // Prefer release cover art if available
                             if (!string.IsNullOrWhiteSpace(releaseJson.CoverArt))
                             {
                                 var relPath = releaseJson.CoverArt.StartsWith("./")

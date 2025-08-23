@@ -175,9 +175,9 @@ public class ProwlarrClient(
             if (string.IsNullOrWhiteSpace(baseUrl) || string.IsNullOrWhiteSpace(apiKey))
                 return false;
 
-            // Test the actual search endpoint with a simple query
+// Test the actual search endpoint with a simple query
             // Use query and repeated Audio categories; optionally restrict to configured indexers
-            var testUrlBase = $"{baseUrl}/api/v1/search?apikey={Uri.EscapeDataString(apiKey)}&query=test&categories=3000&categories=3010&categories=3040";
+            var testUrlBase = $"{baseUrl}/api/v1/search?apikey={Uri.EscapeDataString(apiKey)}&query=test&categories=3000&categories=3010&categories=3040&categories=3050";
             var indexers = options.Value.IndexerIds;
             var testUrl = testUrlBase + (indexers is { Length: > 0 }
                 ? string.Concat(indexers.Select(i => $"&indexers={i}"))
@@ -744,8 +744,7 @@ public class ProwlarrClient(
             }
         }
 
-        // Build search query with quality preferences
-        // Enhance search query for short release titles if enabled
+        // Build search query set with broad-first strategy
         logger.LogInformation("[Prowlarr] ===== BUILDING SEARCH QUERY =====");
         relLogger?.Info("[Prowlarr] ===== BUILDING SEARCH QUERY =====");
         logger.LogInformation("[Prowlarr] Original search: Artist='{Artist}', Release='{Release}', Year={Year}",
@@ -753,34 +752,17 @@ public class ProwlarrClient(
         relLogger?.Info(
             $"[Prowlarr] Original search: Artist='{artistName}', Release='{releaseTitle}', Year={year?.ToString() ?? "null"}");
 
-        var dbSettings = await serverSettingsAccessor.GetAsync();
-        var settingsRecord = new MusicGQL.Features.ServerSettings.ServerSettings(dbSettings);
-        var enhancedQuery = SearchQueryEnhancer.EnhanceQuery(artistName, releaseTitle, settingsRecord, logger, year);
-        var baseQuery = enhancedQuery;
+        var baseBroadQuery = ($"{artistName} {releaseTitle}").Trim();
+        logger.LogInformation("[Prowlarr] Broad base query (no year/quality): '{Query}'", baseBroadQuery);
+        relLogger?.Info($"[Prowlarr] Broad base query (no year/quality): '{baseBroadQuery}'");
 
-        logger.LogInformation("[Prowlarr] Enhanced search query: '{Query}'", baseQuery);
-        relLogger?.Info($"[Prowlarr] Enhanced search query: '{baseQuery}'");
-        logger.LogInformation("[Prowlarr] Short title enhancement: {WasEnhanced}",
-            !baseQuery.Equals($"{artistName} {releaseTitle}", StringComparison.OrdinalIgnoreCase));
-        relLogger?.Info(
-            $"[Prowlarr] Short title enhancement: {!baseQuery.Equals($"{artistName} {releaseTitle}", StringComparison.OrdinalIgnoreCase)}");
-
-        // Create multiple search variants with different quality priorities
-        var searchQueries = new List<string>
-        {
-            // 1. Search for 320 kbps MP3 first (good quality, reasonable file size)
-            baseQuery + " 320",
-            // 2. Search for FLAC (lossless quality)
-            baseQuery + " FLAC",
-            // 3. Fallback to base query (no quality specified)
-            baseQuery
-        };
+        var searchQueries = ProwlarrSearchStrategy.BuildQueries(artistName, releaseTitle, year, logger).ToList();
 
         logger.LogInformation(
-            "[Prowlarr] Quality-based search strategy for '{Artist} - {Release}': 320 → FLAC → no quality", artistName,
-            releaseTitle);
+            "[Prowlarr] Broad-first strategy for '{Artist} - {Release}': base → base+year → base+320 → base+FLAC",
+            artistName, releaseTitle);
         relLogger?.Info(
-            $"[Prowlarr] Quality-based search strategy for '{artistName} - {releaseTitle}': 320 → FLAC → no quality");
+            $"[Prowlarr] Broad-first strategy for '{artistName} - {releaseTitle}': base → base+year → base+320 → base+FLAC");
         logger.LogInformation("[Prowlarr] Will try search queries in order: {Queries}",
             string.Join(" | ", searchQueries));
         relLogger?.Info($"[Prowlarr] Will try search queries in order: {string.Join(" | ", searchQueries)}");
@@ -810,9 +792,27 @@ public class ProwlarrClient(
 
                     if (results.Count > 0)
                     {
-                        var qualityLevel = searchQuery == baseQuery ? "no quality specified" :
-                            searchQuery.Contains("320") ? "320 kbps" :
-                            searchQuery.Contains("FLAC") ? "FLAC" : "unknown";
+                        string qualityLevel;
+                        if (searchQuery.Equals(baseBroadQuery, StringComparison.OrdinalIgnoreCase))
+                        {
+                            qualityLevel = "broad (no year/quality)";
+                        }
+                        else if (year.HasValue && searchQuery.Equals($"{baseBroadQuery} {year.Value}", StringComparison.OrdinalIgnoreCase))
+                        {
+                            qualityLevel = "with year";
+                        }
+                        else if (searchQuery.Contains(" 320", StringComparison.OrdinalIgnoreCase))
+                        {
+                            qualityLevel = "320 kbps";
+                        }
+                        else if (searchQuery.Contains(" FLAC", StringComparison.OrdinalIgnoreCase))
+                        {
+                            qualityLevel = "FLAC";
+                        }
+                        else
+                        {
+                            qualityLevel = "unknown";
+                        }
                         logger.LogInformation(
                             "[Prowlarr] ✅ SUCCESS! Found {Count} results with {QualityLevel} search: '{Query}'",
                             results.Count, qualityLevel, searchQuery);
@@ -1063,36 +1063,6 @@ public class ProwlarrClient(
                 await Task.Delay(TimeSpan.FromSeconds(delaySeconds), cancellationToken);
                 continue;
             }
-        }
-
-        // Try a different search approach - the POST endpoint seems to be for grabbing specific releases
-        // Let's try using the same endpoint but with different parameters or a different method
-        try
-        {
-            var baseUrl2 = options.Value.BaseUrl!.TrimEnd('/');
-            var apiKey2 = options.Value.ApiKey!;
-            // Try using the search endpoint with query parameters instead of POST body
-            var url =
-                $"{baseUrl2}/api/v1/search?apikey={Uri.EscapeDataString(apiKey2)}&query={Uri.EscapeDataString(query)}&type=search";
-            var executor = new ProwlarrRequestExecutor(httpClient, options, logger);
-            var res = await executor.GetJsonAsync(url, cancellationToken);
-            if (res.Success && res.Json is not null)
-            {
-                var json = res.Json;
-                var preview = json.Length > 600 ? json[..600] + "…" : json;
-                logger.LogInformation("[Prowlarr] Alternative GET body preview: {Preview}", preview);
-                using var doc = JsonDocument.Parse(json);
-                var list = ProwlarrJsonParser.ParseResults(doc.RootElement, artistName, releaseTitle, logger);
-                logger.LogInformation("[Prowlarr] Parsed {Count} results from alternative GET", list.Count);
-                if (list.Count > 0)
-                {
-                    return list;
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            logger.LogDebug(ex, "Prowlarr alternative search failed");
         }
 
         logger.LogInformation("Prowlarr returned no results for query '{Query}' across all URL variants. " +
