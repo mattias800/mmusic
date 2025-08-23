@@ -202,6 +202,61 @@ public class LibraryAssetsController(ServerLibraryAssetReader assetReader) : Con
     }
 
     /// <summary>
+    /// Serves disc-aware track audio files
+    /// GET /library/{artistId}/releases/{releaseFolderName}/discs/{discNumber}/tracks/{trackNumber}/audio
+    /// </summary>
+    [HttpGet("{artistId}/releases/{releaseFolderName}/discs/{discNumber:int}/tracks/{trackNumber:int}/audio")]
+    public async Task<IActionResult> GetTrackAudioByDisc(
+        string artistId,
+        string releaseFolderName,
+        int discNumber,
+        int trackNumber,
+        [FromServices] Db.Postgres.EventDbContext dbContext,
+        [FromServices] EventProcessor.EventProcessorWorker eventProcessor
+    )
+    {
+        var (stream, contentType, fileName) = await assetReader.GetTrackAudioAsync(
+            artistId,
+            releaseFolderName,
+            discNumber,
+            trackNumber
+        );
+
+        if (stream == null || contentType == null)
+        {
+            return NotFound(
+                $"Audio file not found for disc {discNumber} track {trackNumber} in release '{releaseFolderName}' by artist '{artistId}'"
+            );
+        }
+
+        // Increment play-count in release.json and refresh the cache.
+        // Emit a TrackPlayed event and process (projection will be updated by the event processor)
+        var userIdClaim = HttpContext
+            .User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)
+            ?.Value;
+        Guid? subjectUserId = null;
+        if (Guid.TryParse(userIdClaim, out var parsed))
+            subjectUserId = parsed;
+
+        if (subjectUserId.HasValue)
+        {
+            var ev = new Features.PlayCounts.Events.TrackPlayed
+            {
+                ArtistId = artistId,
+                ReleaseFolderName = releaseFolderName,
+                TrackNumber = trackNumber,
+                SubjectUserId = subjectUserId.Value,
+            };
+            dbContext.Events.Add(ev);
+            await dbContext.SaveChangesAsync();
+            await eventProcessor.ProcessEvents();
+        }
+
+        // Enable HTTP Range processing so the <audio> element can seek without restarting
+        return File(stream, contentType, fileName, enableRangeProcessing: true);
+    }
+
+    /// <summary>
     /// Alternative endpoint with file extension for artist photos by type
     /// GET /library/{artistId}/photos/{photoType}/{photoIndex}.{extension}
     /// </summary>

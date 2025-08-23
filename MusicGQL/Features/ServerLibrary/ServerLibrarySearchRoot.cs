@@ -81,17 +81,35 @@ public class ServerLibrarySearchRoot
     }
 
     /// <summary>
-    /// Get a single track by stable ID: artistId/releaseFolderName/trackNumber
+    /// Get a single track by stable ID.
+    /// Supports both legacy: artistId/releaseFolderName/trackNumber
+    /// and disc-aware: artistId/releaseFolderName/discNumber:trackNumber
     /// </summary>
     public async Task<Track?> TrackById([Service] ServerLibraryCache cache, [ID] string id)
     {
         if (string.IsNullOrWhiteSpace(id))
             return null;
         var parts = id.Split('/', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-        if (parts.Length != 3 || !int.TryParse(parts[2], out var trackNumber))
+        if (parts.Length != 3)
             return null;
-        var cached = await cache.GetTrackByArtistReleaseAndNumberAsync(parts[0], parts[1], trackNumber);
-        return cached is null ? null : new Track(cached);
+
+        // parts[2] can be either "track" or "disc:track"
+        var last = parts[2];
+        if (last.Contains(':'))
+        {
+            var dt = last.Split(':', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            if (dt.Length != 2 || !int.TryParse(dt[0], out var disc) || !int.TryParse(dt[1], out var track))
+                return null;
+            var cached = await cache.GetTrackByArtistReleaseDiscAndNumberAsync(parts[0], parts[1], disc, track);
+            return cached is null ? null : new Track(cached);
+        }
+        else
+        {
+            if (!int.TryParse(last, out var trackNumber))
+                return null;
+            var cached = await cache.GetTrackByArtistReleaseAndNumberAsync(parts[0], parts[1], trackNumber);
+            return cached is null ? null : new Track(cached);
+        }
     }
 
     /// <summary>

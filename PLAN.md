@@ -5,7 +5,7 @@ Scope and guiding principles
 - [x] Forward-compatible JSON: when multi-disc is present, discs[] is the source of truth; we can optionally materialize a flattened view for compatibility.
 - [x] API and UI remain identical for single-disc releases; for multi-disc, discs show as sections (no layout changes otherwise).
 - [x] Importers and downloaders become disc-aware (MusicBrainz mediums, filesystem “CD1/Disc 2/Digital Media 03”, etc.).
-- [ ] Track identity and availability tracking include disc number for correctness.
+- [x] Track identity and availability tracking include disc number for correctness.
 
 Proposed data model changes
 - [ ] JSON (release.json):

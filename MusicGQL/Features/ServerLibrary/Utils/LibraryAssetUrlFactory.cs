@@ -139,6 +139,26 @@ public static class LibraryAssetUrlFactory
     }
 
     /// <summary>
+    /// Creates a disc-aware track audio URL
+    /// </summary>
+    /// <param name="artistId">Artist ID</param>
+    /// <param name="releaseFolderName">Release folder name</param>
+    /// <param name="discNumber">Disc number (1-based)</param>
+    /// <param name="trackNumber">Track number</param>
+    /// <returns>Track audio URL scoped to a specific disc</returns>
+    public static string CreateTrackAudioUrl(
+        string artistId,
+        string releaseFolderName,
+        int discNumber,
+        int trackNumber
+    )
+    {
+        var escapedArtistId = Uri.EscapeDataString(artistId);
+        var escapedReleaseFolderName = Uri.EscapeDataString(releaseFolderName);
+        return $"/library/{escapedArtistId}/releases/{escapedReleaseFolderName}/discs/{discNumber}/tracks/{trackNumber}/audio";
+    }
+
+    /// <summary>
     /// Creates an appearance cover art URL
     /// </summary>
     /// <param name="artistId">Artist ID</param>

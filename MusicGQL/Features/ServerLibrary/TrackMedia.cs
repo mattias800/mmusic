@@ -17,6 +17,7 @@ public record TrackMedia([property: GraphQLIgnore] CachedTrack Model)
         LibraryAssetUrlFactory.CreateTrackAudioUrl(
             Model.ArtistId,
             Model.ReleaseFolderName,
+            Model.DiscNumber,
             Model.TrackNumber
         );
 

@@ -761,6 +761,34 @@ public class ServerLibraryCache(ServerLibraryJsonReader reader, ITopicEventSende
     }
 
     /// <summary>
+    /// Gets a specific track by artist ID, release folder name, disc number and track number
+    /// </summary>
+    public async Task<CachedTrack?> GetTrackByArtistReleaseDiscAndNumberAsync(
+        string artistId,
+        string releaseFolderName,
+        int discNumber,
+        int trackNumber
+    )
+    {
+        await EnsureCacheInitializedAsync();
+
+        lock (_lockObject)
+        {
+            var artistReleases = _releasesByArtistAndFolder.GetValueOrDefault(
+                artistId.ToLowerInvariant()
+            );
+            if (artistReleases == null)
+                return null;
+
+            if (!artistReleases.TryGetValue(releaseFolderName.ToLowerInvariant(), out var release))
+                return null;
+
+            var d = discNumber <= 0 ? 1 : discNumber;
+            return release.Tracks.FirstOrDefault(t => (t.DiscNumber > 0 ? t.DiscNumber : 1) == d && t.TrackNumber == trackNumber);
+        }
+    }
+
+    /// <summary>
     /// Gets all tracks for a specific artist by artist ID
     /// </summary>
     /// <param name="artistId">Artist ID</param>

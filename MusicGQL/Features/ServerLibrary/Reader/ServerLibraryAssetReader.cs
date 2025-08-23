@@ -343,32 +343,140 @@ public class ServerLibraryAssetReader(ServerSettingsAccessor serverSettingsAcces
                 GetJsonOptions()
             );
 
-            if (releaseJson?.Tracks == null)
+            if (releaseJson == null)
                 return (null, null, null);
 
-            var track = releaseJson.Tracks.FirstOrDefault(t => t.TrackNumber == trackNumber);
-            if (track?.AudioFilePath == null)
-                return (null, null, null);
+            // Prefer flattened tracks for backward compatibility
+            if (releaseJson.Tracks is { Count: > 0 })
+            {
+                var track = releaseJson.Tracks.FirstOrDefault(t => t.TrackNumber == trackNumber);
+                if (track?.AudioFilePath != null)
+                {
+                    var audioPath = track.AudioFilePath;
+                    if (audioPath.StartsWith("./"))
+                        audioPath = audioPath[2..];
+                    var fullAudioPath = Path.Combine(releasePath, audioPath);
+                    if (!File.Exists(fullAudioPath))
+                        return (null, null, null);
+                    var fileStream = new FileStream(fullAudioPath, FileMode.Open, FileAccess.Read);
+                    var contentType = GetContentTypeFromExtension(Path.GetExtension(fullAudioPath));
+                    var fileName = Path.GetFileName(fullAudioPath);
+                    return (fileStream, contentType, fileName);
+                }
+            }
 
-            // Handle relative paths
-            var audioPath = track.AudioFilePath;
-            if (audioPath.StartsWith("./"))
-                audioPath = audioPath[2..];
+            // If no flattened tracks or no match, try discs but this may be ambiguous without disc number
+            if (releaseJson.Discs is { Count: > 0 })
+            {
+                foreach (var d in releaseJson.Discs)
+                {
+                    var t = d.Tracks?.FirstOrDefault(x => x.TrackNumber == trackNumber);
+                    if (t?.AudioFilePath != null)
+                    {
+                        var audioPath = t.AudioFilePath;
+                        if (audioPath.StartsWith("./"))
+                            audioPath = audioPath[2..];
+                        var fullAudioPath = Path.Combine(releasePath, audioPath);
+                        if (!File.Exists(fullAudioPath))
+                            continue;
+                        var fileStream = new FileStream(fullAudioPath, FileMode.Open, FileAccess.Read);
+                        var contentType = GetContentTypeFromExtension(Path.GetExtension(fullAudioPath));
+                        var fileName = Path.GetFileName(fullAudioPath);
+                        return (fileStream, contentType, fileName);
+                    }
+                }
+            }
 
-            var fullAudioPath = Path.Combine(releasePath, audioPath);
-
-            if (!File.Exists(fullAudioPath))
-                return (null, null, null);
-
-            var fileStream = new FileStream(fullAudioPath, FileMode.Open, FileAccess.Read);
-            var contentType = GetContentTypeFromExtension(Path.GetExtension(fullAudioPath));
-            var fileName = Path.GetFileName(fullAudioPath);
-
-            return (fileStream, contentType, fileName);
+            return (null, null, null);
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error reading track audio: {ex.Message}");
+            return (null, null, null);
+        }
+    }
+
+    /// <summary>
+    /// Gets an audio file by artist ID, release folder name, disc number and track number
+    /// </summary>
+    /// <param name="artistId">Artist ID</param>
+    /// <param name="releaseFolderName">Release folder name</param>
+    /// <param name="discNumber">Disc number (1-based)</param>
+    /// <param name="trackNumber">Track number</param>
+    /// <returns>File stream and content type, or null if not found</returns>
+    public async Task<(Stream? stream, string? contentType, string? fileName)> GetTrackAudioAsync(
+        string artistId,
+        string releaseFolderName,
+        int discNumber,
+        int trackNumber
+    )
+    {
+        try
+        {
+            var libraryPath = await GetLibraryPathAsync();
+            var releasePath = Path.Combine(libraryPath, artistId, releaseFolderName);
+            if (!Directory.Exists(releasePath))
+                return (null, null, null);
+
+            var releaseJsonPath = Path.Combine(releasePath, "release.json");
+            if (!File.Exists(releaseJsonPath))
+                return (null, null, null);
+
+            var jsonContent = await File.ReadAllTextAsync(releaseJsonPath);
+            var releaseJson = JsonSerializer.Deserialize<Json.JsonRelease>(
+                jsonContent,
+                GetJsonOptions()
+            );
+
+            if (releaseJson == null)
+                return (null, null, null);
+
+            // Prefer discs when a disc number is provided
+            if (releaseJson.Discs is { Count: > 0 })
+            {
+                var dnum = discNumber <= 0 ? 1 : discNumber;
+                var disc = releaseJson.Discs.FirstOrDefault(d => (d.DiscNumber > 0 ? d.DiscNumber : 1) == dnum);
+                var track = disc?.Tracks?.FirstOrDefault(t => t.TrackNumber == trackNumber);
+                if (track?.AudioFilePath != null)
+                {
+                    var audioPath = track.AudioFilePath;
+                    if (audioPath.StartsWith("./"))
+                        audioPath = audioPath[2..];
+                    var fullAudioPath = Path.Combine(releasePath, audioPath);
+                    if (!File.Exists(fullAudioPath))
+                        return (null, null, null);
+                    var fileStream = new FileStream(fullAudioPath, FileMode.Open, FileAccess.Read);
+                    var contentType = GetContentTypeFromExtension(Path.GetExtension(fullAudioPath));
+                    var fileName = Path.GetFileName(fullAudioPath);
+                    return (fileStream, contentType, fileName);
+                }
+            }
+
+            // Fallback: check flattened tracks with matching discNumber
+            if (releaseJson.Tracks is { Count: > 0 })
+            {
+                var dnum = discNumber <= 0 ? 1 : discNumber;
+                var track = releaseJson.Tracks.FirstOrDefault(t => (t.DiscNumber ?? 1) == dnum && t.TrackNumber == trackNumber);
+                if (track?.AudioFilePath != null)
+                {
+                    var audioPath = track.AudioFilePath;
+                    if (audioPath.StartsWith("./"))
+                        audioPath = audioPath[2..];
+                    var fullAudioPath = Path.Combine(releasePath, audioPath);
+                    if (!File.Exists(fullAudioPath))
+                        return (null, null, null);
+                    var fileStream = new FileStream(fullAudioPath, FileMode.Open, FileAccess.Read);
+                    var contentType = GetContentTypeFromExtension(Path.GetExtension(fullAudioPath));
+                    var fileName = Path.GetFileName(fullAudioPath);
+                    return (fileStream, contentType, fileName);
+                }
+            }
+
+            return (null, null, null);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error reading track audio (disc-aware): {ex.Message}");
             return (null, null, null);
         }
     }
