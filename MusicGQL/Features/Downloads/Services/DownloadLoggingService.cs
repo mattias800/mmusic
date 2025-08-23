@@ -25,6 +25,8 @@ public class DownloadLogger : IDownloadLogger, IDisposable
 {
     // Global, per-file locks to serialize writes across all logger instances
     private static readonly ConcurrentDictionary<string, SemaphoreSlim> FileLocks = new(StringComparer.OrdinalIgnoreCase);
+    // Global, per-file shared writers so all instances use the same handle (prevents interleaved append pointers)
+    private static readonly ConcurrentDictionary<string, Lazy<StreamWriter>> Writers = new(StringComparer.OrdinalIgnoreCase);
 
     private readonly StreamWriter _writer;
     private readonly SemaphoreSlim _fileLock;
@@ -35,12 +37,12 @@ public class DownloadLogger : IDownloadLogger, IDisposable
         Directory.CreateDirectory(Path.GetDirectoryName(logFilePath)!);
         _path = Path.GetFullPath(logFilePath);
         _fileLock = FileLocks.GetOrAdd(_path, _ => new SemaphoreSlim(1, 1));
-        // Allow shared write access; we rely on the per-file semaphore to serialize lines
-        _writer = new StreamWriter(new FileStream(_path, FileMode.Append, FileAccess.Write, FileShare.ReadWrite))
+        // Use a single shared StreamWriter per file across the process lifetime
+        _writer = Writers.GetOrAdd(_path, p => new Lazy<StreamWriter>(() =>
         {
-            AutoFlush = true,
-            NewLine = Environment.NewLine
-        };
+            var fs = new FileStream(p, FileMode.Append, FileAccess.Write, FileShare.ReadWrite);
+            return new StreamWriter(fs) { AutoFlush = true, NewLine = Environment.NewLine };
+        })).Value;
         Info("==== Logger started ====");
     }
 
@@ -66,8 +68,9 @@ public class DownloadLogger : IDownloadLogger, IDisposable
 
     public void Dispose()
     {
-        try { _writer?.Dispose(); } catch { }
-        // Do not remove the semaphore from the dictionary to avoid races while other instances may be using it
+        // Intentionally do not dispose the shared writer here; other instances may still be using it
+        try { _writer.Flush(); } catch { }
+        // Do not remove the semaphore or writer from the dictionaries to avoid races
     }
 }
 
@@ -84,7 +87,8 @@ public class DownloadLogPathProvider(ServerSettingsAccessor serverSettingsAccess
         var safeRelease = SanitizeForFileName(releaseTitle);
         var artistDir = Path.Combine(downloadsRoot, safeArtist);
         Directory.CreateDirectory(artistDir);
-        return Path.Combine(artistDir, $"{safeRelease}.log");
+        // Normalize to full path so all writers resolve to identical keys
+        return Path.GetFullPath(Path.Combine(artistDir, $"{safeRelease}.log"));
     }
 
     public async Task<string?> GetServiceLogFilePathAsync(string serviceName, CancellationToken cancellationToken = default)

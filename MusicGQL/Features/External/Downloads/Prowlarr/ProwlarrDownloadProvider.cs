@@ -29,144 +29,225 @@ public class ProwlarrDownloadProvider(
         CancellationToken cancellationToken
     )
     {
-        // Initialize per-release log
-        DownloadLogger? relLoggerImpl = null;
-        IDownloadLogger relLogger = new NullDownloadLogger();
+        // Initialize per-release log - CRASH if this fails as requested
+        logger.LogInformation("[Prowlarr] ===== STARTING TryDownloadReleaseAsync =====");
+        logger.LogInformation("[Prowlarr] Parameters - ArtistId: {ArtistId}, ReleaseFolderName: {ReleaseFolderName}",
+            artistId, releaseFolderName);
+        logger.LogInformation("[Prowlarr] Parameters - ArtistName: {ArtistName}, ReleaseTitle: {ReleaseTitle}",
+            artistName, releaseTitle);
+        logger.LogInformation("[Prowlarr] Parameters - TargetDirectory: {TargetDirectory}", targetDirectory);
+        logger.LogInformation("[Prowlarr] Parameters - AllowedOfficialCounts: {Counts}",
+            string.Join(", ", allowedOfficialCounts));
+        logger.LogInformation("[Prowlarr] Parameters - AllowedOfficialDigitalCounts: {Counts}",
+            string.Join(", ", allowedOfficialDigitalCounts));
+
+        logger.LogInformation("[Prowlarr] Initializing per-release logger...");
+        string? logPath = null;
         try
         {
-            var logPath = await logPathProvider.GetReleaseLogFilePathAsync(artistName, releaseTitle, cancellationToken);
-            if (!string.IsNullOrWhiteSpace(logPath))
+            logPath = await logPathProvider.GetReleaseLogFilePathAsync(artistName, releaseTitle, cancellationToken);
+            logger.LogInformation("[Prowlarr] Log path obtained: {LogPath}", logPath ?? "null/empty");
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "[Prowlarr] CRITICAL ERROR: Failed to get release log path - CRASHING APPLICATION");
+            Environment.Exit(-1);
+            return false; // This line will never be reached
+        }
+
+        DownloadLogger? relLoggerImpl = null;
+        IDownloadLogger relLogger = new NullDownloadLogger();
+
+        if (!string.IsNullOrWhiteSpace(logPath))
+        {
+            logger.LogInformation("[Prowlarr] Creating DownloadLogger with path: {LogPath}", logPath);
+            try
             {
                 relLoggerImpl = new DownloadLogger(logPath!);
                 relLogger = relLoggerImpl;
+                logger.LogInformation("[Prowlarr] DownloadLogger created successfully");
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "[Prowlarr] CRITICAL ERROR: Failed to create DownloadLogger - CRASHING APPLICATION");
+                Environment.Exit(-1);
+                return false; // This line will never be reached
             }
         }
-        catch
+        else
         {
+            logger.LogWarning("[Prowlarr] Log path is null or empty, using NullDownloadLogger");
         }
 
-        try
+        logger.LogInformation("[Prowlarr] Logger initialization complete");
+
+        // Now we can use relLogger safely
+        relLogger.Info("[Prowlarr] ===== STARTING TryDownloadReleaseAsync =====");
+        relLogger.Info($"[Prowlarr] Parameters - ArtistId: {artistId}, ReleaseFolderName: {releaseFolderName}");
+        relLogger.Info($"[Prowlarr] Parameters - ArtistName: {artistName}, ReleaseTitle: {releaseTitle}");
+        relLogger.Info($"[Prowlarr] Parameters - TargetDirectory: {targetDirectory}");
+        relLogger.Info($"[Prowlarr] Parameters - AllowedOfficialCounts: {string.Join(", ", allowedOfficialCounts)}");
+        relLogger.Info($"[Prowlarr] Parameters - AllowedOfficialDigitalCounts: {string.Join(", ", allowedOfficialDigitalCounts)}");
+
+                try
         {
             // Read toggles
+            logger.LogInformation("[Prowlarr] Reading server settings...");
             var settings = await serverSettingsAccessor.GetAsync();
+            logger.LogInformation("[Prowlarr] Server settings loaded successfully");
+
             var allowSab = settings.EnableSabnzbdDownloader;
             var allowQbit = settings.EnableQBittorrentDownloader;
+            logger.LogInformation("[Prowlarr] Downloader settings - SABnzbd: {SAB}, qBittorrent: {QB}",
+                allowSab, allowQbit);
 
             // 1) Search Prowlarr for nzb/magnet results
+            logger.LogInformation("[Prowlarr] ===== PHASE 1: Search Prowlarr for results =====");
             logger.LogInformation("[Prowlarr] Begin provider for {Artist} - {Release}", artistName, releaseTitle);
-            try
-            {
-                relLogger.Info($"[Prowlarr] Begin provider for {artistName} - {releaseTitle}");
-            }
-            catch
-            {
-            }
+            relLogger.Info($"[Prowlarr] Begin provider for {artistName} - {releaseTitle}");
 
             // Get year information from cache for better search specificity
+            logger.LogInformation("[Prowlarr] Getting year information from cache...");
             var cachedRelease = await cache.GetReleaseByArtistAndFolderAsync(artistId, releaseFolderName);
+            logger.LogInformation("[Prowlarr] Cache lookup result: {HasResult}", cachedRelease != null);
+
             int? year = null;
-            if (cachedRelease?.JsonRelease?.FirstReleaseYear != null &&
-                int.TryParse(cachedRelease.JsonRelease.FirstReleaseYear, out int parsedYear))
+            if (cachedRelease?.JsonRelease?.FirstReleaseYear != null)
             {
-                year = parsedYear;
+                logger.LogInformation("[Prowlarr] FirstReleaseYear found: {Year}", cachedRelease.JsonRelease.FirstReleaseYear);
+                if (int.TryParse(cachedRelease.JsonRelease.FirstReleaseYear, out int parsedYear))
+                {
+                    year = parsedYear;
+                    logger.LogInformation("[Prowlarr] Successfully parsed year: {Year}", year);
+                }
+                else
+                {
+                    logger.LogWarning("[Prowlarr] Failed to parse year from: {YearString}", cachedRelease.JsonRelease.FirstReleaseYear);
+                }
+            }
+            else
+            {
+                logger.LogInformation("[Prowlarr] No year information found in cache");
             }
 
             // Validate configuration before searching, to avoid silent fast-fail
+            logger.LogInformation("[Prowlarr] Validating Prowlarr configuration...");
             var baseUrl = prowlarrOptions.Value.BaseUrl;
             var apiKey = prowlarrOptions.Value.ApiKey;
+
+            logger.LogInformation("[Prowlarr] Configuration check - BaseUrl: {BaseUrl}, ApiKey: {HasApiKey}",
+                baseUrl ?? "null", !string.IsNullOrWhiteSpace(apiKey));
+
             if (string.IsNullOrWhiteSpace(baseUrl) || string.IsNullOrWhiteSpace(apiKey))
             {
-                logger.LogWarning(
-                    "[Prowlarr] Skipping search due to missing configuration. BaseUrl='{BaseUrl}', ApiKeyConfigured={HasApiKey}",
-                    baseUrl ?? "", !string.IsNullOrWhiteSpace(apiKey));
-                try
-                {
-                    relLogger.Warn(
-                        $"[Prowlarr] Skipping: missing configuration. BaseUrl='{baseUrl ?? ""}', ApiKeyConfigured={!string.IsNullOrWhiteSpace(apiKey)}");
-                }
-                catch
-                {
-                }
-
+                logger.LogError("[Prowlarr] CRITICAL: Configuration validation FAILED - RETURNING FALSE");
+                relLogger.Warn($"[Prowlarr] Configuration validation FAILED - BaseUrl='{baseUrl ?? ""}', ApiKeyConfigured={!string.IsNullOrWhiteSpace(apiKey)}");
                 return false;
             }
 
-            var results = await prowlarr.SearchAlbumAsync(artistName, releaseTitle, year, cancellationToken);
-            logger.LogInformation("[Prowlarr] Search returned {Count} results for {Artist} - {Release}", results.Count,
-                artistName, releaseTitle);
-            try
+            logger.LogInformation("[Prowlarr] Configuration validation PASSED");
+
+            // Execute the search
+            logger.LogInformation("[Prowlarr] Executing Prowlarr search...");
+            logger.LogInformation("[Prowlarr] Search parameters - ArtistName: {Artist}, ReleaseTitle: {Release}, Year: {Year}",
+                artistName, releaseTitle, year?.ToString() ?? "null");
+
+            var results = await prowlarr.SearchAlbumAsync(artistName, releaseTitle, year, cancellationToken, relLogger);
+            logger.LogInformation("[Prowlarr] Search completed - Results count: {Count}", results.Count);
+
+            if (results.Count > 0)
             {
-                relLogger.Info($"[Prowlarr] Search returned {results.Count} results");
+                logger.LogInformation("[Prowlarr] Search returned results, proceeding to filtering...");
             }
-            catch
+            else
             {
+                logger.LogWarning("[Prowlarr] Search returned NO RESULTS - RETURNING FALSE");
             }
 
-            try
+            relLogger.Info($"[Prowlarr] Search returned {results.Count} results");
+
+            logger.LogInformation("[Prowlarr] ===== PHASE 2: Process and filter results =====");
+            logger.LogInformation("[Prowlarr] Processing {Count} raw results...", results.Count);
+
+            // Log first few raw results
+            int rawCount = 0;
+            foreach (var r in results)
             {
-                int i = 0;
-                foreach (var r in results)
+                if (rawCount++ >= 10)
                 {
-                    if (i++ >= 10)
-                    {
-                        relLogger.Info("[Prowlarr] (more results omitted)…");
-                        break;
-                    }
-
-                    relLogger.Info(
-                        $"[Prowlarr] Raw result: title={r.Title} size={r.Size} magnet={(string.IsNullOrWhiteSpace(r.MagnetUrl) ? "no" : "yes")} url={(string.IsNullOrWhiteSpace(r.DownloadUrl) ? "no" : "yes")} idx={r.IndexerId}");
+                    relLogger.Info("[Prowlarr] (more results omitted)…");
+                    logger.LogInformation("[Prowlarr] Showing first 10 results, {Remaining} more omitted", Math.Max(0, results.Count - 10));
+                    break;
                 }
+
+                logger.LogInformation("[Prowlarr] Raw result {Index}: title='{Title}', size={Size}, magnet={HasMagnet}, url={HasUrl}, indexer={IndexerId}",
+                    rawCount, r.Title, r.Size, !string.IsNullOrWhiteSpace(r.MagnetUrl), !string.IsNullOrWhiteSpace(r.DownloadUrl), r.IndexerId);
+                relLogger.Info($"[Prowlarr] Raw result: title={r.Title} size={r.Size} magnet={(!string.IsNullOrWhiteSpace(r.MagnetUrl) ? "yes" : "no")} url={(!string.IsNullOrWhiteSpace(r.DownloadUrl) ? "yes" : "no")} idx={r.IndexerId}");
             }
-            catch
-            {
-            }
+
+            logger.LogInformation("[Prowlarr] Starting result filtering and scoring...");
 
             // Prefer items that look like full releases and larger sizes first
             // Filter and score results for music albums only; reject obvious mismatches (e.g., TV packs)
             var preFilter = results;
+            logger.LogInformation("[Prowlarr] Pre-filter count: {Count}", preFilter.Count);
+
             var filtered = preFilter
                 .Where(r => IsLikelyMusicAlbum(r, artistName, releaseTitle))
                 .OrderByDescending(r => Score(r, artistName, releaseTitle))
                 .ThenByDescending(r => r.Size ?? 0)
                 .ToList();
 
-            // Log before/after with rejection reasons
-            try
-            {
-                relLogger.Info($"[Prowlarr] Filtered results: before={preFilter.Count} after={filtered.Count}");
-                if (filtered.Count == 0 && preFilter.Count > 0)
-                {
-                    int shown = 0;
-                    foreach (var r in preFilter)
-                    {
-                        if (shown++ >= 10)
-                        {
-                            relLogger.Info("[Prowlarr] (more rejected omitted)…");
-                            break;
-                        }
+            logger.LogInformation("[Prowlarr] Post-filter count: {Count}", filtered.Count);
+            relLogger.Info($"[Prowlarr] Filtered results: before={preFilter.Count} after={filtered.Count}");
 
-                        var reasons = GetProviderRejectionReasons(r, artistName, releaseTitle);
-                        relLogger.Info($"[Prowlarr] Rejected: title={r.Title} reasons=[{string.Join(',', reasons)}]");
+            // Log filtering results with detailed rejection reasons
+            if (filtered.Count == 0 && preFilter.Count > 0)
+            {
+                logger.LogError("[Prowlarr] CRITICAL: ALL results were filtered out - investigating rejection reasons...");
+                int rejectionCount = 0;
+                foreach (var r in preFilter)
+                {
+                    if (rejectionCount++ >= 10)
+                    {
+                        relLogger.Info("[Prowlarr] (more rejected omitted)…");
+                        logger.LogWarning("[Prowlarr] Showing first 10 rejections, {Remaining} more omitted", Math.Max(0, preFilter.Count - 10));
+                        break;
                     }
+
+                    var reasons = GetProviderRejectionReasons(r, artistName, releaseTitle);
+                    logger.LogError("[Prowlarr] REJECTED result {Index}: '{Title}' - Reasons: [{Reasons}]",
+                        rejectionCount, r.Title, string.Join(", ", reasons));
+                    relLogger.Info($"[Prowlarr] Rejected: title={r.Title} reasons=[{string.Join(',', reasons)}]");
                 }
             }
-            catch
+            else if (filtered.Count > 0)
             {
+                logger.LogInformation("[Prowlarr] Some results passed filtering - showing top results...");
+                int passedCount = 0;
+                foreach (var r in filtered)
+                {
+                    if (passedCount++ >= 5)
+                    {
+                        logger.LogInformation("[Prowlarr] (showing first 5 passed results)...");
+                        break;
+                    }
+
+                    var score = Score(r, artistName, releaseTitle);
+                    logger.LogInformation("[Prowlarr] PASSED result {Index}: '{Title}' - Score: {Score}, Size: {Size}",
+                        passedCount, r.Title, score, r.Size);
+                }
             }
 
             results = filtered;
             if (results.Count == 0)
             {
-                try
-                {
-                    relLogger.Warn("[Prowlarr] No results after filtering");
-                }
-                catch
-                {
-                }
-
+                logger.LogError("[Prowlarr] CRITICAL FAILURE: No results after filtering - RETURNING FALSE");
+                relLogger.Warn("[Prowlarr] No results after filtering");
                 return false;
             }
+
+            logger.LogInformation("[Prowlarr] Results ready for download processing - count: {Count}", results.Count);
 
             // 2) Prefer NZB if available; otherwise fallback to magnet
             // Prefer Prowlarr-provided downloadUrl; many setups do not include .nzb extension
@@ -424,73 +505,66 @@ public class ProwlarrDownloadProvider(
             if (allowSab && !string.IsNullOrWhiteSpace(httpUrl) &&
                 (httpUrl!.StartsWith("http://") || httpUrl.StartsWith("https://")))
             {
+                logger.LogInformation("[Prowlarr] Final HTTP URL found - attempting SABnzbd download");
                 var url2 = EnsureProwlarrApiKey(httpUrl);
-                logger.LogInformation("[Prowlarr] Attempting SABnzbd handoff using HTTP URL: {Url}", url2);
-                try
-                {
-                    relLogger.Info($"[Prowlarr] Attempting SABnzbd handoff using HTTP URL: {url2}");
-                }
-                catch
-                {
-                }
+                logger.LogInformation("[Prowlarr] Final HTTP URL: {Url}", url2);
+                relLogger.Info($"[Prowlarr] Attempting SABnzbd handoff using HTTP URL: {url2}");
 
                 var ok2 = await sab.AddNzbByUrlAsync(url2, $"{artistName} - {releaseTitle}", cancellationToken);
+                logger.LogInformation("[Prowlarr] Final SABnzbd HTTP result: {Success}", ok2);
+
                 if (ok2)
                 {
-                    try
-                    {
-                        relLogger.Info("[Prowlarr] SABnzbd accepted HTTP handoff");
-                    }
-                    catch
-                    {
-                    }
-
+                    logger.LogInformation("[Prowlarr] SUCCESS: Final HTTP URL handed off to SABnzbd successfully");
+                    relLogger.Info("[Prowlarr] SABnzbd accepted HTTP handoff");
                     return true;
+                }
+                else
+                {
+                    logger.LogWarning("[Prowlarr] SABnzbd rejected final HTTP handoff");
                 }
             }
 
             // Diagnostic: log a few candidates and reasons
+            logger.LogInformation("[Prowlarr] ===== FINAL DIAGNOSTIC ANALYSIS =====");
+            logger.LogInformation("[Prowlarr] Analyzing first 3 candidates for rejection reasons...");
+
             try
             {
+                int candidateCount = 0;
                 foreach (var r in results.Take(3))
                 {
+                    candidateCount++;
                     var reasons = new List<string>();
                     if (!TitleMatches(r.Title)) reasons.Add("titleMismatch");
                     if (LooksLikeDiscography(r.Title)) reasons.Add("discography");
                     if (string.IsNullOrWhiteSpace(r.DownloadUrl) && string.IsNullOrWhiteSpace(r.MagnetUrl))
                         reasons.Add("noLink");
-                    logger.LogInformation("[Prowlarr] Candidate: title={Title} size={Size} reasons={Reasons}",
-                        r.Title ?? "", r.Size, string.Join(',', reasons));
-                    try
-                    {
-                        relLogger.Info(
-                            $"[Prowlarr] Candidate: title={r.Title} size={r.Size} reasons=[{string.Join(',', reasons)}]");
-                    }
-                    catch
-                    {
-                    }
+
+                    logger.LogInformation("[Prowlarr] Candidate {Index}: title='{Title}' size={Size} reasons=[{Reasons}]",
+                        candidateCount, r.Title ?? "", r.Size, string.Join(',', reasons));
+                    relLogger.Info($"[Prowlarr] Candidate: title={r.Title} size={r.Size} reasons=[{string.Join(',', reasons)}]");
                 }
+
+                logger.LogInformation("[Prowlarr] Diagnostic analysis complete - {Count} candidates examined", candidateCount);
             }
-            catch
+            catch (Exception ex)
             {
+                logger.LogError(ex, "[Prowlarr] ERROR during diagnostic analysis");
             }
 
-            logger.LogInformation(
-                "Prowlarr provider found results but failed to hand off to downloader (no acceptable candidates)");
-            try
-            {
-                relLogger.Warn(
-                    "[Prowlarr] No acceptable candidates after filtering. First few candidates were logged above with reasons.");
-            }
-            catch
-            {
-            }
+            logger.LogError("[Prowlarr] CRITICAL FAILURE: All attempts failed - RETURNING FALSE");
+            logger.LogInformation("Prowlarr provider found results but failed to hand off to downloader (no acceptable candidates)");
+            relLogger.Warn("[Prowlarr] No acceptable candidates after filtering. First few candidates were logged above with reasons.");
 
             return false;
         }
         finally
         {
+            logger.LogInformation("[Prowlarr] ===== ENDING TryDownloadReleaseAsync =====");
+            logger.LogInformation("[Prowlarr] Disposing logger resources...");
             relLoggerImpl?.Dispose();
+            logger.LogInformation("[Prowlarr] Logger resources disposed");
         }
     }
 

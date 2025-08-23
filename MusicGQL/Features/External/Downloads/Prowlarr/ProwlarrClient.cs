@@ -706,7 +706,7 @@ public class ProwlarrClient(HttpClient httpClient, IOptions<ProwlarrOptions> opt
         return "ProwlarrClient v1.0 - Enhanced with timeout handling, retry logic, and comprehensive diagnostics";
     }
 
-    public async Task<IReadOnlyList<ProwlarrRelease>> SearchAlbumAsync(string artistName, string releaseTitle, int? year, CancellationToken cancellationToken)
+    public async Task<IReadOnlyList<ProwlarrRelease>> SearchAlbumAsync(string artistName, string releaseTitle, int? year, CancellationToken cancellationToken, IDownloadLogger? relLogger = null)
     {
         var baseUrl = options.Value.BaseUrl?.TrimEnd('/');
         var apiKey = options.Value.ApiKey;
@@ -745,10 +745,22 @@ public class ProwlarrClient(HttpClient httpClient, IOptions<ProwlarrOptions> opt
 
         // Build search query with quality preferences
         // Enhance search query for short release titles if enabled
+        logger.LogInformation("[Prowlarr] ===== BUILDING SEARCH QUERY =====");
+        relLogger?.Info("[Prowlarr] ===== BUILDING SEARCH QUERY =====");
+        logger.LogInformation("[Prowlarr] Original search: Artist='{Artist}', Release='{Release}', Year={Year}",
+            artistName, releaseTitle, year?.ToString() ?? "null");
+        relLogger?.Info($"[Prowlarr] Original search: Artist='{artistName}', Release='{releaseTitle}', Year={year?.ToString() ?? "null"}");
+
         var dbSettings = await serverSettingsAccessor.GetAsync();
         var settingsRecord = new MusicGQL.Features.ServerSettings.ServerSettings(dbSettings);
         var enhancedQuery = SearchQueryEnhancer.EnhanceQuery(artistName, releaseTitle, settingsRecord, logger, year);
         var baseQuery = enhancedQuery;
+
+        logger.LogInformation("[Prowlarr] Enhanced search query: '{Query}'", baseQuery);
+        relLogger?.Info($"[Prowlarr] Enhanced search query: '{baseQuery}'");
+        logger.LogInformation("[Prowlarr] Short title enhancement: {WasEnhanced}",
+            !baseQuery.Equals($"{artistName} {releaseTitle}", StringComparison.OrdinalIgnoreCase));
+        relLogger?.Info($"[Prowlarr] Short title enhancement: {!baseQuery.Equals($"{artistName} {releaseTitle}", StringComparison.OrdinalIgnoreCase)}");
         
         // Create multiple search variants with different quality priorities
         var searchQueries = new List<string>
@@ -762,7 +774,12 @@ public class ProwlarrClient(HttpClient httpClient, IOptions<ProwlarrOptions> opt
         };
         
         logger.LogInformation("[Prowlarr] Quality-based search strategy for '{Artist} - {Release}': 320 → FLAC → no quality", artistName, releaseTitle);
+        relLogger?.Info($"[Prowlarr] Quality-based search strategy for '{artistName} - {releaseTitle}': 320 → FLAC → no quality");
         logger.LogInformation("[Prowlarr] Will try search queries in order: {Queries}", string.Join(" | ", searchQueries));
+        relLogger?.Info($"[Prowlarr] Will try search queries in order: {string.Join(" | ", searchQueries)}");
+
+        logger.LogInformation("[Prowlarr] ===== STARTING SEARCH EXECUTION =====");
+        relLogger?.Info("[Prowlarr] ===== STARTING SEARCH EXECUTION =====");
         
         // Try each search query until we find results, with retry logic
         foreach (var searchQuery in searchQueries)
@@ -775,18 +792,38 @@ public class ProwlarrClient(HttpClient httpClient, IOptions<ProwlarrOptions> opt
             {
                 try
                 {
-                    var results = await TrySearchWithQueryAsync(searchQuery, artistName, releaseTitle, cancellationToken);
+                    logger.LogInformation("[Prowlarr] Executing search for query: '{Query}'", searchQuery);
+                    relLogger?.Info($"[Prowlarr] Executing search for query: '{searchQuery}'");
+                    var results = await TrySearchWithQueryAsync(searchQuery, artistName, releaseTitle, cancellationToken, relLogger);
+
+                    logger.LogInformation("[Prowlarr] Query '{Query}' returned {Count} results", searchQuery, results.Count);
+                    relLogger?.Info($"[Prowlarr] Query '{searchQuery}' returned {results.Count} results");
+
                     if (results.Count > 0)
                     {
-                        var qualityLevel = searchQuery == baseQuery ? "no quality specified" : 
-                                         searchQuery.Contains("320") ? "320 kbps" : 
+                        var qualityLevel = searchQuery == baseQuery ? "no quality specified" :
+                                         searchQuery.Contains("320") ? "320 kbps" :
                                          searchQuery.Contains("FLAC") ? "FLAC" : "unknown";
-                        logger.LogInformation("[Prowlarr] Found {Count} results with {QualityLevel} search: '{Query}'", results.Count, qualityLevel, searchQuery);
+                        logger.LogInformation("[Prowlarr] ✅ SUCCESS! Found {Count} results with {QualityLevel} search: '{Query}'", results.Count, qualityLevel, searchQuery);
+                        relLogger?.Info($"[Prowlarr] ✅ SUCCESS! Found {results.Count} results with {qualityLevel} search: '{searchQuery}'");
+
+                        // LOG EVERY RESULT THAT PROWLARR RETURNED
+                        logger.LogInformation("[Prowlarr] ===== PROWLARR RETURNED RESULTS =====");
+                        relLogger?.Info("[Prowlarr] ===== PROWLARR RETURNED RESULTS =====");
+                        for (int i = 0; i < results.Count; i++)
+                        {
+                            var result = results[i];
+                            logger.LogInformation("[Prowlarr] RESULT #{Index}: '{Title}' (Size: {Size}, Magnet: {HasMagnet}, Download: {HasDownload})",
+                                i + 1, result.Title ?? "null", result.Size, !string.IsNullOrWhiteSpace(result.MagnetUrl), !string.IsNullOrWhiteSpace(result.DownloadUrl));
+                            relLogger?.Info($"[Prowlarr] RESULT #{i + 1}: '{result.Title ?? "null"}' (Size: {result.Size}, Magnet: {!string.IsNullOrWhiteSpace(result.MagnetUrl)}, Download: {!string.IsNullOrWhiteSpace(result.DownloadUrl)})");
+                        }
+
                         return results;
                     }
                     else
                     {
-                        logger.LogInformation("[Prowlarr] No results with '{Query}', trying next quality level", searchQuery);
+                        logger.LogInformation("[Prowlarr] ❌ No results with '{Query}', trying next quality level", searchQuery);
+                        relLogger?.Info($"[Prowlarr] ❌ No results with '{searchQuery}', trying next quality level");
                         break; // No results, try next quality level
                     }
                 }
@@ -823,11 +860,23 @@ public class ProwlarrClient(HttpClient httpClient, IOptions<ProwlarrOptions> opt
             }
         }
         
-        logger.LogInformation("[Prowlarr] No results found with any quality level (320, FLAC, or no quality specified)");
+        logger.LogInformation("[Prowlarr] ===== SEARCH COMPLETE - NO RESULTS =====");
+        relLogger?.Info("[Prowlarr] ===== SEARCH COMPLETE - NO RESULTS =====");
+        logger.LogInformation("[Prowlarr] ❌ No results found with any quality level (320, FLAC, or no quality specified)");
+        relLogger?.Info("[Prowlarr] ❌ No results found with any quality level (320, FLAC, or no quality specified)");
+        logger.LogInformation("[Prowlarr] Search queries tried:");
+        relLogger?.Info("[Prowlarr] Search queries tried:");
+        foreach (var query in searchQueries)
+        {
+            logger.LogInformation("[Prowlarr]   - '{Query}'", query);
+            relLogger?.Info($"[Prowlarr]   - '{query}'");
+        }
+        logger.LogInformation("[Prowlarr] Returning empty results array");
+        relLogger?.Info("[Prowlarr] Returning empty results array");
         return Array.Empty<ProwlarrRelease>();
     }
     
-    private async Task<IReadOnlyList<ProwlarrRelease>> TrySearchWithQueryAsync(string query, string artistName, string releaseTitle, CancellationToken cancellationToken)
+    private async Task<IReadOnlyList<ProwlarrRelease>> TrySearchWithQueryAsync(string query, string artistName, string releaseTitle, CancellationToken cancellationToken, IDownloadLogger? relLogger = null)
     {
         var baseUrl = options.Value.BaseUrl?.TrimEnd('/');
         var apiKey = options.Value.ApiKey;
@@ -863,9 +912,14 @@ public class ProwlarrClient(HttpClient httpClient, IOptions<ProwlarrOptions> opt
                 req.Headers.Accept.ParseAdd("application/json");
                 // Some setups prefer API key via header
                 try { req.Headers.Add("X-Api-Key", apiKey); } catch { }
-                
+
                 var attemptNumber = candidateUrls.IndexOf(url) + 1;
-                logger.LogInformation("[Prowlarr] GET {Url} (attempt {Attempt}/{MaxAttempts})", url, attemptNumber, candidateUrls.Count);
+                logger.LogInformation("[Prowlarr] ===== URL ATTEMPT #{Attempt}/{Total} =====", attemptNumber, candidateUrls.Count);
+                relLogger?.Info($"[Prowlarr] ===== URL ATTEMPT #{attemptNumber}/{candidateUrls.Count} =====");
+                logger.LogInformation("[Prowlarr] GET {Url}", url);
+                relLogger?.Info($"[Prowlarr] GET {url}");
+                logger.LogInformation("[Prowlarr] Headers: {Headers}", string.Join(", ", req.Headers.Select(h => $"{h.Key}: {string.Join(", ", h.Value)}")));
+                relLogger?.Info($"[Prowlarr] Headers: {string.Join(", ", req.Headers.Select(h => $"{h.Key}: {string.Join(", ", h.Value)}"))}");
                 var startTime = DateTime.UtcNow;
                 
                 // Log request details for debugging
@@ -877,33 +931,54 @@ public class ProwlarrClient(HttpClient httpClient, IOptions<ProwlarrOptions> opt
                 
                 var resp = await httpClient.SendAsync(req, cancellationToken);
                 var duration = DateTime.UtcNow - startTime;
-                
-                logger.LogInformation("[Prowlarr] GET completed in {Duration:0.00}s with status {Status}", duration.TotalSeconds, (int)resp.StatusCode);
-                
+
+                logger.LogInformation("[Prowlarr] RESPONSE: Status {Status} in {Duration:0.00}s", (int)resp.StatusCode, duration.TotalSeconds);
+                relLogger?.Info($"[Prowlarr] RESPONSE: Status {(int)resp.StatusCode} in {duration.TotalSeconds:0.00}s");
+
                 if (!resp.IsSuccessStatusCode)
                 {
                     string? body = null;
                     try { body = await resp.Content.ReadAsStringAsync(cancellationToken); } catch { }
                     if (!string.IsNullOrWhiteSpace(body) && body.Length > 500) body = body[..500] + "…";
-                    logger.LogInformation("[Prowlarr] GET HTTP {Status} for {Url}. Body: {Body}", (int)resp.StatusCode, url, body);
+                    logger.LogInformation("[Prowlarr] ❌ ERROR RESPONSE: HTTP {Status} - {Body}", (int)resp.StatusCode, body ?? "null");
+                    relLogger?.Warn($"[Prowlarr] ❌ ERROR RESPONSE: HTTP {(int)resp.StatusCode} - {body ?? "null"}");
                     continue;
                 }
-                
+
                 // Success - read and parse response
-                logger.LogDebug("[Prowlarr] Reading response content for {Url}", url);
+                logger.LogInformation("[Prowlarr] ✅ SUCCESS RESPONSE - Reading content...");
+                relLogger?.Info("[Prowlarr] ✅ SUCCESS RESPONSE - Reading content...");
                 var json = await resp.Content.ReadAsStringAsync(cancellationToken);
-                var preview = json.Length > 600 ? json[..600] + "…" : json;
-                logger.LogInformation("[Prowlarr] GET body preview: {Preview}", preview);
+                logger.LogInformation("[Prowlarr] Response JSON length: {Length} characters", json.Length);
+                relLogger?.Info($"[Prowlarr] Response JSON length: {json.Length} characters");
+
+                var preview = json.Length > 1000 ? json[..1000] + "…" : json;
+                logger.LogInformation("[Prowlarr] Response JSON preview: {Preview}", preview);
+                relLogger?.Info($"[Prowlarr] Response JSON preview: {preview}");
+
+                logger.LogInformation("[Prowlarr] Parsing JSON response...");
+                relLogger?.Info("[Prowlarr] Parsing JSON response...");
                 using var doc = JsonDocument.Parse(json);
                 var list = ParseProwlarrResults(doc.RootElement, artistName, releaseTitle, logger);
-                logger.LogInformation("[Prowlarr] Parsed {Count} results from GET", list.Count);
-                if (list.Count == 0)
+
+                logger.LogInformation("[Prowlarr] ===== PARSING RESULTS =====");
+                relLogger?.Info("[Prowlarr] ===== PARSING RESULTS =====");
+                logger.LogInformation("[Prowlarr] Parsed {Count} results from response", list.Count);
+                relLogger?.Info($"[Prowlarr] Parsed {list.Count} results from response");
+
+                if (list.Count > 0)
                 {
-                    logger.LogInformation("[Prowlarr] No results from this GET variant; trying next, if any.");
+                    logger.LogInformation("[Prowlarr] ✅ SUCCESS! Found {Count} results from this URL", list.Count);
+                    relLogger?.Info($"[Prowlarr] ✅ SUCCESS! Found {list.Count} results from this URL");
+                    return list;
+                }
+                else
+                {
+                    logger.LogInformation("[Prowlarr] ❌ No valid results from this URL variant - trying next");
+                    relLogger?.Info("[Prowlarr] ❌ No valid results from this URL variant - trying next");
                     try { LogRootShape(doc.RootElement, logger); } catch { }
                     continue;
                 }
-                return list;
             }
             catch (TaskCanceledException ex) when (ex.InnerException is TaskCanceledException)
             {
