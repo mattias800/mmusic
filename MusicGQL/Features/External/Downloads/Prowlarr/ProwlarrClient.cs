@@ -706,7 +706,7 @@ public class ProwlarrClient(HttpClient httpClient, IOptions<ProwlarrOptions> opt
         return "ProwlarrClient v1.0 - Enhanced with timeout handling, retry logic, and comprehensive diagnostics";
     }
 
-    public async Task<IReadOnlyList<ProwlarrRelease>> SearchAlbumAsync(string artistName, string releaseTitle, CancellationToken cancellationToken)
+    public async Task<IReadOnlyList<ProwlarrRelease>> SearchAlbumAsync(string artistName, string releaseTitle, int? year, CancellationToken cancellationToken)
     {
         var baseUrl = options.Value.BaseUrl?.TrimEnd('/');
         var apiKey = options.Value.ApiKey;
@@ -747,7 +747,7 @@ public class ProwlarrClient(HttpClient httpClient, IOptions<ProwlarrOptions> opt
         // Enhance search query for short release titles if enabled
         var dbSettings = await serverSettingsAccessor.GetAsync();
         var settingsRecord = new MusicGQL.Features.ServerSettings.ServerSettings(dbSettings);
-        var enhancedQuery = SearchQueryEnhancer.EnhanceQuery(artistName, releaseTitle, settingsRecord, logger);
+        var enhancedQuery = SearchQueryEnhancer.EnhanceQuery(artistName, releaseTitle, settingsRecord, logger, year);
         var baseQuery = enhancedQuery;
         
         // Create multiple search variants with different quality priorities
@@ -839,16 +839,19 @@ public class ProwlarrClient(HttpClient httpClient, IOptions<ProwlarrOptions> opt
         // Try a few parameter variants to handle API changes/configs
         var candidateUrls = new List<string>
         {
+            // Prioritize searches WITHOUT category filters first (as they work better for manual searches)
             $"{baseUrl}/api/v1/search?apikey={Uri.EscapeDataString(apiKey)}&query={Uri.EscapeDataString(query)}",
             $"{baseUrl}/api/v1/search?apikey={Uri.EscapeDataString(apiKey)}&query={Uri.EscapeDataString(query)}&type=search",
-            $"{baseUrl}/api/v1/search?apikey={Uri.EscapeDataString(apiKey)}&query={Uri.EscapeDataString(query)}&categories=3000&categories=3010&categories=3030",
-            $"{baseUrl}/api/v1/search?apikey={Uri.EscapeDataString(apiKey)}&query={Uri.EscapeDataString(query)}&categories=3000&categories=3010&categories=3030&limit=50",
-            // Alternate param names some setups accept
+            $"{baseUrl}/api/v1/search?apikey={Uri.EscapeDataString(apiKey)}&query={Uri.EscapeDataString(query)}&limit=50",
+            // Alternate param names without categories
             $"{baseUrl}/api/v1/search?apikey={Uri.EscapeDataString(apiKey)}&term={Uri.EscapeDataString(query)}",
-            $"{baseUrl}/api/v1/search?apikey={Uri.EscapeDataString(apiKey)}&term={Uri.EscapeDataString(query)}&categories=3000&categories=3010&categories=3030",
-            $"{baseUrl}/api/v1/search?apikey={Uri.EscapeDataString(apiKey)}&term={Uri.EscapeDataString(query)}&categories=3000&categories=3010&categories=3030&limit=50",
             $"{baseUrl}/api/v1/search?apikey={Uri.EscapeDataString(apiKey)}&q={Uri.EscapeDataString(query)}",
             $"{baseUrl}/api/v1/search?apikey={Uri.EscapeDataString(apiKey)}&Query={Uri.EscapeDataString(query)}",
+            // Fallback to category-specific searches only if broad searches fail
+            $"{baseUrl}/api/v1/search?apikey={Uri.EscapeDataString(apiKey)}&query={Uri.EscapeDataString(query)}&categories=3000&categories=3010&categories=3030&categories=3040",
+            $"{baseUrl}/api/v1/search?apikey={Uri.EscapeDataString(apiKey)}&query={Uri.EscapeDataString(query)}&categories=3000&categories=3010&categories=3030&categories=3040&limit=50",
+            $"{baseUrl}/api/v1/search?apikey={Uri.EscapeDataString(apiKey)}&term={Uri.EscapeDataString(query)}&categories=3000&categories=3010&categories=3030&categories=3040",
+            $"{baseUrl}/api/v1/search?apikey={Uri.EscapeDataString(apiKey)}&term={Uri.EscapeDataString(query)}&categories=3000&categories=3010&categories=3030&categories=3040&limit=50",
         };
 
         foreach (var url in candidateUrls)

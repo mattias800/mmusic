@@ -21,12 +21,21 @@ public static class SearchQueryEnhancer
     /// <param name="releaseTitle">The release title</param>
     /// <param name="settings">Server settings to check if enhancement is enabled</param>
     /// <param name="logger">Logger for tracking enhancements</param>
+    /// <param name="year">Optional release year for additional specificity</param>
     /// <returns>The enhanced query or original query if no enhancement needed</returns>
-    public static string EnhanceQuery(string artistName, string releaseTitle, ServerSettingsRecord settings, ILogger logger)
+    public static string EnhanceQuery(string artistName, string releaseTitle, ServerSettingsRecord settings, ILogger logger, int? year = null)
     {
+        var baseQuery = $"{artistName} {releaseTitle}".Trim();
+        var enhancedQuery = baseQuery;
+
         if (!settings.SearchEnhanceShortTitles())
         {
-            return $"{artistName} {releaseTitle}".Trim();
+            // Even if short title enhancement is disabled, add year if available
+            if (year.HasValue)
+            {
+                enhancedQuery = $"{baseQuery} {year.Value}";
+            }
+            return enhancedQuery;
         }
 
         // Clean the release title for length checking (remove punctuation)
@@ -35,12 +44,18 @@ public static class SearchQueryEnhancer
         if (cleanTitle.Length < ShortTitleThreshold)
         {
             // Determine what type of contextual keyword to add
-            var enhancedQuery = EnhanceShortTitle(artistName, releaseTitle, cleanTitle, logger);
+            enhancedQuery = EnhanceShortTitle(artistName, releaseTitle, cleanTitle, logger);
             logger.LogInformation("[SearchEnhancer] Enhanced short title '{Title}' → '{Enhanced}'", releaseTitle, enhancedQuery);
-            return enhancedQuery;
         }
 
-        return $"{artistName} {releaseTitle}".Trim();
+        // Add year information if available for additional specificity
+        if (year.HasValue)
+        {
+            enhancedQuery = $"{enhancedQuery} {year.Value}";
+            logger.LogInformation("[SearchEnhancer] Added year {Year} to search query", year.Value);
+        }
+
+        return enhancedQuery;
     }
 
     /// <summary>

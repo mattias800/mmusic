@@ -109,18 +109,27 @@ public class SoulSeekReleaseDownloader(
         string normArtist = NormalizeForSearch(artistName);
         string normTitle = NormalizeForSearch(releaseTitle);
 
+        // Get year information from cache for better search specificity
+        var releaseInfo = await cache.GetReleaseByArtistAndFolderAsync(artistId, releaseFolderName);
+        int? year = null;
+        if (releaseInfo?.JsonRelease?.FirstReleaseYear != null &&
+            int.TryParse(releaseInfo.JsonRelease.FirstReleaseYear, out int parsedYear))
+        {
+            year = parsedYear;
+        }
+
         // Enhance search query for short release titles if enabled
         var dbSettings = await settingsAccessor.GetAsync();
         var settingsRecord = new MusicGQL.Features.ServerSettings.ServerSettings(dbSettings);
-        var enhancedQuery = SearchQueryEnhancer.EnhanceQuery(normArtist, normTitle, settingsRecord, logger);
+        var enhancedQuery = SearchQueryEnhancer.EnhanceQuery(normArtist, normTitle, settingsRecord, logger, year);
         var baseQuery = enhancedQuery.Trim();
 
         logger.LogInformation("[SoulSeek] Search query: {Query}", baseQuery);
         try { relLogger.Info($"Search query: {baseQuery}"); } catch { }
 
         // Determine expected track count from cache (if available)
-        var cachedRelease = await cache.GetReleaseByArtistAndFolderAsync(artistId, releaseFolderName);
-        int expectedTrackCount = cachedRelease?.Tracks?.Count ?? 0;
+        var releaseForTrackCount = await cache.GetReleaseByArtistAndFolderAsync(artistId, releaseFolderName);
+        int expectedTrackCount = releaseForTrackCount?.Tracks?.Count ?? 0;
         try { relLogger.Info($"ExpectedTrackCount={expectedTrackCount}"); } catch { }
         progress.Set(new DownloadProgress
         {
@@ -129,8 +138,8 @@ public class SoulSeekReleaseDownloader(
             Status = DownloadStatus.Searching,
             TotalTracks = expectedTrackCount,
             CompletedTracks = 0,
-            ArtistName = cachedRelease?.ArtistName ?? artistName,
-            ReleaseTitle = cachedRelease?.Title ?? releaseTitle,
+            ArtistName = releaseForTrackCount?.ArtistName ?? artistName,
+            ReleaseTitle = releaseForTrackCount?.Title ?? releaseTitle,
             CoverArtUrl = ServerLibrary.Utils.LibraryAssetUrlFactory.CreateReleaseCoverArtUrl(artistId, releaseFolderName)
         });
         int minRequiredTracks = expectedTrackCount > 0
@@ -156,7 +165,7 @@ public class SoulSeekReleaseDownloader(
         }
 
         // Discover (optional) year for ranking (we already have expectedTrackCount above)
-        var expectedYear = cachedRelease?.JsonRelease?.FirstReleaseYear;
+        var expectedYear = releaseForTrackCount?.JsonRelease?.FirstReleaseYear;
         try { if (!string.IsNullOrWhiteSpace(expectedYear)) relLogger.Info($"ExpectedYear={expectedYear}"); } catch { }
 
         // Use a single canonical query: "Artist Title"
@@ -353,7 +362,7 @@ var queue = DownloadQueueFactory.Create(
                 artistName,
                 releaseTitle,
                 expectedTrackCount,
-                cachedRelease?.Tracks?.Where(t => !string.IsNullOrWhiteSpace(t.Title)).Select(t => t.Title!),
+                releaseForTrackCount?.Tracks?.Where(t => !string.IsNullOrWhiteSpace(t.Title)).Select(t => t.Title!),
                 relLogger
             );
             int trackIndex = 0;
@@ -522,8 +531,8 @@ var queue = DownloadQueueFactory.Create(
                                     Status = DownloadStatus.Downloading,
                                     TotalTracks = expectedTrackCount,
                                     CompletedTracks = displayTrack,
-                                    ArtistName = cachedRelease?.ArtistName ?? artistName,
-                                    ReleaseTitle = cachedRelease?.Title ?? releaseTitle,
+                                    ArtistName = releaseForTrackCount?.ArtistName ?? artistName,
+                                    ReleaseTitle = releaseForTrackCount?.Title ?? releaseTitle,
                                     CoverArtUrl = ServerLibrary.Utils.LibraryAssetUrlFactory.CreateReleaseCoverArtUrl(artistId, releaseFolderName),
                                     CurrentTrackProgressPercent = percent,
                                     CurrentDownloadSpeedKbps = kbps,
@@ -571,8 +580,8 @@ var queue = DownloadQueueFactory.Create(
                             Status = DownloadStatus.Downloading,
                             TotalTracks = expectedTrackCount,
                             CompletedTracks = displayTrack,
-                            ArtistName = cachedRelease?.ArtistName ?? artistName,
-                            ReleaseTitle = cachedRelease?.Title ?? releaseTitle,
+                            ArtistName = releaseForTrackCount?.ArtistName ?? artistName,
+                            ReleaseTitle = releaseForTrackCount?.Title ?? releaseTitle,
                             CoverArtUrl = ServerLibrary.Utils.LibraryAssetUrlFactory.CreateReleaseCoverArtUrl(artistId, releaseFolderName),
                             CurrentTrackProgressPercent = 100,
                             CurrentDownloadSpeedKbps = null,

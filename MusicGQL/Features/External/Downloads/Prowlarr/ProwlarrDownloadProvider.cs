@@ -3,6 +3,7 @@ using MusicGQL.Features.External.Downloads.QBittorrent;
 using MusicGQL.Features.External.Downloads.Sabnzbd;
 using MusicGQL.Features.External.Downloads.Prowlarr.Configuration;
 using MusicGQL.Features.Downloads.Services;
+using MusicGQL.Features.ServerLibrary.Cache;
 
 namespace MusicGQL.Features.External.Downloads.Prowlarr;
 
@@ -13,7 +14,8 @@ public class ProwlarrDownloadProvider(
     IOptions<ProwlarrOptions> prowlarrOptions,
     ServerSettings.ServerSettingsAccessor serverSettingsAccessor,
     ILogger<ProwlarrDownloadProvider> logger,
-    DownloadLogPathProvider logPathProvider
+    DownloadLogPathProvider logPathProvider,
+    ServerLibraryCache cache
 ) : IDownloadProvider
 {
     public async Task<bool> TryDownloadReleaseAsync(
@@ -51,7 +53,17 @@ public class ProwlarrDownloadProvider(
             // 1) Search Prowlarr for nzb/magnet results
             logger.LogInformation("[Prowlarr] Begin provider for {Artist} - {Release}", artistName, releaseTitle);
             try { relLogger.Info($"[Prowlarr] Begin provider for {artistName} - {releaseTitle}"); } catch { }
-            var results = await prowlarr.SearchAlbumAsync(artistName, releaseTitle, cancellationToken);
+
+            // Get year information from cache for better search specificity
+            var cachedRelease = await cache.GetReleaseByArtistAndFolderAsync(artistId, releaseFolderName);
+            int? year = null;
+            if (cachedRelease?.JsonRelease?.FirstReleaseYear != null &&
+                int.TryParse(cachedRelease.JsonRelease.FirstReleaseYear, out int parsedYear))
+            {
+                year = parsedYear;
+            }
+
+            var results = await prowlarr.SearchAlbumAsync(artistName, releaseTitle, year, cancellationToken);
             logger.LogInformation("[Prowlarr] Search returned {Count} results for {Artist} - {Release}", results.Count, artistName, releaseTitle);
             try { relLogger.Info($"[Prowlarr] Search returned {results.Count} results"); } catch { }
             try
