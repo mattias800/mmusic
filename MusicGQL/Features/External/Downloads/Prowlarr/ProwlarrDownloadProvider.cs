@@ -308,6 +308,55 @@ public class ProwlarrDownloadProvider(
 
             var selection = ProwlarrSelectionLogic.Decide(results, artistName, releaseTitle, allowSab, allowQbit, settings.DiscographyEnabled);
 
+            // Helper: attempt torrent/magnet fallback when NZB path fails
+            async Task<bool> TryTorrentFallbackAsync()
+            {
+                if (!allowQbit)
+                {
+                    logger.LogInformation("[Prowlarr] Torrent fallback skipped (qBittorrent disabled)");
+                    return false;
+                }
+
+                // Prefer magnet first
+                var magnetCand = results.FirstOrDefault(r =>
+                    !string.IsNullOrWhiteSpace(r.MagnetUrl)
+                    && TitleMatchesLocal(r.Title, artistName, releaseTitle)
+                    && !LooksLikeDiscography(r.Title));
+                if (magnetCand is not null)
+                {
+                    logger.LogInformation("[Prowlarr] Torrent fallback: handing off magnet to qBittorrent: {Title}", magnetCand.Title ?? "(no title)");
+                    try { relLogger.Info($"[Prowlarr] Torrent fallback: handing off magnet to qBittorrent: {magnetCand.Title}"); } catch { }
+                    var okMag = await qb.AddMagnetAsync(magnetCand.MagnetUrl!, null, cancellationToken);
+                    if (okMag)
+                    {
+                        try { relLogger.Info("[Prowlarr] qBittorrent accepted magnet (fallback)"); } catch { }
+                        return true;
+                    }
+                    logger.LogWarning("[Prowlarr] qBittorrent did not accept magnet (fallback)");
+                    try { relLogger.Warn("[Prowlarr] qBittorrent did not accept magnet (fallback)"); } catch { }
+                }
+
+                var torrentCand = results.FirstOrDefault(r =>
+                    !string.IsNullOrWhiteSpace(r.DownloadUrl)
+                    && LooksLikeTorrentUrl(r.DownloadUrl!)
+                    && TitleMatchesLocal(r.Title, artistName, releaseTitle)
+                    && !LooksLikeDiscography(r.Title));
+                if (torrentCand is not null)
+                {
+                    var tUrl = EnsureProwlarrApiKey(torrentCand.DownloadUrl!);
+                    logger.LogInformation("[Prowlarr] Torrent fallback: handing off .torrent URL to qBittorrent: {Title}", torrentCand.Title ?? "(no title)");
+                    try { relLogger.Info($"[Prowlarr] Torrent fallback: handing off .torrent URL to qBittorrent: {torrentCand.Title}"); } catch { }
+                    var okT = await qb.AddByUrlAsync(tUrl, null, cancellationToken);
+                    if (okT)
+                    {
+                        try { relLogger.Info("[Prowlarr] qBittorrent accepted .torrent URL (fallback)"); } catch { }
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+
             if (selection.Type == ProwlarrSelectionType.Nzb && selection.Release is not null && !string.IsNullOrWhiteSpace(selection.UrlOrMagnet))
             {
                 var nzb = selection.Release;
@@ -338,37 +387,45 @@ public class ProwlarrDownloadProvider(
                         {
                         }
 
-                        goto TryMagnet;
+                        // Try torrent fallback now
+                        var okFallback = await TryTorrentFallbackAsync();
+                        if (okFallback) return true;
                     }
-
-                    var fileName = (nzb.Title ?? "download").Replace(' ', '+') + ".nzb";
-                    var okUpload = await sab.AddNzbByContentAsync(
-                        bytes,
-                        fileName,
-                        cancellationToken,
-                        pathOverride: $"mmusic/{artistId}/{releaseFolderName}",
-                        nzbName: $"{artistName} - {releaseTitle}"
-                    );
-                    if (okUpload)
+                    else
                     {
+                        var fileName = (nzb.Title ?? "download").Replace(' ', '+') + ".nzb";
+                        var okUpload = await sab.AddNzbByContentAsync(
+                            bytes,
+                            fileName,
+                            cancellationToken,
+                            pathOverride: $"mmusic/{artistId}/{releaseFolderName}",
+                            nzbName: $"{artistName} - {releaseTitle}"
+                        );
+                        if (okUpload)
+                        {
+                            try
+                            {
+                                relLogger.Info("[Prowlarr] SABnzbd accepted NZB upload");
+                            }
+                            catch
+                            {
+                            }
+
+                            return true;
+                        }
+
+                        logger.LogWarning("[Prowlarr] SABnzbd rejected NZB content upload");
                         try
                         {
-                            relLogger.Info("[Prowlarr] SABnzbd accepted NZB upload");
+                            relLogger.Warn("[Prowlarr] SABnzbd rejected NZB content upload");
                         }
                         catch
                         {
                         }
 
-                        return true;
-                    }
-
-                    logger.LogWarning("[Prowlarr] SABnzbd rejected NZB content upload");
-                    try
-                    {
-                        relLogger.Warn("[Prowlarr] SABnzbd rejected NZB content upload");
-                    }
-                    catch
-                    {
+                        // Try torrent fallback after rejection
+                        var okFallback2 = await TryTorrentFallbackAsync();
+                        if (okFallback2) return true;
                     }
                 }
                 catch (Exception ex)
@@ -381,10 +438,14 @@ public class ProwlarrDownloadProvider(
                     catch
                     {
                     }
+
+                    // Try torrent fallback on exception
+                    var okFallback3 = await TryTorrentFallbackAsync();
+                    if (okFallback3) return true;
                 }
             }
 
-            TryMagnet:
+            // If initial selection is magnet/torrent, attempt them in order
             if (selection.Type == ProwlarrSelectionType.Magnet && selection.UrlOrMagnet is not null && selection.Release is not null)
             {
                 var magnet = selection.Release;
