@@ -23,9 +23,9 @@ public class ProwlarrOptions
     public bool TestConnectivityFirst { get; set; } = true;
     
     /// <summary>
-    /// Delay in seconds between retry attempts. Default is 1 second.
+    /// Delay in seconds between retry attempts. Default is 2 seconds. Note: a minimum of 2s is enforced in code.
     /// </summary>
-    public int RetryDelaySeconds { get; set; } = 1;
+    public int RetryDelaySeconds { get; set; } = 2;
     
     /// <summary>
     /// Whether to enable detailed logging for debugging. Default is false.

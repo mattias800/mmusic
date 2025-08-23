@@ -26,6 +26,17 @@ public class SoulSeekReleaseDownloader(
     DownloadLogPathProvider logPathProvider
 )
 {
+    private DownloadLogger? serviceLogger;
+    public async Task<DownloadLogger> GetLogger()
+    {
+        if (serviceLogger == null)
+        {
+            var path = await logPathProvider.GetServiceLogFilePathAsync("soulseek");
+            serviceLogger = new DownloadLogger(path);
+        }
+        return serviceLogger;
+    }
+
     public async Task<bool> DownloadReleaseAsync(
         string artistId,
         string releaseFolderName,
@@ -37,6 +48,7 @@ public class SoulSeekReleaseDownloader(
         CancellationToken cancellationToken = default
     )
     {
+        var serviceLogger = await GetLogger();
         // Initialize per-release logger as early as possible
         IDownloadLogger relLogger = new NullDownloadLogger();
         try
@@ -55,8 +67,10 @@ public class SoulSeekReleaseDownloader(
         {
             logger.LogInformation("[SoulSeek] Client not online. Connecting...");
             try { relLogger.Info("[SoulSeek] Client not online. Connecting…"); } catch { }
+            serviceLogger.Info("[SoulSeek] Client not online. Connecting…");
             await service.Connect();
             logger.LogInformation("[SoulSeek] Client network state after connect: {State}", service.State.NetworkState);
+            serviceLogger.Info($"[SoulSeek] Client network state after connect: {service.State.NetworkState}");
 
             // Wait up to a bounded timeout for the network to come online
             int connectWaitSeconds = 20;
@@ -79,9 +93,11 @@ public class SoulSeekReleaseDownloader(
             {
                 logger.LogWarning("[SoulSeek] Network not online after {Seconds}s; aborting search", connectWaitSeconds);
                 try { relLogger.Warn($"[SoulSeek] Network not online after {connectWaitSeconds}s; aborting search"); } catch { }
+                serviceLogger.Warn($"[SoulSeek] Network not online after {connectWaitSeconds}s; aborting search");
                 return false;
             }
             try { relLogger.Info("[SoulSeek] Network is Online"); } catch { }
+            serviceLogger.Info("[SoulSeek] Network is Online");
         }
 
         // Guard: ensure manifest exists at library root before any write

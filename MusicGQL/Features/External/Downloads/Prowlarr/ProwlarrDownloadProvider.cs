@@ -18,6 +18,17 @@ public class ProwlarrDownloadProvider(
     ServerLibraryCache cache
 ) : IDownloadProvider
 {
+    private DownloadLogger? serviceLogger;
+    public async Task<DownloadLogger> GetLogger()
+    {
+        if (serviceLogger == null)
+        {
+            var path = await logPathProvider.GetServiceLogFilePathAsync("prowlarr");
+            serviceLogger = new DownloadLogger(path);
+        }
+        return serviceLogger;
+    }
+
     public async Task<bool> TryDownloadReleaseAsync(
         string artistId,
         string releaseFolderName,
@@ -29,28 +40,38 @@ public class ProwlarrDownloadProvider(
         CancellationToken cancellationToken
     )
     {
+        var serviceLogger = await GetLogger();
         // Initialize per-release log - CRASH if this fails as requested
         logger.LogInformation("[Prowlarr] ===== STARTING TryDownloadReleaseAsync =====");
+        serviceLogger.Info("[Prowlarr] ===== STARTING TryDownloadReleaseAsync =====");
         logger.LogInformation("[Prowlarr] Parameters - ArtistId: {ArtistId}, ReleaseFolderName: {ReleaseFolderName}",
             artistId, releaseFolderName);
+        serviceLogger.Info($"[Prowlarr] Parameters - ArtistId: {artistId}, ReleaseFolderName: {releaseFolderName}");
         logger.LogInformation("[Prowlarr] Parameters - ArtistName: {ArtistName}, ReleaseTitle: {ReleaseTitle}",
             artistName, releaseTitle);
+        serviceLogger.Info($"[Prowlarr] Parameters - ArtistName: {artistName}, ReleaseTitle: {releaseTitle}");
         logger.LogInformation("[Prowlarr] Parameters - TargetDirectory: {TargetDirectory}", targetDirectory);
+        serviceLogger.Info($"[Prowlarr] Parameters - TargetDirectory: {targetDirectory}");
         logger.LogInformation("[Prowlarr] Parameters - AllowedOfficialCounts: {Counts}",
             string.Join(", ", allowedOfficialCounts));
+        serviceLogger.Info($"[Prowlarr] Parameters - AllowedOfficialCounts: {string.Join(", ", allowedOfficialCounts)}");
         logger.LogInformation("[Prowlarr] Parameters - AllowedOfficialDigitalCounts: {Counts}",
             string.Join(", ", allowedOfficialDigitalCounts));
+        serviceLogger.Info($"[Prowlarr] Parameters - AllowedOfficialDigitalCounts: {string.Join(", ", allowedOfficialDigitalCounts)}");
 
         logger.LogInformation("[Prowlarr] Initializing per-release logger...");
+        serviceLogger.Info("[Prowlarr] Initializing per-release logger...");
         string? logPath = null;
         try
         {
             logPath = await logPathProvider.GetReleaseLogFilePathAsync(artistName, releaseTitle, cancellationToken);
             logger.LogInformation("[Prowlarr] Log path obtained: {LogPath}", logPath ?? "null/empty");
+            serviceLogger.Info($"[Prowlarr] Log path obtained: {logPath ?? "null/empty"}");
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "[Prowlarr] CRITICAL ERROR: Failed to get release log path - CRASHING APPLICATION");
+            serviceLogger.Error("[Prowlarr] CRITICAL ERROR: Failed to get release log path - CRASHING APPLICATION");
             Environment.Exit(-1);
             return false; // This line will never be reached
         }
@@ -61,15 +82,18 @@ public class ProwlarrDownloadProvider(
         if (!string.IsNullOrWhiteSpace(logPath))
         {
             logger.LogInformation("[Prowlarr] Creating DownloadLogger with path: {LogPath}", logPath);
+            serviceLogger.Info($"[Prowlarr] Creating DownloadLogger with path: {logPath}");
             try
             {
                 relLoggerImpl = new DownloadLogger(logPath!);
                 relLogger = relLoggerImpl;
                 logger.LogInformation("[Prowlarr] DownloadLogger created successfully");
+                serviceLogger.Info("[Prowlarr] DownloadLogger created successfully");
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "[Prowlarr] CRITICAL ERROR: Failed to create DownloadLogger - CRASHING APPLICATION");
+                serviceLogger.Error("[Prowlarr] CRITICAL ERROR: Failed to create DownloadLogger - CRASHING APPLICATION");
                 Environment.Exit(-1);
                 return false; // This line will never be reached
             }
@@ -77,9 +101,11 @@ public class ProwlarrDownloadProvider(
         else
         {
             logger.LogWarning("[Prowlarr] Log path is null or empty, using NullDownloadLogger");
+            serviceLogger.Warn("[Prowlarr] Log path is null or empty, using NullDownloadLogger");
         }
 
         logger.LogInformation("[Prowlarr] Logger initialization complete");
+        serviceLogger.Info("[Prowlarr] Logger initialization complete");
 
         // Now we can use relLogger safely
         relLogger.Info("[Prowlarr] ===== STARTING TryDownloadReleaseAsync =====");

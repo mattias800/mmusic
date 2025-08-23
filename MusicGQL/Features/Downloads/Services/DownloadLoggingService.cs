@@ -1,6 +1,4 @@
-using System.Text;
 using System.Collections.Concurrent;
-using MusicGQL.Features.ServerLibrary.Cache;
 using MusicGQL.Features.ServerSettings;
 using Directory = System.IO.Directory;
 using Path = System.IO.Path;
@@ -16,17 +14,28 @@ public interface IDownloadLogger
 
 public class NullDownloadLogger : IDownloadLogger
 {
-    public void Info(string message) { }
-    public void Warn(string message) { }
-    public void Error(string message) { }
+    public void Info(string message)
+    {
+    }
+
+    public void Warn(string message)
+    {
+    }
+
+    public void Error(string message)
+    {
+    }
 }
 
 public class DownloadLogger : IDownloadLogger, IDisposable
 {
     // Global, per-file locks to serialize writes across all logger instances
-    private static readonly ConcurrentDictionary<string, SemaphoreSlim> FileLocks = new(StringComparer.OrdinalIgnoreCase);
+    private static readonly ConcurrentDictionary<string, SemaphoreSlim> FileLocks =
+        new(StringComparer.OrdinalIgnoreCase);
+
     // Global, per-file shared writers so all instances use the same handle (prevents interleaved append pointers)
-    private static readonly ConcurrentDictionary<string, Lazy<StreamWriter>> Writers = new(StringComparer.OrdinalIgnoreCase);
+    private static readonly ConcurrentDictionary<string, Lazy<StreamWriter>> Writers =
+        new(StringComparer.OrdinalIgnoreCase);
 
     private readonly StreamWriter _writer;
     private readonly SemaphoreSlim _fileLock;
@@ -69,14 +78,21 @@ public class DownloadLogger : IDownloadLogger, IDisposable
     public void Dispose()
     {
         // Intentionally do not dispose the shared writer here; other instances may still be using it
-        try { _writer.Flush(); } catch { }
+        try
+        {
+            _writer.Flush();
+        }
+        catch
+        {
+        }
         // Do not remove the semaphore or writer from the dictionaries to avoid races
     }
 }
 
 public class DownloadLogPathProvider(ServerSettingsAccessor serverSettingsAccessor)
 {
-    public async Task<string?> GetReleaseLogFilePathAsync(string artistName, string releaseTitle, CancellationToken cancellationToken = default)
+    public async Task<string?> GetReleaseLogFilePathAsync(string artistName, string releaseTitle,
+        CancellationToken cancellationToken = default)
     {
         var settings = await serverSettingsAccessor.GetAsync();
         var root = settings.LogsFolderPath;
@@ -91,11 +107,16 @@ public class DownloadLogPathProvider(ServerSettingsAccessor serverSettingsAccess
         return Path.GetFullPath(Path.Combine(artistDir, $"{safeRelease}.log"));
     }
 
-    public async Task<string?> GetServiceLogFilePathAsync(string serviceName, CancellationToken cancellationToken = default)
+    public async Task<string> GetServiceLogFilePathAsync(string serviceName,
+        CancellationToken cancellationToken = default)
     {
         var settings = await serverSettingsAccessor.GetAsync();
         var root = settings.LogsFolderPath;
-        if (string.IsNullOrWhiteSpace(root)) return null;
+        if (string.IsNullOrWhiteSpace(root))
+        {
+            throw new ArgumentException("Logs folder path is not configured");
+        }
+
         Directory.CreateDirectory(root);
         var safe = SanitizeForFileName(serviceName);
         return Path.Combine(root, $"{safe}.log");
@@ -111,4 +132,3 @@ public class DownloadLogPathProvider(ServerSettingsAccessor serverSettingsAccess
         return filtered.Trim();
     }
 }
-

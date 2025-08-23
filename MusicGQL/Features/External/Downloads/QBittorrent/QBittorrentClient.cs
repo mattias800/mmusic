@@ -10,25 +10,27 @@ public class QBittorrentClient(HttpClient httpClient, IOptions<QBittorrentOption
     private string? cookie;
     private MusicGQL.Features.Downloads.Services.DownloadLogger? serviceLogger;
 
+    public async Task<MusicGQL.Features.Downloads.Services.DownloadLogger> GetLogger()
+    {
+        if (serviceLogger == null)
+        {
+            var path = await logPathProvider.GetServiceLogFilePathAsync("qbittorrent", CancellationToken.None);
+            serviceLogger = new MusicGQL.Features.Downloads.Services.DownloadLogger(path);
+        }
+        return serviceLogger;
+    }
+
     private async Task<bool> EnsureLoginAsync(CancellationToken cancellationToken)
     {
         var baseUrl = options.Value.BaseUrl?.TrimEnd('/');
         if (string.IsNullOrWhiteSpace(baseUrl)) return false;
         if (!string.IsNullOrEmpty(cookie)) return true;
+        var serviceLogger = await GetLogger();
         try
         {
-            try
-            {
-                var path = await logPathProvider.GetServiceLogFilePathAsync("qbittorrent", cancellationToken);
-                if (!string.IsNullOrWhiteSpace(path) && serviceLogger == null)
-                {
-                    serviceLogger = new MusicGQL.Features.Downloads.Services.DownloadLogger(path!);
-                }
-            }
-            catch { }
             var url = $"{baseUrl}/api/v2/auth/login";
             logger.LogDebug("[qBittorrent] POST {Url} (login)", url);
-            try { serviceLogger?.Info($"POST {url} (login)"); } catch { }
+            serviceLogger.Info($"POST {url} (login)");
             var content = new FormUrlEncodedContent(new[]
             {
                 new KeyValuePair<string,string>("username", options.Value.Username ?? string.Empty),
@@ -41,7 +43,7 @@ public class QBittorrentClient(HttpClient httpClient, IOptions<QBittorrentOption
                 {
                     cookie = vals.FirstOrDefault();
                     logger.LogInformation("[qBittorrent] Logged in successfully");
-                    try { serviceLogger?.Info("Logged in successfully"); } catch { }
+                    serviceLogger.Info("Logged in successfully");
                     return true;
                 }
             }
@@ -49,132 +51,126 @@ public class QBittorrentClient(HttpClient httpClient, IOptions<QBittorrentOption
             {
                 var body = await resp.Content.ReadAsStringAsync(cancellationToken);
                 logger.LogWarning("[qBittorrent] Login failed HTTP {Status}. Body: {Body}", (int)resp.StatusCode, body);
-                try { serviceLogger?.Warn($"Login failed HTTP {(int)resp.StatusCode}. Body: {body}"); } catch { }
+                serviceLogger.Warn($"Login failed HTTP {(int)resp.StatusCode}. Body: {body}");
             }
         }
         catch (Exception ex)
         {
             logger.LogWarning(ex, "qBittorrent login failed");
-            try { serviceLogger?.Error($"Login exception: {ex.Message}"); } catch { }
+            serviceLogger.Error($"Login exception: {ex.Message}");
         }
         return false;
     }
 
-    public async Task<bool> AddMagnetAsync(string magnetUrl, string? savePath, CancellationToken cancellationToken)
+public async Task<bool> AddMagnetAsync(string magnetUrl, string? savePath, CancellationToken cancellationToken)
+{
+    var baseUrl = options.Value.BaseUrl?.TrimEnd('/');
+    if (string.IsNullOrWhiteSpace(baseUrl)) return false;
+    var serviceLogger = await GetLogger();
+    if (!await EnsureLoginAsync(cancellationToken)) return false;
+    try
     {
-        var baseUrl = options.Value.BaseUrl?.TrimEnd('/');
-        if (string.IsNullOrWhiteSpace(baseUrl)) return false;
-        if (!await EnsureLoginAsync(cancellationToken)) return false;
-        try
+        var url = $"{baseUrl}/api/v2/torrents/add";
+        using var req = new HttpRequestMessage(HttpMethod.Post, url);
+        if (!string.IsNullOrWhiteSpace(cookie)) req.Headers.Add("Cookie", cookie);
+        var form = new MultipartFormDataContent
         {
-            var url = $"{baseUrl}/api/v2/torrents/add";
-            using var req = new HttpRequestMessage(HttpMethod.Post, url);
-            if (!string.IsNullOrWhiteSpace(cookie)) req.Headers.Add("Cookie", cookie);
-            var form = new MultipartFormDataContent
-            {
-                { new StringContent(magnetUrl), "urls" }
-            };
-            if (!string.IsNullOrWhiteSpace(savePath))
-            {
-                form.Add(new StringContent(savePath), "savepath");
-            }
-            req.Content = form;
-            logger.LogDebug("[qBittorrent] POST {Url} (add magnet)", url);
-            try { serviceLogger?.Info($"POST {url} (add magnet)"); } catch { }
-            var resp = await httpClient.SendAsync(req, cancellationToken);
-            var ok = resp.IsSuccessStatusCode;
-            if (!ok)
-            {
-                var body = await resp.Content.ReadAsStringAsync(cancellationToken);
-                logger.LogWarning("[qBittorrent] Add magnet failed HTTP {Status}. Body: {Body}", (int)resp.StatusCode, body);
-                try { serviceLogger?.Warn($"Add magnet failed HTTP {(int)resp.StatusCode}. Body: {body}"); } catch { }
-            }
-            return ok;
-        }
-        catch (Exception ex)
+            { new StringContent(magnetUrl), "urls" }
+        };
+        if (!string.IsNullOrWhiteSpace(savePath))
         {
-            logger.LogWarning(ex, "qBittorrent add magnet failed");
-            try { serviceLogger?.Error($"Add magnet exception: {ex.Message}"); } catch { }
-            return false;
+            form.Add(new StringContent(savePath), "savepath");
         }
+        req.Content = form;
+        logger.LogDebug("[qBittorrent] POST {Url} (add magnet)", url);
+        serviceLogger.Info($"POST {url} (add magnet)");
+        var resp = await httpClient.SendAsync(req, cancellationToken);
+        var ok = resp.IsSuccessStatusCode;
+        if (!ok)
+        {
+            var body = await resp.Content.ReadAsStringAsync(cancellationToken);
+            logger.LogWarning("[qBittorrent] Add magnet failed HTTP {Status}. Body: {Body}", (int)resp.StatusCode, body);
+            serviceLogger.Warn($"Add magnet failed HTTP {(int)resp.StatusCode}. Body: {body}");
+        }
+        return ok;
     }
-
-    public async Task<bool> AddByUrlAsync(string torrentUrl, string? savePath, CancellationToken cancellationToken)
+    catch (Exception ex)
     {
-        var baseUrl = options.Value.BaseUrl?.TrimEnd('/');
-        if (string.IsNullOrWhiteSpace(baseUrl)) return false;
-        if (!await EnsureLoginAsync(cancellationToken)) return false;
-        try
-        {
-            var url = $"{baseUrl}/api/v2/torrents/add";
-            using var req = new HttpRequestMessage(HttpMethod.Post, url);
-            if (!string.IsNullOrWhiteSpace(cookie)) req.Headers.Add("Cookie", cookie);
-            var form = new MultipartFormDataContent
-            {
-                { new StringContent(torrentUrl), "urls" }
-            };
-            if (!string.IsNullOrWhiteSpace(savePath))
-            {
-                form.Add(new StringContent(savePath), "savepath");
-            }
-            req.Content = form;
-            logger.LogDebug("[qBittorrent] POST {Url} (add by url)", url);
-            try { serviceLogger?.Info($"POST {url} (add by url)"); } catch { }
-            var resp = await httpClient.SendAsync(req, cancellationToken);
-            var ok = resp.IsSuccessStatusCode;
-            if (!ok)
-            {
-                var body = await resp.Content.ReadAsStringAsync(cancellationToken);
-                logger.LogWarning("[qBittorrent] Add by url failed HTTP {Status}. Body: {Body}", (int)resp.StatusCode, body);
-                try { serviceLogger?.Warn($"Add by url failed HTTP {(int)resp.StatusCode}. Body: {body}"); } catch { }
-            }
-            return ok;
-        }
-        catch (Exception ex)
-        {
-            logger.LogWarning(ex, "qBittorrent add by url failed");
-            try { serviceLogger?.Error($"Add by url exception: {ex.Message}"); } catch { }
-            return false;
-        }
+        logger.LogWarning(ex, "qBittorrent add magnet failed");
+        serviceLogger.Error($"Add magnet exception: {ex.Message}");
+        return false;
     }
+}
 
-    public async Task<(bool ok, string message)> TestConnectivityAsync(CancellationToken cancellationToken)
+public async Task<bool> AddByUrlAsync(string torrentUrl, string? savePath, CancellationToken cancellationToken)
+{
+    var baseUrl = options.Value.BaseUrl?.TrimEnd('/');
+    if (string.IsNullOrWhiteSpace(baseUrl)) return false;
+    var serviceLogger = await GetLogger();
+    if (!await EnsureLoginAsync(cancellationToken)) return false;
+    try
     {
-        var baseUrl = options.Value.BaseUrl?.TrimEnd('/');
-        if (string.IsNullOrWhiteSpace(baseUrl)) return (false, "BaseUrl not configured");
-        try
+        var url = $"{baseUrl}/api/v2/torrents/add";
+        using var req = new HttpRequestMessage(HttpMethod.Post, url);
+        if (!string.IsNullOrWhiteSpace(cookie)) req.Headers.Add("Cookie", cookie);
+        var form = new MultipartFormDataContent
         {
-            if (serviceLogger == null)
-            {
-                var path = await logPathProvider.GetServiceLogFilePathAsync("qbittorrent", cancellationToken);
-                if (!string.IsNullOrWhiteSpace(path)) serviceLogger = new MusicGQL.Features.Downloads.Services.DownloadLogger(path!);
-            }
-        }
-        catch { }
-
-        var url = baseUrl + "/api/v2/app/webapiVersion";
-        try
+            { new StringContent(torrentUrl), "urls" }
+        };
+        if (!string.IsNullOrWhiteSpace(savePath))
         {
-            // Ensure we have a session cookie; newer qBittorrent setups may require auth even for this endpoint
-            var loggedIn = await EnsureLoginAsync(cancellationToken);
-            if (!loggedIn)
-            {
-                try { serviceLogger?.Warn("Login failed before connectivity test"); } catch { }
-            }
-            try { serviceLogger?.Info($"Test connectivity: GET {url}"); } catch { }
-            using var req = new HttpRequestMessage(HttpMethod.Get, url);
-            if (!string.IsNullOrWhiteSpace(cookie)) req.Headers.Add("Cookie", cookie);
-            var resp = await httpClient.SendAsync(req, cancellationToken);
-            var msg = $"HTTP {(int)resp.StatusCode}";
-            try { serviceLogger?.Info($"Result: {msg}"); } catch { }
-            return (resp.IsSuccessStatusCode, msg);
+            form.Add(new StringContent(savePath), "savepath");
         }
-        catch (Exception ex)
+        req.Content = form;
+        logger.LogDebug("[qBittorrent] POST {Url} (add by url)", url);
+        serviceLogger.Info($"POST {url} (add by url)");
+        var resp = await httpClient.SendAsync(req, cancellationToken);
+        var ok = resp.IsSuccessStatusCode;
+        if (!ok)
         {
-            try { serviceLogger?.Error($"Exception: {ex.Message}"); } catch { }
-            return (false, ex.Message);
+            var body = await resp.Content.ReadAsStringAsync(cancellationToken);
+            logger.LogWarning("[qBittorrent] Add by url failed HTTP {Status}. Body: {Body}", (int)resp.StatusCode, body);
+            serviceLogger.Warn($"Add by url failed HTTP {(int)resp.StatusCode}. Body: {body}");
         }
+        return ok;
     }
+    catch (Exception ex)
+    {
+        logger.LogWarning(ex, "qBittorrent add by url failed");
+        serviceLogger.Error($"Add by url exception: {ex.Message}");
+        return false;
+    }
+}
+
+public async Task<(bool ok, string message)> TestConnectivityAsync(CancellationToken cancellationToken)
+{
+    var baseUrl = options.Value.BaseUrl?.TrimEnd('/');
+    if (string.IsNullOrWhiteSpace(baseUrl)) return (false, "BaseUrl not configured");
+    var serviceLogger = await GetLogger();
+
+    var url = baseUrl + "/api/v2/app/webapiVersion";
+    try
+    {
+        // Ensure we have a session cookie; newer qBittorrent setups may require auth even for this endpoint
+        var loggedIn = await EnsureLoginAsync(cancellationToken);
+        if (!loggedIn)
+        {
+            serviceLogger.Warn("Login failed before connectivity test");
+        }
+        serviceLogger.Info($"Test connectivity: GET {url}");
+        using var req = new HttpRequestMessage(HttpMethod.Get, url);
+        if (!string.IsNullOrWhiteSpace(cookie)) req.Headers.Add("Cookie", cookie);
+        var resp = await httpClient.SendAsync(req, cancellationToken);
+        var msg = $"HTTP {(int)resp.StatusCode}";
+        serviceLogger.Info($"Result: {msg}");
+        return (resp.IsSuccessStatusCode, msg);
+    }
+    catch (Exception ex)
+    {
+        serviceLogger.Error($"Exception: {ex.Message}");
+        return (false, ex.Message);
+    }
+}
 }
 
 

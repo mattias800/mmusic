@@ -27,17 +27,31 @@ public class StartDownloadReleaseService(
     DownloadLogPathProvider logPathProvider
 )
 {
+    private DownloadLogger? serviceLogger;
+
+    public async Task<DownloadLogger> GetLogger()
+    {
+        if (serviceLogger == null)
+        {
+            var path = await logPathProvider.GetServiceLogFilePathAsync("downloads");
+            serviceLogger = new DownloadLogger(path);
+        }
+        return serviceLogger;
+    }
+
     public async Task<(bool Success, string? ErrorMessage)> StartAsync(
         string artistId,
         string releaseFolderName,
         CancellationToken cancellationToken = default
     )
     {
+        var serviceLogger = await GetLogger();
         logger.LogInformation(
             "[StartDownload] Begin for {ArtistId}/{ReleaseFolder}",
             artistId,
             releaseFolderName
         );
+        serviceLogger.Info($"[StartDownload] Begin for {artistId}/{releaseFolderName}");
 
         var release = await cache.GetReleaseByArtistAndFolderAsync(artistId, releaseFolderName);
 
@@ -45,6 +59,7 @@ public class StartDownloadReleaseService(
         {
             var msg = $"Release not found in cache: {artistId}/{releaseFolderName}";
             logger.LogWarning("[StartDownload] {Message}", msg);
+            serviceLogger.Warn($"[StartDownload] {msg}");
             return (false, "Release not found in cache");
         }
 
@@ -73,6 +88,7 @@ public class StartDownloadReleaseService(
             artistName,
             releaseTitle
         );
+        serviceLogger.Info($"[StartDownload] Resolved targetDir={targetDir}, artistName='{artistName}', releaseTitle='{releaseTitle}'");
         
         // Log the artist name source for debugging
         var currentArtistName = (await cache.GetArtistByIdAsync(artistId))?.JsonArtist.Name ?? "Unknown";
@@ -83,6 +99,7 @@ public class StartDownloadReleaseService(
                 artistName,
                 currentArtistName
             );
+            serviceLogger.Info($"[StartDownload] Using historical artist name '{artistName}' instead of current '{currentArtistName}' for search");
         }
 
         // Compute allowed track counts on-demand (do not persist in release.json)

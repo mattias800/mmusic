@@ -18,7 +18,18 @@ public class SabnzbdFinalizeService(
     DownloadLogPathProvider logPathProvider
 )
 {
+    private MusicGQL.Features.Downloads.Services.DownloadLogger? serviceLogger;
     private static readonly string[] AudioExtensions = new[] { ".mp3", ".flac", ".m4a", ".wav", ".ogg" };
+
+    public async Task<MusicGQL.Features.Downloads.Services.DownloadLogger> GetLogger()
+    {
+        if (serviceLogger == null)
+        {
+            var path = await logPathProvider.GetServiceLogFilePathAsync("sabnzbd");
+            serviceLogger = new MusicGQL.Features.Downloads.Services.DownloadLogger(path);
+        }
+        return serviceLogger;
+    }
 
     // Helper: extract disc and track numbers from a file name
     private static (int disc, int track) ExtractDiscTrackFromName(string? name)
@@ -60,6 +71,7 @@ public class SabnzbdFinalizeService(
 
     public async Task<bool> FinalizeReleaseAsync(string artistId, string releaseFolderName, CancellationToken ct)
     {
+        var serviceLogger = await GetLogger();
         // Prepare per-release logger
         IDownloadLogger relLogger = new NullDownloadLogger();
         DownloadLogger? relLoggerImpl = null;
@@ -83,6 +95,7 @@ public class SabnzbdFinalizeService(
         {
             logger.LogDebug("[SAB Finalize] CompletedPath not configured/existing; skip");
             try { relLogger.Warn("[SAB Finalize] CompletedPath not configured/existing"); } catch { }
+            serviceLogger.Warn("[SAB Finalize] CompletedPath not configured/existing");
             return false;
         }
 
@@ -106,11 +119,13 @@ public class SabnzbdFinalizeService(
         }
         logger.LogInformation("[SAB Finalize] Checking {SourceRoot}", sourceRoot);
         try { relLogger.Info($"[SAB Finalize] Checking {sourceRoot}"); } catch { }
+        serviceLogger.Info($"[SAB Finalize] Checking {sourceRoot}");
 
         // Check SABnzbd API to see if the job is actually complete
         var nzbName = expectedNzbName;
         logger.LogInformation("[SAB Finalize] Checking SABnzbd job status for: {NzbName}", nzbName);
         try { relLogger.Info($"[SAB Finalize] Checking SABnzbd job status for: {nzbName}"); } catch { }
+        serviceLogger.Info($"[SAB Finalize] Checking SABnzbd job status for: {nzbName}");
         
         // Wait a bit for SABnzbd to start processing, then check job status
         for (int attempt = 1; attempt <= 5; attempt++)
@@ -136,8 +151,9 @@ public class SabnzbdFinalizeService(
                 continue;
             }
             
-            logger.LogInformation("[SAB Finalize] Attempt {Attempt}/5: SABnzbd reports job complete, attempting to finalize files", attempt);
-            try { relLogger.Info($"[SAB Finalize] Attempt {attempt}/5: job complete; finalizing"); } catch { }
+                logger.LogInformation("[SAB Finalize] Attempt {Attempt}/5: SABnzbd reports job complete, attempting to finalize files", attempt);
+                try { relLogger.Info($"[SAB Finalize] Attempt {attempt}/5: job complete; finalizing"); } catch { }
+                serviceLogger.Info($"[SAB Finalize] Attempt {attempt}/5: job complete; finalizing");
             
             // Job is complete, now try to finalize the files
             var result = await TryFinalizeReleaseCoreAsync(artistId, releaseFolderName, sourceRoot, relLogger, ct);
@@ -145,10 +161,12 @@ public class SabnzbdFinalizeService(
             {
                 logger.LogInformation("[SAB Finalize] Successfully finalized on attempt {Attempt}", attempt);
                 try { relLogger.Info($"[SAB Finalize] Success on attempt {attempt}"); } catch { }
+                serviceLogger.Info($"[SAB Finalize] Success on attempt {attempt}");
                 return true; // SUCCESS - exit immediately, don't continue with more attempts
             }
             
             logger.LogWarning("[SAB Finalize] Job complete but file finalization failed on attempt {Attempt}/5. This should not happen normally.", attempt);
+            serviceLogger.Warn($"[SAB Finalize] Job complete but file finalization failed on attempt {attempt}");
             // Don't continue with more attempts if the job is complete but finalization failed
             // This likely indicates a filesystem issue that won't be resolved by waiting
             return false;
