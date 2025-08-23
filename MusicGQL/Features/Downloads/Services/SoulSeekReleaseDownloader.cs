@@ -108,9 +108,15 @@ public class SoulSeekReleaseDownloader(
         // Normalize base query (e.g., remove punctuation) to improve matching
         string normArtist = NormalizeForSearch(artistName);
         string normTitle = NormalizeForSearch(releaseTitle);
-        var baseQuery = $"{normArtist} {normTitle}".Trim();
-        logger.LogInformation("[SoulSeek] Normalized search query: {Query}", baseQuery);
-        try { relLogger.Info($"Normalized search query: {baseQuery}"); } catch { }
+
+        // Enhance search query for short release titles if enabled
+        var dbSettings = await settingsAccessor.GetAsync();
+        var settingsRecord = new MusicGQL.Features.ServerSettings.ServerSettings(dbSettings);
+        var enhancedQuery = SearchQueryEnhancer.EnhanceQuery(normArtist, normTitle, settingsRecord, logger);
+        var baseQuery = enhancedQuery.Trim();
+
+        logger.LogInformation("[SoulSeek] Search query: {Query}", baseQuery);
+        try { relLogger.Info($"Search query: {baseQuery}"); } catch { }
 
         // Determine expected track count from cache (if available)
         var cachedRelease = await cache.GetReleaseByArtistAndFolderAsync(artistId, releaseFolderName);
@@ -678,8 +684,8 @@ var sizeBytes = new System.IO.FileInfo(localPath).Length;
                 // Discover additional releases from this user (batch downloading optimization)
                 try
                 {
-                    var settings = await settingsAccessor.GetAsync();
-                    if (settings.SoulSeekBatchDownloadingEnabled)
+                    var discoverySettings = await settingsAccessor.GetAsync();
+                    if (discoverySettings.SoulSeekBatchDownloadingEnabled)
                     {
                         _ = Task.Run(async () =>
                         {

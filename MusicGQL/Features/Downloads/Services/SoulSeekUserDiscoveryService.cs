@@ -1,5 +1,6 @@
 using MusicGQL.Features.External.SoulSeek.Integration;
 using MusicGQL.Features.ServerLibrary.Cache;
+using MusicGQL.Features.ServerSettings;
 using Soulseek;
 using System.Text.RegularExpressions;
 
@@ -12,6 +13,7 @@ public class SoulSeekUserDiscoveryService(
     SoulseekClient client,
     ServerLibraryCache cache,
     DownloadQueueService downloadQueue,
+    ServerSettingsAccessor serverSettingsAccessor,
     ILogger<SoulSeekUserDiscoveryService> logger
 )
 {
@@ -34,19 +36,33 @@ public class SoulSeekUserDiscoveryService(
             
             if (additionalReleases.Count > 0)
             {
-                logger.LogInformation("[SoulSeek] Found {Count} additional releases from user '{User}'", additionalReleases.Count, username);
-                
+                // Get the maximum number of releases to discover per user
+                var settings = await serverSettingsAccessor.GetAsync();
+                var maxReleases = settings.SoulSeekMaxReleasesPerUserDiscovery;
+
+                // Limit the number of releases to prevent queue overflow
+                var releasesToQueue = additionalReleases.Take(maxReleases).ToList();
+
+                logger.LogInformation("[SoulSeek] Found {TotalCount} additional releases from user '{User}', queuing {QueuedCount} (limited by MaxReleasesPerUserDiscovery={MaxReleases})",
+                    additionalReleases.Count, username, releasesToQueue.Count, maxReleases);
+
                 // Add releases to download queue with priority (same user = better connection)
-                foreach (var release in additionalReleases)
+                foreach (var release in releasesToQueue)
                 {
                     downloadQueue.EnqueueFront(new DownloadQueueItem(release.ArtistId, release.ReleaseFolderName)
                     {
                         ArtistName = release.ArtistName,
                         ReleaseTitle = release.ReleaseTitle
                     });
-                    
-                    logger.LogDebug("[SoulSeek] Queued additional release: {Artist} - {Release} from user {User}", 
+
+                    logger.LogDebug("[SoulSeek] Queued additional release: {Artist} - {Release} from user {User}",
                         release.ArtistName, release.ReleaseTitle, username);
+                }
+
+                if (additionalReleases.Count > maxReleases)
+                {
+                    logger.LogInformation("[SoulSeek] Limited discovery to {QueuedCount} releases from user '{User}' (found {TotalCount} total)",
+                        maxReleases, username, additionalReleases.Count);
                 }
             }
             else

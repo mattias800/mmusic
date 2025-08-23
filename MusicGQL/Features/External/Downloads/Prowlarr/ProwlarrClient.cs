@@ -2,10 +2,12 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using MusicGQL.Features.External.Downloads.Prowlarr.Configuration;
 using Microsoft.Extensions.Options;
+using MusicGQL.Features.ServerSettings;
+using MusicGQL.Features.Downloads.Services;
 
 namespace MusicGQL.Features.External.Downloads.Prowlarr;
 
-public class ProwlarrClient(HttpClient httpClient, IOptions<ProwlarrOptions> options, ILogger<ProwlarrClient> logger, MusicGQL.Features.Downloads.Services.DownloadLogPathProvider logPathProvider)
+public class ProwlarrClient(HttpClient httpClient, IOptions<ProwlarrOptions> options, ILogger<ProwlarrClient> logger, MusicGQL.Features.Downloads.Services.DownloadLogPathProvider logPathProvider, ServerSettingsAccessor serverSettingsAccessor)
 {
     private MusicGQL.Features.Downloads.Services.DownloadLogger? serviceLogger;
 
@@ -742,7 +744,11 @@ public class ProwlarrClient(HttpClient httpClient, IOptions<ProwlarrOptions> opt
         }
 
         // Build search query with quality preferences
-        var baseQuery = artistName + " " + releaseTitle;
+        // Enhance search query for short release titles if enabled
+        var dbSettings = await serverSettingsAccessor.GetAsync();
+        var settingsRecord = new MusicGQL.Features.ServerSettings.ServerSettings(dbSettings);
+        var enhancedQuery = SearchQueryEnhancer.EnhanceQuery(artistName, releaseTitle, settingsRecord, logger);
+        var baseQuery = enhancedQuery;
         
         // Create multiple search variants with different quality priorities
         var searchQueries = new List<string>
@@ -1110,10 +1116,9 @@ public class ProwlarrClient(HttpClient httpClient, IOptions<ProwlarrOptions> opt
         if (!ContainsAlbumTitle(title, album))
             return false;
             
-        // Reject torrent files for SABnzbd
-        if (IsTorrentFile(release.DownloadUrl))
-            return false;
-            
+        // Do NOT reject torrent results here.
+        // Whether to use torrents or NZB/magnet is decided later by the provider
+        // based on which downloaders are enabled (SABnzbd/qBittorrent).
         return true;
     }
     

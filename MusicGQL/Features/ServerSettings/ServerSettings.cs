@@ -29,6 +29,10 @@ public record ServerSettings([property: GraphQLIgnore] DbServerSettings Model)
 
     public bool SoulSeekBatchDownloadingEnabled() => Model.SoulSeekBatchDownloadingEnabled;
 
+    public int SoulSeekMaxReleasesPerUserDiscovery() => Model.SoulSeekMaxReleasesPerUserDiscovery;
+
+    public bool SearchEnhanceShortTitles() => Model.SearchEnhanceShortTitles;
+
     public bool SoulSeekLibrarySharingEnabled() => Model.SoulSeekLibrarySharingEnabled;
 
     public int SoulSeekListeningPort() => Model.SoulSeekListeningPort;

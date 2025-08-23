@@ -13,6 +13,9 @@ public class DownloadQueueService(
     private readonly ConcurrentQueue<DownloadQueueItem> _priorityQueue = new();
     private readonly ConcurrentDictionary<string, byte> _dedupeKeys = new(StringComparer.OrdinalIgnoreCase);
 
+    // Maximum queue size to prevent memory issues (adjustable via configuration)
+    private const int MaxQueueSize = 1000;
+
     private static string BuildKey(DownloadQueueItem item)
     {
         return $"dl|{item.ArtistId}|{item.ReleaseFolderName}";
@@ -44,6 +47,14 @@ public class DownloadQueueService(
 
     public async void Enqueue(DownloadQueueItem item)
     {
+        // Check if queue is at maximum capacity to prevent memory issues
+        if (slotManager.QueueLength >= MaxQueueSize)
+        {
+            logger.LogWarning("[DownloadQueue] Queue at maximum capacity ({MaxSize}), rejecting new item {ArtistId}/{Folder}",
+                MaxQueueSize, item.ArtistId, item.ReleaseFolderName);
+            return;
+        }
+
         var key = BuildKey(item);
         if (_dedupeKeys.TryAdd(key, 1))
         {
@@ -91,6 +102,14 @@ public class DownloadQueueService(
 
     public async void EnqueueFront(DownloadQueueItem item)
     {
+        // Check if queue is at maximum capacity to prevent memory issues
+        if (slotManager.QueueLength >= MaxQueueSize)
+        {
+            logger.LogWarning("[DownloadQueue] Queue at maximum capacity ({MaxSize}), rejecting new item {ArtistId}/{Folder}",
+                MaxQueueSize, item.ArtistId, item.ReleaseFolderName);
+            return;
+        }
+
         var key = BuildKey(item);
         if (_dedupeKeys.TryAdd(key, 1))
         {
@@ -100,7 +119,8 @@ public class DownloadQueueService(
             var success = await slotManager.EnqueueWorkAsync(item, CancellationToken.None);
             if (success)
             {
-                logger.LogInformation("[DownloadQueue] Enqueued 1 release at FRONT (priority) ({ArtistId}/{Folder})", item.ArtistId, item.ReleaseFolderName);
+                logger.LogInformation("[DownloadQueue] Enqueued 1 release at FRONT (priority) ({ArtistId}/{Folder}), queue length: {QueueLength}",
+                    item.ArtistId, item.ReleaseFolderName, slotManager.QueueLength);
             }
             else
             {

@@ -23,6 +23,12 @@ public class DbServerSettings
     // Enable batch downloading from Soulseek users (discover additional releases after successful downloads)
     public bool SoulSeekBatchDownloadingEnabled { get; set; } = true;
 
+    // Maximum number of additional releases to discover from a single user (prevents queue overflow)
+    public int SoulSeekMaxReleasesPerUserDiscovery { get; set; } = 5;
+
+    // Enable search query enhancement for short release titles (adds contextual keywords)
+    public bool SearchEnhanceShortTitles { get; set; } = true;
+
     // Enable sharing the music library on Soulseek network
     public bool SoulSeekLibrarySharingEnabled { get; set; } = true;
 
@@ -85,6 +91,8 @@ public static class DefaultDbServerSettingsProvider
             SoulSeekNoDataTimeoutSeconds = 20,
             SoulSeekQueueWaitTimeoutSeconds = 600,
             SoulSeekBatchDownloadingEnabled = true,
+            SoulSeekMaxReleasesPerUserDiscovery = 5,
+            SearchEnhanceShortTitles = true,
             SoulSeekLibrarySharingEnabled = true,
             SoulSeekListeningPort = 50300,
             DownloadSlotCount = 3,
