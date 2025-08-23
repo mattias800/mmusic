@@ -179,7 +179,8 @@ builder
     .AddScoped<TopTracksLastFmImporter>()
     // Download providers
     .AddSingleton<MusicGQL.Features.External.Downloads.SoulSeekDownloadProvider>()
-    .AddHttpClient<MusicGQL.Features.External.Downloads.Prowlarr.ProwlarrClient>((serviceProvider, client) =>
+.AddHttpClient<MusicGQL.Features.External.Downloads.Prowlarr.IProwlarrClient, MusicGQL.Features.External.Downloads.Prowlarr.ProwlarrClient>()
+    .ConfigureHttpClient((serviceProvider, client) =>
     {
         // Configure timeout for Prowlarr requests using options
         var options = serviceProvider.GetRequiredService<IOptions<ProwlarrOptions>>();

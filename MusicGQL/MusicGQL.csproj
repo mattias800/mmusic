@@ -5,6 +5,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <LangVersion>preview</LangVersion>
   </PropertyGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="MusicGQL.Tests" />
+  </ItemGroup>
   <ItemGroup Condition="'$(ImplicitUsings)' == 'enable'">
     <Using Include="MusicGQL" />
   </ItemGroup>

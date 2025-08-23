@@ -29,7 +29,7 @@ public record ExternalRoot
 
     [GraphQLName("testProwlarrConnectivity")]
     public async Task<ConnectivityStatus> TestProwlarrConnectivity(
-        [Service] MusicGQL.Features.External.Downloads.Prowlarr.ProwlarrClient client
+        [Service] MusicGQL.Features.External.Downloads.Prowlarr.IProwlarrClient client
     )
     {
         var (ok, msg) = await client.TestConnectivityAsyncPublic(CancellationToken.None);

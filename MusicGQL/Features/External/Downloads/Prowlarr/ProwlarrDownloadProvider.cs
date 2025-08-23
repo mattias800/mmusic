@@ -8,7 +8,7 @@ using MusicGQL.Features.ServerLibrary.Cache;
 namespace MusicGQL.Features.External.Downloads.Prowlarr;
 
 public class ProwlarrDownloadProvider(
-    ProwlarrClient prowlarr,
+    IProwlarrClient prowlarr,
     QBittorrentClient qb,
     SabnzbdClient sab,
     IOptions<ProwlarrOptions> prowlarrOptions,

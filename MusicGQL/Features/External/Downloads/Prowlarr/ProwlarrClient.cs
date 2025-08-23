@@ -8,12 +8,20 @@ using MusicGQL.Features.Downloads.Services;
 
 namespace MusicGQL.Features.External.Downloads.Prowlarr;
 
+public interface IProwlarrClient
+{
+    Task<IReadOnlyList<ProwlarrRelease>> SearchAlbumAsync(string artistName, string releaseTitle, int? year, CancellationToken cancellationToken, IDownloadLogger? relLogger = null);
+    Task<(bool ok, string message)> TestConnectivityAsyncPublic(CancellationToken cancellationToken);
+    Task<bool> IsHealthyAsync(CancellationToken cancellationToken = default);
+    string GetClientInfo();
+}
+
 public class ProwlarrClient(
     HttpClient httpClient,
     IOptions<ProwlarrOptions> options,
     ILogger<ProwlarrClient> logger,
     DownloadLogPathProvider logPathProvider,
-    ServerSettingsAccessor serverSettingsAccessor)
+    ServerSettingsAccessor serverSettingsAccessor) : IProwlarrClient
 {
     private DownloadLogger? DownloadLogger { get; set; }
 
@@ -925,93 +933,33 @@ public class ProwlarrClient(
         {
             try
             {
-                using var req = new HttpRequestMessage(HttpMethod.Get, url);
-                req.Headers.Accept.Clear();
-                req.Headers.Accept.ParseAdd("application/json");
-                // Some setups prefer API key via header
-                try
-                {
-                    req.Headers.Add("X-Api-Key", apiKey);
-                }
-                catch
-                {
-                }
-
                 var attemptNumber = candidateUrls.IndexOf(url) + 1;
                 logger.LogInformation("[Prowlarr] ===== URL ATTEMPT #{Attempt}/{Total} =====", attemptNumber,
                     candidateUrls.Count);
                 relLogger?.Info($"[Prowlarr] ===== URL ATTEMPT #{attemptNumber}/{candidateUrls.Count} =====");
-                logger.LogInformation("[Prowlarr] GET {Url}", url);
-                relLogger?.Info($"[Prowlarr] GET {url}");
-                logger.LogInformation("[Prowlarr] Headers: {Headers}",
-                    string.Join(", ", req.Headers.Select(h => $"{h.Key}: {string.Join(", ", h.Value)}")));
-                relLogger?.Info(
-                    $"[Prowlarr] Headers: {string.Join(", ", req.Headers.Select(h => $"{h.Key}: {string.Join(", ", h.Value)}"))}");
-                var startTime = DateTime.UtcNow;
 
-                // Log request details for debugging
-                if (options.Value.EnableDetailedLogging)
+                var executor = new ProwlarrRequestExecutor(httpClient, options, logger);
+                var result = await executor.GetJsonAsync(url, cancellationToken, relLogger);
+                if (!result.Success)
                 {
-                    logger.LogDebug(
-                        "[Prowlarr] Request details: Method={Method}, Headers={Headers}, Timeout={Timeout}s",
-                        req.Method,
-                        string.Join(", ", req.Headers.Select(h => $"{h.Key}: {string.Join(", ", h.Value)}")),
-                        options.Value.TimeoutSeconds);
-                }
-
-                var resp = await httpClient.SendAsync(req, cancellationToken);
-                var duration = DateTime.UtcNow - startTime;
-
-                logger.LogInformation("[Prowlarr] RESPONSE: Status {Status} in {Duration:0.00}s", (int)resp.StatusCode,
-                    duration.TotalSeconds);
-                relLogger?.Info($"[Prowlarr] RESPONSE: Status {(int)resp.StatusCode} in {duration.TotalSeconds:0.00}s");
-
-                if (!resp.IsSuccessStatusCode)
-                {
-                    string? body = null;
-                    try
-                    {
-                        body = await resp.Content.ReadAsStringAsync(cancellationToken);
-                    }
-                    catch
-                    {
-                    }
-
-                    if (!string.IsNullOrWhiteSpace(body) && body.Length > 500) body = body[..500] + "…";
-                    var reasonPhrase = resp.ReasonPhrase ?? "";
-                    logger.LogInformation("[Prowlarr] ❌ ERROR RESPONSE: HTTP {Status} {Reason} - {Body}",
-                        (int)resp.StatusCode, reasonPhrase, body ?? "null");
-                    relLogger?.Warn(
-                        $"[Prowlarr] ❌ ERROR RESPONSE: HTTP {(int)resp.StatusCode} {reasonPhrase} - {body ?? "null"}");
-
-                    // Wait a bit before trying the next URL variant
                     var delaySeconds = Math.Max(2, options.Value.RetryDelaySeconds);
                     logger.LogInformation("[Prowlarr] Waiting {Delay}s before next attempt...", delaySeconds);
-                    try
-                    {
-                        relLogger?.Info($"[Prowlarr] Waiting {delaySeconds}s before next attempt...");
-                    }
-                    catch
-                    {
-                    }
-
+                    try { relLogger?.Info($"[Prowlarr] Waiting {delaySeconds}s before next attempt..."); } catch { }
                     await Task.Delay(TimeSpan.FromSeconds(delaySeconds), cancellationToken);
                     continue;
                 }
 
-                // Success - read and parse response
-                logger.LogInformation("[Prowlarr] ✅ SUCCESS RESPONSE - Reading content...");
-                relLogger?.Info("[Prowlarr] ✅ SUCCESS RESPONSE - Reading content...");
-                var json = await resp.Content.ReadAsStringAsync(cancellationToken);
+                // Success - parse and handle JSON
+                var json = result.Json!;
                 logger.LogInformation("[Prowlarr] Response JSON length: {Length} characters", json.Length);
-                relLogger?.Info($"[Prowlarr] Response JSON length: {json.Length} characters");
+                try { relLogger?.Info($"[Prowlarr] Response JSON length: {json.Length} characters"); } catch { }
 
                 var preview = json.Length > 1000 ? json[..1000] + "…" : json;
                 logger.LogInformation("[Prowlarr] Response JSON preview: {Preview}", preview);
-                relLogger?.Info($"[Prowlarr] Response JSON preview: {preview}");
+                try { relLogger?.Info($"[Prowlarr] Response JSON preview: {preview}"); } catch { }
 
                 logger.LogInformation("[Prowlarr] Parsing JSON response...");
-                relLogger?.Info("[Prowlarr] Parsing JSON response...");
+                try { relLogger?.Info("[Prowlarr] Parsing JSON response..."); } catch { }
                 using var doc = JsonDocument.Parse(json);
                 var list = ProwlarrJsonParser.ParseResults(doc.RootElement, artistName, releaseTitle, logger);
 
@@ -1136,22 +1084,11 @@ public class ProwlarrClient(
             // Try using the search endpoint with query parameters instead of POST body
             var url =
                 $"{baseUrl2}/api/v1/search?apikey={Uri.EscapeDataString(apiKey2)}&query={Uri.EscapeDataString(query)}&type=search";
-            using var req = new HttpRequestMessage(HttpMethod.Get, url);
-            req.Headers.Accept.Clear();
-            req.Headers.Accept.ParseAdd("application/json");
-            try
+            var executor = new ProwlarrRequestExecutor(httpClient, options, logger);
+            var res = await executor.GetJsonAsync(url, cancellationToken);
+            if (res.Success && res.Json is not null)
             {
-                req.Headers.Add("X-Api-Key", apiKey2);
-            }
-            catch
-            {
-            }
-
-            logger.LogInformation("[Prowlarr] Alternative GET {Url}", url);
-            var resp = await httpClient.SendAsync(req, cancellationToken);
-            if (resp.IsSuccessStatusCode)
-            {
-                var json = await resp.Content.ReadAsStringAsync(cancellationToken);
+                var json = res.Json;
                 var preview = json.Length > 600 ? json[..600] + "…" : json;
                 logger.LogInformation("[Prowlarr] Alternative GET body preview: {Preview}", preview);
                 using var doc = JsonDocument.Parse(json);
@@ -1161,21 +1098,6 @@ public class ProwlarrClient(
                 {
                     return list;
                 }
-            }
-            else
-            {
-                string? body = null;
-                try
-                {
-                    body = await resp.Content.ReadAsStringAsync(cancellationToken);
-                }
-                catch
-                {
-                }
-
-                if (!string.IsNullOrWhiteSpace(body) && body.Length > 500) body = body[..500] + "…";
-                logger.LogInformation("[Prowlarr] Alternative GET HTTP {Status}. Body: {Body}", (int)resp.StatusCode,
-                    body);
             }
         }
         catch (Exception ex)
