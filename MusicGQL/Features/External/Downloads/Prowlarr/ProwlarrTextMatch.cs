@@ -32,16 +32,33 @@ internal static class ProwlarrTextMatch
     {
         if (string.IsNullOrWhiteSpace(a) || string.IsNullOrWhiteSpace(b)) return false;
         if (a == b) return true;
-        if (a.Contains(b) || b.Contains(a)) return true;
-        // Common prefix heuristic
-        int cpl = CommonPrefixLength(a, b);
-        if (cpl >= 6 && Math.Min(a.Length, b.Length) >= 8) return true;
-        // Levenshtein distance with small threshold
-        int dist = Levenshtein(a, b);
-        if (dist <= 2) return true;
-        // Relative similarity
-        double sim = 1.0 - (double)dist / Math.Max(a.Length, b.Length);
-        return sim >= 0.8;
+
+        int minLen = Math.Min(a.Length, b.Length);
+        int maxLen = Math.Max(a.Length, b.Length);
+
+        // For very short tokens (<3 chars), do not allow fuzzy matches (only exact match above)
+        if (minLen < 3) return false;
+
+        // Substring match only counts when both tokens are reasonably long
+        if (minLen >= 4 && (a.Contains(b) || b.Contains(a))) return true;
+
+        if (minLen >= 4)
+        {
+            // Common prefix heuristic for long tokens
+            int cpl = CommonPrefixLength(a, b);
+            if (cpl >= 6 && minLen >= 8) return true;
+
+            // Levenshtein with length-aware threshold
+            int dist = Levenshtein(a, b);
+            int threshold = maxLen <= 5 ? 1 : (maxLen <= 8 ? 2 : 3);
+            if (dist <= threshold) return true;
+
+            // Relative similarity
+            double sim = 1.0 - (double)dist / maxLen;
+            if (sim >= 0.8) return true;
+        }
+
+        return false;
     }
 
     private static int CommonPrefixLength(string a, string b)

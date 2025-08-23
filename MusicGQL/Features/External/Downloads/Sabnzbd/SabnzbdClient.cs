@@ -31,6 +31,10 @@ public class SabnzbdClient(HttpClient httpClient, IOptions<SabnzbdOptions> optio
         var category = options.Value.Category ?? "music";
         try
         {
+            // Log the exact NZB source URL handed off to SAB (sanitized)
+            logger.LogInformation("[SABnzbd] addurl source NZB URL: {Url}", SanitizeUrlForLogs(nzbUrl));
+            serviceLogger.Info($"addurl source NZB URL: {SanitizeUrlForLogs(nzbUrl)}");
+
             var url = $"{baseUrl}/api?mode=addurl&name={Uri.EscapeDataString(nzbUrl)}&apikey={Uri.EscapeDataString(apiKey)}&output=json&cat={Uri.EscapeDataString(category)}";
             if (!string.IsNullOrWhiteSpace(nzbName))
             {
@@ -337,6 +341,22 @@ public async Task<string?> GetJobStatusAsync(string nzbName, CancellationToken c
         logger.LogWarning(ex, "[SABnzbd] Job status check failed");
         serviceLogger.Warn($"GetJobStatus failed: {ex.Message}");
         return null;
+    }
+}
+
+private static string SanitizeUrlForLogs(string url)
+{
+    try
+    {
+        return System.Text.RegularExpressions.Regex.Replace(
+            url,
+            "(?i)([?&](?:apikey|api_key|apiKey)=)[^&#]+",
+            "$1***"
+        );
+    }
+    catch
+    {
+        return url;
     }
 }
 

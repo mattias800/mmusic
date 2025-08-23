@@ -17,5 +17,26 @@ public class ProwlarrTextMatchTests
         var ok = ProwlarrTextMatch.TitleMatches(title, artist, album);
         Assert.Equal(expected, ok);
     }
+
+    [Fact]
+    public void TitleMatches_ShouldReject_CompletelyDifferentAlbum()
+    {
+        var title = "Tom Grennan - Everywhere I Went Led Me To Where I Didnt Want To Be (2025) 24bit 48khz [FLAC]";
+        var artist = "Breathe Carolina";
+        var album = "Hello Fascination";
+        var ok = ProwlarrTextMatch.TitleMatches(title, artist, album);
+        Assert.False(ok);
+    }
+
+    [Fact]
+    public void TitleMatches_ShouldNotMatch_ShortTokenOverlap()
+    {
+        // title contains short tokens like 'be', 'to', 'me' that should not fuzzy-match 'breathe' or 'carolina'
+        var title = "Be To Me - Random Compilation FLAC";
+        var artist = "Breathe Carolina";
+        var album = "Hello Fascination";
+        var ok = ProwlarrTextMatch.TitleMatches(title, artist, album);
+        Assert.False(ok);
+    }
 }
 

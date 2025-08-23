@@ -522,13 +522,17 @@ public class ProwlarrDownloadProvider(
             {
                 logger.LogInformation("[Prowlarr] Final HTTP URL found - attempting SABnzbd download");
                 var url2 = EnsureProwlarrApiKey(httpUrl);
-                logger.LogInformation("[Prowlarr] Final HTTP URL: {Url}", url2);
-                relLogger.Info($"[Prowlarr] Attempting SABnzbd handoff using HTTP URL: {url2}");
+                logger.LogInformation("[Prowlarr] Final HTTP URL (pre-rewrite): {Url}", SanitizeUrlForLogs(url2));
+                relLogger.Info($"[Prowlarr] Attempting SABnzbd handoff using HTTP URL (pre-rewrite): {SanitizeUrlForLogs(url2)}");
 
                 // If SAB is in Docker and needs to fetch from Prowlarr, rewrite the base to SAB's internal view of Prowlarr
                 var sabInternalProwlarr = sabOptions.Value.BaseUrlToProwlarr;
                 var prowlarrExternal = prowlarrOptions.Value.BaseUrl;
                 var rewriteUrl = MusicGQL.Features.External.Downloads.InterServiceUrlRewriter.RewriteBase(url2, prowlarrExternal, sabInternalProwlarr);
+
+                logger.LogInformation("[Prowlarr] SAB handoff rewrite base from {From} to {To}", prowlarrExternal ?? "(null)", sabInternalProwlarr ?? "(null)");
+                logger.LogInformation("[Prowlarr] SAB handoff URL (post-rewrite): {Url}", SanitizeUrlForLogs(rewriteUrl));
+                relLogger.Info($"[Prowlarr] SAB handoff URL (post-rewrite): {SanitizeUrlForLogs(rewriteUrl)}");
 
                 var ok2 = await sab.AddNzbByUrlAsync(rewriteUrl, $"{artistName} - {releaseTitle}", cancellationToken);
                 logger.LogInformation("[Prowlarr] Final SABnzbd HTTP result: {Success}", ok2);
@@ -692,6 +696,23 @@ public class ProwlarrDownloadProvider(
             "complete works", "singles collection", "mega pack"
         ];
         return bad.Any(k => t.Contains(k));
+    }
+
+    private static string SanitizeUrlForLogs(string url)
+    {
+        try
+        {
+            // Mask common API key query parameters while preserving the base/host
+            return System.Text.RegularExpressions.Regex.Replace(
+                url,
+                "(?i)([?&](?:apikey|api_key|apiKey)=)[^&#]+",
+                "$1***"
+            );
+        }
+        catch
+        {
+            return url;
+        }
     }
 
     private static bool IsLikelyMusicAlbum(ProwlarrRelease r, string artistName, string releaseTitle)
