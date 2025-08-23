@@ -12,6 +12,7 @@ public class ProwlarrDownloadProvider(
     QBittorrentClient qb,
     SabnzbdClient sab,
     IOptions<ProwlarrOptions> prowlarrOptions,
+    IOptions<MusicGQL.Features.External.Downloads.Sabnzbd.Configuration.SabnzbdOptions> sabOptions,
     ServerSettings.ServerSettingsAccessor serverSettingsAccessor,
     ILogger<ProwlarrDownloadProvider> logger,
     DownloadLogPathProvider logPathProvider,
@@ -524,7 +525,12 @@ public class ProwlarrDownloadProvider(
                 logger.LogInformation("[Prowlarr] Final HTTP URL: {Url}", url2);
                 relLogger.Info($"[Prowlarr] Attempting SABnzbd handoff using HTTP URL: {url2}");
 
-                var ok2 = await sab.AddNzbByUrlAsync(url2, $"{artistName} - {releaseTitle}", cancellationToken);
+                // If SAB is in Docker and needs to fetch from Prowlarr, rewrite the base to SAB's internal view of Prowlarr
+                var sabInternalProwlarr = sabOptions.Value.BaseUrlToProwlarr;
+                var prowlarrExternal = prowlarrOptions.Value.BaseUrl;
+                var rewriteUrl = MusicGQL.Features.External.Downloads.InterServiceUrlRewriter.RewriteBase(url2, prowlarrExternal, sabInternalProwlarr);
+
+                var ok2 = await sab.AddNzbByUrlAsync(rewriteUrl, $"{artistName} - {releaseTitle}", cancellationToken);
                 logger.LogInformation("[Prowlarr] Final SABnzbd HTTP result: {Success}", ok2);
 
                 if (ok2)

@@ -8,6 +8,14 @@ public class ProwlarrOptions
     public string? ApiKey { get; set; }
     
     /// <summary>
+    /// Optional: the SABnzbd base URL as seen from inside the Docker network.
+    /// If we ever need to provide SAB URLs to Prowlarr or construct SAB-facing URLs
+    /// for container consumption, we can rewrite to this base.
+    /// Example: http://sabnzbd:6789
+    /// </summary>
+    public string? BaseUrlToSabnzbd { get; set; }
+    
+    /// <summary>
     /// Optional list of indexer IDs to restrict searches to (matches Prowlarr indexer IDs).
     /// If provided, the client will repeat indexers=ID for each value in API calls.
     /// </summary>
