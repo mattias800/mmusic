@@ -8,19 +8,19 @@ Scope and guiding principles
 - [x] Track identity and availability tracking include disc number for correctness.
 
 Proposed data model changes
-- [ ] JSON (release.json):
-- [ ] Add an optional discs array: discs: [{ discNumber: number, title?: string, tracks: Track[] }]
-- [ ] Optional JSON track extension: each track may have discNumber to aid flattened compatibility.
-- [ ] Back-compat:
-  - [ ] If discs is absent, use top-level tracks (current behavior).
-  - [ ] If discs is present, treat discs as the source of truth. Optionally still include flattened tracks, with discNumber populated, for older readers.
-- [ ] C# DTOs:
-- [ ] JsonRelease: add List<JsonDisc>? Discs { get; set; }
-- [ ] JsonDisc: int DiscNumber; string? Title; List<JsonTrack> Tracks
-- [ ] JsonTrack: optional int? DiscNumber (for flat view).
-- [ ] Cache:
-- [ ] CachedTrack gains DiscNumber (default 1 if absent).
-- [ ] Availability keys include disc number (ArtistId|Release|Disc|Track).
+- [x] JSON (release.json):
+- [x] Add an optional discs array: discs: [{ discNumber: number, title?: string, tracks: Track[] }]
+- [x] Optional JSON track extension: each track may have discNumber to aid flattened compatibility.
+- [x] Back-compat:
+  - [x] If discs is absent, use top-level tracks (current behavior).
+  - [x] If discs is present, treat discs as the source of truth. Optionally still include flattened tracks, with discNumber populated, for older readers.
+- [x] C# DTOs:
+- [x] JsonRelease: add List<JsonDisc>? Discs { get; set; }
+- [x] JsonDisc: int DiscNumber; string? Title; List<JsonTrack> Tracks
+- [x] JsonTrack: optional int? DiscNumber (for flat view).
+- [x] Cache:
+- [x] CachedTrack gains DiscNumber (default 1 if absent).
+- [x] Availability keys include disc number (ArtistId|Release|Disc|Track).
 
 Backend implementation steps
 - [ ] 1) Design multi-disc JSON schema + compatibility

@@ -1,7 +1,7 @@
 import * as React from "react";
 import { graphql } from "@/gql";
 import { useMutation, useQuery } from "urql";
-import { GlassCard, GradientButton, StatusCard, StatusGrid } from "@/components/ui";
+import { GradientButton, StatusCard, StatusGrid } from "@/components/ui";
 import { AlertTriangle, CheckCircle2, Globe, Network, RefreshCw } from "lucide-react";
 
 const reachabilityQuery = graphql(`
@@ -47,7 +47,7 @@ const reachabilityMutation = graphql(`
 `);
 
 export const SoulSeekReachabilityCard: React.FC = () => {
-  const [{ data, fetching, error }, reexec] = useQuery({ query: reachabilityQuery, requestPolicy: "cache-and-network" });
+  const [{ data, error }, reexec] = useQuery({ query: reachabilityQuery, requestPolicy: "cache-and-network" });
   const [{ fetching: checking }, runCheck] = useMutation(reachabilityMutation);
 
   const stats = data?.soulSeekSharingStatistics;

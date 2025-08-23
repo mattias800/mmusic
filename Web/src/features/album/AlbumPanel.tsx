@@ -251,7 +251,7 @@ export const AlbumPanel: React.FC<AlbumPanelProps> = (props) => {
 
         {/* Track List */}
         <GlassCard>
-          <AlbumTrackList releaseGroup={release} />
+<AlbumTrackList releaseGroup={release} />
         </GlassCard>
 
         {/* Copyright Info */}
