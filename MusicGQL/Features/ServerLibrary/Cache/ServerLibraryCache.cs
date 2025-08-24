@@ -139,7 +139,8 @@ public class ServerLibraryCache(ServerLibraryJsonReader reader, ITopicEventSende
                         {
                             var discNumber = disc.DiscNumber <= 0 ? 1 : disc.DiscNumber;
                             var discTracks = new List<CachedTrack>();
-                            if (disc.Tracks == null) disc.Tracks = new List<Json.JsonTrack>();
+                            if (disc.Tracks == null)
+                                disc.Tracks = new List<Json.JsonTrack>();
                             foreach (var trackJson in disc.Tracks)
                             {
                                 var cachedTrack = new CachedTrack
@@ -178,7 +179,9 @@ public class ServerLibraryCache(ServerLibraryJsonReader reader, ITopicEventSende
                                                     resolved = resolved.Substring(2);
                                                 resolved = Path.Combine(releasePath, resolved);
                                             }
-                                            cachedTrack.CachedMediaAvailabilityStatus = File.Exists(resolved)
+                                            cachedTrack.CachedMediaAvailabilityStatus = File.Exists(
+                                                resolved
+                                            )
                                                 ? CachedMediaAvailabilityStatus.Available
                                                 : CachedMediaAvailabilityStatus.Missing;
                                         }
@@ -191,12 +194,14 @@ public class ServerLibraryCache(ServerLibraryJsonReader reader, ITopicEventSende
                                 newAllTracks.Add(cachedTrack);
                             }
 
-                            cachedRelease.Discs.Add(new CachedDisc
-                            {
-                                DiscNumber = discNumber,
-                                Title = disc.Title,
-                                Tracks = discTracks.OrderBy(t => t.TrackNumber).ToList(),
-                            });
+                            cachedRelease.Discs.Add(
+                                new CachedDisc
+                                {
+                                    DiscNumber = discNumber,
+                                    Title = disc.Title,
+                                    Tracks = discTracks.OrderBy(t => t.TrackNumber).ToList(),
+                                }
+                            );
                         }
                     }
                     else if (releaseJson.Tracks != null)
@@ -238,7 +243,9 @@ public class ServerLibraryCache(ServerLibraryJsonReader reader, ITopicEventSende
                                                 resolved = resolved.Substring(2);
                                             resolved = Path.Combine(releasePath, resolved);
                                         }
-                                        cachedTrack.CachedMediaAvailabilityStatus = File.Exists(resolved)
+                                        cachedTrack.CachedMediaAvailabilityStatus = File.Exists(
+                                            resolved
+                                        )
                                             ? CachedMediaAvailabilityStatus.Available
                                             : CachedMediaAvailabilityStatus.Missing;
                                     }
@@ -251,18 +258,20 @@ public class ServerLibraryCache(ServerLibraryJsonReader reader, ITopicEventSende
                         }
 
                         // Build discs from flattened view if multiple disc numbers exist, otherwise one disc
-                        var groups = cachedRelease.Tracks
-                            .GroupBy(t => t.DiscNumber > 0 ? t.DiscNumber : 1)
+                        var groups = cachedRelease
+                            .Tracks.GroupBy(t => t.DiscNumber > 0 ? t.DiscNumber : 1)
                             .OrderBy(g => g.Key)
                             .ToList();
                         foreach (var g in groups)
                         {
-                            cachedRelease.Discs.Add(new CachedDisc
-                            {
-                                DiscNumber = g.Key,
-                                Title = null,
-                                Tracks = g.OrderBy(t => t.TrackNumber).ToList(),
-                            });
+                            cachedRelease.Discs.Add(
+                                new CachedDisc
+                                {
+                                    DiscNumber = g.Key,
+                                    Title = null,
+                                    Tracks = g.OrderBy(t => t.TrackNumber).ToList(),
+                                }
+                            );
                         }
                     }
 
@@ -319,7 +328,13 @@ public class ServerLibraryCache(ServerLibraryJsonReader reader, ITopicEventSende
         CachedMediaAvailabilityStatus status
     )
     {
-        await UpdateMediaAvailabilityStatus(artistId, releaseFolderName, discNumber: null, trackNumber, status);
+        await UpdateMediaAvailabilityStatus(
+            artistId,
+            releaseFolderName,
+            discNumber: null,
+            trackNumber,
+            status
+        );
     }
 
     // New overload: disc-aware availability update
@@ -349,7 +364,9 @@ public class ServerLibraryCache(ServerLibraryJsonReader reader, ITopicEventSende
             if (discNumber.HasValue)
             {
                 var d = discNumber.Value <= 0 ? 1 : discNumber.Value;
-                track = release.Tracks.FirstOrDefault(t => t.TrackNumber == trackNumber && (t.DiscNumber > 0 ? t.DiscNumber : 1) == d);
+                track = release.Tracks.FirstOrDefault(t =>
+                    t.TrackNumber == trackNumber && (t.DiscNumber > 0 ? t.DiscNumber : 1) == d
+                );
             }
             else
             {
@@ -386,7 +403,11 @@ public class ServerLibraryCache(ServerLibraryJsonReader reader, ITopicEventSende
 
             // Publish centralized track and release updates
             await eventSender.SendAsync(
-                LibrarySubscription.LibraryTrackUpdatedTopic(artistId, releaseFolderName, trackNumber),
+                LibrarySubscription.LibraryTrackUpdatedTopic(
+                    artistId,
+                    releaseFolderName,
+                    trackNumber
+                ),
                 new Track(track)
             );
             await eventSender.SendAsync(
@@ -438,7 +459,8 @@ public class ServerLibraryCache(ServerLibraryJsonReader reader, ITopicEventSende
             foreach (var t in oldRelease.Tracks)
             {
                 var disc = t.DiscNumber > 0 ? t.DiscNumber : 1;
-                previousStatusesByTrackNumber[(disc * 1000) + t.TrackNumber] = t.CachedMediaAvailabilityStatus;
+                previousStatusesByTrackNumber[(disc * 1000) + t.TrackNumber] =
+                    t.CachedMediaAvailabilityStatus;
             }
         }
 
@@ -476,7 +498,8 @@ public class ServerLibraryCache(ServerLibraryJsonReader reader, ITopicEventSende
             {
                 var dnum = disc.DiscNumber <= 0 ? 1 : disc.DiscNumber;
                 var discTracks = new List<CachedTrack>();
-                if (disc.Tracks == null) disc.Tracks = new List<Json.JsonTrack>();
+                if (disc.Tracks == null)
+                    disc.Tracks = new List<Json.JsonTrack>();
                 foreach (var jt in disc.Tracks)
                 {
                     var ct = new CachedTrack
@@ -504,12 +527,14 @@ public class ServerLibraryCache(ServerLibraryJsonReader reader, ITopicEventSende
                     discTracks.Add(ct);
                 }
 
-                newRelease.Discs.Add(new CachedDisc
-                {
-                    DiscNumber = dnum,
-                    Title = disc.Title,
-                    Tracks = discTracks.OrderBy(t => t.TrackNumber).ToList(),
-                });
+                newRelease.Discs.Add(
+                    new CachedDisc
+                    {
+                        DiscNumber = dnum,
+                        Title = disc.Title,
+                        Tracks = discTracks.OrderBy(t => t.TrackNumber).ToList(),
+                    }
+                );
             }
         }
         else if (releaseJson.Tracks != null)
@@ -540,18 +565,20 @@ public class ServerLibraryCache(ServerLibraryJsonReader reader, ITopicEventSende
                 newRelease.Tracks.Add(ct);
             }
 
-            var groups = newRelease.Tracks
-                .GroupBy(t => t.DiscNumber > 0 ? t.DiscNumber : 1)
+            var groups = newRelease
+                .Tracks.GroupBy(t => t.DiscNumber > 0 ? t.DiscNumber : 1)
                 .OrderBy(g => g.Key)
                 .ToList();
             foreach (var g in groups)
             {
-                newRelease.Discs.Add(new CachedDisc
-                {
-                    DiscNumber = g.Key,
-                    Title = null,
-                    Tracks = g.OrderBy(t => t.TrackNumber).ToList(),
-                });
+                newRelease.Discs.Add(
+                    new CachedDisc
+                    {
+                        DiscNumber = g.Key,
+                        Title = null,
+                        Tracks = g.OrderBy(t => t.TrackNumber).ToList(),
+                    }
+                );
             }
         }
 
@@ -784,7 +811,9 @@ public class ServerLibraryCache(ServerLibraryJsonReader reader, ITopicEventSende
                 return null;
 
             var d = discNumber <= 0 ? 1 : discNumber;
-            return release.Tracks.FirstOrDefault(t => (t.DiscNumber > 0 ? t.DiscNumber : 1) == d && t.TrackNumber == trackNumber);
+            return release.Tracks.FirstOrDefault(t =>
+                (t.DiscNumber > 0 ? t.DiscNumber : 1) == d && t.TrackNumber == trackNumber
+            );
         }
     }
 

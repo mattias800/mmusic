@@ -18,7 +18,8 @@ public class PlayCountsEventProcessor(ILogger<PlayCountsEventProcessor> logger)
 
     private async Task HandleTrackPlayed(TrackPlayed ev, EventDbContext dbContext)
     {
-        var row = await dbContext.Set<DbTrackPlayCount>()
+        var row = await dbContext
+            .Set<DbTrackPlayCount>()
             .FirstOrDefaultAsync(x =>
                 x.ArtistId == ev.ArtistId
                 && x.ReleaseFolderName == ev.ReleaseFolderName
@@ -53,7 +54,8 @@ public class PlayCountsEventProcessor(ILogger<PlayCountsEventProcessor> logger)
         await dbContext.SaveChangesAsync();
 
         // Update per-user play counts
-        var userRow = await dbContext.Set<DbUserTrackPlayCount>()
+        var userRow = await dbContext
+            .Set<DbUserTrackPlayCount>()
             .FirstOrDefaultAsync(x =>
                 x.UserId == ev.SubjectUserId
                 && x.ArtistId == ev.ArtistId
@@ -89,5 +91,3 @@ public class PlayCountsEventProcessor(ILogger<PlayCountsEventProcessor> logger)
         );
     }
 }
-
-

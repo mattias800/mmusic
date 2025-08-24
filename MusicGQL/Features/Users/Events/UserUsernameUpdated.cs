@@ -7,5 +7,3 @@ public class UserUsernameUpdated : Event
     public Guid SubjectUserId { get; set; }
     public string NewUsername { get; set; } = string.Empty;
 }
-
-

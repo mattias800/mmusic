@@ -8,7 +8,11 @@ public class UserListenBrainzCredentialsUpdated : Event
     public string? ListenBrainzUserId { get; init; }
     public string? ListenBrainzToken { get; init; }
 
-    public UserListenBrainzCredentialsUpdated(Guid subjectUserId, string? listenBrainzUserId, string? listenBrainzToken)
+    public UserListenBrainzCredentialsUpdated(
+        Guid subjectUserId,
+        string? listenBrainzUserId,
+        string? listenBrainzToken
+    )
     {
         SubjectUserId = subjectUserId;
         ListenBrainzUserId = listenBrainzUserId;

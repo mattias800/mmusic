@@ -5,7 +5,11 @@ using MusicGQL.Integration.Spotify;
 
 namespace MusicGQL.Features.Import.Services.TopTracks;
 
-public class TopTracksCompleter(SpotifyService spotifyService, LastfmClient lastfmClient, ILogger logger)
+public class TopTracksCompleter(
+    SpotifyService spotifyService,
+    LastfmClient lastfmClient,
+    ILogger logger
+)
 {
     private static string Normalize(string s) => (s ?? string.Empty).Trim().ToLowerInvariant();
 
@@ -25,7 +29,10 @@ public class TopTracksCompleter(SpotifyService spotifyService, LastfmClient last
         var candidateArtistNames = new List<string>();
         void addName(string? s)
         {
-            if (!string.IsNullOrWhiteSpace(s) && !candidateArtistNames.Contains(s, StringComparer.OrdinalIgnoreCase))
+            if (
+                !string.IsNullOrWhiteSpace(s)
+                && !candidateArtistNames.Contains(s, StringComparer.OrdinalIgnoreCase)
+            )
                 candidateArtistNames.Add(s);
         }
         addName(artist.Name);
@@ -48,7 +55,12 @@ public class TopTracksCompleter(SpotifyService spotifyService, LastfmClient last
         }
         if (!string.IsNullOrWhiteSpace(artist.Connections?.SpotifyId))
         {
-            if (!allSpotifyIds.Contains(artist.Connections.SpotifyId, StringComparer.OrdinalIgnoreCase))
+            if (
+                !allSpotifyIds.Contains(
+                    artist.Connections.SpotifyId,
+                    StringComparer.OrdinalIgnoreCase
+                )
+            )
                 allSpotifyIds.Add(artist.Connections.SpotifyId);
         }
         if (allSpotifyIds.Count == 0)
@@ -68,12 +80,16 @@ public class TopTracksCompleter(SpotifyService spotifyService, LastfmClient last
             catch { }
         }
 
-        var titleToSpotify = new Dictionary<string, SpotifyAPI.Web.FullTrack>(StringComparer.OrdinalIgnoreCase);
+        var titleToSpotify = new Dictionary<string, SpotifyAPI.Web.FullTrack>(
+            StringComparer.OrdinalIgnoreCase
+        );
         foreach (var sid in allSpotifyIds)
         {
             try
             {
-                var list = await spotifyService.GetArtistTopTracksAsync(sid) ?? new List<SpotifyAPI.Web.FullTrack>();
+                var list =
+                    await spotifyService.GetArtistTopTracksAsync(sid)
+                    ?? new List<SpotifyAPI.Web.FullTrack>();
                 foreach (var t in list)
                 {
                     var key = Normalize(t.Name);
@@ -122,7 +138,7 @@ public class TopTracksCompleter(SpotifyService spotifyService, LastfmClient last
 
             // Check if this track already has real play count data (e.g., from ListenBrainz)
             bool hasRealPlayCount = tt.PlayCount.HasValue && tt.PlayCount.Value > 0;
-            
+
             // Fill play count, preferring Last.fm when available, else Spotify popularity as proxy
             // BUT only if we don't already have real play count data
             long? lfCountUsed = null;
@@ -140,7 +156,17 @@ public class TopTracksCompleter(SpotifyService spotifyService, LastfmClient last
                         {
                             tt.PlayCount = lfPlays;
                             lfCountUsed = lfPlays;
-                            try { logger.LogInformation("[TopTracksCompleter] LF match title='{Title}' artist='{Artist}' plays={Plays} listeners={Listeners}", tt.Title, candidateArtist, lfPlays ?? 0, lf?.Statistics?.Listeners ?? 0); } catch { }
+                            try
+                            {
+                                logger.LogInformation(
+                                    "[TopTracksCompleter] LF match title='{Title}' artist='{Artist}' plays={Plays} listeners={Listeners}",
+                                    tt.Title,
+                                    candidateArtist,
+                                    lfPlays ?? 0,
+                                    lf?.Statistics?.Listeners ?? 0
+                                );
+                            }
+                            catch { }
                             set = true;
                             break;
                         }
@@ -155,7 +181,15 @@ public class TopTracksCompleter(SpotifyService spotifyService, LastfmClient last
                     spNorm = spotifyMatch.Popularity;
                     spPopularityUsed = spotifyMatch.Popularity;
                     tt.PlayCount = (long)Math.Round(spNorm.Value);
-                    try { logger.LogInformation("[TopTracksCompleter] SP popularity match title='{Title}' popularity={Pop}", tt.Title, spPopularityUsed ?? -1); } catch { }
+                    try
+                    {
+                        logger.LogInformation(
+                            "[TopTracksCompleter] SP popularity match title='{Title}' popularity={Pop}",
+                            tt.Title,
+                            spPopularityUsed ?? -1
+                        );
+                    }
+                    catch { }
                 }
             }
 
@@ -184,13 +218,15 @@ public class TopTracksCompleter(SpotifyService spotifyService, LastfmClient last
             double spScore = spPopularityUsed.HasValue ? (spPopularityUsed.Value / 100.0) : 0.0;
             var rankScore = Wlf * lfScore + Wsp * spScore;
             tt.RankScore = rankScore;
-            
+
             // Set rank source based on what we used
             if (tt.RankSource == null)
             {
-                tt.RankSource = lfCountUsed.HasValue && spPopularityUsed.HasValue ? "lf+sp"
+                tt.RankSource =
+                    lfCountUsed.HasValue && spPopularityUsed.HasValue ? "lf+sp"
                     : lfCountUsed.HasValue ? "lf"
-                    : spPopularityUsed.HasValue ? "sp_popularity" : null;
+                    : spPopularityUsed.HasValue ? "sp_popularity"
+                    : null;
             }
 
             // Log enrichment details for diagnostics
@@ -198,11 +234,23 @@ public class TopTracksCompleter(SpotifyService spotifyService, LastfmClient last
             {
                 if (lfCountUsed == null && spPopularityUsed == null)
                 {
-                    logger.LogInformation("[TopTracksCompleter] No LF/SP data for title='{Title}' (before={Before}, after={After})", tt.Title, beforePlayCount ?? 0, tt.PlayCount ?? 0);
+                    logger.LogInformation(
+                        "[TopTracksCompleter] No LF/SP data for title='{Title}' (before={Before}, after={After})",
+                        tt.Title,
+                        beforePlayCount ?? 0,
+                        tt.PlayCount ?? 0
+                    );
                 }
                 else
                 {
-                    logger.LogInformation("[TopTracksCompleter] Track='{Title}' before={Before} after={After} lfUsed={Lf} spPop={Sp}", tt.Title, beforePlayCount ?? 0, tt.PlayCount ?? 0, lfCountUsed ?? 0, spPopularityUsed ?? -1);
+                    logger.LogInformation(
+                        "[TopTracksCompleter] Track='{Title}' before={Before} after={After} lfUsed={Lf} spPop={Sp}",
+                        tt.Title,
+                        beforePlayCount ?? 0,
+                        tt.PlayCount ?? 0,
+                        lfCountUsed ?? 0,
+                        spPopularityUsed ?? -1
+                    );
                 }
             }
             catch { }
@@ -217,114 +265,176 @@ public class TopTracksCompleter(SpotifyService spotifyService, LastfmClient last
         // Download all URL-based cover art in parallel
         if (tracksWithUrls.Count > 0)
         {
-            logger.LogInformation("[TopTracksCompleter] Starting parallel download of {Count} cover art images from URLs", tracksWithUrls.Count);
-            
-            var downloadTasks = tracksWithUrls.Select(async (item) =>
-            {
-                var (track, index) = item;
-                try
+            logger.LogInformation(
+                "[TopTracksCompleter] Starting parallel download of {Count} cover art images from URLs",
+                tracksWithUrls.Count
+            );
+
+            var downloadTasks = tracksWithUrls.Select(
+                async (item) =>
                 {
-                    var bytes = await httpClient.GetByteArrayAsync(track.CoverArt);
-                    var fileName = $"toptrack{(index + 1).ToString("00")}.jpg";
-                    var fullPath = System.IO.Path.Combine(artistDir, fileName);
-                    
-                    logger.LogInformation("[TopTracksCompleter] Saving cover art for '{Title}' to {Path} ({Size} bytes)", track.Title, fullPath, bytes.Length);
-                    
-                    await File.WriteAllBytesAsync(fullPath, bytes);
-                    track.CoverArt = "./" + fileName; // Update to local file path
-                    
-                    logger.LogInformation("[TopTracksCompleter] Successfully downloaded and saved cover art for '{Title}': {FileName} ({Size} bytes)", 
-                        track.Title, fileName, bytes.Length);
+                    var (track, index) = item;
+                    try
+                    {
+                        var bytes = await httpClient.GetByteArrayAsync(track.CoverArt);
+                        var fileName = $"toptrack{(index + 1).ToString("00")}.jpg";
+                        var fullPath = System.IO.Path.Combine(artistDir, fileName);
+
+                        logger.LogInformation(
+                            "[TopTracksCompleter] Saving cover art for '{Title}' to {Path} ({Size} bytes)",
+                            track.Title,
+                            fullPath,
+                            bytes.Length
+                        );
+
+                        await File.WriteAllBytesAsync(fullPath, bytes);
+                        track.CoverArt = "./" + fileName; // Update to local file path
+
+                        logger.LogInformation(
+                            "[TopTracksCompleter] Successfully downloaded and saved cover art for '{Title}': {FileName} ({Size} bytes)",
+                            track.Title,
+                            fileName,
+                            bytes.Length
+                        );
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.LogWarning(
+                            ex,
+                            "[TopTracksCompleter] Failed to download cover art for '{Title}' from {Url}, clearing CoverArt field",
+                            track.Title,
+                            track.CoverArt
+                        );
+                        track.CoverArt = null; // Clear the failed URL
+                    }
                 }
-                catch (Exception ex)
-                {
-                    logger.LogWarning(ex, "[TopTracksCompleter] Failed to download cover art for '{Title}' from {Url}, clearing CoverArt field", track.Title, track.CoverArt);
-                    track.CoverArt = null; // Clear the failed URL
-                }
-            });
-            
+            );
+
             await Task.WhenAll(downloadTasks);
-            logger.LogInformation("[TopTracksCompleter] Completed all parallel cover art downloads");
+            logger.LogInformation(
+                "[TopTracksCompleter] Completed all parallel cover art downloads"
+            );
         }
 
         // Now process remaining cover art needs (Spotify fallbacks)
         for (int i = 0; i < artist.TopTracks.Count; i++)
         {
             var tt = artist.TopTracks[i];
-            
+
             // Cover art handling - only for tracks that still need it
             if (string.IsNullOrWhiteSpace(tt.CoverArt))
             {
-                logger.LogInformation("[TopTracksCompleter] Processing cover art for track '{Title}' (source: {Source})", tt.Title, tt.RankSource ?? "unknown");
-                
+                logger.LogInformation(
+                    "[TopTracksCompleter] Processing cover art for track '{Title}' (source: {Source})",
+                    tt.Title,
+                    tt.RankSource ?? "unknown"
+                );
+
                 string? coverArtUrl = null;
                 string? coverArtSource = null;
-                
+
                 // Try to get cover art from ListenBrainz data if available
                 // ListenBrainz has caa_id and caa_release_mbid which can be used to get cover art
                 if (tt.RankSource == "listenbrainz")
                 {
-                    logger.LogInformation("[TopTracksCompleter] ListenBrainz track '{Title}' - cover art should already be handled by importer", tt.Title);
+                    logger.LogInformation(
+                        "[TopTracksCompleter] ListenBrainz track '{Title}' - cover art should already be handled by importer",
+                        tt.Title
+                    );
                     // ListenBrainz cover art is now handled by the importer, so we just fall through to Spotify
                 }
-                
+
                 // Try Spotify album image as fallback
                 if (string.IsNullOrEmpty(coverArtUrl))
                 {
                     var normalizedTitle = Normalize(tt.Title);
                     titleToSpotify.TryGetValue(normalizedTitle, out var spotifyMatch);
-                    
+
                     var image = spotifyMatch?.Album?.Images?.FirstOrDefault();
                     if (image != null && !string.IsNullOrWhiteSpace(image.Url))
                     {
                         coverArtUrl = image.Url;
                         coverArtSource = "Spotify";
-                        logger.LogInformation("[TopTracksCompleter] Found Spotify cover art for '{Title}': {Url}", tt.Title, image.Url);
+                        logger.LogInformation(
+                            "[TopTracksCompleter] Found Spotify cover art for '{Title}': {Url}",
+                            tt.Title,
+                            image.Url
+                        );
                     }
                     else
                     {
-                        logger.LogInformation("[TopTracksCompleter] No Spotify cover art available for '{Title}'", tt.Title);
+                        logger.LogInformation(
+                            "[TopTracksCompleter] No Spotify cover art available for '{Title}'",
+                            tt.Title
+                        );
                     }
                 }
-                
+
                 // Download and save cover art if we found a URL
                 if (!string.IsNullOrEmpty(coverArtUrl))
                 {
-                    logger.LogInformation("[TopTracksCompleter] Downloading cover art for '{Title}' from {Source}: {Url}", tt.Title, coverArtSource, coverArtUrl);
+                    logger.LogInformation(
+                        "[TopTracksCompleter] Downloading cover art for '{Title}' from {Source}: {Url}",
+                        tt.Title,
+                        coverArtSource,
+                        coverArtUrl
+                    );
                     try
                     {
                         var bytes = await httpClient.GetByteArrayAsync(coverArtUrl);
                         var fileName = $"toptrack{(i + 1).ToString("00")}.jpg";
                         var fullPath = System.IO.Path.Combine(artistDir, fileName);
-                        
-                        logger.LogInformation("[TopTracksCompleter] Saving cover art for '{Title}' to {Path} ({Size} bytes)", tt.Title, fullPath, bytes.Length);
-                        
+
+                        logger.LogInformation(
+                            "[TopTracksCompleter] Saving cover art for '{Title}' to {Path} ({Size} bytes)",
+                            tt.Title,
+                            fullPath,
+                            bytes.Length
+                        );
+
                         await File.WriteAllBytesAsync(fullPath, bytes);
                         tt.CoverArt = "./" + fileName;
-                        
-                        logger.LogInformation("[TopTracksCompleter] Successfully downloaded and saved cover art for '{Title}': {FileName} ({Size} bytes)", 
-                            tt.Title, fileName, bytes.Length);
+
+                        logger.LogInformation(
+                            "[TopTracksCompleter] Successfully downloaded and saved cover art for '{Title}': {FileName} ({Size} bytes)",
+                            tt.Title,
+                            fileName,
+                            bytes.Length
+                        );
                     }
                     catch (Exception ex)
                     {
-                        logger.LogWarning(ex, "[TopTracksCompleter] Failed to download cover art for '{Title}' from {Url}", tt.Title, coverArtUrl);
+                        logger.LogWarning(
+                            ex,
+                            "[TopTracksCompleter] Failed to download cover art for '{Title}' from {Url}",
+                            tt.Title,
+                            coverArtUrl
+                        );
                         // ignore download failures
                     }
                 }
                 else
                 {
-                    logger.LogInformation("[TopTracksCompleter] No cover art available for '{Title}' (source: {Source}) - will remain null", tt.Title, tt.RankSource ?? "unknown");
+                    logger.LogInformation(
+                        "[TopTracksCompleter] No cover art available for '{Title}' (source: {Source}) - will remain null",
+                        tt.Title,
+                        tt.RankSource ?? "unknown"
+                    );
                 }
             }
             else if (!tt.CoverArt.StartsWith("./"))
             {
-                logger.LogInformation("[TopTracksCompleter] Track '{Title}' already has cover art: {CoverArt}", tt.Title, tt.CoverArt);
+                logger.LogInformation(
+                    "[TopTracksCompleter] Track '{Title}' already has cover art: {CoverArt}",
+                    tt.Title,
+                    tt.CoverArt
+                );
             }
         }
 
         // Resort by rank score (then play count) now that we have enriched counts
-        artist.TopTracks = artist.TopTracks
-            .OrderByDescending(t => t.RankScore ?? 0)
+        artist.TopTracks = artist
+            .TopTracks.OrderByDescending(t => t.RankScore ?? 0)
             .ThenByDescending(t => t.PlayCount ?? 0)
             .ThenBy(t => t.Title)
             .Take(MaxTop)
@@ -336,7 +446,14 @@ public class TopTracksCompleter(SpotifyService spotifyService, LastfmClient last
             for (int i = 0; i < Math.Min(10, artist.TopTracks.Count); i++)
             {
                 var t = artist.TopTracks[i];
-                logger.LogInformation("[TopTracksCompleter] FinalRank #{Rank}: '{Title}' score={Score:F3} plays={Plays} source={Source}", i + 1, t.Title, t.RankScore ?? 0, t.PlayCount ?? 0, t.RankSource ?? "");
+                logger.LogInformation(
+                    "[TopTracksCompleter] FinalRank #{Rank}: '{Title}' score={Score:F3} plays={Plays} source={Source}",
+                    i + 1,
+                    t.Title,
+                    t.RankScore ?? 0,
+                    t.PlayCount ?? 0,
+                    t.RankSource ?? ""
+                );
             }
         }
         catch { }

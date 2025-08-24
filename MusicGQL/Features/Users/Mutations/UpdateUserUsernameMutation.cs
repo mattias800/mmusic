@@ -31,17 +31,23 @@ public class UpdateUserUsernameMutation
         }
 
         var target = await dbContext.Users.FirstOrDefaultAsync(u => u.UserId == input.UserId);
-        if (target is null) return new UpdateUserUsernameError("User not found");
+        if (target is null)
+            return new UpdateUserUsernameError("User not found");
 
         // Ensure unique username
-        var exists = await dbContext.Users.AnyAsync(u => u.Username == input.NewUsername && u.UserId != input.UserId);
-        if (exists) return new UpdateUserUsernameError("Username already taken");
+        var exists = await dbContext.Users.AnyAsync(u =>
+            u.Username == input.NewUsername && u.UserId != input.UserId
+        );
+        if (exists)
+            return new UpdateUserUsernameError("Username already taken");
 
-        dbContext.Events.Add(new UserUsernameUpdated
-        {
-            SubjectUserId = input.UserId,
-            NewUsername = input.NewUsername,
-        });
+        dbContext.Events.Add(
+            new UserUsernameUpdated
+            {
+                SubjectUserId = input.UserId,
+                NewUsername = input.NewUsername,
+            }
+        );
 
         await dbContext.SaveChangesAsync();
         await eventProcessor.ProcessEvents();
@@ -59,5 +65,3 @@ public abstract record UpdateUserUsernameResult;
 public record UpdateUserUsernameSuccess(User User) : UpdateUserUsernameResult;
 
 public record UpdateUserUsernameError(string Message) : UpdateUserUsernameResult;
-
-

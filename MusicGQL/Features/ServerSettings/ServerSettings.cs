@@ -1,12 +1,12 @@
-using MusicGQL.Features.ServerSettings.Db;
 using System.IO;
 using System.Runtime.InteropServices;
-using MusicGQL.Features.ServerLibrary;
 using Microsoft.Extensions.Options;
-using MusicGQL.Integration.Youtube.Configuration;
-using MusicGQL.Integration.Spotify.Configuration;
 using MusicGQL;
 using MusicGQL.Features.ListenBrainz;
+using MusicGQL.Features.ServerLibrary;
+using MusicGQL.Features.ServerSettings.Db;
+using MusicGQL.Integration.Spotify.Configuration;
+using MusicGQL.Integration.Youtube.Configuration;
 
 namespace MusicGQL.Features.ServerSettings;
 
@@ -43,30 +43,43 @@ public record ServerSettings([property: GraphQLIgnore] DbServerSettings Model)
 
     // SoulSeek connection settings (non-secret)
     public string SoulSeekHost() => Model.SoulSeekHost;
+
     public int SoulSeekPort() => Model.SoulSeekPort;
+
     public string SoulSeekUsername() => Model.SoulSeekUsername;
 
     // Prowlarr (non-secret)
     public string? ProwlarrBaseUrl() => Model.ProwlarrBaseUrl;
+
     public int ProwlarrTimeoutSeconds() => Model.ProwlarrTimeoutSeconds;
+
     public int ProwlarrMaxRetries() => Model.ProwlarrMaxRetries;
+
     public int ProwlarrRetryDelaySeconds() => Model.ProwlarrRetryDelaySeconds;
+
     public bool ProwlarrTestConnectivityFirst() => Model.ProwlarrTestConnectivityFirst;
+
     public bool ProwlarrEnableDetailedLogging() => Model.ProwlarrEnableDetailedLogging;
+
     public int ProwlarrMaxConcurrentRequests() => Model.ProwlarrMaxConcurrentRequests;
 
     // qBittorrent (non-secret)
     public string? QBittorrentBaseUrl() => Model.QBittorrentBaseUrl;
+
     public string? QBittorrentUsername() => Model.QBittorrentUsername;
+
     public string? QBittorrentSavePath() => Model.QBittorrentSavePath;
 
     // Downloader toggles
     public bool EnableSabnzbdDownloader() => Model.EnableSabnzbdDownloader;
+
     public bool EnableQBittorrentDownloader() => Model.EnableQBittorrentDownloader;
+
     public bool EnableSoulSeekDownloader() => Model.EnableSoulSeekDownloader;
 
     // Discography
     public bool DiscographyEnabled() => Model.DiscographyEnabled;
+
     public string? DiscographyStagingPath() => Model.DiscographyStagingPath;
 
     // Top Tracks Service Configuration
@@ -86,8 +99,8 @@ public record ServerSettings([property: GraphQLIgnore] DbServerSettings Model)
         !string.IsNullOrWhiteSpace(youTubeOptions.Value.ApiKey);
 
     public bool IsSpotifyConfigured([Service] IOptions<SpotifyClientOptions> spotifyOptions) =>
-        !string.IsNullOrWhiteSpace(spotifyOptions.Value.ClientId) &&
-        !string.IsNullOrWhiteSpace(spotifyOptions.Value.ClientSecret);
+        !string.IsNullOrWhiteSpace(spotifyOptions.Value.ClientId)
+        && !string.IsNullOrWhiteSpace(spotifyOptions.Value.ClientSecret);
 
     public bool IsLastfmConfigured([Service] IOptions<LastfmOptions> lastfmOptions) =>
         !string.IsNullOrWhiteSpace(lastfmOptions.Value.ApiKey);
@@ -96,27 +109,32 @@ public record ServerSettings([property: GraphQLIgnore] DbServerSettings Model)
         !string.IsNullOrWhiteSpace(fanartOptions.Value.ApiKey);
 
     // Config sources
-    public string ListenBrainzConfiguredSource([Service] IOptions<ListenBrainzConfiguration> lbOptions)
-        => !string.IsNullOrWhiteSpace(lbOptions.Value.ApiKey) ? "appsettings" : "none";
+    public string ListenBrainzConfiguredSource(
+        [Service] IOptions<ListenBrainzConfiguration> lbOptions
+    ) => !string.IsNullOrWhiteSpace(lbOptions.Value.ApiKey) ? "appsettings" : "none";
 
-    public string YouTubeConfiguredSource([Service] IOptions<YouTubeServiceOptions> youTubeOptions)
-        => !string.IsNullOrWhiteSpace(youTubeOptions.Value.ApiKey) ? "appsettings" : "none";
+    public string YouTubeConfiguredSource(
+        [Service] IOptions<YouTubeServiceOptions> youTubeOptions
+    ) => !string.IsNullOrWhiteSpace(youTubeOptions.Value.ApiKey) ? "appsettings" : "none";
 
-    public string SpotifyConfiguredSource([Service] IOptions<SpotifyClientOptions> spotifyOptions)
-        => !string.IsNullOrWhiteSpace(spotifyOptions.Value.ClientId) && !string.IsNullOrWhiteSpace(spotifyOptions.Value.ClientSecret)
+    public string SpotifyConfiguredSource(
+        [Service] IOptions<SpotifyClientOptions> spotifyOptions
+    ) =>
+        !string.IsNullOrWhiteSpace(spotifyOptions.Value.ClientId)
+        && !string.IsNullOrWhiteSpace(spotifyOptions.Value.ClientSecret)
             ? "appsettings"
             : "none";
 
-    public string LastfmConfiguredSource([Service] IOptions<LastfmOptions> lastfmOptions)
-        => !string.IsNullOrWhiteSpace(lastfmOptions.Value.ApiKey) ? "appsettings" : "none";
+    public string LastfmConfiguredSource([Service] IOptions<LastfmOptions> lastfmOptions) =>
+        !string.IsNullOrWhiteSpace(lastfmOptions.Value.ApiKey) ? "appsettings" : "none";
 
-    public string FanartConfiguredSource([Service] IOptions<FanartOptions> fanartOptions)
-        => !string.IsNullOrWhiteSpace(fanartOptions.Value.ApiKey)
-            ? "appsettings"
-            : "none";
+    public string FanartConfiguredSource([Service] IOptions<FanartOptions> fanartOptions) =>
+        !string.IsNullOrWhiteSpace(fanartOptions.Value.ApiKey) ? "appsettings" : "none";
 
     [GraphQLName("storageStats")]
-    public async Task<StorageStats?> GetStorageStats([Service] ServerSettingsAccessor serverSettingsAccessor)
+    public async Task<StorageStats?> GetStorageStats(
+        [Service] ServerSettingsAccessor serverSettingsAccessor
+    )
     {
         var settings = await serverSettingsAccessor.GetAsync();
         var libraryPath = settings.LibraryPath;
@@ -156,14 +174,21 @@ public record ServerSettings([property: GraphQLIgnore] DbServerSettings Model)
         long estimatedTotalLibrarySizeBytes = 0;
         try
         {
-            estimatedTotalLibrarySizeBytes = await Task.Run(() => CalculateEstimatedTotalLibrarySizeAsync(libraryPath, librarySizeBytes));
+            estimatedTotalLibrarySizeBytes = await Task.Run(() =>
+                CalculateEstimatedTotalLibrarySizeAsync(libraryPath, librarySizeBytes)
+            );
         }
         catch
         {
             // ignore, keep zero
         }
 
-        return new StorageStats(totalDiskBytes, availableFreeBytes, librarySizeBytes, estimatedTotalLibrarySizeBytes);
+        return new StorageStats(
+            totalDiskBytes,
+            availableFreeBytes,
+            librarySizeBytes,
+            estimatedTotalLibrarySizeBytes
+        );
     }
 
     private static long CalculateDirectorySizeSafe(string folder)
@@ -171,15 +196,15 @@ public record ServerSettings([property: GraphQLIgnore] DbServerSettings Model)
         long size = 0;
         try
         {
-            foreach (var file in Directory.EnumerateFiles(folder, "*", SearchOption.TopDirectoryOnly))
+            foreach (
+                var file in Directory.EnumerateFiles(folder, "*", SearchOption.TopDirectoryOnly)
+            )
             {
                 try
                 {
                     size += new FileInfo(file).Length;
                 }
-                catch
-                {
-                }
+                catch { }
             }
 
             foreach (var sub in Directory.EnumerateDirectories(folder))
@@ -195,7 +220,10 @@ public record ServerSettings([property: GraphQLIgnore] DbServerSettings Model)
         return size;
     }
 
-    private static async Task<long> CalculateEstimatedTotalLibrarySizeAsync(string libraryPath, long currentLibrarySizeBytes)
+    private static async Task<long> CalculateEstimatedTotalLibrarySizeAsync(
+        string libraryPath,
+        long currentLibrarySizeBytes
+    )
     {
         if (currentLibrarySizeBytes == 0)
             return 0;
@@ -211,11 +239,12 @@ public record ServerSettings([property: GraphQLIgnore] DbServerSettings Model)
                 foreach (var releaseDir in Directory.EnumerateDirectories(artistDir))
                 {
                     totalReleases++;
-                    
+
                     // Check if this release has any audio files
-                    var hasAudioFiles = Directory.EnumerateFiles(releaseDir, "*.*", SearchOption.TopDirectoryOnly)
+                    var hasAudioFiles = Directory
+                        .EnumerateFiles(releaseDir, "*.*", SearchOption.TopDirectoryOnly)
                         .Any(file => IsAudioFile(file));
-                    
+
                     if (hasAudioFiles)
                         releasesWithMedia++;
                 }
@@ -249,4 +278,9 @@ public record ServerSettings([property: GraphQLIgnore] DbServerSettings Model)
     }
 }
 
-public record StorageStats(long? TotalDiskBytes, long? AvailableFreeBytes, long LibrarySizeBytes, long EstimatedTotalLibrarySizeBytes);
+public record StorageStats(
+    long? TotalDiskBytes,
+    long? AvailableFreeBytes,
+    long LibrarySizeBytes,
+    long EstimatedTotalLibrarySizeBytes
+);

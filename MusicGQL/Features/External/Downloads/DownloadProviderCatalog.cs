@@ -11,5 +11,3 @@ public class DownloadProviderCatalog
 
     public IReadOnlyList<IDownloadProvider> Providers => _providers;
 }
-
-

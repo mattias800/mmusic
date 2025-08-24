@@ -1,9 +1,9 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using MusicGQL.Db.Postgres;
 using MusicGQL.Features.ArtistImportQueue.Services;
 using MusicGQL.Integration.Spotify;
 using MusicGQL.Types;
-using Microsoft.Extensions.Logging;
 
 namespace MusicGQL.Features.ArtistImportQueue.Mutations;
 
@@ -39,10 +39,7 @@ public sealed class ArtistImportMutations
         return true;
     }
 
-    public bool RemoveArtistImportJob(
-        string queueKey,
-        [Service] ArtistImportQueueService queue
-    )
+    public bool RemoveArtistImportJob(string queueKey, [Service] ArtistImportQueueService queue)
     {
         return queue.TryRemove(queueKey);
     }
@@ -55,13 +52,19 @@ public sealed class ArtistImportMutations
         [Service] ILogger<ArtistImportMutations> logger
     )
     {
-        logger.LogInformation("EnqueueMissingArtistsFromPlaylist requested for playlist {PlaylistId}", playlistId);
+        logger.LogInformation(
+            "EnqueueMissingArtistsFromPlaylist requested for playlist {PlaylistId}",
+            playlistId
+        );
         var playlist = await db
             .Playlists.Include(p => p.Items)
             .FirstOrDefaultAsync(p => p.Id == playlistId);
         if (playlist is null)
         {
-            logger.LogWarning("Playlist {PlaylistId} not found when enqueuing missing artists", playlistId);
+            logger.LogWarning(
+                "Playlist {PlaylistId} not found when enqueuing missing artists",
+                playlistId
+            );
             return false;
         }
 
@@ -92,30 +95,47 @@ public sealed class ArtistImportMutations
                 "Missing artists detail: {Missing}",
                 string.Join(
                     "; ",
-                    missing.Select(m => $"Name='{m.ArtistName}' ExtId='{m.ExternalArtistId ?? ""}' Song='{m.SongTitle ?? ""}'")
+                    missing.Select(m =>
+                        $"Name='{m.ArtistName}' ExtId='{m.ExternalArtistId ?? ""}' Song='{m.SongTitle ?? ""}'"
+                    )
                 )
             );
         }
 
         if (missing.Count == 0)
         {
-            logger.LogInformation("No missing artists to enqueue for playlist {PlaylistId}", playlistId);
+            logger.LogInformation(
+                "No missing artists to enqueue for playlist {PlaylistId}",
+                playlistId
+            );
             return true;
         }
 
         var items = missing
-            .GroupBy(x => (NameLower: x.ArtistName.ToLowerInvariant(), ExternalId: x.ExternalArtistId ?? string.Empty))
+            .GroupBy(x =>
+                (
+                    NameLower: x.ArtistName.ToLowerInvariant(),
+                    ExternalId: x.ExternalArtistId ?? string.Empty
+                )
+            )
             .Select(g =>
             {
                 var any = g.First();
-                var chosenSong = g.Select(x => x.SongTitle).FirstOrDefault(s => !string.IsNullOrWhiteSpace(s));
+                var chosenSong = g.Select(x => x.SongTitle)
+                    .FirstOrDefault(s => !string.IsNullOrWhiteSpace(s));
                 return new ArtistImportQueueItem(any.ArtistName, chosenSong)
                 {
-                    ExternalArtistId = string.IsNullOrWhiteSpace(any.ExternalArtistId) ? null : any.ExternalArtistId
+                    ExternalArtistId = string.IsNullOrWhiteSpace(any.ExternalArtistId)
+                        ? null
+                        : any.ExternalArtistId,
                 };
             });
         var itemList = items.ToList();
-        logger.LogInformation("Enqueuing {Count} unique artist imports for playlist {PlaylistId}", itemList.Count, playlistId);
+        logger.LogInformation(
+            "Enqueuing {Count} unique artist imports for playlist {PlaylistId}",
+            itemList.Count,
+            playlistId
+        );
         queue.Enqueue(itemList);
         return true;
     }

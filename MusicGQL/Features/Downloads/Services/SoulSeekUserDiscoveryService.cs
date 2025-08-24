@@ -1,8 +1,8 @@
+using System.Text.RegularExpressions;
 using MusicGQL.Features.External.SoulSeek.Integration;
 using MusicGQL.Features.ServerLibrary.Cache;
 using MusicGQL.Features.ServerSettings;
 using Soulseek;
-using System.Text.RegularExpressions;
 
 namespace MusicGQL.Features.Downloads.Services;
 
@@ -29,11 +29,19 @@ public class SoulSeekUserDiscoveryService(
     {
         try
         {
-            logger.LogInformation("[SoulSeek] Discovering additional releases from user '{User}'", username);
-            
+            logger.LogInformation(
+                "[SoulSeek] Discovering additional releases from user '{User}'",
+                username
+            );
+
             // Get user's shared files by searching for common patterns
-            var additionalReleases = await FindWantedReleasesFromUserAsync(username, currentArtistId, currentReleaseFolderName, cancellationToken);
-            
+            var additionalReleases = await FindWantedReleasesFromUserAsync(
+                username,
+                currentArtistId,
+                currentReleaseFolderName,
+                cancellationToken
+            );
+
             if (additionalReleases.Count > 0)
             {
                 // Get the maximum number of releases to discover per user
@@ -43,36 +51,58 @@ public class SoulSeekUserDiscoveryService(
                 // Limit the number of releases to prevent queue overflow
                 var releasesToQueue = additionalReleases.Take(maxReleases).ToList();
 
-                logger.LogInformation("[SoulSeek] Found {TotalCount} additional releases from user '{User}', queuing {QueuedCount} (limited by MaxReleasesPerUserDiscovery={MaxReleases})",
-                    additionalReleases.Count, username, releasesToQueue.Count, maxReleases);
+                logger.LogInformation(
+                    "[SoulSeek] Found {TotalCount} additional releases from user '{User}', queuing {QueuedCount} (limited by MaxReleasesPerUserDiscovery={MaxReleases})",
+                    additionalReleases.Count,
+                    username,
+                    releasesToQueue.Count,
+                    maxReleases
+                );
 
                 // Add releases to download queue with priority (same user = better connection)
                 foreach (var release in releasesToQueue)
                 {
-                    downloadQueue.EnqueueFront(new DownloadQueueItem(release.ArtistId, release.ReleaseFolderName)
-                    {
-                        ArtistName = release.ArtistName,
-                        ReleaseTitle = release.ReleaseTitle
-                    });
+                    downloadQueue.EnqueueFront(
+                        new DownloadQueueItem(release.ArtistId, release.ReleaseFolderName)
+                        {
+                            ArtistName = release.ArtistName,
+                            ReleaseTitle = release.ReleaseTitle,
+                        }
+                    );
 
-                    logger.LogDebug("[SoulSeek] Queued additional release: {Artist} - {Release} from user {User}",
-                        release.ArtistName, release.ReleaseTitle, username);
+                    logger.LogDebug(
+                        "[SoulSeek] Queued additional release: {Artist} - {Release} from user {User}",
+                        release.ArtistName,
+                        release.ReleaseTitle,
+                        username
+                    );
                 }
 
                 if (additionalReleases.Count > maxReleases)
                 {
-                    logger.LogInformation("[SoulSeek] Limited discovery to {QueuedCount} releases from user '{User}' (found {TotalCount} total)",
-                        maxReleases, username, additionalReleases.Count);
+                    logger.LogInformation(
+                        "[SoulSeek] Limited discovery to {QueuedCount} releases from user '{User}' (found {TotalCount} total)",
+                        maxReleases,
+                        username,
+                        additionalReleases.Count
+                    );
                 }
             }
             else
             {
-                logger.LogDebug("[SoulSeek] No additional releases found from user '{User}'", username);
+                logger.LogDebug(
+                    "[SoulSeek] No additional releases found from user '{User}'",
+                    username
+                );
             }
         }
         catch (Exception ex)
         {
-            logger.LogWarning(ex, "[SoulSeek] Failed to discover additional releases from user '{User}'", username);
+            logger.LogWarning(
+                ex,
+                "[SoulSeek] Failed to discover additional releases from user '{User}'",
+                username
+            );
         }
     }
 
@@ -87,11 +117,14 @@ public class SoulSeekUserDiscoveryService(
     )
     {
         var discoveredReleases = new List<DiscoveredRelease>();
-        
+
         try
         {
             // Get the current release info to understand what we're looking for
-            var currentRelease = await cache.GetReleaseByArtistAndFolderAsync(currentArtistId, currentReleaseFolderName);
+            var currentRelease = await cache.GetReleaseByArtistAndFolderAsync(
+                currentArtistId,
+                currentReleaseFolderName
+            );
             if (currentRelease == null)
             {
                 logger.LogWarning("[SoulSeek] Could not get current release info for discovery");
@@ -99,16 +132,27 @@ public class SoulSeekUserDiscoveryService(
             }
 
             // Search for releases from the same artist first (likely to be available)
-            var artistReleases = await SearchArtistReleasesAsync(currentRelease.ArtistName, cancellationToken);
+            var artistReleases = await SearchArtistReleasesAsync(
+                currentRelease.ArtistName,
+                cancellationToken
+            );
             discoveredReleases.AddRange(artistReleases);
 
             // Also search for releases with similar characteristics
-            var similarReleases = await SearchSimilarReleasesAsync(currentRelease, cancellationToken);
+            var similarReleases = await SearchSimilarReleasesAsync(
+                currentRelease,
+                cancellationToken
+            );
             discoveredReleases.AddRange(similarReleases);
 
             // Remove duplicates and the current release
             var uniqueReleases = discoveredReleases
-                .Where(r => !(r.ArtistId == currentArtistId && r.ReleaseFolderName == currentReleaseFolderName))
+                .Where(r =>
+                    !(
+                        r.ArtistId == currentArtistId
+                        && r.ReleaseFolderName == currentReleaseFolderName
+                    )
+                )
                 .GroupBy(r => $"{r.ArtistId}|{r.ReleaseFolderName}")
                 .Select(g => g.First())
                 .ToList();
@@ -117,7 +161,11 @@ public class SoulSeekUserDiscoveryService(
         }
         catch (Exception ex)
         {
-            logger.LogWarning(ex, "[SoulSeek] Error searching for additional releases from user '{User}'", username);
+            logger.LogWarning(
+                ex,
+                "[SoulSeek] Error searching for additional releases from user '{User}'",
+                username
+            );
             return discoveredReleases;
         }
     }
@@ -131,19 +179,22 @@ public class SoulSeekUserDiscoveryService(
     )
     {
         var releases = new List<DiscoveredRelease>();
-        
+
         try
         {
             // Search for the artist name to find other releases
             var searchQuery = new SearchQuery(artistName);
             var searchResult = await client.SearchAsync(searchQuery);
-            
+
             if (searchResult.Responses == null || searchResult.Responses.Count == 0)
                 return releases;
 
             // Group files by potential release folders
-            var releaseGroups = GroupFilesByRelease(searchResult.Responses.First().Files.ToList(), artistName);
-            
+            var releaseGroups = GroupFilesByRelease(
+                searchResult.Responses.First().Files.ToList(),
+                artistName
+            );
+
             foreach (var group in releaseGroups)
             {
                 if (IsValidRelease(group))
@@ -155,9 +206,9 @@ public class SoulSeekUserDiscoveryService(
                         ArtistName = group.ArtistName,
                         ReleaseTitle = group.ReleaseTitle,
                         TrackCount = group.TrackCount,
-                        Quality = group.Quality
+                        Quality = group.Quality,
                     };
-                    
+
                     releases.Add(release);
                 }
             }
@@ -166,7 +217,7 @@ public class SoulSeekUserDiscoveryService(
         {
             logger.LogDebug(ex, "[SoulSeek] Error searching for artist releases");
         }
-        
+
         return releases;
     }
 
@@ -179,22 +230,25 @@ public class SoulSeekUserDiscoveryService(
     )
     {
         var releases = new List<DiscoveredRelease>();
-        
+
         try
         {
             // Search for releases with similar characteristics
             var searchTerms = GenerateSimilarSearchTerms(currentRelease);
-            
+
             foreach (var term in searchTerms.Take(3)) // Limit to avoid overwhelming the user
             {
                 var searchQuery = new SearchQuery(term);
                 var searchResult = await client.SearchAsync(searchQuery);
-                
+
                 if (searchResult.Responses == null || searchResult.Responses.Count == 0)
                     continue;
 
-                var releaseGroups = GroupFilesByRelease(searchResult.Responses.First().Files.ToList(), term);
-                
+                var releaseGroups = GroupFilesByRelease(
+                    searchResult.Responses.First().Files.ToList(),
+                    term
+                );
+
                 foreach (var group in releaseGroups)
                 {
                     if (IsValidRelease(group) && !IsCurrentRelease(group, currentRelease))
@@ -206,9 +260,9 @@ public class SoulSeekUserDiscoveryService(
                             ArtistName = group.ArtistName,
                             ReleaseTitle = group.ReleaseTitle,
                             TrackCount = group.TrackCount,
-                            Quality = group.Quality
+                            Quality = group.Quality,
                         };
-                        
+
                         releases.Add(release);
                     }
                 }
@@ -218,7 +272,7 @@ public class SoulSeekUserDiscoveryService(
         {
             logger.LogDebug(ex, "[SoulSeek] Error searching for similar releases");
         }
-        
+
         return releases;
     }
 
@@ -228,7 +282,7 @@ public class SoulSeekUserDiscoveryService(
     private List<ReleaseGroup> GroupFilesByRelease(List<Soulseek.File> files, string searchTerm)
     {
         var groups = new List<ReleaseGroup>();
-        
+
         if (files == null || files.Count == 0)
             return groups;
 
@@ -240,32 +294,44 @@ public class SoulSeekUserDiscoveryService(
 
         foreach (var dirGroup in directoryGroups)
         {
-            var releaseGroup = ParseReleaseFromDirectory(dirGroup.Key, dirGroup.ToList(), searchTerm);
+            var releaseGroup = ParseReleaseFromDirectory(
+                dirGroup.Key,
+                dirGroup.ToList(),
+                searchTerm
+            );
             if (releaseGroup != null)
             {
                 groups.Add(releaseGroup);
             }
         }
-        
+
         return groups;
     }
 
     /// <summary>
     /// Parses release information from a directory path
     /// </summary>
-    private ReleaseGroup? ParseReleaseFromDirectory(string directoryPath, List<Soulseek.File> files, string searchTerm)
+    private ReleaseGroup? ParseReleaseFromDirectory(
+        string directoryPath,
+        List<Soulseek.File> files,
+        string searchTerm
+    )
     {
         try
         {
-            var segments = directoryPath.Split(new[] { '\\', '/' }, StringSplitOptions.RemoveEmptyEntries);
+            var segments = directoryPath.Split(
+                new[] { '\\', '/' },
+                StringSplitOptions.RemoveEmptyEntries
+            );
             if (segments.Length < 2)
                 return null;
 
             // Look for artist and album patterns
-            var artistSegment = segments.FirstOrDefault(s => 
-                s.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
-                searchTerm.Contains(s, StringComparison.OrdinalIgnoreCase));
-            
+            var artistSegment = segments.FirstOrDefault(s =>
+                s.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)
+                || searchTerm.Contains(s, StringComparison.OrdinalIgnoreCase)
+            );
+
             if (artistSegment == null)
                 return null;
 
@@ -274,13 +340,13 @@ public class SoulSeekUserDiscoveryService(
                 return null;
 
             var albumSegment = segments[artistIndex + 1];
-            
+
             // Generate artist and release IDs
             var artistId = GenerateArtistId(artistSegment);
             var releaseFolderName = GenerateReleaseFolderName(albumSegment);
-            
+
             var audioFiles = files.Where(IsAudioFile).ToList();
-            
+
             return new ReleaseGroup
             {
                 ArtistId = artistId,
@@ -288,12 +354,16 @@ public class SoulSeekUserDiscoveryService(
                 ArtistName = artistSegment,
                 ReleaseTitle = albumSegment,
                 TrackCount = audioFiles.Count,
-                Quality = DetermineQuality(audioFiles)
+                Quality = DetermineQuality(audioFiles),
             };
         }
         catch (Exception ex)
         {
-            logger.LogDebug(ex, "[SoulSeek] Error parsing release from directory: {Path}", directoryPath);
+            logger.LogDebug(
+                ex,
+                "[SoulSeek] Error parsing release from directory: {Path}",
+                directoryPath
+            );
             return null;
         }
     }
@@ -304,7 +374,7 @@ public class SoulSeekUserDiscoveryService(
     private List<string> GenerateSimilarSearchTerms(CachedRelease currentRelease)
     {
         var terms = new List<string>();
-        
+
         if (currentRelease?.JsonRelease == null)
             return terms;
 
@@ -331,11 +401,11 @@ public class SoulSeekUserDiscoveryService(
     /// </summary>
     private bool IsValidRelease(ReleaseGroup group)
     {
-        return !string.IsNullOrEmpty(group.ArtistId) &&
-               !string.IsNullOrEmpty(group.ReleaseFolderName) &&
-               !string.IsNullOrEmpty(group.ArtistName) &&
-               !string.IsNullOrEmpty(group.ReleaseTitle) &&
-               group.TrackCount >= 3; // Minimum tracks to be considered a valid release
+        return !string.IsNullOrEmpty(group.ArtistId)
+            && !string.IsNullOrEmpty(group.ReleaseFolderName)
+            && !string.IsNullOrEmpty(group.ArtistName)
+            && !string.IsNullOrEmpty(group.ReleaseTitle)
+            && group.TrackCount >= 3; // Minimum tracks to be considered a valid release
     }
 
     /// <summary>
@@ -343,8 +413,8 @@ public class SoulSeekUserDiscoveryService(
     /// </summary>
     private bool IsCurrentRelease(ReleaseGroup group, CachedRelease currentRelease)
     {
-        return group.ArtistId == currentRelease.ArtistId && 
-               group.ReleaseFolderName == currentRelease.FolderName;
+        return group.ArtistId == currentRelease.ArtistId
+            && group.ReleaseFolderName == currentRelease.FolderName;
     }
 
     /// <summary>
@@ -352,9 +422,9 @@ public class SoulSeekUserDiscoveryService(
     /// </summary>
     private bool IsAudioFile(Soulseek.File file)
     {
-        return file.Extension.Equals("mp3", StringComparison.OrdinalIgnoreCase) ||
-               file.Extension.Equals("flac", StringComparison.OrdinalIgnoreCase) ||
-               file.Extension.Equals("m4a", StringComparison.OrdinalIgnoreCase);
+        return file.Extension.Equals("mp3", StringComparison.OrdinalIgnoreCase)
+            || file.Extension.Equals("flac", StringComparison.OrdinalIgnoreCase)
+            || file.Extension.Equals("m4a", StringComparison.OrdinalIgnoreCase);
     }
 
     /// <summary>
@@ -391,12 +461,17 @@ public class SoulSeekUserDiscoveryService(
     /// </summary>
     private string DetermineQuality(List<Soulseek.File> audioFiles)
     {
-        var hasFlac = audioFiles.Any(f => f.Extension.Equals("flac", StringComparison.OrdinalIgnoreCase));
-        var hasHighBitrateMp3 = audioFiles.Any(f => 
-            f.Extension.Equals("mp3", StringComparison.OrdinalIgnoreCase) && f.BitRate >= 320);
-        
-        if (hasFlac) return "FLAC";
-        if (hasHighBitrateMp3) return "MP3-320";
+        var hasFlac = audioFiles.Any(f =>
+            f.Extension.Equals("flac", StringComparison.OrdinalIgnoreCase)
+        );
+        var hasHighBitrateMp3 = audioFiles.Any(f =>
+            f.Extension.Equals("mp3", StringComparison.OrdinalIgnoreCase) && f.BitRate >= 320
+        );
+
+        if (hasFlac)
+            return "FLAC";
+        if (hasHighBitrateMp3)
+            return "MP3-320";
         return "MP3";
     }
 }

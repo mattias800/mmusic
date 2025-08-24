@@ -1,11 +1,11 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Hqub.Lastfm;
-using MusicGQL.Features.ServerLibrary.Json;
-using Path = System.IO.Path;
 using Microsoft.Extensions.Logging;
-using MusicGQL.Integration.Spotify;
 using MusicGQL.Features.Import.Services.TopTracks;
+using MusicGQL.Features.ServerLibrary.Json;
+using MusicGQL.Integration.Spotify;
+using Path = System.IO.Path;
 
 namespace MusicGQL.Features.Import.Services;
 
@@ -13,7 +13,8 @@ public class LastFmEnrichmentService(
     SpotifyService spotifyService,
     LastfmClient lastfmClient,
     TopTracksServiceManager topTracksServiceManager,
-    ILogger<LastFmEnrichmentService> logger)
+    ILogger<LastFmEnrichmentService> logger
+)
 {
     private static string NormalizeTitle(string s) => (s ?? string.Empty).Trim().ToLowerInvariant();
 
@@ -30,20 +31,24 @@ public class LastFmEnrichmentService(
         try
         {
             var artistText = await File.ReadAllTextAsync(artistJsonPath);
-            jsonArtist = JsonSerializer.Deserialize<JsonArtist>(
-                artistText,
-                GetJsonOptions()
-            );
+            jsonArtist = JsonSerializer.Deserialize<JsonArtist>(artistText, GetJsonOptions());
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "[EnrichArtist] Failed to deserialize artist.json from {ArtistDir}", artistDir);
+            logger.LogError(
+                ex,
+                "[EnrichArtist] Failed to deserialize artist.json from {ArtistDir}",
+                artistDir
+            );
             return;
         }
 
         if (jsonArtist == null)
         {
-            logger.LogWarning("[EnrichArtist] Failed to deserialize artist.json from {ArtistDir}", artistDir);
+            logger.LogWarning(
+                "[EnrichArtist] Failed to deserialize artist.json from {ArtistDir}",
+                artistDir
+            );
             return;
         }
 
@@ -51,7 +56,10 @@ public class LastFmEnrichmentService(
         var candidateNames = new List<string>();
         void addName(string? s)
         {
-            if (!string.IsNullOrWhiteSpace(s) && !candidateNames.Contains(s, StringComparer.OrdinalIgnoreCase))
+            if (
+                !string.IsNullOrWhiteSpace(s)
+                && !candidateNames.Contains(s, StringComparer.OrdinalIgnoreCase)
+            )
                 candidateNames.Add(s);
         }
         addName(jsonArtist.Name);
@@ -68,13 +76,24 @@ public class LastFmEnrichmentService(
         // TOP TRACKS: Use the new TopTracksServiceManager
         try
         {
-            logger.LogInformation("[EnrichArtist] Getting top tracks for artist '{Name}' using service manager", jsonArtist.Name);
-            var topTracksResult = await topTracksServiceManager.GetTopTracksAsync(mbArtistId, jsonArtist.Name, 25);
-            
+            logger.LogInformation(
+                "[EnrichArtist] Getting top tracks for artist '{Name}' using service manager",
+                jsonArtist.Name
+            );
+            var topTracksResult = await topTracksServiceManager.GetTopTracksAsync(
+                mbArtistId,
+                jsonArtist.Name,
+                25
+            );
+
             if (topTracksResult.Success && topTracksResult.Tracks.Count > 0)
             {
-                logger.LogInformation("[EnrichArtist] Got {Count} top tracks from {Source} for artist '{Name}'", 
-                    topTracksResult.Tracks.Count, topTracksResult.Source, jsonArtist.Name);
+                logger.LogInformation(
+                    "[EnrichArtist] Got {Count} top tracks from {Source} for artist '{Name}'",
+                    topTracksResult.Tracks.Count,
+                    topTracksResult.Source,
+                    jsonArtist.Name
+                );
                 jsonArtist.TopTracks = topTracksResult.Tracks;
             }
             else
@@ -82,24 +101,37 @@ public class LastFmEnrichmentService(
                 // Preserve existing top tracks if available
                 if (jsonArtist.TopTracks != null && jsonArtist.TopTracks.Count > 0)
                 {
-                    logger.LogInformation("[EnrichArtist] Preserving existing {Count} top tracks for artist '{Name}'", 
-                        jsonArtist.TopTracks.Count, jsonArtist.Name);
+                    logger.LogInformation(
+                        "[EnrichArtist] Preserving existing {Count} top tracks for artist '{Name}'",
+                        jsonArtist.TopTracks.Count,
+                        jsonArtist.Name
+                    );
                 }
                 else
                 {
-                    logger.LogWarning("[EnrichArtist] No top tracks found for artist '{Name}'. Warnings: {Warnings}", 
-                        jsonArtist.Name, string.Join("; ", topTracksResult.Warnings));
+                    logger.LogWarning(
+                        "[EnrichArtist] No top tracks found for artist '{Name}'. Warnings: {Warnings}",
+                        jsonArtist.Name,
+                        string.Join("; ", topTracksResult.Warnings)
+                    );
                 }
             }
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "[EnrichArtist] Failed to get top tracks for artist '{Name}'", jsonArtist.Name);
+            logger.LogError(
+                ex,
+                "[EnrichArtist] Failed to get top tracks for artist '{Name}'",
+                jsonArtist.Name
+            );
             // Preserve existing top tracks if available
             if (jsonArtist.TopTracks != null && jsonArtist.TopTracks.Count > 0)
             {
-                logger.LogInformation("[EnrichArtist] Preserving existing {Count} top tracks for artist '{Name}' after error", 
-                    jsonArtist.TopTracks.Count, jsonArtist.Name);
+                logger.LogInformation(
+                    "[EnrichArtist] Preserving existing {Count} top tracks for artist '{Name}' after error",
+                    jsonArtist.TopTracks.Count,
+                    jsonArtist.Name
+                );
             }
         }
 
@@ -111,7 +143,11 @@ public class LastFmEnrichmentService(
         }
         catch (Exception ex)
         {
-            logger.LogWarning(ex, "[EnrichArtist] TopTracks completer failed for artist='{Name}'", jsonArtist.Name);
+            logger.LogWarning(
+                ex,
+                "[EnrichArtist] TopTracks completer failed for artist='{Name}'",
+                jsonArtist.Name
+            );
         }
 
         // Map to local library if present
@@ -175,10 +211,12 @@ public class LastFmEnrichmentService(
                             continue;
 
                         // Find all title matches
-                        var titleMatches = candidateTracks.Where(ct =>
-                            !string.IsNullOrWhiteSpace(ct.track.Title)
-                            && AreTitlesEquivalent(ct.track.Title, topTrack.Title)
-                        ).ToList();
+                        var titleMatches = candidateTracks
+                            .Where(ct =>
+                                !string.IsNullOrWhiteSpace(ct.track.Title)
+                                && AreTitlesEquivalent(ct.track.Title, topTrack.Title)
+                            )
+                            .ToList();
 
                         if (titleMatches.Count == 0)
                             continue;
@@ -194,7 +232,8 @@ public class LastFmEnrichmentService(
                                 if (!string.IsNullOrWhiteSpace(audioRef))
                                 {
                                     var rel = audioRef!;
-                                    if (rel.StartsWith("./")) rel = rel[2..];
+                                    if (rel.StartsWith("./"))
+                                        rel = rel[2..];
                                     var full = Path.Combine(releaseDir, rel);
                                     hasAudio = File.Exists(full);
                                 }
@@ -240,7 +279,11 @@ public class LastFmEnrichmentService(
         }
         catch (Exception ex)
         {
-            logger.LogWarning(ex, "[EnrichArtist] Failed to map top tracks to local library for artist='{Name}'", jsonArtist.Name);
+            logger.LogWarning(
+                ex,
+                "[EnrichArtist] Failed to map top tracks to local library for artist='{Name}'",
+                jsonArtist.Name
+            );
         }
 
         // Save updated artist.json
@@ -248,11 +291,18 @@ public class LastFmEnrichmentService(
         {
             var updatedJson = JsonSerializer.Serialize(jsonArtist, GetJsonOptions());
             await File.WriteAllTextAsync(artistJsonPath, updatedJson);
-            logger.LogInformation("[EnrichArtist] Updated artist.json for '{Name}'", jsonArtist.Name);
+            logger.LogInformation(
+                "[EnrichArtist] Updated artist.json for '{Name}'",
+                jsonArtist.Name
+            );
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "[EnrichArtist] Failed to save updated artist.json for '{Name}'", jsonArtist.Name);
+            logger.LogError(
+                ex,
+                "[EnrichArtist] Failed to save updated artist.json for '{Name}'",
+                jsonArtist.Name
+            );
         }
     }
 
@@ -261,20 +311,23 @@ public class LastFmEnrichmentService(
         return new JsonSerializerOptions
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            WriteIndented = true
+            WriteIndented = true,
         };
     }
 
     private static string StripParentheses(string input)
     {
-        return System.Text.RegularExpressions.Regex.Replace(input, "\\(.*?\\)", string.Empty).Trim();
+        return System
+            .Text.RegularExpressions.Regex.Replace(input, "\\(.*?\\)", string.Empty)
+            .Trim();
     }
 
     private static bool AreTitlesEquivalent(string a, string b)
     {
         var na = NormalizeTitle(a);
         var nb = NormalizeTitle(b);
-        if (na.Equals(nb, StringComparison.Ordinal)) return true;
+        if (na.Equals(nb, StringComparison.Ordinal))
+            return true;
 
         // Fallback: ignore parenthetical qualifiers
         var npa = NormalizeTitle(StripParentheses(a));

@@ -1,8 +1,8 @@
 using HotChocolate.Subscriptions;
 using Microsoft.Extensions.Options;
+using MusicGQL.Features.Downloads.Services;
 using MusicGQL.Features.ServerSettings;
 using Soulseek;
-using MusicGQL.Features.Downloads.Services;
 
 namespace MusicGQL.Features.External.SoulSeek.Integration;
 
@@ -25,7 +25,9 @@ public class SoulSeekService(
     {
         if (serviceLogger == null)
         {
-            var path = await new DownloadLogPathProvider(serverSettingsAccessor).GetServiceLogFilePathAsync("soulseek");
+            var path = await new DownloadLogPathProvider(
+                serverSettingsAccessor
+            ).GetServiceLogFilePathAsync("soulseek");
             serviceLogger = new DownloadLogger(path);
         }
         return serviceLogger;
@@ -45,10 +47,20 @@ public class SoulSeekService(
                 _eventsHooked = true;
             }
 
-            if (_isConnecting || State.NetworkState == SoulSeekNetworkState.Connecting || State.NetworkState == SoulSeekNetworkState.Online)
+            if (
+                _isConnecting
+                || State.NetworkState == SoulSeekNetworkState.Connecting
+                || State.NetworkState == SoulSeekNetworkState.Online
+            )
             {
-                logger.LogDebug("[SoulSeek] Connect() ignored (state: {State}, isConnecting={IsConnecting})", State.NetworkState, _isConnecting);
-                serviceLogger.Info($"Connect ignored (state={State.NetworkState}, isConnecting={_isConnecting})");
+                logger.LogDebug(
+                    "[SoulSeek] Connect() ignored (state: {State}, isConnecting={IsConnecting})",
+                    State.NetworkState,
+                    _isConnecting
+                );
+                serviceLogger.Info(
+                    $"Connect ignored (state={State.NetworkState}, isConnecting={_isConnecting})"
+                );
                 return;
             }
 
@@ -62,7 +74,9 @@ public class SoulSeekService(
         PublishUpdate();
         logger.LogInformation("Connecting to Soulseek...");
         serviceLogger.Info("Connecting to Soulseek...");
-        serviceLogger.Info($"Host={options.Value.Host}:{options.Value.Port} Username={options.Value.Username}");
+        serviceLogger.Info(
+            $"Host={options.Value.Host}:{options.Value.Port} Username={options.Value.Username}"
+        );
 
         try
         {

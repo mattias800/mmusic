@@ -7,7 +7,11 @@ using Microsoft.Extensions.Logging;
 
 namespace MusicGQL.Integration.ListenBrainz;
 
-public class ListenBrainzService(MetaBrainz.ListenBrainz.ListenBrainz client, HybridCache cache, ILogger<ListenBrainzService> logger)
+public class ListenBrainzService(
+    MetaBrainz.ListenBrainz.ListenBrainz client,
+    HybridCache cache,
+    ILogger<ListenBrainzService> logger
+)
 {
     private readonly SemaphoreSlim _throttle = new(1, 1);
 
@@ -18,7 +22,10 @@ public class ListenBrainzService(MetaBrainz.ListenBrainz.ListenBrainz client, Hy
         try
         {
             await client.ImportListensAsync(listens);
-            logger.LogInformation("Successfully submitted {Count} listens to ListenBrainz", listens.Count());
+            logger.LogInformation(
+                "Successfully submitted {Count} listens to ListenBrainz",
+                listens.Count()
+            );
             return true;
         }
         catch (Exception ex)
@@ -45,14 +52,20 @@ public class ListenBrainzService(MetaBrainz.ListenBrainz.ListenBrainz client, Hy
 
     // Submit using a specific token (useful for per-user submissions)
 
-    public async Task<bool> SubmitListensAsync(IEnumerable<ISubmittedListen> listens, string userToken)
+    public async Task<bool> SubmitListensAsync(
+        IEnumerable<ISubmittedListen> listens,
+        string userToken
+    )
     {
         var previous = client.UserToken;
         try
         {
             client.UserToken = userToken;
             await client.ImportListensAsync(listens);
-            logger.LogInformation("Successfully submitted {Count} listens to ListenBrainz (per-user token)", listens.Count());
+            logger.LogInformation(
+                "Successfully submitted {Count} listens to ListenBrainz (per-user token)",
+                listens.Count()
+            );
             return true;
         }
         catch (Exception ex)
@@ -73,12 +86,17 @@ public class ListenBrainzService(MetaBrainz.ListenBrainz.ListenBrainz client, Hy
         {
             client.UserToken = userToken;
             await client.SubmitSingleListenAsync(listen);
-            logger.LogInformation("Successfully submitted single listen to ListenBrainz (per-user token)");
+            logger.LogInformation(
+                "Successfully submitted single listen to ListenBrainz (per-user token)"
+            );
             return true;
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Failed to submit single listen to ListenBrainz with provided token");
+            logger.LogError(
+                ex,
+                "Failed to submit single listen to ListenBrainz with provided token"
+            );
             return false;
         }
         finally
@@ -89,13 +107,18 @@ public class ListenBrainzService(MetaBrainz.ListenBrainz.ListenBrainz client, Hy
 
     // Validate Token (active call to LB API)
 
-    public async Task<(bool IsValid, string? User, string? Message)> ValidateTokenAsync(string token, CancellationToken cancellationToken = default)
+    public async Task<(bool IsValid, string? User, string? Message)> ValidateTokenAsync(
+        string token,
+        CancellationToken cancellationToken = default
+    )
     {
         try
         {
             var result = await client.ValidateTokenAsync(token, cancellationToken);
             // Valid can be null -> fall back to message when needed
-            var isValid = result.Valid ?? string.Equals(result.Message, "ok", StringComparison.OrdinalIgnoreCase);
+            var isValid =
+                result.Valid
+                ?? string.Equals(result.Message, "ok", StringComparison.OrdinalIgnoreCase);
             return (isValid, result.User, result.Message);
         }
         catch (Exception ex)

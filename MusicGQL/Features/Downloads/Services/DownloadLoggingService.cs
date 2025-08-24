@@ -14,28 +14,24 @@ public interface IDownloadLogger
 
 public class NullDownloadLogger : IDownloadLogger
 {
-    public void Info(string message)
-    {
-    }
+    public void Info(string message) { }
 
-    public void Warn(string message)
-    {
-    }
+    public void Warn(string message) { }
 
-    public void Error(string message)
-    {
-    }
+    public void Error(string message) { }
 }
 
 public class DownloadLogger : IDownloadLogger, IDisposable
 {
     // Global, per-file locks to serialize writes across all logger instances
-    private static readonly ConcurrentDictionary<string, SemaphoreSlim> FileLocks =
-        new(StringComparer.OrdinalIgnoreCase);
+    private static readonly ConcurrentDictionary<string, SemaphoreSlim> FileLocks = new(
+        StringComparer.OrdinalIgnoreCase
+    );
 
     // Global, per-file shared writers so all instances use the same handle (prevents interleaved append pointers)
-    private static readonly ConcurrentDictionary<string, Lazy<StreamWriter>> Writers =
-        new(StringComparer.OrdinalIgnoreCase);
+    private static readonly ConcurrentDictionary<string, Lazy<StreamWriter>> Writers = new(
+        StringComparer.OrdinalIgnoreCase
+    );
 
     private readonly StreamWriter _writer;
     private readonly SemaphoreSlim _fileLock;
@@ -47,16 +43,28 @@ public class DownloadLogger : IDownloadLogger, IDisposable
         _path = Path.GetFullPath(logFilePath);
         _fileLock = FileLocks.GetOrAdd(_path, _ => new SemaphoreSlim(1, 1));
         // Use a single shared StreamWriter per file across the process lifetime
-        _writer = Writers.GetOrAdd(_path, p => new Lazy<StreamWriter>(() =>
-        {
-            var fs = new FileStream(p, FileMode.Append, FileAccess.Write, FileShare.ReadWrite);
-            return new StreamWriter(fs) { AutoFlush = true, NewLine = Environment.NewLine };
-        })).Value;
+        _writer = Writers
+            .GetOrAdd(
+                _path,
+                p => new Lazy<StreamWriter>(() =>
+                {
+                    var fs = new FileStream(
+                        p,
+                        FileMode.Append,
+                        FileAccess.Write,
+                        FileShare.ReadWrite
+                    );
+                    return new StreamWriter(fs) { AutoFlush = true, NewLine = Environment.NewLine };
+                })
+            )
+            .Value;
         Info("==== Logger started ====");
     }
 
     public void Info(string message) => Write("INFO", message);
+
     public void Warn(string message) => Write("WARN", message);
+
     public void Error(string message) => Write("ERROR", message);
 
     private void Write(string level, string message)
@@ -82,21 +90,23 @@ public class DownloadLogger : IDownloadLogger, IDisposable
         {
             _writer.Flush();
         }
-        catch
-        {
-        }
+        catch { }
         // Do not remove the semaphore or writer from the dictionaries to avoid races
     }
 }
 
 public class DownloadLogPathProvider(ServerSettingsAccessor serverSettingsAccessor)
 {
-    public async Task<string?> GetReleaseLogFilePathAsync(string artistName, string releaseTitle,
-        CancellationToken cancellationToken = default)
+    public async Task<string?> GetReleaseLogFilePathAsync(
+        string artistName,
+        string releaseTitle,
+        CancellationToken cancellationToken = default
+    )
     {
         var settings = await serverSettingsAccessor.GetAsync();
         var root = settings.LogsFolderPath;
-        if (string.IsNullOrWhiteSpace(root)) return null;
+        if (string.IsNullOrWhiteSpace(root))
+            return null;
 
         var downloadsRoot = Path.Combine(root, "Downloads");
         var safeArtist = SanitizeForFileName(artistName);
@@ -107,8 +117,10 @@ public class DownloadLogPathProvider(ServerSettingsAccessor serverSettingsAccess
         return Path.GetFullPath(Path.Combine(artistDir, $"{safeRelease}.log"));
     }
 
-    public async Task<string> GetServiceLogFilePathAsync(string serviceName,
-        CancellationToken cancellationToken = default)
+    public async Task<string> GetServiceLogFilePathAsync(
+        string serviceName,
+        CancellationToken cancellationToken = default
+    )
     {
         var settings = await serverSettingsAccessor.GetAsync();
         var root = settings.LogsFolderPath;
@@ -124,7 +136,8 @@ public class DownloadLogPathProvider(ServerSettingsAccessor serverSettingsAccess
 
     private static string SanitizeForFileName(string input)
     {
-        if (string.IsNullOrWhiteSpace(input)) return string.Empty;
+        if (string.IsNullOrWhiteSpace(input))
+            return string.Empty;
         var invalid = Path.GetInvalidFileNameChars();
         var filtered = new string(input.Where(c => !invalid.Contains(c)).ToArray());
         // Collapse spaces

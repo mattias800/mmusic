@@ -10,7 +10,9 @@ public class ArtistImportQueueService(
 )
 {
     private readonly ConcurrentQueue<ArtistImportQueueItem> _queue = new();
-    private readonly ConcurrentDictionary<string, byte> _dedupeKeys = new(StringComparer.OrdinalIgnoreCase);
+    private readonly ConcurrentDictionary<string, byte> _dedupeKeys = new(
+        StringComparer.OrdinalIgnoreCase
+    );
 
     private static string BuildDedupeKey(ArtistImportQueueItem item)
     {
@@ -19,8 +21,10 @@ public class ArtistImportQueueService(
         // Refresh jobs: local artist id + release folder
         var key = item.JobKind switch
         {
-            ArtistImportJobKind.RefreshReleaseMetadata => $"refresh|{item.LocalArtistId}|{item.ReleaseFolderName}",
-            _ => $"import|{item.ArtistName}|{item.MusicBrainzArtistId}|{item.ExternalArtistId}|{item.SongTitle}"
+            ArtistImportJobKind.RefreshReleaseMetadata =>
+                $"refresh|{item.LocalArtistId}|{item.ReleaseFolderName}",
+            _ =>
+                $"import|{item.ArtistName}|{item.MusicBrainzArtistId}|{item.ExternalArtistId}|{item.SongTitle}",
         };
         return key;
     }
@@ -38,7 +42,9 @@ public class ArtistImportQueueService(
                 count++;
                 if (preview.Count < 10)
                 {
-                    preview.Add($"{item.ArtistName} (job={item.JobKind}, song='{item.SongTitle ?? ""}', extId='{item.ExternalArtistId ?? ""}', mb='{item.MusicBrainzArtistId ?? ""}')");
+                    preview.Add(
+                        $"{item.ArtistName} (job={item.JobKind}, song='{item.SongTitle ?? ""}', extId='{item.ExternalArtistId ?? ""}', mb='{item.MusicBrainzArtistId ?? ""}')"
+                    );
                 }
             }
             else
@@ -46,7 +52,11 @@ public class ArtistImportQueueService(
                 logger.LogInformation("Skipped duplicate job: {Key}", key);
             }
         }
-        logger.LogInformation("Enqueued {Count} artist imports. First items: {Preview}", count, string.Join(", ", preview));
+        logger.LogInformation(
+            "Enqueued {Count} artist imports. First items: {Preview}",
+            count,
+            string.Join(", ", preview)
+        );
         PublishQueueUpdated();
     }
 
@@ -109,7 +119,11 @@ public class ArtistImportQueueService(
             if (!removed && string.Equals(q.QueueKey, queueKey, StringComparison.Ordinal))
             {
                 removed = true;
-                try { _dedupeKeys.TryRemove(BuildDedupeKey(q), out _); } catch { }
+                try
+                {
+                    _dedupeKeys.TryRemove(BuildDedupeKey(q), out _);
+                }
+                catch { }
                 continue;
             }
             _queue.Enqueue(q);
@@ -133,11 +147,6 @@ public class ArtistImportQueueService(
 
     private void PublishQueueUpdated()
     {
-        _ = eventSender.SendAsync(
-            "ArtistImportQueueUpdated",
-            Snapshot()
-        );
+        _ = eventSender.SendAsync("ArtistImportQueueUpdated", Snapshot());
     }
 }
-
-

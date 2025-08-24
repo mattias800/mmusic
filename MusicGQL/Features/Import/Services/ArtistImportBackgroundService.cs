@@ -1,10 +1,10 @@
 using HotChocolate.Subscriptions;
-using MusicGQL.Features.ServerLibrary.Cache;
-using MusicGQL.Features.ServerLibrary.Writer;
-using MusicGQL.Features.ServerLibrary.Subscription;
 using MusicGQL.Features.ArtistImportQueue.Services;
-using MusicGQL.Features.Downloads.Services;
 using MusicGQL.Features.Downloads;
+using MusicGQL.Features.Downloads.Services;
+using MusicGQL.Features.ServerLibrary.Cache;
+using MusicGQL.Features.ServerLibrary.Subscription;
+using MusicGQL.Features.ServerLibrary.Writer;
 using MusicGQL.Features.ServerSettings;
 using Path = System.IO.Path;
 
@@ -22,26 +22,33 @@ public class ArtistImportBackgroundService(
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         logger.LogInformation("ArtistImportBackgroundService started");
-        
+
         while (!stoppingToken.IsCancellationRequested)
         {
             try
             {
                 using var scope = scopeFactory.CreateScope();
-                var queue = scope.ServiceProvider.GetRequiredService<ArtistImportBackgroundQueueService>();
-                
+                var queue =
+                    scope.ServiceProvider.GetRequiredService<ArtistImportBackgroundQueueService>();
+
                 if (!queue.TryDequeue(out var job) || job is null)
                 {
                     await Task.Delay(TimeSpan.FromSeconds(2), stoppingToken);
                     continue;
                 }
 
-                logger.LogInformation("[ArtistImportBackground] Starting background import for artist: {ArtistName} (MBID: {MusicBrainzId})", 
-                    job.ArtistName, job.MusicBrainzId);
-                
+                logger.LogInformation(
+                    "[ArtistImportBackground] Starting background import for artist: {ArtistName} (MBID: {MusicBrainzId})",
+                    job.ArtistName,
+                    job.MusicBrainzId
+                );
+
                 await ProcessArtistImportJobAsync(job, scope.ServiceProvider, stoppingToken);
-                
-                logger.LogInformation("[ArtistImportBackground] Completed background import for artist: {ArtistName}", job.ArtistName);
+
+                logger.LogInformation(
+                    "[ArtistImportBackground] Completed background import for artist: {ArtistName}",
+                    job.ArtistName
+                );
             }
             catch (Exception ex)
             {
@@ -52,9 +59,10 @@ public class ArtistImportBackgroundService(
     }
 
     private async Task ProcessArtistImportJobAsync(
-        ArtistImportBackgroundJob job, 
-        IServiceProvider services, 
-        CancellationToken cancellationToken)
+        ArtistImportBackgroundJob job,
+        IServiceProvider services,
+        CancellationToken cancellationToken
+    )
     {
         var cache = services.GetRequiredService<ServerLibraryCache>();
         var writer = services.GetRequiredService<ServerLibraryJsonWriter>();
@@ -67,7 +75,11 @@ public class ArtistImportBackgroundService(
         try
         {
             // Step 1: Fetch artist metadata from MusicBrainz
-            await PublishProgressAsync(job.ArtistId, "Fetching artist metadata from MusicBrainz...", 10);
+            await PublishProgressAsync(
+                job.ArtistId,
+                "Fetching artist metadata from MusicBrainz...",
+                10
+            );
             var mbArtist = await mbImport.GetArtistByIdAsync(job.MusicBrainzId);
             if (mbArtist == null)
             {
@@ -78,7 +90,11 @@ public class ArtistImportBackgroundService(
             // Step 2: Download photos and create basic artist.json
             await PublishProgressAsync(job.ArtistId, "Downloading artist photos...", 20);
             var artistDir = job.ArtistPath;
-            await importExecutor.ImportOrEnrichArtistAsync(artistDir, job.MusicBrainzId, mbArtist.Name);
+            await importExecutor.ImportOrEnrichArtistAsync(
+                artistDir,
+                job.MusicBrainzId,
+                mbArtist.Name
+            );
 
             // Step 3: Fetch top tracks
             await PublishProgressAsync(job.ArtistId, "Fetching top tracks...", 30);
@@ -88,22 +104,38 @@ public class ArtistImportBackgroundService(
             }
             catch (Exception ex)
             {
-                logger.LogWarning(ex, "[ArtistImportBackground] Artist enrichment failed, continuing without enrichment");
+                logger.LogWarning(
+                    ex,
+                    "[ArtistImportBackground] Artist enrichment failed, continuing without enrichment"
+                );
             }
 
             // Step 4: Get list of all releases
             await PublishProgressAsync(job.ArtistId, "Fetching release information...", 40);
             var releaseGroups = await mbImport.GetArtistReleaseGroupsAsync(job.MusicBrainzId);
             var eligibleReleases = releaseGroups
-                .Where(rg => !(rg.SecondaryTypes?.Any(t => t.Equals("Demo", StringComparison.OrdinalIgnoreCase)) ?? false))
+                .Where(rg =>
+                    !(
+                        rg.SecondaryTypes?.Any(t =>
+                            t.Equals("Demo", StringComparison.OrdinalIgnoreCase)
+                        ) ?? false
+                    )
+                )
                 .ToList();
 
-            await PublishProgressAsync(job.ArtistId, $"Found {eligibleReleases.Count} releases to process", 50);
+            await PublishProgressAsync(
+                job.ArtistId,
+                $"Found {eligibleReleases.Count} releases to process",
+                50
+            );
 
             // Step 5: Import release metadata (without audio)
             await PublishProgressAsync(job.ArtistId, "Importing release metadata...", 60);
-            var importedCount = await importExecutor.ImportEligibleReleaseGroupsAsync(artistDir, job.MusicBrainzId);
-            
+            var importedCount = await importExecutor.ImportEligibleReleaseGroupsAsync(
+                artistDir,
+                job.MusicBrainzId
+            );
+
             await PublishProgressAsync(job.ArtistId, $"Imported {importedCount} releases", 70);
 
             // Step 6: Update cache
@@ -115,16 +147,20 @@ public class ArtistImportBackgroundService(
             var artist = await cache.GetArtistByIdAsync(job.ArtistId);
             if (artist?.Releases != null)
             {
-                var downloadJobs = artist.Releases
-                    .Select(r => new DownloadQueueItem(r.ArtistId, r.FolderName))
+                var downloadJobs = artist
+                    .Releases.Select(r => new DownloadQueueItem(r.ArtistId, r.FolderName))
                     .ToList();
-                
+
                 foreach (var downloadJob in downloadJobs)
                 {
                     downloadQueue.Enqueue(downloadJob);
                 }
-                
-                await PublishProgressAsync(job.ArtistId, $"Enqueued {downloadJobs.Count} releases for download", 100);
+
+                await PublishProgressAsync(
+                    job.ArtistId,
+                    $"Enqueued {downloadJobs.Count} releases for download",
+                    100
+                );
             }
 
             // Step 8: Publish final artist update
@@ -135,13 +171,21 @@ public class ArtistImportBackgroundService(
                     LibrarySubscription.LibraryArtistUpdatedTopic(job.ArtistId),
                     new Artists.Artist(finalArtist)
                 );
-                
-                await PublishProgressAsync(job.ArtistId, "Artist import completed successfully!", 100);
+
+                await PublishProgressAsync(
+                    job.ArtistId,
+                    "Artist import completed successfully!",
+                    100
+                );
             }
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "[ArtistImportBackground] Failed to process artist import job for {ArtistId}", job.ArtistId);
+            logger.LogError(
+                ex,
+                "[ArtistImportBackground] Failed to process artist import job for {ArtistId}",
+                job.ArtistId
+            );
             await PublishErrorAsync(job.ArtistId, $"Import failed: {ex.Message}");
         }
     }
@@ -156,15 +200,16 @@ public class ArtistImportBackgroundService(
                 percentage,
                 DateTime.UtcNow
             );
-            
-            await eventSender.SendAsync(
-                $"ArtistImportBackgroundProgress_{artistId}",
-                progress
-            );
+
+            await eventSender.SendAsync($"ArtistImportBackgroundProgress_{artistId}", progress);
         }
         catch (Exception ex)
         {
-            logger.LogWarning(ex, "Failed to publish artist import progress for {ArtistId}", artistId);
+            logger.LogWarning(
+                ex,
+                "Failed to publish artist import progress for {ArtistId}",
+                artistId
+            );
         }
     }
 
@@ -179,11 +224,8 @@ public class ArtistImportBackgroundService(
                 DateTime.UtcNow,
                 true
             );
-            
-            await eventSender.SendAsync(
-                $"ArtistImportBackgroundProgress_{artistId}",
-                progress
-            );
+
+            await eventSender.SendAsync($"ArtistImportBackgroundProgress_{artistId}", progress);
         }
         catch (Exception ex)
         {

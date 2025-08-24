@@ -14,7 +14,9 @@ public class DownloadQueueService(
 {
     private readonly ConcurrentQueue<DownloadQueueItem> _queue = new();
     private readonly ConcurrentQueue<DownloadQueueItem> _priorityQueue = new();
-    private readonly ConcurrentDictionary<string, byte> _dedupeKeys = new(StringComparer.OrdinalIgnoreCase);
+    private readonly ConcurrentDictionary<string, byte> _dedupeKeys = new(
+        StringComparer.OrdinalIgnoreCase
+    );
 
     // Maximum queue size to prevent memory issues (adjustable via configuration)
     private const int MaxQueueSize = 1000;
@@ -42,7 +44,10 @@ public class DownloadQueueService(
                 {
                     // If enqueue failed, remove the dedupe key so it can be retried later
                     _dedupeKeys.TryRemove(key, out _);
-                    await LogToReleaseAsync(item, "[Queue] Already in queue or being processed (enqueue skipped)");
+                    await LogToReleaseAsync(
+                        item,
+                        "[Queue] Already in queue or being processed (enqueue skipped)"
+                    );
                 }
             }
         }
@@ -55,8 +60,12 @@ public class DownloadQueueService(
         // Check if queue is at maximum capacity to prevent memory issues
         if (slotManager.QueueLength >= MaxQueueSize)
         {
-            logger.LogWarning("[DownloadQueue] Queue at maximum capacity ({MaxSize}), rejecting new item {ArtistId}/{Folder}",
-                MaxQueueSize, item.ArtistId, item.ReleaseFolderName);
+            logger.LogWarning(
+                "[DownloadQueue] Queue at maximum capacity ({MaxSize}), rejecting new item {ArtistId}/{Folder}",
+                MaxQueueSize,
+                item.ArtistId,
+                item.ReleaseFolderName
+            );
             await LogToReleaseAsync(item, "[Queue] Rejected: queue at maximum capacity");
             return;
         }
@@ -67,15 +76,26 @@ public class DownloadQueueService(
             var success = await slotManager.EnqueueWorkAsync(item, CancellationToken.None);
             if (success)
             {
-                logger.LogInformation("[DownloadQueue] Enqueued 1 release ({ArtistId}/{Folder})", item.ArtistId, item.ReleaseFolderName);
+                logger.LogInformation(
+                    "[DownloadQueue] Enqueued 1 release ({ArtistId}/{Folder})",
+                    item.ArtistId,
+                    item.ReleaseFolderName
+                );
                 await LogToReleaseAsync(item, "[Queue] Enqueued");
             }
             else
             {
                 // If enqueue failed, remove the dedupe key so it can be retried later
                 _dedupeKeys.TryRemove(key, out _);
-                logger.LogDebug("[DownloadQueue] Failed to enqueue release ({ArtistId}/{Folder}) - already in queue or being processed", item.ArtistId, item.ReleaseFolderName);
-                await LogToReleaseAsync(item, "[Queue] Already in queue or being processed (enqueue skipped)");
+                logger.LogDebug(
+                    "[DownloadQueue] Failed to enqueue release ({ArtistId}/{Folder}) - already in queue or being processed",
+                    item.ArtistId,
+                    item.ReleaseFolderName
+                );
+                await LogToReleaseAsync(
+                    item,
+                    "[Queue] Already in queue or being processed (enqueue skipped)"
+                );
             }
         }
         PublishQueueUpdated();
@@ -102,11 +122,17 @@ public class DownloadQueueService(
                 {
                     // If enqueue failed, remove the dedupe key so it can be retried later
                     _dedupeKeys.TryRemove(key, out _);
-                    await LogToReleaseAsync(item, "[Queue] Already in queue or being processed (priority enqueue skipped)");
+                    await LogToReleaseAsync(
+                        item,
+                        "[Queue] Already in queue or being processed (priority enqueue skipped)"
+                    );
                 }
             }
         }
-        logger.LogInformation("[DownloadQueue] Enqueued {Count} releases at FRONT (priority)", count);
+        logger.LogInformation(
+            "[DownloadQueue] Enqueued {Count} releases at FRONT (priority)",
+            count
+        );
         PublishQueueUpdated();
     }
 
@@ -115,8 +141,12 @@ public class DownloadQueueService(
         // Check if queue is at maximum capacity to prevent memory issues
         if (slotManager.QueueLength >= MaxQueueSize)
         {
-            logger.LogWarning("[DownloadQueue] Queue at maximum capacity ({MaxSize}), rejecting new item {ArtistId}/{Folder}",
-                MaxQueueSize, item.ArtistId, item.ReleaseFolderName);
+            logger.LogWarning(
+                "[DownloadQueue] Queue at maximum capacity ({MaxSize}), rejecting new item {ArtistId}/{Folder}",
+                MaxQueueSize,
+                item.ArtistId,
+                item.ReleaseFolderName
+            );
             await LogToReleaseAsync(item, "[Queue] Rejected: queue at maximum capacity");
             return;
         }
@@ -130,16 +160,27 @@ public class DownloadQueueService(
             var success = await slotManager.EnqueueWorkAsync(item, CancellationToken.None);
             if (success)
             {
-                logger.LogInformation("[DownloadQueue] Enqueued 1 release at FRONT (priority) ({ArtistId}/{Folder}), queue length: {QueueLength}",
-                    item.ArtistId, item.ReleaseFolderName, slotManager.QueueLength);
+                logger.LogInformation(
+                    "[DownloadQueue] Enqueued 1 release at FRONT (priority) ({ArtistId}/{Folder}), queue length: {QueueLength}",
+                    item.ArtistId,
+                    item.ReleaseFolderName,
+                    slotManager.QueueLength
+                );
                 await LogToReleaseAsync(item, "[Queue] Enqueued at FRONT (priority)");
             }
             else
             {
                 // If enqueue failed, remove the dedupe key so it can be retried later
                 _dedupeKeys.TryRemove(key, out _);
-                logger.LogDebug("[DownloadQueue] Failed to enqueue release at FRONT ({ArtistId}/{Folder}) - already in queue or being processed", item.ArtistId, item.ReleaseFolderName);
-                await LogToReleaseAsync(item, "[Queue] Already in queue or being processed (priority enqueue skipped)");
+                logger.LogDebug(
+                    "[DownloadQueue] Failed to enqueue release at FRONT ({ArtistId}/{Folder}) - already in queue or being processed",
+                    item.ArtistId,
+                    item.ReleaseFolderName
+                );
+                await LogToReleaseAsync(
+                    item,
+                    "[Queue] Already in queue or being processed (priority enqueue skipped)"
+                );
             }
         }
         PublishQueueUpdated();
@@ -152,7 +193,11 @@ public class DownloadQueueService(
         item = dequeued;
         if (ok && dequeued != null)
         {
-            try { _dedupeKeys.TryRemove(BuildKey(dequeued), out _); } catch { }
+            try
+            {
+                _dedupeKeys.TryRemove(BuildKey(dequeued), out _);
+            }
+            catch { }
             PublishQueueUpdated();
         }
         return ok;
@@ -171,7 +216,11 @@ public class DownloadQueueService(
             if (!removed && string.Equals(q.QueueKey, queueKey, StringComparison.Ordinal))
             {
                 removed = true;
-                try { _dedupeKeys.TryRemove(BuildKey(q), out _); } catch { }
+                try
+                {
+                    _dedupeKeys.TryRemove(BuildKey(q), out _);
+                }
+                catch { }
                 continue;
             }
             _priorityQueue.Enqueue(q);
@@ -183,7 +232,11 @@ public class DownloadQueueService(
                 if (!removed && string.Equals(q.QueueKey, queueKey, StringComparison.Ordinal))
                 {
                     removed = true;
-                    try { _dedupeKeys.TryRemove(BuildKey(q), out _); } catch { }
+                    try
+                    {
+                        _dedupeKeys.TryRemove(BuildKey(q), out _);
+                    }
+                    catch { }
                     continue;
                 }
                 _queue.Enqueue(q);
@@ -201,7 +254,7 @@ public class DownloadQueueService(
         // Get queue state from slot manager
         var queueItems = slotManager.GetQueueSnapshot();
         var items = queueItems.Take(25).ToList();
-        
+
         return new DownloadQueueState
         {
             Id = "downloadQueue",
@@ -222,7 +275,11 @@ public class DownloadQueueService(
             if (string.Equals(q.ArtistId, artistId, StringComparison.OrdinalIgnoreCase))
             {
                 removed++;
-                try { _dedupeKeys.TryRemove(BuildKey(q), out _); } catch { }
+                try
+                {
+                    _dedupeKeys.TryRemove(BuildKey(q), out _);
+                }
+                catch { }
                 continue;
             }
             _priorityQueue.Enqueue(q);
@@ -232,7 +289,11 @@ public class DownloadQueueService(
             if (string.Equals(q.ArtistId, artistId, StringComparison.OrdinalIgnoreCase))
             {
                 removed++;
-                try { _dedupeKeys.TryRemove(BuildKey(q), out _); } catch { }
+                try
+                {
+                    _dedupeKeys.TryRemove(BuildKey(q), out _);
+                }
+                catch { }
                 continue;
             }
             _queue.Enqueue(q);
@@ -248,10 +309,16 @@ public class DownloadQueueService(
     {
         try
         {
-            var rel = await cache.GetReleaseByArtistAndFolderAsync(item.ArtistId, item.ReleaseFolderName);
+            var rel = await cache.GetReleaseByArtistAndFolderAsync(
+                item.ArtistId,
+                item.ReleaseFolderName
+            );
             if (rel != null)
             {
-                var path = await logPathProvider.GetReleaseLogFilePathAsync(rel.ArtistName, rel.Title);
+                var path = await logPathProvider.GetReleaseLogFilePathAsync(
+                    rel.ArtistName,
+                    rel.Title
+                );
                 if (!string.IsNullOrWhiteSpace(path))
                 {
                     using var relLogger = new DownloadLogger(path!);
@@ -264,10 +331,6 @@ public class DownloadQueueService(
 
     private void PublishQueueUpdated()
     {
-        _ = eventSender.SendAsync(
-            DownloadsSubscription.DownloadQueueUpdatedTopic,
-            Snapshot()
-        );
+        _ = eventSender.SendAsync(DownloadsSubscription.DownloadQueueUpdatedTopic, Snapshot());
     }
 }
-

@@ -6,7 +6,16 @@ public static class LibraryDecider
 {
     private static readonly string[] NonStandardEditionKeywords = new[]
     {
-        "deluxe", "anniversary", "expanded", "special", "bonus", "tour", "remaster", "remastered", "collector", "edition"
+        "deluxe",
+        "anniversary",
+        "expanded",
+        "special",
+        "bonus",
+        "tour",
+        "remaster",
+        "remastered",
+        "collector",
+        "edition",
     };
 
     public static bool ShouldBeAddedWhenAddingArtistToServerLibrary(
@@ -42,7 +51,9 @@ public static class LibraryDecider
             };
 
             // Track count heuristic: standard editions usually have fewer tracks than deluxe/anniversary
-            var totalTracks = r.Media?.SelectMany(m => m.Tracks ?? new List<Hqub.MusicBrainz.Entities.Track>()).Count() ?? 0;
+            var totalTracks =
+                r.Media?.SelectMany(m => m.Tracks ?? new List<Hqub.MusicBrainz.Entities.Track>())
+                    .Count() ?? 0;
             var primaryType = r.ReleaseGroup?.PrimaryType ?? "";
             var idealMin = 0;
             var idealMax = 999;
@@ -63,11 +74,15 @@ public static class LibraryDecider
             }
 
             var withinIdeal = totalTracks >= idealMin && totalTracks <= idealMax;
-            var trackScore = withinIdeal ? 300 : Math.Max(0, 200 - Math.Abs(((idealMin + idealMax) / 2) - totalTracks) * 10);
+            var trackScore = withinIdeal
+                ? 300
+                : Math.Max(0, 200 - Math.Abs(((idealMin + idealMax) / 2) - totalTracks) * 10);
 
             // Penalize likely non-standard editions by title keywords
             var title = r.Title ?? string.Empty;
-            var hasNonStandardKeyword = NonStandardEditionKeywords.Any(k => title.Contains(k, StringComparison.OrdinalIgnoreCase));
+            var hasNonStandardKeyword = NonStandardEditionKeywords.Any(k =>
+                title.Contains(k, StringComparison.OrdinalIgnoreCase)
+            );
             var keywordPenalty = hasNonStandardKeyword ? -400 : 0;
 
             // Prefer earlier releases

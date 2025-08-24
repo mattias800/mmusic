@@ -41,7 +41,8 @@ public class SetUserPasswordMutation
         }
 
         var target = await dbContext.Users.FirstOrDefaultAsync(u => u.UserId == input.UserId);
-        if (target is null) return new SetUserPasswordError("User not found");
+        if (target is null)
+            return new SetUserPasswordError("User not found");
 
         var hashed = await hashPassword.Handle(new HashPasswordCommand(input.NewPassword));
 
@@ -63,5 +64,3 @@ public abstract record SetUserPasswordResult;
 public record SetUserPasswordSuccess(User User) : SetUserPasswordResult;
 
 public record SetUserPasswordError(string Message) : SetUserPasswordResult;
-
-

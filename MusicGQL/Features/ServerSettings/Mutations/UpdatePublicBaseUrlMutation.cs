@@ -33,9 +33,10 @@ public class UpdatePublicBaseUrlMutation
 
         await handler.Handle(new(userId, input.PublicBaseUrl));
 
-        var settings = await dbContext.ServerSettings.FirstOrDefaultAsync(s =>
-            s.Id == DefaultDbServerSettingsProvider.ServerSettingsSingletonId
-        ) ?? DefaultDbServerSettingsProvider.GetDefault();
+        var settings =
+            await dbContext.ServerSettings.FirstOrDefaultAsync(s =>
+                s.Id == DefaultDbServerSettingsProvider.ServerSettingsSingletonId
+            ) ?? DefaultDbServerSettingsProvider.GetDefault();
 
         return new UpdatePublicBaseUrlSuccess(new(settings));
     }
@@ -45,7 +46,7 @@ public record UpdatePublicBaseUrlInput(string PublicBaseUrl);
 
 [UnionType("UpdatePublicBaseUrlResult")]
 public abstract record UpdatePublicBaseUrlResult;
+
 public record UpdatePublicBaseUrlSuccess(ServerSettings ServerSettings) : UpdatePublicBaseUrlResult;
+
 public record UpdatePublicBaseUrlError(string Message) : UpdatePublicBaseUrlResult;
-
-

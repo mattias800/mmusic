@@ -43,9 +43,9 @@ public class DbServerSettings
     public string PublicBaseUrl { get; set; } = string.Empty;
 
     // Top Tracks Service Configuration
-    public bool ListenBrainzTopTracksEnabled { get; set; } = true;  // Primary source
-    public bool SpotifyTopTracksEnabled { get; set; } = false;      // Disabled by default
-    public bool LastFmTopTracksEnabled { get; set; } = false;      // Disabled by default
+    public bool ListenBrainzTopTracksEnabled { get; set; } = true; // Primary source
+    public bool SpotifyTopTracksEnabled { get; set; } = false; // Disabled by default
+    public bool LastFmTopTracksEnabled { get; set; } = false; // Disabled by default
 
     // SoulSeek connection (non-secret settings)
     public string SoulSeekHost { get; set; } = "vps.slsknet.org";

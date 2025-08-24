@@ -12,7 +12,9 @@ public sealed class RollingFileLoggerProvider : ILoggerProvider
     private readonly string _extension;
     private readonly Encoding _encoding;
     private readonly LogLevel _minLevel;
-    private readonly ConcurrentDictionary<string, RollingFileLogger> _loggers = new(StringComparer.OrdinalIgnoreCase);
+    private readonly ConcurrentDictionary<string, RollingFileLogger> _loggers = new(
+        StringComparer.OrdinalIgnoreCase
+    );
     private readonly object _sync = new();
 
     private StreamWriter? _writer;
@@ -24,7 +26,8 @@ public sealed class RollingFileLoggerProvider : ILoggerProvider
         string baseFileName,
         LogLevel minLevel = LogLevel.Information,
         Encoding? encoding = null,
-        string extension = "log")
+        string extension = "log"
+    )
     {
         _directory = directory;
         _baseName = baseFileName;
@@ -36,8 +39,8 @@ public sealed class RollingFileLoggerProvider : ILoggerProvider
         OpenNewWriter(initial: true);
     }
 
-    private static DateTime TruncateToHourUtc(DateTime utcNow)
-        => new DateTime(utcNow.Year, utcNow.Month, utcNow.Day, utcNow.Hour, 0, 0, DateTimeKind.Utc);
+    private static DateTime TruncateToHourUtc(DateTime utcNow) =>
+        new DateTime(utcNow.Year, utcNow.Month, utcNow.Day, utcNow.Hour, 0, 0, DateTimeKind.Utc);
 
     private void OpenNewWriter(bool initial)
     {
@@ -56,12 +59,24 @@ public sealed class RollingFileLoggerProvider : ILoggerProvider
             var stamp = initial ? now : _currentHourUtc;
             var fileName = $"{_baseName}-{stamp:yyyyMMdd-HHmmss}.{_extension}";
             _currentFilePath = System.IO.Path.Combine(_directory, fileName);
-            _writer = new StreamWriter(new FileStream(_currentFilePath, FileMode.Append, FileAccess.Write, FileShare.ReadWrite), _encoding)
+            _writer = new StreamWriter(
+                new FileStream(
+                    _currentFilePath,
+                    FileMode.Append,
+                    FileAccess.Write,
+                    FileShare.ReadWrite
+                ),
+                _encoding
+            )
             {
                 AutoFlush = true,
-                NewLine = Environment.NewLine
+                NewLine = Environment.NewLine,
             };
-            try { _writer.WriteLine($"==== mmusic log started {DateTime.UtcNow:O} (UTC) ===="); } catch { }
+            try
+            {
+                _writer.WriteLine($"==== mmusic log started {DateTime.UtcNow:O} (UTC) ====");
+            }
+            catch { }
         }
     }
 
@@ -75,26 +90,38 @@ public sealed class RollingFileLoggerProvider : ILoggerProvider
         }
     }
 
-    public ILogger CreateLogger(string categoryName)
-        => _loggers.GetOrAdd(categoryName, name => new RollingFileLogger(name, this));
+    public ILogger CreateLogger(string categoryName) =>
+        _loggers.GetOrAdd(categoryName, name => new RollingFileLogger(name, this));
 
     internal bool IsEnabled(LogLevel level) => level >= _minLevel;
 
-    internal void Write(string category, LogLevel level, EventId eventId, string message, Exception? exception)
+    internal void Write(
+        string category,
+        LogLevel level,
+        EventId eventId,
+        string message,
+        Exception? exception
+    )
     {
-        if (!IsEnabled(level)) return;
+        if (!IsEnabled(level))
+            return;
         lock (_sync)
         {
             MaybeRotate();
             var timestamp = DateTime.UtcNow.ToString("O");
             var lvl = level.ToString();
-            var line = exception == null
-                ? $"{timestamp} [{lvl}] {category}: {message}"
-                : $"{timestamp} [{lvl}] {category}: {message} | {exception.GetType().Name}: {exception.Message}";
+            var line =
+                exception == null
+                    ? $"{timestamp} [{lvl}] {category}: {message}"
+                    : $"{timestamp} [{lvl}] {category}: {message} | {exception.GetType().Name}: {exception.Message}";
             _writer?.WriteLine(line);
             if (exception != null)
             {
-                try { _writer?.WriteLine(exception.StackTrace); } catch { }
+                try
+                {
+                    _writer?.WriteLine(exception.StackTrace);
+                }
+                catch { }
             }
         }
     }
@@ -124,13 +151,21 @@ public sealed class RollingFileLoggerProvider : ILoggerProvider
             _provider = provider;
         }
 
-        public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
+        public IDisposable? BeginScope<TState>(TState state)
+            where TState : notnull => null;
+
         public bool IsEnabled(LogLevel logLevel) => _provider.IsEnabled(logLevel);
 
-        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception,
-            Func<TState, Exception?, string> formatter)
+        public void Log<TState>(
+            LogLevel logLevel,
+            EventId eventId,
+            TState state,
+            Exception? exception,
+            Func<TState, Exception?, string> formatter
+        )
         {
-            if (!IsEnabled(logLevel)) return;
+            if (!IsEnabled(logLevel))
+                return;
             var message = formatter(state, exception);
             _provider.Write(_categoryName, logLevel, eventId, message, exception);
         }

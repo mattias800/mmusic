@@ -13,8 +13,7 @@ public class TopTracksLastFmImporter(LastfmClient lastfmClient) : ITopTracksImpo
             return [];
         }
 
-        return top
-            .Take(take)
+        return top.Take(take)
             .Select(t => new JsonTopTrack
             {
                 Title = t.Name,
@@ -27,5 +26,3 @@ public class TopTracksLastFmImporter(LastfmClient lastfmClient) : ITopTracksImpo
             .ToList();
     }
 }
-
-

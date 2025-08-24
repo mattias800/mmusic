@@ -15,13 +15,16 @@ public sealed class DownloadQueueMutations
     )
     {
         var userIdClaim = claims.FindFirst(ClaimTypes.NameIdentifier);
-        if (userIdClaim is null) return false;
+        if (userIdClaim is null)
+            return false;
         var userId = Guid.Parse(userIdClaim.Value);
         var user = dbContext.Users.AsNoTracking().FirstOrDefault(u => u.UserId == userId);
-        var canManage = user is not null && (user.Roles & (Users.Roles.UserRoles.TriggerDownloads | Users.Roles.UserRoles.Admin)) != 0;
-        if (!canManage) return false;
+        var canManage =
+            user is not null
+            && (user.Roles & (Users.Roles.UserRoles.TriggerDownloads | Users.Roles.UserRoles.Admin))
+                != 0;
+        if (!canManage)
+            return false;
         return queue.TryRemove(queueKey);
     }
 }
-
-

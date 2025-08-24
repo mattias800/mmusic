@@ -1,7 +1,7 @@
 using HotChocolate;
-using MusicGQL.Integration.ListenBrainz;
 using MetaBrainz.ListenBrainz.Objects;
 using MusicGQL.Features.ServerSettings;
+using MusicGQL.Integration.ListenBrainz;
 using MusicGQL.Types;
 
 namespace MusicGQL.Features.ListenBrainz;
@@ -41,7 +41,7 @@ public record ListenBrainzMutations
             );
 
             var success = await listenBrainzService.SubmitSingleListenAsync(listen);
-            
+
             if (success)
             {
                 return new SubmitListenSuccess();

@@ -78,7 +78,9 @@ public record TrackMedia([property: GraphQLIgnore] CachedTrack Model)
         return format!;
     }
 
-    private (string? fullPath, string? ext) TryGetAudioFilePath(ServerSettingsAccessor serverSettingsAccessor)
+    private (string? fullPath, string? ext) TryGetAudioFilePath(
+        ServerSettingsAccessor serverSettingsAccessor
+    )
     {
         var rel = Model.JsonTrack.AudioFilePath;
         if (string.IsNullOrWhiteSpace(rel))

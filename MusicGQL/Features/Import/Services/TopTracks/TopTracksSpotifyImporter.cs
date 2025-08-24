@@ -8,8 +8,7 @@ public class TopTracksSpotifyImporter(SpotifyService spotifyService) : ITopTrack
     public async Task<List<JsonTopTrack>> GetTopTracksAsync(string spotifyArtistId, int take = 10)
     {
         var top = await spotifyService.GetArtistTopTracksAsync(spotifyArtistId) ?? [];
-        return top
-            .Take(take)
+        return top.Take(take)
             .Select(t => new JsonTopTrack
             {
                 Title = t.Name,
@@ -22,5 +21,3 @@ public class TopTracksSpotifyImporter(SpotifyService spotifyService) : ITopTrack
             .ToList();
     }
 }
-
-

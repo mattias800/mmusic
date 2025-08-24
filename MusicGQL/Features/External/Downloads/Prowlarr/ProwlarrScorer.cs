@@ -7,11 +7,15 @@ internal static class ProwlarrScorer
         if (string.IsNullOrWhiteSpace(downloadUrl))
             return false;
 
-        return downloadUrl.EndsWith(".torrent", StringComparison.OrdinalIgnoreCase) ||
-               downloadUrl.Contains("torrent", StringComparison.OrdinalIgnoreCase);
+        return downloadUrl.EndsWith(".torrent", StringComparison.OrdinalIgnoreCase)
+            || downloadUrl.Contains("torrent", StringComparison.OrdinalIgnoreCase);
     }
 
-    public static int CalculateRelevanceScore(ProwlarrRelease release, string artistName, string releaseTitle)
+    public static int CalculateRelevanceScore(
+        ProwlarrRelease release,
+        string artistName,
+        string releaseTitle
+    )
     {
         if (string.IsNullOrWhiteSpace(release.Title))
             return 0;
@@ -56,4 +60,3 @@ internal static class ProwlarrScorer
         return score;
     }
 }
-

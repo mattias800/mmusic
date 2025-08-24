@@ -6,5 +6,3 @@ public class LogsFolderPathUpdated : Event
 {
     public string? NewPath { get; set; }
 }
-
-

@@ -1,8 +1,8 @@
 using MusicGQL.Features.Artists;
 using MusicGQL.Features.Downloads;
 using MusicGQL.Features.ServerLibrary.Cache;
-using MusicGQL.Features.ServerLibrary.Utils;
 using MusicGQL.Features.ServerLibrary.Json;
+using MusicGQL.Features.ServerLibrary.Utils;
 
 namespace MusicGQL.Features.ServerLibrary;
 
@@ -68,7 +68,8 @@ public record Release([property: GraphQLIgnore] CachedRelease Model)
     public int DiscCount()
     {
         // Prefer cached discs if present
-        if (Model.Discs is { Count: > 0 }) return Model.Discs.Count;
+        if (Model.Discs is { Count: > 0 })
+            return Model.Discs.Count;
         var discs = Model.JsonRelease.Discs;
         return (discs is { Count: > 0 }) ? discs.Count : 1;
     }
@@ -79,9 +80,7 @@ public record Release([property: GraphQLIgnore] CachedRelease Model)
         var discs = Model.Discs;
         if (discs is { Count: > 0 })
         {
-            return discs
-                .OrderBy(d => d.DiscNumber)
-                .Select(d => new Disc(d));
+            return discs.OrderBy(d => d.DiscNumber).Select(d => new Disc(d));
         }
 
         // If JSON contains discs but cached discs are not built (e.g., direct construction in tests), map minimal discs from JSON
@@ -90,25 +89,50 @@ public record Release([property: GraphQLIgnore] CachedRelease Model)
         {
             return jsonDiscs
                 .OrderBy(d => d.DiscNumber)
-                .Select(d => new Disc(new CachedDisc { DiscNumber = d.DiscNumber <= 0 ? 1 : d.DiscNumber, Title = d.Title, Tracks = new() }));
+                .Select(d => new Disc(
+                    new CachedDisc
+                    {
+                        DiscNumber = d.DiscNumber <= 0 ? 1 : d.DiscNumber,
+                        Title = d.Title,
+                        Tracks = new(),
+                    }
+                ));
         }
 
         // Fallback: group cached tracks by disc number
-        var groups = Model.Tracks
-            .GroupBy(t => t.DiscNumber > 0 ? t.DiscNumber : 1)
+        var groups = Model
+            .Tracks.GroupBy(t => t.DiscNumber > 0 ? t.DiscNumber : 1)
             .OrderBy(g => g.Key)
             .ToList();
         if (groups.Count == 0)
         {
-            return new[] { new Disc(new CachedDisc { DiscNumber = 1, Title = null, Tracks = new() }) };
+            return new[]
+            {
+                new Disc(
+                    new CachedDisc
+                    {
+                        DiscNumber = 1,
+                        Title = null,
+                        Tracks = new(),
+                    }
+                ),
+            };
         }
-        return groups.Select(g => new Disc(new CachedDisc { DiscNumber = g.Key, Title = null, Tracks = g.OrderBy(t => t.TrackNumber).ToList() }));
+        return groups.Select(g => new Disc(
+            new CachedDisc
+            {
+                DiscNumber = g.Key,
+                Title = null,
+                Tracks = g.OrderBy(t => t.TrackNumber).ToList(),
+            }
+        ));
     }
 
     public async Task<bool> IsFullyMissing(ServerLibraryCache cache)
     {
         var tracks = await cache.GetAllTracksForReleaseAsync(Model.ArtistId, Model.FolderName);
-        if (tracks.Count == 0) return true;
+        if (tracks.Count == 0)
+            return true;
         return tracks.All(t => string.IsNullOrWhiteSpace(t.JsonTrack.AudioFilePath));
     }
 
@@ -120,16 +144,22 @@ public record Release([property: GraphQLIgnore] CachedRelease Model)
     /// <summary>
     /// MusicBrainz connections for this release. These are persisted in the underlying JSON.
     /// </summary>
-    public string? MusicBrainzReleaseGroupId() => Model.JsonRelease.Connections?.MusicBrainzReleaseGroupId;
+    public string? MusicBrainzReleaseGroupId() =>
+        Model.JsonRelease.Connections?.MusicBrainzReleaseGroupId;
 
-    public string? MusicBrainzSelectedReleaseId() => Model.JsonRelease.Connections?.MusicBrainzSelectedReleaseId;
+    public string? MusicBrainzSelectedReleaseId() =>
+        Model.JsonRelease.Connections?.MusicBrainzSelectedReleaseId;
 
-    public string? MusicBrainzReleaseIdOverride() => Model.JsonRelease.Connections?.MusicBrainzReleaseIdOverride;
+    public string? MusicBrainzReleaseIdOverride() =>
+        Model.JsonRelease.Connections?.MusicBrainzReleaseIdOverride;
 };
 
 public record Disc([property: GraphQLIgnore] CachedDisc Model)
 {
     public int DiscNumber() => Model.DiscNumber;
+
     public string? Title() => Model.Title;
-    public IEnumerable<Track> Tracks() => Model.Tracks.OrderBy(t => t.TrackNumber).Select(t => new Track(t));
+
+    public IEnumerable<Track> Tracks() =>
+        Model.Tracks.OrderBy(t => t.TrackNumber).Select(t => new Track(t));
 }

@@ -12,7 +12,9 @@ public class ArtistImportBackgroundQueueService(
 )
 {
     private readonly ConcurrentQueue<ArtistImportBackgroundJob> _queue = new();
-    private readonly ConcurrentDictionary<string, byte> _dedupeKeys = new(StringComparer.OrdinalIgnoreCase);
+    private readonly ConcurrentDictionary<string, byte> _dedupeKeys = new(
+        StringComparer.OrdinalIgnoreCase
+    );
 
     private static string BuildDedupeKey(ArtistImportBackgroundJob job)
     {
@@ -28,14 +30,20 @@ public class ArtistImportBackgroundQueueService(
         if (_dedupeKeys.TryAdd(key, 1))
         {
             _queue.Enqueue(job);
-            logger.LogInformation("[ArtistImportBackgroundQueue] Enqueued artist import job for {ArtistName} (MBID: {MusicBrainzId})", 
-                job.ArtistName, job.MusicBrainzId);
+            logger.LogInformation(
+                "[ArtistImportBackgroundQueue] Enqueued artist import job for {ArtistName} (MBID: {MusicBrainzId})",
+                job.ArtistName,
+                job.MusicBrainzId
+            );
             PublishQueueUpdated();
         }
         else
         {
-            logger.LogDebug("[ArtistImportBackgroundQueue] Artist import job already queued for {ArtistName} (MBID: {MusicBrainzId})", 
-                job.ArtistName, job.MusicBrainzId);
+            logger.LogDebug(
+                "[ArtistImportBackgroundQueue] Artist import job already queued for {ArtistName} (MBID: {MusicBrainzId})",
+                job.ArtistName,
+                job.MusicBrainzId
+            );
         }
     }
 
@@ -46,7 +54,7 @@ public class ArtistImportBackgroundQueueService(
     {
         var ok = _queue.TryDequeue(out var dequeued);
         job = dequeued;
-        
+
         if (ok && dequeued != null)
         {
             // Remove dedupe key now that we are going to process it
@@ -56,12 +64,16 @@ public class ArtistImportBackgroundQueueService(
                 _dedupeKeys.TryRemove(key, out _);
             }
             catch { }
-            
-            logger.LogInformation("[ArtistImportBackgroundQueue] Dequeued artist import job for {ArtistName} (MBID: {MusicBrainzId}). Remaining queue length: {QueueLength}", 
-                dequeued.ArtistName, dequeued.MusicBrainzId, _queue.Count);
+
+            logger.LogInformation(
+                "[ArtistImportBackgroundQueue] Dequeued artist import job for {ArtistName} (MBID: {MusicBrainzId}). Remaining queue length: {QueueLength}",
+                dequeued.ArtistName,
+                dequeued.MusicBrainzId,
+                _queue.Count
+            );
             PublishQueueUpdated();
         }
-        
+
         return ok;
     }
 
@@ -85,10 +97,7 @@ public class ArtistImportBackgroundQueueService(
 
     private void PublishQueueUpdated()
     {
-        _ = eventSender.SendAsync(
-            "ArtistImportBackgroundQueueUpdated",
-            Snapshot()
-        );
+        _ = eventSender.SendAsync("ArtistImportBackgroundQueueUpdated", Snapshot());
     }
 }
 

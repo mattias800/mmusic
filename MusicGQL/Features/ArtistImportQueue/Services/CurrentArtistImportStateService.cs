@@ -15,10 +15,7 @@ public class CurrentArtistImportStateService(
     {
         // Publish an explicit Idle state instead of null so subscribers receive
         // a non-null payload and UI can reliably transition to Idle.
-        _state = new ArtistImportProgress
-        {
-            Status = ArtistImportStatus.Idle,
-        };
+        _state = new ArtistImportProgress { Status = ArtistImportStatus.Idle };
         Publish();
     }
 
@@ -36,23 +33,26 @@ public class CurrentArtistImportStateService(
 
     public void SetReleaseProgress(int completed, int total)
     {
-        _state = (_state ?? new ArtistImportProgress()) with { CompletedReleases = completed, TotalReleases = total };
+        _state = (_state ?? new ArtistImportProgress()) with
+        {
+            CompletedReleases = completed,
+            TotalReleases = total,
+        };
         Publish();
     }
 
     public void SetError(string error)
     {
-        _state = (_state ?? new ArtistImportProgress()) with { Status = ArtistImportStatus.Failed, ErrorMessage = error };
+        _state = (_state ?? new ArtistImportProgress()) with
+        {
+            Status = ArtistImportStatus.Failed,
+            ErrorMessage = error,
+        };
         Publish();
     }
 
     private void Publish()
     {
-        _ = eventSender.SendAsync(
-            "CurrentArtistImportUpdated",
-            _state
-        );
+        _ = eventSender.SendAsync("CurrentArtistImportUpdated", _state);
     }
 }
-
-

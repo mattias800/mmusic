@@ -63,7 +63,9 @@ public class ServerLibraryFileSystemScanner(ServerSettingsAccessor serverSetting
             if (string.IsNullOrWhiteSpace(libraryPath) || !Directory.Exists(libraryPath))
             {
                 result.Success = true;
-                result.Notes.Add($"Library path not found: {Path.GetFullPath(libraryPath ?? string.Empty)}");
+                result.Notes.Add(
+                    $"Library path not found: {Path.GetFullPath(libraryPath ?? string.Empty)}"
+                );
                 return result;
             }
 

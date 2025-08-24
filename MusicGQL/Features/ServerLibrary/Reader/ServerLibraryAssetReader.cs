@@ -1,7 +1,7 @@
-using MusicGQL.Features.ServerSettings;
-using Path = System.IO.Path;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using MusicGQL.Features.ServerSettings;
+using Path = System.IO.Path;
 
 namespace MusicGQL.Features.ServerLibrary.Reader;
 
@@ -59,13 +59,13 @@ public class ServerLibraryAssetReader(ServerSettingsAccessor serverSettingsAcces
                 return (null, null, null);
 
             List<string>? photoList = photoType.ToLowerInvariant() switch
-                {
-                    "thumbs" => artistJson.Photos.Thumbs,
-                    "backgrounds" => artistJson.Photos.Backgrounds,
-                    "banners" => artistJson.Photos.Banners,
-                    "logos" => artistJson.Photos.Logos,
-                    _ => null,
-                };
+            {
+                "thumbs" => artistJson.Photos.Thumbs,
+                "backgrounds" => artistJson.Photos.Backgrounds,
+                "banners" => artistJson.Photos.Banners,
+                "logos" => artistJson.Photos.Logos,
+                _ => null,
+            };
 
             if (photoList == null || photoIndex >= photoList.Count)
                 return (null, null, null);
@@ -172,10 +172,11 @@ public class ServerLibraryAssetReader(ServerSettingsAccessor serverSettingsAcces
     /// Reads artist.json and if the top track has a mapped release, serves that release cover art;
     /// otherwise serves the local toptrackNN.jpg if present.
     /// </summary>
-    public async Task<(Stream? stream, string? contentType, string? fileName)> GetTopTrackCoverArtAsync(
-        string artistId,
-        int index
-    )
+    public async Task<(
+        Stream? stream,
+        string? contentType,
+        string? fileName
+    )> GetTopTrackCoverArtAsync(string artistId, int index)
     {
         try
         {
@@ -238,10 +239,11 @@ public class ServerLibraryAssetReader(ServerSettingsAccessor serverSettingsAcces
     /// <param name="artistId">Artist ID</param>
     /// <param name="appearanceId">Appearance ID (from the filename like "appearance_abc123_def456_cover.jpg")</param>
     /// <returns>File stream and content type, or null if not found</returns>
-    public async Task<(Stream? stream, string? contentType, string? fileName)> GetAppearanceCoverArtAsync(
-        string artistId,
-        string appearanceId
-    )
+    public async Task<(
+        Stream? stream,
+        string? contentType,
+        string? fileName
+    )> GetAppearanceCoverArtAsync(string artistId, string appearanceId)
     {
         try
         {
@@ -278,10 +280,11 @@ public class ServerLibraryAssetReader(ServerSettingsAccessor serverSettingsAcces
     /// Gets a similar artist thumbnail by parent artist and similar MBID
     /// Looks for files named similar_thumb_{mbid}.* in the artist directory
     /// </summary>
-    public async Task<(Stream? stream, string? contentType, string? fileName)> GetSimilarArtistThumbAsync(
-        string artistId,
-        string musicBrainzArtistId
-    )
+    public async Task<(
+        Stream? stream,
+        string? contentType,
+        string? fileName
+    )> GetSimilarArtistThumbAsync(string artistId, string musicBrainzArtistId)
     {
         try
         {
@@ -379,8 +382,14 @@ public class ServerLibraryAssetReader(ServerSettingsAccessor serverSettingsAcces
                         var fullAudioPath = Path.Combine(releasePath, audioPath);
                         if (!File.Exists(fullAudioPath))
                             continue;
-                        var fileStream = new FileStream(fullAudioPath, FileMode.Open, FileAccess.Read);
-                        var contentType = GetContentTypeFromExtension(Path.GetExtension(fullAudioPath));
+                        var fileStream = new FileStream(
+                            fullAudioPath,
+                            FileMode.Open,
+                            FileAccess.Read
+                        );
+                        var contentType = GetContentTypeFromExtension(
+                            Path.GetExtension(fullAudioPath)
+                        );
                         var fileName = Path.GetFileName(fullAudioPath);
                         return (fileStream, contentType, fileName);
                     }
@@ -435,7 +444,9 @@ public class ServerLibraryAssetReader(ServerSettingsAccessor serverSettingsAcces
             if (releaseJson.Discs is { Count: > 0 })
             {
                 var dnum = discNumber <= 0 ? 1 : discNumber;
-                var disc = releaseJson.Discs.FirstOrDefault(d => (d.DiscNumber > 0 ? d.DiscNumber : 1) == dnum);
+                var disc = releaseJson.Discs.FirstOrDefault(d =>
+                    (d.DiscNumber > 0 ? d.DiscNumber : 1) == dnum
+                );
                 var track = disc?.Tracks?.FirstOrDefault(t => t.TrackNumber == trackNumber);
                 if (track?.AudioFilePath != null)
                 {
@@ -456,7 +467,9 @@ public class ServerLibraryAssetReader(ServerSettingsAccessor serverSettingsAcces
             if (releaseJson.Tracks is { Count: > 0 })
             {
                 var dnum = discNumber <= 0 ? 1 : discNumber;
-                var track = releaseJson.Tracks.FirstOrDefault(t => (t.DiscNumber ?? 1) == dnum && t.TrackNumber == trackNumber);
+                var track = releaseJson.Tracks.FirstOrDefault(t =>
+                    (t.DiscNumber ?? 1) == dnum && t.TrackNumber == trackNumber
+                );
                 if (track?.AudioFilePath != null)
                 {
                     var audioPath = track.AudioFilePath;
@@ -523,7 +536,7 @@ public class ServerLibraryAssetReader(ServerSettingsAccessor serverSettingsAcces
         return extension switch
         {
             ".jpg" or ".jpeg" or ".png" or ".gif" or ".webp" => true,
-            _ => false
+            _ => false,
         };
     }
 }

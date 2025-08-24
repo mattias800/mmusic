@@ -1,9 +1,9 @@
 using System.Security.Claims;
 using HotChocolate.Authorization;
 using Microsoft.EntityFrameworkCore;
+using MusicGQL.Db.Postgres;
 using MusicGQL.Features.Downloads.Services;
 using MusicGQL.Features.ServerLibrary.Cache;
-using MusicGQL.Db.Postgres;
 using MusicGQL.Types;
 
 namespace MusicGQL.Features.Downloads.Mutations;
@@ -34,7 +34,9 @@ public class StartBulkDownloadForArtistMutation
             return new StartBulkDownloadForArtistError("User not found");
         }
 
-        var canTrigger = (user.Roles & (Users.Roles.UserRoles.TriggerDownloads | Users.Roles.UserRoles.Admin)) != 0;
+        var canTrigger =
+            (user.Roles & (Users.Roles.UserRoles.TriggerDownloads | Users.Roles.UserRoles.Admin))
+            != 0;
         if (!canTrigger)
         {
             return new StartBulkDownloadForArtistError("Not authorized to trigger downloads");
@@ -49,17 +51,28 @@ public class StartBulkDownloadForArtistMutation
 
         var releases = artist.Releases;
         if (input.Scope == BulkDownloadScope.Albums)
-            releases = releases.Where(r => r.Type == ServerLibrary.Json.JsonReleaseType.Album).ToList();
+            releases = releases
+                .Where(r => r.Type == ServerLibrary.Json.JsonReleaseType.Album)
+                .ToList();
         else if (input.Scope == BulkDownloadScope.Eps)
-            releases = releases.Where(r => r.Type == ServerLibrary.Json.JsonReleaseType.Ep).ToList();
+            releases = releases
+                .Where(r => r.Type == ServerLibrary.Json.JsonReleaseType.Ep)
+                .ToList();
         else if (input.Scope == BulkDownloadScope.Singles)
-            releases = releases.Where(r => r.Type == ServerLibrary.Json.JsonReleaseType.Single).ToList();
+            releases = releases
+                .Where(r => r.Type == ServerLibrary.Json.JsonReleaseType.Single)
+                .ToList();
 
         int queued = 0;
         // Enqueue all (auto) to normal queue; keep user explicit single enqueues prioritized elsewhere
         foreach (var r in releases)
         {
-            try { queue.Enqueue(new DownloadQueueItem(input.ArtistId, r.FolderName)); queued++; } catch { }
+            try
+            {
+                queue.Enqueue(new DownloadQueueItem(input.ArtistId, r.FolderName));
+                queued++;
+            }
+            catch { }
         }
 
         // Worker will process the queue automatically; nothing else to start here
@@ -75,12 +88,13 @@ public enum BulkDownloadScope
     All,
     Albums,
     Singles,
-    Eps
+    Eps,
 }
 
 [UnionType("StartBulkDownloadForArtistResult")]
 public abstract record StartBulkDownloadForArtistResult;
 
-public record StartBulkDownloadForArtistSuccess(string ArtistId, int QueuedCount) : StartBulkDownloadForArtistResult;
+public record StartBulkDownloadForArtistSuccess(string ArtistId, int QueuedCount)
+    : StartBulkDownloadForArtistResult;
 
 public record StartBulkDownloadForArtistError(string Message) : StartBulkDownloadForArtistResult;

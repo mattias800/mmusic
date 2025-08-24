@@ -6,5 +6,3 @@ public class SoulSeekSearchTimeLimitUpdated : Event
 {
     public int NewSeconds { get; set; }
 }
-
-

@@ -9,10 +9,9 @@ public class ServerSettingsAccessor(IDbContextFactory<EventDbContext> dbFactory)
     public async Task<DbServerSettings> GetAsync()
     {
         await using var db = await dbFactory.CreateDbContextAsync();
-        var s = await db.ServerSettings
-            .FirstOrDefaultAsync(s => s.Id == DefaultDbServerSettingsProvider.ServerSettingsSingletonId);
+        var s = await db.ServerSettings.FirstOrDefaultAsync(s =>
+            s.Id == DefaultDbServerSettingsProvider.ServerSettingsSingletonId
+        );
         return s ?? DefaultDbServerSettingsProvider.GetDefault();
     }
 }
-
-

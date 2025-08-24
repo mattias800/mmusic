@@ -32,9 +32,10 @@ public record ArtistSearchRoot
         [Service] SpotifyService spotify,
         [ID] string artistId,
         ExternalServiceType serviceType
-    ) => serviceType == ExternalServiceType.Spotify
-        ? await GetSpotifyExternalArtist(spotify, artistId)
-        : null;
+    ) =>
+        serviceType == ExternalServiceType.Spotify
+            ? await GetSpotifyExternalArtist(spotify, artistId)
+            : null;
 
     public async Task<IEnumerable<ExternalArtist>> SearchExternalArtists(
         [Service] SpotifyService spotify,
@@ -49,12 +50,25 @@ public record ArtistSearchRoot
         }
 
         var results = await spotify.SearchArtistsAsync(searchTerm, limit);
-        return results.Select(a => new ExternalArtist(a.Id ?? string.Empty, a.Name ?? string.Empty, ExternalServiceType.Spotify));
+        return results.Select(a => new ExternalArtist(
+            a.Id ?? string.Empty,
+            a.Name ?? string.Empty,
+            ExternalServiceType.Spotify
+        ));
     }
 
-    private static async Task<ExternalArtist?> GetSpotifyExternalArtist(SpotifyService spotify, string artistId)
+    private static async Task<ExternalArtist?> GetSpotifyExternalArtist(
+        SpotifyService spotify,
+        string artistId
+    )
     {
         var a = await spotify.GetArtistAsync(artistId);
-        return a is null ? null : new ExternalArtist(a.Id ?? string.Empty, a.Name ?? string.Empty, ExternalServiceType.Spotify);
+        return a is null
+            ? null
+            : new ExternalArtist(
+                a.Id ?? string.Empty,
+                a.Name ?? string.Empty,
+                ExternalServiceType.Spotify
+            );
     }
 }

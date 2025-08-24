@@ -1,25 +1,26 @@
 using Google.Apis.Services;
 using Hqub.Lastfm;
 using Hqub.MusicBrainz;
+using MetaBrainz.ListenBrainz;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using MusicGQL.Db.Postgres;
 using MusicGQL.EventProcessor;
-using MusicGQL.Features.Artists;
 using MusicGQL.Features.ArtistImportQueue;
 using MusicGQL.Features.ArtistImportQueue.Mutations;
 using MusicGQL.Features.ArtistImportQueue.Services;
+using MusicGQL.Features.Artists;
 using MusicGQL.Features.Authentication.Handlers;
 using MusicGQL.Features.Authorization;
+using MusicGQL.Features.Downloads;
 using MusicGQL.Features.Downloads.Mutations;
 using MusicGQL.Features.Downloads.Services;
-using MusicGQL.Features.Downloads;
 using MusicGQL.Features.External.Downloads.Prowlarr.Configuration;
 using MusicGQL.Features.External.Downloads.QBittorrent.Configuration;
-using MusicGQL.Features.External.Downloads.Sabnzbd.Configuration;
 using MusicGQL.Features.External.Downloads.Sabnzbd;
+using MusicGQL.Features.External.Downloads.Sabnzbd.Configuration;
 using MusicGQL.Features.External.SoulSeek;
 using MusicGQL.Features.External.SoulSeek.Integration;
 using MusicGQL.Features.External.SoulSeek.Mutations;
@@ -28,9 +29,11 @@ using MusicGQL.Features.FileSystem.Mutations;
 using MusicGQL.Features.Import;
 using MusicGQL.Features.Import.Mutations;
 using MusicGQL.Features.Import.Services;
+using MusicGQL.Features.Import.Services.TopTracks;
 using MusicGQL.Features.Likes.Commands;
 using MusicGQL.Features.Likes.Events;
 using MusicGQL.Features.Likes.Mutations;
+using MusicGQL.Features.ListenBrainz;
 using MusicGQL.Features.MusicBrainz.ReleaseGroup;
 using MusicGQL.Features.Playlists.Aggregate;
 using MusicGQL.Features.Playlists.Commands;
@@ -50,15 +53,12 @@ using MusicGQL.Features.Users.Aggregate;
 using MusicGQL.Features.Users.Handlers;
 using MusicGQL.Features.Users.Mutations;
 using MusicGQL.Features.Users.Services;
+using MusicGQL.Integration.ListenBrainz;
 using MusicGQL.Integration.MusicBrainz;
 using MusicGQL.Integration.Spotify;
 using MusicGQL.Integration.Spotify.Configuration;
 using MusicGQL.Integration.Youtube.Configuration;
-using MusicGQL.Integration.ListenBrainz;
-using MusicGQL.Features.ListenBrainz;
-using MusicGQL.Features.Import.Services.TopTracks;
 using MusicGQL.Types;
-using MetaBrainz.ListenBrainz;
 using Soulseek;
 using Soulseek.Diagnostics;
 using SpotifyAPI.Web;
@@ -75,7 +75,8 @@ try
     if (autoExitSeconds is null)
     {
         var env = Environment.GetEnvironmentVariable("AUTO_EXIT_SECONDS");
-        if (int.TryParse(env, out var s) && s > 0) autoExitSeconds = s;
+        if (int.TryParse(env, out var s) && s > 0)
+            autoExitSeconds = s;
     }
 }
 catch { }
@@ -84,6 +85,7 @@ catch { }
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 builder.Logging.AddFilter("Microsoft.EntityFrameworkCore", LogLevel.Warning);
+
 // Keep console for interactive diagnostics; file sink is added after we can resolve server settings
 
 // Cookie settings for module federation.
@@ -111,11 +113,21 @@ builder.Services.Configure<ListenBrainzConfiguration>(
 );
 
 builder.Services.Configure<SoulSeekConnectOptions>(builder.Configuration.GetSection("SoulSeek"));
-builder.Services.Configure<ProwlarrOptions>(builder.Configuration.GetSection(ProwlarrOptions.SectionName));
-builder.Services.Configure<SabnzbdOptions>(builder.Configuration.GetSection(SabnzbdOptions.SectionName));
-builder.Services.Configure<SabnzbdHistoryScannerOptions>(builder.Configuration.GetSection("Sabnzbd:HistoryScanner"));
-builder.Services.Configure<QBittorrentOptions>(builder.Configuration.GetSection(QBittorrentOptions.SectionName));
-builder.Services.Configure<MusicGQL.Features.External.Downloads.QBittorrent.QBittorrentFinalizeWorkerOptions>(builder.Configuration.GetSection("QBittorrent:FinalizeWorker"));
+builder.Services.Configure<ProwlarrOptions>(
+    builder.Configuration.GetSection(ProwlarrOptions.SectionName)
+);
+builder.Services.Configure<SabnzbdOptions>(
+    builder.Configuration.GetSection(SabnzbdOptions.SectionName)
+);
+builder.Services.Configure<SabnzbdHistoryScannerOptions>(
+    builder.Configuration.GetSection("Sabnzbd:HistoryScanner")
+);
+builder.Services.Configure<QBittorrentOptions>(
+    builder.Configuration.GetSection(QBittorrentOptions.SectionName)
+);
+builder.Services.Configure<MusicGQL.Features.External.Downloads.QBittorrent.QBittorrentFinalizeWorkerOptions>(
+    builder.Configuration.GetSection("QBittorrent:FinalizeWorker")
+);
 
 builder
     .Services.AddHybridCache(options =>
@@ -143,7 +155,10 @@ builder
     .AddSingleton<CurrentDownloadStateService>()
     .AddSingleton<DownloadHistoryService>()
     .AddSingleton<DownloadLogPathProvider>()
-.AddSingleton<MusicGQL.Features.External.Downloads.QBittorrent.IQBittorrentFinalizeService, MusicGQL.Features.External.Downloads.QBittorrent.QBittorrentFinalizeService>()
+    .AddSingleton<
+        MusicGQL.Features.External.Downloads.QBittorrent.IQBittorrentFinalizeService,
+        MusicGQL.Features.External.Downloads.QBittorrent.QBittorrentFinalizeService
+    >()
     .AddHostedService<MusicGQL.Features.Downloads.Services.DownloadServicesStartupLogger>()
     .AddHostedService(sp => sp.GetRequiredService<DownloadSlotManager>())
     // .AddHostedService<DownloadWorker>() // Disabled - now using DownloadSlotManager
@@ -195,56 +210,60 @@ builder
     .AddScoped<TopTracksLastFmImporter>()
     // Download providers
     .AddSingleton<MusicGQL.Features.External.Downloads.SoulSeekDownloadProvider>()
-.AddHttpClient<MusicGQL.Features.External.Downloads.Prowlarr.IProwlarrClient, MusicGQL.Features.External.Downloads.Prowlarr.ProwlarrClient>()
-    .ConfigureHttpClient((serviceProvider, client) =>
-    {
-        // Configure timeout for Prowlarr requests using options
-        var options = serviceProvider.GetRequiredService<IOptions<ProwlarrOptions>>();
-        client.Timeout = TimeSpan.FromSeconds(options.Value.TimeoutSeconds);
-        
-        // Additional configuration for better reliability
-        client.DefaultRequestHeaders.Add("User-Agent", "MusicGQL/1.0");
-        client.DefaultRequestHeaders.Add("Accept", "application/json");
-    })
-    .Services
-    .AddHttpClient<SabnzbdClient>(client =>
+    .AddHttpClient<
+        MusicGQL.Features.External.Downloads.Prowlarr.IProwlarrClient,
+        MusicGQL.Features.External.Downloads.Prowlarr.ProwlarrClient
+    >()
+    .ConfigureHttpClient(
+        (serviceProvider, client) =>
+        {
+            // Configure timeout for Prowlarr requests using options
+            var options = serviceProvider.GetRequiredService<IOptions<ProwlarrOptions>>();
+            client.Timeout = TimeSpan.FromSeconds(options.Value.TimeoutSeconds);
+
+            // Additional configuration for better reliability
+            client.DefaultRequestHeaders.Add("User-Agent", "MusicGQL/1.0");
+            client.DefaultRequestHeaders.Add("Accept", "application/json");
+        }
+    )
+    .Services.AddHttpClient<SabnzbdClient>(client =>
     {
         // Configure timeout for SABnzbd requests - 30 seconds should be sufficient for local network
         client.Timeout = TimeSpan.FromSeconds(30);
     })
-    .Services
-    .AddHttpClient<MusicGQL.Features.External.Downloads.QBittorrent.QBittorrentClient>(client =>
-    {
-        // Configure timeout for QBittorrent requests - 30 seconds should be sufficient for local network
-        client.Timeout = TimeSpan.FromSeconds(30);
-    })
-    .Services
-    .AddSingleton<SabnzbdFinalizeService>()
+    .Services.AddHttpClient<MusicGQL.Features.External.Downloads.QBittorrent.QBittorrentClient>(
+        client =>
+        {
+            // Configure timeout for QBittorrent requests - 30 seconds should be sufficient for local network
+            client.Timeout = TimeSpan.FromSeconds(30);
+        }
+    )
+    .Services.AddSingleton<SabnzbdFinalizeService>()
     .AddSingleton<MusicGQL.Features.External.Downloads.Prowlarr.ProwlarrDownloadProvider>()
     .AddSingleton<MusicGQL.Features.External.Downloads.DownloadProviderCatalog>(sp =>
     {
         var configuration = sp.GetRequiredService<IConfiguration>();
-        var serverSettingsAccessor = sp.GetRequiredService<MusicGQL.Features.ServerSettings.ServerSettingsAccessor>();
-        var logger = sp.GetRequiredService<ILogger<MusicGQL.Features.External.Downloads.DownloadProviderCatalog>>();
+        var serverSettingsAccessor =
+            sp.GetRequiredService<MusicGQL.Features.ServerSettings.ServerSettingsAccessor>();
+        var logger = sp.GetRequiredService<
+            ILogger<MusicGQL.Features.External.Downloads.DownloadProviderCatalog>
+        >();
         bool skipSoulSeek = false;
         bool preferProwlarrFirst = false;
         try
         {
             skipSoulSeek = configuration.GetValue<bool>("Download:SkipSoulSeek");
         }
-        catch
-        {
-        }
+        catch { }
 
         try
         {
             preferProwlarrFirst = configuration.GetValue<bool>("Download:PreferProwlarrFirst");
         }
-        catch
-        {
-        }
+        catch { }
 
-        var soulSeekProvider = sp.GetRequiredService<MusicGQL.Features.External.Downloads.SoulSeekDownloadProvider>();
+        var soulSeekProvider =
+            sp.GetRequiredService<MusicGQL.Features.External.Downloads.SoulSeekDownloadProvider>();
         var prowlarrProvider =
             sp.GetRequiredService<MusicGQL.Features.External.Downloads.Prowlarr.ProwlarrDownloadProvider>();
 
@@ -269,19 +288,22 @@ builder
 
         try
         {
-            logger.LogInformation("[DownloadProviders] skipSoulSeek={Skip}, preferProwlarrFirst={Prefer}", skipSoulSeek,
-                preferProwlarrFirst);
-            logger.LogInformation("[DownloadProviders] Order: {Order}",
-                string.Join(", ", providers.Select(p => p.GetType().Name)));
+            logger.LogInformation(
+                "[DownloadProviders] skipSoulSeek={Skip}, preferProwlarrFirst={Prefer}",
+                skipSoulSeek,
+                preferProwlarrFirst
+            );
+            logger.LogInformation(
+                "[DownloadProviders] Order: {Order}",
+                string.Join(", ", providers.Select(p => p.GetType().Name))
+            );
         }
-        catch
-        {
-        }
+        catch { }
 
         return new MusicGQL.Features.External.Downloads.DownloadProviderCatalog(providers);
     })
     .AddHostedService<SabnzbdWatcherWorker>()
-.AddHostedService<SabnzbdHistoryScannerWorker>()
+    .AddHostedService<SabnzbdHistoryScannerWorker>()
     .AddHostedService<MusicGQL.Features.External.Downloads.QBittorrent.QBittorrentFinalizeWorker>()
     // Event processors
     .AddScoped<LikedSongsEventProcessor>()
@@ -395,12 +417,14 @@ builder.Services.AddStackExchangeRedisCache(options =>
 
 // Options for missing library detector
 builder.Services.Configure<MissingLibraryItemsDetectorOptions>(
-    builder.Configuration.GetSection("MissingLibraryDetector"));
+    builder.Configuration.GetSection("MissingLibraryDetector")
+);
 
 builder
     .AddGraphQL()
     .AddAuthorization()
-    .ModifyRequestOptions(o => {
+    .ModifyRequestOptions(o =>
+    {
         o.ExecutionTimeout = TimeSpan.FromSeconds(60);
         o.IncludeExceptionDetails = builder.Environment.IsDevelopment();
     })
@@ -421,9 +445,9 @@ builder
     .AddTypeExtension<ImportSpotifyPlaylistArtistsMutation>()
     .AddType<ImportArtistsFromSpotifyPlaylistSuccess>()
     .AddType<ImportArtistsFromSpotifyPlaylistError>()
-.AddTypeExtension<SoulSeekSubscription>()
+    .AddTypeExtension<SoulSeekSubscription>()
     .AddTypeExtension<SoulSeekLibrarySharingRoot>()
-.AddTypeExtension<MusicGQL.Features.External.SoulSeek.Mutations.SoulSeekLibrarySharingMutations>()
+    .AddTypeExtension<MusicGQL.Features.External.SoulSeek.Mutations.SoulSeekLibrarySharingMutations>()
     .AddType<MusicGQL.Features.External.SoulSeek.Mutations.StartSoulSeekSharingSuccess>()
     .AddType<MusicGQL.Features.External.SoulSeek.Mutations.StartSoulSeekSharingError>()
     .AddType<MusicGQL.Features.External.SoulSeek.Mutations.StopSoulSeekSharingSuccess>()
@@ -432,7 +456,7 @@ builder
     .AddType<MusicGQL.Features.External.SoulSeek.Mutations.RefreshSoulSeekSharesError>()
     .AddType<MusicGQL.Features.External.SoulSeek.Mutations.CheckSoulSeekReachabilitySuccess>()
     .AddType<MusicGQL.Features.External.SoulSeek.Mutations.CheckSoulSeekReachabilityError>()
-.AddTypeExtension<LibrarySubscription>()
+    .AddTypeExtension<LibrarySubscription>()
     .AddTypeExtension<ImportSubscription>()
     .AddTypeExtension<ArtistImportSearchRoot>()
     .AddTypeExtension<ArtistImportMutations>()
@@ -582,7 +606,6 @@ builder
     .AddTypeExtension<DeleteReleaseAudioMutation>()
     .AddType<DeleteReleaseAudioSuccess>()
     .AddType<DeleteReleaseAudioError>()
-    
     .AddTypeExtension<DeleteArtistMutation>()
     .AddType<DeleteArtistSuccess>()
     .AddType<DeleteArtistError>()
@@ -638,7 +661,9 @@ builder.Services.AddFanArtTVClient(options =>
     var fanartOptions = builder.Configuration.GetSection("Fanart").Get<FanartOptions>();
     options.ApiKey = fanartOptions?.ApiKey;
     // BaseAddress optional; when not provided, client default is used
-    options.BaseAddress = string.IsNullOrWhiteSpace(fanartOptions?.BaseAddress) ? null : fanartOptions!.BaseAddress;
+    options.BaseAddress = string.IsNullOrWhiteSpace(fanartOptions?.BaseAddress)
+        ? null
+        : fanartOptions!.BaseAddress;
 });
 
 builder.Services.AddHostedService<ScheduledTaskPublisher>();
@@ -649,19 +674,31 @@ var app = builder.Build();
 // Add file logger provider targeting LogsFolderPath/mmusic.log when configured
 try
 {
-    var settingsAccessor = app.Services.GetRequiredService<MusicGQL.Features.ServerSettings.ServerSettingsAccessor>();
+    var settingsAccessor =
+        app.Services.GetRequiredService<MusicGQL.Features.ServerSettings.ServerSettingsAccessor>();
     var settings = settingsAccessor.GetAsync().GetAwaiter().GetResult();
     var logsRoot = settings.LogsFolderPath;
     if (!string.IsNullOrWhiteSpace(logsRoot))
     {
         System.IO.Directory.CreateDirectory(logsRoot);
         var loggerFactory = app.Services.GetRequiredService<ILoggerFactory>();
-        loggerFactory.AddProvider(new MusicGQL.Infrastructure.Logging.RollingFileLoggerProvider(logsRoot, "mmusic", LogLevel.Information));
-        app.Logger.LogInformation("[Startup] File logging enabled with hourly rolling in folder {Folder}", logsRoot);
+        loggerFactory.AddProvider(
+            new MusicGQL.Infrastructure.Logging.RollingFileLoggerProvider(
+                logsRoot,
+                "mmusic",
+                LogLevel.Information
+            )
+        );
+        app.Logger.LogInformation(
+            "[Startup] File logging enabled with hourly rolling in folder {Folder}",
+            logsRoot
+        );
     }
     else
     {
-        app.Logger.LogInformation("[Startup] LogsFolderPath is not configured; file logging disabled");
+        app.Logger.LogInformation(
+            "[Startup] LogsFolderPath is not configured; file logging disabled"
+        );
     }
 }
 catch (Exception ex)
@@ -672,7 +709,10 @@ catch (Exception ex)
 // If auto-exit is configured, register a timer to stop the app after the delay
 if (autoExitSeconds is int seconds && seconds > 0)
 {
-    app.Logger.LogInformation("[Startup] Auto-exit is enabled: exiting after {Seconds} seconds", seconds);
+    app.Logger.LogInformation(
+        "[Startup] Auto-exit is enabled: exiting after {Seconds} seconds",
+        seconds
+    );
     app.Lifetime.ApplicationStarted.Register(() =>
     {
         _ = Task.Run(async () =>
@@ -694,7 +734,6 @@ app.UseCors("AllowFrontend");
 app.UseRouting(); // Ensure UseRouting is called before UseAuthentication and UseAuthorization
 app.UseAuthentication();
 app.UseAuthorization();
-
 
 // 🟢 Run event processor once on startup
 using (var scope = app.Services.CreateScope())
@@ -718,10 +757,12 @@ using (var scope = app.Services.CreateScope())
         Console.WriteLine("📀 Loading music library from disk...");
         try
         {
-            var serverSettingsAccessor = scope.ServiceProvider
-                .GetRequiredService<MusicGQL.Features.ServerSettings.ServerSettingsAccessor>();
+            var serverSettingsAccessor =
+                scope.ServiceProvider.GetRequiredService<MusicGQL.Features.ServerSettings.ServerSettingsAccessor>();
             var settings = await serverSettingsAccessor.GetAsync();
-            var lib = string.IsNullOrWhiteSpace(settings.LibraryPath) ? "(not set)" : settings.LibraryPath;
+            var lib = string.IsNullOrWhiteSpace(settings.LibraryPath)
+                ? "(not set)"
+                : settings.LibraryPath;
             Console.WriteLine($"   🔍 Library path: {lib}");
         }
         catch
@@ -740,8 +781,9 @@ using (var scope = app.Services.CreateScope())
         Console.WriteLine();
 
         // Only show detailed listing if explicitly requested (reduce startup noise)
-        var showDetailedListing = Environment.GetEnvironmentVariable("MUSICGQL_SHOW_DETAILED_STARTUP") == "true";
-        
+        var showDetailedListing =
+            Environment.GetEnvironmentVariable("MUSICGQL_SHOW_DETAILED_STARTUP") == "true";
+
         if (showDetailedListing)
         {
             // Display all artists and their albums (verbose mode)
@@ -808,11 +850,15 @@ using (var scope = app.Services.CreateScope())
                 Console.WriteLine($"🎤 Library contains {artists.Count} artists");
                 if (artists.Count > 5)
                 {
-                    Console.WriteLine($"   📋 Sample artists: {string.Join(", ", sampleArtists.Select(a => a.Name))}...");
+                    Console.WriteLine(
+                        $"   📋 Sample artists: {string.Join(", ", sampleArtists.Select(a => a.Name))}..."
+                    );
                 }
                 else
                 {
-                    Console.WriteLine($"   📋 Artists: {string.Join(", ", sampleArtists.Select(a => a.Name))}");
+                    Console.WriteLine(
+                        $"   📋 Artists: {string.Join(", ", sampleArtists.Select(a => a.Name))}"
+                    );
                 }
                 Console.WriteLine();
             }
@@ -821,7 +867,7 @@ using (var scope = app.Services.CreateScope())
                 Console.WriteLine("📭 No artists found in library");
                 Console.WriteLine("   💡 Make sure your library folder contains artist.json files");
             }
-            
+
             // Add helpful hint about detailed logging
             Console.WriteLine("💡 To see detailed artist and release listing during startup, set:");
             Console.WriteLine("   MUSICGQL_SHOW_DETAILED_STARTUP=true");

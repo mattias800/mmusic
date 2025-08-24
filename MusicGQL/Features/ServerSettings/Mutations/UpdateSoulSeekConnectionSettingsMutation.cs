@@ -10,8 +10,12 @@ public record UpdateSoulSeekConnectionSettingsInput(string Host, int Port, strin
 
 [UnionType]
 public abstract record UpdateSoulSeekConnectionSettingsResult;
-public record UpdateSoulSeekConnectionSettingsSuccess(ServerSettings ServerSettings) : UpdateSoulSeekConnectionSettingsResult;
-public record UpdateSoulSeekConnectionSettingsError(string Message) : UpdateSoulSeekConnectionSettingsResult;
+
+public record UpdateSoulSeekConnectionSettingsSuccess(ServerSettings ServerSettings)
+    : UpdateSoulSeekConnectionSettingsResult;
+
+public record UpdateSoulSeekConnectionSettingsError(string Message)
+    : UpdateSoulSeekConnectionSettingsResult;
 
 [ExtendObjectType(typeof(Mutation))]
 public class UpdateSoulSeekConnectionSettingsMutation
@@ -23,7 +27,9 @@ public class UpdateSoulSeekConnectionSettingsMutation
         [Service] EventProcessor.EventProcessorWorker eventProcessorWorker
     )
     {
-        var userIdString = httpContextAccessor.HttpContext?.User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var userIdString = httpContextAccessor.HttpContext?.User.FindFirstValue(
+            ClaimTypes.NameIdentifier
+        );
         if (!Guid.TryParse(userIdString, out var userId))
         {
             return new UpdateSoulSeekConnectionSettingsError("Not authenticated");
@@ -35,20 +41,22 @@ public class UpdateSoulSeekConnectionSettingsMutation
             return new UpdateSoulSeekConnectionSettingsError("Not authorized");
         }
 
-        dbContext.Events.Add(new Events.SoulSeekConnectionUpdated
-        {
-            ActorUserId = userId,
-            Host = input.Host,
-            Port = input.Port,
-            Username = input.Username,
-        });
+        dbContext.Events.Add(
+            new Events.SoulSeekConnectionUpdated
+            {
+                ActorUserId = userId,
+                Host = input.Host,
+                Port = input.Port,
+                Username = input.Username,
+            }
+        );
         await dbContext.SaveChangesAsync();
         await eventProcessorWorker.ProcessEvents();
 
-        var settings = await dbContext.ServerSettings.FirstOrDefaultAsync(s => s.Id == DefaultDbServerSettingsProvider.ServerSettingsSingletonId)
-            ?? DefaultDbServerSettingsProvider.GetDefault();
+        var settings =
+            await dbContext.ServerSettings.FirstOrDefaultAsync(s =>
+                s.Id == DefaultDbServerSettingsProvider.ServerSettingsSingletonId
+            ) ?? DefaultDbServerSettingsProvider.GetDefault();
         return new UpdateSoulSeekConnectionSettingsSuccess(new(settings));
     }
 }
-
-

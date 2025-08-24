@@ -12,7 +12,6 @@ public class UpdateSoulSeekSearchTimeLimitMutation
         EventDbContext db,
         EventProcessor.EventProcessorWorker eventProcessorWorker,
         int seconds
-
     )
     {
         if (seconds is < 5 or > 600)
@@ -21,18 +20,19 @@ public class UpdateSoulSeekSearchTimeLimitMutation
         }
 
         db.Events.Add(new SoulSeekSearchTimeLimitUpdated { NewSeconds = seconds });
-        
+
         await db.SaveChangesAsync();
         await eventProcessorWorker.ProcessEvents();
 
         // Build ServerSettings GQL object from latest row
-        var serverSettings = await db.ServerSettings
-            .FirstOrDefaultAsync(s => s.Id == Db.DefaultDbServerSettingsProvider.ServerSettingsSingletonId)
-            ?? Db.DefaultDbServerSettingsProvider.GetDefault();
+        var serverSettings =
+            await db.ServerSettings.FirstOrDefaultAsync(s =>
+                s.Id == Db.DefaultDbServerSettingsProvider.ServerSettingsSingletonId
+            ) ?? Db.DefaultDbServerSettingsProvider.GetDefault();
 
         // Mirror the new seconds in the instance we return
         serverSettings.SoulSeekSearchTimeLimitSeconds = seconds;
-        
+
         return new UpdateSoulSeekSearchTimeLimitSuccess(new ServerSettings(serverSettings));
     }
 }
@@ -40,8 +40,8 @@ public class UpdateSoulSeekSearchTimeLimitMutation
 [UnionType("UpdateSoulSeekSearchTimeLimitResult")]
 public abstract record UpdateSoulSeekSearchTimeLimitResult;
 
-public record UpdateSoulSeekSearchTimeLimitSuccess(ServerSettings ServerSettings) : UpdateSoulSeekSearchTimeLimitResult;
+public record UpdateSoulSeekSearchTimeLimitSuccess(ServerSettings ServerSettings)
+    : UpdateSoulSeekSearchTimeLimitResult;
 
-public record UpdateSoulSeekSearchTimeLimitError(string Message) : UpdateSoulSeekSearchTimeLimitResult;
-
-
+public record UpdateSoulSeekSearchTimeLimitError(string Message)
+    : UpdateSoulSeekSearchTimeLimitResult;

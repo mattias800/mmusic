@@ -18,11 +18,10 @@ public class CreateUserMutation
 
         return result switch
         {
-            CreateUserHandler.Result.Success success =>
-                new CreateUserSuccess(
-                    new(success.DbUser),
-                    (await dbContext.Users.ToListAsync()).Select(u => new User(u))
-                ),
+            CreateUserHandler.Result.Success success => new CreateUserSuccess(
+                new(success.DbUser),
+                (await dbContext.Users.ToListAsync()).Select(u => new User(u))
+            ),
             CreateUserHandler.Result.Error failure => new CreateUserError(failure.Message),
             _ => new CreateUserError("An unexpected error occurred."),
         };

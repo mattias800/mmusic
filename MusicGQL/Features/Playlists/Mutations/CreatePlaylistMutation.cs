@@ -34,7 +34,10 @@ public class CreatePlaylistMutation
         }
 
         // Authorization: require CreatePlaylists role or Admin
-        if ((user.Roles & (Users.Roles.UserRoles.CreatePlaylists | Users.Roles.UserRoles.Admin)) == 0)
+        if (
+            (user.Roles & (Users.Roles.UserRoles.CreatePlaylists | Users.Roles.UserRoles.Admin))
+            == 0
+        )
         {
             return new CreatePlaylistNoWriteAccess();
         }

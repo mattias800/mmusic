@@ -27,7 +27,13 @@ public class DeleteReleaseAudioMutation
         try
         {
             var audioExts = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-            { ".mp3", ".flac", ".wav", ".m4a", ".ogg" };
+            {
+                ".mp3",
+                ".flac",
+                ".wav",
+                ".m4a",
+                ".ogg",
+            };
 
             var releaseRoot = Path.GetFullPath(release.ReleasePath);
             var files = Directory
@@ -39,8 +45,10 @@ public class DeleteReleaseAudioMutation
                 try
                 {
                     var normalized = Path.GetFullPath(file);
-                    if (normalized.StartsWith(releaseRoot, StringComparison.OrdinalIgnoreCase)
-                        && File.Exists(normalized))
+                    if (
+                        normalized.StartsWith(releaseRoot, StringComparison.OrdinalIgnoreCase)
+                        && File.Exists(normalized)
+                    )
                     {
                         File.Delete(normalized);
                     }
@@ -68,7 +76,8 @@ public class DeleteReleaseAudioMutation
                     {
                         foreach (var d in r.Discs)
                         {
-                            if (d.Tracks == null) continue;
+                            if (d.Tracks == null)
+                                continue;
                             foreach (var jt in d.Tracks)
                             {
                                 jt.AudioFilePath = null;

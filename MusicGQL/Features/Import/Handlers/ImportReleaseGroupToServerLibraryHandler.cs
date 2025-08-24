@@ -33,22 +33,27 @@ public class ImportReleaseGroupToServerLibraryHandler(
                 command.ReleaseGroupMbId,
                 releaseGroup.Title
             );
-            
+
             // Log detailed release group information for debugging
             logger.LogInformation("Release group details:");
             logger.LogInformation("  - Title: {Title}", releaseGroup.Title);
             logger.LogInformation("  - Primary Type: {PrimaryType}", releaseGroup.PrimaryType);
-            logger.LogInformation("  - First Release Date: {FirstReleaseDate}", releaseGroup.FirstReleaseDate);
-            
+            logger.LogInformation(
+                "  - First Release Date: {FirstReleaseDate}",
+                releaseGroup.FirstReleaseDate
+            );
+
             if (releaseGroup.Credits?.Any() == true)
             {
                 logger.LogInformation("  - Credits ({CreditCount}):", releaseGroup.Credits.Count());
                 foreach (var credit in releaseGroup.Credits.Take(5)) // Limit to first 5
                 {
-                    logger.LogInformation("    * {ArtistName} (ID: {ArtistId}, Join: '{JoinPhrase}')", 
-                        credit.Name ?? credit.Artist?.Name ?? "Unknown", 
-                        credit.Artist?.Id ?? "Unknown", 
-                        credit.JoinPhrase ?? "");
+                    logger.LogInformation(
+                        "    * {ArtistName} (ID: {ArtistId}, Join: '{JoinPhrase}')",
+                        credit.Name ?? credit.Artist?.Name ?? "Unknown",
+                        credit.Artist?.Id ?? "Unknown",
+                        credit.JoinPhrase ?? ""
+                    );
                 }
             }
             else
@@ -57,26 +62,34 @@ public class ImportReleaseGroupToServerLibraryHandler(
             }
 
             var artistId = releaseGroup.Credits?.First().Artist.Id;
-            
+
             // Log artist information for debugging
             if (releaseGroup.Credits?.Any() == true)
             {
                 var primaryCredit = releaseGroup.Credits.First();
                 var artistName = primaryCredit.Name ?? primaryCredit.Artist?.Name ?? "Unknown";
-                logger.LogInformation("Primary artist: '{ArtistName}' (ID: {ArtistId})", artistName, artistId);
-                
+                logger.LogInformation(
+                    "Primary artist: '{ArtistName}' (ID: {ArtistId})",
+                    artistName,
+                    artistId
+                );
+
                 // Check if this is a name change situation
                 if (primaryCredit.Artist != null)
                 {
-                    logger.LogInformation("Artist entity: Name='{ArtistName}', SortName='{SortName}', Type='{ArtistType}'", 
-                        primaryCredit.Artist.Name, primaryCredit.Artist.SortName, primaryCredit.Artist.Type);
+                    logger.LogInformation(
+                        "Artist entity: Name='{ArtistName}', SortName='{SortName}', Type='{ArtistType}'",
+                        primaryCredit.Artist.Name,
+                        primaryCredit.Artist.SortName,
+                        primaryCredit.Artist.Type
+                    );
                 }
             }
             else
             {
                 logger.LogWarning("No artist credits found in release group");
             }
-            
+
             // removed artist server status updates
 
             logger.LogInformation(

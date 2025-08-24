@@ -1,9 +1,9 @@
 using System.Net.Http.Headers;
 using MusicGQL.Features.ServerLibrary.Utils;
+using MusicGQL.Features.ServerSettings;
 using MusicGQL.Integration.MusicBrainz;
 using MusicGQL.Integration.Spotify;
 using Path = System.IO.Path;
-using MusicGQL.Features.ServerSettings;
 
 namespace MusicGQL.Features.Import.Services;
 
@@ -35,12 +35,12 @@ public class CoverArtDownloadService(
                 return new FanArtDownloadResult();
             }
         }
-        catch { return new FanArtDownloadResult(); }
+        catch
+        {
+            return new FanArtDownloadResult();
+        }
 
-        var result = await fanArtService.DownloadArtistPhotosAsync(
-            musicBrainzId,
-            artistFolderPath
-        );
+        var result = await fanArtService.DownloadArtistPhotosAsync(musicBrainzId, artistFolderPath);
 
         // Spotify fallback(s) when fanart.tv misses
         try
@@ -102,14 +102,19 @@ public class CoverArtDownloadService(
         try
         {
             // releaseFolderPath => <Library>/<Artist>/<Release>
-            var libRoot = Directory.GetParent(Directory.GetParent(releaseFolderPath)?.FullName ?? string.Empty)?.FullName
-                           ?? string.Empty;
+            var libRoot =
+                Directory
+                    .GetParent(Directory.GetParent(releaseFolderPath)?.FullName ?? string.Empty)
+                    ?.FullName ?? string.Empty;
             if (!File.Exists(Path.Combine(libRoot, LibraryManifestService.ManifestFileName)))
             {
                 return null;
             }
         }
-        catch { return null; }
+        catch
+        {
+            return null;
+        }
 
         // 1) Try fanart.tv
         var viaFanArt = await fanArtService.DownloadReleaseCoverArtAsync(
@@ -128,10 +133,7 @@ public class CoverArtDownloadService(
             return viaCaa;
 
         // 3) Try Spotify
-        var viaSpotify = await TryDownloadCoverFromSpotifyAsync(
-            releaseGroupId,
-            releaseFolderPath
-        );
+        var viaSpotify = await TryDownloadCoverFromSpotifyAsync(releaseGroupId, releaseFolderPath);
         if (!string.IsNullOrWhiteSpace(viaSpotify))
             return viaSpotify;
 
@@ -165,8 +167,9 @@ public class CoverArtDownloadService(
                     if (!response.IsSuccessStatusCode)
                         continue;
                     var bytes = await response.Content.ReadAsByteArrayAsync();
-                    var ext = GetExtensionFromContentType(response.Content.Headers.ContentType)
-                              ?? GetExtensionFromUrlOrDefault(url, ".jpg");
+                    var ext =
+                        GetExtensionFromContentType(response.Content.Headers.ContentType)
+                        ?? GetExtensionFromUrlOrDefault(url, ".jpg");
                     var fileName = "cover" + ext;
                     var filePath = Path.Combine(releaseFolderPath, fileName);
                     await File.WriteAllBytesAsync(filePath, bytes);
@@ -201,8 +204,9 @@ public class CoverArtDownloadService(
                 return null;
 
             var albums = await spotifyService.GetArtistAlbumsAsync(spArtist.Id);
-            var match = albums
-                ?.FirstOrDefault(a => string.Equals(a.Name, groupTitle, StringComparison.OrdinalIgnoreCase));
+            var match = albums?.FirstOrDefault(a =>
+                string.Equals(a.Name, groupTitle, StringComparison.OrdinalIgnoreCase)
+            );
             match ??= albums?.OrderByDescending(a => a.ReleaseDate).FirstOrDefault();
 
             var imageUrl = match?.Images?.FirstOrDefault()?.Url;
@@ -252,5 +256,3 @@ public class CoverArtDownloadService(
         }
     }
 }
-
-

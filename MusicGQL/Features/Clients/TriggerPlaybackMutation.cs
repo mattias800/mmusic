@@ -13,19 +13,22 @@ public sealed class TriggerPlaybackMutation
     )
     {
         var online = presence.GetAllOnlineClients().Any(c => c.ClientId == input.ClientId);
-        await sender.SendAsync("PlaybackTriggered", new ClientPlaybackCommand(
-            input.ClientId,
-            new ClientPlaybackState(
-                input.ArtistId,
-                input.ReleaseFolderName,
-                input.TrackNumber,
-                input.TrackTitle,
-                input.ArtistName,
-                input.CoverArtUrl,
-                input.TrackLengthMs,
-                input.QualityLabel
+        await sender.SendAsync(
+            "PlaybackTriggered",
+            new ClientPlaybackCommand(
+                input.ClientId,
+                new ClientPlaybackState(
+                    input.ArtistId,
+                    input.ReleaseFolderName,
+                    input.TrackNumber,
+                    input.TrackTitle,
+                    input.ArtistName,
+                    input.CoverArtUrl,
+                    input.TrackLengthMs,
+                    input.QualityLabel
+                )
             )
-        ));
+        );
         return new TriggerPlaybackPayload(input.ClientId, online, online ? null : "Client offline");
     }
 }
@@ -44,17 +47,14 @@ public record TriggerPlaybackInput(
 
 public record TriggerPlaybackPayload(string ClientId, bool Accepted, string? Message);
 
-public record ClientPlaybackCommand(
-    string ClientId,
-    ClientPlaybackState Playback
-);
+public record ClientPlaybackCommand(string ClientId, ClientPlaybackState Playback);
 
 [ExtendObjectType(typeof(Subscription))]
 public sealed class ClientPlaybackSubscription
 {
     [Subscribe]
     [Topic("PlaybackTriggered")]
-    public ClientPlaybackCommand OnPlaybackTriggered([EventMessage] ClientPlaybackCommand command) => command;
+    public ClientPlaybackCommand OnPlaybackTriggered(
+        [EventMessage] ClientPlaybackCommand command
+    ) => command;
 }
-
-

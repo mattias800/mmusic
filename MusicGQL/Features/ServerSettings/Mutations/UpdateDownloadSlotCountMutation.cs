@@ -1,7 +1,7 @@
+using MusicGQL.Features.ServerSettings;
 using MusicGQL.Features.ServerSettings.Commands;
 using MusicGQL.Features.ServerSettings.Db;
 using MusicGQL.Features.ServerSettings.Events;
-using MusicGQL.Features.ServerSettings;
 using MusicGQL.Types;
 
 namespace MusicGQL.Features.ServerSettings.Mutations;
@@ -13,7 +13,8 @@ public class UpdateDownloadSlotCountMutation
         UpdateDownloadSlotCountInput input,
         [Service] UpdateDownloadSlotCountHandler updateDownloadSlotCountHandler,
         [Service] ServerSettingsAccessor serverSettingsAccessor,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         // TODO: Get actual user ID from authentication context
         var userId = Guid.Empty; // Placeholder
@@ -29,7 +30,7 @@ public class UpdateDownloadSlotCountMutation
                 new UpdateDownloadSlotCountError("Slot count must be between 1 and 10"),
             _ => throw new InvalidOperationException(
                 "Unhandled result from UpdateDownloadSlotCountHandler"
-            )
+            ),
         };
     }
 
@@ -49,5 +50,4 @@ public abstract record UpdateDownloadSlotCountResult;
 public record UpdateDownloadSlotCountSuccess(ServerSettings ServerSettings)
     : UpdateDownloadSlotCountResult;
 
-public record UpdateDownloadSlotCountError(string Message)
-    : UpdateDownloadSlotCountResult;
+public record UpdateDownloadSlotCountError(string Message) : UpdateDownloadSlotCountResult;

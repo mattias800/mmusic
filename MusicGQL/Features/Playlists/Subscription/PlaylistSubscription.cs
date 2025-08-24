@@ -9,7 +9,8 @@ namespace MusicGQL.Features.Playlists.Subscription;
 [ExtendObjectType(typeof(Types.Subscription))]
 public record PlaylistSubscription
 {
-    public static string PlaylistItemUpdatedTopic(string playlistId) => $"PlaylistItemUpdated_{playlistId}";
+    public static string PlaylistItemUpdatedTopic(string playlistId) =>
+        $"PlaylistItemUpdated_{playlistId}";
 
     public record PlaylistItemUpdatedMessage(string PlaylistId, string PlaylistItemId);
 
@@ -17,8 +18,11 @@ public record PlaylistSubscription
         [Service] ITopicEventReceiver receiver,
         [ID] string playlistId,
         CancellationToken cancellationToken
-    ) => receiver.SubscribeAsync<PlaylistItemUpdatedMessage>(PlaylistItemUpdatedTopic(playlistId),
-        cancellationToken);
+    ) =>
+        receiver.SubscribeAsync<PlaylistItemUpdatedMessage>(
+            PlaylistItemUpdatedTopic(playlistId),
+            cancellationToken
+        );
 
     [Subscribe(With = nameof(SubscribeToPlaylistItemUpdated))]
     public async Task<PlaylistItem> PlaylistItemUpdated(
@@ -27,8 +31,7 @@ public record PlaylistSubscription
     )
     {
         var playlist = await db
-            .Playlists
-            .Include(p => p.Items)
+            .Playlists.Include(p => p.Items)
             .FirstOrDefaultAsync(p => p.Id == message.PlaylistId);
 
         var item = playlist?.Items.FirstOrDefault(i => i.Id == message.PlaylistItemId);

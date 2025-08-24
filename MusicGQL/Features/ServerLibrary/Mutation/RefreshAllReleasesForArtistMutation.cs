@@ -17,7 +17,10 @@ public class RefreshAllReleasesForArtistMutation
             return new RefreshAllReleasesForArtistError("Artist not found");
         }
 
-        var items = artist.Releases.Select(r => new ArtistImportQueue.ArtistImportQueueItem(artist.Name, null)
+        var items = artist.Releases.Select(r => new ArtistImportQueue.ArtistImportQueueItem(
+            artist.Name,
+            null
+        )
         {
             JobKind = ArtistImportQueue.ArtistImportJobKind.RefreshReleaseMetadata,
             LocalArtistId = artistId,

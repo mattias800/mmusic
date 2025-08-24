@@ -6,5 +6,3 @@ public class PublicBaseUrlUpdated : Event
 {
     public string NewPublicBaseUrl { get; set; } = string.Empty;
 }
-
-

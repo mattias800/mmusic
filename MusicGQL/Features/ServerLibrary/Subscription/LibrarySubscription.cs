@@ -1,8 +1,8 @@
 using HotChocolate.Execution;
 using HotChocolate.Subscriptions;
-using MusicGQL.Features.ServerLibrary.Cache;
 using MusicGQL.Features.Artists;
 using MusicGQL.Features.ServerLibrary;
+using MusicGQL.Features.ServerLibrary.Cache;
 
 namespace MusicGQL.Features.ServerLibrary.Subscription;
 
@@ -139,10 +139,11 @@ public record LibrarySubscription
         string artistId,
         string releaseFolderName,
         CancellationToken cancellationToken
-    ) => receiver.SubscribeAsync<Release>(
-        LibraryReleaseUpdatedTopic(artistId, releaseFolderName),
-        cancellationToken
-    );
+    ) =>
+        receiver.SubscribeAsync<Release>(
+            LibraryReleaseUpdatedTopic(artistId, releaseFolderName),
+            cancellationToken
+        );
 
     [Subscribe(With = nameof(SubscribeToLibraryReleaseUpdated))]
     public Release LibraryReleaseUpdated([EventMessage] Release release) => release;
@@ -152,10 +153,11 @@ public record LibrarySubscription
         [Service] ITopicEventReceiver receiver,
         string artistId,
         CancellationToken cancellationToken
-    ) => receiver.SubscribeAsync<Release>(
-        LibraryArtistReleaseUpdatedTopic(artistId),
-        cancellationToken
-    );
+    ) =>
+        receiver.SubscribeAsync<Release>(
+            LibraryArtistReleaseUpdatedTopic(artistId),
+            cancellationToken
+        );
 
     [Subscribe(With = nameof(SubscribeToLibraryArtistReleaseUpdated))]
     public Release LibraryArtistReleaseUpdated([EventMessage] Release release) => release;
@@ -167,10 +169,11 @@ public record LibrarySubscription
         string releaseFolderName,
         int trackNumber,
         CancellationToken cancellationToken
-    ) => receiver.SubscribeAsync<Track>(
-        LibraryTrackUpdatedTopic(artistId, releaseFolderName, trackNumber),
-        cancellationToken
-    );
+    ) =>
+        receiver.SubscribeAsync<Track>(
+            LibraryTrackUpdatedTopic(artistId, releaseFolderName, trackNumber),
+            cancellationToken
+        );
 
     [Subscribe(With = nameof(SubscribeToLibraryTrackUpdated))]
     public Track LibraryTrackUpdated([EventMessage] Track track) => track;
@@ -180,7 +183,8 @@ public record LibrarySubscription
         [Service] ITopicEventReceiver receiver,
         string artistId,
         CancellationToken cancellationToken
-    ) => receiver.SubscribeAsync<Track>(LibraryArtistTrackUpdatedTopic(artistId), cancellationToken);
+    ) =>
+        receiver.SubscribeAsync<Track>(LibraryArtistTrackUpdatedTopic(artistId), cancellationToken);
 
     [Subscribe(With = nameof(SubscribeToLibraryArtistTrackUpdated))]
     public Track LibraryArtistTrackUpdated([EventMessage] Track track) => track;

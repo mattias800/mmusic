@@ -10,7 +10,7 @@ public enum DownloadStatus
     Downloading,
     Processing,
     Completed,
-    Failed
+    Failed,
 }
 
 public record DownloadQueueItem(string ArtistId, string ReleaseFolderName)

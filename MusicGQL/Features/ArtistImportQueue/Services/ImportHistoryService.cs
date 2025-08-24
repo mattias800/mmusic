@@ -1,7 +1,6 @@
 namespace MusicGQL.Features.ArtistImportQueue.Services;
 
-public record ArtistImportHistoryItem
-(
+public record ArtistImportHistoryItem(
     DateTime TimestampUtc,
     ArtistImportJobKind JobKind,
     string ArtistName,
@@ -39,5 +38,3 @@ public class ImportHistoryService
         }
     }
 }
-
-

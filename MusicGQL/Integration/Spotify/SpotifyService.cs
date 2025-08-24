@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Caching.Hybrid;
-using SpotifyAPI.Web;
 using MusicGQL.Features.Playlists.Import.Spotify;
+using SpotifyAPI.Web;
 
 namespace MusicGQL.Integration.Spotify;
 
@@ -26,7 +26,8 @@ public class SpotifyService(SpotifyClient client, HybridCache cache) : CachedSer
             async () =>
             {
                 var fullPlaylist = await client.Playlists.Get(playlistId);
-                if (fullPlaylist == null) return null;
+                if (fullPlaylist == null)
+                    return null;
                 return new SpotifyPlaylistModel
                 {
                     Id = fullPlaylist.Id ?? string.Empty,

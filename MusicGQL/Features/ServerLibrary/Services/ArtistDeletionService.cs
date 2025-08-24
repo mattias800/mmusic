@@ -16,7 +16,9 @@ public class ArtistDeletionService(
     ServerSettingsAccessor serverSettingsAccessor
 )
 {
-    public async Task<(bool Success, string? ErrorMessage)> DeleteArtistCompletelyAsync(string artistId)
+    public async Task<(bool Success, string? ErrorMessage)> DeleteArtistCompletelyAsync(
+        string artistId
+    )
     {
         try
         {
@@ -32,7 +34,11 @@ public class ArtistDeletionService(
 
             // 2) Remove queued downloads for this artist
             var removedFromDlQueue = downloadQueue.RemoveAllForArtist(artistId);
-            logger.LogInformation("[ArtistDeletion] Removed {Count} queued downloads for {ArtistId}", removedFromDlQueue, artistId);
+            logger.LogInformation(
+                "[ArtistDeletion] Removed {Count} queued downloads for {ArtistId}",
+                removedFromDlQueue,
+                artistId
+            );
 
             // 3) Remove artist import queue items referencing this artist (refresh jobs)
             // This service does not currently expose a per-artist purge; best effort by rebuilding the queue
@@ -74,15 +80,22 @@ public class ArtistDeletionService(
             {
                 if (!string.IsNullOrEmpty(item.QueueKey))
                 {
-                    try { if (artistImportQueue.TryRemove(item.QueueKey!)) removed++; } catch { }
+                    try
+                    {
+                        if (artistImportQueue.TryRemove(item.QueueKey!))
+                            removed++;
+                    }
+                    catch { }
                 }
             }
         }
         if (removed > 0)
         {
-            logger.LogInformation("[ArtistDeletion] Removed {Count} artist import jobs for {ArtistId}", removed, artistId);
+            logger.LogInformation(
+                "[ArtistDeletion] Removed {Count} artist import jobs for {ArtistId}",
+                removed,
+                artistId
+            );
         }
     }
 }
-
-

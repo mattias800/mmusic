@@ -4,7 +4,7 @@ using MusicGQL.Features.Assets;
 namespace MusicGQL.Controllers;
 
 [ApiController]
-[Route("assets")] 
+[Route("assets")]
 public class ExternalAssetsController(ExternalAssetStorage storage) : ControllerBase
 {
     /// <summary>
@@ -22,5 +22,3 @@ public class ExternalAssetsController(ExternalAssetStorage storage) : Controller
         return File(stream, contentType, fileName);
     }
 }
-
-

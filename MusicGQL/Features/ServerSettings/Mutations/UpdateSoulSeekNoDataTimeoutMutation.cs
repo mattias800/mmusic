@@ -22,18 +22,19 @@ public class UpdateSoulSeekNoDataTimeoutMutation
         }
 
         db.Events.Add(new SoulSeekNoDataTimeoutUpdated { NewSeconds = input.Seconds });
-        
+
         await db.SaveChangesAsync();
         await eventProcessorWorker.ProcessEvents();
 
         // Build ServerSettings GQL object from latest row
-        var serverSettings = await db.ServerSettings
-            .FirstOrDefaultAsync(s => s.Id == Db.DefaultDbServerSettingsProvider.ServerSettingsSingletonId)
-            ?? Db.DefaultDbServerSettingsProvider.GetDefault();
+        var serverSettings =
+            await db.ServerSettings.FirstOrDefaultAsync(s =>
+                s.Id == Db.DefaultDbServerSettingsProvider.ServerSettingsSingletonId
+            ) ?? Db.DefaultDbServerSettingsProvider.GetDefault();
 
         // Mirror in returned instance
         serverSettings.SoulSeekNoDataTimeoutSeconds = input.Seconds;
-        
+
         return new UpdateSoulSeekNoDataTimeoutSuccess(new ServerSettings(serverSettings));
     }
 }
@@ -41,9 +42,7 @@ public class UpdateSoulSeekNoDataTimeoutMutation
 [UnionType("UpdateSoulSeekNoDataTimeoutResult")]
 public abstract record UpdateSoulSeekNoDataTimeoutResult;
 
-public record UpdateSoulSeekNoDataTimeoutSuccess(ServerSettings ServerSettings) : UpdateSoulSeekNoDataTimeoutResult;
+public record UpdateSoulSeekNoDataTimeoutSuccess(ServerSettings ServerSettings)
+    : UpdateSoulSeekNoDataTimeoutResult;
 
 public record UpdateSoulSeekNoDataTimeoutError(string Message) : UpdateSoulSeekNoDataTimeoutResult;
-
-
-

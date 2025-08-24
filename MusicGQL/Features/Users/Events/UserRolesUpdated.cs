@@ -8,5 +8,3 @@ public class UserRolesUpdated : Event
     public Guid SubjectUserId { get; set; }
     public UserRoles Roles { get; set; }
 }
-
-

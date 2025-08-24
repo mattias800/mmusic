@@ -15,10 +15,14 @@ public record UserSearchRoot
     {
         // Only Admins can list users
         var userIdClaim = claims.FindFirst(ClaimTypes.NameIdentifier);
-        if (userIdClaim is null) return [];
+        if (userIdClaim is null)
+            return [];
         var userId = Guid.Parse(userIdClaim.Value);
-        var viewer = await dbContext.Users.AsNoTracking().FirstOrDefaultAsync(u => u.UserId == userId);
-        if (viewer is null || (viewer.Roles & Roles.UserRoles.Admin) == 0) return [];
+        var viewer = await dbContext
+            .Users.AsNoTracking()
+            .FirstOrDefaultAsync(u => u.UserId == userId);
+        if (viewer is null || (viewer.Roles & Roles.UserRoles.Admin) == 0)
+            return [];
 
         var projections = await dbContext.Users.ToListAsync();
         return projections.Select(p => new User(p));
@@ -31,10 +35,14 @@ public record UserSearchRoot
     )
     {
         var userIdClaim = claims.FindFirst(ClaimTypes.NameIdentifier);
-        if (userIdClaim is null) return [];
+        if (userIdClaim is null)
+            return [];
         var userId = Guid.Parse(userIdClaim.Value);
-        var viewer = await dbContext.Users.AsNoTracking().FirstOrDefaultAsync(u => u.UserId == userId);
-        if (viewer is null || (viewer.Roles & Roles.UserRoles.Admin) == 0) return [];
+        var viewer = await dbContext
+            .Users.AsNoTracking()
+            .FirstOrDefaultAsync(u => u.UserId == userId);
+        if (viewer is null || (viewer.Roles & Roles.UserRoles.Admin) == 0)
+            return [];
         return presence.GetAllOnlineClients();
     }
 }

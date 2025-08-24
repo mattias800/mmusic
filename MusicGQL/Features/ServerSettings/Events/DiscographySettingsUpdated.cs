@@ -7,5 +7,3 @@ public class DiscographySettingsUpdated : Event
     public bool Enabled { get; set; }
     public string? StagingPath { get; set; }
 }
-
-

@@ -1,11 +1,11 @@
+using System.Collections.Concurrent;
+using System.Text.Json;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using MusicGQL.Features.External.Downloads.Sabnzbd.Configuration;
 using MusicGQL.Features.ServerLibrary.Cache;
-using MusicGQL.Features.ServerSettings;
 using MusicGQL.Features.ServerLibrary.Writer;
-using Microsoft.Extensions.DependencyInjection;
-using System.Text.Json;
-using System.Collections.Concurrent;
+using MusicGQL.Features.ServerSettings;
 
 namespace MusicGQL.Features.External.Downloads.Sabnzbd;
 
@@ -39,7 +39,10 @@ public class SabnzbdHistoryScannerWorker(
             return;
         }
 
-        logger.LogInformation("[SAB History Scanner] Started with {Interval} minute scan interval", opts.ScanIntervalMinutes);
+        logger.LogInformation(
+            "[SAB History Scanner] Started with {Interval} minute scan interval",
+            opts.ScanIntervalMinutes
+        );
 
         while (!stoppingToken.IsCancellationRequested)
         {
@@ -60,11 +63,14 @@ public class SabnzbdHistoryScannerWorker(
         }
     }
 
-    private async Task ScanHistoryForMissingReleasesAsync(SabnzbdHistoryScannerOptions opts, CancellationToken cancellationToken)
+    private async Task ScanHistoryForMissingReleasesAsync(
+        SabnzbdHistoryScannerOptions opts,
+        CancellationToken cancellationToken
+    )
     {
         var baseUrl = sabnzbdOptions.Value.BaseUrl?.TrimEnd('/');
         var apiKey = sabnzbdOptions.Value.ApiKey;
-        
+
         if (string.IsNullOrWhiteSpace(baseUrl) || string.IsNullOrWhiteSpace(apiKey))
         {
             logger.LogDebug("[SAB History Scanner] Missing SABnzbd configuration, skipping scan");
@@ -74,21 +80,27 @@ public class SabnzbdHistoryScannerWorker(
         try
         {
             // Get SABnzbd history
-            var historyUrl = $"{baseUrl}/api?mode=history&apikey={Uri.EscapeDataString(apiKey)}&output=json&limit={opts.MaxHistoryItemsToProcess}";
+            var historyUrl =
+                $"{baseUrl}/api?mode=history&apikey={Uri.EscapeDataString(apiKey)}&output=json&limit={opts.MaxHistoryItemsToProcess}";
             logger.LogDebug("[SAB History Scanner] Querying SABnzbd history at {Url}", historyUrl);
-            
+
             var response = await httpClient.GetAsync(historyUrl, cancellationToken);
             if (!response.IsSuccessStatusCode)
             {
-                logger.LogWarning("[SAB History Scanner] Failed to get history: HTTP {Status}", (int)response.StatusCode);
+                logger.LogWarning(
+                    "[SAB History Scanner] Failed to get history: HTTP {Status}",
+                    (int)response.StatusCode
+                );
                 return;
             }
 
             var json = await response.Content.ReadAsStringAsync(cancellationToken);
             var doc = JsonDocument.Parse(json);
-            
-            if (!doc.RootElement.TryGetProperty("history", out var history) ||
-                !history.TryGetProperty("slots", out var slots))
+
+            if (
+                !doc.RootElement.TryGetProperty("history", out var history)
+                || !history.TryGetProperty("slots", out var slots)
+            )
             {
                 logger.LogDebug("[SAB History Scanner] No history slots found in response");
                 return;
@@ -100,23 +112,34 @@ public class SabnzbdHistoryScannerWorker(
 
             foreach (var slot in slots.EnumerateArray())
             {
-                if (cancellationToken.IsCancellationRequested) break;
-                if (processedCount >= opts.MaxHistoryItemsToProcess) break;
+                if (cancellationToken.IsCancellationRequested)
+                    break;
+                if (processedCount >= opts.MaxHistoryItemsToProcess)
+                    break;
 
                 try
                 {
                     // Log the slot structure for debugging
-                    logger.LogDebug("[SAB History Scanner] Processing slot: {SlotJson}", slot.GetRawText());
-                    
-                    if (slot.TryGetProperty("name", out var name) &&
-                        slot.TryGetProperty("completed", out var completed) &&
-                        slot.TryGetProperty("status", out var status))
+                    logger.LogDebug(
+                        "[SAB History Scanner] Processing slot: {SlotJson}",
+                        slot.GetRawText()
+                    );
+
+                    if (
+                        slot.TryGetProperty("name", out var name)
+                        && slot.TryGetProperty("completed", out var completed)
+                        && slot.TryGetProperty("status", out var status)
+                    )
                     {
                         var jobName = name.GetString();
                         var statusStr = status.GetString();
 
-                        logger.LogDebug("[SAB History Scanner] Slot has name='{JobName}', status='{Status}', completed type={CompletedType}", 
-                            jobName, statusStr, completed.ValueKind);
+                        logger.LogDebug(
+                            "[SAB History Scanner] Slot has name='{JobName}', status='{Status}', completed type={CompletedType}",
+                            jobName,
+                            statusStr,
+                            completed.ValueKind
+                        );
 
                         if (string.IsNullOrWhiteSpace(jobName) || statusStr != "Completed")
                         {
@@ -128,10 +151,15 @@ public class SabnzbdHistoryScannerWorker(
                         if (completed.ValueKind == JsonValueKind.String)
                         {
                             var completedStr = completed.GetString();
-                            if (string.IsNullOrWhiteSpace(completedStr) || 
-                                !DateTime.TryParse(completedStr, out completedTime))
+                            if (
+                                string.IsNullOrWhiteSpace(completedStr)
+                                || !DateTime.TryParse(completedStr, out completedTime)
+                            )
                             {
-                                logger.LogDebug("[SAB History Scanner] Failed to parse completed string: '{CompletedStr}'", completedStr);
+                                logger.LogDebug(
+                                    "[SAB History Scanner] Failed to parse completed string: '{CompletedStr}'",
+                                    completedStr
+                                );
                                 continue;
                             }
                         }
@@ -139,38 +167,64 @@ public class SabnzbdHistoryScannerWorker(
                         {
                             // SABnzbd sometimes returns Unix timestamps
                             var timestamp = completed.GetInt64();
-                            completedTime = DateTimeOffset.FromUnixTimeSeconds(timestamp).UtcDateTime;
-                            logger.LogDebug("[SAB History Scanner] Parsed Unix timestamp {Timestamp} -> {CompletedTime}", timestamp, completedTime);
+                            completedTime = DateTimeOffset
+                                .FromUnixTimeSeconds(timestamp)
+                                .UtcDateTime;
+                            logger.LogDebug(
+                                "[SAB History Scanner] Parsed Unix timestamp {Timestamp} -> {CompletedTime}",
+                                timestamp,
+                                completedTime
+                            );
                         }
                         else
                         {
                             // Skip if we can't parse the completion time
-                            logger.LogDebug("[SAB History Scanner] Skipping slot with unexpected completed type: {CompletedType}", completed.ValueKind);
+                            logger.LogDebug(
+                                "[SAB History Scanner] Skipping slot with unexpected completed type: {CompletedType}",
+                                completed.ValueKind
+                            );
                             continue;
                         }
 
                         if (completedTime < cutoffTime)
                         {
-                            logger.LogDebug("[SAB History Scanner] Slot completed at {CompletedTime} is older than cutoff {CutoffTime}", completedTime, cutoffTime);
+                            logger.LogDebug(
+                                "[SAB History Scanner] Slot completed at {CompletedTime} is older than cutoff {CutoffTime}",
+                                completedTime,
+                                cutoffTime
+                            );
                             continue;
                         }
 
                         // Skip if we've already processed this job
-                        if (_processedJobs.TryGetValue(jobName, out var lastProcessed) && 
-                            lastProcessed > completedTime)
+                        if (
+                            _processedJobs.TryGetValue(jobName, out var lastProcessed)
+                            && lastProcessed > completedTime
+                        )
                         {
                             continue;
                         }
 
                         processedCount++;
-                        logger.LogDebug("[SAB History Scanner] Processing completed job: {JobName} (completed: {Completed})", jobName, completedTime);
+                        logger.LogDebug(
+                            "[SAB History Scanner] Processing completed job: {JobName} (completed: {Completed})",
+                            jobName,
+                            completedTime
+                        );
 
                         // Try to match this job against missing releases
-                        var matched = await TryMatchJobToMissingReleaseAsync(jobName, cancellationToken);
+                        var matched = await TryMatchJobToMissingReleaseAsync(
+                            jobName,
+                            cancellationToken
+                        );
                         if (matched)
                         {
                             matchedCount++;
-                            _processedJobs.AddOrUpdate(jobName, completedTime, (_, _) => completedTime);
+                            _processedJobs.AddOrUpdate(
+                                jobName,
+                                completedTime,
+                                (_, _) => completedTime
+                            );
                         }
                     }
                 }
@@ -182,8 +236,11 @@ public class SabnzbdHistoryScannerWorker(
 
             if (processedCount > 0)
             {
-                logger.LogInformation("[SAB History Scanner] Processed {Processed} history items, matched {Matched} to missing releases", 
-                    processedCount, matchedCount);
+                logger.LogInformation(
+                    "[SAB History Scanner] Processed {Processed} history items, matched {Matched} to missing releases",
+                    processedCount,
+                    matchedCount
+                );
             }
         }
         catch (Exception ex)
@@ -192,13 +249,18 @@ public class SabnzbdHistoryScannerWorker(
         }
     }
 
-    private async Task<bool> TryMatchJobToMissingReleaseAsync(string jobName, CancellationToken cancellationToken)
+    private async Task<bool> TryMatchJobToMissingReleaseAsync(
+        string jobName,
+        CancellationToken cancellationToken
+    )
     {
         try
         {
             // Skip if we recently failed to match this job
-            if (_failedMatches.TryGetValue(jobName, out var lastFailed) && 
-                lastFailed > DateTime.UtcNow.AddHours(-1)) // 1 hour cooldown on failed matches
+            if (
+                _failedMatches.TryGetValue(jobName, out var lastFailed)
+                && lastFailed > DateTime.UtcNow.AddHours(-1)
+            ) // 1 hour cooldown on failed matches
             {
                 return false;
             }
@@ -206,8 +268,12 @@ public class SabnzbdHistoryScannerWorker(
             // Get all missing releases (releases with no available tracks)
             var allReleases = await cache.GetAllReleasesAsync();
             var missingReleases = allReleases
-                .Where(r => (r.Tracks?.Count ?? 0) > 0 && 
-                           r.Tracks.All(t => t.CachedMediaAvailabilityStatus != CachedMediaAvailabilityStatus.Available))
+                .Where(r =>
+                    (r.Tracks?.Count ?? 0) > 0
+                    && r.Tracks.All(t =>
+                        t.CachedMediaAvailabilityStatus != CachedMediaAvailabilityStatus.Available
+                    )
+                )
                 .ToList();
 
             if (missingReleases.Count == 0)
@@ -220,18 +286,25 @@ public class SabnzbdHistoryScannerWorker(
             var bestMatch = FindBestReleaseMatch(jobName, missingReleases);
             if (bestMatch == null)
             {
-                logger.LogDebug("[SAB History Scanner] No match found for job '{JobName}'", jobName);
+                logger.LogDebug(
+                    "[SAB History Scanner] No match found for job '{JobName}'",
+                    jobName
+                );
                 _failedMatches.AddOrUpdate(jobName, DateTime.UtcNow, (_, _) => DateTime.UtcNow);
                 return false;
             }
 
-            logger.LogInformation("[SAB History Scanner] Found match for job '{JobName}' -> {ArtistId}/{ReleaseFolder}", 
-                jobName, bestMatch.ArtistId, bestMatch.FolderName);
+            logger.LogInformation(
+                "[SAB History Scanner] Found match for job '{JobName}' -> {ArtistId}/{ReleaseFolder}",
+                jobName,
+                bestMatch.ArtistId,
+                bestMatch.FolderName
+            );
 
             // Try to finalize the release
             var settings = await serverSettingsAccessor.GetAsync();
             var completedPath = sabnzbdOptions.Value.CompletedPath;
-            
+
             if (string.IsNullOrWhiteSpace(completedPath))
             {
                 logger.LogWarning("[SAB History Scanner] No completed path configured for SABnzbd");
@@ -241,62 +314,95 @@ public class SabnzbdHistoryScannerWorker(
             // Look for the release in the completed downloads folder
             var potentialPaths = new List<string>
             {
-                System.IO.Path.Combine(completedPath, "mmusic", bestMatch.ArtistId, bestMatch.FolderName),
+                System.IO.Path.Combine(
+                    completedPath,
+                    "mmusic",
+                    bestMatch.ArtistId,
+                    bestMatch.FolderName
+                ),
                 System.IO.Path.Combine(completedPath, bestMatch.ArtistId, bestMatch.FolderName),
-                System.IO.Path.Combine(completedPath, bestMatch.FolderName)
+                System.IO.Path.Combine(completedPath, bestMatch.FolderName),
             };
 
             foreach (var potentialPath in potentialPaths)
             {
                 if (Directory.Exists(potentialPath))
                 {
-                    logger.LogInformation("[SAB History Scanner] Found potential release at {Path}, attempting finalization", potentialPath);
-                    
+                    logger.LogInformation(
+                        "[SAB History Scanner] Found potential release at {Path}, attempting finalization",
+                        potentialPath
+                    );
+
                     using var scope = scopeFactory.CreateScope();
-                    var finalizeService = scope.ServiceProvider.GetRequiredService<SabnzbdFinalizeService>();
-                    
+                    var finalizeService =
+                        scope.ServiceProvider.GetRequiredService<SabnzbdFinalizeService>();
+
                     try
                     {
-                        await finalizeService.FinalizeReleaseAsync(bestMatch.ArtistId, bestMatch.FolderName, cancellationToken);
-                        _processedJobs.AddOrUpdate(jobName, DateTime.UtcNow, (_, _) => DateTime.UtcNow);
+                        await finalizeService.FinalizeReleaseAsync(
+                            bestMatch.ArtistId,
+                            bestMatch.FolderName,
+                            cancellationToken
+                        );
+                        _processedJobs.AddOrUpdate(
+                            jobName,
+                            DateTime.UtcNow,
+                            (_, _) => DateTime.UtcNow
+                        );
                         return true;
                     }
                     catch (Exception ex)
                     {
-                        logger.LogWarning(ex, "[SAB History Scanner] Failed to finalize release at {Path}", potentialPath);
+                        logger.LogWarning(
+                            ex,
+                            "[SAB History Scanner] Failed to finalize release at {Path}",
+                            potentialPath
+                        );
                     }
                 }
             }
 
-            logger.LogDebug("[SAB History Scanner] No matching directory found for job '{JobName}'", jobName);
+            logger.LogDebug(
+                "[SAB History Scanner] No matching directory found for job '{JobName}'",
+                jobName
+            );
             _failedMatches.AddOrUpdate(jobName, DateTime.UtcNow, (_, _) => DateTime.UtcNow);
             return false;
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "[SAB History Scanner] Error trying to match job '{JobName}'", jobName);
+            logger.LogError(
+                ex,
+                "[SAB History Scanner] Error trying to match job '{JobName}'",
+                jobName
+            );
             return false;
         }
     }
 
-    private static CachedRelease? FindBestReleaseMatch(string jobName, List<CachedRelease> missingReleases)
+    private static CachedRelease? FindBestReleaseMatch(
+        string jobName,
+        List<CachedRelease> missingReleases
+    )
     {
         // Simple matching logic - can be improved later
         var jobNameLower = jobName.ToLowerInvariant();
-        
+
         // First try exact matches
-        var exactMatch = missingReleases.FirstOrDefault(r => 
-            jobNameLower.Contains(r.ArtistId.ToLowerInvariant()) && 
-            jobNameLower.Contains(r.FolderName.ToLowerInvariant()));
-        
+        var exactMatch = missingReleases.FirstOrDefault(r =>
+            jobNameLower.Contains(r.ArtistId.ToLowerInvariant())
+            && jobNameLower.Contains(r.FolderName.ToLowerInvariant())
+        );
+
         if (exactMatch != null)
             return exactMatch;
 
         // Try partial matches
-        var partialMatch = missingReleases.FirstOrDefault(r => 
-            jobNameLower.Contains(r.ArtistId.ToLowerInvariant()) || 
-            jobNameLower.Contains(r.FolderName.ToLowerInvariant()));
-        
+        var partialMatch = missingReleases.FirstOrDefault(r =>
+            jobNameLower.Contains(r.ArtistId.ToLowerInvariant())
+            || jobNameLower.Contains(r.FolderName.ToLowerInvariant())
+        );
+
         return partialMatch;
     }
 }

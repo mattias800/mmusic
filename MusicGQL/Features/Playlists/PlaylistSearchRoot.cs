@@ -22,8 +22,8 @@ public record PlaylistSearchRoot
         string searchTerm
     )
     {
-        var query = db.Playlists
-            .Where(p => p.Name != null && p.Name.ToLower().Contains(searchTerm.ToLower()))
+        var query = db
+            .Playlists.Where(p => p.Name != null && p.Name.ToLower().Contains(searchTerm.ToLower()))
             .OrderByDescending(p => p.CreatedAt)
             .Take(limit);
         var results = await query.ToListAsync();

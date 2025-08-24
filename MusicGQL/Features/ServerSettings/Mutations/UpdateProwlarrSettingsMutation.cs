@@ -18,7 +18,10 @@ public record UpdateProwlarrSettingsInput(
 
 [UnionType]
 public abstract record UpdateProwlarrSettingsResult;
-public record UpdateProwlarrSettingsSuccess(ServerSettings ServerSettings) : UpdateProwlarrSettingsResult;
+
+public record UpdateProwlarrSettingsSuccess(ServerSettings ServerSettings)
+    : UpdateProwlarrSettingsResult;
+
 public record UpdateProwlarrSettingsError(string Message) : UpdateProwlarrSettingsResult;
 
 [ExtendObjectType(typeof(Mutation))]
@@ -31,7 +34,9 @@ public class UpdateProwlarrSettingsMutation
         [Service] EventProcessor.EventProcessorWorker eventProcessorWorker
     )
     {
-        var userIdString = httpContextAccessor.HttpContext?.User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var userIdString = httpContextAccessor.HttpContext?.User.FindFirstValue(
+            ClaimTypes.NameIdentifier
+        );
         if (!Guid.TryParse(userIdString, out var userId))
             return new UpdateProwlarrSettingsError("Not authenticated");
 
@@ -39,24 +44,26 @@ public class UpdateProwlarrSettingsMutation
         if (viewer is null || (viewer.Roles & Users.Roles.UserRoles.Admin) == 0)
             return new UpdateProwlarrSettingsError("Not authorized");
 
-        dbContext.Events.Add(new Events.ProwlarrSettingsUpdated
-        {
-            ActorUserId = userId,
-            BaseUrl = input.BaseUrl,
-            TimeoutSeconds = input.TimeoutSeconds,
-            MaxRetries = input.MaxRetries,
-            RetryDelaySeconds = input.RetryDelaySeconds,
-            TestConnectivityFirst = input.TestConnectivityFirst,
-            EnableDetailedLogging = input.EnableDetailedLogging,
-            MaxConcurrentRequests = input.MaxConcurrentRequests,
-        });
+        dbContext.Events.Add(
+            new Events.ProwlarrSettingsUpdated
+            {
+                ActorUserId = userId,
+                BaseUrl = input.BaseUrl,
+                TimeoutSeconds = input.TimeoutSeconds,
+                MaxRetries = input.MaxRetries,
+                RetryDelaySeconds = input.RetryDelaySeconds,
+                TestConnectivityFirst = input.TestConnectivityFirst,
+                EnableDetailedLogging = input.EnableDetailedLogging,
+                MaxConcurrentRequests = input.MaxConcurrentRequests,
+            }
+        );
         await dbContext.SaveChangesAsync();
         await eventProcessorWorker.ProcessEvents();
 
-        var settings = await dbContext.ServerSettings.FirstOrDefaultAsync(s => s.Id == DefaultDbServerSettingsProvider.ServerSettingsSingletonId)
-            ?? DefaultDbServerSettingsProvider.GetDefault();
+        var settings =
+            await dbContext.ServerSettings.FirstOrDefaultAsync(s =>
+                s.Id == DefaultDbServerSettingsProvider.ServerSettingsSingletonId
+            ) ?? DefaultDbServerSettingsProvider.GetDefault();
         return new UpdateProwlarrSettingsSuccess(new(settings));
     }
 }
-
-

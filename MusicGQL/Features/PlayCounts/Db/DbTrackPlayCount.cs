@@ -17,5 +17,3 @@ public class DbTrackPlayCount
     public long PlayCount { get; set; }
     public DateTime? LastPlayedAt { get; set; }
 }
-
-

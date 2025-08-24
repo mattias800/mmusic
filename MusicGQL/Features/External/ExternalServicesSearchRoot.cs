@@ -2,7 +2,8 @@ namespace MusicGQL.Features.External;
 
 public record ExternalServicesSearchRoot
 {
-    public IEnumerable<ExternalService> All() => ExternalServiceCatalog.All.Select(s => new ExternalService(s));
+    public IEnumerable<ExternalService> All() =>
+        ExternalServiceCatalog.All.Select(s => new ExternalService(s));
 
     public ExternalService? ById([ID] string id)
     {

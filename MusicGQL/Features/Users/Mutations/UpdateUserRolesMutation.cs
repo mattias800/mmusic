@@ -45,7 +45,8 @@ public class UpdateUserRolesMutation
 
         var newRoles = (UserRoles)input.Roles;
 
-        var removingAdmin = (targetUser.Roles & UserRoles.Admin) != 0 && (newRoles & UserRoles.Admin) == 0;
+        var removingAdmin =
+            (targetUser.Roles & UserRoles.Admin) != 0 && (newRoles & UserRoles.Admin) == 0;
         if (removingAdmin)
         {
             if (actorUserId == targetUser.UserId)
@@ -53,18 +54,18 @@ public class UpdateUserRolesMutation
                 return new UpdateUserRolesError("You cannot remove admin from yourself");
             }
 
-            var adminCount = await dbContext.Users.CountAsync(u => (u.Roles & UserRoles.Admin) != 0);
+            var adminCount = await dbContext.Users.CountAsync(u =>
+                (u.Roles & UserRoles.Admin) != 0
+            );
             if (adminCount <= 1)
             {
                 return new UpdateUserRolesError("Cannot remove admin from the last admin user");
             }
         }
 
-        dbContext.Events.Add(new UserRolesUpdated
-        {
-            SubjectUserId = input.UserId,
-            Roles = newRoles,
-        });
+        dbContext.Events.Add(
+            new UserRolesUpdated { SubjectUserId = input.UserId, Roles = newRoles }
+        );
 
         await dbContext.SaveChangesAsync();
         await eventProcessor.ProcessEvents();
@@ -82,5 +83,3 @@ public abstract record UpdateUserRolesResult;
 public record UpdateUserRolesSuccess(User User) : UpdateUserRolesResult;
 
 public record UpdateUserRolesError(string Message) : UpdateUserRolesResult;
-
-

@@ -8,15 +8,22 @@ internal static class ProwlarrJsonParser
         JsonElement root,
         string artistName,
         string releaseTitle,
-        ILogger logger)
+        ILogger logger
+    )
     {
         // Root can be array or object with Results/results
         JsonElement array = root;
         if (root.ValueKind == JsonValueKind.Object)
         {
-            if (!TryGetPropertyCI(root, "results", out array) && !TryGetPropertyCI(root, "Results", out array))
+            if (
+                !TryGetPropertyCI(root, "results", out array)
+                && !TryGetPropertyCI(root, "Results", out array)
+            )
             {
-                if (!TryGetPropertyCI(root, "data", out array) && !TryGetPropertyCI(root, "Data", out array))
+                if (
+                    !TryGetPropertyCI(root, "data", out array)
+                    && !TryGetPropertyCI(root, "Data", out array)
+                )
                 {
                     array = root;
                 }
@@ -38,13 +45,20 @@ internal static class ProwlarrJsonParser
             string? title = GetStringCI(item, "title") ?? GetStringCI(item, "Title");
             string? guid = GetStringCI(item, "guid") ?? GetStringCI(item, "Guid");
             string? magnet = GetStringCI(item, "magnetUrl") ?? GetStringCI(item, "MagnetUrl");
-            string? downloadUrl = GetStringCI(item, "downloadUrl") ?? GetStringCI(item, "DownloadUrl")
-                ?? GetStringCI(item, "link") ?? GetStringCI(item, "Link");
+            string? downloadUrl =
+                GetStringCI(item, "downloadUrl")
+                ?? GetStringCI(item, "DownloadUrl")
+                ?? GetStringCI(item, "link")
+                ?? GetStringCI(item, "Link");
             long? size = GetInt64CI(item, "size") ?? GetInt64CI(item, "Size");
             int? indexerId = null;
-            if (TryGetPropertyCI(item, "indexerId", out var idx) && idx.ValueKind == JsonValueKind.Number)
+            if (
+                TryGetPropertyCI(item, "indexerId", out var idx)
+                && idx.ValueKind == JsonValueKind.Number
+            )
             {
-                if (idx.TryGetInt32(out var i32)) indexerId = i32;
+                if (idx.TryGetInt32(out var i32))
+                    indexerId = i32;
             }
 
             var release = new ProwlarrRelease(title, guid, magnet, downloadUrl, size, indexerId);
@@ -56,16 +70,33 @@ internal static class ProwlarrJsonParser
             else
             {
                 filteredResults++;
-                var reason = ProwlarrResultFilter.GetRejectionReason(release, artistName, releaseTitle);
-                logger.LogDebug("[Prowlarr] Filtered out result '{Title}': {Reason}", title, reason);
+                var reason = ProwlarrResultFilter.GetRejectionReason(
+                    release,
+                    artistName,
+                    releaseTitle
+                );
+                logger.LogDebug(
+                    "[Prowlarr] Filtered out result '{Title}': {Reason}",
+                    title,
+                    reason
+                );
             }
         }
 
-        logger.LogInformation("[Prowlarr] Filtered {Filtered}/{Total} results for '{Artist} - {Album}'",
-            filteredResults, totalResults, artistName, releaseTitle);
+        logger.LogInformation(
+            "[Prowlarr] Filtered {Filtered}/{Total} results for '{Artist} - {Album}'",
+            filteredResults,
+            totalResults,
+            artistName,
+            releaseTitle
+        );
 
-        list.Sort((a, b) => ProwlarrScorer.CalculateRelevanceScore(b, artistName, releaseTitle)
-            .CompareTo(ProwlarrScorer.CalculateRelevanceScore(a, artistName, releaseTitle)));
+        list.Sort(
+            (a, b) =>
+                ProwlarrScorer
+                    .CalculateRelevanceScore(b, artistName, releaseTitle)
+                    .CompareTo(ProwlarrScorer.CalculateRelevanceScore(a, artistName, releaseTitle))
+        );
 
         return list;
     }
@@ -74,10 +105,12 @@ internal static class ProwlarrJsonParser
     {
         if (root.ValueKind == JsonValueKind.Array)
         {
-            logger.LogDebug("[Prowlarr] Root is array; first item keys: {Keys}",
+            logger.LogDebug(
+                "[Prowlarr] Root is array; first item keys: {Keys}",
                 root.GetArrayLength() > 0
                     ? string.Join(",", root[0].EnumerateObject().Select(p => p.Name))
-                    : "(empty)");
+                    : "(empty)"
+            );
             return;
         }
 
@@ -87,12 +120,18 @@ internal static class ProwlarrJsonParser
             logger.LogDebug("[Prowlarr] Root is object; keys: {Keys}", string.Join(",", keys));
             foreach (var k in keys)
             {
-                if (TryGetPropertyCI(root, k, out var v) && v.ValueKind == JsonValueKind.Array &&
-                    v.GetArrayLength() > 0)
+                if (
+                    TryGetPropertyCI(root, k, out var v)
+                    && v.ValueKind == JsonValueKind.Array
+                    && v.GetArrayLength() > 0
+                )
                 {
                     var innerKeys = v[0].EnumerateObject().Select(p => p.Name);
-                    logger.LogDebug("[Prowlarr] First element keys of '{Key}': {InnerKeys}", k,
-                        string.Join(",", innerKeys));
+                    logger.LogDebug(
+                        "[Prowlarr] First element keys of '{Key}': {InnerKeys}",
+                        k,
+                        string.Join(",", innerKeys)
+                    );
                 }
             }
         }
@@ -137,10 +176,10 @@ internal static class ProwlarrJsonParser
     {
         if (TryGetPropertyCI(obj, name, out var v) && v.ValueKind == JsonValueKind.Number)
         {
-            if (v.TryGetInt64(out var i64)) return i64;
+            if (v.TryGetInt64(out var i64))
+                return i64;
         }
 
         return null;
     }
 }
-

@@ -29,5 +29,3 @@ public class UpdateLogsFolderPathHandler(
         public record Success : Result;
     }
 }
-
-

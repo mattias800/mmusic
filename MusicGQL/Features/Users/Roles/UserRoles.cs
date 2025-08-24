@@ -18,10 +18,9 @@ public static class UserRolesExtensions
     {
         foreach (var r in required)
         {
-            if ((roles & r) == r) return true;
+            if ((roles & r) == r)
+                return true;
         }
         return false;
     }
 }
-
-

@@ -20,7 +20,10 @@ public class QBittorrentFinalizeWorker(
     MusicGQL.Features.Downloads.Services.DownloadLogPathProvider logPathProvider
 ) : BackgroundService
 {
-    private readonly System.Collections.Concurrent.ConcurrentDictionary<string, DateTime> _lastAttempt = new();
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<
+        string,
+        DateTime
+    > _lastAttempt = new();
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -31,7 +34,11 @@ public class QBittorrentFinalizeWorker(
             return;
         }
 
-        logger.LogInformation("[qB Finalize Worker] Started. Interval={Interval} min, MaxReleasesPerScan={Max}", opts.ScanIntervalMinutes, opts.MaxReleasesPerScan);
+        logger.LogInformation(
+            "[qB Finalize Worker] Started. Interval={Interval} min, MaxReleasesPerScan={Max}",
+            opts.ScanIntervalMinutes,
+            opts.MaxReleasesPerScan
+        );
 
         while (!stoppingToken.IsCancellationRequested)
         {
@@ -61,7 +68,12 @@ public class QBittorrentFinalizeWorker(
         // Get missing releases
         var allReleases = await cache.GetAllReleasesAsync();
         var missing = allReleases
-            .Where(r => (r.Tracks?.Count ?? 0) > 0 && r.Tracks.All(t => t.CachedMediaAvailabilityStatus != CachedMediaAvailabilityStatus.Available))
+            .Where(r =>
+                (r.Tracks?.Count ?? 0) > 0
+                && r.Tracks.All(t =>
+                    t.CachedMediaAvailabilityStatus != CachedMediaAvailabilityStatus.Available
+                )
+            )
             .Take(opts.MaxReleasesPerScan)
             .ToList();
 
@@ -73,10 +85,14 @@ public class QBittorrentFinalizeWorker(
 
         foreach (var rel in missing)
         {
-            if (cancellationToken.IsCancellationRequested) break;
+            if (cancellationToken.IsCancellationRequested)
+                break;
 
             var key = $"{rel.ArtistId}|{rel.FolderName}".ToLowerInvariant();
-            if (_lastAttempt.TryGetValue(key, out var last) && last > now.AddMinutes(-opts.AttemptCooldownMinutes))
+            if (
+                _lastAttempt.TryGetValue(key, out var last)
+                && last > now.AddMinutes(-opts.AttemptCooldownMinutes)
+            )
             {
                 continue; // cooldown
             }
@@ -87,7 +103,11 @@ public class QBittorrentFinalizeWorker(
             // Write a small breadcrumb into per-release log
             try
             {
-                var relLogPath = await logPathProvider.GetReleaseLogFilePathAsync(rel.ArtistName ?? rel.ArtistId, rel.Title ?? rel.FolderName, cancellationToken);
+                var relLogPath = await logPathProvider.GetReleaseLogFilePathAsync(
+                    rel.ArtistName ?? rel.ArtistId,
+                    rel.Title ?? rel.FolderName,
+                    cancellationToken
+                );
                 if (!string.IsNullOrWhiteSpace(relLogPath))
                 {
                     var rlog = new MusicGQL.Features.Downloads.Services.DownloadLogger(relLogPath!);
@@ -98,25 +118,45 @@ public class QBittorrentFinalizeWorker(
 
             try
             {
-                var ok = await qbFinalize.FinalizeReleaseAsync(rel.ArtistId, rel.FolderName, cancellationToken);
+                var ok = await qbFinalize.FinalizeReleaseAsync(
+                    rel.ArtistId,
+                    rel.FolderName,
+                    cancellationToken
+                );
                 if (ok)
                 {
-                    logger.LogInformation("[qB Finalize Worker] Finalize succeeded for {Artist}/{Release}", rel.ArtistId, rel.FolderName);
+                    logger.LogInformation(
+                        "[qB Finalize Worker] Finalize succeeded for {Artist}/{Release}",
+                        rel.ArtistId,
+                        rel.FolderName
+                    );
                 }
                 else
                 {
-                    logger.LogDebug("[qB Finalize Worker] Finalize skipped or not complete for {Artist}/{Release}", rel.ArtistId, rel.FolderName);
+                    logger.LogDebug(
+                        "[qB Finalize Worker] Finalize skipped or not complete for {Artist}/{Release}",
+                        rel.ArtistId,
+                        rel.FolderName
+                    );
                 }
             }
             catch (Exception ex)
             {
-                logger.LogDebug(ex, "[qB Finalize Worker] Finalize attempt failed for {Artist}/{Release}", rel.ArtistId, rel.FolderName);
+                logger.LogDebug(
+                    ex,
+                    "[qB Finalize Worker] Finalize attempt failed for {Artist}/{Release}",
+                    rel.ArtistId,
+                    rel.FolderName
+                );
             }
         }
 
         if (attempts > 0)
         {
-            logger.LogInformation("[qB Finalize Worker] Attempted finalize for {Count} releases", attempts);
+            logger.LogInformation(
+                "[qB Finalize Worker] Attempted finalize for {Count} releases",
+                attempts
+            );
         }
         return attempts;
     }

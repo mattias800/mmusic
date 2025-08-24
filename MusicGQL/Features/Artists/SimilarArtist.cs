@@ -15,7 +15,10 @@ public record SimilarArtist(
 
     public string? Thumb() =>
         !string.IsNullOrWhiteSpace(Model.MusicBrainzArtistId)
-            ? LibraryAssetUrlFactory.CreateSimilarArtistThumbUrl(ParentArtistId, Model.MusicBrainzArtistId)
+            ? LibraryAssetUrlFactory.CreateSimilarArtistThumbUrl(
+                ParentArtistId,
+                Model.MusicBrainzArtistId
+            )
             : Model.Thumb;
 
     public async Task<Artist?> Artist(ServerLibraryCache cache)

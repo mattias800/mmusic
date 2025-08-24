@@ -11,11 +11,15 @@ public class LibraryManifestService
     {
         try
         {
-            if (string.IsNullOrWhiteSpace(libraryPath)) return false;
+            if (string.IsNullOrWhiteSpace(libraryPath))
+                return false;
             var path = System.IO.Path.Combine(libraryPath, ManifestFileName);
             return File.Exists(path);
         }
-        catch { return false; }
+        catch
+        {
+            return false;
+        }
     }
 
     public async Task CreateManifestAsync(string libraryPath)
@@ -25,26 +29,32 @@ public class LibraryManifestService
 
         Directory.CreateDirectory(libraryPath);
         var path = System.IO.Path.Combine(libraryPath, ManifestFileName);
-        if (File.Exists(path)) return;
+        if (File.Exists(path))
+            return;
 
-        var json = JsonSerializer.Serialize(new Manifest
-        {
-            SchemaVersion = 1,
-            CreatedAtUtc = DateTime.UtcNow,
-            Host = Environment.MachineName
-        }, new JsonSerializerOptions
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            WriteIndented = true,
-            Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) },
-        });
+        var json = JsonSerializer.Serialize(
+            new Manifest
+            {
+                SchemaVersion = 1,
+                CreatedAtUtc = DateTime.UtcNow,
+                Host = Environment.MachineName,
+            },
+            new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                WriteIndented = true,
+                Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) },
+            }
+        );
         await File.WriteAllTextAsync(path, json);
     }
 
     public async Task EnsureWritesAllowedAsync(string libraryPath)
     {
         if (!await HasManifestAsync(libraryPath))
-            throw new InvalidOperationException("Library manifest not found. Writes are disabled for safety.");
+            throw new InvalidOperationException(
+                "Library manifest not found. Writes are disabled for safety."
+            );
     }
 
     public class Manifest
@@ -54,5 +64,3 @@ public class LibraryManifestService
         public string? Host { get; set; }
     }
 }
-
-

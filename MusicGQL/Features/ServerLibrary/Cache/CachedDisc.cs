@@ -6,4 +6,3 @@ public class CachedDisc
     public string? Title { get; set; }
     public List<CachedTrack> Tracks { get; set; } = new();
 }
-

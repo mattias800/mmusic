@@ -1,7 +1,7 @@
+using MusicGQL.Features.ServerSettings;
 using MusicGQL.Features.ServerSettings.Commands;
 using MusicGQL.Features.ServerSettings.Db;
 using MusicGQL.Features.ServerSettings.Events;
-using MusicGQL.Features.ServerSettings;
 using MusicGQL.Types;
 
 namespace MusicGQL.Features.ServerSettings.Mutations;
@@ -13,7 +13,8 @@ public class UpdateSoulSeekMaxReleasesPerUserDiscoveryMutation
         UpdateSoulSeekMaxReleasesPerUserDiscoveryInput input,
         [Service] UpdateSoulSeekMaxReleasesPerUserDiscoveryHandler handler,
         [Service] ServerSettingsAccessor serverSettingsAccessor,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken
+    )
     {
         // TODO: Get actual user ID from authentication context
         var userId = Guid.Empty; // Placeholder
@@ -24,16 +25,21 @@ public class UpdateSoulSeekMaxReleasesPerUserDiscoveryMutation
 
         return handlerResult switch
         {
-            UpdateSoulSeekMaxReleasesPerUserDiscoveryHandler.Result.Success => await HandleSuccessAsync(serverSettingsAccessor),
+            UpdateSoulSeekMaxReleasesPerUserDiscoveryHandler.Result.Success =>
+                await HandleSuccessAsync(serverSettingsAccessor),
             UpdateSoulSeekMaxReleasesPerUserDiscoveryHandler.Result.InvalidMaxReleases =>
-                new UpdateSoulSeekMaxReleasesPerUserDiscoveryError("Max releases must be between 1 and 50"),
+                new UpdateSoulSeekMaxReleasesPerUserDiscoveryError(
+                    "Max releases must be between 1 and 50"
+                ),
             _ => throw new InvalidOperationException(
                 "Unhandled result from UpdateSoulSeekMaxReleasesPerUserDiscoveryHandler"
-            )
+            ),
         };
     }
 
-    private async Task<UpdateSoulSeekMaxReleasesPerUserDiscoveryResult> HandleSuccessAsync(ServerSettingsAccessor serverSettingsAccessor)
+    private async Task<UpdateSoulSeekMaxReleasesPerUserDiscoveryResult> HandleSuccessAsync(
+        ServerSettingsAccessor serverSettingsAccessor
+    )
     {
         var dbSettings = await serverSettingsAccessor.GetAsync();
         var settings = new ServerSettings(dbSettings);

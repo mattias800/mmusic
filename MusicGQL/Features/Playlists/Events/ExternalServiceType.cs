@@ -7,7 +7,5 @@ public enum ExternalServiceType
     YouTubeMusic = 2,
     Tidal = 3,
     Deezer = 4,
-    Other = 99
+    Other = 99,
 }
-
-

@@ -6,5 +6,3 @@ public interface ITopTracksImporter
 {
     Task<List<JsonTopTrack>> GetTopTracksAsync(string artistExternalId, int take = 10);
 }
-
-

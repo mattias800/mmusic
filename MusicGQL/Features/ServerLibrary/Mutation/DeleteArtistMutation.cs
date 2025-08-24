@@ -28,5 +28,3 @@ public abstract record DeleteArtistResult;
 public record DeleteArtistSuccess([ID] string DeletedArtistId) : DeleteArtistResult;
 
 public record DeleteArtistError(string Message) : DeleteArtistResult;
-
-

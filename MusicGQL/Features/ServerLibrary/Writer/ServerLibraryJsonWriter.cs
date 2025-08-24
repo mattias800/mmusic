@@ -6,7 +6,10 @@ using Path = System.IO.Path;
 
 namespace MusicGQL.Features.ServerLibrary.Writer;
 
-public class ServerLibraryJsonWriter(ServerSettingsAccessor serverSettingsAccessor, LibraryManifestService manifestService)
+public class ServerLibraryJsonWriter(
+    ServerSettingsAccessor serverSettingsAccessor,
+    LibraryManifestService manifestService
+)
 {
     private async Task<string> GetLibraryRootAsync()
     {
@@ -21,12 +24,13 @@ public class ServerLibraryJsonWriter(ServerSettingsAccessor serverSettingsAccess
         }
     }
 
-    private static JsonSerializerOptions GetJsonOptions() => new()
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        WriteIndented = true,
-        Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) },
-    };
+    private static JsonSerializerOptions GetJsonOptions() =>
+        new()
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            WriteIndented = true,
+            Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) },
+        };
 
     private async Task<string> GetArtistDirAsync(string artistId)
     {
@@ -34,14 +38,14 @@ public class ServerLibraryJsonWriter(ServerSettingsAccessor serverSettingsAccess
         return Path.Combine(root, artistId);
     }
 
-    private async Task<string> GetArtistJsonPathAsync(string artistId)
-        => Path.Combine(await GetArtistDirAsync(artistId), "artist.json");
+    private async Task<string> GetArtistJsonPathAsync(string artistId) =>
+        Path.Combine(await GetArtistDirAsync(artistId), "artist.json");
 
-    private async Task<string> GetReleaseDirAsync(string artistId, string releaseFolderName)
-        => Path.Combine(await GetArtistDirAsync(artistId), releaseFolderName);
+    private async Task<string> GetReleaseDirAsync(string artistId, string releaseFolderName) =>
+        Path.Combine(await GetArtistDirAsync(artistId), releaseFolderName);
 
-    private async Task<string> GetReleaseJsonPathAsync(string artistId, string releaseFolderName)
-        => Path.Combine(await GetReleaseDirAsync(artistId, releaseFolderName), "release.json");
+    private async Task<string> GetReleaseJsonPathAsync(string artistId, string releaseFolderName) =>
+        Path.Combine(await GetReleaseDirAsync(artistId, releaseFolderName), "release.json");
 
     public async Task WriteArtistAsync(JsonArtist artist)
     {
@@ -59,11 +63,13 @@ public class ServerLibraryJsonWriter(ServerSettingsAccessor serverSettingsAccess
     public async Task UpdateArtistAsync(string artistId, Action<JsonArtist> update)
     {
         var path = await GetArtistJsonPathAsync(artistId);
-        if (!File.Exists(path)) return;
+        if (!File.Exists(path))
+            return;
 
         var text = await File.ReadAllTextAsync(path);
         var artist = JsonSerializer.Deserialize<JsonArtist>(text, GetJsonOptions());
-        if (artist is null) return;
+        if (artist is null)
+            return;
 
         update(artist);
 
@@ -71,7 +77,11 @@ public class ServerLibraryJsonWriter(ServerSettingsAccessor serverSettingsAccess
         await File.WriteAllTextAsync(path, json);
     }
 
-    public async Task WriteReleaseAsync(string artistId, string releaseFolderName, JsonRelease release)
+    public async Task WriteReleaseAsync(
+        string artistId,
+        string releaseFolderName,
+        JsonRelease release
+    )
     {
         if (string.IsNullOrWhiteSpace(artistId))
             throw new ArgumentException("artistId is required");
@@ -86,15 +96,21 @@ public class ServerLibraryJsonWriter(ServerSettingsAccessor serverSettingsAccess
         await File.WriteAllTextAsync(path, json);
     }
 
-    public async Task UpdateReleaseAsync(string artistId, string releaseFolderName, Action<JsonRelease> update)
+    public async Task UpdateReleaseAsync(
+        string artistId,
+        string releaseFolderName,
+        Action<JsonRelease> update
+    )
     {
         var path = await GetReleaseJsonPathAsync(artistId, releaseFolderName);
         await manifestService.EnsureWritesAllowedAsync(await GetLibraryRootAsync());
-        if (!File.Exists(path)) return;
+        if (!File.Exists(path))
+            return;
 
         var text = await File.ReadAllTextAsync(path);
         var release = JsonSerializer.Deserialize<JsonRelease>(text, GetJsonOptions());
-        if (release is null) return;
+        if (release is null)
+            return;
 
         update(release);
 
@@ -102,4 +118,3 @@ public class ServerLibraryJsonWriter(ServerSettingsAccessor serverSettingsAccess
         await File.WriteAllTextAsync(path, json);
     }
 }
-

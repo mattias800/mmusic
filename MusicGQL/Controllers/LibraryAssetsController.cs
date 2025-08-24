@@ -137,12 +137,20 @@ public class LibraryAssetsController(ServerLibraryAssetReader assetReader) : Con
     /// GET /library/{artistId}/similar/{musicBrainzArtistId}/thumb
     /// </summary>
     [HttpGet("{artistId}/similar/{musicBrainzArtistId}/thumb")]
-    public async Task<IActionResult> GetSimilarArtistThumb(string artistId, string musicBrainzArtistId)
+    public async Task<IActionResult> GetSimilarArtistThumb(
+        string artistId,
+        string musicBrainzArtistId
+    )
     {
-        var (stream, contentType, fileName) = await assetReader.GetSimilarArtistThumbAsync(artistId, musicBrainzArtistId);
+        var (stream, contentType, fileName) = await assetReader.GetSimilarArtistThumbAsync(
+            artistId,
+            musicBrainzArtistId
+        );
         if (stream == null || contentType == null)
         {
-            return NotFound($"Similar artist thumb not found for artist '{artistId}' and MBID '{musicBrainzArtistId}'");
+            return NotFound(
+                $"Similar artist thumb not found for artist '{artistId}' and MBID '{musicBrainzArtistId}'"
+            );
         }
         var shouldIncludeExtension = ShouldIncludeFileExtension(Request.Path);
         return File(stream, contentType, shouldIncludeExtension ? fileName : null);
@@ -205,7 +213,9 @@ public class LibraryAssetsController(ServerLibraryAssetReader assetReader) : Con
     /// Serves disc-aware track audio files
     /// GET /library/{artistId}/releases/{releaseFolderName}/discs/{discNumber}/tracks/{trackNumber}/audio
     /// </summary>
-    [HttpGet("{artistId}/releases/{releaseFolderName}/discs/{discNumber:int}/tracks/{trackNumber:int}/audio")]
+    [HttpGet(
+        "{artistId}/releases/{releaseFolderName}/discs/{discNumber:int}/tracks/{trackNumber:int}/audio"
+    )]
     public async Task<IActionResult> GetTrackAudioByDisc(
         string artistId,
         string releaseFolderName,

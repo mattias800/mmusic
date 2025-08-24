@@ -1,11 +1,11 @@
+using System.Collections.Concurrent;
+using System.IO;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using MusicGQL.Features.External.Downloads.Sabnzbd.Configuration;
 using MusicGQL.Features.ServerLibrary.Cache;
-using MusicGQL.Features.ServerSettings;
 using MusicGQL.Features.ServerLibrary.Writer;
-using Microsoft.Extensions.DependencyInjection;
-using System.Collections.Concurrent;
-using System.IO;
+using MusicGQL.Features.ServerSettings;
 
 namespace MusicGQL.Features.External.Downloads.Sabnzbd;
 
@@ -17,14 +17,23 @@ public class SabnzbdWatcherWorker(
     IServiceScopeFactory scopeFactory
 ) : BackgroundService
 {
-    private static readonly string[] AudioExtensions = new[] { ".mp3", ".flac", ".m4a", ".wav", ".ogg" };
+    private static readonly string[] AudioExtensions = new[]
+    {
+        ".mp3",
+        ".flac",
+        ".m4a",
+        ".wav",
+        ".ogg",
+    };
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         var completedPath = options.Value.CompletedPath;
         if (string.IsNullOrWhiteSpace(completedPath) || !Directory.Exists(completedPath))
         {
-            logger.LogInformation("[SAB Watcher] CompletedPath not set or does not exist; watcher disabled");
+            logger.LogInformation(
+                "[SAB Watcher] CompletedPath not set or does not exist; watcher disabled"
+            );
             return;
         }
 
@@ -34,7 +43,11 @@ public class SabnzbdWatcherWorker(
         {
             IncludeSubdirectories = true,
             EnableRaisingEvents = true,
-            NotifyFilter = NotifyFilters.FileName | NotifyFilters.DirectoryName | NotifyFilters.Size | NotifyFilters.LastWrite
+            NotifyFilter =
+                NotifyFilters.FileName
+                | NotifyFilters.DirectoryName
+                | NotifyFilters.Size
+                | NotifyFilters.LastWrite,
         };
 
         var queue = new ConcurrentQueue<string>();
@@ -42,7 +55,12 @@ public class SabnzbdWatcherWorker(
         DateTime lastFullScan = DateTime.MinValue;
         void Enqueue(string p)
         {
-            try { if (!string.IsNullOrWhiteSpace(p)) queue.Enqueue(p); } catch { }
+            try
+            {
+                if (!string.IsNullOrWhiteSpace(p))
+                    queue.Enqueue(p);
+            }
+            catch { }
         }
 
         watcher.Created += (_, e) => Enqueue(e.FullPath);
@@ -54,7 +72,8 @@ public class SabnzbdWatcherWorker(
             try
             {
                 await Task.Delay(TimeSpan.FromSeconds(2), stoppingToken);
-                if (!queue.TryDequeue(out var path)) continue;
+                if (!queue.TryDequeue(out var path))
+                    continue;
                 // Heuristic: look for audio files appearing; when they do, trigger a rescan of artist/release if we can infer it from path later.
                 var ext = System.IO.Path.GetExtension(path).ToLowerInvariant();
                 if (ext is not (".mp3" or ".flac" or ".m4a" or ".wav" or ".ogg"))
@@ -68,19 +87,47 @@ public class SabnzbdWatcherWorker(
                 try
                 {
                     var settings = await serverSettingsAccessor.GetAsync();
-                    var completed = completedPath!.TrimEnd(System.IO.Path.DirectorySeparatorChar, System.IO.Path.AltDirectorySeparatorChar);
+                    var completed = completedPath!.TrimEnd(
+                        System.IO.Path.DirectorySeparatorChar,
+                        System.IO.Path.AltDirectorySeparatorChar
+                    );
                     var rel = System.IO.Path.GetRelativePath(completed, path);
-                    var parts = rel.Split(System.IO.Path.DirectorySeparatorChar, System.IO.Path.AltDirectorySeparatorChar);
-                    var idx = Array.FindIndex(parts, p => string.Equals(p, "mmusic", StringComparison.OrdinalIgnoreCase));
+                    var parts = rel.Split(
+                        System.IO.Path.DirectorySeparatorChar,
+                        System.IO.Path.AltDirectorySeparatorChar
+                    );
+                    var idx = Array.FindIndex(
+                        parts,
+                        p => string.Equals(p, "mmusic", StringComparison.OrdinalIgnoreCase)
+                    );
                     if (idx >= 0 && parts.Length >= idx + 3)
                     {
                         var artistId = parts[idx + 1];
                         var releaseFolder = parts[idx + 2];
-                        logger.LogInformation("[SAB Watcher] Mapped to artistId={ArtistId}, releaseFolder={Release}", artistId, releaseFolder);
+                        logger.LogInformation(
+                            "[SAB Watcher] Mapped to artistId={ArtistId}, releaseFolder={Release}",
+                            artistId,
+                            releaseFolder
+                        );
 
-                        var sourceRoot = System.IO.Path.Combine(completed, "mmusic", artistId, releaseFolder);
-                        logger.LogInformation("[SAB Watcher] Finalize check for {ArtistId}/{Release} from {SourceRoot}", artistId, releaseFolder, sourceRoot);
-                        await TryFinalizeReleaseAsync(artistId, releaseFolder, sourceRoot, stoppingToken);
+                        var sourceRoot = System.IO.Path.Combine(
+                            completed,
+                            "mmusic",
+                            artistId,
+                            releaseFolder
+                        );
+                        logger.LogInformation(
+                            "[SAB Watcher] Finalize check for {ArtistId}/{Release} from {SourceRoot}",
+                            artistId,
+                            releaseFolder,
+                            sourceRoot
+                        );
+                        await TryFinalizeReleaseAsync(
+                            artistId,
+                            releaseFolder,
+                            sourceRoot,
+                            stoppingToken
+                        );
                         lastScanByKey[$"{artistId}|{releaseFolder}"] = DateTime.UtcNow;
                     }
                     else
@@ -93,8 +140,17 @@ public class SabnzbdWatcherWorker(
                             if (inferred != null)
                             {
                                 var (artistId, relFolder) = inferred.Value;
-                                logger.LogInformation("[SAB Watcher] Inferred mapping to {ArtistId}/{Release}", artistId, relFolder);
-                                await TryFinalizeReleaseAsync(artistId, relFolder, parent!, stoppingToken);
+                                logger.LogInformation(
+                                    "[SAB Watcher] Inferred mapping to {ArtistId}/{Release}",
+                                    artistId,
+                                    relFolder
+                                );
+                                await TryFinalizeReleaseAsync(
+                                    artistId,
+                                    relFolder,
+                                    parent!,
+                                    stoppingToken
+                                );
                                 lastScanByKey[$"{artistId}|{relFolder}"] = DateTime.UtcNow;
                             }
                         }
@@ -116,17 +172,37 @@ public class SabnzbdWatcherWorker(
                         {
                             foreach (var artistDir in Directory.EnumerateDirectories(mmusicRoot))
                             {
-                                foreach (var releaseDir in Directory.EnumerateDirectories(artistDir))
+                                foreach (
+                                    var releaseDir in Directory.EnumerateDirectories(artistDir)
+                                )
                                 {
-                                    var key = System.IO.Path.GetFileName(System.IO.Path.GetDirectoryName(releaseDir)) + "|" + System.IO.Path.GetFileName(releaseDir);
-                                    if (lastScanByKey.TryGetValue(key, out var ts) && (DateTime.UtcNow - ts) < TimeSpan.FromSeconds(30))
+                                    var key =
+                                        System.IO.Path.GetFileName(
+                                            System.IO.Path.GetDirectoryName(releaseDir)
+                                        )
+                                        + "|"
+                                        + System.IO.Path.GetFileName(releaseDir);
+                                    if (
+                                        lastScanByKey.TryGetValue(key, out var ts)
+                                        && (DateTime.UtcNow - ts) < TimeSpan.FromSeconds(30)
+                                    )
                                     {
                                         continue;
                                     }
                                     var artistId = System.IO.Path.GetFileName(artistDir);
                                     var releaseFolder = System.IO.Path.GetFileName(releaseDir);
-                                    logger.LogDebug("[SAB Watcher] Sweep finalize {ArtistId}/{Release} from {ReleaseDir}", artistId, releaseFolder, releaseDir);
-                                    await TryFinalizeReleaseAsync(artistId, releaseFolder, releaseDir, stoppingToken);
+                                    logger.LogDebug(
+                                        "[SAB Watcher] Sweep finalize {ArtistId}/{Release} from {ReleaseDir}",
+                                        artistId,
+                                        releaseFolder,
+                                        releaseDir
+                                    );
+                                    await TryFinalizeReleaseAsync(
+                                        artistId,
+                                        releaseFolder,
+                                        releaseDir,
+                                        stoppingToken
+                                    );
                                     lastScanByKey[key] = DateTime.UtcNow;
                                 }
                             }
@@ -135,21 +211,41 @@ public class SabnzbdWatcherWorker(
                         // Also sweep top-level immediate subfolders for inference if they contain audio files
                         foreach (var folder in Directory.EnumerateDirectories(completedPath!))
                         {
-                            if (string.Equals(System.IO.Path.GetFileName(folder), "mmusic", StringComparison.OrdinalIgnoreCase))
+                            if (
+                                string.Equals(
+                                    System.IO.Path.GetFileName(folder),
+                                    "mmusic",
+                                    StringComparison.OrdinalIgnoreCase
+                                )
+                            )
                                 continue;
                             try
                             {
-                                var hasAudio = Directory.EnumerateFiles(folder, "*", SearchOption.AllDirectories)
-                                    .Any(f => AudioExtensions.Contains(System.IO.Path.GetExtension(f).ToLowerInvariant()));
-                                if (!hasAudio) continue;
+                                var hasAudio = Directory
+                                    .EnumerateFiles(folder, "*", SearchOption.AllDirectories)
+                                    .Any(f =>
+                                        AudioExtensions.Contains(
+                                            System.IO.Path.GetExtension(f).ToLowerInvariant()
+                                        )
+                                    );
+                                if (!hasAudio)
+                                    continue;
                                 var inferred = await InferReleaseFromFolderAsync(folder);
                                 if (inferred != null)
                                 {
                                     var (artistId, relFolder) = inferred.Value;
                                     var key = artistId + "|" + relFolder;
-                                    if (lastScanByKey.TryGetValue(key, out var ts2) && (DateTime.UtcNow - ts2) < TimeSpan.FromSeconds(30))
+                                    if (
+                                        lastScanByKey.TryGetValue(key, out var ts2)
+                                        && (DateTime.UtcNow - ts2) < TimeSpan.FromSeconds(30)
+                                    )
                                         continue;
-                                    await TryFinalizeReleaseAsync(artistId, relFolder, folder, stoppingToken);
+                                    await TryFinalizeReleaseAsync(
+                                        artistId,
+                                        relFolder,
+                                        folder,
+                                        stoppingToken
+                                    );
                                     lastScanByKey[key] = DateTime.UtcNow;
                                 }
                             }
@@ -170,27 +266,40 @@ public class SabnzbdWatcherWorker(
         }
     }
 
-    private async Task TryFinalizeReleaseAsync(string artistId, string releaseFolderName, string sourceRoot, CancellationToken ct)
+    private async Task TryFinalizeReleaseAsync(
+        string artistId,
+        string releaseFolderName,
+        string sourceRoot,
+        CancellationToken ct
+    )
     {
         try
         {
             var release = await cache.GetReleaseByArtistAndFolderAsync(artistId, releaseFolderName);
             if (release == null)
             {
-                logger.LogWarning("[SAB Watcher] Release not found in cache for {ArtistId}/{Release}", artistId, releaseFolderName);
+                logger.LogWarning(
+                    "[SAB Watcher] Release not found in cache for {ArtistId}/{Release}",
+                    artistId,
+                    releaseFolderName
+                );
                 return;
             }
 
             var targetDir = release.ReleasePath;
-            if (string.IsNullOrWhiteSpace(targetDir)) return;
+            if (string.IsNullOrWhiteSpace(targetDir))
+                return;
             Directory.CreateDirectory(targetDir);
 
-            if (!Directory.Exists(sourceRoot)) return;
+            if (!Directory.Exists(sourceRoot))
+                return;
 
             // Collect audio files recursively
             var sourceFiles = Directory
                 .EnumerateFiles(sourceRoot, "*", SearchOption.AllDirectories)
-                .Where(f => AudioExtensions.Contains(System.IO.Path.GetExtension(f).ToLowerInvariant()))
+                .Where(f =>
+                    AudioExtensions.Contains(System.IO.Path.GetExtension(f).ToLowerInvariant())
+                )
                 .ToList();
 
             if (sourceFiles.Count == 0)
@@ -234,13 +343,21 @@ public class SabnzbdWatcherWorker(
                     {
                         // Fall back to copy if move isn't allowed (e.g., read-only source)
                         File.Copy(src, destFinal, overwrite: false);
-                        try { File.Delete(src); } catch { }
+                        try
+                        {
+                            File.Delete(src);
+                        }
+                        catch { }
                     }
                     catch (IOException)
                     {
                         // Cross-device or locked: try copy then delete
                         File.Copy(src, destFinal, overwrite: false);
-                        try { File.Delete(src); } catch { }
+                        try
+                        {
+                            File.Delete(src);
+                        }
+                        catch { }
                     }
                     movedAny = true;
                     logger.LogInformation("[SAB Watcher] Moved {File} -> {Dest}", src, destFinal);
@@ -263,7 +380,9 @@ public class SabnzbdWatcherWorker(
             // Update release.json with audio file paths now present in targetDir
             var audioFiles = Directory
                 .GetFiles(targetDir)
-                .Where(f => AudioExtensions.Contains(System.IO.Path.GetExtension(f).ToLowerInvariant()))
+                .Where(f =>
+                    AudioExtensions.Contains(System.IO.Path.GetExtension(f).ToLowerInvariant())
+                )
                 .OrderBy(f => f, StringComparer.OrdinalIgnoreCase)
                 .Select(System.IO.Path.GetFileName)
                 .ToList();
@@ -288,18 +407,36 @@ public class SabnzbdWatcherWorker(
                                 if (!string.IsNullOrWhiteSpace(name))
                                 {
                                     var lower = name!.ToLowerInvariant();
-                                    var m = System.Text.RegularExpressions.Regex.Match(lower, @"\b(?:cd|disc|disk|digital\s*media)\s*(\d+)\b", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-                                    if (m.Success && int.TryParse(m.Groups[1].Value, out var d)) disc = d;
-                                    var m2 = System.Text.RegularExpressions.Regex.Match(name, @"-\s*(\d{1,3})\s*-", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-                                    if (m2.Success && int.TryParse(m2.Groups[1].Value, out var t2)) track = t2;
+                                    var m = System.Text.RegularExpressions.Regex.Match(
+                                        lower,
+                                        @"\b(?:cd|disc|disk|digital\s*media)\s*(\d+)\b",
+                                        System.Text.RegularExpressions.RegexOptions.IgnoreCase
+                                    );
+                                    if (m.Success && int.TryParse(m.Groups[1].Value, out var d))
+                                        disc = d;
+                                    var m2 = System.Text.RegularExpressions.Regex.Match(
+                                        name,
+                                        @"-\s*(\d{1,3})\s*-",
+                                        System.Text.RegularExpressions.RegexOptions.IgnoreCase
+                                    );
+                                    if (m2.Success && int.TryParse(m2.Groups[1].Value, out var t2))
+                                        track = t2;
                                     if (track < 0)
                                     {
                                         var span = name.AsSpan();
                                         int pos = 0;
-                                        while (pos < span.Length && !char.IsDigit(span[pos])) pos++;
+                                        while (pos < span.Length && !char.IsDigit(span[pos]))
+                                            pos++;
                                         int start = pos;
-                                        while (pos < span.Length && char.IsDigit(span[pos])) pos++;
-                                        if (pos > start && int.TryParse(span.Slice(start, pos - start), out var n))
+                                        while (pos < span.Length && char.IsDigit(span[pos]))
+                                            pos++;
+                                        if (
+                                            pos > start
+                                            && int.TryParse(
+                                                span.Slice(start, pos - start),
+                                                out var n
+                                            )
+                                        )
                                         {
                                             track = n > 99 ? (n % 100 == 0 ? n : n % 100) : n;
                                         }
@@ -314,28 +451,35 @@ public class SabnzbdWatcherWorker(
                         foreach (var f in audioFiles)
                         {
                             var (disc, track) = ExtractDiscTrack(f);
-                            if (track <= 0) continue;
+                            if (track <= 0)
+                                continue;
                             if (!byDiscTrack.TryGetValue(disc, out var inner))
                             {
                                 inner = new Dictionary<int, string>();
                                 byDiscTrack[disc] = inner;
                             }
-                            if (!inner.ContainsKey(track)) inner[track] = f;
+                            if (!inner.ContainsKey(track))
+                                inner[track] = f;
                         }
 
                         if (rel.Discs is { Count: > 0 })
                         {
                             foreach (var d in rel.Discs)
                             {
-                                if (d.Tracks == null) continue;
+                                if (d.Tracks == null)
+                                    continue;
                                 var discNum = d.DiscNumber > 0 ? d.DiscNumber : 1;
                                 if (byDiscTrack.TryGetValue(discNum, out var inner))
                                 {
                                     foreach (var t in d.Tracks)
                                     {
-                                        if (t.TrackNumber > 0 && inner.TryGetValue(t.TrackNumber, out var fname))
+                                        if (
+                                            t.TrackNumber > 0
+                                            && inner.TryGetValue(t.TrackNumber, out var fname)
+                                        )
                                         {
-                                            t.AudioFilePath = "./" + System.IO.Path.GetFileName(fname);
+                                            t.AudioFilePath =
+                                                "./" + System.IO.Path.GetFileName(fname);
                                         }
                                     }
                                 }
@@ -347,7 +491,10 @@ public class SabnzbdWatcherWorker(
                             foreach (var t in rel.Tracks)
                             {
                                 var discNum = t.DiscNumber ?? 1;
-                                if (byDiscTrack.TryGetValue(discNum, out var inner) && inner.TryGetValue(t.TrackNumber, out var fname))
+                                if (
+                                    byDiscTrack.TryGetValue(discNum, out var inner)
+                                    && inner.TryGetValue(t.TrackNumber, out var fname)
+                                )
                                 {
                                     t.AudioFilePath = "./" + System.IO.Path.GetFileName(fname);
                                 }
@@ -360,18 +507,30 @@ public class SabnzbdWatcherWorker(
             // Refresh cache and mark availability
             await cache.UpdateReleaseFromJsonAsync(artistId, releaseFolderName);
             await Task.WhenAll(
-                audioFiles.Select((_, i) => cache.UpdateMediaAvailabilityStatus(
-                    artistId,
-                    releaseFolderName,
-                    i + 1,
-                    CachedMediaAvailabilityStatus.Available))
+                audioFiles.Select(
+                    (_, i) =>
+                        cache.UpdateMediaAvailabilityStatus(
+                            artistId,
+                            releaseFolderName,
+                            i + 1,
+                            CachedMediaAvailabilityStatus.Available
+                        )
+                )
             );
-            logger.LogInformation("[SAB Watcher] Finalized {ArtistId}/{Release}; {Count} audio files ready", artistId, releaseFolderName, audioFiles.Count);
+            logger.LogInformation(
+                "[SAB Watcher] Finalized {ArtistId}/{Release}; {Count} audio files ready",
+                artistId,
+                releaseFolderName,
+                audioFiles.Count
+            );
 
             // Best-effort: clean up empty source folder
             try
             {
-                if (Directory.Exists(sourceRoot) && !Directory.EnumerateFileSystemEntries(sourceRoot).Any())
+                if (
+                    Directory.Exists(sourceRoot)
+                    && !Directory.EnumerateFileSystemEntries(sourceRoot).Any()
+                )
                 {
                     Directory.Delete(sourceRoot, true);
                 }
@@ -380,18 +539,25 @@ public class SabnzbdWatcherWorker(
         }
         catch (Exception ex)
         {
-            logger.LogWarning(ex, "[SAB Watcher] Finalize failed for {ArtistId}/{Release}", artistId, releaseFolderName);
+            logger.LogWarning(
+                ex,
+                "[SAB Watcher] Finalize failed for {ArtistId}/{Release}",
+                artistId,
+                releaseFolderName
+            );
         }
     }
 
     private static string NormalizeTitle(string input)
     {
-        if (string.IsNullOrWhiteSpace(input)) return string.Empty;
+        if (string.IsNullOrWhiteSpace(input))
+            return string.Empty;
         var s = input.Replace("’", "'").Replace("“", "\"").Replace("”", "\"");
         var builder = new System.Text.StringBuilder(s.Length);
         foreach (var ch in s)
         {
-            if (char.IsLetterOrDigit(ch) || char.IsWhiteSpace(ch)) builder.Append(char.ToLowerInvariant(ch));
+            if (char.IsLetterOrDigit(ch) || char.IsWhiteSpace(ch))
+                builder.Append(char.ToLowerInvariant(ch));
         }
         return System.Text.RegularExpressions.Regex.Replace(builder.ToString(), "\\s+", " ").Trim();
     }
@@ -400,18 +566,23 @@ public class SabnzbdWatcherWorker(
     {
         foreach (var t in tokens)
         {
-            if (string.IsNullOrWhiteSpace(t)) return false;
-            if (haystack.IndexOf(t, StringComparison.Ordinal) < 0) return false;
+            if (string.IsNullOrWhiteSpace(t))
+                return false;
+            if (haystack.IndexOf(t, StringComparison.Ordinal) < 0)
+                return false;
         }
         return true;
     }
 
-    private async Task<(string ArtistId, string ReleaseFolderName)?> InferReleaseFromFolderAsync(string folder)
+    private async Task<(string ArtistId, string ReleaseFolderName)?> InferReleaseFromFolderAsync(
+        string folder
+    )
     {
         try
         {
             var name = System.IO.Path.GetFileName(folder);
-            if (string.IsNullOrWhiteSpace(name)) return null;
+            if (string.IsNullOrWhiteSpace(name))
+                return null;
             var norm = NormalizeTitle(name);
             var releases = await cache.GetAllReleasesAsync();
             (string A, string R)? best = null;
@@ -421,8 +592,10 @@ public class SabnzbdWatcherWorker(
                 var a = NormalizeTitle(rel.ArtistName ?? string.Empty);
                 var r = NormalizeTitle(rel.Title ?? string.Empty);
                 int score = 0;
-                if (!string.IsNullOrWhiteSpace(a) && norm.Contains(a)) score += a.Length;
-                if (!string.IsNullOrWhiteSpace(r) && norm.Contains(r)) score += r.Length;
+                if (!string.IsNullOrWhiteSpace(a) && norm.Contains(a))
+                    score += a.Length;
+                if (!string.IsNullOrWhiteSpace(r) && norm.Contains(r))
+                    score += r.Length;
                 if (score > bestScore && score >= Math.Min(norm.Length / 3, 12))
                 {
                     bestScore = score;
@@ -437,5 +610,3 @@ public class SabnzbdWatcherWorker(
         }
     }
 }
-
-

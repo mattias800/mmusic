@@ -1,8 +1,8 @@
 using System.Security.Claims;
 using MusicGQL.Features.Artists;
+using MusicGQL.Features.Import.Services;
 using MusicGQL.Features.ServerLibrary;
 using MusicGQL.Features.ServerLibrary.Cache;
-using MusicGQL.Features.Import.Services;
 using MusicGQL.Features.ServerLibrary.Json;
 using MusicGQL.Types;
 using Path = System.IO.Path;
@@ -28,7 +28,9 @@ public class ImportArtistMutation
         [Service] IHttpContextAccessor httpContextAccessor
     )
     {
-        var userIdString = httpContextAccessor.HttpContext?.User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var userIdString = httpContextAccessor.HttpContext?.User.FindFirstValue(
+            ClaimTypes.NameIdentifier
+        );
         if (!Guid.TryParse(userIdString, out _))
         {
             return new ImportArtistError("User not authenticated or invalid user ID.");
@@ -47,7 +49,7 @@ public class ImportArtistMutation
             var artistFolderName = SanitizeFolderName(mbArtist.Name);
             var libraryPath = await GetLibraryPathAsync(serverSettingsAccessor);
             var artistFolderPath = Path.Combine(libraryPath, artistFolderName);
-            
+
             if (!Directory.Exists(artistFolderPath))
             {
                 Directory.CreateDirectory(artistFolderPath);
@@ -59,24 +61,24 @@ public class ImportArtistMutation
             {
                 Id = artistFolderName,
                 Name = mbArtist.Name,
-                Connections = new JsonArtistServiceConnections 
-                { 
-                    MusicBrainzArtistId = input.MusicBrainzArtistId 
-                }
+                Connections = new JsonArtistServiceConnections
+                {
+                    MusicBrainzArtistId = input.MusicBrainzArtistId,
+                },
             };
 
             // Write basic artist.json
             var jsonOptions = new System.Text.Json.JsonSerializerOptions
             {
                 WriteIndented = true,
-                PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase
+                PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase,
             };
             var jsonText = System.Text.Json.JsonSerializer.Serialize(basicArtistJson, jsonOptions);
             await File.WriteAllTextAsync(artistJsonPath, jsonText);
 
             // Step 4: Update cache to include the new artist
             await cache.UpdateCacheAsync();
-            
+
             // Step 5: Get the cached artist for return
             var cached = await cache.GetArtistByIdAsync(artistFolderName);
             if (cached is null)
@@ -91,17 +93,17 @@ public class ImportArtistMutation
                 MusicBrainzId: input.MusicBrainzArtistId,
                 ArtistPath: artistFolderPath
             );
-            
+
             backgroundQueue.Enqueue(backgroundJob);
 
             // Step 7: Generate share files (non-blocking)
-            try 
-            { 
-                await shareService.GenerateForArtistAsync(artistFolderName); 
-            } 
-            catch 
-            { 
-                // Non-critical, continue 
+            try
+            {
+                await shareService.GenerateForArtistAsync(artistFolderName);
+            }
+            catch
+            {
+                // Non-critical, continue
             }
 
             return new ImportArtistSuccess(new Artist(cached));
@@ -153,7 +155,7 @@ public class ImportArtistMutation
         // Remove or replace invalid characters for folder names
         var invalidChars = Path.GetInvalidFileNameChars();
         var sanitized = artistName;
-        
+
         foreach (var invalidChar in invalidChars)
         {
             sanitized = sanitized.Replace(invalidChar, '_');
@@ -167,7 +169,9 @@ public class ImportArtistMutation
         return sanitized;
     }
 
-    private static async Task<string> GetLibraryPathAsync(ServerSettings.ServerSettingsAccessor serverSettingsAccessor)
+    private static async Task<string> GetLibraryPathAsync(
+        ServerSettings.ServerSettingsAccessor serverSettingsAccessor
+    )
     {
         try
         {

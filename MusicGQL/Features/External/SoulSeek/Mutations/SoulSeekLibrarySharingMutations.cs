@@ -122,7 +122,8 @@ public record RefreshSoulSeekSharesError(string Message) : RefreshSoulSeekShares
 [UnionType("CheckSoulSeekReachabilityResult")]
 public abstract record CheckSoulSeekReachabilityResult;
 
-public record CheckSoulSeekReachabilitySuccess(SharingStatistics Statistics) : CheckSoulSeekReachabilityResult;
+public record CheckSoulSeekReachabilitySuccess(SharingStatistics Statistics)
+    : CheckSoulSeekReachabilityResult;
 
 public record CheckSoulSeekReachabilityError(string Message) : CheckSoulSeekReachabilityResult;
 

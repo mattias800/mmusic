@@ -56,5 +56,4 @@ public record UpdateDownloadPathInput(string NewDownloadPath);
 [UnionType("UpdateDownloadPathResult")]
 public abstract record UpdateDownloadPathResult;
 
-public record UpdateDownloadPathSuccess(ServerSettings ServerSettings)
-    : UpdateDownloadPathResult;
+public record UpdateDownloadPathSuccess(ServerSettings ServerSettings) : UpdateDownloadPathResult;

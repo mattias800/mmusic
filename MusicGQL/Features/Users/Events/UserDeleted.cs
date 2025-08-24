@@ -6,5 +6,3 @@ public class UserDeleted : Event
 {
     public Guid SubjectUserId { get; set; }
 }
-
-

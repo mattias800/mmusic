@@ -1,8 +1,8 @@
 using MusicGQL.Features.External;
+using MusicGQL.Features.ListenBrainz;
 using MusicGQL.Features.ServerLibrary;
 using MusicGQL.Features.ServerLibrary.Cache;
 using MusicGQL.Features.ServerLibrary.Json;
-using MusicGQL.Features.ListenBrainz;
 
 namespace MusicGQL.Features.Artists;
 
@@ -51,15 +51,19 @@ public record Artist([property: GraphQLIgnore] CachedArtist Model) : IArtistBase
     public long? Listeners() => Model.JsonArtist.MonthlyListeners;
 
     public IEnumerable<ArtistTopTrack> TopTracks() =>
-        Model.JsonArtist.TopTracks?
-            .Select((t, index) => new ArtistTopTrack(Model.Id, t, index)) ?? [];
+        Model.JsonArtist.TopTracks?.Select((t, index) => new ArtistTopTrack(Model.Id, t, index))
+        ?? [];
 
     public IEnumerable<ArtistConnectedExternalService> ConnectedExternalServices()
     {
         var connections = Model.JsonArtist.Connections;
         IEnumerable<ArtistConnectedExternalService> connectedExternalServices =
         [
-            new(ExternalServiceCatalog.Musicbrainz(), connections?.MusicBrainzArtistId, connections),
+            new(
+                ExternalServiceCatalog.Musicbrainz(),
+                connections?.MusicBrainzArtistId,
+                connections
+            ),
             new(ExternalServiceCatalog.Spotify(), connections?.SpotifyId, connections),
             new(ExternalServiceCatalog.Apple(), connections?.AppleMusicArtistId, connections),
             new(ExternalServiceCatalog.Youtube(), connections?.YoutubeChannelUrl, connections),

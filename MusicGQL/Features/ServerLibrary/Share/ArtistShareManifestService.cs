@@ -1,13 +1,16 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using MusicGQL.Features.ServerLibrary.Cache;
 using MusicGQL.Features.ServerLibrary.Audio;
+using MusicGQL.Features.ServerLibrary.Cache;
 using MusicGQL.Features.ServerSettings;
 using Path = System.IO.Path;
 
 namespace MusicGQL.Features.ServerLibrary.Share;
 
-public class ArtistShareManifestService(ServerLibraryCache cache, ServerSettingsAccessor serverSettingsAccessor)
+public class ArtistShareManifestService(
+    ServerLibraryCache cache,
+    ServerSettingsAccessor serverSettingsAccessor
+)
 {
     private record Manifest(
         int SchemaVersion,
@@ -21,9 +24,13 @@ public class ArtistShareManifestService(ServerLibraryCache cache, ServerSettings
     );
 
     private record ManifestArtist(string Name, string Slug, string ArtistId, string? MusicBrainzId);
+
     private record ManifestCoverage(string Scope, List<string> Include, List<string> Exclude);
+
     private record ManifestAudio(string Format, string Bitrate, List<string> Codecs);
+
     private record ManifestTotals(int Releases, int Tracks, long SizeBytes);
+
     private record ManifestRelease(
         string Title,
         int? Year,
@@ -34,7 +41,10 @@ public class ArtistShareManifestService(ServerLibraryCache cache, ServerSettings
         int Tracks
     );
 
-    public async Task<(string tagFileName, string manifestPath)> GenerateForArtistAsync(string artistId, CancellationToken cancellationToken = default)
+    public async Task<(string tagFileName, string manifestPath)> GenerateForArtistAsync(
+        string artistId,
+        CancellationToken cancellationToken = default
+    )
     {
         var artist = await cache.GetArtistByIdAsync(artistId);
         if (artist is null)
@@ -87,7 +97,12 @@ public class ArtistShareManifestService(ServerLibraryCache cache, ServerSettings
                     continue;
                 if (relPath.StartsWith("./"))
                     relPath = relPath[2..];
-                var full = Path.Combine((await serverSettingsAccessor.GetAsync()).LibraryPath, release.ArtistId, release.FolderName, relPath);
+                var full = Path.Combine(
+                    (await serverSettingsAccessor.GetAsync()).LibraryPath,
+                    release.ArtistId,
+                    release.FolderName,
+                    relPath
+                );
                 var ext = Path.GetExtension(full).TrimStart('.').ToLowerInvariant();
                 if (!File.Exists(full))
                     continue;
@@ -119,7 +134,12 @@ public class ArtistShareManifestService(ServerLibraryCache cache, ServerSettings
                     int? kbps = null;
                     try
                     {
-                        using var fs = new FileStream(full, FileMode.Open, FileAccess.Read, FileShare.Read);
+                        using var fs = new FileStream(
+                            full,
+                            FileMode.Open,
+                            FileAccess.Read,
+                            FileShare.Read
+                        );
                         kbps = Mp3HeaderReader.TryReadBitrateKbps(fs);
                     }
                     catch { }
@@ -139,7 +159,9 @@ public class ArtistShareManifestService(ServerLibraryCache cache, ServerSettings
                     releaseFormat = "flac";
                     releaseBitrate = "lossless";
                 }
-                else if (releaseAllLossless && releaseCodecs.IsSubsetOf(["flac", "wav", "alac", "aiff"]))
+                else if (
+                    releaseAllLossless && releaseCodecs.IsSubsetOf(["flac", "wav", "alac", "aiff"])
+                )
                 {
                     releaseFormat = "mixed";
                     releaseBitrate = "lossless";
@@ -164,15 +186,17 @@ public class ArtistShareManifestService(ServerLibraryCache cache, ServerSettings
                 if (int.TryParse(release.JsonRelease.FirstReleaseYear, out var parsedYear))
                     year = parsedYear;
 
-                releaseManifests.Add(new ManifestRelease(
-                    Title: release.Title,
-                    Year: year,
-                    Type: typeStr,
-                    Path: Path.Combine(artist.Name, release.FolderName),
-                    Format: releaseFormat,
-                    Bitrate: releaseBitrate,
-                    Tracks: releaseTrackCount
-                ));
+                releaseManifests.Add(
+                    new ManifestRelease(
+                        Title: release.Title,
+                        Year: year,
+                        Type: typeStr,
+                        Path: Path.Combine(artist.Name, release.FolderName),
+                        Format: releaseFormat,
+                        Bitrate: releaseBitrate,
+                        Tracks: releaseTrackCount
+                    )
+                );
             }
         }
 
@@ -233,18 +257,24 @@ public class ArtistShareManifestService(ServerLibraryCache cache, ServerSettings
                 Tracks: totalTracks,
                 SizeBytes: totalSizeBytes
             ),
-            Releases: releaseManifests.OrderBy(r => r.Year ?? int.MaxValue).ThenBy(r => r.Title).ToList(),
+            Releases: releaseManifests
+                .OrderBy(r => r.Year ?? int.MaxValue)
+                .ThenBy(r => r.Title)
+                .ToList(),
             Notes: $"Snapshot of library as of {updatedDate}"
         );
 
         // Write manifest JSON
         var manifestPath = Path.Combine(artistDir, "mmusic.manifest.json");
-        var json = JsonSerializer.Serialize(manifest, new JsonSerializerOptions
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            WriteIndented = true,
-            Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) },
-        });
+        var json = JsonSerializer.Serialize(
+            manifest,
+            new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                WriteIndented = true,
+                Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) },
+            }
+        );
         await File.WriteAllTextAsync(manifestPath, json, cancellationToken);
 
         // Remove old mmusic tag files for this artist
@@ -252,16 +282,22 @@ public class ArtistShareManifestService(ServerLibraryCache cache, ServerSettings
         {
             foreach (var existing in Directory.GetFiles(artistDir, "mmusic - * - [v1].nfo"))
             {
-                try { File.Delete(existing); } catch { }
+                try
+                {
+                    File.Delete(existing);
+                }
+                catch { }
             }
         }
         catch { }
 
         // Write tag file (.nfo) with searchable filename
         var safeArtistName = SanitizeForFileName(artist.Name);
-        var tagFileName = $"mmusic - {safeArtistName} - [scope={scope}][format={overallFormat}][bitrate={overallBitrate}][updated={updatedDate}][v1].nfo";
+        var tagFileName =
+            $"mmusic - {safeArtistName} - [scope={scope}][format={overallFormat}][bitrate={overallBitrate}][updated={updatedDate}][v1].nfo";
         var tagFilePath = Path.Combine(artistDir, tagFileName);
-        var tagContents = $"mmusic share tag for {artist.Name}\nupdated: {updatedDate}\nscope: {scope}\nformat: {overallFormat}\nbitrate: {overallBitrate}\n";
+        var tagContents =
+            $"mmusic share tag for {artist.Name}\nupdated: {updatedDate}\nscope: {scope}\nformat: {overallFormat}\nbitrate: {overallBitrate}\n";
         await File.WriteAllTextAsync(tagFilePath, tagContents, cancellationToken);
 
         return (tagFileName, manifestPath);
@@ -269,21 +305,22 @@ public class ArtistShareManifestService(ServerLibraryCache cache, ServerSettings
 
     private static string Slugify(string input)
     {
-        if (string.IsNullOrWhiteSpace(input)) return string.Empty;
+        if (string.IsNullOrWhiteSpace(input))
+            return string.Empty;
         var invalid = Path.GetInvalidFileNameChars();
         var filtered = new string(input.Where(c => !invalid.Contains(c)).ToArray());
         filtered = filtered.Replace(' ', '-');
-        while (filtered.Contains("--")) filtered = filtered.Replace("--", "-");
+        while (filtered.Contains("--"))
+            filtered = filtered.Replace("--", "-");
         return filtered.ToLowerInvariant();
     }
 
     private static string SanitizeForFileName(string input)
     {
-        if (string.IsNullOrWhiteSpace(input)) return string.Empty;
+        if (string.IsNullOrWhiteSpace(input))
+            return string.Empty;
         var invalid = Path.GetInvalidFileNameChars();
         var filtered = new string(input.Where(c => !invalid.Contains(c)).ToArray());
         return filtered.Trim();
     }
 }
-
-

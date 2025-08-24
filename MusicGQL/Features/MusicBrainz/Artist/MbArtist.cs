@@ -1,15 +1,16 @@
 using Hqub.Lastfm;
+using MusicGQL.Features.Artists;
 using MusicGQL.Features.LastFm;
 using MusicGQL.Features.MusicBrainz.ReleaseGroup;
-using MusicGQL.Features.ServerLibrary.Utils;
 using MusicGQL.Features.ServerLibrary.Cache;
+using MusicGQL.Features.ServerLibrary.Utils;
 using MusicGQL.Integration.MusicBrainz;
 using TrackSeries.FanArtTV.Client;
-using MusicGQL.Features.Artists;
 
 namespace MusicGQL.Features.MusicBrainz.Artist;
 
-public record MbArtist([property: GraphQLIgnore] Hqub.MusicBrainz.Entities.Artist Model) : IArtistBase
+public record MbArtist([property: GraphQLIgnore] Hqub.MusicBrainz.Entities.Artist Model)
+    : IArtistBase
 {
     [ID]
     public string Id() => Model.Id;
@@ -19,6 +20,7 @@ public record MbArtist([property: GraphQLIgnore] Hqub.MusicBrainz.Entities.Artis
     public string SortName() => Model.SortName;
 
     public string? Disambiguation() => Model.Disambiguation;
+
     public string? Type() => Model.Type;
 
     public string? Country() => Model.Country;

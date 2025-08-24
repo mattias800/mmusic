@@ -17,5 +17,3 @@ public class SabnzbdOptions
     /// </summary>
     public string? BaseUrlToProwlarr { get; set; }
 }
-
-

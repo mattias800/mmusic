@@ -36,12 +36,15 @@ public class DeleteUserMutation
         }
 
         var target = await dbContext.Users.FirstOrDefaultAsync(u => u.UserId == input.UserId);
-        if (target is null) return new DeleteUserError("User not found");
+        if (target is null)
+            return new DeleteUserError("User not found");
 
         var isAdmin = (target.Roles & UserRoles.Admin) != 0;
         if (isAdmin)
         {
-            var adminCount = await dbContext.Users.CountAsync(u => (u.Roles & UserRoles.Admin) != 0);
+            var adminCount = await dbContext.Users.CountAsync(u =>
+                (u.Roles & UserRoles.Admin) != 0
+            );
             if (adminCount <= 1)
             {
                 return new DeleteUserError("Cannot delete the last admin user");

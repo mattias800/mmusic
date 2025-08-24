@@ -35,8 +35,13 @@ public class LibraryReleaseImportService(
             Title = releaseGroup.Title,
         };
 
-        logger.LogInformation("[ReleaseImport] 🚀 Starting import of release group '{Title}' (Type: {PrimaryType}, ID: {ReleaseGroupId}) for artist '{ArtistId}'", 
-            releaseGroup.Title, releaseGroup.PrimaryType, releaseGroup.Id, artistId);
+        logger.LogInformation(
+            "[ReleaseImport] 🚀 Starting import of release group '{Title}' (Type: {PrimaryType}, ID: {ReleaseGroupId}) for artist '{ArtistId}'",
+            releaseGroup.Title,
+            releaseGroup.PrimaryType,
+            releaseGroup.Id,
+            artistId
+        );
 
         // Declare releaseFolderPath at method level so it's accessible in catch block
         string releaseFolderPath = string.Empty;
@@ -51,17 +56,26 @@ public class LibraryReleaseImportService(
             if (!Directory.Exists(releaseFolderPath))
             {
                 Directory.CreateDirectory(releaseFolderPath);
-                logger.LogInformation("[ReleaseImport] ✅ Created new release directory: {ReleasePath}", releaseFolderPath);
+                logger.LogInformation(
+                    "[ReleaseImport] ✅ Created new release directory: {ReleasePath}",
+                    releaseFolderPath
+                );
             }
             else
             {
-                logger.LogInformation("[ReleaseImport] ℹ️ Release directory already exists: {ReleasePath}", releaseFolderPath);
+                logger.LogInformation(
+                    "[ReleaseImport] ℹ️ Release directory already exists: {ReleasePath}",
+                    releaseFolderPath
+                );
             }
 
             // 2. Build release.json using centralized builder
-            logger.LogInformation("[ReleaseImport] 🔨 Step 2: Building release.json metadata for '{Title}'", releaseGroup.Title);
+            logger.LogInformation(
+                "[ReleaseImport] 🔨 Step 2: Building release.json metadata for '{Title}'",
+                releaseGroup.Title
+            );
             var buildStart = DateTime.UtcNow;
-            
+
             var built = await releaseJsonBuilder.BuildAsync(
                 artistFolderPath,
                 releaseGroup.Id,
@@ -74,55 +88,83 @@ public class LibraryReleaseImportService(
 
             if (built is null)
             {
-                logger.LogWarning("[ReleaseImport] ⚠️ No suitable release found for release group '{Title}' after {DurationMs}ms", 
-                    releaseGroup.Title, buildDuration.TotalMilliseconds);
+                logger.LogWarning(
+                    "[ReleaseImport] ⚠️ No suitable release found for release group '{Title}' after {DurationMs}ms",
+                    releaseGroup.Title,
+                    buildDuration.TotalMilliseconds
+                );
                 result.ErrorMessage = "No suitable release found for release group";
                 return result;
             }
 
-            logger.LogInformation("[ReleaseImport] ✅ Successfully built release.json in {DurationMs}ms", buildDuration.TotalMilliseconds);
+            logger.LogInformation(
+                "[ReleaseImport] ✅ Successfully built release.json in {DurationMs}ms",
+                buildDuration.TotalMilliseconds
+            );
 
             // 3. Write via centralized writer
             logger.LogInformation("[ReleaseImport] 💾 Step 3: Writing release.json to disk");
             var writeStart = DateTime.UtcNow;
-            
+
             await writer.WriteReleaseAsync(artistId, releaseFolderName, built);
-            
+
             var writeDuration = DateTime.UtcNow - writeStart;
-            logger.LogInformation("[ReleaseImport] ✅ Successfully wrote release.json in {DurationMs}ms", writeDuration.TotalMilliseconds);
+            logger.LogInformation(
+                "[ReleaseImport] ✅ Successfully wrote release.json in {DurationMs}ms",
+                writeDuration.TotalMilliseconds
+            );
 
             result.Success = true;
             result.ReleaseFolderPath = releaseFolderPath;
             result.ReleaseJson = built;
 
             var totalDuration = DateTime.UtcNow - startTime;
-            logger.LogInformation("[ReleaseImport] 🎉 Successfully imported release '{Title}' in {TotalDurationMs}ms", 
-                releaseGroup.Title, totalDuration.TotalMilliseconds);
-            logger.LogInformation("[ReleaseImport] 📊 Import Summary: Build: {BuildMs}ms, Write: {WriteMs}ms", 
-                buildDuration.TotalMilliseconds, writeDuration.TotalMilliseconds);
+            logger.LogInformation(
+                "[ReleaseImport] 🎉 Successfully imported release '{Title}' in {TotalDurationMs}ms",
+                releaseGroup.Title,
+                totalDuration.TotalMilliseconds
+            );
+            logger.LogInformation(
+                "[ReleaseImport] 📊 Import Summary: Build: {BuildMs}ms, Write: {WriteMs}ms",
+                buildDuration.TotalMilliseconds,
+                writeDuration.TotalMilliseconds
+            );
         }
         catch (Exception ex)
         {
             var totalDuration = DateTime.UtcNow - startTime;
-            logger.LogError(ex, "[ReleaseImport] ❌ Failed to import release '{Title}' after {TotalDurationMs}ms", 
-                releaseGroup.Title, totalDuration.TotalMilliseconds);
-            
+            logger.LogError(
+                ex,
+                "[ReleaseImport] ❌ Failed to import release '{Title}' after {TotalDurationMs}ms",
+                releaseGroup.Title,
+                totalDuration.TotalMilliseconds
+            );
+
             result.ErrorMessage = ex.Message;
 
             // Cleanup on error
             if (!string.IsNullOrEmpty(releaseFolderPath))
             {
-                logger.LogInformation("[ReleaseImport] 🧹 Cleaning up failed release directory: {ReleasePath}", releaseFolderPath);
+                logger.LogInformation(
+                    "[ReleaseImport] 🧹 Cleaning up failed release directory: {ReleasePath}",
+                    releaseFolderPath
+                );
                 if (Directory.Exists(releaseFolderPath))
                 {
                     try
                     {
                         Directory.Delete(releaseFolderPath, true);
-                        logger.LogInformation("[ReleaseImport] ✅ Successfully cleaned up failed release directory");
+                        logger.LogInformation(
+                            "[ReleaseImport] ✅ Successfully cleaned up failed release directory"
+                        );
                     }
                     catch (Exception cleanupEx)
                     {
-                        logger.LogWarning(cleanupEx, "[ReleaseImport] ⚠️ Failed to clean up release directory: {ReleasePath}", releaseFolderPath);
+                        logger.LogWarning(
+                            cleanupEx,
+                            "[ReleaseImport] ⚠️ Failed to clean up release directory: {ReleasePath}",
+                            releaseFolderPath
+                        );
                     }
                 }
             }

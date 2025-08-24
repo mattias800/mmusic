@@ -10,7 +10,11 @@ public static class InterServiceUrlRewriter
     {
         try
         {
-            if (string.IsNullOrWhiteSpace(url) || string.IsNullOrWhiteSpace(fromBase) || string.IsNullOrWhiteSpace(toBase))
+            if (
+                string.IsNullOrWhiteSpace(url)
+                || string.IsNullOrWhiteSpace(fromBase)
+                || string.IsNullOrWhiteSpace(toBase)
+            )
                 return url;
 
             var fromTrim = fromBase!.TrimEnd('/');

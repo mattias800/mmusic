@@ -6,5 +6,5 @@ public record ProwlarrRelease(
     string? MagnetUrl,
     string? DownloadUrl,
     long? Size,
-    int? IndexerId);
-
+    int? IndexerId
+);

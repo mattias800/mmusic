@@ -53,7 +53,11 @@ public class SetArtistMatchMutation
         // Enrich to refresh top tracks/photos and connections based on new MBID
         try
         {
-            await importExecutor.ImportOrEnrichArtistAsync(artistDir, input.MusicBrainzArtistId, json.Name);
+            await importExecutor.ImportOrEnrichArtistAsync(
+                artistDir,
+                input.MusicBrainzArtistId,
+                json.Name
+            );
             await enrichmentService.EnrichArtistAsync(artistDir, input.MusicBrainzArtistId);
         }
         catch { }
@@ -64,10 +68,23 @@ public class SetArtistMatchMutation
             var subDirs = Directory.GetDirectories(artistDir);
             foreach (var dir in subDirs)
             {
-                try { Directory.Delete(dir, true); } catch { /* best effort */ }
+                try
+                {
+                    Directory.Delete(dir, true);
+                }
+                catch
+                { /* best effort */
+                }
             }
             // Re-import all eligible release groups for this artist
-            try { await importExecutor.ImportEligibleReleaseGroupsAsync(artistDir, input.MusicBrainzArtistId); } catch { }
+            try
+            {
+                await importExecutor.ImportEligibleReleaseGroupsAsync(
+                    artistDir,
+                    input.MusicBrainzArtistId
+                );
+            }
+            catch { }
         }
         catch { }
 
@@ -122,7 +139,11 @@ public class SetArtistMatchMutation
         var mbid = json.Connections.MusicBrainzArtistId;
         if (!string.IsNullOrWhiteSpace(mbid))
         {
-            try { await enrichmentService.EnrichArtistAsync(artistDir, mbid!); } catch { }
+            try
+            {
+                await enrichmentService.EnrichArtistAsync(artistDir, mbid!);
+            }
+            catch { }
         }
 
         await cache.UpdateCacheAsync();
@@ -133,25 +154,30 @@ public class SetArtistMatchMutation
         return new SetArtistSpotifyMatchSuccess(new Artists.Artist(updatedArtist));
     }
 
-    private static JsonSerializerOptions GetJsonOptions() => new()
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        WriteIndented = true,
-        Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) },
-    };
+    private static JsonSerializerOptions GetJsonOptions() =>
+        new()
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            WriteIndented = true,
+            Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) },
+        };
 }
 
 public record SetArtistMusicBrainzMatchInput(string ArtistId, string MusicBrainzArtistId);
+
 public record SetArtistSpotifyMatchInput(string ArtistId, string SpotifyArtistId);
 
 [UnionType("SetArtistMusicBrainzMatchResult")]
 public abstract record SetArtistMusicBrainzMatchResult;
-public record SetArtistMusicBrainzMatchSuccess(Artists.Artist Artist) : SetArtistMusicBrainzMatchResult;
+
+public record SetArtistMusicBrainzMatchSuccess(Artists.Artist Artist)
+    : SetArtistMusicBrainzMatchResult;
+
 public record SetArtistMusicBrainzMatchError(string Message) : SetArtistMusicBrainzMatchResult;
 
 [UnionType("SetArtistSpotifyMatchResult")]
 public abstract record SetArtistSpotifyMatchResult;
+
 public record SetArtistSpotifyMatchSuccess(Artists.Artist Artist) : SetArtistSpotifyMatchResult;
+
 public record SetArtistSpotifyMatchError(string Message) : SetArtistSpotifyMatchResult;
-
-

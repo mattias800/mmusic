@@ -1,12 +1,12 @@
 using Microsoft.EntityFrameworkCore;
 using MusicGQL.Db.Postgres;
+using MusicGQL.Features.Import.Services;
 using MusicGQL.Features.Playlists.Db;
 using MusicGQL.Features.Playlists.Subscription;
 using MusicGQL.Features.ServerLibrary.Cache;
 using MusicGQL.Features.ServerLibrary.Writer;
-using Path = System.IO.Path;
 using MusicGQL.Features.ServerSettings;
-using MusicGQL.Features.Import.Services;
+using Path = System.IO.Path;
 
 namespace MusicGQL.Features.Downloads.Services;
 
@@ -73,7 +73,11 @@ public class StartDownloadReleaseService(
         DownloadLogger? relLoggerImpl = null;
         try
         {
-            var logPath = await logPathProvider.GetReleaseLogFilePathAsync(artistName, releaseTitle, cancellationToken);
+            var logPath = await logPathProvider.GetReleaseLogFilePathAsync(
+                artistName,
+                releaseTitle,
+                cancellationToken
+            );
             if (!string.IsNullOrWhiteSpace(logPath))
             {
                 relLoggerImpl = new DownloadLogger(logPath!);
@@ -81,7 +85,11 @@ public class StartDownloadReleaseService(
             }
         }
         catch { }
-        try { relLogger.Info($"[Orchestrator] Start for {artistName} - {releaseTitle}"); } catch { }
+        try
+        {
+            relLogger.Info($"[Orchestrator] Start for {artistName} - {releaseTitle}");
+        }
+        catch { }
 
         logger.LogInformation(
             "[StartDownload] Resolved targetDir={TargetDir}, artistName='{Artist}', releaseTitle='{Title}'",
@@ -89,10 +97,13 @@ public class StartDownloadReleaseService(
             artistName,
             releaseTitle
         );
-        serviceLogger.Info($"[StartDownload] Resolved targetDir={targetDir}, artistName='{artistName}', releaseTitle='{releaseTitle}'");
-        
+        serviceLogger.Info(
+            $"[StartDownload] Resolved targetDir={targetDir}, artistName='{artistName}', releaseTitle='{releaseTitle}'"
+        );
+
         // Log the artist name source for debugging
-        var currentArtistName = (await cache.GetArtistByIdAsync(artistId))?.JsonArtist.Name ?? "Unknown";
+        var currentArtistName =
+            (await cache.GetArtistByIdAsync(artistId))?.JsonArtist.Name ?? "Unknown";
         if (artistName != currentArtistName)
         {
             logger.LogInformation(
@@ -100,7 +111,9 @@ public class StartDownloadReleaseService(
                 artistName,
                 currentArtistName
             );
-            serviceLogger.Info($"[StartDownload] Using historical artist name '{artistName}' instead of current '{currentArtistName}' for search");
+            serviceLogger.Info(
+                $"[StartDownload] Using historical artist name '{artistName}' instead of current '{currentArtistName}' for search"
+            );
         }
 
         // Compute allowed track counts on-demand (do not persist in release.json)
@@ -113,29 +126,50 @@ public class StartDownloadReleaseService(
             var mbReleaseGroupId = release.JsonRelease?.Connections?.MusicBrainzReleaseGroupId;
             if (!string.IsNullOrWhiteSpace(mbReleaseGroupId))
             {
-                (allowedOfficialCounts, allowedOfficialDigitalCounts) = await mbImport.GetPossibleTrackCountsForReleaseGroupAsync(mbReleaseGroupId!);
+                (allowedOfficialCounts, allowedOfficialDigitalCounts) =
+                    await mbImport.GetPossibleTrackCountsForReleaseGroupAsync(mbReleaseGroupId!);
             }
-            else if (!string.IsNullOrWhiteSpace(mbArtistId) && !string.IsNullOrWhiteSpace(releaseTitle))
+            else if (
+                !string.IsNullOrWhiteSpace(mbArtistId) && !string.IsNullOrWhiteSpace(releaseTitle)
+            )
             {
                 var rgs = await mbImport.GetArtistReleaseGroupsAsync(mbArtistId!);
-                var candidates = rgs
-                    .Where(rg => AreTitlesEquivalent(rg.Title, releaseTitle))
-                    .Where(rg => !(rg.SecondaryTypes?.Any(t => t.Equals("Demo", StringComparison.OrdinalIgnoreCase)) ?? false))
+                var candidates = rgs.Where(rg => AreTitlesEquivalent(rg.Title, releaseTitle))
+                    .Where(rg =>
+                        !(
+                            rg.SecondaryTypes?.Any(t =>
+                                t.Equals("Demo", StringComparison.OrdinalIgnoreCase)
+                            ) ?? false
+                        )
+                    )
                     .ToList();
                 if (candidates.Count == 0)
                 {
-                    candidates = rgs
-                        .Where(rg => (rg.Title ?? string.Empty).IndexOf(releaseTitle, StringComparison.OrdinalIgnoreCase) >= 0)
-                        .Where(rg => !(rg.SecondaryTypes?.Any(t => t.Equals("Demo", StringComparison.OrdinalIgnoreCase)) ?? false))
+                    candidates = rgs.Where(rg =>
+                            (rg.Title ?? string.Empty).IndexOf(
+                                releaseTitle,
+                                StringComparison.OrdinalIgnoreCase
+                            ) >= 0
+                        )
+                        .Where(rg =>
+                            !(
+                                rg.SecondaryTypes?.Any(t =>
+                                    t.Equals("Demo", StringComparison.OrdinalIgnoreCase)
+                                ) ?? false
+                            )
+                        )
                         .ToList();
                 }
                 var match = candidates
-                    .OrderByDescending(rg => string.Equals(rg.PrimaryType, "Album", StringComparison.OrdinalIgnoreCase))
+                    .OrderByDescending(rg =>
+                        string.Equals(rg.PrimaryType, "Album", StringComparison.OrdinalIgnoreCase)
+                    )
                     .ThenBy(rg => SafeDateKey(rg.FirstReleaseDate))
                     .FirstOrDefault();
                 if (match is not null)
                 {
-                    (allowedOfficialCounts, allowedOfficialDigitalCounts) = await mbImport.GetPossibleTrackCountsForReleaseGroupAsync(match.Id);
+                    (allowedOfficialCounts, allowedOfficialDigitalCounts) =
+                        await mbImport.GetPossibleTrackCountsForReleaseGroupAsync(match.Id);
                 }
             }
         }
@@ -146,9 +180,13 @@ public class StartDownloadReleaseService(
         try
         {
             if (allowedOfficialCounts.Count > 0)
-                relLogger.Info($"[Orchestrator] Allowed official track counts: {string.Join(", ", allowedOfficialCounts)}");
+                relLogger.Info(
+                    $"[Orchestrator] Allowed official track counts: {string.Join(", ", allowedOfficialCounts)}"
+                );
             if (allowedOfficialDigitalCounts.Count > 0)
-                relLogger.Info($"[Orchestrator] Allowed DIGITAL track counts: {string.Join(", ", allowedOfficialDigitalCounts)}");
+                relLogger.Info(
+                    $"[Orchestrator] Allowed DIGITAL track counts: {string.Join(", ", allowedOfficialDigitalCounts)}"
+                );
         }
         catch { }
 
@@ -158,7 +196,11 @@ public class StartDownloadReleaseService(
             releaseFolderName,
             CachedReleaseDownloadStatus.Searching
         );
-        try { relLogger.Info("[Orchestrator] Set download status = Searching"); } catch { }
+        try
+        {
+            relLogger.Info("[Orchestrator] Set download status = Searching");
+        }
+        catch { }
 
         // Use an unlinked cancellation token so provider-level retries are resilient to request aborts
         var token = cancellationService.CreateFor(artistId, releaseFolderName);
@@ -167,7 +209,7 @@ public class StartDownloadReleaseService(
         string? providerName = null; // Declare at broader scope for use in logging and state
         var providerList = providers.Providers.ToList();
         var totalProviders = providerList.Count;
-        
+
         // Initialize the enhanced download history item with Idle state
         var enhancedHistoryItem = new EnhancedDownloadHistoryItem
         {
@@ -180,54 +222,80 @@ public class StartDownloadReleaseService(
             CurrentState = DownloadState.Idle,
             FinalResult = DownloadResult.NoResultYet,
             ProviderUsed = null,
-            StateStartTime = DateTime.UtcNow
+            StateStartTime = DateTime.UtcNow,
         };
-        
+
         downloadHistory.AddEnhanced(enhancedHistoryItem);
-        
+
         // Set initial searching status with provider info
-        currentDownloadState.Set(new DownloadProgress
-        {
-            ArtistId = artistId,
-            ReleaseFolderName = releaseFolderName,
-            ArtistName = artistName,
-            ReleaseTitle = releaseTitle,
-            Status = DownloadStatus.Searching,
-            TotalProviders = totalProviders,
-            CurrentProviderIndex = 0,
-            CurrentProvider = null
-        });
-        
+        currentDownloadState.Set(
+            new DownloadProgress
+            {
+                ArtistId = artistId,
+                ReleaseFolderName = releaseFolderName,
+                ArtistName = artistName,
+                ReleaseTitle = releaseTitle,
+                Status = DownloadStatus.Searching,
+                TotalProviders = totalProviders,
+                CurrentProviderIndex = 0,
+                CurrentProvider = null,
+            }
+        );
+
         // Update state to Searching
-        downloadHistory.UpdateState(artistId, releaseFolderName, DownloadState.Searching, "Starting search across download providers");
-        
+        downloadHistory.UpdateState(
+            artistId,
+            releaseFolderName,
+            DownloadState.Searching,
+            "Starting search across download providers"
+        );
+
         for (int i = 0; i < providerList.Count; i++)
         {
             var provider = providerList[i];
             providerName = provider.GetType().Name; // Assign to the broader scope variable
-            
+
             try
             {
                 // Update current provider info
-                try { relLogger.Info($"[Orchestrator] Trying provider {providerName} ({i + 1}/{totalProviders})"); } catch { }
-                currentDownloadState.Set(new DownloadProgress
+                try
                 {
-                    ArtistId = artistId,
-                    ReleaseFolderName = releaseFolderName,
-                    ArtistName = artistName,
-                    ReleaseTitle = releaseTitle,
-                    Status = DownloadStatus.Searching,
-                    TotalProviders = totalProviders,
-                    CurrentProviderIndex = i + 1,
-                    CurrentProvider = providerName
-                });
-                
+                    relLogger.Info(
+                        $"[Orchestrator] Trying provider {providerName} ({i + 1}/{totalProviders})"
+                    );
+                }
+                catch { }
+                currentDownloadState.Set(
+                    new DownloadProgress
+                    {
+                        ArtistId = artistId,
+                        ReleaseFolderName = releaseFolderName,
+                        ArtistName = artistName,
+                        ReleaseTitle = releaseTitle,
+                        Status = DownloadStatus.Searching,
+                        TotalProviders = totalProviders,
+                        CurrentProviderIndex = i + 1,
+                        CurrentProvider = providerName,
+                    }
+                );
+
                 // Update state to show current provider being tried
-                downloadHistory.UpdateState(artistId, releaseFolderName, DownloadState.Searching, $"Trying provider {providerName} ({i + 1}/{totalProviders})");
-                
-                logger.LogInformation("[StartDownload] Trying provider {Provider} ({Index}/{Total}) for {Artist}/{Folder}", 
-                    providerName, i + 1, totalProviders, artistId, releaseFolderName);
-                
+                downloadHistory.UpdateState(
+                    artistId,
+                    releaseFolderName,
+                    DownloadState.Searching,
+                    $"Trying provider {providerName} ({i + 1}/{totalProviders})"
+                );
+
+                logger.LogInformation(
+                    "[StartDownload] Trying provider {Provider} ({Index}/{Total}) for {Artist}/{Folder}",
+                    providerName,
+                    i + 1,
+                    totalProviders,
+                    artistId,
+                    releaseFolderName
+                );
+
                 ok = await provider.TryDownloadReleaseAsync(
                     artistId,
                     releaseFolderName,
@@ -238,60 +306,131 @@ public class StartDownloadReleaseService(
                     allowedOfficialDigitalCounts,
                     token
                 );
-                
+
                 if (ok)
                 {
                     anyAccepted = true;
                     if (providerName == "ProwlarrDownloadProvider")
                     {
-                        logger.LogInformation("[StartDownload] Provider {Provider} accepted job handoff (SAB/qBittorrent). Will wait for files to appear in library.", providerName);
-                        downloadHistory.UpdateState(artistId, releaseFolderName, DownloadState.Downloading, $"{providerName} accepted job handoff; awaiting files");
-                        try { relLogger.Info($"[Orchestrator] {providerName} accepted job handoff; awaiting files"); } catch { }
+                        logger.LogInformation(
+                            "[StartDownload] Provider {Provider} accepted job handoff (SAB/qBittorrent). Will wait for files to appear in library.",
+                            providerName
+                        );
+                        downloadHistory.UpdateState(
+                            artistId,
+                            releaseFolderName,
+                            DownloadState.Downloading,
+                            $"{providerName} accepted job handoff; awaiting files"
+                        );
+                        try
+                        {
+                            relLogger.Info(
+                                $"[Orchestrator] {providerName} accepted job handoff; awaiting files"
+                            );
+                        }
+                        catch { }
                     }
                     else if (providerName == "SoulSeekDownloadProvider")
                     {
-                        logger.LogInformation("[StartDownload] Provider {Provider} completed download flow", providerName);
-                        downloadHistory.UpdateState(artistId, releaseFolderName, DownloadState.Downloading, $"{providerName} completed download");
-                        try { relLogger.Info($"[Orchestrator] {providerName} completed download"); } catch { }
+                        logger.LogInformation(
+                            "[StartDownload] Provider {Provider} completed download flow",
+                            providerName
+                        );
+                        downloadHistory.UpdateState(
+                            artistId,
+                            releaseFolderName,
+                            DownloadState.Downloading,
+                            $"{providerName} completed download"
+                        );
+                        try
+                        {
+                            relLogger.Info($"[Orchestrator] {providerName} completed download");
+                        }
+                        catch { }
                     }
                     else
                     {
-                        logger.LogInformation("[StartDownload] Provider {Provider} succeeded", providerName);
-                        downloadHistory.UpdateState(artistId, releaseFolderName, DownloadState.Downloading, $"{providerName} succeeded");
-                        try { relLogger.Info($"[Orchestrator] {providerName} succeeded"); } catch { }
+                        logger.LogInformation(
+                            "[StartDownload] Provider {Provider} succeeded",
+                            providerName
+                        );
+                        downloadHistory.UpdateState(
+                            artistId,
+                            releaseFolderName,
+                            DownloadState.Downloading,
+                            $"{providerName} succeeded"
+                        );
+                        try
+                        {
+                            relLogger.Info($"[Orchestrator] {providerName} succeeded");
+                        }
+                        catch { }
                     }
-                    
+
                     // Continue to next provider to exhaust all download services
                 }
                 else
                 {
-                    logger.LogInformation("[StartDownload] Provider {Provider} found no suitable result; moving to next", providerName);
-                    downloadHistory.UpdateState(artistId, releaseFolderName, DownloadState.Searching, $"{providerName} found no result; trying next provider");
-                    try { relLogger.Info($"[Orchestrator] Provider {providerName} returned no result"); } catch { }
+                    logger.LogInformation(
+                        "[StartDownload] Provider {Provider} found no suitable result; moving to next",
+                        providerName
+                    );
+                    downloadHistory.UpdateState(
+                        artistId,
+                        releaseFolderName,
+                        DownloadState.Searching,
+                        $"{providerName} found no result; trying next provider"
+                    );
+                    try
+                    {
+                        relLogger.Info(
+                            $"[Orchestrator] Provider {providerName} returned no result"
+                        );
+                    }
+                    catch { }
                 }
             }
             catch (Exception ex)
             {
                 logger.LogWarning(ex, "[StartDownload] Provider {Provider} failed", providerName);
-                
+
                 // Update state to show provider failed
-                downloadHistory.UpdateState(artistId, releaseFolderName, DownloadState.Searching, $"Provider {providerName} failed: {ex.Message}");
-                
+                downloadHistory.UpdateState(
+                    artistId,
+                    releaseFolderName,
+                    DownloadState.Searching,
+                    $"Provider {providerName} failed: {ex.Message}"
+                );
+
                 // Continue to next provider on failure
-                try { relLogger.Info($"[Orchestrator] Provider {providerName} failed: {ex.Message}"); } catch { }
+                try
+                {
+                    relLogger.Info($"[Orchestrator] Provider {providerName} failed: {ex.Message}");
+                }
+                catch { }
             }
         }
-        
+
         if (!anyAccepted)
         {
             var msg = $"No suitable download found for {artistName} - {releaseTitle}";
             logger.LogWarning("[StartDownload] {Message}", msg);
 
             // Update download result to show no search result
-            downloadHistory.UpdateResult(artistId, releaseFolderName, DownloadResult.NoSearchResult, msg);
-            
+            downloadHistory.UpdateResult(
+                artistId,
+                releaseFolderName,
+                DownloadResult.NoSearchResult,
+                msg
+            );
+
             // Update state to Finished
-            downloadHistory.UpdateState(artistId, releaseFolderName, DownloadState.Finished, "Download process failed - no suitable download found");
+            downloadHistory.UpdateState(
+                artistId,
+                releaseFolderName,
+                DownloadState.Finished,
+                "Download process failed - no suitable download found"
+            );
 
             await cache.UpdateReleaseDownloadStatus(
                 artistId,
@@ -303,27 +442,52 @@ public class StartDownloadReleaseService(
         }
 
         // Phase 2: Metadata refresh and track count validation
-        logger.LogInformation("[StartDownload] Phase 1 complete - download queued. Starting Phase 2: metadata refresh and track count validation for {ArtistId}/{ReleaseFolder}", artistId, releaseFolderName);
-        try { relLogger.Info("[Orchestrator] Phase 2 start: finalize + JSON update + metadata validation"); } catch { }
-        
+        logger.LogInformation(
+            "[StartDownload] Phase 1 complete - download queued. Starting Phase 2: metadata refresh and track count validation for {ArtistId}/{ReleaseFolder}",
+            artistId,
+            releaseFolderName
+        );
+        try
+        {
+            relLogger.Info(
+                "[Orchestrator] Phase 2 start: finalize + JSON update + metadata validation"
+            );
+        }
+        catch { }
+
         // Track the start time of Phase 2 for performance monitoring
         var phase2StartTime = DateTime.UtcNow;
-        
+
         // Update state to ImportingFiles
-        downloadHistory.UpdateState(artistId, releaseFolderName, DownloadState.ImportingFiles, "Starting file import and metadata refresh");
-        
+        downloadHistory.UpdateState(
+            artistId,
+            releaseFolderName,
+            DownloadState.ImportingFiles,
+            "Starting file import and metadata refresh"
+        );
+
         // Validate that we have a valid target directory before proceeding
         if (string.IsNullOrWhiteSpace(targetDir) || !Directory.Exists(targetDir))
         {
             var error = $"Target directory is invalid or does not exist: {targetDir}";
             logger.LogError("[StartDownload] {Error}", error);
-            
+
             // Update download result to show failure
-            downloadHistory.UpdateResult(artistId, releaseFolderName, DownloadResult.UnknownError, error);
-            
+            downloadHistory.UpdateResult(
+                artistId,
+                releaseFolderName,
+                DownloadResult.UnknownError,
+                error
+            );
+
             // Update state to Finished
-            downloadHistory.UpdateState(artistId, releaseFolderName, DownloadState.Finished, "Download process failed due to invalid target directory");
-            
+            downloadHistory.UpdateState(
+                artistId,
+                releaseFolderName,
+                DownloadState.Finished,
+                "Download process failed due to invalid target directory"
+            );
+
             return (false, error);
         }
 
@@ -331,53 +495,123 @@ public class StartDownloadReleaseService(
         try
         {
             // Update state to show SAB finalization starting
-            downloadHistory.UpdateState(artistId, releaseFolderName, DownloadState.ImportingFiles, "Starting SAB/qBit finalization process");
-            
-            var finalizedSab = await sabFinalize.FinalizeReleaseAsync(artistId, releaseFolderName, token);
+            downloadHistory.UpdateState(
+                artistId,
+                releaseFolderName,
+                DownloadState.ImportingFiles,
+                "Starting SAB/qBit finalization process"
+            );
+
+            var finalizedSab = await sabFinalize.FinalizeReleaseAsync(
+                artistId,
+                releaseFolderName,
+                token
+            );
             if (finalizedSab)
             {
-                logger.LogInformation("[StartDownload] SAB finalize moved audio for {ArtistId}/{Folder}", artistId, releaseFolderName);
-                try { relLogger.Info("[Orchestrator] SAB finalize completed successfully"); } catch { }
-                
+                logger.LogInformation(
+                    "[StartDownload] SAB finalize moved audio for {ArtistId}/{Folder}",
+                    artistId,
+                    releaseFolderName
+                );
+                try
+                {
+                    relLogger.Info("[Orchestrator] SAB finalize completed successfully");
+                }
+                catch { }
+
                 // Update state to show SAB finalization completed
-                downloadHistory.UpdateState(artistId, releaseFolderName, DownloadState.ImportingFiles, "SAB finalization completed successfully");
+                downloadHistory.UpdateState(
+                    artistId,
+                    releaseFolderName,
+                    DownloadState.ImportingFiles,
+                    "SAB finalization completed successfully"
+                );
             }
             else
             {
-                try { relLogger.Warn("[Orchestrator] SAB finalize did not complete (files may still be processing)"); } catch { }
+                try
+                {
+                    relLogger.Warn(
+                        "[Orchestrator] SAB finalize did not complete (files may still be processing)"
+                    );
+                }
+                catch { }
                 // Update state to show SAB finalization didn't complete
-                downloadHistory.UpdateState(artistId, releaseFolderName, DownloadState.ImportingFiles, "SAB finalization did not complete (files may still be processing)");
+                downloadHistory.UpdateState(
+                    artistId,
+                    releaseFolderName,
+                    DownloadState.ImportingFiles,
+                    "SAB finalization did not complete (files may still be processing)"
+                );
             }
-            
+
             // Try qBittorrent finalization as well (move torrent save location to release folder)
             try
             {
-                var qbOk = await qbFinalize.FinalizeReleaseAsync(artistId, releaseFolderName, token);
+                var qbOk = await qbFinalize.FinalizeReleaseAsync(
+                    artistId,
+                    releaseFolderName,
+                    token
+                );
                 if (qbOk)
                 {
-                    logger.LogInformation("[StartDownload] qBittorrent finalize set location or copied files for {ArtistId}/{Folder}", artistId, releaseFolderName);
-                    try { relLogger.Info("[Orchestrator] qBittorrent finalize completed successfully"); } catch { }
+                    logger.LogInformation(
+                        "[StartDownload] qBittorrent finalize set location or copied files for {ArtistId}/{Folder}",
+                        artistId,
+                        releaseFolderName
+                    );
+                    try
+                    {
+                        relLogger.Info(
+                            "[Orchestrator] qBittorrent finalize completed successfully"
+                        );
+                    }
+                    catch { }
                 }
                 else
                 {
-                    try { relLogger.Warn("[Orchestrator] qBittorrent finalize did not complete (torrent may still be downloading)"); } catch { }
+                    try
+                    {
+                        relLogger.Warn(
+                            "[Orchestrator] qBittorrent finalize did not complete (torrent may still be downloading)"
+                        );
+                    }
+                    catch { }
                 }
             }
             catch (Exception ex)
             {
-                logger.LogDebug(ex, "[StartDownload] qBittorrent finalize attempt failed (non-fatal)");
-                try { relLogger.Warn($"[Orchestrator] qBittorrent finalize failed: {ex.Message}"); } catch { }
+                logger.LogDebug(
+                    ex,
+                    "[StartDownload] qBittorrent finalize attempt failed (non-fatal)"
+                );
+                try
+                {
+                    relLogger.Warn($"[Orchestrator] qBittorrent finalize failed: {ex.Message}");
+                }
+                catch { }
             }
         }
         catch (Exception ex)
         {
             logger.LogDebug(ex, "[StartDownload] Finalize attempts failed (non-fatal)");
-            
+
             // Update state to show finalization failed
-            downloadHistory.UpdateState(artistId, releaseFolderName, DownloadState.ImportingFiles, "Finalize attempts failed (non-fatal)");
-            
+            downloadHistory.UpdateState(
+                artistId,
+                releaseFolderName,
+                DownloadState.ImportingFiles,
+                "Finalize attempts failed (non-fatal)"
+            );
+
             // Update state to Finished
-            downloadHistory.UpdateState(artistId, releaseFolderName, DownloadState.Finished, "Download process completed with finalize failure (non-fatal)");
+            downloadHistory.UpdateState(
+                artistId,
+                releaseFolderName,
+                DownloadState.Finished,
+                "Download process completed with finalize failure (non-fatal)"
+            );
         }
 
         // Before any JSON/meta work, check if any audio files are present yet
@@ -386,17 +620,32 @@ public class StartDownloadReleaseService(
         {
             currentAudioCount = Directory
                 .GetFiles(targetDir)
-                .Count(f => new[] { ".mp3", ".flac", ".wav", ".m4a", ".ogg" }
-                    .Contains(Path.GetExtension(f).ToLowerInvariant()));
+                .Count(f =>
+                    new[] { ".mp3", ".flac", ".wav", ".m4a", ".ogg" }.Contains(
+                        Path.GetExtension(f).ToLowerInvariant()
+                    )
+                );
         }
         catch { }
 
         if (currentAudioCount == 0)
         {
             // Keep the download in progress until files arrive (via SAB/qBit or background providers)
-            logger.LogInformation("[StartDownload] No audio files present yet at {TargetDir}. Keeping in progress and awaiting files from providers.", targetDir);
-            downloadHistory.UpdateState(artistId, releaseFolderName, DownloadState.Downloading, "Awaiting files from providers");
-            await cache.UpdateReleaseDownloadStatus(artistId, releaseFolderName, CachedReleaseDownloadStatus.Downloading);
+            logger.LogInformation(
+                "[StartDownload] No audio files present yet at {TargetDir}. Keeping in progress and awaiting files from providers.",
+                targetDir
+            );
+            downloadHistory.UpdateState(
+                artistId,
+                releaseFolderName,
+                DownloadState.Downloading,
+                "Awaiting files from providers"
+            );
+            await cache.UpdateReleaseDownloadStatus(
+                artistId,
+                releaseFolderName,
+                CachedReleaseDownloadStatus.Downloading
+            );
             return (true, null);
         }
 
@@ -408,9 +657,16 @@ public class StartDownloadReleaseService(
             try
             {
                 // Update state to show JSON update starting
-                downloadHistory.UpdateState(artistId, releaseFolderName, DownloadState.ImportingFiles, "Starting JSON update with audio file paths");
-                
-                logger.LogDebug("[StartDownload] release.json exists. Enumerating audio files for injection...");
+                downloadHistory.UpdateState(
+                    artistId,
+                    releaseFolderName,
+                    DownloadState.ImportingFiles,
+                    "Starting JSON update with audio file paths"
+                );
+
+                logger.LogDebug(
+                    "[StartDownload] release.json exists. Enumerating audio files for injection..."
+                );
                 var audioFiles = Directory
                     .GetFiles(targetDir)
                     .Where(f =>
@@ -427,7 +683,13 @@ public class StartDownloadReleaseService(
                     audioFiles.Count,
                     targetDir
                 );
-                try { relLogger.Info($"[Orchestrator] Found {audioFiles.Count} audio files in target directory"); } catch { }
+                try
+                {
+                    relLogger.Info(
+                        $"[Orchestrator] Found {audioFiles.Count} audio files in target directory"
+                    );
+                }
+                catch { }
 
                 await writer.UpdateReleaseAsync(
                     artistId,
@@ -444,18 +706,36 @@ public class StartDownloadReleaseService(
                                 if (!string.IsNullOrWhiteSpace(name))
                                 {
                                     var lower = name!.ToLowerInvariant();
-                                    var m = System.Text.RegularExpressions.Regex.Match(lower, @"\b(?:cd|disc|disk|digital\s*media)\s*(\d+)\b", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-                                    if (m.Success && int.TryParse(m.Groups[1].Value, out var d)) disc = d;
-                                    var m2 = System.Text.RegularExpressions.Regex.Match(name, @"-\s*(\d{1,3})\s*-", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-                                    if (m2.Success && int.TryParse(m2.Groups[1].Value, out var t2)) track = t2;
+                                    var m = System.Text.RegularExpressions.Regex.Match(
+                                        lower,
+                                        @"\b(?:cd|disc|disk|digital\s*media)\s*(\d+)\b",
+                                        System.Text.RegularExpressions.RegexOptions.IgnoreCase
+                                    );
+                                    if (m.Success && int.TryParse(m.Groups[1].Value, out var d))
+                                        disc = d;
+                                    var m2 = System.Text.RegularExpressions.Regex.Match(
+                                        name,
+                                        @"-\s*(\d{1,3})\s*-",
+                                        System.Text.RegularExpressions.RegexOptions.IgnoreCase
+                                    );
+                                    if (m2.Success && int.TryParse(m2.Groups[1].Value, out var t2))
+                                        track = t2;
                                     if (track < 0)
                                     {
                                         var span = name.AsSpan();
                                         int pos = 0;
-                                        while (pos < span.Length && !char.IsDigit(span[pos])) pos++;
+                                        while (pos < span.Length && !char.IsDigit(span[pos]))
+                                            pos++;
                                         int start = pos;
-                                        while (pos < span.Length && char.IsDigit(span[pos])) pos++;
-                                        if (pos > start && int.TryParse(span.Slice(start, pos - start), out var n))
+                                        while (pos < span.Length && char.IsDigit(span[pos]))
+                                            pos++;
+                                        if (
+                                            pos > start
+                                            && int.TryParse(
+                                                span.Slice(start, pos - start),
+                                                out var n
+                                            )
+                                        )
                                         {
                                             track = n > 99 ? (n % 100 == 0 ? n : n % 100) : n;
                                         }
@@ -470,13 +750,15 @@ public class StartDownloadReleaseService(
                         foreach (var f in audioFiles)
                         {
                             var (disc, track) = ExtractDiscTrack(f);
-                            if (track <= 0) continue;
+                            if (track <= 0)
+                                continue;
                             if (!byDiscTrack.TryGetValue(disc, out var inner))
                             {
                                 inner = new Dictionary<int, string>();
                                 byDiscTrack[disc] = inner;
                             }
-                            if (!inner.ContainsKey(track)) inner[track] = f;
+                            if (!inner.ContainsKey(track))
+                                inner[track] = f;
                         }
 
                         // Update discs when present
@@ -484,15 +766,20 @@ public class StartDownloadReleaseService(
                         {
                             foreach (var d in rel.Discs)
                             {
-                                if (d.Tracks == null) continue;
+                                if (d.Tracks == null)
+                                    continue;
                                 var discNum = d.DiscNumber > 0 ? d.DiscNumber : 1;
                                 if (byDiscTrack.TryGetValue(discNum, out var inner))
                                 {
                                     foreach (var t in d.Tracks)
                                     {
-                                        if (t.TrackNumber > 0 && inner.TryGetValue(t.TrackNumber, out var fname))
+                                        if (
+                                            t.TrackNumber > 0
+                                            && inner.TryGetValue(t.TrackNumber, out var fname)
+                                        )
                                         {
-                                            t.AudioFilePath = "./" + System.IO.Path.GetFileName(fname);
+                                            t.AudioFilePath =
+                                                "./" + System.IO.Path.GetFileName(fname);
                                         }
                                     }
                                 }
@@ -505,7 +792,10 @@ public class StartDownloadReleaseService(
                             foreach (var t in rel.Tracks)
                             {
                                 var discNum = t.DiscNumber ?? 1;
-                                if (byDiscTrack.TryGetValue(discNum, out var inner) && inner.TryGetValue(t.TrackNumber, out var fname))
+                                if (
+                                    byDiscTrack.TryGetValue(discNum, out var inner)
+                                    && inner.TryGetValue(t.TrackNumber, out var fname)
+                                )
                                 {
                                     t.AudioFilePath = "./" + System.IO.Path.GetFileName(fname);
                                 }
@@ -515,10 +805,19 @@ public class StartDownloadReleaseService(
                 );
 
                 logger.LogInformation("[StartDownload] Updated release.json with audio file paths");
-                try { relLogger.Info("[Orchestrator] Updated release.json with audio file paths"); } catch { }
+                try
+                {
+                    relLogger.Info("[Orchestrator] Updated release.json with audio file paths");
+                }
+                catch { }
 
                 // Update state to show JSON update completed
-                downloadHistory.UpdateState(artistId, releaseFolderName, DownloadState.ImportingFiles, "JSON update completed, refreshing cache");
+                downloadHistory.UpdateState(
+                    artistId,
+                    releaseFolderName,
+                    DownloadState.ImportingFiles,
+                    "JSON update completed, refreshing cache"
+                );
 
                 // Reload just this release into cache so it reflects new JSON (preserves transient availability)
                 logger.LogInformation(
@@ -527,7 +826,12 @@ public class StartDownloadReleaseService(
                 await cache.UpdateReleaseFromJsonAsync(artistId, releaseFolderName);
 
                 // Update state to show cache refresh completed
-                downloadHistory.UpdateState(artistId, releaseFolderName, DownloadState.ImportingFiles, "Cache refresh completed, updating media availability status");
+                downloadHistory.UpdateState(
+                    artistId,
+                    releaseFolderName,
+                    DownloadState.ImportingFiles,
+                    "Cache refresh completed, updating media availability status"
+                );
 
                 // Now publish availability status updates to reflect current runtime state
                 var relAfterCount = audioFiles.Count; // used for bounds below
@@ -543,18 +847,33 @@ public class StartDownloadReleaseService(
                             if (!string.IsNullOrWhiteSpace(name))
                             {
                                 var lower = name!.ToLowerInvariant();
-                                var m = System.Text.RegularExpressions.Regex.Match(lower, @"\b(?:cd|disc|disk|digital\s*media)\s*(\d+)\b", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-                                if (m.Success && int.TryParse(m.Groups[1].Value, out var d)) disc = d;
-                                var m2 = System.Text.RegularExpressions.Regex.Match(name, @"-\s*(\d{1,3})\s*-", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-                                if (m2.Success && int.TryParse(m2.Groups[1].Value, out var t2)) track = t2;
+                                var m = System.Text.RegularExpressions.Regex.Match(
+                                    lower,
+                                    @"\b(?:cd|disc|disk|digital\s*media)\s*(\d+)\b",
+                                    System.Text.RegularExpressions.RegexOptions.IgnoreCase
+                                );
+                                if (m.Success && int.TryParse(m.Groups[1].Value, out var d))
+                                    disc = d;
+                                var m2 = System.Text.RegularExpressions.Regex.Match(
+                                    name,
+                                    @"-\s*(\d{1,3})\s*-",
+                                    System.Text.RegularExpressions.RegexOptions.IgnoreCase
+                                );
+                                if (m2.Success && int.TryParse(m2.Groups[1].Value, out var t2))
+                                    track = t2;
                                 if (track < 0)
                                 {
                                     var span = name.AsSpan();
                                     int pos = 0;
-                                    while (pos < span.Length && !char.IsDigit(span[pos])) pos++;
+                                    while (pos < span.Length && !char.IsDigit(span[pos]))
+                                        pos++;
                                     int start = pos;
-                                    while (pos < span.Length && char.IsDigit(span[pos])) pos++;
-                                    if (pos > start && int.TryParse(span.Slice(start, pos - start), out var n))
+                                    while (pos < span.Length && char.IsDigit(span[pos]))
+                                        pos++;
+                                    if (
+                                        pos > start
+                                        && int.TryParse(span.Slice(start, pos - start), out var n)
+                                    )
                                     {
                                         track = n > 99 ? (n % 100 == 0 ? n : n % 100) : n;
                                     }
@@ -568,8 +887,12 @@ public class StartDownloadReleaseService(
                     var byDiscTrack = new Dictionary<int, HashSet<int>>();
                     foreach (var f in audioFiles)
                     {
-var (disc, track) = MusicGQL.Features.Downloads.Util.FileNameParsing.ExtractDiscTrackFromName(f);
-                        if (track <= 0) continue;
+                        var (disc, track) =
+                            MusicGQL.Features.Downloads.Util.FileNameParsing.ExtractDiscTrackFromName(
+                                f
+                            );
+                        if (track <= 0)
+                            continue;
                         if (!byDiscTrack.TryGetValue(disc, out var set))
                         {
                             set = new HashSet<int>();
@@ -608,11 +931,23 @@ var (disc, track) = MusicGQL.Features.Downloads.Util.FileNameParsing.ExtractDisc
                             )
                     );
                 }
-                logger.LogInformation("[StartDownload] Marked {Count} tracks as Available", relAfterCount);
-                try { relLogger.Info($"[Orchestrator] Marked {relAfterCount} tracks as Available"); } catch { }
+                logger.LogInformation(
+                    "[StartDownload] Marked {Count} tracks as Available",
+                    relAfterCount
+                );
+                try
+                {
+                    relLogger.Info($"[Orchestrator] Marked {relAfterCount} tracks as Available");
+                }
+                catch { }
 
                 // Update state to show media availability status updates completed
-                downloadHistory.UpdateState(artistId, releaseFolderName, DownloadState.ImportingFiles, "Media availability status updates completed, linking playlist items");
+                downloadHistory.UpdateState(
+                    artistId,
+                    releaseFolderName,
+                    DownloadState.ImportingFiles,
+                    "Media availability status updates completed, linking playlist items"
+                );
 
                 // Backfill playlist items that should now reference these tracks
                 try
@@ -627,31 +962,64 @@ var (disc, track) = MusicGQL.Features.Downloads.Util.FileNameParsing.ExtractDisc
                         artistId,
                         releaseFolderName
                     );
-                    
+
                     // Update state to show playlist linking failed
-                    downloadHistory.UpdateState(artistId, releaseFolderName, DownloadState.ImportingFiles, "Playlist linking failed (non-fatal)");
-                    
+                    downloadHistory.UpdateState(
+                        artistId,
+                        releaseFolderName,
+                        DownloadState.ImportingFiles,
+                        "Playlist linking failed (non-fatal)"
+                    );
+
                     // Update state to Finished
-                    downloadHistory.UpdateState(artistId, releaseFolderName, DownloadState.Finished, "Download process completed with playlist linking failure (non-fatal)");
+                    downloadHistory.UpdateState(
+                        artistId,
+                        releaseFolderName,
+                        DownloadState.Finished,
+                        "Download process completed with playlist linking failure (non-fatal)"
+                    );
                 }
             }
             catch (Exception ex)
             {
-                logger.LogWarning(ex, "[StartDownload] JSON update failed for {ArtistId}/{Folder}", artistId, releaseFolderName);
-                
+                logger.LogWarning(
+                    ex,
+                    "[StartDownload] JSON update failed for {ArtistId}/{Folder}",
+                    artistId,
+                    releaseFolderName
+                );
+
                 // Update state to show JSON update failed
-                downloadHistory.UpdateState(artistId, releaseFolderName, DownloadState.ImportingFiles, "JSON update failed");
-                
+                downloadHistory.UpdateState(
+                    artistId,
+                    releaseFolderName,
+                    DownloadState.ImportingFiles,
+                    "JSON update failed"
+                );
+
                 // Update state to Finished
-                downloadHistory.UpdateState(artistId, releaseFolderName, DownloadState.Finished, "Download process failed during JSON update");
+                downloadHistory.UpdateState(
+                    artistId,
+                    releaseFolderName,
+                    DownloadState.Finished,
+                    "Download process failed during JSON update"
+                );
             }
         }
         else
         {
-            logger.LogWarning("[StartDownload] release.json not found at path: {Path}. Skipping JSON update.", releaseJsonPath);
-            
+            logger.LogWarning(
+                "[StartDownload] release.json not found at path: {Path}. Skipping JSON update.",
+                releaseJsonPath
+            );
+
             // Update state to show no JSON update needed
-            downloadHistory.UpdateState(artistId, releaseFolderName, DownloadState.ImportingFiles, "No release.json found, skipping JSON update");
+            downloadHistory.UpdateState(
+                artistId,
+                releaseFolderName,
+                DownloadState.ImportingFiles,
+                "No release.json found, skipping JSON update"
+            );
         }
 
         await cache.UpdateReleaseDownloadStatus(
@@ -659,15 +1027,24 @@ var (disc, track) = MusicGQL.Features.Downloads.Util.FileNameParsing.ExtractDisc
             releaseFolderName,
             CachedReleaseDownloadStatus.Idle
         );
-        try { relLogger.Info("[Orchestrator] Set download status = Idle"); } catch { }
+        try
+        {
+            relLogger.Info("[Orchestrator] Set download status = Idle");
+        }
+        catch { }
 
         // Auto-refresh metadata now that audio exists
         bool metadataRefreshSuccess = false;
         string? metadataError = null;
-        
+
         // Update state to MatchingRelease
-        downloadHistory.UpdateState(artistId, releaseFolderName, DownloadState.MatchingRelease, "Starting metadata refresh from MusicBrainz");
-        
+        downloadHistory.UpdateState(
+            artistId,
+            releaseFolderName,
+            DownloadState.MatchingRelease,
+            "Starting metadata refresh from MusicBrainz"
+        );
+
         try
         {
             var rel = await cache.GetReleaseByArtistAndFolderAsync(artistId, releaseFolderName);
@@ -676,27 +1053,51 @@ var (disc, track) = MusicGQL.Features.Downloads.Util.FileNameParsing.ExtractDisc
             if (!string.IsNullOrWhiteSpace(mbArtistId) && rel != null)
             {
                 // Update state to show MusicBrainz search starting
-                downloadHistory.UpdateState(artistId, releaseFolderName, DownloadState.MatchingRelease, "Searching MusicBrainz for matching release groups");
-                
+                downloadHistory.UpdateState(
+                    artistId,
+                    releaseFolderName,
+                    DownloadState.MatchingRelease,
+                    "Searching MusicBrainz for matching release groups"
+                );
+
                 var rgs = await mbImport.GetArtistReleaseGroupsAsync(mbArtistId!);
 
                 // Prefer RGs whose titles are equivalent, exclude demos, prefer Album primary type, then earliest date
-                var candidates = rgs
-                    .Where(rg => AreTitlesEquivalent(rg.Title, rel.Title ?? string.Empty))
-                    .Where(rg => !(rg.SecondaryTypes?.Any(t => t.Equals("Demo", StringComparison.OrdinalIgnoreCase)) ?? false))
+                var candidates = rgs.Where(rg =>
+                        AreTitlesEquivalent(rg.Title, rel.Title ?? string.Empty)
+                    )
+                    .Where(rg =>
+                        !(
+                            rg.SecondaryTypes?.Any(t =>
+                                t.Equals("Demo", StringComparison.OrdinalIgnoreCase)
+                            ) ?? false
+                        )
+                    )
                     .ToList();
 
                 if (candidates.Count == 0)
                 {
                     // Fallback: loose contains check
-                    candidates = rgs
-                        .Where(rg => (rg.Title ?? string.Empty).IndexOf(rel.Title ?? string.Empty, StringComparison.OrdinalIgnoreCase) >= 0)
-                        .Where(rg => !(rg.SecondaryTypes?.Any(t => t.Equals("Demo", StringComparison.OrdinalIgnoreCase)) ?? false))
+                    candidates = rgs.Where(rg =>
+                            (rg.Title ?? string.Empty).IndexOf(
+                                rel.Title ?? string.Empty,
+                                StringComparison.OrdinalIgnoreCase
+                            ) >= 0
+                        )
+                        .Where(rg =>
+                            !(
+                                rg.SecondaryTypes?.Any(t =>
+                                    t.Equals("Demo", StringComparison.OrdinalIgnoreCase)
+                                ) ?? false
+                            )
+                        )
                         .ToList();
                 }
 
                 var match = candidates
-                    .OrderByDescending(rg => string.Equals(rg.PrimaryType, "Album", StringComparison.OrdinalIgnoreCase))
+                    .OrderByDescending(rg =>
+                        string.Equals(rg.PrimaryType, "Album", StringComparison.OrdinalIgnoreCase)
+                    )
                     .ThenBy(rg => SafeDateKey(rg.FirstReleaseDate))
                     .FirstOrDefault();
 
@@ -706,15 +1107,30 @@ var (disc, track) = MusicGQL.Features.Downloads.Util.FileNameParsing.ExtractDisc
                 if (match is not null)
                 {
                     // Update state to show release group match found
-                    downloadHistory.UpdateState(artistId, releaseFolderName, DownloadState.MatchingRelease, $"Found matching release group: {match.Title} ({match.Id})");
-                    try { relLogger.Info($"[Orchestrator] Matched MusicBrainz RG: {match.Title} ({match.Id})"); } catch { }
+                    downloadHistory.UpdateState(
+                        artistId,
+                        releaseFolderName,
+                        DownloadState.MatchingRelease,
+                        $"Found matching release group: {match.Title} ({match.Id})"
+                    );
+                    try
+                    {
+                        relLogger.Info(
+                            $"[Orchestrator] Matched MusicBrainz RG: {match.Title} ({match.Id})"
+                        );
+                    }
+                    catch { }
 
                     // Rebuild using this RG; builder will pick the best matching release considering local audio files
                     var importResult = await releaseImporter.ImportReleaseGroupInPlaceAsync(
                         match.Id,
                         match.Title,
                         match.PrimaryType,
-                        Path.GetDirectoryName(rel.ReleasePath) ?? Path.Combine((await serverSettingsAccessor.GetAsync()).LibraryPath, artistId),
+                        Path.GetDirectoryName(rel.ReleasePath)
+                            ?? Path.Combine(
+                                (await serverSettingsAccessor.GetAsync()).LibraryPath,
+                                artistId
+                            ),
                         artistId,
                         rel.FolderName
                     );
@@ -722,92 +1138,173 @@ var (disc, track) = MusicGQL.Features.Downloads.Util.FileNameParsing.ExtractDisc
                     if (importResult.Success)
                     {
                         // Update state to show import completed successfully
-                        downloadHistory.UpdateState(artistId, releaseFolderName, DownloadState.MatchingRelease, "Release import completed successfully");
+                        downloadHistory.UpdateState(
+                            artistId,
+                            releaseFolderName,
+                            DownloadState.MatchingRelease,
+                            "Release import completed successfully"
+                        );
 
                         await cache.UpdateReleaseFromJsonAsync(artistId, releaseFolderName);
 
                         // Update state to ValidatingTracks
-                        downloadHistory.UpdateState(artistId, releaseFolderName, DownloadState.ValidatingTracks, "Starting track count validation");
+                        downloadHistory.UpdateState(
+                            artistId,
+                            releaseFolderName,
+                            DownloadState.ValidatingTracks,
+                            "Starting track count validation"
+                        );
 
                         // Verify that the refreshed release has tracks that match our audio files
-                        var refreshedRelease = await cache.GetReleaseByArtistAndFolderAsync(artistId, releaseFolderName);
+                        var refreshedRelease = await cache.GetReleaseByArtistAndFolderAsync(
+                            artistId,
+                            releaseFolderName
+                        );
                         if (refreshedRelease?.Tracks != null)
                         {
                             var audioFiles = Directory
                                 .GetFiles(targetDir)
-                                .Where(f => new[] { ".mp3", ".flac", ".wav", ".m4a", ".ogg" }.Contains(
-                                    Path.GetExtension(f).ToLowerInvariant()
-                                ))
+                                .Where(f =>
+                                    new[] { ".mp3", ".flac", ".wav", ".m4a", ".ogg" }.Contains(
+                                        Path.GetExtension(f).ToLowerInvariant()
+                                    )
+                                )
                                 .ToList();
 
                             var trackCount = refreshedRelease.Tracks.Count;
                             var audioFileCount = audioFiles.Count;
 
-                            logger.LogInformation("[StartDownload] Track count validation: MusicBrainz release has {TrackCount} tracks, found {AudioFileCount} audio files in {TargetDir}",
-                                trackCount, audioFileCount, targetDir);
+                            logger.LogInformation(
+                                "[StartDownload] Track count validation: MusicBrainz release has {TrackCount} tracks, found {AudioFileCount} audio files in {TargetDir}",
+                                trackCount,
+                                audioFileCount,
+                                targetDir
+                            );
 
                             if (trackCount == audioFileCount)
                             {
                                 metadataRefreshSuccess = true;
-                                logger.LogInformation("[StartDownload] Metadata refresh successful - track count matches: {TrackCount} tracks, {AudioFileCount} audio files", trackCount, audioFileCount);
-                                try { relLogger.Info($"[Orchestrator] Metadata refresh OK — track count matches: {trackCount}"); } catch { }
+                                logger.LogInformation(
+                                    "[StartDownload] Metadata refresh successful - track count matches: {TrackCount} tracks, {AudioFileCount} audio files",
+                                    trackCount,
+                                    audioFileCount
+                                );
+                                try
+                                {
+                                    relLogger.Info(
+                                        $"[Orchestrator] Metadata refresh OK — track count matches: {trackCount}"
+                                    );
+                                }
+                                catch { }
 
                                 // Update state to show track validation successful
-                                downloadHistory.UpdateState(artistId, releaseFolderName, DownloadState.ValidatingTracks, $"Track validation successful: {trackCount} tracks match {audioFileCount} audio files");
+                                downloadHistory.UpdateState(
+                                    artistId,
+                                    releaseFolderName,
+                                    DownloadState.ValidatingTracks,
+                                    $"Track validation successful: {trackCount} tracks match {audioFileCount} audio files"
+                                );
                             }
                             else
                             {
                                 // Primary match failed due to track count mismatch - look for alternatives
                                 primaryMatchFailed = true;
-                                metadataError = $"Track count mismatch: expected {trackCount} tracks, found {audioFileCount} audio files. Looking for alternative releases with same title...";
+                                metadataError =
+                                    $"Track count mismatch: expected {trackCount} tracks, found {audioFileCount} audio files. Looking for alternative releases with same title...";
                                 logger.LogWarning("[StartDownload] {Error}", metadataError);
-                                try { relLogger.Warn($"[Orchestrator] {metadataError}"); } catch { }
+                                try
+                                {
+                                    relLogger.Warn($"[Orchestrator] {metadataError}");
+                                }
+                                catch { }
 
                                 // Log additional diagnostic information
                                 if (audioFiles.Count > 0)
                                 {
-                                    var audioFileNames = audioFiles.Select(Path.GetFileName).Take(5).ToList();
-                                    logger.LogWarning("[StartDownload] Audio files found: {AudioFiles}...", string.Join(", ", audioFileNames));
+                                    var audioFileNames = audioFiles
+                                        .Select(Path.GetFileName)
+                                        .Take(5)
+                                        .ToList();
+                                    logger.LogWarning(
+                                        "[StartDownload] Audio files found: {AudioFiles}...",
+                                        string.Join(", ", audioFileNames)
+                                    );
                                 }
 
                                 if (refreshedRelease.Tracks.Count > 0)
                                 {
-                                    var trackNames = refreshedRelease.Tracks.Take(5).Select(t => t.Title).ToList();
-                                    logger.LogWarning("[StartDownload] Expected tracks: {Tracks}...", string.Join(", ", trackNames));
+                                    var trackNames = refreshedRelease
+                                        .Tracks.Take(5)
+                                        .Select(t => t.Title)
+                                        .ToList();
+                                    logger.LogWarning(
+                                        "[StartDownload] Expected tracks: {Tracks}...",
+                                        string.Join(", ", trackNames)
+                                    );
                                 }
 
                                 // Search for alternative release groups with same title that might have matching track count
-                                var allReleaseGroupsWithTitle = rgs
-                                    .Where(rg => AreTitlesEquivalent(rg.Title, rel.Title ?? string.Empty))
-                                    .Where(rg => !(rg.SecondaryTypes?.Any(t => t.Equals("Demo", StringComparison.OrdinalIgnoreCase)) ?? false))
+                                var allReleaseGroupsWithTitle = rgs.Where(rg =>
+                                        AreTitlesEquivalent(rg.Title, rel.Title ?? string.Empty)
+                                    )
+                                    .Where(rg =>
+                                        !(
+                                            rg.SecondaryTypes?.Any(t =>
+                                                t.Equals("Demo", StringComparison.OrdinalIgnoreCase)
+                                            ) ?? false
+                                        )
+                                    )
                                     .ToList();
 
                                 foreach (var alternativeRg in allReleaseGroupsWithTitle)
                                 {
-                                    if (alternativeRg.Id == match.Id) continue; // Skip the one we already tried
+                                    if (alternativeRg.Id == match.Id)
+                                        continue; // Skip the one we already tried
 
                                     try
                                     {
-                                        var (altOfficialCounts, _) = await mbImport.GetPossibleTrackCountsForReleaseGroupAsync(alternativeRg.Id);
+                                        var (altOfficialCounts, _) =
+                                            await mbImport.GetPossibleTrackCountsForReleaseGroupAsync(
+                                                alternativeRg.Id
+                                            );
                                         if (altOfficialCounts.Contains(audioFileCount))
                                         {
                                             alternativeMatch = alternativeRg;
-                                            logger.LogInformation("[StartDownload] Found alternative release group '{Title}' ({Id}) with matching track count {AudioFileCount}",
-                                                alternativeRg.Title, alternativeRg.Id, audioFileCount);
-                                            try { relLogger.Info($"[Orchestrator] Found alternative RG: {alternativeRg.Title} ({alternativeRg.Id})"); } catch { }
+                                            logger.LogInformation(
+                                                "[StartDownload] Found alternative release group '{Title}' ({Id}) with matching track count {AudioFileCount}",
+                                                alternativeRg.Title,
+                                                alternativeRg.Id,
+                                                audioFileCount
+                                            );
+                                            try
+                                            {
+                                                relLogger.Info(
+                                                    $"[Orchestrator] Found alternative RG: {alternativeRg.Title} ({alternativeRg.Id})"
+                                                );
+                                            }
+                                            catch { }
                                             break;
                                         }
                                     }
                                     catch (Exception ex)
                                     {
-                                        logger.LogDebug(ex, "[StartDownload] Failed to get track counts for alternative release group {Id}", alternativeRg.Id);
+                                        logger.LogDebug(
+                                            ex,
+                                            "[StartDownload] Failed to get track counts for alternative release group {Id}",
+                                            alternativeRg.Id
+                                        );
                                     }
                                 }
 
                                 if (alternativeMatch is null)
                                 {
                                     // Update state to show track validation failed
-                                    downloadHistory.UpdateState(artistId, releaseFolderName, DownloadState.ValidatingTracks, $"Track validation failed: {metadataError}");
+                                    downloadHistory.UpdateState(
+                                        artistId,
+                                        releaseFolderName,
+                                        DownloadState.ValidatingTracks,
+                                        $"Track validation failed: {metadataError}"
+                                    );
                                 }
                             }
                         }
@@ -818,7 +1315,12 @@ var (disc, track) = MusicGQL.Features.Downloads.Util.FileNameParsing.ExtractDisc
                         }
 
                         // Update state to show metadata events being published
-                        downloadHistory.UpdateState(artistId, releaseFolderName, DownloadState.ValidatingTracks, "Publishing metadata update events");
+                        downloadHistory.UpdateState(
+                            artistId,
+                            releaseFolderName,
+                            DownloadState.ValidatingTracks,
+                            "Publishing metadata update events"
+                        );
 
                         // Publish metadata updated event
                         var updated = await cache.GetReleaseByArtistAndFolderAsync(
@@ -851,60 +1353,108 @@ var (disc, track) = MusicGQL.Features.Downloads.Util.FileNameParsing.ExtractDisc
                             );
 
                             // Update state to show metadata events published successfully
-                            downloadHistory.UpdateState(artistId, releaseFolderName, DownloadState.ValidatingTracks, "Metadata update events published successfully");
+                            downloadHistory.UpdateState(
+                                artistId,
+                                releaseFolderName,
+                                DownloadState.ValidatingTracks,
+                                "Metadata update events published successfully"
+                            );
                         }
                     }
                     else
                     {
                         metadataError = $"Metadata import failed: {importResult.ErrorMessage}";
                         logger.LogWarning("[StartDownload] {Error}", metadataError);
-                        try { relLogger.Warn($"[Orchestrator] {metadataError}"); } catch { }
+                        try
+                        {
+                            relLogger.Warn($"[Orchestrator] {metadataError}");
+                        }
+                        catch { }
 
                         // Update state to show import failed
-                        downloadHistory.UpdateState(artistId, releaseFolderName, DownloadState.MatchingRelease, $"Release import failed: {metadataError}");
+                        downloadHistory.UpdateState(
+                            artistId,
+                            releaseFolderName,
+                            DownloadState.MatchingRelease,
+                            $"Release import failed: {metadataError}"
+                        );
                     }
                 }
                 else
                 {
                     metadataError = "No matching release group found in MusicBrainz";
                     logger.LogWarning("[StartDownload] {Error}", metadataError);
-                    try { relLogger.Warn($"[Orchestrator] {metadataError}"); } catch { }
+                    try
+                    {
+                        relLogger.Warn($"[Orchestrator] {metadataError}");
+                    }
+                    catch { }
 
                     // Update state to show no matching release group found
-                    downloadHistory.UpdateState(artistId, releaseFolderName, DownloadState.MatchingRelease, "No matching release group found in MusicBrainz");
+                    downloadHistory.UpdateState(
+                        artistId,
+                        releaseFolderName,
+                        DownloadState.MatchingRelease,
+                        "No matching release group found in MusicBrainz"
+                    );
                 }
 
                 // Try alternative match if primary match failed due to track count mismatch
                 if (primaryMatchFailed && alternativeMatch is not null)
                 {
-                    logger.LogInformation("[StartDownload] Attempting alternative release group: {Title} ({Id})", alternativeMatch.Title, alternativeMatch.Id);
-                    downloadHistory.UpdateState(artistId, releaseFolderName, DownloadState.MatchingRelease, $"Attempting alternative release group: {alternativeMatch.Title} ({alternativeMatch.Id})");
+                    logger.LogInformation(
+                        "[StartDownload] Attempting alternative release group: {Title} ({Id})",
+                        alternativeMatch.Title,
+                        alternativeMatch.Id
+                    );
+                    downloadHistory.UpdateState(
+                        artistId,
+                        releaseFolderName,
+                        DownloadState.MatchingRelease,
+                        $"Attempting alternative release group: {alternativeMatch.Title} ({alternativeMatch.Id})"
+                    );
 
                     var altImportResult = await releaseImporter.ImportReleaseGroupInPlaceAsync(
                         alternativeMatch.Id,
                         alternativeMatch.Title,
                         alternativeMatch.PrimaryType,
-                        Path.GetDirectoryName(rel.ReleasePath) ?? Path.Combine((await serverSettingsAccessor.GetAsync()).LibraryPath, artistId),
+                        Path.GetDirectoryName(rel.ReleasePath)
+                            ?? Path.Combine(
+                                (await serverSettingsAccessor.GetAsync()).LibraryPath,
+                                artistId
+                            ),
                         artistId,
                         rel.FolderName
                     );
 
                     if (altImportResult.Success)
                     {
-                        logger.LogInformation("[StartDownload] Alternative release group import successful");
-                        downloadHistory.UpdateState(artistId, releaseFolderName, DownloadState.MatchingRelease, "Alternative release import completed successfully");
+                        logger.LogInformation(
+                            "[StartDownload] Alternative release group import successful"
+                        );
+                        downloadHistory.UpdateState(
+                            artistId,
+                            releaseFolderName,
+                            DownloadState.MatchingRelease,
+                            "Alternative release import completed successfully"
+                        );
 
                         await cache.UpdateReleaseFromJsonAsync(artistId, releaseFolderName);
 
                         // Verify the alternative release has matching track count
-                        var altRefreshedRelease = await cache.GetReleaseByArtistAndFolderAsync(artistId, releaseFolderName);
+                        var altRefreshedRelease = await cache.GetReleaseByArtistAndFolderAsync(
+                            artistId,
+                            releaseFolderName
+                        );
                         if (altRefreshedRelease?.Tracks != null)
                         {
                             var audioFiles = Directory
                                 .GetFiles(targetDir)
-                                .Where(f => new[] { ".mp3", ".flac", ".wav", ".m4a", ".ogg" }.Contains(
-                                    Path.GetExtension(f).ToLowerInvariant()
-                                ))
+                                .Where(f =>
+                                    new[] { ".mp3", ".flac", ".wav", ".m4a", ".ogg" }.Contains(
+                                        Path.GetExtension(f).ToLowerInvariant()
+                                    )
+                                )
                                 .ToList();
 
                             var trackCount = altRefreshedRelease.Tracks.Count;
@@ -914,13 +1464,31 @@ var (disc, track) = MusicGQL.Features.Downloads.Util.FileNameParsing.ExtractDisc
                             {
                                 metadataRefreshSuccess = true;
                                 metadataError = null; // Clear the error since we succeeded with alternative
-                                logger.LogInformation("[StartDownload] Alternative metadata refresh successful - track count matches: {TrackCount} tracks, {AudioFileCount} audio files", trackCount, audioFileCount);
-                                try { relLogger.Info($"[Orchestrator] Alternative metadata refresh OK — track count matches: {trackCount}"); } catch { }
+                                logger.LogInformation(
+                                    "[StartDownload] Alternative metadata refresh successful - track count matches: {TrackCount} tracks, {AudioFileCount} audio files",
+                                    trackCount,
+                                    audioFileCount
+                                );
+                                try
+                                {
+                                    relLogger.Info(
+                                        $"[Orchestrator] Alternative metadata refresh OK — track count matches: {trackCount}"
+                                    );
+                                }
+                                catch { }
 
-                                downloadHistory.UpdateState(artistId, releaseFolderName, DownloadState.ValidatingTracks, $"Alternative track validation successful: {trackCount} tracks match {audioFileCount} audio files");
+                                downloadHistory.UpdateState(
+                                    artistId,
+                                    releaseFolderName,
+                                    DownloadState.ValidatingTracks,
+                                    $"Alternative track validation successful: {trackCount} tracks match {audioFileCount} audio files"
+                                );
 
                                 // Publish metadata updated event for alternative match
-                                var altUpdated = await cache.GetReleaseByArtistAndFolderAsync(artistId, releaseFolderName);
+                                var altUpdated = await cache.GetReleaseByArtistAndFolderAsync(
+                                    artistId,
+                                    releaseFolderName
+                                );
                                 if (altUpdated != null)
                                 {
                                     await eventSender.SendAsync(
@@ -948,17 +1516,27 @@ var (disc, track) = MusicGQL.Features.Downloads.Util.FileNameParsing.ExtractDisc
                             }
                             else
                             {
-                                metadataError = $"Alternative release also has track count mismatch: expected {trackCount} tracks, found {audioFileCount} audio files";
+                                metadataError =
+                                    $"Alternative release also has track count mismatch: expected {trackCount} tracks, found {audioFileCount} audio files";
                                 logger.LogWarning("[StartDownload] {Error}", metadataError);
-                                try { relLogger.Warn($"[Orchestrator] {metadataError}"); } catch { }
+                                try
+                                {
+                                    relLogger.Warn($"[Orchestrator] {metadataError}");
+                                }
+                                catch { }
                             }
                         }
                     }
                     else
                     {
-                        metadataError = $"Alternative release import failed: {altImportResult.ErrorMessage}";
+                        metadataError =
+                            $"Alternative release import failed: {altImportResult.ErrorMessage}";
                         logger.LogWarning("[StartDownload] {Error}", metadataError);
-                        try { relLogger.Warn($"[Orchestrator] {metadataError}"); } catch { }
+                        try
+                        {
+                            relLogger.Warn($"[Orchestrator] {metadataError}");
+                        }
+                        catch { }
                     }
                 }
             }
@@ -966,73 +1544,156 @@ var (disc, track) = MusicGQL.Features.Downloads.Util.FileNameParsing.ExtractDisc
             {
                 metadataError = "No MusicBrainz artist ID or release found for metadata refresh";
                 logger.LogWarning("[StartDownload] {Error}", metadataError);
-                try { relLogger.Warn($"[Orchestrator] {metadataError}"); } catch { }
-                
+                try
+                {
+                    relLogger.Warn($"[Orchestrator] {metadataError}");
+                }
+                catch { }
+
                 // Update state to show no MusicBrainz data available
-                downloadHistory.UpdateState(artistId, releaseFolderName, DownloadState.MatchingRelease, "No MusicBrainz artist ID or release found for metadata refresh");
+                downloadHistory.UpdateState(
+                    artistId,
+                    releaseFolderName,
+                    DownloadState.MatchingRelease,
+                    "No MusicBrainz artist ID or release found for metadata refresh"
+                );
             }
         }
         catch (Exception ex)
         {
             metadataError = $"Metadata refresh failed: {ex.Message}";
             logger.LogWarning(ex, "[StartDownload] Auto-refresh after download failed");
-            try { relLogger.Warn($"[Orchestrator] Metadata refresh failed: {ex.Message}"); } catch { }
-            
+            try
+            {
+                relLogger.Warn($"[Orchestrator] Metadata refresh failed: {ex.Message}");
+            }
+            catch { }
+
             // Update state to show metadata refresh failed
-            downloadHistory.UpdateState(artistId, releaseFolderName, DownloadState.MatchingRelease, $"Metadata refresh failed: {ex.Message}");
-            
+            downloadHistory.UpdateState(
+                artistId,
+                releaseFolderName,
+                DownloadState.MatchingRelease,
+                $"Metadata refresh failed: {ex.Message}"
+            );
+
             // Update state to Finished
-            downloadHistory.UpdateState(artistId, releaseFolderName, DownloadState.Finished, "Download process failed during metadata refresh");
+            downloadHistory.UpdateState(
+                artistId,
+                releaseFolderName,
+                DownloadState.Finished,
+                "Download process failed during metadata refresh"
+            );
         }
 
         // Phase 2: Final success/failure determination based on metadata refresh and track count validation
-        downloadHistory.UpdateState(artistId, releaseFolderName, DownloadState.ValidatingTracks, "Determining final download result");
-        
+        downloadHistory.UpdateState(
+            artistId,
+            releaseFolderName,
+            DownloadState.ValidatingTracks,
+            "Determining final download result"
+        );
+
         if (metadataRefreshSuccess)
         {
             // Update the download result to show final success
             downloadHistory.UpdateResult(artistId, releaseFolderName, DownloadResult.Success);
-            try { relLogger.Info("[Orchestrator] Final result: SUCCESS"); } catch { }
-            
+            try
+            {
+                relLogger.Info("[Orchestrator] Final result: SUCCESS");
+            }
+            catch { }
+
             // Update state to Finished
-            downloadHistory.UpdateState(artistId, releaseFolderName, DownloadState.Finished, "Download process completed successfully");
-            
-            logger.LogInformation("[StartDownload] Download completed successfully for {ArtistId}/{ReleaseFolder} after metadata validation", artistId, releaseFolderName);
+            downloadHistory.UpdateState(
+                artistId,
+                releaseFolderName,
+                DownloadState.Finished,
+                "Download process completed successfully"
+            );
+
+            logger.LogInformation(
+                "[StartDownload] Download completed successfully for {ArtistId}/{ReleaseFolder} after metadata validation",
+                artistId,
+                releaseFolderName
+            );
         }
         else
         {
             // Determine the specific failure reason
             var failureResult = metadataError switch
             {
-                var msg when msg?.Contains("Track count mismatch") == true => DownloadResult.TrackCountMismatch,
-                var msg when msg?.Contains("No matching release group") == true => DownloadResult.NoMatchingReleases,
-                var msg when msg?.Contains("Metadata refresh failed") == true => DownloadResult.MetadataRefreshFailed,
-                _ => DownloadResult.UnknownError
+                var msg when msg?.Contains("Track count mismatch") == true =>
+                    DownloadResult.TrackCountMismatch,
+                var msg when msg?.Contains("No matching release group") == true =>
+                    DownloadResult.NoMatchingReleases,
+                var msg when msg?.Contains("Metadata refresh failed") == true =>
+                    DownloadResult.MetadataRefreshFailed,
+                _ => DownloadResult.UnknownError,
             };
-            
+
             // Update the download result to show final failure
             downloadHistory.UpdateResult(artistId, releaseFolderName, failureResult, metadataError);
-            try { relLogger.Warn($"[Orchestrator] Final result: FAILURE ({failureResult}) — {metadataError}"); } catch { }
-            
+            try
+            {
+                relLogger.Warn(
+                    $"[Orchestrator] Final result: FAILURE ({failureResult}) — {metadataError}"
+                );
+            }
+            catch { }
+
             // Update state to Finished
-            downloadHistory.UpdateState(artistId, releaseFolderName, DownloadState.Finished, "Download process failed during metadata validation");
-            
-            logger.LogWarning("[StartDownload] Download failed for {ArtistId}/{ReleaseFolder} after metadata validation: {Error}", artistId, releaseFolderName, metadataError);
+            downloadHistory.UpdateState(
+                artistId,
+                releaseFolderName,
+                DownloadState.Finished,
+                "Download process failed during metadata validation"
+            );
+
+            logger.LogWarning(
+                "[StartDownload] Download failed for {ArtistId}/{ReleaseFolder} after metadata validation: {Error}",
+                artistId,
+                releaseFolderName,
+                metadataError
+            );
         }
 
         // Log Phase 2 completion time
         var phase2Duration = DateTime.UtcNow - phase2StartTime;
-        logger.LogInformation("[StartDownload] Phase 2 completed in {Duration:g} for {ArtistId}/{ReleaseFolder}", phase2Duration, artistId, releaseFolderName);
-        try { relLogger.Info($"[Orchestrator] Phase 2 completed in {phase2Duration:g}"); } catch { }
+        logger.LogInformation(
+            "[StartDownload] Phase 2 completed in {Duration:g} for {ArtistId}/{ReleaseFolder}",
+            phase2Duration,
+            artistId,
+            releaseFolderName
+        );
+        try
+        {
+            relLogger.Info($"[Orchestrator] Phase 2 completed in {phase2Duration:g}");
+        }
+        catch { }
 
         // Update state to show final cleanup starting
-        downloadHistory.UpdateState(artistId, releaseFolderName, DownloadState.Finished, "Starting final cleanup and completion");
+        downloadHistory.UpdateState(
+            artistId,
+            releaseFolderName,
+            DownloadState.Finished,
+            "Starting final cleanup and completion"
+        );
 
         // Final state transition to Finished
-        downloadHistory.UpdateState(artistId, releaseFolderName, DownloadState.Finished, "Download process completed");
+        downloadHistory.UpdateState(
+            artistId,
+            releaseFolderName,
+            DownloadState.Finished,
+            "Download process completed"
+        );
 
         // Finished
-        logger.LogInformation("[StartDownload] Done for {ArtistId}/{ReleaseFolder}", artistId, releaseFolderName);
+        logger.LogInformation(
+            "[StartDownload] Done for {ArtistId}/{ReleaseFolder}",
+            artistId,
+            releaseFolderName
+        );
         return (true, null);
     }
 
@@ -1045,11 +1706,13 @@ var (disc, track) = MusicGQL.Features.Downloads.Util.FileNameParsing.ExtractDisc
         await using var db = await dbFactory.CreateDbContextAsync();
 
         // Candidates: items already linked to this artist but missing track mapping
-        var candidates = await db
-            .Set<DbPlaylistItem>()
+        var candidates = await db.Set<DbPlaylistItem>()
             .Where(i =>
                 i.LocalArtistId == artistId
-                && (i.LocalReleaseFolderName == null || i.LocalReleaseFolderName == releaseFolderName)
+                && (
+                    i.LocalReleaseFolderName == null
+                    || i.LocalReleaseFolderName == releaseFolderName
+                )
                 && i.LocalTrackNumber == null
                 && i.SongTitle != null
             )
@@ -1062,15 +1725,17 @@ var (disc, track) = MusicGQL.Features.Downloads.Util.FileNameParsing.ExtractDisc
         foreach (var item in candidates)
         {
             // If item has a release title, require it to match the release title to reduce false positives
-            if (!string.IsNullOrWhiteSpace(item.ReleaseTitle)
-                && !AreTitlesEquivalent(item.ReleaseTitle!, rel.Title ?? string.Empty))
+            if (
+                !string.IsNullOrWhiteSpace(item.ReleaseTitle)
+                && !AreTitlesEquivalent(item.ReleaseTitle!, rel.Title ?? string.Empty)
+            )
             {
                 continue;
             }
 
             var title = item.SongTitle ?? string.Empty;
-            var match = rel.Tracks
-                .Where(t => !string.IsNullOrWhiteSpace(t.Title))
+            var match = rel
+                .Tracks.Where(t => !string.IsNullOrWhiteSpace(t.Title))
                 .FirstOrDefault(t => AreTitlesEquivalent(t.Title!, title));
 
             if (match != null)
@@ -1096,17 +1761,17 @@ var (disc, track) = MusicGQL.Features.Downloads.Util.FileNameParsing.ExtractDisc
                     new PlaylistSubscription.PlaylistItemUpdatedMessage(item.PlaylistId, item.Id)
                 );
             }
-            catch { /* best effort */ }
+            catch
+            { /* best effort */
+            }
         }
     }
 
     private static string NormalizeTitle(string input)
     {
-        if (string.IsNullOrWhiteSpace(input)) return string.Empty;
-        var s = input
-            .Replace("’", "'")
-            .Replace("“", "\"")
-            .Replace("”", "\"");
+        if (string.IsNullOrWhiteSpace(input))
+            return string.Empty;
+        var s = input.Replace("’", "'").Replace("“", "\"").Replace("”", "\"");
         var builder = new System.Text.StringBuilder(s.Length);
         foreach (var ch in s)
         {
@@ -1115,20 +1780,25 @@ var (disc, track) = MusicGQL.Features.Downloads.Util.FileNameParsing.ExtractDisc
                 builder.Append(char.ToLowerInvariant(ch));
             }
         }
-        var normalized = System.Text.RegularExpressions.Regex.Replace(builder.ToString(), "\\s+", " ").Trim();
+        var normalized = System
+            .Text.RegularExpressions.Regex.Replace(builder.ToString(), "\\s+", " ")
+            .Trim();
         return normalized;
     }
 
     private static string StripParentheses(string input)
     {
-        return System.Text.RegularExpressions.Regex.Replace(input, "\\(.*?\\)", string.Empty).Trim();
+        return System
+            .Text.RegularExpressions.Regex.Replace(input, "\\(.*?\\)", string.Empty)
+            .Trim();
     }
 
     private static bool AreTitlesEquivalent(string a, string b)
     {
         var na = NormalizeTitle(a);
         var nb = NormalizeTitle(b);
-        if (na.Equals(nb, StringComparison.Ordinal)) return true;
+        if (na.Equals(nb, StringComparison.Ordinal))
+            return true;
 
         var npa = NormalizeTitle(StripParentheses(a));
         var npb = NormalizeTitle(StripParentheses(b));
@@ -1137,7 +1807,8 @@ var (disc, track) = MusicGQL.Features.Downloads.Util.FileNameParsing.ExtractDisc
 
     private static int SafeDateKey(string? iso)
     {
-        if (string.IsNullOrWhiteSpace(iso)) return int.MaxValue;
+        if (string.IsNullOrWhiteSpace(iso))
+            return int.MaxValue;
         var parts = iso.Split('-');
         int y = parts.Length > 0 && int.TryParse(parts[0], out var yy) ? yy : 9999;
         int m = parts.Length > 1 && int.TryParse(parts[1], out var mm) ? mm : 12;

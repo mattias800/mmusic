@@ -8,7 +8,12 @@ internal static class ProwlarrSearchStrategy
     /// Build the ordered list of search queries to try against Prowlarr.
     /// Order: base (artist + album) → base + year (when provided) → base + " 320" → base + " FLAC".
     /// </summary>
-    public static IReadOnlyList<string> BuildQueries(string artistName, string releaseTitle, int? year, ILogger logger)
+    public static IReadOnlyList<string> BuildQueries(
+        string artistName,
+        string releaseTitle,
+        int? year,
+        ILogger logger
+    )
     {
         var baseBroad = ($"{artistName} {releaseTitle}").Trim();
         var queries = new List<string> { baseBroad };
@@ -21,8 +26,11 @@ internal static class ProwlarrSearchStrategy
         queries.Add($"{baseBroad} 320");
         queries.Add($"{baseBroad} FLAC");
 
-        logger.LogDebug("[Prowlarr] Built {Count} search queries (broad-first): {Queries}", queries.Count, string.Join(" | ", queries));
+        logger.LogDebug(
+            "[Prowlarr] Built {Count} search queries (broad-first): {Queries}",
+            queries.Count,
+            string.Join(" | ", queries)
+        );
         return queries;
     }
 }
-

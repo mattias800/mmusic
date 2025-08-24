@@ -19,7 +19,12 @@ public class GenerateArtistShareFilesMutation
         }
 
         var (tagFileName, manifestPath) = await shareService.GenerateForArtistAsync(input.ArtistId);
-        return new GenerateArtistShareFilesSuccess(artist.Id, artist.Name, tagFileName, manifestPath);
+        return new GenerateArtistShareFilesSuccess(
+            artist.Id,
+            artist.Name,
+            tagFileName,
+            manifestPath
+        );
     }
 }
 
@@ -27,7 +32,12 @@ public record GenerateArtistShareFilesInput([ID] string ArtistId);
 
 [UnionType]
 public abstract record GenerateArtistShareFilesResult;
-public record GenerateArtistShareFilesSuccess(string ArtistId, string ArtistName, string TagFileName, string ManifestPath) : GenerateArtistShareFilesResult;
+
+public record GenerateArtistShareFilesSuccess(
+    string ArtistId,
+    string ArtistName,
+    string TagFileName,
+    string ManifestPath
+) : GenerateArtistShareFilesResult;
+
 public record GenerateArtistShareFilesError(string Message) : GenerateArtistShareFilesResult;
-
-

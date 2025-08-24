@@ -8,5 +8,3 @@ public record SpotifyPlaylistModel
     public string? CoverImageUrl { get; init; }
     public int? TotalTracks { get; init; }
 }
-
-

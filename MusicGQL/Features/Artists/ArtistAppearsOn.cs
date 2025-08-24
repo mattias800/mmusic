@@ -18,7 +18,9 @@ public record ArtistAppearsOn([property: GraphQLIgnore] CachedArtist Artist)
         return list.Select(appearance => new ArtistAppearsOnRelease(appearance, Artist.Id));
     }
 
-    public async Task<IEnumerable<Playlist>> Playlists([Service] IDbContextFactory<EventDbContext> dbFactory)
+    public async Task<IEnumerable<Playlist>> Playlists(
+        [Service] IDbContextFactory<EventDbContext> dbFactory
+    )
     {
         await using var db = await dbFactory.CreateDbContextAsync();
 
@@ -30,5 +32,3 @@ public record ArtistAppearsOn([property: GraphQLIgnore] CachedArtist Artist)
         return playlists.Select(p => new Playlist(p));
     }
 }
-
-

@@ -1,5 +1,5 @@
-using MusicGQL.Features.ServerLibrary.Cache;
 using MusicGQL.Features.Downloads;
+using MusicGQL.Features.ServerLibrary.Cache;
 
 namespace MusicGQL.Features.Downloads.Services;
 
@@ -28,7 +28,7 @@ public class DownloadHistoryService
         {
             var key = $"{item.ArtistId}|{item.ReleaseFolderName}";
             _enhancedItems[key] = item;
-            
+
             // Also add to legacy list for backward compatibility
             var legacyItem = new DownloadHistoryItem(
                 item.TimestampUtc,
@@ -44,7 +44,12 @@ public class DownloadHistoryService
         }
     }
 
-    public void UpdateState(string artistId, string releaseFolderName, DownloadState newState, string? notes = null)
+    public void UpdateState(
+        string artistId,
+        string releaseFolderName,
+        DownloadState newState,
+        string? notes = null
+    )
     {
         lock (_sync)
         {
@@ -53,21 +58,21 @@ public class DownloadHistoryService
             {
                 var now = DateTime.UtcNow;
                 var durationInPreviousState = now - existing.StateStartTime;
-                
+
                 var transition = new DownloadStateTransition
                 {
                     FromState = existing.CurrentState,
                     ToState = newState,
                     Timestamp = now,
                     DurationInPreviousState = durationInPreviousState,
-                    Notes = notes
+                    Notes = notes,
                 };
 
                 var updated = existing with
                 {
                     CurrentState = newState,
                     StateStartTime = now,
-                    StateTransitions = existing.StateTransitions.Append(transition).ToList()
+                    StateTransitions = existing.StateTransitions.Append(transition).ToList(),
                 };
 
                 _enhancedItems[key] = updated;
@@ -75,7 +80,12 @@ public class DownloadHistoryService
         }
     }
 
-    public void UpdateResult(string artistId, string releaseFolderName, DownloadResult result, string? errorMessage = null)
+    public void UpdateResult(
+        string artistId,
+        string releaseFolderName,
+        DownloadResult result,
+        string? errorMessage = null
+    )
     {
         lock (_sync)
         {
@@ -84,13 +94,13 @@ public class DownloadHistoryService
             {
                 var now = DateTime.UtcNow;
                 var totalDuration = now - existing.TimestampUtc;
-                
+
                 var updated = existing with
                 {
                     FinalResult = result,
                     ErrorMessage = errorMessage,
                     TotalDuration = totalDuration,
-                    CurrentState = DownloadState.Finished
+                    CurrentState = DownloadState.Finished,
                 };
 
                 _enhancedItems[key] = updated;
@@ -132,5 +142,3 @@ public class DownloadHistoryService
         }
     }
 }
-
-

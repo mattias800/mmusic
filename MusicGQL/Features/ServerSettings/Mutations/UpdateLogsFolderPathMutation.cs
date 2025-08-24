@@ -11,7 +11,10 @@ public record UpdateLogsFolderPathInput(string? NewPath);
 
 [UnionType]
 public abstract record UpdateLogsFolderPathResult;
-public record UpdateLogsFolderPathSuccess(ServerSettings ServerSettings) : UpdateLogsFolderPathResult;
+
+public record UpdateLogsFolderPathSuccess(ServerSettings ServerSettings)
+    : UpdateLogsFolderPathResult;
+
 public record UpdateLogsFolderPathError(string Message) : UpdateLogsFolderPathResult;
 
 [ExtendObjectType(typeof(Mutation))]
@@ -24,7 +27,9 @@ public class UpdateLogsFolderPathMutation
         [Service] EventDbContext dbContext
     )
     {
-        var userIdString = httpContextAccessor.HttpContext?.User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var userIdString = httpContextAccessor.HttpContext?.User.FindFirstValue(
+            ClaimTypes.NameIdentifier
+        );
         if (!Guid.TryParse(userIdString, out var userId))
             return new UpdateLogsFolderPathError("Not authenticated");
 
@@ -32,12 +37,14 @@ public class UpdateLogsFolderPathMutation
         if (viewer is null || (viewer.Roles & Users.Roles.UserRoles.Admin) == 0)
             return new UpdateLogsFolderPathError("Not authorized");
 
-        var result = await handler.Handle(new UpdateLogsFolderPathHandler.Command(userId, input.NewPath));
+        var result = await handler.Handle(
+            new UpdateLogsFolderPathHandler.Command(userId, input.NewPath)
+        );
 
-        var settings = await dbContext.ServerSettings.FirstOrDefaultAsync(s => s.Id == DefaultDbServerSettingsProvider.ServerSettingsSingletonId)
-            ?? DefaultDbServerSettingsProvider.GetDefault();
+        var settings =
+            await dbContext.ServerSettings.FirstOrDefaultAsync(s =>
+                s.Id == DefaultDbServerSettingsProvider.ServerSettingsSingletonId
+            ) ?? DefaultDbServerSettingsProvider.GetDefault();
         return new UpdateLogsFolderPathSuccess(new(settings));
     }
 }
-
-

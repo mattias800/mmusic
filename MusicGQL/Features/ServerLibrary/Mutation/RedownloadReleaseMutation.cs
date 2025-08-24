@@ -13,7 +13,10 @@ public class RedownloadReleaseMutation
         [Service] ServerLibraryJsonWriter writer
     )
     {
-        var release = await cache.GetReleaseByArtistAndFolderAsync(input.ArtistId, input.ReleaseFolderName);
+        var release = await cache.GetReleaseByArtistAndFolderAsync(
+            input.ArtistId,
+            input.ReleaseFolderName
+        );
         if (release == null)
         {
             return new RedownloadReleaseError("Release not found");
@@ -24,7 +27,14 @@ public class RedownloadReleaseMutation
         {
             if (Directory.Exists(dir))
             {
-                var audioExts = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { ".mp3", ".flac", ".wav", ".m4a", ".ogg" };
+                var audioExts = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+                {
+                    ".mp3",
+                    ".flac",
+                    ".wav",
+                    ".m4a",
+                    ".ogg",
+                };
                 foreach (var file in Directory.GetFiles(dir))
                 {
                     var ext = Path.GetExtension(file);
@@ -48,7 +58,8 @@ public class RedownloadReleaseMutation
                 input.ReleaseFolderName,
                 rel =>
                 {
-                    if (rel.Tracks is null) return;
+                    if (rel.Tracks is null)
+                        return;
                     foreach (var t in rel.Tracks)
                     {
                         t.AudioFilePath = null;

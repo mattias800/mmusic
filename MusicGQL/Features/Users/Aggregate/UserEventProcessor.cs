@@ -19,7 +19,10 @@ public class UserEventProcessor(ILogger<UserEventProcessor> logger)
                 await HandleUserPasswordHashSet(userPasswordHashSet, dbContext);
                 break;
             case UserListenBrainzCredentialsUpdated userListenBrainzCredentialsUpdated:
-                await HandleUserListenBrainzCredentialsUpdated(userListenBrainzCredentialsUpdated, dbContext);
+                await HandleUserListenBrainzCredentialsUpdated(
+                    userListenBrainzCredentialsUpdated,
+                    dbContext
+                );
                 break;
             case UserRolesUpdated userRolesUpdated:
                 await HandleUserRolesUpdated(userRolesUpdated, dbContext);
@@ -143,7 +146,10 @@ public class UserEventProcessor(ILogger<UserEventProcessor> logger)
         var user = dbContext.Users.FirstOrDefault(u => u.UserId == ev.SubjectUserId);
         if (user is null)
         {
-            logger.LogWarning("UserDeleted received for non-existing user {UserId}", ev.SubjectUserId);
+            logger.LogWarning(
+                "UserDeleted received for non-existing user {UserId}",
+                ev.SubjectUserId
+            );
             return;
         }
         dbContext.Users.Remove(user);

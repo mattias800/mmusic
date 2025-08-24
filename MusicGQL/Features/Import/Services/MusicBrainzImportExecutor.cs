@@ -1,13 +1,13 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Hqub.Lastfm;
+using MusicGQL.Features.ArtistImportQueue;
+using MusicGQL.Features.ArtistImportQueue.Services;
+using MusicGQL.Features.Downloads.Util;
+using MusicGQL.Features.Import.Services.TopTracks;
 using MusicGQL.Features.ServerLibrary.Json;
 using MusicGQL.Features.ServerLibrary.Utils;
 using MusicGQL.Integration.MusicBrainz;
-using MusicGQL.Features.ArtistImportQueue;
-using MusicGQL.Features.ArtistImportQueue.Services;
-using MusicGQL.Features.Import.Services.TopTracks;
-using MusicGQL.Features.Downloads.Util;
 using Path = System.IO.Path;
 
 namespace MusicGQL.Features.Import.Services;
@@ -104,7 +104,12 @@ public sealed class MusicBrainzImportExecutor(
 
         if (!File.Exists(artistJsonPath))
         {
-            logger.LogInformation("[ImportArtist] Creating new artist.json for '{Artist}' (MBID {MbId}) at {Path}", artistDisplayName, mbArtistId, artistJsonPath);
+            logger.LogInformation(
+                "[ImportArtist] Creating new artist.json for '{Artist}' (MBID {MbId}) at {Path}",
+                artistDisplayName,
+                mbArtistId,
+                artistJsonPath
+            );
             var photos = await coverArtDownloadService.DownloadArtistPhotosAsync(
                 mbArtistId,
                 artistDir
@@ -126,7 +131,12 @@ public sealed class MusicBrainzImportExecutor(
         }
         else
         {
-            logger.LogInformation("[ImportArtist] Enriching existing artist.json for '{Artist}' (MBID {MbId}) at {Path}", artistDisplayName, mbArtistId, artistJsonPath);
+            logger.LogInformation(
+                "[ImportArtist] Enriching existing artist.json for '{Artist}' (MBID {MbId}) at {Path}",
+                artistDisplayName,
+                mbArtistId,
+                artistJsonPath
+            );
             try
             {
                 var text = await File.ReadAllTextAsync(artistJsonPath);
@@ -179,15 +189,17 @@ public sealed class MusicBrainzImportExecutor(
             try
             {
                 var mbArtist = await musicBrainzService.GetArtistByIdAsync(mbArtistId);
-                var aliases = mbArtist?.Aliases?.Select(a => new JsonArtistAlias
-                {
-                    Name = a.Name,
-                    SortName = a.SortName,
-                    BeginDate = a.Begin,
-                    EndDate = a.End,
-                    Type = a.Type,
-                    Locale = a.Locale
-                }).ToList();
+                var aliases = mbArtist
+                    ?.Aliases?.Select(a => new JsonArtistAlias
+                    {
+                        Name = a.Name,
+                        SortName = a.SortName,
+                        BeginDate = a.Begin,
+                        EndDate = a.End,
+                        Type = a.Type,
+                        Locale = a.Locale,
+                    })
+                    .ToList();
                 if (aliases != null && aliases.Any())
                 {
                     jsonArtist.Aliases = aliases;
@@ -214,13 +226,24 @@ public sealed class MusicBrainzImportExecutor(
                 // TOP TRACKS: Use the new TopTracksServiceManager
                 try
                 {
-                    logger.LogInformation("[MusicBrainzImportExecutor] Getting top tracks for artist '{Name}' using service manager", artistDisplayName);
-                    var topTracksResult = await topTracksServiceManager.GetTopTracksAsync(mbArtistId, artistDisplayName, 25);
-                    
+                    logger.LogInformation(
+                        "[MusicBrainzImportExecutor] Getting top tracks for artist '{Name}' using service manager",
+                        artistDisplayName
+                    );
+                    var topTracksResult = await topTracksServiceManager.GetTopTracksAsync(
+                        mbArtistId,
+                        artistDisplayName,
+                        25
+                    );
+
                     if (topTracksResult.Success && topTracksResult.Tracks.Count > 0)
                     {
-                        logger.LogInformation("[MusicBrainzImportExecutor] Got {Count} top tracks from {Source} for artist '{Name}'", 
-                            topTracksResult.Tracks.Count, topTracksResult.Source, artistDisplayName);
+                        logger.LogInformation(
+                            "[MusicBrainzImportExecutor] Got {Count} top tracks from {Source} for artist '{Name}'",
+                            topTracksResult.Tracks.Count,
+                            topTracksResult.Source,
+                            artistDisplayName
+                        );
                         jsonArtist.TopTracks = topTracksResult.Tracks;
                     }
                     else
@@ -228,24 +251,37 @@ public sealed class MusicBrainzImportExecutor(
                         // Preserve existing top tracks if available
                         if (jsonArtist.TopTracks != null && jsonArtist.TopTracks.Count > 0)
                         {
-                            logger.LogInformation("[MusicBrainzImportExecutor] Preserving existing {Count} top tracks for artist '{Name}'", 
-                                jsonArtist.TopTracks.Count, artistDisplayName);
+                            logger.LogInformation(
+                                "[MusicBrainzImportExecutor] Preserving existing {Count} top tracks for artist '{Name}'",
+                                jsonArtist.TopTracks.Count,
+                                artistDisplayName
+                            );
                         }
                         else
                         {
-                            logger.LogWarning("[MusicBrainzImportExecutor] No top tracks found for artist '{Name}'. Warnings: {Warnings}", 
-                                artistDisplayName, string.Join("; ", topTracksResult.Warnings));
+                            logger.LogWarning(
+                                "[MusicBrainzImportExecutor] No top tracks found for artist '{Name}'. Warnings: {Warnings}",
+                                artistDisplayName,
+                                string.Join("; ", topTracksResult.Warnings)
+                            );
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    logger.LogError(ex, "[MusicBrainzImportExecutor] Failed to get top tracks for artist '{Name}'", artistDisplayName);
+                    logger.LogError(
+                        ex,
+                        "[MusicBrainzImportExecutor] Failed to get top tracks for artist '{Name}'",
+                        artistDisplayName
+                    );
                     // Preserve existing top tracks if available
                     if (jsonArtist.TopTracks != null && jsonArtist.TopTracks.Count > 0)
                     {
-                        logger.LogInformation("[MusicBrainzImportExecutor] Preserving existing {Count} top tracks for artist '{Name}' after error", 
-                            jsonArtist.TopTracks.Count, artistDisplayName);
+                        logger.LogInformation(
+                            "[MusicBrainzImportExecutor] Preserving existing {Count} top tracks for artist '{Name}' after error",
+                            jsonArtist.TopTracks.Count,
+                            artistDisplayName
+                        );
                     }
                 }
 
@@ -329,7 +365,10 @@ public sealed class MusicBrainzImportExecutor(
             // Fetch similar artists from ListenBrainz and store (best-effort)
             try
             {
-                var sims = await listenBrainzSimilarityClient.GetSimilarArtistsByMbidAsync(mbArtistId, 50);
+                var sims = await listenBrainzSimilarityClient.GetSimilarArtistsByMbidAsync(
+                    mbArtistId,
+                    50
+                );
                 // Fallback: try Last.fm similar artists if ListenBrainz yields none
                 if (sims.Count == 0)
                 {
@@ -349,11 +388,26 @@ public sealed class MusicBrainzImportExecutor(
                                         if (matchProp != null)
                                         {
                                             var val = matchProp.GetValue(a);
-                                            if (val is double d) score = d;
-                                            else if (val is float f) score = f;
-                                            else if (val is string s && double.TryParse(s, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var parsed)) score = parsed;
+                                            if (val is double d)
+                                                score = d;
+                                            else if (val is float f)
+                                                score = f;
+                                            else if (
+                                                val is string s
+                                                && double.TryParse(
+                                                    s,
+                                                    System.Globalization.NumberStyles.Float,
+                                                    System
+                                                        .Globalization
+                                                        .CultureInfo
+                                                        .InvariantCulture,
+                                                    out var parsed
+                                                )
+                                            )
+                                                score = parsed;
                                             // Normalize if value looks like percentage
-                                            if (score > 1.0) score = score / 100.0;
+                                            if (score > 1.0)
+                                                score = score / 100.0;
                                         }
                                     }
                                     catch { }
@@ -362,10 +416,13 @@ public sealed class MusicBrainzImportExecutor(
                                     {
                                         artist_mbid = a.MBID ?? string.Empty,
                                         artist_name = a.Name ?? string.Empty,
-                                        score = score
+                                        score = score,
                                     };
                                 })
-                                .Where(s => !string.IsNullOrWhiteSpace(s.artist_mbid) || !string.IsNullOrWhiteSpace(s.artist_name))
+                                .Where(s =>
+                                    !string.IsNullOrWhiteSpace(s.artist_mbid)
+                                    || !string.IsNullOrWhiteSpace(s.artist_name)
+                                )
                                 .Take(12)
                                 .ToList();
                         }
@@ -380,26 +437,37 @@ public sealed class MusicBrainzImportExecutor(
                         string? thumb = null;
                         if (!string.IsNullOrWhiteSpace(s.artist_mbid))
                         {
-                            thumb = await fanArtDownloadService.DownloadSingleArtistThumbAsync(s.artist_mbid, artistDir);
+                            thumb = await fanArtDownloadService.DownloadSingleArtistThumbAsync(
+                                s.artist_mbid,
+                                artistDir
+                            );
                         }
                         string? localArtistId = null;
                         try
                         {
                             if (!string.IsNullOrWhiteSpace(s.artist_mbid))
                             {
-                                var cached = await cache.GetArtistByMusicBrainzIdAsync(s.artist_mbid);
+                                var cached = await cache.GetArtistByMusicBrainzIdAsync(
+                                    s.artist_mbid
+                                );
                                 localArtistId = cached?.Id;
                             }
                         }
                         catch { }
-                        list.Add(new JsonSimilarArtist
-                        {
-                            Name = string.IsNullOrWhiteSpace(s.artist_name) ? "Unknown Artist" : s.artist_name,
-                            MusicBrainzArtistId = string.IsNullOrWhiteSpace(s.artist_mbid) ? null : s.artist_mbid,
-                            SimilarityScore = s.score,
-                            Thumb = thumb,
-                            ArtistId = localArtistId
-                        });
+                        list.Add(
+                            new JsonSimilarArtist
+                            {
+                                Name = string.IsNullOrWhiteSpace(s.artist_name)
+                                    ? "Unknown Artist"
+                                    : s.artist_name,
+                                MusicBrainzArtistId = string.IsNullOrWhiteSpace(s.artist_mbid)
+                                    ? null
+                                    : s.artist_mbid,
+                                SimilarityScore = s.score,
+                                Thumb = thumb,
+                                ArtistId = localArtistId,
+                            }
+                        );
                     }
                     jsonArtist.SimilarArtists = list;
                 }
@@ -423,8 +491,11 @@ public sealed class MusicBrainzImportExecutor(
                 foreach (var rel in rels)
                 {
                     var url = rel?.Url?.Resource;
-                    if (string.IsNullOrWhiteSpace(url)) continue;
-                    if (url.Contains("open.spotify.com/artist/", StringComparison.OrdinalIgnoreCase))
+                    if (string.IsNullOrWhiteSpace(url))
+                        continue;
+                    if (
+                        url.Contains("open.spotify.com/artist/", StringComparison.OrdinalIgnoreCase)
+                    )
                     {
                         try
                         {
@@ -449,7 +520,10 @@ public sealed class MusicBrainzImportExecutor(
                     {
                         jsonArtist.Connections.YoutubeMusicUrl ??= url;
                     }
-                    else if (url.Contains("youtube.com", StringComparison.OrdinalIgnoreCase) || url.Contains("youtu.be", StringComparison.OrdinalIgnoreCase))
+                    else if (
+                        url.Contains("youtube.com", StringComparison.OrdinalIgnoreCase)
+                        || url.Contains("youtu.be", StringComparison.OrdinalIgnoreCase)
+                    )
                     {
                         // Prefer channel URLs
                         if (url.Contains("/channel/") || url.Contains("/c/") || url.Contains("/@"))
@@ -483,26 +557,39 @@ public sealed class MusicBrainzImportExecutor(
                     jsonArtist.Connections.SpotifyIds ??= new List<JsonSpotifyArtistIdentity>();
                     foreach (var sid in spotifyIds)
                     {
-                        if (!jsonArtist.Connections.SpotifyIds.Any(x => string.Equals(x.Id, sid, StringComparison.OrdinalIgnoreCase)))
+                        if (
+                            !jsonArtist.Connections.SpotifyIds.Any(x =>
+                                string.Equals(x.Id, sid, StringComparison.OrdinalIgnoreCase)
+                            )
+                        )
                         {
-                            jsonArtist.Connections.SpotifyIds.Add(new JsonSpotifyArtistIdentity
-                            {
-                                Id = sid,
-                                DisplayName = jsonArtist.Name,
-                                Source = "musicbrainz",
-                                AddedAt = DateTime.UtcNow.ToString("yyyy-MM-dd"),
-                            });
+                            jsonArtist.Connections.SpotifyIds.Add(
+                                new JsonSpotifyArtistIdentity
+                                {
+                                    Id = sid,
+                                    DisplayName = jsonArtist.Name,
+                                    Source = "musicbrainz",
+                                    AddedAt = DateTime.UtcNow.ToString("yyyy-MM-dd"),
+                                }
+                            );
                         }
                     }
                 }
 
                 // Normalize any previously mis-assigned YouTube Music link
-                if (!string.IsNullOrWhiteSpace(jsonArtist.Connections.YoutubeChannelUrl)
-                    && jsonArtist.Connections.YoutubeChannelUrl.Contains("music.youtube.com", StringComparison.OrdinalIgnoreCase))
+                if (
+                    !string.IsNullOrWhiteSpace(jsonArtist.Connections.YoutubeChannelUrl)
+                    && jsonArtist.Connections.YoutubeChannelUrl.Contains(
+                        "music.youtube.com",
+                        StringComparison.OrdinalIgnoreCase
+                    )
+                )
                 {
                     if (string.IsNullOrWhiteSpace(jsonArtist.Connections.YoutubeMusicUrl))
                     {
-                        jsonArtist.Connections.YoutubeMusicUrl = jsonArtist.Connections.YoutubeChannelUrl;
+                        jsonArtist.Connections.YoutubeMusicUrl = jsonArtist
+                            .Connections
+                            .YoutubeChannelUrl;
                     }
                     jsonArtist.Connections.YoutubeChannelUrl = null;
                 }
@@ -513,7 +600,10 @@ public sealed class MusicBrainzImportExecutor(
             {
                 try
                 {
-                    var spotifyMatches = await spotifyService.SearchArtistsAsync(artistDisplayName, 1);
+                    var spotifyMatches = await spotifyService.SearchArtistsAsync(
+                        artistDisplayName,
+                        1
+                    );
                     var match = spotifyMatches?.FirstOrDefault();
                     if (match?.Id != null)
                     {
@@ -529,164 +619,241 @@ public sealed class MusicBrainzImportExecutor(
         }
 
         await writer.WriteArtistAsync(jsonArtist);
-        logger.LogInformation("[ImportArtist] Wrote artist.json for '{Artist}' at {Path}", jsonArtist.Name, artistJsonPath);
+        logger.LogInformation(
+            "[ImportArtist] Wrote artist.json for '{Artist}' at {Path}",
+            jsonArtist.Name,
+            artistJsonPath
+        );
     }
 
     public async Task<int> ImportEligibleReleaseGroupsAsync(string artistDir, string mbArtistId)
     {
-        logger.LogInformation("[ImportExecutor] 🚀 Starting import of eligible release groups for artist directory: {ArtistDir} (MBID: {MbId})", artistDir, mbArtistId);
+        logger.LogInformation(
+            "[ImportExecutor] 🚀 Starting import of eligible release groups for artist directory: {ArtistDir} (MBID: {MbId})",
+            artistDir,
+            mbArtistId
+        );
         var startTime = DateTime.UtcNow;
-        
+
         try
         {
             // Get all release groups for this artist
-            logger.LogInformation("[ImportExecutor] 🔍 Fetching release groups from MusicBrainz for artist MBID: {MbId}", mbArtistId);
+            logger.LogInformation(
+                "[ImportExecutor] 🔍 Fetching release groups from MusicBrainz for artist MBID: {MbId}",
+                mbArtistId
+            );
             var releaseGroupsStart = DateTime.UtcNow;
             var releaseGroups = await musicBrainzService.GetReleaseGroupsForArtistAsync(mbArtistId);
             var releaseGroupsDuration = DateTime.UtcNow - releaseGroupsStart;
-            
-            logger.LogInformation("[ImportExecutor] 📀 Found {ReleaseGroupCount} total release groups in {DurationMs}ms", releaseGroups.Count, releaseGroupsDuration.TotalMilliseconds);
+
+            logger.LogInformation(
+                "[ImportExecutor] 📀 Found {ReleaseGroupCount} total release groups in {DurationMs}ms",
+                releaseGroups.Count,
+                releaseGroupsDuration.TotalMilliseconds
+            );
 
             // Filter to only eligible types (Album, EP, Single)
             var eligibleTypes = new[] { "Album", "EP", "Single" };
-            var eligibleGroups = releaseGroups.Where(rg => eligibleTypes.Contains(rg.PrimaryType)).ToList();
-            
+            var eligibleGroups = releaseGroups
+                .Where(rg => eligibleTypes.Contains(rg.PrimaryType))
+                .ToList();
+
             // Filter to only include release groups where this artist is the primary credited artist
-            var primaryArtistGroups = eligibleGroups.Where(rg =>
-            {
-                var credits = rg.Credits?.ToList();
-                if (credits == null || credits.Count == 0) return false;
-                
-                // Check if the first (primary) credit is for this artist
-                var primaryCredit = credits.FirstOrDefault();
-                if (primaryCredit?.Artist?.Id == null) return false;
-                
-                // Basic primary artist check
-                var isPrimaryArtist = primaryCredit.Artist.Id == mbArtistId;
-                if (!isPrimaryArtist) return false;
-                
-                // Additional filtering to exclude non-official releases
-                var title = rg.Title?.ToLowerInvariant() ?? "";
-                var secondaryTypes = rg.SecondaryTypes?.Select(t => t.ToLowerInvariant()).ToList() ?? new List<string>();
-                
-                // Exclude compilations, anthologies, live recordings, mixtapes, etc.
-                var excludeKeywords = new[]
+            var primaryArtistGroups = eligibleGroups
+                .Where(rg =>
                 {
-                    "anthology", "compilation", "collection", "greatest hits", "best of",
-                    "live", "concert", "performance", "storytellers", "unplugged",
-                    "mixtape", "presented by", "dj", "remix", "remastered",
-                    "deluxe", "expanded", "special edition", "anniversary"
-                };
-                
-                // Check if title contains any exclude keywords
-                if (excludeKeywords.Any(keyword => title.Contains(keyword)))
-                {
-                    return false;
-                }
-                
-                // Specific exclusions for albums that should not be imported
-                var specificExcludeTitles = new[]
-                {
-                    "the college dropout video anthology",
-                    "late orchestration",
-                    "can't tell me nothing: the official mixtape",
-                    "sky high: presented by dj benzi and plain pat",
-                    "good fridays",
-                    "vh1 storytellers"
-                };
-                
-                if (specificExcludeTitles.Any(excludeTitle => title.Contains(excludeTitle)))
-                {
-                    return false;
-                }
-                
-                // Check secondary types that indicate non-studio releases
-                var excludeSecondaryTypes = new[]
-                {
-                    "compilation", "live", "mixtape", "remix", "dj-mix"
-                };
-                
-                if (excludeSecondaryTypes.Any(excludeType => secondaryTypes.Contains(excludeType)))
-                {
-                    return false;
-                }
-                
-                return true;
-            }).ToList();
-            
+                    var credits = rg.Credits?.ToList();
+                    if (credits == null || credits.Count == 0)
+                        return false;
+
+                    // Check if the first (primary) credit is for this artist
+                    var primaryCredit = credits.FirstOrDefault();
+                    if (primaryCredit?.Artist?.Id == null)
+                        return false;
+
+                    // Basic primary artist check
+                    var isPrimaryArtist = primaryCredit.Artist.Id == mbArtistId;
+                    if (!isPrimaryArtist)
+                        return false;
+
+                    // Additional filtering to exclude non-official releases
+                    var title = rg.Title?.ToLowerInvariant() ?? "";
+                    var secondaryTypes =
+                        rg.SecondaryTypes?.Select(t => t.ToLowerInvariant()).ToList()
+                        ?? new List<string>();
+
+                    // Exclude compilations, anthologies, live recordings, mixtapes, etc.
+                    var excludeKeywords = new[]
+                    {
+                        "anthology",
+                        "compilation",
+                        "collection",
+                        "greatest hits",
+                        "best of",
+                        "live",
+                        "concert",
+                        "performance",
+                        "storytellers",
+                        "unplugged",
+                        "mixtape",
+                        "presented by",
+                        "dj",
+                        "remix",
+                        "remastered",
+                        "deluxe",
+                        "expanded",
+                        "special edition",
+                        "anniversary",
+                    };
+
+                    // Check if title contains any exclude keywords
+                    if (excludeKeywords.Any(keyword => title.Contains(keyword)))
+                    {
+                        return false;
+                    }
+
+                    // Specific exclusions for albums that should not be imported
+                    var specificExcludeTitles = new[]
+                    {
+                        "the college dropout video anthology",
+                        "late orchestration",
+                        "can't tell me nothing: the official mixtape",
+                        "sky high: presented by dj benzi and plain pat",
+                        "good fridays",
+                        "vh1 storytellers",
+                    };
+
+                    if (specificExcludeTitles.Any(excludeTitle => title.Contains(excludeTitle)))
+                    {
+                        return false;
+                    }
+
+                    // Check secondary types that indicate non-studio releases
+                    var excludeSecondaryTypes = new[]
+                    {
+                        "compilation",
+                        "live",
+                        "mixtape",
+                        "remix",
+                        "dj-mix",
+                    };
+
+                    if (
+                        excludeSecondaryTypes.Any(excludeType =>
+                            secondaryTypes.Contains(excludeType)
+                        )
+                    )
+                    {
+                        return false;
+                    }
+
+                    return true;
+                })
+                .ToList();
+
             // Special handling for important collaborations that should be included
-            var importantCollaborations = eligibleGroups.Where(rg =>
-            {
-                var credits = rg.Credits?.ToList();
-                if (credits == null || credits.Count == 0) return false;
-                
-                // Check if this artist appears but is not the primary artist
-                var hasArtist = credits.Any(c => c.Artist?.Id == mbArtistId);
-                if (!hasArtist) return false;
-                
-                var primaryCredit = credits.FirstOrDefault();
-                if (primaryCredit?.Artist?.Id == null) return false;
-                
-                // Only include if this artist is not the primary artist
-                if (primaryCredit.Artist.Id == mbArtistId) return false;
-                
-                // Check for specific important collaborations
-                var title = rg.Title?.ToLowerInvariant() ?? "";
-                var importantCollaborationTitles = new[]
+            var importantCollaborations = eligibleGroups
+                .Where(rg =>
                 {
-                    "watch the throne", // Kanye West + Jay-Z collaboration
-                    "kids see ghosts", // Kanye West + Kid Cudi collaboration
-                    "cruel summer", // GOOD Music compilation (but important)
-                    "ye vs. the people" // Kanye West + T.I. collaboration
-                };
-                
-                return importantCollaborationTitles.Any(importantTitle => title.Contains(importantTitle));
-            }).ToList();
-            
+                    var credits = rg.Credits?.ToList();
+                    if (credits == null || credits.Count == 0)
+                        return false;
+
+                    // Check if this artist appears but is not the primary artist
+                    var hasArtist = credits.Any(c => c.Artist?.Id == mbArtistId);
+                    if (!hasArtist)
+                        return false;
+
+                    var primaryCredit = credits.FirstOrDefault();
+                    if (primaryCredit?.Artist?.Id == null)
+                        return false;
+
+                    // Only include if this artist is not the primary artist
+                    if (primaryCredit.Artist.Id == mbArtistId)
+                        return false;
+
+                    // Check for specific important collaborations
+                    var title = rg.Title?.ToLowerInvariant() ?? "";
+                    var importantCollaborationTitles = new[]
+                    {
+                        "watch the throne", // Kanye West + Jay-Z collaboration
+                        "kids see ghosts", // Kanye West + Kid Cudi collaboration
+                        "cruel summer", // GOOD Music compilation (but important)
+                        "ye vs. the people", // Kanye West + T.I. collaboration
+                    };
+
+                    return importantCollaborationTitles.Any(importantTitle =>
+                        title.Contains(importantTitle)
+                    );
+                })
+                .ToList();
+
             // Combine primary artist groups with important collaborations
             var finalImportGroups = primaryArtistGroups.Concat(importantCollaborations).ToList();
-            
+
             // Collect non-primary artist appearances for the alsoAppearsOn field
-            var nonPrimaryArtistGroups = eligibleGroups.Where(rg =>
-            {
-                var credits = rg.Credits?.ToList();
-                if (credits == null || credits.Count == 0) return false;
-                
-                // Check if this artist appears but is not the primary artist
-                var hasArtist = credits.Any(c => c.Artist?.Id == mbArtistId);
-                if (!hasArtist) return false;
-                
-                var primaryCredit = credits.FirstOrDefault();
-                if (primaryCredit?.Artist?.Id == null) return false;
-                
-                // Exclude important collaborations that we're already importing
-                var title = rg.Title?.ToLowerInvariant() ?? "";
-                var importantCollaborationTitles = new[]
+            var nonPrimaryArtistGroups = eligibleGroups
+                .Where(rg =>
                 {
-                    "watch the throne", // Kanye West + Jay-Z collaboration
-                    "kids see ghosts", // Kanye West + Kid Cudi collaboration
-                    "cruel summer", // GOOD Music compilation (but important)
-                    "ye vs. the people" // Kanye West + T.I. collaboration
-                };
-                
-                if (importantCollaborationTitles.Any(importantTitle => title.Contains(importantTitle)))
-                {
-                    return false;
-                }
-                
-                return primaryCredit.Artist.Id != mbArtistId;
-            }).ToList();
-            
-            logger.LogInformation("[ImportExecutor] ✅ Filtered to {EligibleCount}/{TotalCount} eligible release groups (types: {Types})", 
-                eligibleGroups.Count, releaseGroups.Count, string.Join(", ", eligibleTypes));
-            logger.LogInformation("[ImportExecutor] 🎯 Further filtered to {PrimaryArtistCount}/{EligibleCount} primary artist release groups", 
-                primaryArtistGroups.Count, eligibleGroups.Count);
-            logger.LogInformation("[ImportExecutor] 🤝 Found {ImportantCollaborationCount} important collaborations to include", 
-                importantCollaborations.Count);
-            logger.LogInformation("[ImportExecutor] 📥 Final import count: {FinalCount} release groups", 
-                finalImportGroups.Count);
-            logger.LogInformation("[ImportExecutor] 🤝 Found {NonPrimaryCount} non-primary artist appearances for alsoAppearsOn", 
-                nonPrimaryArtistGroups.Count);
+                    var credits = rg.Credits?.ToList();
+                    if (credits == null || credits.Count == 0)
+                        return false;
+
+                    // Check if this artist appears but is not the primary artist
+                    var hasArtist = credits.Any(c => c.Artist?.Id == mbArtistId);
+                    if (!hasArtist)
+                        return false;
+
+                    var primaryCredit = credits.FirstOrDefault();
+                    if (primaryCredit?.Artist?.Id == null)
+                        return false;
+
+                    // Exclude important collaborations that we're already importing
+                    var title = rg.Title?.ToLowerInvariant() ?? "";
+                    var importantCollaborationTitles = new[]
+                    {
+                        "watch the throne", // Kanye West + Jay-Z collaboration
+                        "kids see ghosts", // Kanye West + Kid Cudi collaboration
+                        "cruel summer", // GOOD Music compilation (but important)
+                        "ye vs. the people", // Kanye West + T.I. collaboration
+                    };
+
+                    if (
+                        importantCollaborationTitles.Any(importantTitle =>
+                            title.Contains(importantTitle)
+                        )
+                    )
+                    {
+                        return false;
+                    }
+
+                    return primaryCredit.Artist.Id != mbArtistId;
+                })
+                .ToList();
+
+            logger.LogInformation(
+                "[ImportExecutor] ✅ Filtered to {EligibleCount}/{TotalCount} eligible release groups (types: {Types})",
+                eligibleGroups.Count,
+                releaseGroups.Count,
+                string.Join(", ", eligibleTypes)
+            );
+            logger.LogInformation(
+                "[ImportExecutor] 🎯 Further filtered to {PrimaryArtistCount}/{EligibleCount} primary artist release groups",
+                primaryArtistGroups.Count,
+                eligibleGroups.Count
+            );
+            logger.LogInformation(
+                "[ImportExecutor] 🤝 Found {ImportantCollaborationCount} important collaborations to include",
+                importantCollaborations.Count
+            );
+            logger.LogInformation(
+                "[ImportExecutor] 📥 Final import count: {FinalCount} release groups",
+                finalImportGroups.Count
+            );
+            logger.LogInformation(
+                "[ImportExecutor] 🤝 Found {NonPrimaryCount} non-primary artist appearances for alsoAppearsOn",
+                nonPrimaryArtistGroups.Count
+            );
 
             var importedCount = 0;
             var skippedCount = 0;
@@ -697,27 +864,39 @@ public sealed class MusicBrainzImportExecutor(
             {
                 try
                 {
-                    logger.LogInformation("[ImportExecutor] 📀 Processing release group: '{Title}' (Type: {PrimaryType}, ID: {ReleaseGroupId})", 
-                        releaseGroup.Title, releaseGroup.PrimaryType, releaseGroup.Id);
-                    
+                    logger.LogInformation(
+                        "[ImportExecutor] 📀 Processing release group: '{Title}' (Type: {PrimaryType}, ID: {ReleaseGroupId})",
+                        releaseGroup.Title,
+                        releaseGroup.PrimaryType,
+                        releaseGroup.Id
+                    );
+
                     var singleGroupStart = DateTime.UtcNow;
-                    
+
                     // Check if this release group already exists
                     var releaseDir = SanitizeFolderName(releaseGroup.Title);
                     var releasePath = Path.Combine(artistDir, releaseDir);
-                    
+
                     if (Directory.Exists(releasePath))
                     {
-                        logger.LogInformation("[ImportExecutor] ℹ️ Release directory already exists, skipping: {ReleasePath}", releasePath);
+                        logger.LogInformation(
+                            "[ImportExecutor] ℹ️ Release directory already exists, skipping: {ReleasePath}",
+                            releasePath
+                        );
                         skippedCount++;
                         continue;
                     }
 
-                    logger.LogInformation("[ImportExecutor] 🆕 Creating new release directory: {ReleasePath}", releasePath);
+                    logger.LogInformation(
+                        "[ImportExecutor] 🆕 Creating new release directory: {ReleasePath}",
+                        releasePath
+                    );
                     Directory.CreateDirectory(releasePath);
 
                     // Import the release group
-                    logger.LogInformation("[ImportExecutor] 📥 Importing release group data and cover art");
+                    logger.LogInformation(
+                        "[ImportExecutor] 📥 Importing release group data and cover art"
+                    );
                     await ImportReleaseIfMissingAsync(
                         artistDir,
                         releasePath,
@@ -725,34 +904,44 @@ public sealed class MusicBrainzImportExecutor(
                         releaseGroup.Title,
                         releaseGroup.PrimaryType
                     );
-                    
+
                     var singleGroupDuration = DateTime.UtcNow - singleGroupStart;
-                    
+
                     // Check if the import was successful by looking for release.json
                     var releaseJsonPath = Path.Combine(releasePath, "release.json");
                     if (File.Exists(releaseJsonPath))
                     {
                         importedCount++;
-                        logger.LogInformation("[ImportExecutor] ✅ Successfully imported release group '{Title}' in {DurationMs}ms", 
-                            releaseGroup.Title, singleGroupDuration.TotalMilliseconds);
+                        logger.LogInformation(
+                            "[ImportExecutor] ✅ Successfully imported release group '{Title}' in {DurationMs}ms",
+                            releaseGroup.Title,
+                            singleGroupDuration.TotalMilliseconds
+                        );
                     }
                     else
                     {
                         failedCount++;
-                        logger.LogWarning("[ImportExecutor] ⚠️ Failed to import release group '{Title}' after {DurationMs}ms - no release.json created", 
-                            releaseGroup.Title, singleGroupDuration.TotalMilliseconds);
+                        logger.LogWarning(
+                            "[ImportExecutor] ⚠️ Failed to import release group '{Title}' after {DurationMs}ms - no release.json created",
+                            releaseGroup.Title,
+                            singleGroupDuration.TotalMilliseconds
+                        );
                     }
                 }
                 catch (Exception ex)
                 {
                     failedCount++;
-                    logger.LogError(ex, "[ImportExecutor] ❌ Exception while processing release group '{Title}'", releaseGroup.Title);
+                    logger.LogError(
+                        ex,
+                        "[ImportExecutor] ❌ Exception while processing release group '{Title}'",
+                        releaseGroup.Title
+                    );
                 }
             }
 
             var totalImportDuration = DateTime.UtcNow - importStart;
             var totalDuration = DateTime.UtcNow - startTime;
-            
+
             // Populate alsoAppearsOn field in artist.json with non-primary artist appearances
             if (nonPrimaryArtistGroups != null && nonPrimaryArtistGroups.Count > 0)
             {
@@ -762,31 +951,46 @@ public sealed class MusicBrainzImportExecutor(
                     if (File.Exists(artistJsonPath))
                     {
                         var artistText = await File.ReadAllTextAsync(artistJsonPath);
-                        var jsonArtist = JsonSerializer.Deserialize<JsonArtist>(artistText, GetJsonOptions()) ?? new JsonArtist();
-                        
-                        logger.LogInformation("[ImportExecutor] 🖼️ Downloading cover art for {Count} non-primary artist appearances", nonPrimaryArtistGroups.Count);
-                        
+                        var jsonArtist =
+                            JsonSerializer.Deserialize<JsonArtist>(artistText, GetJsonOptions())
+                            ?? new JsonArtist();
+
+                        logger.LogInformation(
+                            "[ImportExecutor] 🖼️ Downloading cover art for {Count} non-primary artist appearances",
+                            nonPrimaryArtistGroups.Count
+                        );
+
                         var appearancesWithCoverArt = new List<JsonArtistAppearance>();
-                        
+
                         foreach (var rg in nonPrimaryArtistGroups)
                         {
                             try
                             {
                                 var credits = rg.Credits?.ToList();
                                 var primaryCredit = credits?.FirstOrDefault();
-                                var primaryArtistName = primaryCredit?.Artist?.Name ?? primaryCredit?.Name ?? "Unknown Artist";
+                                var primaryArtistName =
+                                    primaryCredit?.Artist?.Name
+                                    ?? primaryCredit?.Name
+                                    ?? "Unknown Artist";
                                 var primaryArtistId = primaryCredit?.Artist?.Id;
-                                
+
                                 // Determine the role of this artist on the release
-                                var artistCredit = credits?.FirstOrDefault(c => c.Artist?.Id == mbArtistId);
-                                var role = artistCredit?.JoinPhrase?.TrimStart(' ', '&', ',') ?? "Featured Artist";
-                                
+                                var artistCredit = credits?.FirstOrDefault(c =>
+                                    c.Artist?.Id == mbArtistId
+                                );
+                                var role =
+                                    artistCredit?.JoinPhrase?.TrimStart(' ', '&', ',')
+                                    ?? "Featured Artist";
+
                                 // Fetch cover art for this release group
                                 string? coverArtUrl = null;
                                 try
                                 {
                                     // Try to get cover art URL from Cover Art Archive and download it locally
-                                    var releases = await musicBrainzService.GetReleasesForReleaseGroupAsync(rg.Id);
+                                    var releases =
+                                        await musicBrainzService.GetReleasesForReleaseGroupAsync(
+                                            rg.Id
+                                        );
                                     var bestRelease = releases.FirstOrDefault();
                                     if (bestRelease?.Id != null)
                                     {
@@ -794,49 +998,86 @@ public sealed class MusicBrainzImportExecutor(
                                         try
                                         {
                                             using var httpClient = new HttpClient();
-                                            var coverArtSourceUrl = $"https://coverartarchive.org/release/{bestRelease.Id}/front-500.jpg";
-                                            
-                                            var response = await httpClient.GetAsync(coverArtSourceUrl);
+                                            var coverArtSourceUrl =
+                                                $"https://coverartarchive.org/release/{bestRelease.Id}/front-500.jpg";
+
+                                            var response = await httpClient.GetAsync(
+                                                coverArtSourceUrl
+                                            );
                                             if (response.IsSuccessStatusCode)
                                             {
-                                                var imageBytes = await response.Content.ReadAsByteArrayAsync();
+                                                var imageBytes =
+                                                    await response.Content.ReadAsByteArrayAsync();
                                                 var fileName = $"appearance_{rg.Id}_cover.jpg";
-                                                var coverArtPath = Path.Combine(artistDir, fileName);
-                                                
-                                                await File.WriteAllBytesAsync(coverArtPath, imageBytes);
+                                                var coverArtPath = Path.Combine(
+                                                    artistDir,
+                                                    fileName
+                                                );
+
+                                                await File.WriteAllBytesAsync(
+                                                    coverArtPath,
+                                                    imageBytes
+                                                );
                                                 coverArtUrl = $"./{fileName}";
-                                                
-                                                logger.LogDebug("[ImportExecutor] 🖼️ Downloaded cover art for '{Title}': {CoverArtPath}", rg.Title, coverArtPath);
+
+                                                logger.LogDebug(
+                                                    "[ImportExecutor] 🖼️ Downloaded cover art for '{Title}': {CoverArtPath}",
+                                                    rg.Title,
+                                                    coverArtPath
+                                                );
                                             }
                                             else
                                             {
                                                 // Try alternative URL without size specification
-                                                coverArtSourceUrl = $"https://coverartarchive.org/release/{bestRelease.Id}/front";
-                                                response = await httpClient.GetAsync(coverArtSourceUrl);
+                                                coverArtSourceUrl =
+                                                    $"https://coverartarchive.org/release/{bestRelease.Id}/front";
+                                                response = await httpClient.GetAsync(
+                                                    coverArtSourceUrl
+                                                );
                                                 if (response.IsSuccessStatusCode)
                                                 {
-                                                    var imageBytes = await response.Content.ReadAsByteArrayAsync();
+                                                    var imageBytes =
+                                                        await response.Content.ReadAsByteArrayAsync();
                                                     var fileName = $"appearance_{rg.Id}_cover.jpg";
-                                                    var coverArtPath = Path.Combine(artistDir, fileName);
-                                                    
-                                                    await File.WriteAllBytesAsync(coverArtPath, imageBytes);
+                                                    var coverArtPath = Path.Combine(
+                                                        artistDir,
+                                                        fileName
+                                                    );
+
+                                                    await File.WriteAllBytesAsync(
+                                                        coverArtPath,
+                                                        imageBytes
+                                                    );
                                                     coverArtUrl = $"./{fileName}";
-                                                    
-                                                    logger.LogDebug("[ImportExecutor] 🖼️ Downloaded cover art for '{Title}' (alternative URL): {CoverArtPath}", rg.Title, coverArtPath);
+
+                                                    logger.LogDebug(
+                                                        "[ImportExecutor] 🖼️ Downloaded cover art for '{Title}' (alternative URL): {CoverArtPath}",
+                                                        rg.Title,
+                                                        coverArtPath
+                                                    );
                                                 }
                                             }
                                         }
                                         catch (Exception downloadEx)
                                         {
-                                            logger.LogDebug(downloadEx, "[ImportExecutor] ⚠️ Failed to download cover art for '{Title}' from Cover Art Archive", rg.Title);
+                                            logger.LogDebug(
+                                                downloadEx,
+                                                "[ImportExecutor] ⚠️ Failed to download cover art for '{Title}' from Cover Art Archive",
+                                                rg.Title
+                                            );
                                         }
                                     }
                                 }
                                 catch (Exception coverArtEx)
                                 {
-                                    logger.LogDebug(coverArtEx, "[ImportExecutor] ⚠️ Failed to fetch cover art for release group '{Title}' (ID: {ReleaseGroupId})", rg.Title, rg.Id);
+                                    logger.LogDebug(
+                                        coverArtEx,
+                                        "[ImportExecutor] ⚠️ Failed to fetch cover art for release group '{Title}' (ID: {ReleaseGroupId})",
+                                        rg.Title,
+                                        rg.Id
+                                    );
                                 }
-                                
+
                                 var appearance = new JsonArtistAppearance
                                 {
                                     ReleaseTitle = rg.Title ?? "Unknown Release",
@@ -845,49 +1086,80 @@ public sealed class MusicBrainzImportExecutor(
                                     PrimaryArtistMusicBrainzId = primaryArtistId,
                                     MusicBrainzReleaseGroupId = rg.Id,
                                     FirstReleaseDate = rg.FirstReleaseDate,
-                                    FirstReleaseYear = rg.FirstReleaseDate?.Split("-").FirstOrDefault(),
+                                    FirstReleaseYear = rg
+                                        .FirstReleaseDate?.Split("-")
+                                        .FirstOrDefault(),
                                     Role = role,
-                                    CoverArt = coverArtUrl
+                                    CoverArt = coverArtUrl,
                                 };
-                                
+
                                 appearancesWithCoverArt.Add(appearance);
                             }
                             catch (Exception appearanceEx)
                             {
-                                logger.LogWarning(appearanceEx, "[ImportExecutor] ⚠️ Failed to process appearance for release group '{Title}'", rg.Title);
+                                logger.LogWarning(
+                                    appearanceEx,
+                                    "[ImportExecutor] ⚠️ Failed to process appearance for release group '{Title}'",
+                                    rg.Title
+                                );
                             }
                         }
-                        
+
                         jsonArtist.AlsoAppearsOn = appearancesWithCoverArt;
-                        
+
                         // Write updated artist.json
-                        var updatedArtistText = JsonSerializer.Serialize(jsonArtist, GetJsonOptions());
+                        var updatedArtistText = JsonSerializer.Serialize(
+                            jsonArtist,
+                            GetJsonOptions()
+                        );
                         await File.WriteAllTextAsync(artistJsonPath, updatedArtistText);
-                        
-                        var coverArtCount = appearancesWithCoverArt.Count(a => !string.IsNullOrEmpty(a.CoverArt));
-                        logger.LogInformation("[ImportExecutor] 📝 Added {AppearanceCount} appearances to alsoAppearsOn field in artist.json ({CoverArtCount} with locally stored cover art)", 
-                            appearancesWithCoverArt.Count, coverArtCount);
+
+                        var coverArtCount = appearancesWithCoverArt.Count(a =>
+                            !string.IsNullOrEmpty(a.CoverArt)
+                        );
+                        logger.LogInformation(
+                            "[ImportExecutor] 📝 Added {AppearanceCount} appearances to alsoAppearsOn field in artist.json ({CoverArtCount} with locally stored cover art)",
+                            appearancesWithCoverArt.Count,
+                            coverArtCount
+                        );
                     }
                 }
                 catch (Exception ex)
                 {
-                    logger.LogWarning(ex, "[ImportExecutor] ⚠️ Failed to update alsoAppearsOn field in artist.json");
+                    logger.LogWarning(
+                        ex,
+                        "[ImportExecutor] ⚠️ Failed to update alsoAppearsOn field in artist.json"
+                    );
                 }
             }
-            
-            logger.LogInformation("[ImportExecutor] 🎉 Release group import completed in {TotalDurationMs}ms", totalDuration.TotalMilliseconds);
-            logger.LogInformation("[ImportExecutor] 📊 Import Summary: {Imported} imported, {Skipped} skipped, {Failed} failed", 
-                importedCount, skippedCount, failedCount);
-            logger.LogInformation("[ImportExecutor] ⏱️ Timing: Release groups fetch: {GroupsMs}ms, Individual imports: {ImportsMs}ms", 
-                releaseGroupsDuration.TotalMilliseconds, totalImportDuration.TotalMilliseconds);
+
+            logger.LogInformation(
+                "[ImportExecutor] 🎉 Release group import completed in {TotalDurationMs}ms",
+                totalDuration.TotalMilliseconds
+            );
+            logger.LogInformation(
+                "[ImportExecutor] 📊 Import Summary: {Imported} imported, {Skipped} skipped, {Failed} failed",
+                importedCount,
+                skippedCount,
+                failedCount
+            );
+            logger.LogInformation(
+                "[ImportExecutor] ⏱️ Timing: Release groups fetch: {GroupsMs}ms, Individual imports: {ImportsMs}ms",
+                releaseGroupsDuration.TotalMilliseconds,
+                totalImportDuration.TotalMilliseconds
+            );
 
             return importedCount;
         }
         catch (Exception ex)
         {
             var totalDuration = DateTime.UtcNow - startTime;
-            logger.LogError(ex, "[ImportExecutor] ❌ Failed to import eligible release groups for artist directory '{ArtistDir}' after {TotalDurationMs}ms", 
-                artistDir, totalDuration.TotalMilliseconds);
+            logger.LogError(
+                ex,
+                "[ImportExecutor] ❌ Failed to import eligible release groups for artist directory '{ArtistDir}' after {TotalDurationMs}ms",
+                artistDir,
+                totalDuration.TotalMilliseconds
+            );
             throw;
         }
     }
@@ -931,7 +1203,11 @@ public sealed class MusicBrainzImportExecutor(
             built
         );
         await EnsureAudioFilePathsAsync(releaseDir, releaseJsonPath);
-        logger.LogDebug("[ImportRelease] Wrote release.json for '{Title}' at {Path}", built.Title, releaseJsonPath);
+        logger.LogDebug(
+            "[ImportRelease] Wrote release.json for '{Title}' at {Path}",
+            built.Title,
+            releaseJsonPath
+        );
     }
 
     private static async Task EnsureAudioFilePathsAsync(string releaseDir, string releaseJsonPath)
@@ -965,13 +1241,15 @@ public sealed class MusicBrainzImportExecutor(
             foreach (var f in audioFiles)
             {
                 var (disc, track) = FileNameParsing.ExtractDiscTrackFromName(f);
-                if (track <= 0) continue;
+                if (track <= 0)
+                    continue;
                 if (!byDiscTrack.TryGetValue(disc, out var inner))
                 {
                     inner = new Dictionary<int, string>();
                     byDiscTrack[disc] = inner;
                 }
-                if (!inner.ContainsKey(track)) inner[track] = f!;
+                if (!inner.ContainsKey(track))
+                    inner[track] = f!;
             }
 
             bool anyUpdated = false;
@@ -982,12 +1260,15 @@ public sealed class MusicBrainzImportExecutor(
                 foreach (var d in jsonRelease.Discs)
                 {
                     var discNum = d.DiscNumber > 0 ? d.DiscNumber : 1;
-                    if (d.Tracks == null) continue;
-                    if (!byDiscTrack.TryGetValue(discNum, out var inner)) continue;
+                    if (d.Tracks == null)
+                        continue;
+                    if (!byDiscTrack.TryGetValue(discNum, out var inner))
+                        continue;
 
                     foreach (var t in d.Tracks)
                     {
-                        if (!string.IsNullOrWhiteSpace(t.AudioFilePath)) continue;
+                        if (!string.IsNullOrWhiteSpace(t.AudioFilePath))
+                            continue;
                         if (t.TrackNumber > 0 && inner.TryGetValue(t.TrackNumber, out var fname))
                         {
                             t.AudioFilePath = "./" + fname;
@@ -1002,9 +1283,13 @@ public sealed class MusicBrainzImportExecutor(
             {
                 foreach (var t in jsonRelease.Tracks)
                 {
-                    if (!string.IsNullOrWhiteSpace(t.AudioFilePath)) continue;
+                    if (!string.IsNullOrWhiteSpace(t.AudioFilePath))
+                        continue;
                     var discNum = t.DiscNumber ?? 1;
-                    if (byDiscTrack.TryGetValue(discNum, out var inner) && inner.TryGetValue(t.TrackNumber, out var fname))
+                    if (
+                        byDiscTrack.TryGetValue(discNum, out var inner)
+                        && inner.TryGetValue(t.TrackNumber, out var fname)
+                    )
                     {
                         t.AudioFilePath = "./" + fname;
                         anyUpdated = true;

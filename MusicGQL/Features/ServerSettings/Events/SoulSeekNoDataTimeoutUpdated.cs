@@ -6,5 +6,3 @@ public class SoulSeekNoDataTimeoutUpdated : Event
 {
     public int NewSeconds { get; set; }
 }
-
-

@@ -23,7 +23,13 @@ public static class SearchQueryEnhancer
     /// <param name="logger">Logger for tracking enhancements</param>
     /// <param name="year">Optional release year for additional specificity</param>
     /// <returns>The enhanced query or original query if no enhancement needed</returns>
-    public static string EnhanceQuery(string artistName, string releaseTitle, ServerSettingsRecord settings, ILogger logger, int? year = null)
+    public static string EnhanceQuery(
+        string artistName,
+        string releaseTitle,
+        ServerSettingsRecord settings,
+        ILogger logger,
+        int? year = null
+    )
     {
         var baseQuery = $"{artistName} {releaseTitle}".Trim();
         var enhancedQuery = baseQuery;
@@ -39,13 +45,22 @@ public static class SearchQueryEnhancer
         }
 
         // Clean the release title for length checking (remove punctuation)
-        var cleanTitle = releaseTitle.Replace("\"", "").Replace("'", "").Replace("-", "").Replace(".", "").Trim();
+        var cleanTitle = releaseTitle
+            .Replace("\"", "")
+            .Replace("'", "")
+            .Replace("-", "")
+            .Replace(".", "")
+            .Trim();
 
         if (cleanTitle.Length < ShortTitleThreshold)
         {
             // Determine what type of contextual keyword to add
             enhancedQuery = EnhanceShortTitle(artistName, releaseTitle, cleanTitle, logger);
-            logger.LogInformation("[SearchEnhancer] Enhanced short title '{Title}' → '{Enhanced}'", releaseTitle, enhancedQuery);
+            logger.LogInformation(
+                "[SearchEnhancer] Enhanced short title '{Title}' → '{Enhanced}'",
+                releaseTitle,
+                enhancedQuery
+            );
         }
 
         // Add year information if available for additional specificity
@@ -61,7 +76,12 @@ public static class SearchQueryEnhancer
     /// <summary>
     /// Enhances a search query for a short release title by adding contextual keywords
     /// </summary>
-    private static string EnhanceShortTitle(string artistName, string releaseTitle, string cleanTitle, ILogger logger)
+    private static string EnhanceShortTitle(
+        string artistName,
+        string releaseTitle,
+        string cleanTitle,
+        ILogger logger
+    )
     {
         // Strategy: Try different contextual keywords to make the search more specific
 
@@ -94,6 +114,11 @@ public static class SearchQueryEnhancer
     /// </summary>
     public static int GetCleanedLength(string text)
     {
-        return text.Replace("\"", "").Replace("'", "").Replace("-", "").Replace(".", "").Trim().Length;
+        return text.Replace("\"", "")
+            .Replace("'", "")
+            .Replace("-", "")
+            .Replace(".", "")
+            .Trim()
+            .Length;
     }
 }

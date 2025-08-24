@@ -3,10 +3,8 @@ using MusicGQL.Features.ServerSettings;
 
 namespace MusicGQL.Features.Downloads.Services;
 
-public class DownloadWorker(
-    IServiceScopeFactory scopeFactory,
-    ILogger<DownloadWorker> logger
-) : BackgroundService
+public class DownloadWorker(IServiceScopeFactory scopeFactory, ILogger<DownloadWorker> logger)
+    : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -16,8 +14,10 @@ public class DownloadWorker(
             try
             {
                 using var scope = scopeFactory.CreateScope();
-                var settingsAccessor = scope.ServiceProvider.GetRequiredService<ServerSettingsAccessor>();
-                var manifestService = scope.ServiceProvider.GetRequiredService<LibraryManifestService>();
+                var settingsAccessor =
+                    scope.ServiceProvider.GetRequiredService<ServerSettingsAccessor>();
+                var manifestService =
+                    scope.ServiceProvider.GetRequiredService<LibraryManifestService>();
 
                 // Pause worker if manifest missing; resume automatically when present
                 try
@@ -25,7 +25,9 @@ public class DownloadWorker(
                     var settings = await settingsAccessor.GetAsync();
                     if (!await manifestService.HasManifestAsync(settings.LibraryPath))
                     {
-                        logger.LogDebug("[DownloadWorker] Library manifest missing; pausing processing.");
+                        logger.LogDebug(
+                            "[DownloadWorker] Library manifest missing; pausing processing."
+                        );
                         await Task.Delay(TimeSpan.FromSeconds(2), stoppingToken);
                         continue;
                     }
@@ -36,7 +38,8 @@ public class DownloadWorker(
                     continue;
                 }
                 var queue = scope.ServiceProvider.GetRequiredService<DownloadQueueService>();
-                var starter = scope.ServiceProvider.GetRequiredService<StartDownloadReleaseService>();
+                var starter =
+                    scope.ServiceProvider.GetRequiredService<StartDownloadReleaseService>();
                 var cache = scope.ServiceProvider.GetRequiredService<ServerLibraryCache>();
 
                 if (!queue.TryDequeue(out var job) || job is null)
@@ -49,13 +52,26 @@ public class DownloadWorker(
                 // Start the download for this queued release
                 try
                 {
-                    logger.LogInformation("[DownloadWorker] Starting job {Artist}/{Folder}", job.ArtistId, job.ReleaseFolderName);
+                    logger.LogInformation(
+                        "[DownloadWorker] Starting job {Artist}/{Folder}",
+                        job.ArtistId,
+                        job.ReleaseFolderName
+                    );
                     await starter.StartAsync(job.ArtistId, job.ReleaseFolderName, stoppingToken);
-                    logger.LogInformation("[DownloadWorker] Finished job {Artist}/{Folder}", job.ArtistId, job.ReleaseFolderName);
+                    logger.LogInformation(
+                        "[DownloadWorker] Finished job {Artist}/{Folder}",
+                        job.ArtistId,
+                        job.ReleaseFolderName
+                    );
                 }
                 catch (Exception ex)
                 {
-                    logger.LogWarning(ex, "[DownloadWorker] Error starting job {Artist}/{Folder}", job.ArtistId, job.ReleaseFolderName);
+                    logger.LogWarning(
+                        ex,
+                        "[DownloadWorker] Error starting job {Artist}/{Folder}",
+                        job.ArtistId,
+                        job.ReleaseFolderName
+                    );
                 }
             }
             catch (Exception ex)

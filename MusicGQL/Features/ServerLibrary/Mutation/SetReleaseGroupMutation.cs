@@ -5,8 +5,8 @@ using MusicGQL.Features.Import.Services;
 using MusicGQL.Features.ServerLibrary.Cache;
 using MusicGQL.Features.ServerLibrary.Json;
 using MusicGQL.Features.ServerLibrary.Writer;
-using Path = System.IO.Path;
 using MusicGQL.Features.ServerSettings;
+using Path = System.IO.Path;
 
 namespace MusicGQL.Features.ServerLibrary.Mutation;
 
@@ -47,7 +47,10 @@ public class SetReleaseGroupMutation
                         {
                             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
                             PropertyNameCaseInsensitive = true,
-                            Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) },
+                            Converters =
+                            {
+                                new JsonStringEnumConverter(JsonNamingPolicy.CamelCase),
+                            },
                         }
                     );
                 }
@@ -56,7 +59,7 @@ public class SetReleaseGroupMutation
 
             // Ensure connections block exists and set new RG id; clear specific release override
             existing ??= new JsonRelease { Title = release.Title, Type = JsonReleaseType.Album };
-            
+
             // Set artist name if not already set
             if (string.IsNullOrWhiteSpace(existing.ArtistName))
             {
@@ -72,7 +75,10 @@ public class SetReleaseGroupMutation
                             {
                                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
                                 PropertyNameCaseInsensitive = true,
-                                Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) },
+                                Converters =
+                                {
+                                    new JsonStringEnumConverter(JsonNamingPolicy.CamelCase),
+                                },
                             }
                         );
                         existing.ArtistName = jsonArtist?.Name ?? string.Empty;
@@ -83,7 +89,7 @@ public class SetReleaseGroupMutation
                     existing.ArtistName = string.Empty;
                 }
             }
-            
+
             existing.Connections ??= new ReleaseServiceConnections();
             existing.Connections.MusicBrainzReleaseGroupId = input.MusicBrainzReleaseGroupId;
             existing.Connections.MusicBrainzReleaseIdOverride = null;
@@ -108,16 +114,20 @@ public class SetReleaseGroupMutation
             // Preserve audio file paths by track number if possible
             if (existing?.Tracks != null && existing.Tracks.Count > 0)
             {
-                var byNumber = existing.Tracks
-                    .Where(t => t != null)
+                var byNumber = existing
+                    .Tracks.Where(t => t != null)
                     .ToDictionary(t => t.TrackNumber, t => t.AudioFilePath);
 
                 if (built.Tracks != null)
                 {
                     foreach (var t in built.Tracks)
                     {
-                        if (t == null) continue;
-                        if (byNumber.TryGetValue(t.TrackNumber, out var oldPath) && !string.IsNullOrWhiteSpace(oldPath))
+                        if (t == null)
+                            continue;
+                        if (
+                            byNumber.TryGetValue(t.TrackNumber, out var oldPath)
+                            && !string.IsNullOrWhiteSpace(oldPath)
+                        )
                         {
                             t.AudioFilePath = oldPath;
                         }
@@ -169,7 +179,11 @@ public class SetReleaseGroupMutation
     }
 }
 
-public record SetReleaseGroupInput(string ArtistId, string ReleaseFolderName, string MusicBrainzReleaseGroupId);
+public record SetReleaseGroupInput(
+    string ArtistId,
+    string ReleaseFolderName,
+    string MusicBrainzReleaseGroupId
+);
 
 [UnionType("SetReleaseGroupResult")]
 public abstract record SetReleaseGroupResult;
@@ -177,5 +191,3 @@ public abstract record SetReleaseGroupResult;
 public record SetReleaseGroupSuccess(Release Release) : SetReleaseGroupResult;
 
 public record SetReleaseGroupError(string Message) : SetReleaseGroupResult;
-
-

@@ -13,5 +13,3 @@ public interface IDownloadProvider
         CancellationToken cancellationToken
     );
 }
-
-

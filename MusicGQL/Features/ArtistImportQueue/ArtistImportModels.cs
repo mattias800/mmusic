@@ -5,6 +5,7 @@ namespace MusicGQL.Features.ArtistImportQueue;
 public record ArtistImportQueueItem(string ArtistName, string? SongTitle)
 {
     public string Id => QueueKey ?? $"{ArtistName}|{SongTitle}";
+
     [GraphQLIgnore]
     public string? ExternalArtistId { get; init; }
 
@@ -45,7 +46,7 @@ public enum ArtistImportStatus
     ImportingArtist,
     ImportingReleases,
     Completed,
-    Failed
+    Failed,
 }
 
 public enum ArtistImportJobKind
@@ -57,7 +58,9 @@ public enum ArtistImportJobKind
 public record ArtistImportProgress
 {
     public string Id { get; init; } = "artistImportCurrent";
-    [GraphQLIgnore] public string? MusicBrainzArtistId { get; init; }
+
+    [GraphQLIgnore]
+    public string? MusicBrainzArtistId { get; init; }
 
     public string ArtistName { get; init; } = string.Empty;
     public string? SongTitle { get; init; }
@@ -88,8 +91,8 @@ public record ArtistImportStatusInfo
                 ArtistImportStatus.ImportingReleases => "Importing releases…",
                 ArtistImportStatus.Completed => "Completed",
                 ArtistImportStatus.Failed => "Failed",
-                _ => status.ToString()
-            }
+                _ => status.ToString(),
+            },
         };
     }
 }

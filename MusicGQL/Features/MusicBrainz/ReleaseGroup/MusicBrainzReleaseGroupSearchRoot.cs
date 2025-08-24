@@ -46,7 +46,8 @@ public record MusicBrainzReleaseGroupSearchRoot
         {
             var credits = g.Credits ?? new List<Hqub.MusicBrainz.Entities.NameCredit>();
             var primary = credits.FirstOrDefault()?.Artist?.Name ?? credits.FirstOrDefault()?.Name;
-            if (string.IsNullOrWhiteSpace(primary)) return false;
+            if (string.IsNullOrWhiteSpace(primary))
+                return false;
             return primary!.Equals(artistName, StringComparison.OrdinalIgnoreCase)
                 || primary!.Contains(artistName, StringComparison.OrdinalIgnoreCase);
         });

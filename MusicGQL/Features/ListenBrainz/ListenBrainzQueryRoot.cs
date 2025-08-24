@@ -1,6 +1,6 @@
 using HotChocolate;
-using MusicGQL.Integration.ListenBrainz;
 using MusicGQL.Features.ServerSettings;
+using MusicGQL.Integration.ListenBrainz;
 
 namespace MusicGQL.Features.ListenBrainz;
 

@@ -8,5 +8,3 @@ public class SoulSeekConnectionUpdated : Event
     public int Port { get; set; }
     public string Username { get; set; } = string.Empty;
 }
-
-

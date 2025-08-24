@@ -8,5 +8,3 @@ public class QBittorrentSettingsUpdated : Event
     public string? Username { get; set; }
     public string? SavePath { get; set; }
 }
-
-

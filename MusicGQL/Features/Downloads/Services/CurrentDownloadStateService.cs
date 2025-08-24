@@ -1,5 +1,5 @@
-using HotChocolate.Subscriptions;
 using System.Collections.Concurrent;
+using HotChocolate.Subscriptions;
 
 namespace MusicGQL.Features.Downloads.Services;
 
@@ -10,7 +10,7 @@ public class CurrentDownloadStateService(
 {
     // Internal state for backward compatibility (not exposed via GraphQL)
     private DownloadProgress? _legacyState = null;
-    
+
     // New multi-slot state
     private readonly ConcurrentDictionary<int, DownloadProgress> _slotProgress = new();
 
@@ -34,16 +34,25 @@ public class CurrentDownloadStateService(
 
     public void SetTrackProgress(int completed, int total)
     {
-        _legacyState = (_legacyState ?? new DownloadProgress()) with { CompletedTracks = completed, TotalTracks = total };
+        _legacyState = (_legacyState ?? new DownloadProgress()) with
+        {
+            CompletedTracks = completed,
+            TotalTracks = total,
+        };
     }
 
     public void SetError(string error)
     {
-        _legacyState = (_legacyState ?? new DownloadProgress()) with { Status = DownloadStatus.Failed, ErrorMessage = error };
+        _legacyState = (_legacyState ?? new DownloadProgress()) with
+        {
+            Status = DownloadStatus.Failed,
+            ErrorMessage = error,
+        };
     }
 
     // New multi-slot methods (exposed via GraphQL)
-    public IReadOnlyDictionary<int, DownloadProgress> GetAllSlotProgress() => _slotProgress.AsReadOnly();
+    public IReadOnlyDictionary<int, DownloadProgress> GetAllSlotProgress() =>
+        _slotProgress.AsReadOnly();
 
     public DownloadProgress? GetSlotProgress(int slotId)
     {
@@ -51,7 +60,11 @@ public class CurrentDownloadStateService(
         return progress;
     }
 
-    public async Task UpdateSlotProgressAsync(int slotId, DownloadProgress progress, CancellationToken cancellationToken)
+    public async Task UpdateSlotProgressAsync(
+        int slotId,
+        DownloadProgress progress,
+        CancellationToken cancellationToken
+    )
     {
         _slotProgress[slotId] = progress;
         await PublishSlotProgressAsync(slotId, progress, cancellationToken);
@@ -85,15 +98,20 @@ public class CurrentDownloadStateService(
         }
     }
 
-    public void UpdateSlotProvider(int slotId, string? provider, int providerIndex, int totalProviders)
+    public void UpdateSlotProvider(
+        int slotId,
+        string? provider,
+        int providerIndex,
+        int totalProviders
+    )
     {
         if (_slotProgress.TryGetValue(slotId, out var existing))
         {
-            var updated = existing with 
-            { 
-                CurrentProvider = provider, 
-                CurrentProviderIndex = providerIndex, 
-                TotalProviders = totalProviders 
+            var updated = existing with
+            {
+                CurrentProvider = provider,
+                CurrentProviderIndex = providerIndex,
+                TotalProviders = totalProviders,
             };
             _slotProgress[slotId] = updated;
             _ = PublishSlotProgressAsync(slotId, updated, CancellationToken.None);
@@ -110,7 +128,11 @@ public class CurrentDownloadStateService(
         }
     }
 
-    private async Task PublishSlotProgressAsync(int slotId, DownloadProgress? progress, CancellationToken cancellationToken)
+    private async Task PublishSlotProgressAsync(
+        int slotId,
+        DownloadProgress? progress,
+        CancellationToken cancellationToken
+    )
     {
         try
         {
@@ -122,11 +144,20 @@ public class CurrentDownloadStateService(
         }
         catch (Exception ex)
         {
-            logger.LogWarning(ex, "Failed to publish slot progress update for slot {SlotId}", slotId);
+            logger.LogWarning(
+                ex,
+                "Failed to publish slot progress update for slot {SlotId}",
+                slotId
+            );
         }
     }
 
-    public async Task PublishSlotStatusUpdateAsync(int slotId, bool isActive, DownloadQueueItem? currentWork, CancellationToken cancellationToken)
+    public async Task PublishSlotStatusUpdateAsync(
+        int slotId,
+        bool isActive,
+        DownloadQueueItem? currentWork,
+        CancellationToken cancellationToken
+    )
     {
         try
         {
@@ -146,5 +177,3 @@ public class CurrentDownloadStateService(
 public record SlotProgressUpdate(int SlotId, DownloadProgress? Progress);
 
 public record SlotStatusUpdate(int SlotId, bool IsActive, DownloadQueueItem? CurrentWork);
-
-

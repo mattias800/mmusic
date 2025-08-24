@@ -16,5 +16,3 @@ public class TrackPlayed : Event
     public string? ReleaseTitle { get; set; }
     public string? TrackTitle { get; set; }
 }
-
-

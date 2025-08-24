@@ -10,7 +10,7 @@ public sealed class ClientPresenceSubscription
     // Field name will be onClientsUpdated (camelCase of method name)
     [Subscribe]
     [Topic("ClientsUpdated")]
-    public IReadOnlyList<OnlineClient> OnClientsUpdated([EventMessage] IReadOnlyList<OnlineClient> clients) => clients;
+    public IReadOnlyList<OnlineClient> OnClientsUpdated(
+        [EventMessage] IReadOnlyList<OnlineClient> clients
+    ) => clients;
 }
-
-

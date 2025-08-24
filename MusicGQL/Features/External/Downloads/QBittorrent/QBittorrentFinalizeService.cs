@@ -1,7 +1,7 @@
+using Microsoft.Extensions.Options;
 using MusicGQL.Features.External.Downloads.QBittorrent;
 using MusicGQL.Features.ServerLibrary.Cache;
 using MusicGQL.Features.ServerSettings;
-using Microsoft.Extensions.Options;
 
 namespace MusicGQL.Features.External.Downloads.QBittorrent;
 
@@ -14,6 +14,7 @@ public class QBittorrentFinalizeService(
 ) : IQBittorrentFinalizeService
 {
     private MusicGQL.Features.Downloads.Services.DownloadLogger? serviceLogger;
+
     public async Task<MusicGQL.Features.Downloads.Services.DownloadLogger> GetLogger()
     {
         if (serviceLogger == null)
@@ -24,7 +25,11 @@ public class QBittorrentFinalizeService(
         return serviceLogger;
     }
 
-    public async Task<bool> FinalizeReleaseAsync(string artistId, string releaseFolderName, CancellationToken ct)
+    public async Task<bool> FinalizeReleaseAsync(
+        string artistId,
+        string releaseFolderName,
+        CancellationToken ct
+    )
     {
         var sLogger = await GetLogger();
         try
@@ -32,7 +37,11 @@ public class QBittorrentFinalizeService(
             var rel = await cache.GetReleaseByArtistAndFolderAsync(artistId, releaseFolderName);
             if (rel == null)
             {
-                logger.LogWarning("[qB Finalize] Release not found in cache {ArtistId}/{Folder}", artistId, releaseFolderName);
+                logger.LogWarning(
+                    "[qB Finalize] Release not found in cache {ArtistId}/{Folder}",
+                    artistId,
+                    releaseFolderName
+                );
                 return false;
             }
 
@@ -45,9 +54,14 @@ public class QBittorrentFinalizeService(
             }
 
             var targetName = $"{rel.ArtistName} - {rel.Title}".ToLowerInvariant();
-            var candidate = torrents
-                .FirstOrDefault(t => (t.Name ?? string.Empty).ToLowerInvariant().Contains(rel.ArtistName.ToLowerInvariant())
-                                     && (t.Name ?? string.Empty).ToLowerInvariant().Contains(rel.Title.ToLowerInvariant()));
+            var candidate = torrents.FirstOrDefault(t =>
+                (t.Name ?? string.Empty)
+                    .ToLowerInvariant()
+                    .Contains(rel.ArtistName.ToLowerInvariant())
+                && (t.Name ?? string.Empty)
+                    .ToLowerInvariant()
+                    .Contains(rel.Title.ToLowerInvariant())
+            );
             if (candidate == null)
             {
                 sLogger.Warn($"[qB Finalize] No torrent matched name '{targetName}'");
@@ -57,7 +71,9 @@ public class QBittorrentFinalizeService(
             // Guard: only copy when complete; otherwise log and exit
             if (candidate.Progress < 0.999)
             {
-                sLogger.Info($"[qB Finalize] Torrent '{candidate.Name}' not complete yet (progress={candidate.Progress:P0}); skipping copy for now");
+                sLogger.Info(
+                    $"[qB Finalize] Torrent '{candidate.Name}' not complete yet (progress={candidate.Progress:P0}); skipping copy for now"
+                );
                 return false;
             }
 
@@ -71,10 +87,17 @@ public class QBittorrentFinalizeService(
             Directory.CreateDirectory(targetDir);
 
             // If qB reports a content path, prefer copying audio files from there instead of moving qB's save path.
-            if (!string.IsNullOrWhiteSpace(candidate.ContentPath) && Directory.Exists(candidate.ContentPath))
+            if (
+                !string.IsNullOrWhiteSpace(candidate.ContentPath)
+                && Directory.Exists(candidate.ContentPath)
+            )
             {
                 sLogger.Info($"[qB Finalize] Using content path for copy: {candidate.ContentPath}");
-                var copied = QbFinalizeCopier.CopyAudioFilesRecursively(candidate.ContentPath!, targetDir, sLogger);
+                var copied = QbFinalizeCopier.CopyAudioFilesRecursively(
+                    candidate.ContentPath!,
+                    targetDir,
+                    sLogger
+                );
                 if (copied > 0)
                 {
                     sLogger.Info("[qB Finalize] Copy phase completed successfully");
@@ -84,10 +107,17 @@ public class QBittorrentFinalizeService(
             }
 
             // Fallback: try save path
-            if (!string.IsNullOrWhiteSpace(candidate.SavePath) && Directory.Exists(candidate.SavePath))
+            if (
+                !string.IsNullOrWhiteSpace(candidate.SavePath)
+                && Directory.Exists(candidate.SavePath)
+            )
             {
                 sLogger.Info($"[qB Finalize] Using save path for copy: {candidate.SavePath}");
-                var copied = QbFinalizeCopier.CopyAudioFilesRecursively(candidate.SavePath!, targetDir, sLogger);
+                var copied = QbFinalizeCopier.CopyAudioFilesRecursively(
+                    candidate.SavePath!,
+                    targetDir,
+                    sLogger
+                );
                 if (copied > 0)
                 {
                     sLogger.Info("[qB Finalize] Copy phase completed successfully (save path)");
@@ -116,4 +146,3 @@ public class QBittorrentFinalizeService(
         }
     }
 }
-

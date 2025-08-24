@@ -3,28 +3,29 @@ using Microsoft.EntityFrameworkCore;
 using MusicGQL.Db.Postgres;
 using MusicGQL.Features.ArtistImportQueue;
 using MusicGQL.Features.Artists;
+using MusicGQL.Features.Artists;
+using MusicGQL.Features.Downloads;
 using MusicGQL.Features.External;
 using MusicGQL.Features.FileSystem;
 using MusicGQL.Features.MusicBrainz;
-using MusicGQL.Features.Spotify;
 using MusicGQL.Features.Playlists;
 using MusicGQL.Features.Recommendations;
 using MusicGQL.Features.ServerLibrary;
 using MusicGQL.Features.ServerSettings;
 using MusicGQL.Features.ServerSettings.Db;
+using MusicGQL.Features.Spotify;
 using MusicGQL.Features.Users;
-using MusicGQL.Features.Artists;
-using MusicGQL.Features.Downloads;
 
 namespace MusicGQL.Types;
 
 public class Query
 {
     public ArtistSearchRoot Artist() => new();
-    
+
     public ServerLibrarySearchRoot ServerLibrary() => new();
 
     public MusicBrainzSearchRoot MusicBrainz() => new();
+
     public SpotifyArtistSearchRoot Spotify() => new();
 
     // Implemented Viewer field

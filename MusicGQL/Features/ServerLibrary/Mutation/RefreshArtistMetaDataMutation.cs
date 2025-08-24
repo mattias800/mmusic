@@ -1,8 +1,8 @@
+using Microsoft.Extensions.Logging;
 using MusicGQL.Features.Artists;
 using MusicGQL.Features.Import.Services;
 using MusicGQL.Features.ServerLibrary.Cache;
 using MusicGQL.Features.ServerSettings;
-using Microsoft.Extensions.Logging;
 using Path = System.IO.Path;
 
 namespace MusicGQL.Features.ServerLibrary.Mutation;
@@ -21,7 +21,10 @@ public class RefreshArtistMetaDataMutation
         RefreshArtistMetaDataInput input
     )
     {
-        logger.LogInformation("[RefreshArtistMetaData] Requested refresh for artistId='{ArtistId}'", input.ArtistId);
+        logger.LogInformation(
+            "[RefreshArtistMetaData] Requested refresh for artistId='{ArtistId}'",
+            input.ArtistId
+        );
 
         var artist = await cache.GetArtistByIdAsync(input.ArtistId);
 
@@ -32,19 +35,24 @@ public class RefreshArtistMetaDataMutation
             {
                 var matches = await cache.SearchArtistsByNameAsync(input.ArtistId, 10);
                 var exact = matches.FirstOrDefault(a =>
-                    string.Equals(a.Name, input.ArtistId, StringComparison.OrdinalIgnoreCase));
+                    string.Equals(a.Name, input.ArtistId, StringComparison.OrdinalIgnoreCase)
+                );
                 if (exact != null)
                 {
                     logger.LogInformation(
                         "[RefreshArtistMetaData] Artist not found by id. Using exact name match -> id='{Id}'",
-                        exact.Id);
+                        exact.Id
+                    );
                     artist = exact;
                 }
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "[RefreshArtistMetaData] Error during name fallback for '{ArtistId}'",
-                    input.ArtistId);
+                logger.LogError(
+                    ex,
+                    "[RefreshArtistMetaData] Error during name fallback for '{ArtistId}'",
+                    input.ArtistId
+                );
             }
         }
 
@@ -70,8 +78,10 @@ public class RefreshArtistMetaDataMutation
         }
         catch (Exception ex)
         {
-            logger.LogWarning(ex,
-                "[RefreshArtistMetaData] Import/enrich executor failed; continuing to Last.fm enrichment");
+            logger.LogWarning(
+                ex,
+                "[RefreshArtistMetaData] Import/enrich executor failed; continuing to Last.fm enrichment"
+            );
         }
 
         // Backfill any eligible releases (covers previous runs where writes were blocked)
@@ -81,28 +91,37 @@ public class RefreshArtistMetaDataMutation
         }
         catch (Exception ex)
         {
-            logger.LogWarning(ex,
-                "[RefreshArtistMetaData] ImportEligibleReleaseGroupsAsync failed; continuing to enrichment");
+            logger.LogWarning(
+                ex,
+                "[RefreshArtistMetaData] ImportEligibleReleaseGroupsAsync failed; continuing to enrichment"
+            );
         }
 
         await enrichment.EnrichArtistAsync(dir, mbId!);
         // EnrichArtistAsync now returns void, so we assume success
         // TODO: Consider adding error handling if needed
-        
+
         logger.LogInformation(
             "[RefreshArtistMetaData] Enrichment complete for artistId='{ArtistId}'. Updating cache...",
-            effectiveArtistId);
+            effectiveArtistId
+        );
         await cache.UpdateCacheAsync();
 
         // After updating cache, generate share files (manifest + tag)
-        try { await shareService.GenerateForArtistAsync(effectiveArtistId); } catch { }
+        try
+        {
+            await shareService.GenerateForArtistAsync(effectiveArtistId);
+        }
+        catch { }
 
         var artistAfterRefresh = await cache.GetArtistByIdAsync(effectiveArtistId);
 
         if (artistAfterRefresh == null)
         {
-            logger.LogError("[RefreshArtistMetaData] Artist not found in cache after refresh for id='{ArtistId}'",
-                effectiveArtistId);
+            logger.LogError(
+                "[RefreshArtistMetaData] Artist not found in cache after refresh for id='{ArtistId}'",
+                effectiveArtistId
+            );
             return new RefreshArtistMetaDataError("Could not find artist after refresh");
         }
 
@@ -114,11 +133,12 @@ public class RefreshArtistMetaDataMutation
                 new Artist(artistAfterRefresh)
             );
         }
-        catch
-        {
-        }
+        catch { }
 
-        logger.LogInformation("[RefreshArtistMetaData] Success for artistId='{ArtistId}'", effectiveArtistId);
+        logger.LogInformation(
+            "[RefreshArtistMetaData] Success for artistId='{ArtistId}'",
+            effectiveArtistId
+        );
         return new RefreshArtistMetaDataSuccess(new Artist(artistAfterRefresh));
     }
 }

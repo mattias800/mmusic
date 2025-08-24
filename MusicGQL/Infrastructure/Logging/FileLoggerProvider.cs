@@ -10,22 +10,32 @@ public sealed class FileLoggerProvider : ILoggerProvider
     private readonly string _filePath;
     private readonly Encoding _encoding;
     private readonly LogLevel _minLevel;
-    private readonly ConcurrentDictionary<string, FileLogger> _loggers = new(StringComparer.OrdinalIgnoreCase);
+    private readonly ConcurrentDictionary<string, FileLogger> _loggers = new(
+        StringComparer.OrdinalIgnoreCase
+    );
     private readonly object _sync = new();
     private StreamWriter? _writer;
 
-    public FileLoggerProvider(string filePath, LogLevel minLevel = LogLevel.Information, Encoding? encoding = null)
+    public FileLoggerProvider(
+        string filePath,
+        LogLevel minLevel = LogLevel.Information,
+        Encoding? encoding = null
+    )
     {
         _filePath = filePath;
         _minLevel = minLevel;
         _encoding = encoding ?? new UTF8Encoding(encoderShouldEmitUTF8Identifier: false);
 
         var dir = Path.GetDirectoryName(_filePath);
-        if (!string.IsNullOrWhiteSpace(dir)) Directory.CreateDirectory(dir);
-        _writer = new StreamWriter(new FileStream(_filePath, FileMode.Append, FileAccess.Write, FileShare.ReadWrite), _encoding)
+        if (!string.IsNullOrWhiteSpace(dir))
+            Directory.CreateDirectory(dir);
+        _writer = new StreamWriter(
+            new FileStream(_filePath, FileMode.Append, FileAccess.Write, FileShare.ReadWrite),
+            _encoding
+        )
         {
             AutoFlush = true,
-            NewLine = Environment.NewLine
+            NewLine = Environment.NewLine,
         };
         WritePreamble();
     }
@@ -46,20 +56,32 @@ public sealed class FileLoggerProvider : ILoggerProvider
 
     internal bool IsEnabled(LogLevel level) => level >= _minLevel;
 
-    internal void Write(string category, LogLevel level, EventId eventId, string message, Exception? exception)
+    internal void Write(
+        string category,
+        LogLevel level,
+        EventId eventId,
+        string message,
+        Exception? exception
+    )
     {
-        if (!IsEnabled(level)) return;
+        if (!IsEnabled(level))
+            return;
         var timestamp = DateTime.UtcNow.ToString("O");
         var lvl = level.ToString();
-        var line = exception == null
-            ? $"{timestamp} [{lvl}] {category}: {message}"
-            : $"{timestamp} [{lvl}] {category}: {message} | {exception.GetType().Name}: {exception.Message}";
+        var line =
+            exception == null
+                ? $"{timestamp} [{lvl}] {category}: {message}"
+                : $"{timestamp} [{lvl}] {category}: {message} | {exception.GetType().Name}: {exception.Message}";
         lock (_sync)
         {
             _writer?.WriteLine(line);
             if (exception != null)
             {
-                try { _writer?.WriteLine(exception.StackTrace); } catch { }
+                try
+                {
+                    _writer?.WriteLine(exception.StackTrace);
+                }
+                catch { }
             }
         }
     }
@@ -83,13 +105,21 @@ public sealed class FileLoggerProvider : ILoggerProvider
         private readonly string _categoryName = categoryName;
         private readonly FileLoggerProvider _provider = provider;
 
-        public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
+        public IDisposable? BeginScope<TState>(TState state)
+            where TState : notnull => null;
+
         public bool IsEnabled(LogLevel logLevel) => _provider.IsEnabled(logLevel);
 
-        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception,
-            Func<TState, Exception?, string> formatter)
+        public void Log<TState>(
+            LogLevel logLevel,
+            EventId eventId,
+            TState state,
+            Exception? exception,
+            Func<TState, Exception?, string> formatter
+        )
         {
-            if (!IsEnabled(logLevel)) return;
+            if (!IsEnabled(logLevel))
+                return;
             var message = formatter(state, exception);
             _provider.Write(_categoryName, logLevel, eventId, message, exception);
         }

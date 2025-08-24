@@ -1,8 +1,8 @@
-using MusicGQL.Features.ServerSettings.Db;
-using MusicGQL.Features.ServerSettings.Events;
-using MusicGQL.Features.Downloads.Services;
 using MusicGQL.Db.Postgres;
 using MusicGQL.EventProcessor;
+using MusicGQL.Features.Downloads.Services;
+using MusicGQL.Features.ServerSettings.Db;
+using MusicGQL.Features.ServerSettings.Events;
 
 namespace MusicGQL.Features.ServerSettings.Commands;
 
@@ -17,7 +17,7 @@ public class UpdateDownloadSlotCountHandler(
     public enum Result
     {
         Success,
-        InvalidSlotCount
+        InvalidSlotCount,
     }
 
     public async Task<Result> Handle(Command command)
@@ -29,7 +29,9 @@ public class UpdateDownloadSlotCountHandler(
         }
 
         // Get current settings
-        var settings = await dbContext.ServerSettings.FindAsync(DefaultDbServerSettingsProvider.ServerSettingsSingletonId);
+        var settings = await dbContext.ServerSettings.FindAsync(
+            DefaultDbServerSettingsProvider.ServerSettingsSingletonId
+        );
         if (settings == null)
         {
             // Create default settings if none exist
@@ -54,7 +56,10 @@ public class UpdateDownloadSlotCountHandler(
         await eventProcessorWorker.ProcessEvents();
 
         // Update slot manager configuration
-        await slotManager.UpdateSlotConfigurationAsync(command.NewSlotCount, CancellationToken.None);
+        await slotManager.UpdateSlotConfigurationAsync(
+            command.NewSlotCount,
+            CancellationToken.None
+        );
 
         return Result.Success;
     }
@@ -70,7 +75,7 @@ public class UpdateSoulSeekMaxReleasesPerUserDiscoveryHandler(
     public enum Result
     {
         Success,
-        InvalidMaxReleases
+        InvalidMaxReleases,
     }
 
     public async Task<Result> Handle(Command command)
@@ -82,7 +87,9 @@ public class UpdateSoulSeekMaxReleasesPerUserDiscoveryHandler(
         }
 
         // Get current settings
-        var settings = await dbContext.ServerSettings.FindAsync(DefaultDbServerSettingsProvider.ServerSettingsSingletonId);
+        var settings = await dbContext.ServerSettings.FindAsync(
+            DefaultDbServerSettingsProvider.ServerSettingsSingletonId
+        );
         if (settings == null)
         {
             // Create default settings if none exist

@@ -1,10 +1,10 @@
 using Microsoft.EntityFrameworkCore;
 using MusicGQL.Db.Postgres;
+using MusicGQL.Features.Authorization;
 using MusicGQL.Features.Likes;
 using MusicGQL.Features.Playlists;
 using MusicGQL.Features.Users.Db;
 using MusicGQL.Features.Users.Roles;
-using MusicGQL.Features.Authorization;
 
 namespace MusicGQL.Features.Users;
 
@@ -27,11 +27,21 @@ public record User([property: GraphQLIgnore] DbUser Model)
     public int GetRoles() => (int)Model.Roles;
 
     public bool IsAdmin([Service] UserRoleAuthorizer auth) => auth.IsAdmin(Model.Roles);
-    public bool CanCreatePlaylists([Service] UserRoleAuthorizer auth) => auth.CanCreatePlaylists(Model.Roles);
-    public bool CanTriggerDownloads([Service] UserRoleAuthorizer auth) => auth.CanTriggerDownloads(Model.Roles);
-    public bool CanManageUserRoles([Service] UserRoleAuthorizer auth) => auth.CanManageUserRoles(Model.Roles);
-    public bool CanViewDownloads([Service] UserRoleAuthorizer auth) => auth.CanViewDownloads(Model.Roles);
-    public bool CanEditExternalAuth([Service] UserRoleAuthorizer auth) => auth.CanEditExternalAuth(Model.Roles);
+
+    public bool CanCreatePlaylists([Service] UserRoleAuthorizer auth) =>
+        auth.CanCreatePlaylists(Model.Roles);
+
+    public bool CanTriggerDownloads([Service] UserRoleAuthorizer auth) =>
+        auth.CanTriggerDownloads(Model.Roles);
+
+    public bool CanManageUserRoles([Service] UserRoleAuthorizer auth) =>
+        auth.CanManageUserRoles(Model.Roles);
+
+    public bool CanViewDownloads([Service] UserRoleAuthorizer auth) =>
+        auth.CanViewDownloads(Model.Roles);
+
+    public bool CanEditExternalAuth([Service] UserRoleAuthorizer auth) =>
+        auth.CanEditExternalAuth(Model.Roles);
 
     public async Task<IEnumerable<LikedSong>> LikedSongs([Service] EventDbContext dbContext)
     {

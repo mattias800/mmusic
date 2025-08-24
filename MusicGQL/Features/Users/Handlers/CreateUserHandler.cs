@@ -59,11 +59,9 @@ public class CreateUserHandler(
         var isFirstUser = !await dbContext.Users.AnyAsync(u => u.UserId != userId);
         if (isFirstUser)
         {
-            dbContext.Events.Add(new UserRolesUpdated
-            {
-                SubjectUserId = userId,
-                Roles = UserRoles.Admin
-            });
+            dbContext.Events.Add(
+                new UserRolesUpdated { SubjectUserId = userId, Roles = UserRoles.Admin }
+            );
             await dbContext.SaveChangesAsync();
             await eventProcessor.ProcessEvents();
         }

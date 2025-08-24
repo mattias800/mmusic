@@ -1,9 +1,9 @@
-using HotChocolate;
 using System.Security.Claims;
-using MusicGQL.Features.ServerSettings.Db;
+using HotChocolate;
 using Microsoft.EntityFrameworkCore;
-using MusicGQL.Types;
 using MusicGQL.Db.Postgres;
+using MusicGQL.Features.ServerSettings.Db;
+using MusicGQL.Types;
 
 namespace MusicGQL.Features.ServerSettings.Mutations;
 
@@ -22,7 +22,8 @@ public record UpdateTopTracksServiceSettingsSuccess : UpdateTopTracksServiceSett
     public string Message { get; init; } = "Top tracks service settings updated successfully";
 }
 
-public record UpdateTopTracksServiceSettingsError(string Message) : UpdateTopTracksServiceSettingsResult;
+public record UpdateTopTracksServiceSettingsError(string Message)
+    : UpdateTopTracksServiceSettingsResult;
 
 [ExtendObjectType(typeof(Mutation))]
 public record UpdateTopTracksServiceSettingsMutation
@@ -30,12 +31,14 @@ public record UpdateTopTracksServiceSettingsMutation
     public async Task<UpdateTopTracksServiceSettingsResult> UpdateTopTracksServiceSettings(
         UpdateTopTracksServiceSettingsInput input,
         [Service] EventDbContext dbContext,
-        ClaimsPrincipal claims)
+        ClaimsPrincipal claims
+    )
     {
         try
         {
             var userIdClaim = claims.FindFirst(ClaimTypes.NameIdentifier);
-            if (userIdClaim is null) return new UpdateTopTracksServiceSettingsError("Not authenticated");
+            if (userIdClaim is null)
+                return new UpdateTopTracksServiceSettingsError("Not authenticated");
             var userId = Guid.Parse(userIdClaim.Value);
             var viewer = await dbContext.Users.FirstOrDefaultAsync(u => u.UserId == userId);
             if (viewer is null || (viewer.Roles & Users.Roles.UserRoles.Admin) == 0)
@@ -57,19 +60,25 @@ public record UpdateTopTracksServiceSettingsMutation
             await dbContext.SaveChangesAsync();
 
             var enabledServices = new List<string>();
-            if (input.ListenBrainzTopTracksEnabled) enabledServices.Add("ListenBrainz");
-            if (input.SpotifyTopTracksEnabled) enabledServices.Add("Spotify");
-            if (input.LastFmTopTracksEnabled) enabledServices.Add("Last.fm");
+            if (input.ListenBrainzTopTracksEnabled)
+                enabledServices.Add("ListenBrainz");
+            if (input.SpotifyTopTracksEnabled)
+                enabledServices.Add("Spotify");
+            if (input.LastFmTopTracksEnabled)
+                enabledServices.Add("Last.fm");
 
-            var message = enabledServices.Count > 0 
-                ? $"Top tracks services updated. Enabled services: {string.Join(", ", enabledServices)}"
-                : "Top tracks services updated. All services are now disabled.";
+            var message =
+                enabledServices.Count > 0
+                    ? $"Top tracks services updated. Enabled services: {string.Join(", ", enabledServices)}"
+                    : "Top tracks services updated. All services are now disabled.";
 
             return new UpdateTopTracksServiceSettingsSuccess { Message = message };
         }
         catch (Exception ex)
         {
-            return new UpdateTopTracksServiceSettingsError($"Failed to update top tracks service settings: {ex.Message}");
+            return new UpdateTopTracksServiceSettingsError(
+                $"Failed to update top tracks service settings: {ex.Message}"
+            );
         }
     }
 }

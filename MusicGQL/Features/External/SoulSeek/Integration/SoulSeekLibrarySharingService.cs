@@ -1,12 +1,12 @@
-using MusicGQL.Features.ServerSettings;
-using Soulseek;
 using System.IO;
 using System.Net;
 using MusicGQL.Features.Downloads.Services;
-using SystemIOPath = System.IO.Path;
+using MusicGQL.Features.ServerSettings;
+using Soulseek;
 using SystemIODirectory = System.IO.Directory;
 using SystemIOFile = System.IO.File;
 using SystemIOFileInfo = System.IO.FileInfo;
+using SystemIOPath = System.IO.Path;
 
 namespace MusicGQL.Features.External.SoulSeek.Integration;
 
@@ -26,7 +26,17 @@ public class SoulSeekLibrarySharingService(
     private IDownloadLogger? _fileLogger;
     private ReachabilityInfo? _lastReachability;
 
-    private static readonly string[] AudioExtensions = new[] { ".mp3", ".flac", ".m4a", ".wav", ".ogg", ".aac", ".wma", ".webm" };
+    private static readonly string[] AudioExtensions = new[]
+    {
+        ".mp3",
+        ".flac",
+        ".m4a",
+        ".wav",
+        ".ogg",
+        ".aac",
+        ".wma",
+        ".webm",
+    };
 
     /// <summary>
     /// Gets the current sharing status
@@ -58,19 +68,28 @@ public class SoulSeekLibrarySharingService(
 
             if (!settings.SoulSeekLibrarySharingEnabled)
             {
-                logger.LogInformation("[SoulSeek] Library sharing disabled; client not configured for shares");
+                logger.LogInformation(
+                    "[SoulSeek] Library sharing disabled; client not configured for shares"
+                );
                 return;
             }
 
-            _listeningPort = settings.SoulSeekListeningPort > 0 && settings.SoulSeekListeningPort <= 65535
-                ? settings.SoulSeekListeningPort
-                : 50300;
+            _listeningPort =
+                settings.SoulSeekListeningPort > 0 && settings.SoulSeekListeningPort <= 65535
+                    ? settings.SoulSeekListeningPort
+                    : 50300;
 
             // Precompute alias from configured library folder (folder name)
             if (!string.IsNullOrWhiteSpace(settings.LibraryPath))
             {
-                _rootAlias = SystemIOPath.GetFileName(settings.LibraryPath.TrimEnd(SystemIOPath.DirectorySeparatorChar, SystemIOPath.AltDirectorySeparatorChar));
-                if (string.IsNullOrWhiteSpace(_rootAlias)) _rootAlias = "library";
+                _rootAlias = SystemIOPath.GetFileName(
+                    settings.LibraryPath.TrimEnd(
+                        SystemIOPath.DirectorySeparatorChar,
+                        SystemIOPath.AltDirectorySeparatorChar
+                    )
+                );
+                if (string.IsNullOrWhiteSpace(_rootAlias))
+                    _rootAlias = "library";
             }
             else
             {
@@ -88,13 +107,27 @@ public class SoulSeekLibrarySharingService(
 
             await client.ReconfigureOptionsAsync(patch);
 
-            logger.LogInformation("[SoulSeek] Client configured for sharing on port {Port}; alias={Alias}", _listeningPort, _rootAlias);
-            try { _fileLogger?.Info($"Client configured for sharing on port {_listeningPort}; alias={_rootAlias}"); } catch { }
+            logger.LogInformation(
+                "[SoulSeek] Client configured for sharing on port {Port}; alias={Alias}",
+                _listeningPort,
+                _rootAlias
+            );
+            try
+            {
+                _fileLogger?.Info(
+                    $"Client configured for sharing on port {_listeningPort}; alias={_rootAlias}"
+                );
+            }
+            catch { }
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "[SoulSeek] Failed to configure client for library sharing");
-            try { _fileLogger?.Error($"Configure client failed: {ex.Message}"); } catch { }
+            try
+            {
+                _fileLogger?.Error($"Configure client failed: {ex.Message}");
+            }
+            catch { }
         }
     }
 
@@ -118,12 +151,21 @@ public class SoulSeekLibrarySharingService(
             var ver = typeof(SoulseekClient).Assembly.GetName().Version?.ToString();
             logger.LogInformation("[SoulSeek] Using SDK {Version}", ver);
             logger.LogInformation("[SoulSeek] Library sharing service initialized");
-            try { _fileLogger?.Info($"Using SDK {ver}"); _fileLogger?.Info("Library sharing service initialized"); } catch { }
+            try
+            {
+                _fileLogger?.Info($"Using SDK {ver}");
+                _fileLogger?.Info("Library sharing service initialized");
+            }
+            catch { }
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "[SoulSeek] Failed to initialize library sharing service");
-            try { _fileLogger?.Error($"Initialize failed: {ex.Message}"); } catch { }
+            try
+            {
+                _fileLogger?.Error($"Initialize failed: {ex.Message}");
+            }
+            catch { }
         }
     }
 
@@ -157,12 +199,22 @@ public class SoulSeekLibrarySharingService(
             }
 
             logger.LogInformation("[SoulSeek] Sharing library path: {Path}", libraryPath);
-            try { _fileLogger?.Info($"Sharing library path: {libraryPath}"); } catch { }
+            try
+            {
+                _fileLogger?.Info($"Sharing library path: {libraryPath}");
+            }
+            catch { }
 
             // Compute share counts
             var (dirCount, fileCount) = await CountLibraryAsync(libraryPath);
             SharedFileCount = fileCount;
-            try { _fileLogger?.Info($"Share counts computed: directories={dirCount} files={fileCount}"); } catch { }
+            try
+            {
+                _fileLogger?.Info(
+                    $"Share counts computed: directories={dirCount} files={fileCount}"
+                );
+            }
+            catch { }
 
             _isSharingEnabled = true;
 
@@ -170,12 +222,22 @@ public class SoulSeekLibrarySharingService(
                 "[SoulSeek] Library sharing started successfully. Shared files from {Path}",
                 libraryPath
             );
-            try { _fileLogger?.Info($"Library sharing started successfully. Shared files from {libraryPath}"); } catch { }
+            try
+            {
+                _fileLogger?.Info(
+                    $"Library sharing started successfully. Shared files from {libraryPath}"
+                );
+            }
+            catch { }
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "[SoulSeek] Failed to start library sharing");
-            try { _fileLogger?.Error($"Start sharing failed: {ex.Message}"); } catch { }
+            try
+            {
+                _fileLogger?.Error($"Start sharing failed: {ex.Message}");
+            }
+            catch { }
             _isSharingEnabled = false;
         }
     }
@@ -190,10 +252,18 @@ public class SoulSeekLibrarySharingService(
             _isSharingEnabled = false;
 
             // Inform the server that nothing is shared now (best-effort)
-            try { await client.SetSharedCountsAsync(0, 0); } catch { }
+            try
+            {
+                await client.SetSharedCountsAsync(0, 0);
+            }
+            catch { }
 
             logger.LogInformation("[SoulSeek] Library sharing stopped");
-            try { _fileLogger?.Info("Library sharing stopped"); } catch { }
+            try
+            {
+                _fileLogger?.Info("Library sharing stopped");
+            }
+            catch { }
         }
         catch (Exception ex)
         {
@@ -209,7 +279,11 @@ public class SoulSeekLibrarySharingService(
         if (_isSharingEnabled)
         {
             logger.LogInformation("[SoulSeek] Refreshing share index...");
-            try { _fileLogger?.Info("Refreshing share index..."); } catch { }
+            try
+            {
+                _fileLogger?.Info("Refreshing share index...");
+            }
+            catch { }
             await StartSharingAsync();
         }
     }
@@ -231,7 +305,10 @@ public class SoulSeekLibrarySharingService(
             var normalizedLibraryPath = SystemIOPath.GetFullPath(libraryPath);
 
             // Ensure the requested path is within the library directory
-            return normalizedRequestedPath.StartsWith(normalizedLibraryPath, StringComparison.OrdinalIgnoreCase);
+            return normalizedRequestedPath.StartsWith(
+                normalizedLibraryPath,
+                StringComparison.OrdinalIgnoreCase
+            );
         }
         catch
         {
@@ -247,7 +324,11 @@ public class SoulSeekLibrarySharingService(
         try
         {
             var directories = await BuildBrowseDirectoriesAsync();
-            try { _fileLogger?.Info($"Browse response built: directories={directories.Count()} "); } catch { }
+            try
+            {
+                _fileLogger?.Info($"Browse response built: directories={directories.Count()} ");
+            }
+            catch { }
             return new BrowseResponse(directories);
         }
         catch (Exception ex)
@@ -260,17 +341,32 @@ public class SoulSeekLibrarySharingService(
     /// <summary>
     /// Soulseek callback: Return the contents of a specific directory
     /// </summary>
-    private async Task<IEnumerable<Soulseek.Directory>> DirectoryContentsResponseResolver(string username, IPEndPoint endpoint, int token, string directory)
+    private async Task<IEnumerable<Soulseek.Directory>> DirectoryContentsResponseResolver(
+        string username,
+        IPEndPoint endpoint,
+        int token,
+        string directory
+    )
     {
         try
         {
             var list = await BuildDirectoryListingAsync(directory);
-            try { _fileLogger?.Info($"Directory listing for '{directory}' with {list.Files?.Count() ?? 0} files"); } catch { }
+            try
+            {
+                _fileLogger?.Info(
+                    $"Directory listing for '{directory}' with {list.Files?.Count() ?? 0} files"
+                );
+            }
+            catch { }
             return new[] { list };
         }
         catch (Exception ex)
         {
-            logger.LogWarning(ex, "[SoulSeek] Failed to build directory contents for {Dir}", directory);
+            logger.LogWarning(
+                ex,
+                "[SoulSeek] Failed to build directory contents for {Dir}",
+                directory
+            );
             return new[] { new Soulseek.Directory(directory) };
         }
     }
@@ -285,9 +381,17 @@ public class SoulSeekLibrarySharingService(
             try
             {
                 var local = await MapRemoteToLocalAsync(filename);
-                if (string.IsNullOrWhiteSpace(local) || !IsValidSharePath(local) || !SystemIOFile.Exists(local))
+                if (
+                    string.IsNullOrWhiteSpace(local)
+                    || !IsValidSharePath(local)
+                    || !SystemIOFile.Exists(local)
+                )
                 {
-                    logger.LogInformation("[SoulSeek] Rejecting upload for {User}: file not shared or not found: {File}", username, filename);
+                    logger.LogInformation(
+                        "[SoulSeek] Rejecting upload for {User}: file not shared or not found: {File}",
+                        username,
+                        filename
+                    );
                     return;
                 }
 
@@ -299,8 +403,14 @@ public class SoulSeekLibrarySharingService(
                     size: size,
                     inputStreamFactory: (startOffset) =>
                     {
-                        var stream = new FileStream(local, FileMode.Open, FileAccess.Read, FileShare.Read);
-                        if (startOffset > 0) stream.Seek(startOffset, SeekOrigin.Begin);
+                        var stream = new FileStream(
+                            local,
+                            FileMode.Open,
+                            FileAccess.Read,
+                            FileShare.Read
+                        );
+                        if (startOffset > 0)
+                            stream.Seek(startOffset, SeekOrigin.Begin);
                         return Task.FromResult((Stream)stream);
                     },
                     options: new TransferOptions(
@@ -309,13 +419,30 @@ public class SoulSeekLibrarySharingService(
                     )
                 );
 
-                logger.LogInformation("[SoulSeek] Completed upload to {User}: {File}", username, filename);
-                try { _fileLogger?.Info($"Upload to {username} completed: {filename} ({size} bytes)"); } catch { }
+                logger.LogInformation(
+                    "[SoulSeek] Completed upload to {User}: {File}",
+                    username,
+                    filename
+                );
+                try
+                {
+                    _fileLogger?.Info($"Upload to {username} completed: {filename} ({size} bytes)");
+                }
+                catch { }
             }
             catch (Exception ex)
             {
-                logger.LogWarning(ex, "[SoulSeek] Upload failed for {User}: {File}", username, filename);
-                try { _fileLogger?.Warn($"Upload failed for {username}: {filename} - {ex.Message}"); } catch { }
+                logger.LogWarning(
+                    ex,
+                    "[SoulSeek] Upload failed for {User}: {File}",
+                    username,
+                    filename
+                );
+                try
+                {
+                    _fileLogger?.Warn($"Upload failed for {username}: {filename} - {ex.Message}");
+                }
+                catch { }
             }
         });
 
@@ -335,14 +462,30 @@ public class SoulSeekLibrarySharingService(
             return Array.Empty<Soulseek.Directory>();
         }
 
-        var alias = _rootAlias ?? SystemIOPath.GetFileName(libraryPath.TrimEnd(SystemIOPath.DirectorySeparatorChar, SystemIOPath.AltDirectorySeparatorChar)) ?? "library";
+        var alias =
+            _rootAlias
+            ?? SystemIOPath.GetFileName(
+                libraryPath.TrimEnd(
+                    SystemIOPath.DirectorySeparatorChar,
+                    SystemIOPath.AltDirectorySeparatorChar
+                )
+            )
+            ?? "library";
 
-        var directories = new Dictionary<string, Soulseek.Directory>(StringComparer.OrdinalIgnoreCase);
+        var directories = new Dictionary<string, Soulseek.Directory>(
+            StringComparer.OrdinalIgnoreCase
+        );
 
         // Seed all directories (including the root alias) so empty folders still appear
         directories[alias] = new Soulseek.Directory(alias);
 
-        foreach (var dir in SystemIODirectory.EnumerateDirectories(libraryPath, "*", SearchOption.AllDirectories))
+        foreach (
+            var dir in SystemIODirectory.EnumerateDirectories(
+                libraryPath,
+                "*",
+                SearchOption.AllDirectories
+            )
+        )
         {
             var remoteDir = ToRemotePath(alias, libraryPath, dir);
             if (!directories.ContainsKey(remoteDir))
@@ -361,7 +504,8 @@ public class SoulSeekLibrarySharingService(
             .Select(g => new
             {
                 Dir = g.Key,
-                Files = g.Select(f => CreateSoulseekFile(alias, libraryPath, f)).OrderBy(sf => sf.Filename)
+                Files = g.Select(f => CreateSoulseekFile(alias, libraryPath, f))
+                    .OrderBy(sf => sf.Filename),
             });
 
         foreach (var g in groups)
@@ -380,7 +524,15 @@ public class SoulSeekLibrarySharingService(
         var settings = await serverSettingsAccessor.GetAsync();
         var libraryPath = settings.LibraryPath;
 
-        var alias = _rootAlias ?? SystemIOPath.GetFileName(libraryPath.TrimEnd(SystemIOPath.DirectorySeparatorChar, SystemIOPath.AltDirectorySeparatorChar)) ?? "library";
+        var alias =
+            _rootAlias
+            ?? SystemIOPath.GetFileName(
+                libraryPath.TrimEnd(
+                    SystemIOPath.DirectorySeparatorChar,
+                    SystemIOPath.AltDirectorySeparatorChar
+                )
+            )
+            ?? "library";
         var localDir = await MapRemoteDirectoryToLocalAsync(remoteDirectory);
 
         if (string.IsNullOrWhiteSpace(localDir) || !SystemIODirectory.Exists(localDir))
@@ -408,14 +560,20 @@ public class SoulSeekLibrarySharingService(
     private static string ToRemotePath(string alias, string libraryPath, string localPath)
     {
         var fullLocal = SystemIOPath.GetFullPath(localPath);
-        var fullRoot = SystemIOPath.GetFullPath(libraryPath.TrimEnd(SystemIOPath.DirectorySeparatorChar, SystemIOPath.AltDirectorySeparatorChar));
+        var fullRoot = SystemIOPath.GetFullPath(
+            libraryPath.TrimEnd(
+                SystemIOPath.DirectorySeparatorChar,
+                SystemIOPath.AltDirectorySeparatorChar
+            )
+        );
 
         string relative = string.Empty;
         if (fullLocal.StartsWith(fullRoot, StringComparison.OrdinalIgnoreCase))
         {
-            relative = fullLocal.Length == fullRoot.Length
-                ? string.Empty
-                : fullLocal.Substring(fullRoot.Length + 1);
+            relative =
+                fullLocal.Length == fullRoot.Length
+                    ? string.Empty
+                    : fullLocal.Substring(fullRoot.Length + 1);
         }
 
         // Build Windows-style path for Soulseek
@@ -440,12 +598,24 @@ public class SoulSeekLibrarySharingService(
 
     private string? MapRemoteToLocal(string libraryPath, string remotePath)
     {
-        if (string.IsNullOrWhiteSpace(libraryPath) || string.IsNullOrWhiteSpace(remotePath)) return null;
+        if (string.IsNullOrWhiteSpace(libraryPath) || string.IsNullOrWhiteSpace(remotePath))
+            return null;
 
-        var alias = _rootAlias ?? SystemIOPath.GetFileName(libraryPath.TrimEnd(SystemIOPath.DirectorySeparatorChar, SystemIOPath.AltDirectorySeparatorChar)) ?? "library";
+        var alias =
+            _rootAlias
+            ?? SystemIOPath.GetFileName(
+                libraryPath.TrimEnd(
+                    SystemIOPath.DirectorySeparatorChar,
+                    SystemIOPath.AltDirectorySeparatorChar
+                )
+            )
+            ?? "library";
 
         var normalizedRemote = remotePath.Replace('/', '\\');
-        if (!normalizedRemote.StartsWith(alias + "\\") && !normalizedRemote.Equals(alias, StringComparison.OrdinalIgnoreCase))
+        if (
+            !normalizedRemote.StartsWith(alias + "\\")
+            && !normalizedRemote.Equals(alias, StringComparison.OrdinalIgnoreCase)
+        )
         {
             return null;
         }
@@ -454,14 +624,20 @@ public class SoulSeekLibrarySharingService(
             ? string.Empty
             : normalizedRemote.Substring(alias.Length + 1);
 
-        var local = string.IsNullOrEmpty(sub) ? libraryPath : SystemIOPath.Combine(libraryPath, sub.Replace('\\', SystemIOPath.DirectorySeparatorChar));
+        var local = string.IsNullOrEmpty(sub)
+            ? libraryPath
+            : SystemIOPath.Combine(
+                libraryPath,
+                sub.Replace('\\', SystemIOPath.DirectorySeparatorChar)
+            );
 
         // Normalize and ensure within root
         try
         {
             var fullLocal = SystemIOPath.GetFullPath(local);
             var fullRoot = SystemIOPath.GetFullPath(libraryPath);
-            if (!fullLocal.StartsWith(fullRoot, StringComparison.OrdinalIgnoreCase)) return null;
+            if (!fullLocal.StartsWith(fullRoot, StringComparison.OrdinalIgnoreCase))
+                return null;
             return fullLocal;
         }
         catch
@@ -482,9 +658,21 @@ public class SoulSeekLibrarySharingService(
                 if (SystemIODirectory.Exists(libraryPath))
                 {
                     dirs = 1; // root alias
-                    foreach (var _ in SystemIODirectory.EnumerateDirectories(libraryPath, "*", SearchOption.AllDirectories)) dirs++;
-                    files = SystemIODirectory.EnumerateFiles(libraryPath, "*", SearchOption.AllDirectories)
-                        .Count(f => AudioExtensions.Contains(SystemIOPath.GetExtension(f).ToLowerInvariant()));
+                    foreach (
+                        var _ in SystemIODirectory.EnumerateDirectories(
+                            libraryPath,
+                            "*",
+                            SearchOption.AllDirectories
+                        )
+                    )
+                        dirs++;
+                    files = SystemIODirectory
+                        .EnumerateFiles(libraryPath, "*", SearchOption.AllDirectories)
+                        .Count(f =>
+                            AudioExtensions.Contains(
+                                SystemIOPath.GetExtension(f).ToLowerInvariant()
+                            )
+                        );
                 }
             }
             catch
@@ -512,7 +700,7 @@ public class SoulSeekLibrarySharingService(
                 SharedFileCount = 0,
                 LibraryPath = libraryPath,
                 ListeningPort = _listeningPort,
-                TotalLibrarySize = 0
+                TotalLibrarySize = 0,
             };
         }
 
@@ -530,7 +718,7 @@ public class SoulSeekLibrarySharingService(
             ObservedPort = _lastReachability?.ObservedPort,
             ObservedAtUtc = _lastReachability?.TimestampUtc,
             IsPrivateIp = _lastReachability?.IsPrivateIp ?? false,
-            PortMatches = _lastReachability?.PortMatches ?? false
+            PortMatches = _lastReachability?.PortMatches ?? false,
         };
     }
 
@@ -545,7 +733,13 @@ public class SoulSeekLibrarySharingService(
             {
                 var totalSize = 0L;
 
-                foreach (var file in SystemIODirectory.EnumerateFiles(libraryPath, "*", SearchOption.AllDirectories))
+                foreach (
+                    var file in SystemIODirectory.EnumerateFiles(
+                        libraryPath,
+                        "*",
+                        SearchOption.AllDirectories
+                    )
+                )
                 {
                     try
                     {
@@ -584,11 +778,15 @@ public class SoulSeekLibrarySharingService(
         catch (Exception ex)
         {
             logger.LogError(ex, "[SoulSeek] Error during service disposal");
-            try { _fileLogger?.Error($"Dispose error: {ex.Message}"); } catch { }
+            try
+            {
+                _fileLogger?.Error($"Dispose error: {ex.Message}");
+            }
+            catch { }
         }
         finally
         {
-            ( _fileLogger as IDisposable )?.Dispose();
+            (_fileLogger as IDisposable)?.Dispose();
         }
     }
 
@@ -600,17 +798,35 @@ public class SoulSeekLibrarySharingService(
         try
         {
             var settings = await serverSettingsAccessor.GetAsync();
-            if (string.IsNullOrWhiteSpace(settings.LibraryPath) || !SystemIODirectory.Exists(settings.LibraryPath)) return;
+            if (
+                string.IsNullOrWhiteSpace(settings.LibraryPath)
+                || !SystemIODirectory.Exists(settings.LibraryPath)
+            )
+                return;
 
             var (dirs, files) = await CountLibraryAsync(settings.LibraryPath);
             await client.SetSharedCountsAsync(dirs, files);
-            logger.LogInformation("[SoulSeek] Published share counts after login: {Dirs} directories, {Files} files", dirs, files);
-            try { _fileLogger?.Info($"Published share counts after login: directories={dirs} files={files}"); } catch { }
+            logger.LogInformation(
+                "[SoulSeek] Published share counts after login: {Dirs} directories, {Files} files",
+                dirs,
+                files
+            );
+            try
+            {
+                _fileLogger?.Info(
+                    $"Published share counts after login: directories={dirs} files={files}"
+                );
+            }
+            catch { }
         }
         catch (Exception ex)
         {
             logger.LogWarning(ex, "[SoulSeek] Failed to publish shared counts after login");
-            try { _fileLogger?.Warn($"Failed to publish counts after login: {ex.Message}"); } catch { }
+            try
+            {
+                _fileLogger?.Warn($"Failed to publish counts after login: {ex.Message}");
+            }
+            catch { }
         }
     }
 
@@ -622,12 +838,21 @@ public class SoulSeekLibrarySharingService(
         try
         {
             var settings = await serverSettingsAccessor.GetAsync();
-            var listenPort = settings.SoulSeekListeningPort > 0 ? settings.SoulSeekListeningPort : _listeningPort;
+            var listenPort =
+                settings.SoulSeekListeningPort > 0
+                    ? settings.SoulSeekListeningPort
+                    : _listeningPort;
 
             var endpoint = await client.GetUserEndPointAsync(client.Username);
             if (endpoint == null)
             {
-                try { _fileLogger?.Warn("Reachability: server did not provide an endpoint for this user."); } catch { }
+                try
+                {
+                    _fileLogger?.Warn(
+                        "Reachability: server did not provide an endpoint for this user."
+                    );
+                }
+                catch { }
                 return;
             }
 
@@ -643,34 +868,55 @@ public class SoulSeekLibrarySharingService(
                 ListenPort = listenPort,
                 IsPrivateIp = isPrivate,
                 PortMatches = portMatch,
-                TimestampUtc = DateTime.UtcNow
+                TimestampUtc = DateTime.UtcNow,
             };
 
-            var msg = $"Server sees you at {ip}:{port}. ListenPort={listenPort}. PrivateIP={isPrivate}. PortMatch={portMatch}";
+            var msg =
+                $"Server sees you at {ip}:{port}. ListenPort={listenPort}. PrivateIP={isPrivate}. PortMatch={portMatch}";
             logger.LogInformation("[SoulSeek] {Message}", msg);
-            try { _fileLogger?.Info($"Reachability: {msg}"); } catch { }
+            try
+            {
+                _fileLogger?.Info($"Reachability: {msg}");
+            }
+            catch { }
 
             if (isPrivate || !portMatch)
             {
-                var guidance = "Likely behind NAT or port mismatch; other users may not be able to reach your share directly. Configure port forwarding for the listen port to this machine, or enable UPnP/NAT-PMP on your router.";
+                var guidance =
+                    "Likely behind NAT or port mismatch; other users may not be able to reach your share directly. Configure port forwarding for the listen port to this machine, or enable UPnP/NAT-PMP on your router.";
                 logger.LogWarning("[SoulSeek] {Guidance}", guidance);
-                try { _fileLogger?.Warn($"{guidance}"); } catch { }
+                try
+                {
+                    _fileLogger?.Warn($"{guidance}");
+                }
+                catch { }
             }
             else
             {
-                try { _fileLogger?.Info("Reachability heuristic OK (public IP and port match). This does not guarantee external reachability but is a good sign."); } catch { }
+                try
+                {
+                    _fileLogger?.Info(
+                        "Reachability heuristic OK (public IP and port match). This does not guarantee external reachability but is a good sign."
+                    );
+                }
+                catch { }
             }
         }
         catch (Exception ex)
         {
             logger.LogDebug(ex, "[SoulSeek] Reachability check failed");
-            try { _fileLogger?.Warn($"Reachability check failed: {ex.Message}"); } catch { }
+            try
+            {
+                _fileLogger?.Warn($"Reachability check failed: {ex.Message}");
+            }
+            catch { }
         }
     }
 
     private static bool IsPrivateIPv4(IPAddress ip)
     {
-        if (ip.AddressFamily != System.Net.Sockets.AddressFamily.InterNetwork) return false;
+        if (ip.AddressFamily != System.Net.Sockets.AddressFamily.InterNetwork)
+            return false;
         var b = ip.GetAddressBytes();
         return b[0] == 10
             || (b[0] == 172 && b[1] >= 16 && b[1] <= 31)
@@ -680,7 +926,8 @@ public class SoulSeekLibrarySharingService(
 
     private async Task EnsureFileLoggerAsync()
     {
-        if (_fileLogger != null) return;
+        if (_fileLogger != null)
+            return;
         try
         {
             var path = await logPathProvider.GetServiceLogFilePathAsync("soulseek");

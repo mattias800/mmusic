@@ -1,9 +1,9 @@
+using System.Text.Json;
 using MusicGQL.Features.ServerLibrary.Cache;
 using MusicGQL.Features.ServerLibrary.Json;
 using MusicGQL.Features.ServerLibrary.Utils;
-using MusicGQL.Integration.MusicBrainz;
 using MusicGQL.Features.ServerSettings;
-using System.Text.Json;
+using MusicGQL.Integration.MusicBrainz;
 
 namespace MusicGQL.Features.ServerLibrary.Mutation;
 
@@ -20,37 +20,58 @@ public class FixReleaseTypeMutation
     {
         try
         {
-            logger.LogInformation("[FixReleaseType] 🔧 Starting to fix release type for {ArtistId}/{ReleaseFolder}", 
-                input.ArtistId, input.ReleaseFolderName);
+            logger.LogInformation(
+                "[FixReleaseType] 🔧 Starting to fix release type for {ArtistId}/{ReleaseFolder}",
+                input.ArtistId,
+                input.ReleaseFolderName
+            );
 
             // Get the release from cache
-            var release = await cache.GetReleaseByArtistAndFolderAsync(input.ArtistId, input.ReleaseFolderName);
+            var release = await cache.GetReleaseByArtistAndFolderAsync(
+                input.ArtistId,
+                input.ReleaseFolderName
+            );
             if (release == null)
             {
-                logger.LogWarning("[FixReleaseType] ❌ Release not found: {ArtistId}/{ReleaseFolder}", 
-                    input.ArtistId, input.ReleaseFolderName);
+                logger.LogWarning(
+                    "[FixReleaseType] ❌ Release not found: {ArtistId}/{ReleaseFolder}",
+                    input.ArtistId,
+                    input.ReleaseFolderName
+                );
                 return new FixReleaseTypeError("Release not found");
             }
 
             var releaseGroupId = release.JsonRelease.Connections?.MusicBrainzReleaseGroupId;
             if (string.IsNullOrWhiteSpace(releaseGroupId))
             {
-                logger.LogWarning("[FixReleaseType] ❌ Release has no MusicBrainz release group ID: {ArtistId}/{ReleaseFolder}", 
-                    input.ArtistId, input.ReleaseFolderName);
+                logger.LogWarning(
+                    "[FixReleaseType] ❌ Release has no MusicBrainz release group ID: {ArtistId}/{ReleaseFolder}",
+                    input.ArtistId,
+                    input.ReleaseFolderName
+                );
                 return new FixReleaseTypeError("Release has no MusicBrainz release group ID");
             }
 
             // Fetch the release group from MusicBrainz
-            logger.LogInformation("[FixReleaseType] 🔍 Fetching release group {ReleaseGroupId} from MusicBrainz", releaseGroupId);
+            logger.LogInformation(
+                "[FixReleaseType] 🔍 Fetching release group {ReleaseGroupId} from MusicBrainz",
+                releaseGroupId
+            );
             var releaseGroup = await musicBrainzService.GetReleaseGroupByIdAsync(releaseGroupId);
             if (releaseGroup == null)
             {
-                logger.LogWarning("[FixReleaseType] ❌ Could not fetch release group from MusicBrainz: {ReleaseGroupId}", releaseGroupId);
+                logger.LogWarning(
+                    "[FixReleaseType] ❌ Could not fetch release group from MusicBrainz: {ReleaseGroupId}",
+                    releaseGroupId
+                );
                 return new FixReleaseTypeError("Could not fetch release group from MusicBrainz");
             }
 
             var musicBrainzType = releaseGroup.PrimaryType;
-            logger.LogInformation("[FixReleaseType] 🏷️ MusicBrainz primary type: '{MusicBrainzType}'", musicBrainzType);
+            logger.LogInformation(
+                "[FixReleaseType] 🏷️ MusicBrainz primary type: '{MusicBrainzType}'",
+                musicBrainzType
+            );
 
             // Map the MusicBrainz type to our local type
             var newType = musicBrainzType?.ToLowerInvariant() switch
@@ -63,15 +84,22 @@ public class FixReleaseTypeMutation
                 "live" => JsonReleaseType.Album,
                 "remix" => JsonReleaseType.Ep,
                 "mixtape" => JsonReleaseType.Ep,
-                _ => JsonReleaseType.Album
+                _ => JsonReleaseType.Album,
             };
 
-            logger.LogInformation("[FixReleaseType] 🔄 Mapping type: '{MusicBrainzType}' → {NewType}", musicBrainzType, newType);
+            logger.LogInformation(
+                "[FixReleaseType] 🔄 Mapping type: '{MusicBrainzType}' → {NewType}",
+                musicBrainzType,
+                newType
+            );
 
             // Check if the type actually needs to change
             if (release.JsonRelease.Type == newType)
             {
-                logger.LogInformation("[FixReleaseType] ℹ️ Release type is already correct: {CurrentType}", release.JsonRelease.Type);
+                logger.LogInformation(
+                    "[FixReleaseType] ℹ️ Release type is already correct: {CurrentType}",
+                    release.JsonRelease.Type
+                );
                 return new FixReleaseTypeSuccess(release.JsonRelease);
             }
 
@@ -87,7 +115,10 @@ public class FixReleaseTypeMutation
 
             if (!File.Exists(releaseJsonPath))
             {
-                logger.LogError("[FixReleaseType] ❌ Release.json file not found: {Path}", releaseJsonPath);
+                logger.LogError(
+                    "[FixReleaseType] ❌ Release.json file not found: {Path}",
+                    releaseJsonPath
+                );
                 return new FixReleaseTypeError("Release.json file not found");
             }
 
@@ -95,13 +126,17 @@ public class FixReleaseTypeMutation
             var jsonOptions = new JsonSerializerOptions
             {
                 WriteIndented = true,
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
             };
 
             var updatedJson = JsonSerializer.Serialize(release.JsonRelease, jsonOptions);
             await File.WriteAllTextAsync(releaseJsonPath, updatedJson);
 
-            logger.LogInformation("[FixReleaseType] ✅ Successfully updated release type from {OldType} to {NewType}", oldType, newType);
+            logger.LogInformation(
+                "[FixReleaseType] ✅ Successfully updated release type from {OldType} to {NewType}",
+                oldType,
+                newType
+            );
 
             // Update the cache
             await cache.UpdateReleaseFromJsonAsync(input.ArtistId, input.ReleaseFolderName);
@@ -110,8 +145,12 @@ public class FixReleaseTypeMutation
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "[FixReleaseType] ❌ Error fixing release type for {ArtistId}/{ReleaseFolder}", 
-                input.ArtistId, input.ReleaseFolderName);
+            logger.LogError(
+                ex,
+                "[FixReleaseType] ❌ Error fixing release type for {ArtistId}/{ReleaseFolder}",
+                input.ArtistId,
+                input.ReleaseFolderName
+            );
             return new FixReleaseTypeError($"Error: {ex.Message}");
         }
     }

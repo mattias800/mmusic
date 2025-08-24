@@ -21,7 +21,8 @@ public static class FileNameParsing
                     "\\b(?:cd|disc|disk|digital\\s*media)\\s*(\\d+)\\b",
                     RegexOptions.IgnoreCase | RegexOptions.Compiled
                 );
-                if (discMatch.Success && int.TryParse(discMatch.Groups[1].Value, out var d)) disc = d;
+                if (discMatch.Success && int.TryParse(discMatch.Groups[1].Value, out var d))
+                    disc = d;
 
                 // Determine start position for track search: after the disc label if present
                 int searchStart = discMatch.Success ? discMatch.Index + discMatch.Length : 0;
@@ -56,9 +57,11 @@ public static class FileNameParsing
                     // Last resort: scan from the start (legacy behavior)
                     var span = name.AsSpan();
                     int pos = 0;
-                    while (pos < span.Length && !char.IsDigit(span[pos])) pos++;
+                    while (pos < span.Length && !char.IsDigit(span[pos]))
+                        pos++;
                     int start = pos;
-                    while (pos < span.Length && char.IsDigit(span[pos])) pos++;
+                    while (pos < span.Length && char.IsDigit(span[pos]))
+                        pos++;
                     if (pos > start && int.TryParse(span.Slice(start, pos - start), out var n))
                     {
                         track = n > 99 ? (n % 100 == 0 ? n : n % 100) : n;

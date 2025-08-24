@@ -4,14 +4,25 @@ namespace MusicGQL.Features.External.Downloads.QBittorrent;
 
 public static class QbFinalizeCopier
 {
-    private static readonly string[] AudioExtensions = new[] { ".mp3", ".flac", ".m4a", ".wav", ".ogg" };
+    private static readonly string[] AudioExtensions = new[]
+    {
+        ".mp3",
+        ".flac",
+        ".m4a",
+        ".wav",
+        ".ogg",
+    };
 
     /// <summary>
     /// Recursively scans the source root for audio files and copies them flat into targetDir.
     /// Existing files are not overwritten.
     /// Returns the number of files copied.
     /// </summary>
-    public static int CopyAudioFilesRecursively(string sourceRoot, string targetDir, IDownloadLogger logger)
+    public static int CopyAudioFilesRecursively(
+        string sourceRoot,
+        string targetDir,
+        IDownloadLogger logger
+    )
     {
         if (string.IsNullOrWhiteSpace(sourceRoot) || !Directory.Exists(sourceRoot))
         {
@@ -24,8 +35,11 @@ public static class QbFinalizeCopier
         IEnumerable<string> files;
         try
         {
-            files = Directory.EnumerateFiles(sourceRoot, "*", SearchOption.AllDirectories)
-                .Where(f => AudioExtensions.Contains(System.IO.Path.GetExtension(f).ToLowerInvariant()));
+            files = Directory
+                .EnumerateFiles(sourceRoot, "*", SearchOption.AllDirectories)
+                .Where(f =>
+                    AudioExtensions.Contains(System.IO.Path.GetExtension(f).ToLowerInvariant())
+                );
         }
         catch (Exception ex)
         {
@@ -54,8 +68,9 @@ public static class QbFinalizeCopier
             }
         }
 
-        logger.Info($"[qB Finalize] Copied {copied} audio file(s) from {sourceRoot} to {targetDir}");
+        logger.Info(
+            $"[qB Finalize] Copied {copied} audio file(s) from {sourceRoot} to {targetDir}"
+        );
         return copied;
     }
 }
-

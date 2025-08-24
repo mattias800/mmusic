@@ -12,7 +12,8 @@ public record SpotifyArtistSearchRoot
     )
     {
         var results = await spotifyService.SearchArtistsAsync(name, limit + offset);
-        var paged = results?.Skip(offset).Take(limit) ?? Enumerable.Empty<SpotifyAPI.Web.FullArtist>();
+        var paged =
+            results?.Skip(offset).Take(limit) ?? Enumerable.Empty<SpotifyAPI.Web.FullArtist>();
         return paged.Select(a => new SpotifyArtist(a));
     }
 

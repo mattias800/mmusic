@@ -25,8 +25,8 @@ public static class LibraryDeciderExtensions
     public static bool IsDemo(this Hqub.MusicBrainz.Entities.ReleaseGroup releaseGroup)
     {
         // MusicBrainz marks demos as a secondary type "Demo"
-        return releaseGroup.SecondaryTypes.Any(
-            t => t.Equals("Demo", StringComparison.OrdinalIgnoreCase)
+        return releaseGroup.SecondaryTypes.Any(t =>
+            t.Equals("Demo", StringComparison.OrdinalIgnoreCase)
         );
     }
 }

@@ -1,14 +1,14 @@
+using System.Security.Claims;
+using HotChocolate.Subscriptions;
+using Microsoft.EntityFrameworkCore;
 using MusicGQL.Db.Postgres;
-using MusicGQL.EventProcessor;
 using MusicGQL.Db.Postgres.Models;
+using MusicGQL.EventProcessor;
+using MusicGQL.Features.Clients;
 using MusicGQL.Features.Users.Db;
 using MusicGQL.Features.Users.Events;
 using MusicGQL.Features.Users.Services;
-using MusicGQL.Features.Clients;
 using MusicGQL.Types;
-using Microsoft.EntityFrameworkCore;
-using System.Security.Claims;
-using HotChocolate.Subscriptions;
 
 namespace MusicGQL.Features.Users.Mutations;
 
@@ -44,17 +44,22 @@ public class UpdateUserListenBrainzCredentialsMutation
                     UserId = user.UserId,
                     Username = user.Username,
                     ListenBrainzUserId = newListenBrainzUserId ?? user.ListenBrainzUserId,
-                    ListenBrainzToken = newListenBrainzToken
+                    ListenBrainzToken = newListenBrainzToken,
                 };
 
                 var validationResult = await userListenBrainzService.ValidateTokenAsync(tempUser);
                 if (!validationResult.IsValid)
                 {
-                    return new UpdateUserListenBrainzCredentialsError($"Invalid ListenBrainz token: {validationResult.Message}");
+                    return new UpdateUserListenBrainzCredentialsError(
+                        $"Invalid ListenBrainz token: {validationResult.Message}"
+                    );
                 }
 
                 // Update the user's ListenBrainz user ID if it's different from what we got from validation
-                if (!string.IsNullOrEmpty(validationResult.User) && validationResult.User != newListenBrainzUserId)
+                if (
+                    !string.IsNullOrEmpty(validationResult.User)
+                    && validationResult.User != newListenBrainzUserId
+                )
                 {
                     newListenBrainzUserId = validationResult.User;
                 }
@@ -86,14 +91,18 @@ public class UpdateUserListenBrainzCredentialsMutation
             var updatedUser = await dbContext.Users.FindAsync(input.UserId);
             if (updatedUser == null)
             {
-                return new UpdateUserListenBrainzCredentialsError("Failed to retrieve updated user");
+                return new UpdateUserListenBrainzCredentialsError(
+                    "Failed to retrieve updated user"
+                );
             }
 
             return new UpdateUserListenBrainzCredentialsSuccess(new(updatedUser));
         }
         catch (Exception ex)
         {
-            return new UpdateUserListenBrainzCredentialsError($"Failed to update ListenBrainz credentials: {ex.Message}");
+            return new UpdateUserListenBrainzCredentialsError(
+                $"Failed to update ListenBrainz credentials: {ex.Message}"
+            );
         }
     }
 
@@ -120,7 +129,9 @@ public class UpdateUserListenBrainzCredentialsMutation
             return new UpdateUserListenBrainzCredentialsError("Not authenticated");
         }
         var userId = Guid.Parse(userIdClaim.Value);
-        var viewer = await dbContext.Users.AsNoTracking().FirstOrDefaultAsync(u => u.UserId == userId);
+        var viewer = await dbContext
+            .Users.AsNoTracking()
+            .FirstOrDefaultAsync(u => u.UserId == userId);
         if (viewer is null)
         {
             return new UpdateUserListenBrainzCredentialsError("User not found");
@@ -152,6 +163,8 @@ public record UpdateUserListenBrainzCredentialsInput(
 [UnionType]
 public abstract record UpdateUserListenBrainzCredentialsResult;
 
-public record UpdateUserListenBrainzCredentialsSuccess(User User) : UpdateUserListenBrainzCredentialsResult;
+public record UpdateUserListenBrainzCredentialsSuccess(User User)
+    : UpdateUserListenBrainzCredentialsResult;
 
-public record UpdateUserListenBrainzCredentialsError(string Message) : UpdateUserListenBrainzCredentialsResult;
+public record UpdateUserListenBrainzCredentialsError(string Message)
+    : UpdateUserListenBrainzCredentialsResult;

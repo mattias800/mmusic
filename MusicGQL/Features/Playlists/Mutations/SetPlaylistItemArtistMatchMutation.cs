@@ -59,5 +59,3 @@ public record SetPlaylistItemArtistMatchSuccess(PlaylistItem PlaylistItem)
     : SetPlaylistItemArtistMatchResult;
 
 public record SetPlaylistItemArtistMatchNotFound(string Message) : SetPlaylistItemArtistMatchResult;
-
-

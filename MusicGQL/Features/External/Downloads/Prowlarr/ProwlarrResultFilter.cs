@@ -2,7 +2,11 @@ namespace MusicGQL.Features.External.Downloads.Prowlarr;
 
 internal static class ProwlarrResultFilter
 {
-    public static bool IsValidMusicResult(ProwlarrRelease release, string artistName, string releaseTitle)
+    public static bool IsValidMusicResult(
+        ProwlarrRelease release,
+        string artistName,
+        string releaseTitle
+    )
     {
         if (string.IsNullOrWhiteSpace(release.Title))
             return false;
@@ -23,7 +27,11 @@ internal static class ProwlarrResultFilter
         return true;
     }
 
-    public static string GetRejectionReason(ProwlarrRelease release, string artistName, string releaseTitle)
+    public static string GetRejectionReason(
+        ProwlarrRelease release,
+        string artistName,
+        string releaseTitle
+    )
     {
         if (string.IsNullOrWhiteSpace(release.Title))
             return "Missing title";
@@ -51,10 +59,37 @@ internal static class ProwlarrResultFilter
     {
         var nonMusicTerms = new[]
         {
-            "1080p", "720p", "4k", "hdtv", "web-dl", "bluray", "dvdrip", "h264", "h265", "x264", "x265",
-            "season", "episode", "s01", "s02", "e01", "e02", "complete", "series",
-            "movie", "film", "documentary", "show", "tv", "television",
-            "subtitle", "dub", "dubbed", "multi", "dual", "audio"
+            "1080p",
+            "720p",
+            "4k",
+            "hdtv",
+            "web-dl",
+            "bluray",
+            "dvdrip",
+            "h264",
+            "h265",
+            "x264",
+            "x265",
+            "season",
+            "episode",
+            "s01",
+            "s02",
+            "e01",
+            "e02",
+            "complete",
+            "series",
+            "movie",
+            "film",
+            "documentary",
+            "show",
+            "tv",
+            "television",
+            "subtitle",
+            "dub",
+            "dubbed",
+            "multi",
+            "dual",
+            "audio",
         };
 
         return nonMusicTerms.Any(term => title.Contains(term));
@@ -65,7 +100,9 @@ internal static class ProwlarrResultFilter
         // Simple fuzzy: require artist token containment or close similarity on at least half of words
         var artistWords = artistName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
         var titleWords = title.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-        var matchingWords = artistWords.Count(word => titleWords.Any(titleWord => ProwlarrTextMatch.FuzzyWordMatch(titleWord, word)));
+        var matchingWords = artistWords.Count(word =>
+            titleWords.Any(titleWord => ProwlarrTextMatch.FuzzyWordMatch(titleWord, word))
+        );
         return matchingWords >= Math.Max(1, artistWords.Length / 2);
     }
 
@@ -74,4 +111,3 @@ internal static class ProwlarrResultFilter
         return ProwlarrTextMatch.ContainsAlbumTitleFuzzy(title, albumTitle);
     }
 }
-

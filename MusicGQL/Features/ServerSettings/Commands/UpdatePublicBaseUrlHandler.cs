@@ -29,5 +29,3 @@ public class UpdatePublicBaseUrlHandler(
         public record Success : Result;
     }
 }
-
-

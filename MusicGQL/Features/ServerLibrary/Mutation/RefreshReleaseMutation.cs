@@ -1,9 +1,9 @@
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using MusicGQL.Features.Import.Services;
 using MusicGQL.Features.ServerLibrary.Cache;
 using MusicGQL.Features.ServerLibrary.Json;
 using MusicGQL.Features.ServerLibrary.Writer;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using Path = System.IO.Path;
 
 namespace MusicGQL.Features.ServerLibrary.Mutation;
@@ -28,7 +28,10 @@ public class RefreshReleaseMutation
 
         // Enqueue in existing ArtistImport queue as a release refresh job for unification
         var artist = await cache.GetArtistByIdAsync(input.ArtistId);
-        var queueItem = new ArtistImportQueue.ArtistImportQueueItem(artist?.Name ?? input.ArtistId, null)
+        var queueItem = new ArtistImportQueue.ArtistImportQueueItem(
+            artist?.Name ?? input.ArtistId,
+            null
+        )
         {
             JobKind = ArtistImportQueue.ArtistImportJobKind.RefreshReleaseMetadata,
             LocalArtistId = input.ArtistId,
@@ -38,7 +41,6 @@ public class RefreshReleaseMutation
         return new RefreshReleaseSuccess(new(release));
     }
 }
-
 
 public record RefreshReleaseInput(string ArtistId, string ReleaseFolderName);
 

@@ -1,5 +1,5 @@
-using MusicGQL.Integration.MusicBrainz;
 using MusicGQL.Features.ServerSettings;
+using MusicGQL.Integration.MusicBrainz;
 using Path = System.IO.Path;
 
 namespace MusicGQL.Features.MusicBrainz.ReleaseGroup;
@@ -24,7 +24,11 @@ public class ReleasesWithScoresQuery
     {
         var releases = await mbService.GetReleasesForReleaseGroupAsync(releaseGroupId);
 
-        var releaseDir = Path.Combine((await serverSettingsAccessor.GetAsync()).LibraryPath, artistId, releaseFolderName);
+        var releaseDir = Path.Combine(
+            (await serverSettingsAccessor.GetAsync()).LibraryPath,
+            artistId,
+            releaseFolderName
+        );
         var audioExtensions = new[] { ".mp3", ".flac", ".wav", ".m4a", ".ogg" };
         var audioFiles = Directory.Exists(releaseDir)
             ? Directory

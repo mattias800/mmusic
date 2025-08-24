@@ -11,10 +11,7 @@ public class FanArtDownloadService
     private readonly IFanArtTVClient _fanArtClient;
     private readonly HttpClient _httpClient;
 
-    public FanArtDownloadService(
-        IFanArtTVClient fanArtClient,
-        HttpClient httpClient
-    )
+    public FanArtDownloadService(IFanArtTVClient fanArtClient, HttpClient httpClient)
     {
         _fanArtClient = fanArtClient;
         _httpClient = httpClient;
@@ -103,17 +100,22 @@ public class FanArtDownloadService
     /// <summary>
     /// Downloads a single best artist thumb, returns relative path or null
     /// </summary>
-    public async Task<string?> DownloadSingleArtistThumbAsync(string musicBrainzId, string artistFolderPath)
+    public async Task<string?> DownloadSingleArtistThumbAsync(
+        string musicBrainzId,
+        string artistFolderPath
+    )
     {
         try
         {
             var artistImages = await _fanArtClient.Music.GetArtistAsync(musicBrainzId);
             var thumbUrl = artistImages?.ArtistThumb?.FirstOrDefault()?.Url;
-            if (string.IsNullOrWhiteSpace(thumbUrl)) return null;
+            if (string.IsNullOrWhiteSpace(thumbUrl))
+                return null;
 
             var uri = new Uri(thumbUrl);
             var extension = Path.GetExtension(uri.LocalPath);
-            if (string.IsNullOrEmpty(extension)) extension = ".jpg";
+            if (string.IsNullOrEmpty(extension))
+                extension = ".jpg";
             var fileName = $"similar_thumb_{musicBrainzId}{extension}";
             var filePath = Path.Combine(artistFolderPath, fileName);
 

@@ -19,23 +19,33 @@ public record ClientPlaybackState(
 {
     public async Task<Artist?> Artist([Service] ServerLibraryCache cache)
     {
-        if (string.IsNullOrWhiteSpace(ArtistId)) return null;
+        if (string.IsNullOrWhiteSpace(ArtistId))
+            return null;
         var a = await cache.GetArtistByIdAsync(ArtistId);
         return a is null ? null : new Artist(a);
     }
 
     public async Task<Release?> Release([Service] ServerLibraryCache cache)
     {
-        if (string.IsNullOrWhiteSpace(ArtistId) || string.IsNullOrWhiteSpace(ReleaseFolderName)) return null;
+        if (string.IsNullOrWhiteSpace(ArtistId) || string.IsNullOrWhiteSpace(ReleaseFolderName))
+            return null;
         var r = await cache.GetReleaseByArtistAndFolderAsync(ArtistId!, ReleaseFolderName!);
         return r is null ? null : new Release(r);
     }
 
     public async Task<Track?> Track([Service] ServerLibraryCache cache)
     {
-        if (string.IsNullOrWhiteSpace(ArtistId) || string.IsNullOrWhiteSpace(ReleaseFolderName) || TrackNumber is null)
+        if (
+            string.IsNullOrWhiteSpace(ArtistId)
+            || string.IsNullOrWhiteSpace(ReleaseFolderName)
+            || TrackNumber is null
+        )
             return null;
-        var t = await cache.GetTrackByArtistReleaseAndNumberAsync(ArtistId!, ReleaseFolderName!, TrackNumber.Value);
+        var t = await cache.GetTrackByArtistReleaseAndNumberAsync(
+            ArtistId!,
+            ReleaseFolderName!,
+            TrackNumber.Value
+        );
         return t is null ? null : new Track(t);
     }
 }
@@ -51,10 +61,16 @@ public class OnlineClient
 
 public class ClientPresenceService
 {
-    private readonly ConcurrentDictionary<(Guid userId, string clientId), OnlineClient> _clients = new();
+    private readonly ConcurrentDictionary<(Guid userId, string clientId), OnlineClient> _clients =
+        new();
     private readonly TimeSpan _offlineAfter = TimeSpan.FromSeconds(45);
 
-    public OnlineClient Heartbeat(Guid userId, string clientId, string? name, ClientPlaybackState? playback)
+    public OnlineClient Heartbeat(
+        Guid userId,
+        string clientId,
+        string? name,
+        ClientPlaybackState? playback
+    )
     {
         var client = _clients.AddOrUpdate(
             (userId, clientId),
@@ -64,13 +80,15 @@ public class ClientPresenceService
                 ClientId = clientId,
                 Name = string.IsNullOrWhiteSpace(name) ? "Unnamed client" : name!,
                 LastSeenAt = DateTimeOffset.UtcNow,
-                Playback = playback
+                Playback = playback,
             },
             (_, existing) =>
             {
                 existing.LastSeenAt = DateTimeOffset.UtcNow;
-                if (!string.IsNullOrWhiteSpace(name)) existing.Name = name!;
-                if (playback is not null) existing.Playback = playback;
+                if (!string.IsNullOrWhiteSpace(name))
+                    existing.Name = name!;
+                if (playback is not null)
+                    existing.Playback = playback;
                 return existing;
             }
         );
@@ -92,12 +110,10 @@ public class ClientPresenceService
     public IReadOnlyList<OnlineClient> GetAllOnlineClients()
     {
         var now = DateTimeOffset.UtcNow;
-        return _clients.Values
-            .Where(c => now - c.LastSeenAt <= _offlineAfter)
+        return _clients
+            .Values.Where(c => now - c.LastSeenAt <= _offlineAfter)
             .OrderBy(c => c.UserId)
             .ThenByDescending(c => c.LastSeenAt)
             .ToList();
     }
 }
-
-

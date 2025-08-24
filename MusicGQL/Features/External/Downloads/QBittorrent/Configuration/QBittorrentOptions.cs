@@ -9,5 +9,3 @@ public class QBittorrentOptions
     public string? Password { get; set; }
     public string? SavePath { get; set; }
 }
-
-

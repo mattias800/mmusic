@@ -15,13 +15,19 @@ public class UserListenBrainzService(ILogger<UserListenBrainzService> logger)
     {
         if (string.IsNullOrEmpty(user.ListenBrainzToken))
         {
-            throw new InvalidOperationException($"User {user.Username} does not have ListenBrainz credentials configured");
+            throw new InvalidOperationException(
+                $"User {user.Username} does not have ListenBrainz credentials configured"
+            );
         }
 
         // Create a new client instance for this user
-        var client = new MetaBrainz.ListenBrainz.ListenBrainz("MusicGQL", "1.0", "mmusic@example.com");
+        var client = new MetaBrainz.ListenBrainz.ListenBrainz(
+            "MusicGQL",
+            "1.0",
+            "mmusic@example.com"
+        );
         client.UserToken = user.ListenBrainzToken;
-        
+
         return client;
     }
 
@@ -34,13 +40,20 @@ public class UserListenBrainzService(ILogger<UserListenBrainzService> logger)
         {
             var client = CreateClientForUser(user);
             await client.SubmitSingleListenAsync(listen);
-            
-            logger.LogInformation("Successfully submitted listen to ListenBrainz for user {Username}", user.Username);
+
+            logger.LogInformation(
+                "Successfully submitted listen to ListenBrainz for user {Username}",
+                user.Username
+            );
             return true;
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Failed to submit listen to ListenBrainz for user {Username}", user.Username);
+            logger.LogError(
+                ex,
+                "Failed to submit listen to ListenBrainz for user {Username}",
+                user.Username
+            );
             return false;
         }
     }
@@ -54,15 +67,22 @@ public class UserListenBrainzService(ILogger<UserListenBrainzService> logger)
         {
             var client = CreateClientForUser(user);
             await client.ImportListensAsync(listens);
-            
-            logger.LogInformation("Successfully submitted {Count} listens to ListenBrainz for user {Username}", 
-                listens.Count(), user.Username);
+
+            logger.LogInformation(
+                "Successfully submitted {Count} listens to ListenBrainz for user {Username}",
+                listens.Count(),
+                user.Username
+            );
             return true;
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Failed to submit {Count} listens to ListenBrainz for user {Username}", 
-                listens.Count(), user.Username);
+            logger.LogError(
+                ex,
+                "Failed to submit {Count} listens to ListenBrainz for user {Username}",
+                listens.Count(),
+                user.Username
+            );
             return false;
         }
     }
@@ -70,7 +90,10 @@ public class UserListenBrainzService(ILogger<UserListenBrainzService> logger)
     /// <summary>
     /// Validates a ListenBrainz token for a user
     /// </summary>
-    public async Task<(bool IsValid, string? User, string? Message)> ValidateTokenAsync(DbUser user, CancellationToken cancellationToken = default)
+    public async Task<(bool IsValid, string? User, string? Message)> ValidateTokenAsync(
+        DbUser user,
+        CancellationToken cancellationToken = default
+    )
     {
         try
         {
@@ -81,14 +104,20 @@ public class UserListenBrainzService(ILogger<UserListenBrainzService> logger)
 
             var client = CreateClientForUser(user);
             var result = await client.ValidateTokenAsync(user.ListenBrainzToken, cancellationToken);
-            
+
             // Valid can be null -> fall back to message when needed
-            var isValid = result.Valid ?? string.Equals(result.Message, "ok", StringComparison.OrdinalIgnoreCase);
+            var isValid =
+                result.Valid
+                ?? string.Equals(result.Message, "ok", StringComparison.OrdinalIgnoreCase);
             return (isValid, result.User, result.Message);
         }
         catch (Exception ex)
         {
-            logger.LogWarning(ex, "Failed to validate ListenBrainz token for user {Username}", user.Username);
+            logger.LogWarning(
+                ex,
+                "Failed to validate ListenBrainz token for user {Username}",
+                user.Username
+            );
             return (false, null, ex.Message);
         }
     }

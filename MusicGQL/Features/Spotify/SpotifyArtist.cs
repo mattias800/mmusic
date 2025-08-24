@@ -6,7 +6,9 @@ public record SpotifyArtist
     {
         Id = artist.Id ?? string.Empty;
         Name = artist.Name ?? string.Empty;
-        Images = artist.Images?.Select(i => new SpotifyImage { Url = i.Url }).ToList() ?? new List<SpotifyImage>();
+        Images =
+            artist.Images?.Select(i => new SpotifyImage { Url = i.Url }).ToList()
+            ?? new List<SpotifyImage>();
     }
 
     public string Id { get; init; }

@@ -11,14 +11,25 @@ public class MusicBrainzImportService(MusicBrainzService musicBrainzService)
     /// Computes distinct possible track counts among Official releases in a release group.
     /// Also computes the subset for Official DIGITAL releases.
     /// </summary>
-    public async Task<(List<int> OfficialCounts, List<int> OfficialDigitalCounts)> GetPossibleTrackCountsForReleaseGroupAsync(string releaseGroupId)
+    public async Task<(
+        List<int> OfficialCounts,
+        List<int> OfficialDigitalCounts
+    )> GetPossibleTrackCountsForReleaseGroupAsync(string releaseGroupId)
     {
         try
         {
             var releases = await musicBrainzService.GetReleasesForReleaseGroupAsync(releaseGroupId);
             var officialCounts = releases
                 .Where(r => string.Equals(r.Status, "Official", StringComparison.OrdinalIgnoreCase))
-                .Select(r => (r.Media?.SelectMany(m => m.Tracks ?? new List<Hqub.MusicBrainz.Entities.Track>()).Count()) ?? 0)
+                .Select(r =>
+                    (
+                        r
+                            .Media?.SelectMany(m =>
+                                m.Tracks ?? new List<Hqub.MusicBrainz.Entities.Track>()
+                            )
+                            .Count()
+                    ) ?? 0
+                )
                 .Where(c => c > 0)
                 .Distinct()
                 .OrderBy(c => c)
@@ -27,8 +38,26 @@ public class MusicBrainzImportService(MusicBrainzService musicBrainzService)
 
             var officialDigitalCounts = releases
                 .Where(r => string.Equals(r.Status, "Official", StringComparison.OrdinalIgnoreCase))
-                .Where(r => (r.Media?.Any(m => string.Equals(m.Format, "Digital Media", StringComparison.OrdinalIgnoreCase) || string.Equals(m.Format, "File", StringComparison.OrdinalIgnoreCase)) ?? false))
-                .Select(r => (r.Media?.SelectMany(m => m.Tracks ?? new List<Hqub.MusicBrainz.Entities.Track>()).Count()) ?? 0)
+                .Where(r =>
+                    (
+                        r.Media?.Any(m =>
+                            string.Equals(
+                                m.Format,
+                                "Digital Media",
+                                StringComparison.OrdinalIgnoreCase
+                            ) || string.Equals(m.Format, "File", StringComparison.OrdinalIgnoreCase)
+                        ) ?? false
+                    )
+                )
+                .Select(r =>
+                    (
+                        r
+                            .Media?.SelectMany(m =>
+                                m.Tracks ?? new List<Hqub.MusicBrainz.Entities.Track>()
+                            )
+                            .Count()
+                    ) ?? 0
+                )
                 .Where(c => c > 0)
                 .Distinct()
                 .OrderBy(c => c)
@@ -42,6 +71,7 @@ public class MusicBrainzImportService(MusicBrainzService musicBrainzService)
             return (new List<int>(), new List<int>());
         }
     }
+
     /// <summary>
     /// Searches for an artist by name on MusicBrainz
     /// </summary>

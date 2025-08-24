@@ -12,5 +12,3 @@ public class ProwlarrSettingsUpdated : Event
     public bool EnableDetailedLogging { get; set; }
     public int MaxConcurrentRequests { get; set; }
 }
-
-
