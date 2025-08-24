@@ -2,39 +2,86 @@ namespace MusicGQL.Features.Downloads.Services;
 
 public class DownloadCancellationService
 {
-    private CancellationTokenSource? _cts;
-    private string? _artistId;
-    private string? _releaseFolderName;
+    private readonly object _lock = new();
+    private readonly Dictionary<string, CancellationTokenSource> _byRelease = new(StringComparer.OrdinalIgnoreCase);
 
+    private static string Key(string artistId, string releaseFolderName) => $"{artistId}|{releaseFolderName}";
+
+    // Create or reuse a cancellation token for a specific artist/release. Does NOT cancel tokens for other releases.
     public CancellationToken CreateFor(string artistId, string releaseFolderName, CancellationToken? linkedWith = null)
     {
-        try { _cts?.Cancel(); } catch { }
-        try { _cts?.Dispose(); } catch { }
+        var key = Key(artistId, releaseFolderName);
+        lock (_lock)
+        {
+            if (_byRelease.TryGetValue(key, out var existing))
+            {
+                // Reuse existing if not canceled; otherwise replace
+                if (!existing.IsCancellationRequested)
+                {
+                    return existing.Token;
+                }
+                try { existing.Dispose(); } catch { }
+                _byRelease.Remove(key);
+            }
 
-        _artistId = artistId;
-        _releaseFolderName = releaseFolderName;
-        _cts = linkedWith.HasValue
-            ? CancellationTokenSource.CreateLinkedTokenSource(linkedWith.Value)
-            : new CancellationTokenSource();
-        return _cts.Token;
+            var cts = linkedWith.HasValue
+                ? CancellationTokenSource.CreateLinkedTokenSource(linkedWith.Value)
+                : new CancellationTokenSource();
+            _byRelease[key] = cts;
+            return cts.Token;
+        }
     }
 
+    // Cancels all active tokens for the given artist. Returns true if any were canceled.
     public bool CancelActiveForArtist(string artistId)
     {
-        if (!string.Equals(_artistId, artistId, StringComparison.OrdinalIgnoreCase))
+        var prefix = artistId + "|";
+        var canceled = false;
+        lock (_lock)
         {
-            return false;
+            var keys = _byRelease.Keys.Where(k => k.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)).ToList();
+            foreach (var k in keys)
+            {
+                if (_byRelease.TryGetValue(k, out var cts))
+                {
+                    try { cts.Cancel(); } catch { }
+                    try { cts.Dispose(); } catch { }
+                    _byRelease.Remove(k);
+                    canceled = true;
+                }
+            }
         }
-        try { _cts?.Cancel(); } catch { }
-        return true;
+        return canceled;
     }
 
+    // Cancels a specific artist/release token, if present.
+    public bool CancelForRelease(string artistId, string releaseFolderName)
+    {
+        var key = Key(artistId, releaseFolderName);
+        lock (_lock)
+        {
+            if (_byRelease.TryGetValue(key, out var cts))
+            {
+                try { cts.Cancel(); } catch { }
+                try { cts.Dispose(); } catch { }
+                _byRelease.Remove(key);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // Clears all tokens (disposes without cancel).
     public void Clear()
     {
-        try { _cts?.Dispose(); } catch { }
-        _cts = null;
-        _artistId = null;
-        _releaseFolderName = null;
+        lock (_lock)
+        {
+            foreach (var cts in _byRelease.Values)
+            {
+                try { cts.Dispose(); } catch { }
+            }
+            _byRelease.Clear();
+        }
     }
 }
 

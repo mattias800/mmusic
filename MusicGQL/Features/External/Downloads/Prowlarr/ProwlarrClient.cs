@@ -842,7 +842,7 @@ await Task.Delay(TimeSpan.FromSeconds(delaySeconds));
                     // Wait a bit before retrying
                     var delaySeconds = Math.Max(2, options.Value.RetryDelaySeconds);
                     logger.LogInformation("[Prowlarr] Waiting {Delay}s before retry...", delaySeconds);
-                    await Task.Delay(TimeSpan.FromSeconds(delaySeconds), cancellationToken);
+                    await Task.Delay(TimeSpan.FromSeconds(delaySeconds));
                     continue;
                 }
                 catch (Exception ex) when (attempt <= maxRetries)
@@ -933,6 +933,7 @@ await Task.Delay(TimeSpan.FromSeconds(delaySeconds));
         int attemptNumber = 0;
         foreach (var url in candidateUrls)
         {
+            DateTime attemptStart = DateTime.UtcNow;
             try
             {
                 attemptNumber++;
@@ -941,6 +942,7 @@ await Task.Delay(TimeSpan.FromSeconds(delaySeconds));
                 relLogger?.Info($"[Prowlarr] ===== URL ATTEMPT #{attemptNumber}/{candidateUrls.Count} =====");
 
                 var executor = new ProwlarrRequestExecutor(httpClient, options, logger);
+                attemptStart = DateTime.UtcNow;
                 var result = await executor.GetJsonAsync(url, cancellationToken, relLogger);
                 if (!result.Success)
                 {
@@ -993,9 +995,10 @@ await Task.Delay(TimeSpan.FromSeconds(delaySeconds));
             }
             catch (TaskCanceledException ex) when (ex.InnerException is TaskCanceledException)
             {
+                var dur = DateTime.UtcNow - attemptStart;
                 logger.LogWarning(ex,
-                    "[Prowlarr] Request timed out for {Url} after ~{Timeout}s - server may be unreachable or overloaded. BaseUrl={BaseUrl}",
-                    url, options.Value.TimeoutSeconds, options.Value.BaseUrl);
+                    "[Prowlarr] Request timed out or was canceled for {Url} after {Seconds:0.00}s - server may be unreachable or overloaded. BaseUrl={BaseUrl}",
+                    url, dur.TotalSeconds, options.Value.BaseUrl);
                 // Wait a bit before trying the next URL variant
                 var delaySeconds = Math.Max(2, options.Value.RetryDelaySeconds);
                 logger.LogInformation("[Prowlarr] Waiting {Delay}s before next attempt...", delaySeconds);
@@ -1007,7 +1010,7 @@ await Task.Delay(TimeSpan.FromSeconds(delaySeconds));
                 {
                 }
 
-                await Task.Delay(TimeSpan.FromSeconds(delaySeconds), cancellationToken);
+                await Task.Delay(TimeSpan.FromSeconds(delaySeconds));
                 continue;
             }
             catch (TaskCanceledException ex)
