@@ -7,7 +7,9 @@ public class DownloadSlotManager(
     ILogger<DownloadSlotManager> logger,
     ServerSettingsAccessor serverSettingsAccessor,
     IServiceScopeFactory scopeFactory,
-    CurrentDownloadStateService currentDownloadStateService
+    CurrentDownloadStateService currentDownloadStateService,
+    MusicGQL.Features.ServerLibrary.Cache.ServerLibraryCache cache,
+    DownloadLogPathProvider logPathProvider
 ) : BackgroundService, IDownloadSlotManager
 {
     private readonly ConcurrentDictionary<int, DownloadSlot> _slots = new();
@@ -15,6 +17,8 @@ public class DownloadSlotManager(
     private readonly SemaphoreSlim _queueSemaphore = new(1, 1);
     private readonly SemaphoreSlim _slotSemaphore = new(1, 1);
     private CurrentDownloadStateService _currentDownloadStateService;
+    private readonly MusicGQL.Features.ServerLibrary.Cache.ServerLibraryCache _cache = cache;
+    private readonly DownloadLogPathProvider _logPathProvider = logPathProvider;
     
     private int _nextSlotId = 0;
     private bool _isInitialized = false;
@@ -151,11 +155,13 @@ public class DownloadSlotManager(
                     _workQueue.Enqueue(workItem);
                     logger.LogDebug("[DownloadSlotManager] Release {ArtistId}/{Release} already being processed, re-queuing", 
                         workItem.ArtistId, workItem.ReleaseFolderName);
+                    await LogToReleaseAsync(workItem, "[Queue] Already being processed; re-queued for later", cancellationToken);
                     return false;
                 }
                 
                 // Assign work to the slot
                 await slot.AssignWorkAsync(workItem, cancellationToken);
+                await LogToReleaseAsync(workItem, $"[Queue] Assigned to slot {slot.Id}", cancellationToken);
                 
                 // Publish slot status update
                 await PublishSlotStatusUpdateAsync(slot.Id, slot.IsActive, slot.CurrentWork, cancellationToken);
@@ -203,6 +209,7 @@ public class DownloadSlotManager(
         {
             logger.LogDebug("[DownloadSlotManager] Release {ArtistId}/{Release} already being processed, skipping", 
                 item.ArtistId, item.ReleaseFolderName);
+            await LogToReleaseAsync(item, "[Queue] Already being processed; skipping enqueue", cancellationToken);
             return false;
         }
         
@@ -212,6 +219,7 @@ public class DownloadSlotManager(
         {
             logger.LogDebug("[DownloadSlotManager] Release {ArtistId}/{Release} already in queue, skipping", 
                 item.ArtistId, item.ReleaseFolderName);
+            await LogToReleaseAsync(item, "[Queue] Already in work queue; skipping enqueue", cancellationToken);
             return false;
         }
         
@@ -221,6 +229,7 @@ public class DownloadSlotManager(
             _workQueue.Enqueue(item);
             logger.LogInformation("[DownloadSlotManager] Enqueued work for {ArtistId}/{Release}, queue length: {QueueLength}", 
                 item.ArtistId, item.ReleaseFolderName, _workQueue.Count);
+            await LogToReleaseAsync(item, $"[Queue] Added to work queue. Queue length: {_workQueue.Count}", cancellationToken);
             return true;
         }
         finally
@@ -311,5 +320,23 @@ public class DownloadSlotManager(
             slots.Count, _isInitialized);
         
         return slots;
+    }
+
+    private async Task LogToReleaseAsync(DownloadQueueItem item, string message, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var rel = await _cache.GetReleaseByArtistAndFolderAsync(item.ArtistId, item.ReleaseFolderName);
+            if (rel != null)
+            {
+                var path = await _logPathProvider.GetReleaseLogFilePathAsync(rel.ArtistName, rel.Title, cancellationToken);
+                if (!string.IsNullOrWhiteSpace(path))
+                {
+                    using var relLogger = new DownloadLogger(path!);
+                    relLogger.Info(message);
+                }
+            }
+        }
+        catch { }
     }
 }

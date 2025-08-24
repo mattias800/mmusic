@@ -18,6 +18,7 @@ public class StartDownloadReleaseMutation
         [Service] EventDbContext dbContext,
         [Service] ServerLibraryCache cache,
         [Service] DownloadQueueService queue,
+        [Service] DownloadLogPathProvider logPathProvider,
         StartDownloadReleaseInput input
     )
     {
@@ -45,6 +46,22 @@ public class StartDownloadReleaseMutation
 
         // Get the release info for the response
         var release = await cache.GetReleaseByArtistAndFolderAsync(input.ArtistId, input.ReleaseFolderName);
+
+        // Log to per-release log that the user initiated a download request and it was queued (priority)
+        try
+        {
+            if (release is not null)
+            {
+                var path = await logPathProvider.GetReleaseLogFilePathAsync(release.ArtistName, release.Title);
+                if (!string.IsNullOrWhiteSpace(path))
+                {
+                    using var relLogger = new DownloadLogger(path!);
+                    relLogger.Info("[Queue] Download requested by user; enqueued at FRONT (priority)");
+                }
+            }
+        }
+        catch { }
+
         return release is null
             ? new StartDownloadReleaseAccepted(input.ArtistId, input.ReleaseFolderName)
             : new StartDownloadReleaseSuccess(new Release(release));
