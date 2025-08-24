@@ -816,6 +816,15 @@ public class ProwlarrClient(
                     }
                     else
                     {
+                        // If the broad (no year/quality) search finds nothing, skip narrower searches
+                        if (searchQuery.Equals(baseBroadQuery, StringComparison.OrdinalIgnoreCase))
+                        {
+                            logger.LogInformation("[Prowlarr] ❌ No results with broad search '{Query}'. Skipping narrower searches (year/320/FLAC).",
+                                searchQuery);
+                            relLogger?.Info($"[Prowlarr] ❌ Broad search returned zero results; skipping narrower searches");
+                            return Array.Empty<ProwlarrRelease>();
+                        }
+
                         logger.LogInformation("[Prowlarr] ❌ No results with '{Query}', trying next quality level",
                             searchQuery);
                         relLogger?.Info($"[Prowlarr] ❌ No results with '{searchQuery}', trying next quality level");

@@ -31,11 +31,11 @@ import {
 } from "lucide-react";
 import { Tag } from "@/components/text/Tag.tsx";
 import {
-  loadMediaOnCast,
-  castPlay,
   castPause,
+  castPlay,
   castSeek,
   castSetVolume,
+  loadMediaOnCast,
 } from "@/features/casting/cast-sender.ts";
 import { useCast } from "@/features/casting/useCast.ts";
 import { useServerPublicBaseUrl } from "@/features/casting/useServerPublicBaseUrl.ts";
@@ -126,11 +126,7 @@ export const MusicPlayer: React.FC<MusicPlayerProps> = () => {
     return null;
   }
 
-  const currentQueueItem =
-    currentIndex >= 0 && currentIndex < queue.length
-      ? queue[currentIndex]
-      : undefined;
-
+  console.log({ currentTrack });
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-background/90 backdrop-blur border-t px-4 py-2 z-50">
       <div className="max-w-screen-2xl mx-auto grid grid-cols-3 items-center gap-4">
@@ -146,7 +142,7 @@ export const MusicPlayer: React.FC<MusicPlayerProps> = () => {
           <div className="min-w-0">
             <div className={"flex gap-4 items-center"}>
               <div className="truncate font-medium">
-                {currentQueueItem?.title ??
+                {currentTrack?.title ??
                   `${currentTrack?.artistId ?? ""} - ${currentTrack?.releaseFolderName ?? ""}`}
               </div>
               {currentTrack?.qualityLabel && (
@@ -156,7 +152,7 @@ export const MusicPlayer: React.FC<MusicPlayerProps> = () => {
               )}
             </div>
             <div className="truncate text-muted-foreground text-sm">
-              {currentQueueItem?.artistName ?? currentTrack?.artistId}
+              {currentTrack?.artistName ?? currentTrack?.artistId}
             </div>
           </div>
         </div>
