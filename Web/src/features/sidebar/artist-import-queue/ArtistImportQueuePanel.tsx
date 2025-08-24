@@ -93,7 +93,8 @@ export const ArtistImportQueuePanel: React.FC = () => {
 
   const queue = data.artistImport.artistImportQueue;
   const current = data.artistImport.currentArtistImport;
-  const bgLen = bgQueue.data?.artistImportBackgroundQueueUpdated?.queueLength ?? 0;
+  const bgLen =
+    bgQueue.data?.artistImportBackgroundQueueUpdated?.queueLength ?? 0;
 
   return (
     <div className="space-y-3 text-sm">
@@ -119,10 +120,14 @@ export const ArtistImportQueuePanel: React.FC = () => {
 
       <div>
         <div className="font-medium text-zinc-200">
-          {queue?.queueLength ? `${queue.queueLength} in legacy queue` : "Legacy queue is empty"}
+          {queue?.queueLength
+            ? `${queue.queueLength} in legacy queue`
+            : "Legacy queue is empty"}
         </div>
         <div className="font-medium text-zinc-200">
-          {bgLen > 0 ? `${bgLen} in background queue` : "Background queue is empty"}
+          {bgLen > 0
+            ? `${bgLen} in background queue`
+            : "Background queue is empty"}
         </div>
       </div>
     </div>

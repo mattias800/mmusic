@@ -17,5 +17,3 @@ export const AdminClientsTab: React.FC = () => {
     </PageLayout>
   );
 };
-
-

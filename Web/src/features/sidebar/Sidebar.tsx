@@ -128,11 +128,7 @@ export const Sidebar = ({ className }: SidebarProps) => {
         <SidebarSection heading="You" icon={User} iconColor="text-emerald-400">
           <SidebarNavButton path="/profile" icon={User} label={username} />
           {isAdmin && (
-            <SidebarNavButton
-              path="/admin"
-              icon={Cog}
-              label="Admin"
-            />
+            <SidebarNavButton path="/admin" icon={Cog} label="Admin" />
           )}
         </SidebarSection>
       </div>

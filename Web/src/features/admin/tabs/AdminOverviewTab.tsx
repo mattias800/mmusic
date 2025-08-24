@@ -56,7 +56,11 @@ export const AdminOverviewTab: React.FC = () => {
 
   return (
     <PageLayout>
-      <PageHeader icon={Gauge} title="Overview" subtitle="Server library status" />
+      <PageHeader
+        icon={Gauge}
+        title="Overview"
+        subtitle="Server library status"
+      />
       <div className="pt-4 space-y-4">
         <ServerLibraryStatisticsHeader serverLibrary={data.serverLibrary} />
         <SoulSeekReachabilitySummary />
@@ -64,5 +68,3 @@ export const AdminOverviewTab: React.FC = () => {
     </PageLayout>
   );
 };
-
-

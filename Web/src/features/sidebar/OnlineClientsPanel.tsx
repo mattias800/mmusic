@@ -13,7 +13,12 @@ const onlineClientsQuery = graphql(`
         clientId
         name
         lastSeenAt
-        playback { artistId releaseFolderName trackNumber trackTitle }
+        playback {
+          artistId
+          releaseFolderName
+          trackNumber
+          trackTitle
+        }
       }
     }
   }
@@ -26,7 +31,12 @@ const clientsUpdated = graphql(`
       clientId
       name
       lastSeenAt
-      playback { artistId releaseFolderName trackNumber trackTitle }
+      playback {
+        artistId
+        releaseFolderName
+        trackNumber
+        trackTitle
+      }
     }
   }
 `);
@@ -54,10 +64,18 @@ const heartbeatMutation = graphql(`
 `);
 
 export const OnlineClientsPanel: React.FC = () => {
-  const [{ data }, reexec] = useQuery({ query: onlineClientsQuery, requestPolicy: "network-only", pause: false });
+  const [{ data }, reexec] = useQuery({
+    query: onlineClientsQuery,
+    requestPolicy: "network-only",
+    pause: false,
+  });
   const [, sendHeartbeat] = useMutation(heartbeatMutation);
-  const [clientName, setClientName] = useState<string>(getStoredClientName() || getDefaultClientName());
-  const [allowRemote, setAllowRemote] = useState<boolean>(getStoredAllowRemote());
+  const [clientName, setClientName] = useState<string>(
+    getStoredClientName() || getDefaultClientName(),
+  );
+  const [allowRemote, setAllowRemote] = useState<boolean>(
+    getStoredAllowRemote(),
+  );
 
   useSubscription({ query: clientsUpdated }, () => {
     reexec({ requestPolicy: "network-only" });
@@ -68,7 +86,8 @@ export const OnlineClientsPanel: React.FC = () => {
     const clientId = getOrCreateClientId();
     persistClientName(clientName);
     persistAllowRemote(allowRemote);
-    const beat = () => sendHeartbeat({ clientId, name: clientName }).catch(() => {});
+    const beat = () =>
+      sendHeartbeat({ clientId, name: clientName }).catch(() => {});
     const interval = setInterval(beat, 15000);
     beat();
     return () => clearInterval(interval);
@@ -89,14 +108,23 @@ export const OnlineClientsPanel: React.FC = () => {
               placeholder="Client name"
             />
             <label className="flex items-center gap-2 text-xs">
-              <Switch checked={allowRemote} onCheckedChange={setAllowRemote} ariaLabel="Allow remote playback" />
+              <Switch
+                checked={allowRemote}
+                onCheckedChange={setAllowRemote}
+                ariaLabel="Allow remote playback"
+              />
               Allow remote playback
             </label>
           </div>
         </div>
-        {clients.length === 0 && <div className="opacity-60">No clients online</div>}
+        {clients.length === 0 && (
+          <div className="opacity-60">No clients online</div>
+        )}
         {clients.map((c) => (
-          <div key={`${c.userId}-${c.clientId}`} className="flex items-center justify-between">
+          <div
+            key={`${c.userId}-${c.clientId}`}
+            className="flex items-center justify-between"
+          >
             <div className="truncate">
               <div className="font-medium">{c.name}</div>
               <div className="opacity-70 text-xs">
@@ -123,8 +151,11 @@ function getOrCreateClientId(): string {
 
 function getDefaultClientName(): string {
   try {
-    const navAny = navigator as unknown as { userAgentData?: { platform?: string } };
-    const platform = navAny.userAgentData?.platform || navigator.platform || "Unknown";
+    const navAny = navigator as unknown as {
+      userAgentData?: { platform?: string };
+    };
+    const platform =
+      navAny.userAgentData?.platform || navigator.platform || "Unknown";
     return `${platform} / ${navigator.userAgent}`;
   } catch {
     return "Unknown Client";
@@ -170,10 +201,11 @@ function getStoredAllowRemote(): boolean {
 
 function persistAllowRemote(allow: boolean) {
   try {
-    localStorage.setItem("mmusic_allow_remote_playback", allow ? "true" : "false");
+    localStorage.setItem(
+      "mmusic_allow_remote_playback",
+      allow ? "true" : "false",
+    );
   } catch {
     /* ignore */
   }
 }
-
-

@@ -107,8 +107,6 @@ export const SettingsPage: React.FC<SettingsPageProps> = () => {
           <LogsFolderPathForm serverSettings={data.serverSettings} />
         </GlassCard>
 
-        
-
         {/* Top Tracks Settings */}
         <GlassCard
           title="Top Tracks Integration"
@@ -118,7 +116,6 @@ export const SettingsPage: React.FC<SettingsPageProps> = () => {
           <TopTracksServiceSettingsForm />
         </GlassCard>
 
-
         {/* Public Base URL for Casting */}
         <GlassCard
           title="Public Base URL"
@@ -127,8 +124,6 @@ export const SettingsPage: React.FC<SettingsPageProps> = () => {
         >
           <PublicBaseUrlForm serverSettings={data.serverSettings} />
         </GlassCard>
-
-        
       </div>
 
       {/* Bottom Info Section */}

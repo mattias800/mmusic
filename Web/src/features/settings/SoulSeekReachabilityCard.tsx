@@ -2,7 +2,13 @@ import * as React from "react";
 import { graphql } from "@/gql";
 import { useMutation, useQuery } from "urql";
 import { GradientButton, StatusCard, StatusGrid } from "@/components/ui";
-import { AlertTriangle, CheckCircle2, Globe, Network, RefreshCw } from "lucide-react";
+import {
+  AlertTriangle,
+  CheckCircle2,
+  Globe,
+  Network,
+  RefreshCw,
+} from "lucide-react";
 
 const reachabilityQuery = graphql(`
   query SoulSeekReachabilityCard_Query {
@@ -47,7 +53,10 @@ const reachabilityMutation = graphql(`
 `);
 
 export const SoulSeekReachabilityCard: React.FC = () => {
-  const [{ data, error }, reexec] = useQuery({ query: reachabilityQuery, requestPolicy: "cache-and-network" });
+  const [{ data, error }, reexec] = useQuery({
+    query: reachabilityQuery,
+    requestPolicy: "cache-and-network",
+  });
   const [{ fetching: checking }, runCheck] = useMutation(reachabilityMutation);
 
   const stats = data?.soulSeekSharingStatistics;
@@ -57,8 +66,13 @@ export const SoulSeekReachabilityCard: React.FC = () => {
     reexec({ requestPolicy: "network-only" });
   };
 
-  const observedAtText = stats?.observedAtUtc ? new Date(stats.observedAtUtc).toLocaleString() : "—";
-  const observedEndpoint = stats?.observedIp && stats?.observedPort ? `${stats.observedIp}:${stats.observedPort}` : "—";
+  const observedAtText = stats?.observedAtUtc
+    ? new Date(stats.observedAtUtc).toLocaleString()
+    : "—";
+  const observedEndpoint =
+    stats?.observedIp && stats?.observedPort
+      ? `${stats.observedIp}:${stats.observedPort}`
+      : "—";
 
   const showWarning = !!stats && (stats.isPrivateIp || !stats.portMatches);
 
@@ -71,11 +85,20 @@ export const SoulSeekReachabilityCard: React.FC = () => {
             <Network className="w-5 h-5 text-blue-400" />
           </div>
           <div>
-            <div className="text-white font-semibold">SoulSeek Reachability</div>
-            <div className="text-gray-400 text-sm">Check if peers can likely reach your share</div>
+            <div className="text-white font-semibold">
+              SoulSeek Reachability
+            </div>
+            <div className="text-gray-400 text-sm">
+              Check if peers can likely reach your share
+            </div>
           </div>
         </div>
-        <GradientButton onClick={onCheck} disabled={checking} className="min-w-40" variant="primary">
+        <GradientButton
+          onClick={onCheck}
+          disabled={checking}
+          className="min-w-40"
+          variant="primary"
+        >
           {checking ? (
             <span className="inline-flex items-center gap-2">
               <RefreshCw className="w-4 h-4 animate-spin" /> Checking...
@@ -98,17 +121,35 @@ export const SoulSeekReachabilityCard: React.FC = () => {
       {/* Sharing disabled */}
       {stats && !stats.isSharingEnabled && (
         <div className="p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/20 text-sm text-yellow-200">
-          Sharing appears to be disabled. Enable SoulSeek library sharing in Server Settings to make your library browseable.
+          Sharing appears to be disabled. Enable SoulSeek library sharing in
+          Server Settings to make your library browseable.
         </div>
       )}
 
       {/* Status metrics */}
       <StatusGrid columns={2}>
-        <StatusCard label="Listening Port" value={stats?.listeningPort ?? "—"} icon={Globe} />
-        <StatusCard label="Observed Endpoint" value={observedEndpoint} icon={Globe} />
-        <StatusCard label="Private IP Detected" value={stats ? (stats.isPrivateIp ? "Yes" : "No") : "—"} />
-        <StatusCard label="Port Matches" value={stats ? (stats.portMatches ? "Yes" : "No") : "—"} />
-        <StatusCard label="Shared Files" value={stats?.sharedFileCount ?? "—"} />
+        <StatusCard
+          label="Listening Port"
+          value={stats?.listeningPort ?? "—"}
+          icon={Globe}
+        />
+        <StatusCard
+          label="Observed Endpoint"
+          value={observedEndpoint}
+          icon={Globe}
+        />
+        <StatusCard
+          label="Private IP Detected"
+          value={stats ? (stats.isPrivateIp ? "Yes" : "No") : "—"}
+        />
+        <StatusCard
+          label="Port Matches"
+          value={stats ? (stats.portMatches ? "Yes" : "No") : "—"}
+        />
+        <StatusCard
+          label="Shared Files"
+          value={stats?.sharedFileCount ?? "—"}
+        />
         <StatusCard label="Last Observed" value={observedAtText} />
       </StatusGrid>
 
@@ -128,16 +169,24 @@ export const SoulSeekReachabilityCard: React.FC = () => {
               <CheckCircle2 className="w-4 h-4" />
             )}
             <span className="font-semibold">
-              {showWarning ? "Potential NAT/Port mismatch detected" : "Reachability looks OK"}
+              {showWarning
+                ? "Potential NAT/Port mismatch detected"
+                : "Reachability looks OK"}
             </span>
           </div>
           {showWarning ? (
             <p className="text-sm">
-              Your observed IP appears private or the observed port doesn’t match your configured listen port. Other users may not reach your share directly.
-              Configure port forwarding for the listen port on your router, or enable UPnP/NAT-PMP. Then run "Check Reachability" again.
+              Your observed IP appears private or the observed port doesn’t
+              match your configured listen port. Other users may not reach your
+              share directly. Configure port forwarding for the listen port on
+              your router, or enable UPnP/NAT-PMP. Then run "Check Reachability"
+              again.
             </p>
           ) : (
-            <p className="text-sm">Public IP and listen port match the server’s observation. This is a good sign, though it doesn’t guarantee reachability.</p>
+            <p className="text-sm">
+              Public IP and listen port match the server’s observation. This is
+              a good sign, though it doesn’t guarantee reachability.
+            </p>
           )}
         </div>
       )}

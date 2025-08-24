@@ -18,13 +18,19 @@ const query = graphql(`
 `);
 
 export const SoulSeekReachabilitySummary: React.FC = () => {
-  const [{ data, fetching, error }] = useQuery({ query, requestPolicy: "cache-and-network" });
+  const [{ data, fetching, error }] = useQuery({
+    query,
+    requestPolicy: "cache-and-network",
+  });
 
   if (fetching || error || !data?.soulSeekSharingStatistics) return null;
   const s = data.soulSeekSharingStatistics;
 
-  const observedEndpoint = s.observedIp && s.observedPort ? `${s.observedIp}:${s.observedPort}` : "—";
-  const observedAtText = s.observedAtUtc ? new Date(s.observedAtUtc).toLocaleString() : "—";
+  const observedEndpoint =
+    s.observedIp && s.observedPort ? `${s.observedIp}:${s.observedPort}` : "—";
+  const observedAtText = s.observedAtUtc
+    ? new Date(s.observedAtUtc).toLocaleString()
+    : "—";
   const warning = s.isPrivateIp || !s.portMatches;
 
   return (
@@ -37,8 +43,12 @@ export const SoulSeekReachabilitySummary: React.FC = () => {
     >
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className={`p-2 rounded-lg ${warning ? "bg-orange-500/20" : "bg-green-500/20"}`}>
-            <Network className={`w-5 h-5 ${warning ? "text-orange-300" : "text-green-300"}`} />
+          <div
+            className={`p-2 rounded-lg ${warning ? "bg-orange-500/20" : "bg-green-500/20"}`}
+          >
+            <Network
+              className={`w-5 h-5 ${warning ? "text-orange-300" : "text-green-300"}`}
+            />
           </div>
           <div>
             <div className="flex items-center gap-2">
@@ -48,11 +58,14 @@ export const SoulSeekReachabilitySummary: React.FC = () => {
                 <CheckCircle2 className="w-4 h-4" />
               )}
               <span className="font-semibold">
-                {warning ? "SoulSeek Reachability: Action recommended" : "SoulSeek Reachability: OK"}
+                {warning
+                  ? "SoulSeek Reachability: Action recommended"
+                  : "SoulSeek Reachability: OK"}
               </span>
             </div>
             <div className="text-sm opacity-90 mt-1">
-              Observed: <span className="font-mono">{observedEndpoint}</span> · Listen port: {s.listeningPort} · Last checked: {observedAtText}
+              Observed: <span className="font-mono">{observedEndpoint}</span> ·
+              Listen port: {s.listeningPort} · Last checked: {observedAtText}
             </div>
           </div>
         </div>

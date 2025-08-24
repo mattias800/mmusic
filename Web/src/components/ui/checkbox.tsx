@@ -1,7 +1,11 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 
-export interface CheckboxProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "onChange" | "type"> {
+export interface CheckboxProps
+  extends Omit<
+    React.InputHTMLAttributes<HTMLInputElement>,
+    "onChange" | "type"
+  > {
   checked: boolean;
   onCheckedChange: (checked: boolean) => void;
   label?: React.ReactNode;
@@ -18,7 +22,12 @@ export const Checkbox: React.FC<CheckboxProps> = ({
   ...rest
 }) => {
   return (
-    <label className={cn("inline-flex items-center gap-2 select-none", disabled && "opacity-50 cursor-not-allowed")}>
+    <label
+      className={cn(
+        "inline-flex items-center gap-2 select-none",
+        disabled && "opacity-50 cursor-not-allowed",
+      )}
+    >
       <input
         type="checkbox"
         id={id}
@@ -45,12 +54,16 @@ export const Checkbox: React.FC<CheckboxProps> = ({
           xmlns="http://www.w3.org/2000/svg"
           aria-hidden
         >
-          <path d="M2 6.5L4.5 9L10 3.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          <path
+            d="M2 6.5L4.5 9L10 3.5"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
         </svg>
       </span>
       {label ? <span className="text-sm text-gray-200">{label}</span> : null}
     </label>
   );
 };
-
-

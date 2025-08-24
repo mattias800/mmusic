@@ -2,7 +2,14 @@ import * as React from "react";
 import { useQuery } from "urql";
 import { graphql } from "@/gql";
 import { Download, Settings } from "lucide-react";
-import { GlassCard, PageLayout, PageHeader, PageLoading, PageError, PageNoData } from "@/components/ui";
+import {
+  GlassCard,
+  PageLayout,
+  PageHeader,
+  PageLoading,
+  PageError,
+  PageNoData,
+} from "@/components/ui";
 import { DownloadSlotSettingsForm } from "@/features/settings/DownloadSlotSettingsForm.tsx";
 import { DownloadersTogglesCard } from "@/features/settings/DownloadersTogglesCard.tsx";
 import { AlertTriangle } from "lucide-react";
@@ -70,5 +77,3 @@ export const AdminDownloadsTab: React.FC = () => {
     </PageLayout>
   );
 };
-
-

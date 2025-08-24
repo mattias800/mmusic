@@ -4,7 +4,12 @@ import { SoulSeekConnectionForm } from "@/features/settings/SoulSeekConnectionFo
 import { ProwlarrSettingsForm } from "@/features/settings/ProwlarrSettingsForm.tsx";
 import { QBittorrentSettingsForm } from "@/features/settings/QBittorrentSettingsForm.tsx";
 import { SoulSeekReachabilityCard } from "@/features/settings/SoulSeekReachabilityCard.tsx";
-import { GlassCard, PageLayout, PageHeader, InfoSection } from "@/components/ui";
+import {
+  GlassCard,
+  PageLayout,
+  PageHeader,
+  InfoSection,
+} from "@/components/ui";
 import { PlugZap, Settings, Network } from "lucide-react";
 
 export const AdminIntegrationsTab: React.FC = () => {
@@ -32,11 +37,19 @@ export const AdminIntegrationsTab: React.FC = () => {
           <SoulSeekReachabilityCard />
         </GlassCard>
 
-        <GlassCard title="Prowlarr" icon={Settings} iconBgColor="bg-green-500/20">
+        <GlassCard
+          title="Prowlarr"
+          icon={Settings}
+          iconBgColor="bg-green-500/20"
+        >
           <ProwlarrSettingsForm />
         </GlassCard>
 
-        <GlassCard title="qBittorrent" icon={Settings} iconBgColor="bg-yellow-500/20">
+        <GlassCard
+          title="qBittorrent"
+          icon={Settings}
+          iconBgColor="bg-yellow-500/20"
+        >
           <QBittorrentSettingsForm />
         </GlassCard>
 
@@ -49,10 +62,9 @@ export const AdminIntegrationsTab: React.FC = () => {
         </GlassCard>
       </div>
       <InfoSection icon={PlugZap} title="About Integrations" variant="purple">
-        Configure connectivity and credentials for external services used by mmusic.
+        Configure connectivity and credentials for external services used by
+        mmusic.
       </InfoSection>
     </PageLayout>
   );
 };
-
-

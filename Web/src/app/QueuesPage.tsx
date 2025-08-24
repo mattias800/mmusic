@@ -98,7 +98,10 @@ function classifyDownloadResult(
 ): { label: string; color: "green" | "red" | "amber" | "sky" } {
   if (success) return { label: "Success", color: "green" };
   const msg = (errorMessage || "").toLowerCase();
-  if (msg.includes("no suitable download found") || msg.includes("no search result")) {
+  if (
+    msg.includes("no suitable download found") ||
+    msg.includes("no search result")
+  ) {
     return { label: "Not found", color: "amber" };
   }
   if (msg.includes("no matching release group")) {
@@ -735,12 +738,17 @@ const HistoryItem: React.FC<{
   item: QueuesPageHistoryItem;
   type: "download" | "import";
 }> = ({ item, type }) => {
-  const result = type === "download" ? classifyDownloadResult(item.success, item.errorMessage) : null;
+  const result =
+    type === "download"
+      ? classifyDownloadResult(item.success, item.errorMessage)
+      : null;
   return (
     <div className="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/10">
       <div className="flex items-center gap-3">
         {type === "download" && item.releaseFolderName ? (
-          <Link to={`/artist/${item.artistId}/release/${item.releaseFolderName}`}>
+          <Link
+            to={`/artist/${item.artistId}/release/${item.releaseFolderName}`}
+          >
             <ReleaseCoverArt
               srcUrl={`/library/${item.artistId}/releases/${item.releaseFolderName}/coverart`}
               titleForPlaceholder={item.releaseTitle ?? item.releaseFolderName}
@@ -828,10 +836,10 @@ const HistoryItem: React.FC<{
                 result.color === "green"
                   ? "border-green-400 text-green-300 bg-green-500/10"
                   : result.color === "amber"
-                  ? "border-amber-400 text-amber-300 bg-amber-500/10"
-                  : result.color === "sky"
-                  ? "border-sky-400 text-sky-300 bg-sky-500/10"
-                  : "border-red-400 text-red-300 bg-red-500/10"
+                    ? "border-amber-400 text-amber-300 bg-amber-500/10"
+                    : result.color === "sky"
+                      ? "border-sky-400 text-sky-300 bg-sky-500/10"
+                      : "border-red-400 text-red-300 bg-red-500/10"
               }`}
             >
               {result.label}

@@ -120,7 +120,11 @@ export const TopTracksServiceSettingsForm: React.FC = () => {
               </div>
             </div>
             <label className="flex items-center cursor-pointer">
-              <Switch checked={listenBrainzEnabled} onCheckedChange={setListenBrainzEnabled} ariaLabel="Enable ListenBrainz" />
+              <Switch
+                checked={listenBrainzEnabled}
+                onCheckedChange={setListenBrainzEnabled}
+                ariaLabel="Enable ListenBrainz"
+              />
             </label>
           </div>
         </div>
@@ -140,7 +144,11 @@ export const TopTracksServiceSettingsForm: React.FC = () => {
               </div>
             </div>
             <label className="flex items-center cursor-pointer">
-              <Switch checked={spotifyEnabled} onCheckedChange={setSpotifyEnabled} ariaLabel="Enable Spotify" />
+              <Switch
+                checked={spotifyEnabled}
+                onCheckedChange={setSpotifyEnabled}
+                ariaLabel="Enable Spotify"
+              />
             </label>
           </div>
         </div>
@@ -160,7 +168,11 @@ export const TopTracksServiceSettingsForm: React.FC = () => {
               </div>
             </div>
             <label className="flex items-center cursor-pointer">
-              <Switch checked={lastFmEnabled} onCheckedChange={setLastFmEnabled} ariaLabel="Enable Last.fm" />
+              <Switch
+                checked={lastFmEnabled}
+                onCheckedChange={setLastFmEnabled}
+                ariaLabel="Enable Last.fm"
+              />
             </label>
           </div>
         </div>

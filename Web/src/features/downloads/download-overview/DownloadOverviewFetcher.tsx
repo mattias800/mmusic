@@ -206,7 +206,7 @@ export const DownloadOverviewFetcher: React.FC<
                 </Link>
                 {" - "}
                 <Link
-                  to={`/artist/${(progress.artistId || slot.currentWork?.artistId)}/release/${progress.releaseFolderName || slot.currentWork?.releaseFolderName}`}
+                  to={`/artist/${progress.artistId || slot.currentWork?.artistId}/release/${progress.releaseFolderName || slot.currentWork?.releaseFolderName}`}
                   className="hover:underline"
                 >
                   {releaseDisplay}

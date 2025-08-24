@@ -34,23 +34,38 @@ const updateLogsFolderPathMutation = graphql(`
   }
 `);
 
-export const LogsFolderPathForm: React.FC<LogsFolderPathFormProps> = (props) => {
+export const LogsFolderPathForm: React.FC<LogsFolderPathFormProps> = (
+  props,
+) => {
   const serverSettings = useFragment(
     logsFolderPathFormServerSettingsFragment,
     props.serverSettings,
   );
 
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [{ fetching }, updateSetting] = useMutation(updateLogsFolderPathMutation);
+  const [{ fetching }, updateSetting] = useMutation(
+    updateLogsFolderPathMutation,
+  );
 
   return (
     <div>
-      <Label htmlFor="logs-folder-path" style={{ marginBottom: "8px", display: "block" }}>
+      <Label
+        htmlFor="logs-folder-path"
+        style={{ marginBottom: "8px", display: "block" }}
+      >
         Logs folder path
       </Label>
       <div className={"flex w-xl items-center space-x-2"}>
-        <Input id={"logs-folder-path"} value={serverSettings.logsFolderPath ?? ""} readOnly />
-        <Button loading={fetching} disabled={fetching} onClick={() => setIsModalOpen(true)}>
+        <Input
+          id={"logs-folder-path"}
+          value={serverSettings.logsFolderPath ?? ""}
+          readOnly
+        />
+        <Button
+          loading={fetching}
+          disabled={fetching}
+          onClick={() => setIsModalOpen(true)}
+        >
           Browse...
         </Button>
         <Button
@@ -63,7 +78,8 @@ export const LogsFolderPathForm: React.FC<LogsFolderPathFormProps> = (props) => 
         </Button>
       </div>
       <div className="text-sm text-muted-foreground mt-2">
-        When set, per-release logs are written under <code>Downloads/&lt;Artist&gt;/&lt;Release&gt;.log</code>.
+        When set, per-release logs are written under{" "}
+        <code>Downloads/&lt;Artist&gt;/&lt;Release&gt;.log</code>.
       </div>
       <DirectoryBrowserModal
         open={isModalOpen}
@@ -74,6 +90,3 @@ export const LogsFolderPathForm: React.FC<LogsFolderPathFormProps> = (props) => 
     </div>
   );
 };
-
-
-

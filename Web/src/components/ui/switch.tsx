@@ -23,9 +23,21 @@ export const Switch: React.FC<SwitchProps> = ({
   ariaLabel,
 }) => {
   const sizes = {
-    sm: { track: "h-5 w-9", thumb: "h-4 w-4 translate-x-0.5", shift: "translate-x-4" },
-    md: { track: "h-6 w-11", thumb: "h-5 w-5 translate-x-0.5", shift: "translate-x-5" },
-    lg: { track: "h-7 w-14", thumb: "h-6 w-6 translate-x-1", shift: "translate-x-7" },
+    sm: {
+      track: "h-5 w-9",
+      thumb: "h-4 w-4 translate-x-0.5",
+      shift: "translate-x-4",
+    },
+    md: {
+      track: "h-6 w-11",
+      thumb: "h-5 w-5 translate-x-0.5",
+      shift: "translate-x-5",
+    },
+    lg: {
+      track: "h-7 w-14",
+      thumb: "h-6 w-6 translate-x-1",
+      shift: "translate-x-7",
+    },
   } as const;
 
   const { track, thumb, shift } = sizes[size];
@@ -73,5 +85,3 @@ export const Switch: React.FC<SwitchProps> = ({
     </button>
   );
 };
-
-

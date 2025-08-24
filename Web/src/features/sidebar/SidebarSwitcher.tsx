@@ -5,7 +5,6 @@ import { SidebarDocument } from "@/gql/graphql.ts";
 import { Sidebar } from "@/features/sidebar/Sidebar.tsx";
 import { AdminSidebar } from "@/features/sidebar/AdminSidebar.tsx";
 
-
 export interface SidebarSwitcherProps {}
 
 export const SidebarSwitcher: React.FC<SidebarSwitcherProps> = () => {
@@ -14,11 +13,11 @@ export const SidebarSwitcher: React.FC<SidebarSwitcherProps> = () => {
 
   const isAdmin = data?.viewer?.isAdmin ?? false;
   const isInAdmin = React.useMemo(() => {
-    return location.pathname === "/admin" || location.pathname.startsWith("/admin/");
+    return (
+      location.pathname === "/admin" || location.pathname.startsWith("/admin/")
+    );
   }, [location.pathname]);
 
   if (isInAdmin && isAdmin) return <AdminSidebar />;
   return <Sidebar />;
 };
-
-

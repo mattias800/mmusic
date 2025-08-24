@@ -13,7 +13,9 @@ const albumTrackListReleaseFragment = graphql(`
     id
     title
     folderName
-    artist { id }
+    artist {
+      id
+    }
     discCount
     discs {
       discNumber
@@ -23,12 +25,27 @@ const albumTrackListReleaseFragment = graphql(`
         title
         trackLength
         isMissing
-        media { id audioUrl audioQualityLabel }
+        media {
+          id
+          audioUrl
+          audioQualityLabel
+        }
         ...TrackCreditLinks_Track
         ...MusicPlayerTrackFactory_Track
         ...AlbumTrackTag_Track
-        credits { artistName artist { id } mbArtist { id } }
-        statistics { listeners playCount }
+        credits {
+          artistName
+          artist {
+            id
+          }
+          mbArtist {
+            id
+          }
+        }
+        statistics {
+          listeners
+          playCount
+        }
       }
     }
     # Flattened tracks remain for single-disc and back-compat flows
@@ -37,12 +54,27 @@ const albumTrackListReleaseFragment = graphql(`
       title
       trackLength
       isMissing
-      media { id audioUrl audioQualityLabel }
+      media {
+        id
+        audioUrl
+        audioQualityLabel
+      }
       ...TrackCreditLinks_Track
       ...MusicPlayerTrackFactory_Track
       ...AlbumTrackTag_Track
-      credits { artistName artist { id } mbArtist { id } }
-      statistics { listeners playCount }
+      credits {
+        artistName
+        artist {
+          id
+        }
+        mbArtist {
+          id
+        }
+      }
+      statistics {
+        listeners
+        playCount
+      }
     }
   }
 `);
@@ -94,7 +126,11 @@ const TrackRow: React.FC<TrackRowProps> = ({
   />
 );
 
-const DiscSection: React.FC<{ discNumber: number; title?: string | null; children: React.ReactNode }> = ({ discNumber, title, children }) => (
+const DiscSection: React.FC<{
+  discNumber: number;
+  title?: string | null;
+  children: React.ReactNode;
+}> = ({ discNumber, title, children }) => (
   <div className="space-y-3">
     <div className="px-2 py-1 text-sm text-gray-300">{`Disc ${discNumber}${title ? ` — ${title}` : ""}`}</div>
     <div>{children}</div>
@@ -113,24 +149,29 @@ export const AlbumTrackList: React.FC<AlbumTrackListProps> = (props) => {
   const isMultiDisc =
     (release.discCount ?? 1) > 1 && (release.discs?.length ?? 0) > 0;
 
-  const buildOnDragStart = (trackNo: number, title: string) => (ev: React.DragEvent) => {
-    try {
-      const payload = {
-        type: "track" as const,
-        artistId: release.artist.id,
-        releaseFolderName: release.folderName,
-        trackNumber: trackNo,
-        title,
-      };
-      ev.dataTransfer.setData("application/json", JSON.stringify(payload));
-      ev.dataTransfer.effectAllowed = "copyMove";
-    } catch (err) {
-      console.error("Failed to set drag payload", err);
-    }
-  };
+  const buildOnDragStart =
+    (trackNo: number, title: string) => (ev: React.DragEvent) => {
+      try {
+        const payload = {
+          type: "track" as const,
+          artistId: release.artist.id,
+          releaseFolderName: release.folderName,
+          trackNumber: trackNo,
+          title,
+        };
+        ev.dataTransfer.setData("application/json", JSON.stringify(payload));
+        ev.dataTransfer.effectAllowed = "copyMove";
+      } catch (err) {
+        console.error("Failed to set drag payload", err);
+      }
+    };
 
-  const buildOnClick = (track: FragmentType<typeof MusicPlayerTrackFactory_TrackFragmentDoc>) => () =>
-    dispatch(musicPlayerSlice.actions.playTrack(createMusicPlayerTrack(track)));
+  const buildOnClick =
+    (track: FragmentType<typeof MusicPlayerTrackFactory_TrackFragmentDoc>) =>
+    () =>
+      dispatch(
+        musicPlayerSlice.actions.playTrack(createMusicPlayerTrack(track)),
+      );
 
   const isPlaying = (trackNo: number) =>
     player.currentTrack?.artistId === release.artist.id &&
@@ -142,7 +183,11 @@ export const AlbumTrackList: React.FC<AlbumTrackListProps> = (props) => {
     <div className="space-y-6">
       {isMultiDisc
         ? release.discs!.map((disc) => (
-            <DiscSection key={disc.discNumber} discNumber={disc.discNumber} title={disc.title}>
+            <DiscSection
+              key={disc.discNumber}
+              discNumber={disc.discNumber}
+              title={disc.title}
+            >
               {disc.tracks.map((t, i) => (
                 <TrackRow
                   key={t.id}
