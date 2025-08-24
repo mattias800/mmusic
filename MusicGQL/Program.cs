@@ -115,6 +115,7 @@ builder.Services.Configure<ProwlarrOptions>(builder.Configuration.GetSection(Pro
 builder.Services.Configure<SabnzbdOptions>(builder.Configuration.GetSection(SabnzbdOptions.SectionName));
 builder.Services.Configure<SabnzbdHistoryScannerOptions>(builder.Configuration.GetSection("Sabnzbd:HistoryScanner"));
 builder.Services.Configure<QBittorrentOptions>(builder.Configuration.GetSection(QBittorrentOptions.SectionName));
+builder.Services.Configure<MusicGQL.Features.External.Downloads.QBittorrent.QBittorrentFinalizeWorkerOptions>(builder.Configuration.GetSection("QBittorrent:FinalizeWorker"));
 
 builder
     .Services.AddHybridCache(options =>
@@ -142,6 +143,7 @@ builder
     .AddSingleton<CurrentDownloadStateService>()
     .AddSingleton<DownloadHistoryService>()
     .AddSingleton<DownloadLogPathProvider>()
+.AddSingleton<MusicGQL.Features.External.Downloads.QBittorrent.IQBittorrentFinalizeService, MusicGQL.Features.External.Downloads.QBittorrent.QBittorrentFinalizeService>()
     .AddHostedService<MusicGQL.Features.Downloads.Services.DownloadServicesStartupLogger>()
     .AddHostedService(sp => sp.GetRequiredService<DownloadSlotManager>())
     // .AddHostedService<DownloadWorker>() // Disabled - now using DownloadSlotManager
@@ -279,7 +281,8 @@ builder
         return new MusicGQL.Features.External.Downloads.DownloadProviderCatalog(providers);
     })
     .AddHostedService<SabnzbdWatcherWorker>()
-    .AddHostedService<SabnzbdHistoryScannerWorker>()
+.AddHostedService<SabnzbdHistoryScannerWorker>()
+    .AddHostedService<MusicGQL.Features.External.Downloads.QBittorrent.QBittorrentFinalizeWorker>()
     // Event processors
     .AddScoped<LikedSongsEventProcessor>()
     .AddScoped<UserEventProcessor>()

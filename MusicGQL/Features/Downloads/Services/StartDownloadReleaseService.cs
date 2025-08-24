@@ -22,6 +22,7 @@ public class StartDownloadReleaseService(
     ServerSettingsAccessor serverSettingsAccessor,
     MusicGQL.Features.External.Downloads.DownloadProviderCatalog providers,
     MusicGQL.Features.External.Downloads.Sabnzbd.SabnzbdFinalizeService sabFinalize,
+    MusicGQL.Features.External.Downloads.QBittorrent.IQBittorrentFinalizeService qbFinalize,
     CurrentDownloadStateService currentDownloadState,
     DownloadHistoryService downloadHistory,
     DownloadLogPathProvider logPathProvider
@@ -329,10 +330,10 @@ public class StartDownloadReleaseService(
         try
         {
             // Update state to show SAB finalization starting
-            downloadHistory.UpdateState(artistId, releaseFolderName, DownloadState.ImportingFiles, "Starting SAB finalization process");
+            downloadHistory.UpdateState(artistId, releaseFolderName, DownloadState.ImportingFiles, "Starting SAB/qBit finalization process");
             
-            var finalized = await sabFinalize.FinalizeReleaseAsync(artistId, releaseFolderName, token);
-            if (finalized)
+            var finalizedSab = await sabFinalize.FinalizeReleaseAsync(artistId, releaseFolderName, token);
+            if (finalizedSab)
             {
                 logger.LogInformation("[StartDownload] SAB finalize moved audio for {ArtistId}/{Folder}", artistId, releaseFolderName);
                 try { relLogger.Info("[Orchestrator] SAB finalize completed successfully"); } catch { }
@@ -346,16 +347,36 @@ public class StartDownloadReleaseService(
                 // Update state to show SAB finalization didn't complete
                 downloadHistory.UpdateState(artistId, releaseFolderName, DownloadState.ImportingFiles, "SAB finalization did not complete (files may still be processing)");
             }
+            
+            // Try qBittorrent finalization as well (move torrent save location to release folder)
+            try
+            {
+                var qbOk = await qbFinalize.FinalizeReleaseAsync(artistId, releaseFolderName, token);
+                if (qbOk)
+                {
+                    logger.LogInformation("[StartDownload] qBittorrent finalize set location or copied files for {ArtistId}/{Folder}", artistId, releaseFolderName);
+                    try { relLogger.Info("[Orchestrator] qBittorrent finalize completed successfully"); } catch { }
+                }
+                else
+                {
+                    try { relLogger.Warn("[Orchestrator] qBittorrent finalize did not complete (torrent may still be downloading)"); } catch { }
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogDebug(ex, "[StartDownload] qBittorrent finalize attempt failed (non-fatal)");
+                try { relLogger.Warn($"[Orchestrator] qBittorrent finalize failed: {ex.Message}"); } catch { }
+            }
         }
         catch (Exception ex)
         {
-            logger.LogDebug(ex, "[StartDownload] SAB finalize attempt failed (non-fatal)");
+            logger.LogDebug(ex, "[StartDownload] Finalize attempts failed (non-fatal)");
             
-            // Update state to show SAB finalization failed
-            downloadHistory.UpdateState(artistId, releaseFolderName, DownloadState.ImportingFiles, "SAB finalization failed (non-fatal)");
+            // Update state to show finalization failed
+            downloadHistory.UpdateState(artistId, releaseFolderName, DownloadState.ImportingFiles, "Finalize attempts failed (non-fatal)");
             
             // Update state to Finished
-            downloadHistory.UpdateState(artistId, releaseFolderName, DownloadState.Finished, "Download process completed with SAB finalization failure (non-fatal)");
+            downloadHistory.UpdateState(artistId, releaseFolderName, DownloadState.Finished, "Download process completed with finalize failure (non-fatal)");
         }
 
         // Before any JSON/meta work, check if any audio files are present yet
@@ -371,7 +392,7 @@ public class StartDownloadReleaseService(
 
         if (currentAudioCount == 0)
         {
-            // Keep the download in progress until files arrive (via SAB watcher/history scanner or background providers)
+            // Keep the download in progress until files arrive (via SAB/qBit or background providers)
             logger.LogInformation("[StartDownload] No audio files present yet at {TargetDir}. Keeping in progress and awaiting files from providers.", targetDir);
             downloadHistory.UpdateState(artistId, releaseFolderName, DownloadState.Downloading, "Awaiting files from providers");
             await cache.UpdateReleaseDownloadStatus(artistId, releaseFolderName, CachedReleaseDownloadStatus.Downloading);
