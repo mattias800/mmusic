@@ -67,10 +67,24 @@ using YouTubeService = MusicGQL.Integration.Youtube.YouTubeService;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Optional: support timed auto-exit via config or environment (App:AutoExitAfterSeconds or AUTO_EXIT_SECONDS)
+int? autoExitSeconds = null;
+try
+{
+    autoExitSeconds = builder.Configuration.GetValue<int?>("App:AutoExitAfterSeconds");
+    if (autoExitSeconds is null)
+    {
+        var env = Environment.GetEnvironmentVariable("AUTO_EXIT_SECONDS");
+        if (int.TryParse(env, out var s) && s > 0) autoExitSeconds = s;
+    }
+}
+catch { }
+
 // Reduce EF Core SQL logging noise
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 builder.Logging.AddFilter("Microsoft.EntityFrameworkCore", LogLevel.Warning);
+// Keep console for interactive diagnostics; file sink is added after we can resolve server settings
 
 // Cookie settings for module federation.
 builder.Services.ConfigureApplicationCookie(options =>
@@ -628,6 +642,51 @@ builder.Services.AddHostedService<ScheduledTaskPublisher>();
 builder.Services.AddHostedService<LibraryImportWorker>();
 
 var app = builder.Build();
+
+// Add file logger provider targeting LogsFolderPath/mmusic.log when configured
+try
+{
+    var settingsAccessor = app.Services.GetRequiredService<MusicGQL.Features.ServerSettings.ServerSettingsAccessor>();
+    var settings = settingsAccessor.GetAsync().GetAwaiter().GetResult();
+    var logsRoot = settings.LogsFolderPath;
+    if (!string.IsNullOrWhiteSpace(logsRoot))
+    {
+        System.IO.Directory.CreateDirectory(logsRoot);
+        var loggerFactory = app.Services.GetRequiredService<ILoggerFactory>();
+        loggerFactory.AddProvider(new MusicGQL.Infrastructure.Logging.RollingFileLoggerProvider(logsRoot, "mmusic", LogLevel.Information));
+        app.Logger.LogInformation("[Startup] File logging enabled with hourly rolling in folder {Folder}", logsRoot);
+    }
+    else
+    {
+        app.Logger.LogInformation("[Startup] LogsFolderPath is not configured; file logging disabled");
+    }
+}
+catch (Exception ex)
+{
+    app.Logger.LogDebug(ex, "Failed to initialize file logger provider");
+}
+
+// If auto-exit is configured, register a timer to stop the app after the delay
+if (autoExitSeconds is int seconds && seconds > 0)
+{
+    app.Logger.LogInformation("[Startup] Auto-exit is enabled: exiting after {Seconds} seconds", seconds);
+    app.Lifetime.ApplicationStarted.Register(() =>
+    {
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await Task.Delay(TimeSpan.FromSeconds(seconds));
+                app.Logger.LogInformation("[AutoExit] Timer elapsed; stopping application...");
+                app.Lifetime.StopApplication();
+            }
+            catch (Exception ex)
+            {
+                app.Logger.LogWarning(ex, "[AutoExit] Timer failed");
+            }
+        });
+    });
+}
 app.UseCors("AllowFrontend");
 app.UseRouting(); // Ensure UseRouting is called before UseAuthentication and UseAuthorization
 app.UseAuthentication();
