@@ -831,7 +831,7 @@ public class ProwlarrClient(
                     // Wait a bit before retrying
                     var delaySeconds = Math.Max(2, options.Value.RetryDelaySeconds);
                     logger.LogInformation("[Prowlarr] Waiting {Delay}s before retry...", delaySeconds);
-                    await Task.Delay(TimeSpan.FromSeconds(delaySeconds), cancellationToken);
+await Task.Delay(TimeSpan.FromSeconds(delaySeconds));
                     continue;
                 }
                 catch (HttpRequestException) when (attempt <= maxRetries)

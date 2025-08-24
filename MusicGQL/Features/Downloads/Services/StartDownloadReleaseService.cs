@@ -160,7 +160,8 @@ public class StartDownloadReleaseService(
         );
         try { relLogger.Info("[Orchestrator] Set download status = Searching"); } catch { }
 
-        var token = cancellationService.CreateFor(artistId, releaseFolderName, cancellationToken);
+        // Use an unlinked cancellation token so provider-level retries are resilient to request aborts
+        var token = cancellationService.CreateFor(artistId, releaseFolderName);
         var ok = false; // last provider result
         var anyAccepted = false; // whether any provider accepted/started a download
         string? providerName = null; // Declare at broader scope for use in logging and state
