@@ -721,28 +721,6 @@ public class ProwlarrClient(
         // Log current configuration for debugging
         LogCurrentConfiguration();
 
-        // Test basic connectivity first
-        if (options.Value.TestConnectivityFirst)
-        {
-            var isConnected = await TestConnectivityAsync(cancellationToken);
-            if (!isConnected)
-            {
-                logger.LogWarning(
-                    "[Prowlarr] Prowlarr server is not accessible at {BaseUrl}. This may be due to network issues, authentication problems, or the server being unavailable. Skipping search.",
-                    baseUrl);
-                return Array.Empty<ProwlarrRelease>();
-            }
-
-            // Also test the search endpoint specifically
-            var isSearchWorking = await TestSearchEndpointAsync(cancellationToken);
-            if (!isSearchWorking)
-            {
-                logger.LogWarning(
-                    "[Prowlarr] Prowlarr server is reachable but search endpoint is not working properly. " +
-                    "This may indicate API configuration issues or server problems.");
-                // Continue anyway as the server might be temporarily slow
-            }
-        }
 
         // Build search query set with broad-first strategy
         logger.LogInformation("[Prowlarr] ===== BUILDING SEARCH QUERY =====");
@@ -898,6 +876,40 @@ public class ProwlarrClient(
         {
             logger.LogInformation("[Prowlarr]   - '{Query}'", query);
             relLogger?.Info($"[Prowlarr]   - '{query}'");
+        }
+
+        // Post-failure diagnostics: run connectivity and search endpoint tests to surface reasons
+        try
+        {
+            relLogger?.Info("[Prowlarr] Running post-failure diagnostics (connectivity + search endpoint)");
+            var connected = await TestConnectivityAsync(cancellationToken);
+            if (connected)
+            {
+                logger.LogInformation("[Prowlarr] Post-diagnostic: connectivity OK");
+                relLogger?.Info("[Prowlarr] Post-diagnostic: connectivity OK");
+            }
+            else
+            {
+                logger.LogWarning("[Prowlarr] Post-diagnostic: connectivity FAILED");
+                relLogger?.Warn("[Prowlarr] Post-diagnostic: connectivity FAILED");
+            }
+
+            var searchOk = await TestSearchEndpointAsync(cancellationToken);
+            if (searchOk)
+            {
+                logger.LogInformation("[Prowlarr] Post-diagnostic: search endpoint OK");
+                relLogger?.Info("[Prowlarr] Post-diagnostic: search endpoint OK");
+            }
+            else
+            {
+                logger.LogWarning("[Prowlarr] Post-diagnostic: search endpoint FAILED");
+                relLogger?.Warn("[Prowlarr] Post-diagnostic: search endpoint FAILED");
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogDebug(ex, "[Prowlarr] Post-failure diagnostics threw");
+            relLogger?.Warn($"[Prowlarr] Post-diagnostic exception: {ex.Message}");
         }
 
         logger.LogInformation("[Prowlarr] Returning empty results array");
