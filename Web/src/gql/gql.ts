@@ -35,7 +35,7 @@ type Documents = {
     "\n  query ProfilePage {\n    viewer {\n      id\n      username\n      ...UserProfilePanel_User\n    }\n  }\n": typeof types.ProfilePageDocument,
     "\n  mutation ImportArtist($musicBrainzArtistId: String!) {\n    importArtist(input: { musicBrainzArtistId: $musicBrainzArtistId }) {\n      __typename\n      ... on ImportArtistSuccess {\n        artist {\n          id\n          name\n        }\n      }\n      ... on ImportArtistError {\n        message\n      }\n    }\n  }\n": typeof types.ImportArtistDocument,
     "\n  query AdminDownloadsSettings {\n    serverSettings {\n      id\n      downloadSlotCount\n    }\n  }\n": typeof types.AdminDownloadsSettingsDocument,
-    "\n  query AdminOverviewTabQuery {\n    serverLibrary {\n      ...ServerLibraryStatisticsHeader_ServerLibrary\n    }\n  }\n": typeof types.AdminOverviewTabQueryDocument,
+    "\n  query AdminOverviewTabQuery {\n    serverLibrary {\n      ...ServerLibraryStatisticsHeader_ServerLibrary\n    }\n    serverSettings {\n      storageStats {\n        ...DiskUsagePanel_StorageStats\n      }\n    }\n  }\n": typeof types.AdminOverviewTabQueryDocument,
     "\n  fragment AlbumCard_Release on Release {\n    id\n    title\n    firstReleaseYear\n    coverArtUrl\n    folderName\n    isFullyMissing\n    artistName\n    artist {\n      id\n      images {\n        thumbs\n      }\n    }\n  }\n": typeof types.AlbumCard_ReleaseFragmentDoc,
     "\n  fragment AlbumHeader_Release on Release {\n    id\n    title\n    type\n    coverArtUrl\n    firstReleaseYear\n    artistName\n    artist {\n      id\n      name\n      images {\n        thumbs\n      }\n    }\n    tracks {\n      id\n      trackLength\n    }\n  }\n": typeof types.AlbumHeader_ReleaseFragmentDoc,
     "\n  fragment AlbumPanel_Release on Release {\n    id\n    folderName\n    isFullyMissing\n    ...PlayAlbumButton_Release\n    ...ReleaseDownloadButton_Release\n    ...AlbumHeader_Release\n    ...AlbumTrackList_Release\n    firstReleaseYear\n    labels {\n      name\n      id\n      catalogNumber\n      disambiguation\n    }\n    artist {\n      id\n    }\n  }\n": typeof types.AlbumPanel_ReleaseFragmentDoc,
@@ -151,7 +151,7 @@ type Documents = {
     "\n  query TestProwlarrConnectivity {\n    external {\n      testProwlarrConnectivity {\n        ok\n        message\n      }\n    }\n  }\n": typeof types.TestProwlarrConnectivityDocument,
     "\n  query TestQBittorrentConnectivity {\n    external {\n      testQBittorrentConnectivity {\n        ok\n        message\n      }\n    }\n  }\n": typeof types.TestQBittorrentConnectivityDocument,
     "\n  fragment DownloadersTogglesCard_ServerSettings on ServerSettings {\n    id\n    enableSabnzbdDownloader\n    enableQBittorrentDownloader\n    enableSoulSeekDownloader\n  }\n": typeof types.DownloadersTogglesCard_ServerSettingsFragmentDoc,
-    "\n  fragment LibraryPathForm_ServerSettings on ServerSettings {\n    id\n    ...ChangeLibraryFolderControl_ServerSettings\n    libraryPath\n    storageStats {\n      totalDiskBytes\n      availableFreeBytes\n      librarySizeBytes\n      estimatedTotalLibrarySizeBytes\n    }\n  }\n": typeof types.LibraryPathForm_ServerSettingsFragmentDoc,
+    "\n  fragment LibraryPathForm_ServerSettings on ServerSettings {\n    id\n    ...ChangeLibraryFolderControl_ServerSettings\n    libraryPath\n  }\n": typeof types.LibraryPathForm_ServerSettingsFragmentDoc,
     "\n  fragment LogsFolderPathForm_ServerSettings on ServerSettings {\n    id\n    logsFolderPath\n  }\n": typeof types.LogsFolderPathForm_ServerSettingsFragmentDoc,
     "\n  mutation UpdateLogsFolderPath($newPath: String) {\n    updateLogsFolderPath(input: { newPath: $newPath }) {\n      ... on UpdateLogsFolderPathSuccess {\n        serverSettings {\n          id\n          logsFolderPath\n        }\n      }\n      ... on UpdateLogsFolderPathError {\n        message\n      }\n    }\n  }\n": typeof types.UpdateLogsFolderPathDocument,
     "\n  query ProwlarrSettings_Query {\n    serverSettings {\n      id\n      prowlarrBaseUrl\n      prowlarrTimeoutSeconds\n      prowlarrMaxRetries\n      prowlarrRetryDelaySeconds\n      prowlarrTestConnectivityFirst\n      prowlarrEnableDetailedLogging\n      prowlarrMaxConcurrentRequests\n    }\n  }\n": typeof types.ProwlarrSettings_QueryDocument,
@@ -194,6 +194,7 @@ type Documents = {
     "\n  fragment SpotifyPlaylistPanel_SpotifyPlaylist on SpotifyPlaylist {\n    id\n    name\n    description\n    coverImageUrl\n    totalTracks\n    tracks {\n      id\n      title\n      durationMs\n      artistNames\n      albumCoverImageUrl\n      previewUrl\n    }\n  }\n": typeof types.SpotifyPlaylistPanel_SpotifyPlaylistFragmentDoc,
     "\n  query ViewerIdForSpotifyImport {\n    viewer {\n      id\n    }\n  }\n": typeof types.ViewerIdForSpotifyImportDocument,
     "\n  mutation EnqueueArtistsFromSpotifyPlaylist($playlistId: String!) {\n    enqueueArtistsFromSpotifyPlaylist(input: { playlistId: $playlistId })\n  }\n": typeof types.EnqueueArtistsFromSpotifyPlaylistDocument,
+    "\n  fragment DiskUsagePanel_StorageStats on StorageStats {\n    availableFreeBytes\n    estimatedTotalLibrarySizeBytes\n    librarySizeBytes\n    totalDiskBytes\n  }\n": typeof types.DiskUsagePanel_StorageStatsFragmentDoc,
     "\n  mutation AdminCreateUser($input: CreateUserInput!) {\n    createUser(input: $input) {\n      __typename\n      ... on CreateUserSuccess {\n        users {\n          id\n          ...UserAdminPanel_User\n        }\n      }\n      ... on CreateUserError {\n        message\n      }\n    }\n  }\n": typeof types.AdminCreateUserDocument,
     "\n  fragment UserAdminCard_User on User {\n    id\n    username\n    roles\n  }\n": typeof types.UserAdminCard_UserFragmentDoc,
     "\n  fragment UserAdminPanel_Viewer on User {\n    id\n    roles\n    username\n    createdAt\n  }\n": typeof types.UserAdminPanel_ViewerFragmentDoc,
@@ -232,7 +233,7 @@ const documents: Documents = {
     "\n  query ProfilePage {\n    viewer {\n      id\n      username\n      ...UserProfilePanel_User\n    }\n  }\n": types.ProfilePageDocument,
     "\n  mutation ImportArtist($musicBrainzArtistId: String!) {\n    importArtist(input: { musicBrainzArtistId: $musicBrainzArtistId }) {\n      __typename\n      ... on ImportArtistSuccess {\n        artist {\n          id\n          name\n        }\n      }\n      ... on ImportArtistError {\n        message\n      }\n    }\n  }\n": types.ImportArtistDocument,
     "\n  query AdminDownloadsSettings {\n    serverSettings {\n      id\n      downloadSlotCount\n    }\n  }\n": types.AdminDownloadsSettingsDocument,
-    "\n  query AdminOverviewTabQuery {\n    serverLibrary {\n      ...ServerLibraryStatisticsHeader_ServerLibrary\n    }\n  }\n": types.AdminOverviewTabQueryDocument,
+    "\n  query AdminOverviewTabQuery {\n    serverLibrary {\n      ...ServerLibraryStatisticsHeader_ServerLibrary\n    }\n    serverSettings {\n      storageStats {\n        ...DiskUsagePanel_StorageStats\n      }\n    }\n  }\n": types.AdminOverviewTabQueryDocument,
     "\n  fragment AlbumCard_Release on Release {\n    id\n    title\n    firstReleaseYear\n    coverArtUrl\n    folderName\n    isFullyMissing\n    artistName\n    artist {\n      id\n      images {\n        thumbs\n      }\n    }\n  }\n": types.AlbumCard_ReleaseFragmentDoc,
     "\n  fragment AlbumHeader_Release on Release {\n    id\n    title\n    type\n    coverArtUrl\n    firstReleaseYear\n    artistName\n    artist {\n      id\n      name\n      images {\n        thumbs\n      }\n    }\n    tracks {\n      id\n      trackLength\n    }\n  }\n": types.AlbumHeader_ReleaseFragmentDoc,
     "\n  fragment AlbumPanel_Release on Release {\n    id\n    folderName\n    isFullyMissing\n    ...PlayAlbumButton_Release\n    ...ReleaseDownloadButton_Release\n    ...AlbumHeader_Release\n    ...AlbumTrackList_Release\n    firstReleaseYear\n    labels {\n      name\n      id\n      catalogNumber\n      disambiguation\n    }\n    artist {\n      id\n    }\n  }\n": types.AlbumPanel_ReleaseFragmentDoc,
@@ -348,7 +349,7 @@ const documents: Documents = {
     "\n  query TestProwlarrConnectivity {\n    external {\n      testProwlarrConnectivity {\n        ok\n        message\n      }\n    }\n  }\n": types.TestProwlarrConnectivityDocument,
     "\n  query TestQBittorrentConnectivity {\n    external {\n      testQBittorrentConnectivity {\n        ok\n        message\n      }\n    }\n  }\n": types.TestQBittorrentConnectivityDocument,
     "\n  fragment DownloadersTogglesCard_ServerSettings on ServerSettings {\n    id\n    enableSabnzbdDownloader\n    enableQBittorrentDownloader\n    enableSoulSeekDownloader\n  }\n": types.DownloadersTogglesCard_ServerSettingsFragmentDoc,
-    "\n  fragment LibraryPathForm_ServerSettings on ServerSettings {\n    id\n    ...ChangeLibraryFolderControl_ServerSettings\n    libraryPath\n    storageStats {\n      totalDiskBytes\n      availableFreeBytes\n      librarySizeBytes\n      estimatedTotalLibrarySizeBytes\n    }\n  }\n": types.LibraryPathForm_ServerSettingsFragmentDoc,
+    "\n  fragment LibraryPathForm_ServerSettings on ServerSettings {\n    id\n    ...ChangeLibraryFolderControl_ServerSettings\n    libraryPath\n  }\n": types.LibraryPathForm_ServerSettingsFragmentDoc,
     "\n  fragment LogsFolderPathForm_ServerSettings on ServerSettings {\n    id\n    logsFolderPath\n  }\n": types.LogsFolderPathForm_ServerSettingsFragmentDoc,
     "\n  mutation UpdateLogsFolderPath($newPath: String) {\n    updateLogsFolderPath(input: { newPath: $newPath }) {\n      ... on UpdateLogsFolderPathSuccess {\n        serverSettings {\n          id\n          logsFolderPath\n        }\n      }\n      ... on UpdateLogsFolderPathError {\n        message\n      }\n    }\n  }\n": types.UpdateLogsFolderPathDocument,
     "\n  query ProwlarrSettings_Query {\n    serverSettings {\n      id\n      prowlarrBaseUrl\n      prowlarrTimeoutSeconds\n      prowlarrMaxRetries\n      prowlarrRetryDelaySeconds\n      prowlarrTestConnectivityFirst\n      prowlarrEnableDetailedLogging\n      prowlarrMaxConcurrentRequests\n    }\n  }\n": types.ProwlarrSettings_QueryDocument,
@@ -391,6 +392,7 @@ const documents: Documents = {
     "\n  fragment SpotifyPlaylistPanel_SpotifyPlaylist on SpotifyPlaylist {\n    id\n    name\n    description\n    coverImageUrl\n    totalTracks\n    tracks {\n      id\n      title\n      durationMs\n      artistNames\n      albumCoverImageUrl\n      previewUrl\n    }\n  }\n": types.SpotifyPlaylistPanel_SpotifyPlaylistFragmentDoc,
     "\n  query ViewerIdForSpotifyImport {\n    viewer {\n      id\n    }\n  }\n": types.ViewerIdForSpotifyImportDocument,
     "\n  mutation EnqueueArtistsFromSpotifyPlaylist($playlistId: String!) {\n    enqueueArtistsFromSpotifyPlaylist(input: { playlistId: $playlistId })\n  }\n": types.EnqueueArtistsFromSpotifyPlaylistDocument,
+    "\n  fragment DiskUsagePanel_StorageStats on StorageStats {\n    availableFreeBytes\n    estimatedTotalLibrarySizeBytes\n    librarySizeBytes\n    totalDiskBytes\n  }\n": types.DiskUsagePanel_StorageStatsFragmentDoc,
     "\n  mutation AdminCreateUser($input: CreateUserInput!) {\n    createUser(input: $input) {\n      __typename\n      ... on CreateUserSuccess {\n        users {\n          id\n          ...UserAdminPanel_User\n        }\n      }\n      ... on CreateUserError {\n        message\n      }\n    }\n  }\n": types.AdminCreateUserDocument,
     "\n  fragment UserAdminCard_User on User {\n    id\n    username\n    roles\n  }\n": types.UserAdminCard_UserFragmentDoc,
     "\n  fragment UserAdminPanel_Viewer on User {\n    id\n    roles\n    username\n    createdAt\n  }\n": types.UserAdminPanel_ViewerFragmentDoc,
@@ -509,7 +511,7 @@ export function graphql(source: "\n  query AdminDownloadsSettings {\n    serverS
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query AdminOverviewTabQuery {\n    serverLibrary {\n      ...ServerLibraryStatisticsHeader_ServerLibrary\n    }\n  }\n"): (typeof documents)["\n  query AdminOverviewTabQuery {\n    serverLibrary {\n      ...ServerLibraryStatisticsHeader_ServerLibrary\n    }\n  }\n"];
+export function graphql(source: "\n  query AdminOverviewTabQuery {\n    serverLibrary {\n      ...ServerLibraryStatisticsHeader_ServerLibrary\n    }\n    serverSettings {\n      storageStats {\n        ...DiskUsagePanel_StorageStats\n      }\n    }\n  }\n"): (typeof documents)["\n  query AdminOverviewTabQuery {\n    serverLibrary {\n      ...ServerLibraryStatisticsHeader_ServerLibrary\n    }\n    serverSettings {\n      storageStats {\n        ...DiskUsagePanel_StorageStats\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -973,7 +975,7 @@ export function graphql(source: "\n  fragment DownloadersTogglesCard_ServerSetti
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment LibraryPathForm_ServerSettings on ServerSettings {\n    id\n    ...ChangeLibraryFolderControl_ServerSettings\n    libraryPath\n    storageStats {\n      totalDiskBytes\n      availableFreeBytes\n      librarySizeBytes\n      estimatedTotalLibrarySizeBytes\n    }\n  }\n"): (typeof documents)["\n  fragment LibraryPathForm_ServerSettings on ServerSettings {\n    id\n    ...ChangeLibraryFolderControl_ServerSettings\n    libraryPath\n    storageStats {\n      totalDiskBytes\n      availableFreeBytes\n      librarySizeBytes\n      estimatedTotalLibrarySizeBytes\n    }\n  }\n"];
+export function graphql(source: "\n  fragment LibraryPathForm_ServerSettings on ServerSettings {\n    id\n    ...ChangeLibraryFolderControl_ServerSettings\n    libraryPath\n  }\n"): (typeof documents)["\n  fragment LibraryPathForm_ServerSettings on ServerSettings {\n    id\n    ...ChangeLibraryFolderControl_ServerSettings\n    libraryPath\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -1142,6 +1144,10 @@ export function graphql(source: "\n  query ViewerIdForSpotifyImport {\n    viewe
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  mutation EnqueueArtistsFromSpotifyPlaylist($playlistId: String!) {\n    enqueueArtistsFromSpotifyPlaylist(input: { playlistId: $playlistId })\n  }\n"): (typeof documents)["\n  mutation EnqueueArtistsFromSpotifyPlaylist($playlistId: String!) {\n    enqueueArtistsFromSpotifyPlaylist(input: { playlistId: $playlistId })\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  fragment DiskUsagePanel_StorageStats on StorageStats {\n    availableFreeBytes\n    estimatedTotalLibrarySizeBytes\n    librarySizeBytes\n    totalDiskBytes\n  }\n"): (typeof documents)["\n  fragment DiskUsagePanel_StorageStats on StorageStats {\n    availableFreeBytes\n    estimatedTotalLibrarySizeBytes\n    librarySizeBytes\n    totalDiskBytes\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

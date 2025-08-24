@@ -3,19 +3,25 @@ import { graphql } from "@/gql";
 import { useQuery } from "urql";
 import { ServerLibraryStatisticsHeader } from "@/features/server-library/ServerLibraryStatisticsHeader.tsx";
 import {
-  PageLayout,
-  PageHeader,
-  PageLoading,
   PageError,
+  PageHeader,
+  PageLayout,
+  PageLoading,
   PageNoData,
 } from "@/components/ui";
-import { Gauge, AlertTriangle } from "lucide-react";
+import { AlertTriangle, Gauge } from "lucide-react";
 import { SoulSeekReachabilitySummary } from "@/features/soul-seek-network-status/SoulSeekReachabilitySummary.tsx";
+import { DiskUsagePanel } from "@/features/storage-statistics/DiskUsagePanel.tsx";
 
 const adminOverviewQuery = graphql(`
   query AdminOverviewTabQuery {
     serverLibrary {
       ...ServerLibraryStatisticsHeader_ServerLibrary
+    }
+    serverSettings {
+      storageStats {
+        ...DiskUsagePanel_StorageStats
+      }
     }
   }
 `);
@@ -63,6 +69,9 @@ export const AdminOverviewTab: React.FC = () => {
       />
       <div className="pt-4 space-y-4">
         <ServerLibraryStatisticsHeader serverLibrary={data.serverLibrary} />
+        {data.serverSettings.storageStats && (
+          <DiskUsagePanel storageStats={data.serverSettings.storageStats} />
+        )}
         <SoulSeekReachabilitySummary />
       </div>
     </PageLayout>

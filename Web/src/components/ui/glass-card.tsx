@@ -19,8 +19,8 @@ export const GlassCard: React.FC<GlassCardProps> = ({
   padding = "lg",
 }) => {
   const paddingClasses = {
-    sm: "p-4",
-    md: "p-6",
+    sm: "p-2",
+    md: "p-4",
     lg: "p-8",
   };
 
