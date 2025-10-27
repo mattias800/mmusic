@@ -146,9 +146,9 @@ This plan outlines the complete implementation of a multiplatform Flutter music 
 - [ ] Create `lib/data/graphql/mutations/` directory
 - [x] Port essential GraphQL operations from Web frontend:
   - [x] User authentication queries
-  - [ ] Library queries (artists, albums, tracks)
+  - [x] Library queries (artists, albums, tracks)
   - [ ] Playlist queries
-  - [ ] Search queries
+  - [x] Search queries
 - [x] Create data models matching GraphQL schema (User model)
 - [ ] Set up code generation for GraphQL (if using graphql_codegen)
 
@@ -217,7 +217,7 @@ This plan outlines the complete implementation of a multiplatform Flutter music 
 - [x] Create mappers between data models and domain entities
 
 ### Repositories
-- [ ] Create `lib/data/repositories/library_repository.dart`
+- [x] Create `lib/data/repositories/library_repository.dart`
   - Fetch artists
   - Fetch albums
   - Fetch tracks
@@ -263,7 +263,7 @@ This plan outlines the complete implementation of a multiplatform Flutter music 
   - Search tab (placeholder)
   - Playlists tab (placeholder)
   - Settings tab (with sign out)
-- [ ] Create `lib/presentation/screens/library/library_screen.dart`
+- [x] Create `lib/presentation/screens/library/library_screen.dart`
   - Artists list
   - Albums list
   - Tracks list
@@ -351,7 +351,7 @@ This plan outlines the complete implementation of a multiplatform Flutter music 
   - [ ] Volume state
 
 ### Library State
-- [ ] Create `lib/presentation/providers/library_provider.dart`
+- [x] Create `lib/presentation/providers/library_provider.dart`
   - Artists state
   - Albums state
   - Tracks state
@@ -373,15 +373,15 @@ This plan outlines the complete implementation of a multiplatform Flutter music 
 ## Phase 10: Shared Widgets
 
 ### Create Reusable Components
-- [ ] Create `lib/presentation/widgets/track_list_item.dart`
+- [x] Create `lib/presentation/widgets/track_list_item.dart`
   - Track thumbnail
   - Track title
   - Artist name
   - Duration
   - More menu
   - Play on tap
-- [ ] Create `lib/presentation/widgets/album_card.dart`
-- [ ] Create `lib/presentation/widgets/artist_card.dart`
+- [x] Create `lib/presentation/widgets/album_card.dart`
+- [x] Create `lib/presentation/widgets/artist_card.dart`
 - [ ] Create `lib/presentation/widgets/playlist_card.dart`
 - [ ] Create `lib/presentation/widgets/loading_indicator.dart`
 - [ ] Create `lib/presentation/widgets/error_view.dart`
