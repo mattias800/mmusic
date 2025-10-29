@@ -1,3 +1,6 @@
+using System.Globalization;
+using System.Text;
+
 namespace MusicGQL.Features.External.Downloads.Prowlarr;
 
 internal static class ProwlarrResultFilter
@@ -12,16 +15,12 @@ internal static class ProwlarrResultFilter
             return false;
 
         var title = release.Title.ToLowerInvariant();
-        var artist = artistName.ToLowerInvariant();
-        var album = releaseTitle.ToLowerInvariant();
 
         if (ContainsNonMusicTerms(title))
             return false;
 
-        if (!ContainsArtistName(title, artist))
-            return false;
-
-        if (!ContainsAlbumTitle(title, album))
+        // Use the unified fuzzy title matcher which handles separators and single-word rules
+        if (!ProwlarrTextMatch.TitleMatches(release.Title, artistName, releaseTitle))
             return false;
 
         return true;
@@ -97,9 +96,36 @@ internal static class ProwlarrResultFilter
 
     private static bool ContainsArtistName(string title, string artistName)
     {
-        // Simple fuzzy: require artist token containment or close similarity on at least half of words
-        var artistWords = artistName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-        var titleWords = title.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        // Normalize separators similar to ProwlarrTextMatch to support scene folder names
+        static string Norm(string s)
+        {
+            if (string.IsNullOrEmpty(s)) return string.Empty;
+            s = s.ToLowerInvariant();
+
+            var decomposed = s.Normalize(System.Text.NormalizationForm.FormD);
+            var sb = new System.Text.StringBuilder(decomposed.Length * 2);
+            foreach (var ch in decomposed)
+            {
+                var cat = CharUnicodeInfo.GetUnicodeCategory(ch);
+                if (cat == UnicodeCategory.NonSpacingMark)
+                    continue;
+                switch (ch)
+                {
+                    case 'ß': sb.Append("ss"); continue;
+                    case 'Æ': case 'æ': sb.Append("ae"); continue;
+                    case 'Œ': case 'œ': sb.Append("oe"); continue;
+                    case 'Ø': case 'ø': sb.Append("o"); continue;
+                    case 'Ð': case 'ð': sb.Append("d"); continue;
+                    case 'Þ': case 'þ': sb.Append("th"); continue;
+                }
+                if (char.IsLetterOrDigit(ch)) sb.Append(ch);
+                else if (char.IsWhiteSpace(ch) || char.IsPunctuation(ch) || char.IsSymbol(ch)) sb.Append(' ');
+            }
+            return System.Text.RegularExpressions.Regex.Replace(sb.ToString(), "\\s+", " ").Trim();
+        }
+
+        var artistWords = Norm(artistName).Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        var titleWords = Norm(title).Split(' ', StringSplitOptions.RemoveEmptyEntries);
         var matchingWords = artistWords.Count(word =>
             titleWords.Any(titleWord => ProwlarrTextMatch.FuzzyWordMatch(titleWord, word))
         );

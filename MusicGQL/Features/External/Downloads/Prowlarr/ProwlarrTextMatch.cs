@@ -1,3 +1,6 @@
+using System.Globalization;
+using System.Text;
+
 namespace MusicGQL.Features.External.Downloads.Prowlarr;
 
 internal static class ProwlarrTextMatch
@@ -16,12 +19,22 @@ internal static class ProwlarrTextMatch
         );
         if (artistMatchCount < Math.Max(1, artistWords.Length / 2))
             return false;
-        // Require at least half of album words
+        // Require at least half of album words, with a stricter rule for single-word album titles
         var albumWords = album.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-        var albumMatchCount = albumWords.Count(word =>
-            titleWords.Any(x => FuzzyWordMatch(x, word))
-        );
-        return albumMatchCount >= Math.Max(1, albumWords.Length / 2);
+        if (albumWords.Length == 1)
+        {
+            // For single-word album titles (e.g., "Color"), allow fuzzy but enforce reasonable length proximity
+            // and explicitly reject simple pluralization/singularization
+            var token = albumWords[0];
+            return titleWords.Any(x => SingleWordAlbumTokenMatch(x, token));
+        }
+        else
+        {
+            var albumMatchCount = albumWords.Count(word =>
+                titleWords.Any(x => FuzzyWordMatch(x, word))
+            );
+            return albumMatchCount >= Math.Max(1, albumWords.Length / 2);
+        }
     }
 
     public static bool ContainsAlbumTitleFuzzy(string title, string albumTitle)
@@ -30,6 +43,11 @@ internal static class ProwlarrTextMatch
         var album = Normalize(albumTitle);
         var albumWords = album.Split(' ', StringSplitOptions.RemoveEmptyEntries);
         var titleWords = t.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (albumWords.Length == 1)
+        {
+            var token = albumWords[0];
+            return titleWords.Any(x => SingleWordAlbumTokenMatch(x, token));
+        }
         var matchCount = albumWords.Count(word => titleWords.Any(x => FuzzyWordMatch(x, word)));
         return matchCount >= Math.Max(1, albumWords.Length / 2);
     }
@@ -48,10 +66,8 @@ internal static class ProwlarrTextMatch
         if (minLen < 3)
             return false;
 
-        // Substring match only counts when both tokens are reasonably long
-        if (minLen >= 4 && (a.Contains(b) || b.Contains(a)))
-            return true;
-
+        // Do not treat plain substring presence as a fuzzy match to avoid false positives like
+        // 'differentartist' vs 'artist'. Rely on prefix similarity and edit distance instead.
         if (minLen >= 4)
         {
             // Common prefix heuristic for long tokens
@@ -83,6 +99,47 @@ internal static class ProwlarrTextMatch
         return i;
     }
 
+    private static bool IsSimplePluralization(string a, string b)
+    {
+        // Assumes inputs are already normalized/lowercased tokens
+        if (a == b) return false;
+
+        // Helper to check if y is a simple plural of x
+        static bool IsPluralOf(string x, string y)
+        {
+            if (string.IsNullOrEmpty(x) || string.IsNullOrEmpty(y)) return false;
+            if (y == x + "s") return true;
+            if (y == x + "es") return true;
+            if (x.EndsWith("y") && y == x[..^1] + "ies") return true;
+            return false;
+        }
+
+        return IsPluralOf(a, b) || IsPluralOf(b, a);
+    }
+
+    private static bool SingleWordAlbumTokenMatch(string titleToken, string albumToken)
+    {
+        if (string.IsNullOrWhiteSpace(titleToken) || string.IsNullOrWhiteSpace(albumToken))
+            return false;
+        if (titleToken == albumToken)
+            return true;
+        if (IsSimplePluralization(titleToken, albumToken))
+            return false;
+        int lenDiff = Math.Abs(titleToken.Length - albumToken.Length);
+        // Disallow tokens that are far in length (e.g., star vs starboy, color vs colorful)
+        if (lenDiff > 2)
+            return false;
+        // For small length differences allow fuzzy matching
+        if (lenDiff == 2)
+        {
+            int dist = Levenshtein(titleToken, albumToken);
+            double sim = 1.0 - (double)dist / Math.Max(titleToken.Length, albumToken.Length);
+            return dist <= 2 && sim >= 0.8;
+        }
+        // lenDiff 0 or 1: use the general fuzzy logic
+        return FuzzyWordMatch(titleToken, albumToken);
+    }
+
     private static int Levenshtein(string a, string b)
     {
         int n = a.Length,
@@ -112,13 +169,42 @@ internal static class ProwlarrTextMatch
 
     private static string Normalize(string s)
     {
+        if (string.IsNullOrEmpty(s)) return string.Empty;
         s = s.ToLowerInvariant();
-        var keep = new System.Text.StringBuilder(s.Length);
-        foreach (var ch in s)
+
+        // Unicode normalize and strip diacritics (é -> e, å -> a, ö -> o, etc.)
+        var decomposed = s.Normalize(System.Text.NormalizationForm.FormD);
+        var sb = new System.Text.StringBuilder(decomposed.Length * 2);
+        foreach (var ch in decomposed)
         {
-            if (char.IsLetterOrDigit(ch) || char.IsWhiteSpace(ch))
-                keep.Append(ch);
+            var cat = CharUnicodeInfo.GetUnicodeCategory(ch);
+            if (cat == UnicodeCategory.NonSpacingMark)
+                continue; // drop diacritic marks
+
+            // Map common special letters to ASCII-ish approximations
+            switch (ch)
+            {
+                case 'ß': sb.Append("ss"); continue;
+                case 'Æ': case 'æ': sb.Append("ae"); continue;
+                case 'Œ': case 'œ': sb.Append("oe"); continue;
+                case 'Ø': case 'ø': sb.Append("o"); continue;
+                case 'Ð': case 'ð': sb.Append("d"); continue;
+                case 'Þ': case 'þ': sb.Append("th"); continue;
+            }
+
+            if (char.IsLetterOrDigit(ch))
+            {
+                sb.Append(ch);
+            }
+            else if (char.IsWhiteSpace(ch) || char.IsPunctuation(ch) || char.IsSymbol(ch))
+            {
+                // Treat punctuation/symbols as separators to avoid token concatenation (e.g., ac/dc -> ac dc)
+                sb.Append(' ');
+            }
+            // else: ignore other categories
         }
-        return System.Text.RegularExpressions.Regex.Replace(keep.ToString(), "\\s+", " ").Trim();
+
+        var collapsed = System.Text.RegularExpressions.Regex.Replace(sb.ToString(), "\\s+", " ").Trim();
+        return collapsed;
     }
 }

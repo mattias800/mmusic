@@ -1,0 +1,144 @@
+fragment PlaylistCard on Playlist {
+  id
+  name
+  coverImageUrl
+  createdAt
+  modifiedAt
+}
+
+fragment PlaylistItemDetail on PlaylistItem {
+  id
+  title
+  artistName
+  addedAt
+  trackLengthMs
+  track {
+    id
+    title
+    trackNumber
+    trackLength
+    isMissing
+    media {
+      audioUrl
+      audioQualityLabel
+      audioFormat
+    }
+    release {
+      id
+      title
+      coverArtUrl
+      artist {
+        id
+        name
+      }
+    }
+  }
+}
+
+query GetPlaylists {
+  viewer {
+    playlists {
+      ...PlaylistCard
+    }
+  }
+}
+
+query GetPlaylistsWithDetails {
+  viewer {
+    playlists {
+      id
+      name
+      coverImageUrl
+      createdAt
+      modifiedAt
+      items {
+        ...PlaylistItemDetail
+      }
+    }
+  }
+}
+
+mutation CreatePlaylist($input: CreatePlaylistInput!) {
+  createPlaylist(input: $input) {
+    ... on CreatePlaylistSuccess {
+      playlist {
+        ...PlaylistCard
+      }
+    }
+  }
+}
+
+mutation DeletePlaylist($input: DeletePlaylistInput!) {
+  deletePlaylist(input: $input) {
+    ... on DeletePlaylistSuccess {
+      deletedPlaylistId
+    }
+    ... on DeletePlaylistNoWriteAccess {
+      message
+    }
+  }
+}
+
+mutation RenamePlaylist($input: RenamePlaylistInput!) {
+  renamePlaylist(input: $input) {
+    ... on RenamePlaylistSuccess {
+      playlist {
+        ...PlaylistCard
+      }
+    }
+    ... on RenamePlaylistNoWriteAccess {
+      message
+    }
+  }
+}
+
+mutation AddTrackToPlaylist($input: AddTrackToPlaylistInput!) {
+  addTrackToPlaylist(input: $input) {
+    ... on AddTrackToPlaylistSuccess {
+      playlist {
+        id
+        name
+        items {
+          ...PlaylistItemDetail
+        }
+      }
+    }
+    ... on AddTrackToPlaylistError {
+      message
+    }
+  }
+}
+
+mutation RemoveItemFromPlaylist($input: RemoveItemFromPlaylistInput!) {
+  removeItemFromPlaylist(input: $input) {
+    ... on RemoveItemFromPlaylistSuccess {
+      playlist {
+        id
+        name
+        items {
+          ...PlaylistItemDetail
+        }
+      }
+    }
+    ... on RemoveItemFromPlaylistError {
+      message
+    }
+  }
+}
+
+mutation MovePlaylistItem($input: MovePlaylistItemInput!) {
+  movePlaylistItem(input: $input) {
+    ... on MovePlaylistItemSuccess {
+      playlist {
+        id
+        name
+        items {
+          ...PlaylistItemDetail
+        }
+      }
+    }
+    ... on MovePlaylistItemError {
+      message
+    }
+  }
+}

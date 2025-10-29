@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using MusicGQL.Db.Postgres;
 using MusicGQL.Features.Authentication.Commands;
 using MusicGQL.Features.Authentication.Handlers;
+using MusicGQL.Features.Authentication.Services;
 using MusicGQL.Types;
 
 namespace MusicGQL.Features.Users.Mutations;
@@ -16,6 +17,7 @@ public class SignInMutation
         SignInInput input,
         [Service] EventDbContext dbContext,
         [Service] VerifyPasswordHandler verifyPasswordHandler,
+        [Service] JwtTokenService jwtTokenService,
         [Service] IHttpContextAccessor httpContextAccessor
     )
     {
@@ -48,13 +50,17 @@ public class SignInMutation
 
         var authProperties = new AuthenticationProperties { };
 
+        // Still set cookie for web compatibility
         await httpContextAccessor.HttpContext.SignInAsync(
             CookieAuthenticationDefaults.AuthenticationScheme,
             new ClaimsPrincipal(claimsIdentity),
             authProperties
         );
 
-        return new SignInSuccess(new(user));
+        // Generate JWT token for mobile/desktop apps
+        var token = jwtTokenService.GenerateToken(user.UserId, user.Username);
+
+        return new SignInSuccess(new(user), token);
     }
 }
 
@@ -63,6 +69,6 @@ public record SignInInput(string Username, string Password);
 [UnionType]
 public abstract record SignInResult;
 
-public record SignInSuccess(User User) : SignInResult;
+public record SignInSuccess(User User, string Token) : SignInResult;
 
 public record SignInError(string Message) : SignInResult;

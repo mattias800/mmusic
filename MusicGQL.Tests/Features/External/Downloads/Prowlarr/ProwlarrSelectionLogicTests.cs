@@ -132,5 +132,41 @@ public class ProwlarrSelectionLogicTests
         Assert.Equal(ProwlarrSelectionType.Nzb, sel.Type);
         Assert.Equal("http://x/intro.nzb", sel.UrlOrMagnet);
     }
+
+    [Fact]
+    public void Decide_SingleWord_Album_ShouldReturn_None_For_PluralizationMismatch()
+    {
+        var results = new List<ProwlarrRelease>
+        {
+            new("Grant Geissman - Flying Colors FLAC", null, null, "http://x/colors.nzb", 300_000_000L, 1)
+        };
+        var sel = ProwlarrSelectionLogic.Decide(results, "Grant", "Color", allowSab: true, allowQbit: true, discographyEnabled: false);
+        Assert.Equal(ProwlarrSelectionType.None, sel.Type);
+        Assert.Null(sel.Release);
+    }
+
+    [Fact]
+    public void Decide_SceneFolder_CorrectMatch_Prefers_Nzb()
+    {
+        var results = new List<ProwlarrRelease>
+        {
+            new("Artist-Album-2024-WEB-320-XYZ", null, null, "http://x/album.nzb", 120_000_000L, 2),
+            new("Artist-Album-2024-WEB-320-XYZ [Magnet]", null, "magnet:?xt=urn:btih:abc", null, 110_000_000L, 2)
+        };
+        var sel = ProwlarrSelectionLogic.Decide(results, "Artist", "Album", allowSab: true, allowQbit: true, discographyEnabled: false);
+        Assert.Equal(ProwlarrSelectionType.Nzb, sel.Type);
+        Assert.Equal("http://x/album.nzb", sel.UrlOrMagnet);
+    }
+
+    [Fact]
+    public void Decide_SceneFolder_Mismatch_Returns_None()
+    {
+        var results = new List<ProwlarrRelease>
+        {
+            new("DifferentArtist-Album-2024-WEB-320-XYZ", null, null, "http://x/album.nzb", 120_000_000L, 2)
+        };
+        var sel = ProwlarrSelectionLogic.Decide(results, "Artist", "Album", allowSab: true, allowQbit: true, discographyEnabled: false);
+        Assert.Equal(ProwlarrSelectionType.None, sel.Type);
+    }
 }
 

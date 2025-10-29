@@ -1,0 +1,55 @@
+fragment AlbumCard on Release {
+  id
+  title
+  type
+  firstReleaseDate
+  folderName
+  artist {
+    id
+    name
+  }
+  coverArtUrl
+  isFullyMissing
+}
+
+query GetAlbums {
+  serverLibrary {
+    allReleases {
+      ...AlbumCard
+    }
+  }
+}
+
+query GetAlbumDetail($artistId: ID!, $releaseFolderName: String!) {
+  serverLibrary {
+    artistById(id: $artistId) {
+      releaseByFolderName(releaseFolderName: $releaseFolderName) {
+        id
+        title
+        type
+        firstReleaseDate
+        firstReleaseYear
+        folderName
+        coverArtUrl
+        artist {
+          id
+          name
+        }
+        tracks {
+          id
+          trackNumber
+          discNumber
+          title
+          trackLength
+          isMissing
+          playCount
+          media {
+            audioUrl
+            audioQualityLabel
+            audioFormat
+          }
+        }
+      }
+    }
+  }
+}

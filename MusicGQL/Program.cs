@@ -3,6 +3,8 @@ using Hqub.Lastfm;
 using Hqub.MusicBrainz;
 using MetaBrainz.ListenBrainz;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
@@ -23,7 +25,6 @@ using MusicGQL.Features.External.Downloads.Sabnzbd;
 using MusicGQL.Features.External.Downloads.Sabnzbd.Configuration;
 using MusicGQL.Features.External.SoulSeek;
 using MusicGQL.Features.External.SoulSeek.Integration;
-using MusicGQL.Features.External.SoulSeek.Mutations;
 using MusicGQL.Features.FileSystem;
 using MusicGQL.Features.FileSystem.Mutations;
 using MusicGQL.Features.Import;
@@ -315,6 +316,7 @@ builder
     // Register new Handlers
     .AddScoped<HashPasswordHandler>()
     .AddScoped<VerifyPasswordHandler>()
+    .AddSingleton<MusicGQL.Features.Authentication.Services.JwtTokenService>()
     .AddScoped<CreateUserHandler>()
     .AddScoped<CreatePlaylistHandler>()
     .AddScoped<RenamePlaylistHandler>()
@@ -360,15 +362,42 @@ builder.Services.AddDbContextFactory<EventDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Postgres"))
 );
 
-// Add Authentication services
+// Add Authentication services - support both cookies (web) and JWT (mobile/desktop)
+var jwtSettings = builder.Configuration.GetSection("Jwt");
+var jwtSecretKey = jwtSettings["SecretKey"] ?? "your-256-bit-secret-key-change-this-in-production-please-make-it-long";
+var jwtIssuer = jwtSettings["Issuer"] ?? "mmusic-api";
+var jwtAudience = jwtSettings["Audience"] ?? "mmusic-app";
+
 builder
-    .Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .Services.AddAuthentication(options =>
+    {
+        // Set JWT as default scheme for API/GraphQL requests (mobile/desktop apps)
+        // Cookies will still work for web apps when explicitly specified
+        options.DefaultScheme = Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerDefaults.AuthenticationScheme;
+        // Allow both JWT and Cookies - ASP.NET will try both
+        options.DefaultAuthenticateScheme = Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerDefaults.AuthenticationScheme;
+    })
     .AddCookie(options =>
     {
         options.Cookie.Name = "MusicGQL.Authentication";
         options.LoginPath = "/login"; // Path to the login page UI (to be created)
         options.LogoutPath = "/logout";
         // Further options can be configured here, like cookie expiration.
+    })
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecretKey)),
+            ValidateIssuer = true,
+            ValidIssuer = jwtIssuer,
+            ValidateAudience = true,
+            ValidAudience = jwtAudience,
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.Zero
+        };
     });
 
 builder.Services.AddCors(options =>

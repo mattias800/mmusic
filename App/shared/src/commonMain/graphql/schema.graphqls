@@ -1,0 +1,2094 @@
+"""
+The purpose of the `cost` directive is to define a `weight` for GraphQL types, fields, and arguments. Static analysis can use these weights when calculating the overall cost of a query or response.
+"""
+directive @cost(
+  """
+  The `weight` argument defines what value to add to the overall cost for every appearance, or possible appearance, of a type, field, argument, etc.
+  """
+  weight: String!
+) on ARGUMENT_DEFINITION | ENUM | FIELD_DEFINITION | INPUT_FIELD_DEFINITION | OBJECT | SCALAR
+
+"""
+The purpose of the `@listSize` directive is to either inform the static analysis about the size of returned lists (if that information is statically available), or to point the analysis to where to find that information.
+"""
+directive @listSize(
+  """
+  The `assumedSize` argument can be used to statically define the maximum length of a list returned by a field.
+  """
+  assumedSize: Int
+
+  """
+  The `requireOneSlicingArgument` argument can be used to inform the static analysis that it should expect that exactly one of the defined slicing arguments is present in a query. If that is not the case (i.e., if none or multiple slicing arguments are present), the static analysis may throw an error.
+  """
+  requireOneSlicingArgument: Boolean! = true
+
+  """
+  The `sizedFields` argument can be used to define that the value of the `assumedSize` argument or of a slicing argument does not affect the size of a list returned by a field itself, but that of a list returned by one of its sub-fields.
+  """
+  sizedFields: [String!]
+
+  """
+  The `slicingArgumentDefaultValue` argument can be used to define a default value for a slicing argument, which is used if the argument is not present in a query.
+  """
+  slicingArgumentDefaultValue: Int
+
+  """
+  The `slicingArguments` argument can be used to define which of the field's arguments with numeric type are slicing arguments, so that their value determines the size of the list returned by that field. It may specify a list of multiple slicing arguments.
+  """
+  slicingArguments: [String!]
+) on FIELD_DEFINITION
+
+type AddTrackToPlaylistError {
+  message: String!
+}
+
+input AddTrackToPlaylistInput {
+  artistId: ID!
+  playlistId: ID!
+  releaseFolderName: String!
+  trackNumber: Int!
+}
+
+union AddTrackToPlaylistResult = AddTrackToPlaylistError | AddTrackToPlaylistSuccess
+
+type AddTrackToPlaylistSuccess {
+  playlist: Playlist!
+}
+
+"""Defines when a policy shall be executed."""
+enum ApplyPolicy {
+  """After the resolver was executed."""
+  AFTER_RESOLVER
+
+  """Before the resolver was executed."""
+  BEFORE_RESOLVER
+
+  """The policy is applied in the validation step before the execution."""
+  VALIDATION
+}
+
+type Artist implements ArtistBase {
+  albums: [Release!]!
+  appearsOn: ArtistAppearsOn!
+  connectedExternalServices: [ArtistConnectedExternalService!]!
+  eps: [Release!]!
+  id: ID!
+  images: ArtistImages
+  listeners: Long
+  name: String!
+  releaseByFolderName(releaseFolderName: String!): Release
+  releases: [Release!]!
+  similarArtists: [SimilarArtist!]!
+  singles: [Release!]!
+  sortName: String!
+  topTracks: [ArtistTopTrack!]!
+}
+
+type ArtistAppearsOn {
+  playlists: [Playlist!]!
+  releases: [ArtistAppearsOnRelease!]!
+}
+
+type ArtistAppearsOnRelease {
+  coverArtUrl: String
+  firstReleaseDate: String
+  firstReleaseYear: String
+  musicBrainzReleaseGroupId: String
+  primaryArtistMusicBrainzId: String
+  primaryArtistName: String!
+  releaseTitle: String!
+  releaseType: String!
+  role: String
+}
+
+interface ArtistBase {
+  id: ID!
+  name: String!
+  sortName: String!
+}
+
+type ArtistConnectedExternalService {
+  artistPageUrl: String!
+  externalArtistId: String
+  externalService: ExternalService!
+  isConnected: Boolean!
+}
+
+type ArtistImages {
+  backgrounds: [String!]!
+  banners: [String!]!
+  logos: [String!]!
+  thumbs: [String!]!
+}
+
+type ArtistImportBackgroundJob {
+  artistId: String!
+  artistName: String!
+  artistPath: String!
+  musicBrainzId: String!
+}
+
+type ArtistImportBackgroundProgress {
+  artistId: String!
+  hasError: Boolean!
+  message: String!
+  percentage: Int!
+  timestamp: DateTime!
+}
+
+type ArtistImportBackgroundQueueState {
+  items: [ArtistImportBackgroundJob!]!
+  queueLength: Int!
+}
+
+type ArtistImportHistoryItem {
+  artistName: String!
+  errorMessage: String
+  jobKind: ArtistImportJobKind!
+  localArtistId: String
+  musicBrainzArtistId: String
+  releaseFolderName: String
+  songTitle: String
+  success: Boolean!
+  timestampUtc: DateTime!
+}
+
+enum ArtistImportJobKind {
+  IMPORT_ARTIST
+  REFRESH_RELEASE_METADATA
+}
+
+type ArtistImportProgress {
+  artistName: String!
+  completedReleases: Int!
+  errorMessage: String
+  id: String!
+  songTitle: String
+  status: ArtistImportStatus!
+  statusInfo: ArtistImportStatusInfo!
+  totalReleases: Int!
+}
+
+type ArtistImportQueueItem {
+  artistName: String!
+  id: String!
+  jobKind: ArtistImportJobKind!
+  localArtistId: String
+  queueKey: String
+  releaseFolderName: String
+  songTitle: String
+}
+
+type ArtistImportQueueState {
+  id: String!
+  items: [ArtistImportQueueItem!]!
+  queueLength: Int!
+}
+
+type ArtistImportSearchRoot {
+  artistImportHistory: [ArtistImportHistoryItem!]!
+  artistImportQueue: ArtistImportQueueState!
+  currentArtistImport: ArtistImportProgress
+}
+
+enum ArtistImportStatus {
+  COMPLETED
+  FAILED
+  IDLE
+  IMPORTING_ARTIST
+  IMPORTING_RELEASES
+  RESOLVING_ARTIST
+}
+
+type ArtistImportStatusInfo {
+  id: ArtistImportStatus!
+  text: String!
+}
+
+type ArtistSearchRoot {
+  all: [Artist!]!
+  byId(artistId: ID!): Artist
+  externalArtistById(artistId: ID!, serviceType: ExternalServiceType!): ExternalArtist
+  searchArtists(limit: Int! = 20, searchTerm: String!): [Artist!]!
+  searchExternalArtists(limit: Int! = 10, searchTerm: String!, serviceType: ExternalServiceType!): [ExternalArtist!]!
+}
+
+type ArtistTopTrack {
+  coverArtUrl: String
+  playCount: Long
+  releaseTitle: String
+  title: String!
+  track: Track
+  trackLength: Int
+}
+
+enum BulkDownloadScope {
+  ALBUMS
+  ALL
+  EPS
+  SINGLES
+}
+
+type CacheStatistics {
+  artistCount: Int!
+  isInitialized: Boolean!
+  lastUpdated: DateTime!
+  releaseCount: Int!
+  trackCount: Int!
+}
+
+type CheckSoulSeekReachabilityError {
+  message: String!
+}
+
+union CheckSoulSeekReachabilityResult = CheckSoulSeekReachabilityError | CheckSoulSeekReachabilitySuccess
+
+type CheckSoulSeekReachabilitySuccess {
+  statistics: SharingStatistics!
+}
+
+type ClientPlaybackCommand {
+  clientId: String!
+  playback: ClientPlaybackState!
+}
+
+type ClientPlaybackState {
+  artist: Artist
+  artistId: String
+  artistName: String
+  coverArtUrl: String
+  qualityLabel: String
+  release: Release
+  releaseFolderName: String
+  track: Track
+  trackLengthMs: Int
+  trackNumber: Int
+  trackTitle: String
+}
+
+type ConnectivityStatus {
+  message: String!
+  ok: Boolean!
+}
+
+type CreateDirectoryError {
+  message: String!
+}
+
+input CreateDirectoryInput {
+  path: String!
+}
+
+union CreateDirectoryResult = CreateDirectoryError | CreateDirectorySuccess
+
+type CreateDirectorySuccess {
+  entry: FileSystemEntry!
+}
+
+type CreateLibraryManifestError {
+  message: String!
+}
+
+union CreateLibraryManifestResult = CreateLibraryManifestError | CreateLibraryManifestSuccess
+
+type CreateLibraryManifestSuccess {
+  serverLibraryManifestStatus: ServerLibraryManifestStatus!
+}
+
+input CreatePlaylistInput {
+  description: String
+  name: String
+}
+
+union CreatePlaylistResult = CreatePlaylistSuccess
+
+type CreatePlaylistSuccess {
+  playlist: Playlist!
+}
+
+type CreateUserError {
+  message: String!
+}
+
+input CreateUserInput {
+  password: String!
+  username: String!
+}
+
+union CreateUserResult = CreateUserError | CreateUserSuccess
+
+type CreateUserSuccess {
+  user: User!
+  users: [User!]!
+}
+
+"""The `DateTime` scalar represents an ISO-8601 compliant date time type."""
+scalar DateTime
+
+type DeleteArtistError {
+  message: String!
+}
+
+input DeleteArtistInput {
+  artistId: String!
+}
+
+union DeleteArtistResult = DeleteArtistError | DeleteArtistSuccess
+
+type DeleteArtistSuccess {
+  deletedArtistId: String!
+}
+
+input DeletePlaylistInput {
+  playlistId: ID!
+}
+
+type DeletePlaylistNoWriteAccess {
+  message: String!
+}
+
+union DeletePlaylistResult = DeletePlaylistNoWriteAccess | DeletePlaylistSuccess
+
+type DeletePlaylistSuccess {
+  deletedPlaylistId: UUID!
+}
+
+type DeleteReleaseAudioError {
+  message: String!
+}
+
+input DeleteReleaseAudioInput {
+  artistId: String!
+  releaseFolderName: String!
+}
+
+union DeleteReleaseAudioResult = DeleteReleaseAudioError | DeleteReleaseAudioSuccess
+
+type DeleteReleaseAudioSuccess {
+  release: Release!
+}
+
+type DeleteUserError {
+  message: String!
+}
+
+input DeleteUserInput {
+  userId: UUID!
+}
+
+union DeleteUserResult = DeleteUserError | DeleteUserSuccess
+
+type DeleteUserSuccess {
+  deletedUserId: UUID!
+  user: UserSearchRoot!
+}
+
+type Disc {
+  discNumber: Int!
+  title: String
+  tracks: [Track!]!
+}
+
+type DownloadHistoryItem {
+  artistId: String!
+  artistName: String
+  errorMessage: String
+  providerUsed: String
+  releaseFolderName: String!
+  releaseTitle: String
+  success: Boolean!
+  timestampUtc: DateTime!
+}
+
+type DownloadProgress {
+  artistId: String!
+  artistName: String
+  completedTracks: Int!
+  coverArtUrl: String
+  currentDownloadSpeedKbps: Float
+  currentProvider: String
+  currentProviderIndex: Int!
+  currentTrackProgressPercent: Float
+  errorMessage: String
+  id: String!
+  releaseFolderName: String!
+  releaseTitle: String
+  status: DownloadStatus!
+  totalProviders: Int!
+  totalTracks: Int!
+}
+
+type DownloadQueueItem {
+  artistId: String!
+  artistName: String
+  id: String!
+  queueKey: String
+  releaseFolderName: String!
+  releaseTitle: String
+}
+
+type DownloadQueueState {
+  id: String!
+  items: [DownloadQueueItem!]!
+  queueLength: Int!
+}
+
+type DownloadSlotInfo {
+  currentProgress: DownloadProgress
+  currentWork: DownloadQueueItem
+  id: Int!
+  isActive: Boolean!
+  isWorking: Boolean!
+  lastActivityAt: DateTime
+  startedAt: DateTime
+  status: String
+}
+
+enum DownloadStatus {
+  COMPLETED
+  DOWNLOADING
+  FAILED
+  IDLE
+  PROCESSING
+  SEARCHING
+}
+
+type DownloadsSearchRoot {
+  allSlotProgress: [KeyValuePairOfInt32AndDownloadProgress!]!
+  downloadHistory: [DownloadHistoryItem!]!
+  downloadQueue: DownloadQueueState!
+  downloadSlots: [DownloadSlotInfo!]!
+  slotProgress(slotId: Int!): DownloadProgress
+}
+
+input EnqueueArtistsFromSpotifyPlaylistInput {
+  playlistId: String!
+}
+
+type ExternalArtist {
+  artistId: String!
+  artistName: String!
+  id: ID!
+  service: ExternalServiceType!
+}
+
+type ExternalRoot {
+  id: ID!
+  soulSeek: SoulSeekRoot!
+  testFanartConnectivity: ConnectivityStatus!
+  testLastfmConnectivity: ConnectivityStatus!
+  testListenBrainzConnectivity: ConnectivityStatus!
+  testProwlarrConnectivity: ConnectivityStatus!
+  testQBittorrentConnectivity: ConnectivityStatus!
+  testSabnzbdConnectivity: ConnectivityStatus!
+  testSpotifyConnectivity: ConnectivityStatus!
+  testYouTubeConnectivity: ConnectivityStatus!
+}
+
+type ExternalService {
+  id: ID!
+  name: String!
+}
+
+enum ExternalServiceType {
+  APPLE_MUSIC
+  DEEZER
+  OTHER
+  SPOTIFY
+  TIDAL
+  YOU_TUBE_MUSIC
+}
+
+type ExternalServicesSearchRoot {
+  all: [ExternalService!]!
+  byId(id: ID!): ExternalService
+}
+
+type FileSystemEntry {
+  hasChildren: Boolean!
+  hasLibraryManifest: Boolean!
+  id: ID!
+  isAccessible: Boolean!
+  isDirectory: Boolean!
+  name: String!
+  path: String!
+}
+
+type FileSystemSearchRoot {
+  browseFileSystem(path: String): [FileSystemEntry!]!
+  hasLibraryManifest(path: String!): Boolean!
+}
+
+type FixReleaseTypeError {
+  message: String!
+}
+
+input FixReleaseTypeInput {
+  artistId: String!
+  releaseFolderName: String!
+}
+
+union FixReleaseTypeResult = FixReleaseTypeError | FixReleaseTypeSuccess
+
+type FixReleaseTypeSuccess {
+  release: JsonRelease!
+}
+
+type GenerateArtistShareFilesError {
+  message: String!
+}
+
+input GenerateArtistShareFilesInput {
+  artistId: String!
+}
+
+union GenerateArtistShareFilesResult = GenerateArtistShareFilesError | GenerateArtistShareFilesSuccess
+
+type GenerateArtistShareFilesSuccess {
+  artistId: String!
+  artistName: String!
+  manifestPath: String!
+  tagFileName: String!
+}
+
+type ImportArtistError {
+  message: String!
+}
+
+input ImportArtistInput {
+  musicBrainzArtistId: String!
+}
+
+union ImportArtistResult = ImportArtistError | ImportArtistSuccess
+
+type ImportArtistSuccess {
+  artist: Artist!
+}
+
+type ImportArtistsFromSpotifyPlaylistError {
+  message: String!
+}
+
+input ImportArtistsFromSpotifyPlaylistInput {
+  playlistId: String!
+}
+
+union ImportArtistsFromSpotifyPlaylistResult = ImportArtistsFromSpotifyPlaylistError | ImportArtistsFromSpotifyPlaylistSuccess
+
+type ImportArtistsFromSpotifyPlaylistSuccess {
+  artists: [Artist!]!
+  failedArtists: [String!]!
+  importedArtists: Int!
+  totalArtists: Int!
+}
+
+type ImportPlaylistSearchRoot {
+  spotify: SpotifyPlaylistSearchRoot!
+}
+
+type ImportReleasesResult {
+  artistId: String!
+  errorMessage: String
+  failedReleases: Int!
+  importedReleases: [ImportedRelease!]!
+  success: Boolean!
+  successfulReleases: Int!
+  totalReleases: Int!
+}
+
+type ImportSimilarArtistsError {
+  message: String!
+}
+
+input ImportSimilarArtistsInput {
+  artistId: String!
+}
+
+union ImportSimilarArtistsResult = ImportSimilarArtistsError | ImportSimilarArtistsSuccess
+
+type ImportSimilarArtistsSuccess {
+  artist: Artist!
+  importedCount: Int!
+}
+
+type ImportSpotifyPlaylistError {
+  message: String!
+}
+
+input ImportSpotifyPlaylistInput {
+  playlistId: String!
+  userId: UUID!
+}
+
+union ImportSpotifyPlaylistResult = ImportSpotifyPlaylistError | ImportSpotifyPlaylistSuccess
+
+type ImportSpotifyPlaylistSuccess {
+  playlist: Playlist!
+}
+
+type ImportedRelease {
+  errorMessage: String
+  releaseGroupId: String!
+  success: Boolean!
+  title: String!
+}
+
+type JsonDisc {
+  discNumber: Int!
+  title: String
+  tracks: [JsonTrack!]!
+}
+
+type JsonLabelInfo {
+  catalogNumber: String
+  disambiguation: String
+  id: String
+  name: String!
+}
+
+type JsonRelease {
+  artistId: String
+  artistName: String!
+  connections: ReleaseServiceConnections
+  coverArt: String
+  discs: [JsonDisc!]
+  firstReleaseDate: String
+  firstReleaseYear: String
+  labels: [JsonLabelInfo!]
+  sortTitle: String
+  title: String!
+  tracks: [JsonTrack!]
+  type: JsonReleaseType!
+}
+
+enum JsonReleaseType {
+  ALBUM
+  EP
+  SINGLE
+}
+
+type JsonTrack {
+  audioFilePath: String
+  connections: JsonTrackServiceConnections
+  credits: [JsonTrackCredit!]
+  discNumber: Int
+  playCount: Long
+  sortTitle: String
+  statistics: JsonTrackStatistics
+  title: String!
+  trackLength: Int
+  trackNumber: Int!
+}
+
+type JsonTrackCredit {
+  artistId: String
+  artistName: String!
+  musicBrainzArtistId: String
+}
+
+type JsonTrackServiceConnections {
+  musicBrainzRecordingId: String
+  musicVideoYoutubeVideoUrl: String
+  spotifySongId: String
+}
+
+type JsonTrackStatistics {
+  listeners: Long!
+  playCount: Long!
+}
+
+type KeyValuePairOfInt32AndDownloadProgress {
+  key: Int!
+  value: DownloadProgress!
+}
+
+type LastFmAlbum {
+  album: MbReleaseGroup
+  id: ID!
+  imageUrl: String
+  mbid: String!
+  name: String!
+  statistics: LastFmStatistics!
+}
+
+type LastFmArtist {
+  artist: Artist
+  id: ID!
+  images: ArtistImages
+  musicBrainzArtist: MbArtist
+  name: String!
+  statistics: LastFmStatistics!
+  summary: String
+  topTracks: [LastFmTrack!]!
+}
+
+type LastFmStatistics {
+  listeners: Long!
+  playCount: Long!
+}
+
+type LastFmTag {
+  name: String!
+  url: String!
+}
+
+type LastFmTrack {
+  album: LastFmAlbum
+  artist: LastFmArtist!
+  id: ID!
+  images: ArtistImages
+  mbid: String
+  musicBrainzRecording: MbRecording
+  name: String!
+  playCount: Long
+  recording: Track
+  statistics: LastFmStatistics!
+  summary: String
+}
+
+type LibraryCacheTrackStatus {
+  artistId: String!
+  releaseFolderName: String!
+  track: Track
+  trackNumber: Int!
+}
+
+type LibraryReleaseDownloadStatusUpdate {
+  release: Release!
+}
+
+type LikeSongAlreadyLiked {
+  message: String!
+}
+
+input LikeSongInput {
+  recordingId: String!
+}
+
+union LikeSongResult = LikeSongAlreadyLiked | LikeSongSongDoesNotExist | LikeSongSuccess
+
+type LikeSongSongDoesNotExist {
+  message: String!
+}
+
+type LikeSongSuccess {
+  viewer: User!
+}
+
+type LikedSong {
+  id: ID!
+  recording: MbRecording
+}
+
+type ListenBrainzQueryRoot {
+  userInfo(username: String!): ListenBrainzUserInfo
+}
+
+type ListenBrainzUserInfo {
+  bio: String
+  id: ID!
+  joined: DateTime
+  location: String
+  username: String!
+  website: String
+}
+
+"""
+The `Long` scalar type represents non-fractional signed whole 64-bit numeric values. Long can represent values between -(2^63) and 2^63 - 1.
+"""
+scalar Long
+
+type MbAlbumImages {
+  albumCover: String
+  cdArt: String
+}
+
+type MbArtist implements ArtistBase {
+  albums: [MbReleaseGroup!]!
+  artist: Artist
+  country: String
+  disambiguation: String
+  id: ID!
+  images: MbArtistImages
+  lastFmArtist: LastFmArtist
+  listeners: Long
+  name: String!
+  relations: [MbRelation!]!
+  releaseGroups: [MbReleaseGroup!]!
+  releases: [MbRelease!]!
+  singles: [MbReleaseGroup!]!
+  sortName: String!
+  topTracks: [LastFmTrack!]!
+  type: String
+}
+
+type MbArtistImages {
+  artistBackground: String
+  artistThumb: String
+  hdMusicLogo: String
+  musicBanner: String
+  musicLogo: String
+}
+
+type MbGenre {
+  id: ID!
+  name: String!
+}
+
+type MbLabel {
+  disambiguation: String
+  id: String!
+  name: String!
+}
+
+type MbLabelInfo {
+  catalogNumber: String
+  label: MbLabel!
+}
+
+type MbMedium {
+  trackCount: Int!
+  tracks: [MbTrack!]!
+}
+
+type MbNameCredit {
+  artist: MbArtist!
+  joinPhrase: String
+  name: String!
+}
+
+type MbRecording {
+  artists: [MbArtist!]!
+  id: ID!
+  length: Int
+  mainAlbum: MbRelease
+  nameCredits: [MbNameCredit!]!
+  relations: [MbRelation!]!
+  releases: [MbRelease!]!
+  statistics: LastFmStatistics
+  streamingServiceInfo: MbRecordingStreamingServiceInfo!
+  title: String!
+}
+
+type MbRecordingStreamingServiceInfo {
+  id: ID!
+  youtubeMusicUrl: String
+  youtubeSearchVideoId: String
+  youtubeVideoId: String
+}
+
+type MbRelation {
+  attributes: [String!]
+  begin: String
+  direction: String
+  end: String
+  targetType: String
+  type: String
+  typeId: String
+  url: Url
+}
+
+type MbRelease {
+  artists: [MbArtist!]!
+  barcode: String
+  country: String
+  coverArtUri: String!
+  credits: [MbNameCredit!]!
+  date: String
+  genres: [MbGenre!]!
+  id: ID!
+  labels: [MbLabelInfo!]!
+  media: [MbMedium!]!
+  quality: String
+  recordings: [MbRecording!]!
+  releaseGroup: MbReleaseGroup
+  status: String
+  title: String!
+  year: String
+}
+
+type MbReleaseGroup {
+  coverArtUri: String
+  credits: [MbNameCredit!]!
+  firstReleaseDate: String
+  firstReleaseYear: String
+  id: ID!
+  images: MbAlbumImages
+  mainRelease: MbRelease
+  primaryType: String
+  relations: [MbRelation!]!
+  secondaryTypes: [String!]!
+  tags: [String!]!
+  title: String!
+}
+
+type MbTrack {
+  id: ID!
+  mbRecording: MbRecording!
+  position: Int!
+}
+
+enum MediaAvailabilityStatus {
+  AVAILABLE
+  DOWNLOADING
+  MISSING
+  PROCESSING
+  QUEUED_FOR_DOWNLOAD
+  UNKNOWN
+}
+
+type MovePlaylistItemError {
+  message: String!
+}
+
+input MovePlaylistItemInput {
+  newIndex: Int!
+  playlistId: ID!
+  playlistItemId: ID!
+}
+
+union MovePlaylistItemResult = MovePlaylistItemError | MovePlaylistItemSuccess
+
+type MovePlaylistItemSuccess {
+  playlist: Playlist!
+}
+
+type MusicBrainzArtistSearchRoot {
+  byId(id: ID!): MbArtist
+  searchByName(limit: Int! = 25, name: String!, offset: Int! = 0): [MbArtist!]!
+}
+
+type MusicBrainzRecordingSearchRoot {
+  byId(id: ID!): MbRecording
+  searchByName(limit: Int! = 25, name: String!, offset: Int! = 0): [MbRecording!]!
+}
+
+type MusicBrainzReleaseGroupSearchRoot {
+  byId(id: ID!): MbReleaseGroup
+  searchByName(limit: Int! = 25, name: String!, offset: Int! = 0): [MbReleaseGroup!]!
+  searchByNameAndArtistName(artistName: String!, limit: Int! = 25, name: String!, offset: Int! = 0): [MbReleaseGroup!]!
+}
+
+type MusicBrainzReleaseSearchRoot {
+  byId(id: ID!): MbRelease
+  searchByName(limit: Int! = 25, name: String!, offset: Int! = 0): [MbRelease!]!
+}
+
+type MusicBrainzSearchRoot {
+  artist: MusicBrainzArtistSearchRoot!
+  recording: MusicBrainzRecordingSearchRoot!
+  release: MusicBrainzReleaseSearchRoot!
+  releaseGroup: MusicBrainzReleaseGroupSearchRoot!
+}
+
+type Mutation {
+  addTrackToPlaylist(input: AddTrackToPlaylistInput!): AddTrackToPlaylistResult!
+  checkSoulSeekReachability: CheckSoulSeekReachabilityResult!
+  createDirectory(input: CreateDirectoryInput!): CreateDirectoryResult!
+  createLibraryManifest: CreateLibraryManifestResult!
+  createPlaylist(input: CreatePlaylistInput!): CreatePlaylistResult!
+  createUser(input: CreateUserInput!): CreateUserResult!
+  deleteArtist(input: DeleteArtistInput!): DeleteArtistResult!
+  deletePlaylist(input: DeletePlaylistInput!): DeletePlaylistResult!
+  deleteReleaseAudio(input: DeleteReleaseAudioInput!): DeleteReleaseAudioResult!
+  deleteUser(input: DeleteUserInput!): DeleteUserResult!
+  enqueueArtist(artistName: String!, songTitle: String): Boolean!
+  enqueueArtistsFromSpotifyPlaylist(input: EnqueueArtistsFromSpotifyPlaylistInput!): Boolean!
+  enqueueMissingArtistsFromPlaylist(playlistId: ID!): Boolean!
+  fixReleaseType(input: FixReleaseTypeInput!): FixReleaseTypeResult!
+  generateArtistShareFiles(input: GenerateArtistShareFilesInput!): GenerateArtistShareFilesResult!
+  heartbeat(artistId: String, artistName: String, clientId: String!, coverArtUrl: String, name: String, qualityLabel: String, releaseFolderName: String, trackLengthMs: Int, trackNumber: Int, trackTitle: String): UpdateUserListenBrainzCredentialsResult!
+  importArtist(input: ImportArtistInput!): ImportArtistResult!
+  importArtistReleases(artistId: String!): ImportReleasesResult!
+  importArtistsFromSpotifyPlaylist(input: ImportArtistsFromSpotifyPlaylistInput!): ImportArtistsFromSpotifyPlaylistResult!
+  importSimilarArtists(input: ImportSimilarArtistsInput!): ImportSimilarArtistsResult!
+  importSpotifyPlaylist(input: ImportSpotifyPlaylistInput!): ImportSpotifyPlaylistResult!
+  likeSong(input: LikeSongInput!): LikeSongResult!
+  movePlaylistItem(input: MovePlaylistItemInput!): MovePlaylistItemResult!
+  ping: Boolean!
+  redownloadRelease(input: RedownloadReleaseInput!): RedownloadReleaseResult!
+  refreshAllReleasesForArtist(artistId: String!): RefreshAllReleasesForArtistResult!
+  refreshArtistMetaData(input: RefreshArtistMetaDataInput!): RefreshArtistMetaDataResult!
+  refreshArtistTopTracks(input: RefreshArtistTopTracksInput!): RefreshArtistTopTracksResult!
+  refreshRelease(input: RefreshReleaseInput!): RefreshReleaseResult!
+  refreshSoulSeekShares: RefreshSoulSeekSharesResult!
+  removeArtistImportJob(queueKey: String!): Boolean!
+  removeDownloadJob(queueKey: String!): Boolean!
+  removeItemFromPlaylist(input: RemoveItemFromPlaylistInput!): RemoveItemFromPlaylistResult!
+  renamePlaylist(input: RenamePlaylistInput!): RenamePlaylistResult!
+  scanLibraryForMissingJson: ScanLibraryForMissingJsonResult!
+  scanReleaseFolderForMedia(input: ScanReleaseFolderForMediaInput!): ScanReleaseFolderForMediaResult!
+  setArtistMusicBrainzMatch(input: SetArtistMusicBrainzMatchInput!): SetArtistMusicBrainzMatchResult!
+  setArtistSpotifyMatch(input: SetArtistSpotifyMatchInput!): SetArtistSpotifyMatchResult!
+  setPlaylistItemArtistMatch(input: SetPlaylistItemArtistMatchInput!): SetPlaylistItemArtistMatchResult!
+  setPlaylistItemArtistMusicBrainzMatch(input: SetPlaylistItemArtistMusicBrainzMatchInput!): SetPlaylistItemArtistMusicBrainzMatchResult!
+  setReleaseGroup(input: SetReleaseGroupInput!): SetReleaseGroupResult!
+  setReleaseMatchOverride(input: SetReleaseMatchOverrideInput!): SetReleaseMatchOverrideResult!
+  setUserPassword(input: SetUserPasswordInput!): SetUserPasswordResult!
+  signIn(input: SignInInput!): SignInResult!
+  signOut(input: SignOutInput!): SignOutResult!
+  startBulkDownloadForArtist(input: StartBulkDownloadForArtistInput!): StartBulkDownloadForArtistResult!
+  startDownloadRelease(input: StartDownloadReleaseInput!): StartDownloadReleaseResult!
+  startSoulSeekSharing: StartSoulSeekSharingResult!
+  stopSoulSeekSharing: StopSoulSeekSharingResult!
+  submitListen(input: SubmitListenInput!): SubmitListenResult!
+  triggerPlayback(input: TriggerPlaybackInput!): TriggerPlaybackPayload!
+  unlikeSong(input: UnlikedSongInput!): UnlikeSongResult!
+  updateDiscographySettings(input: UpdateDiscographySettingsInput!): UpdateDiscographySettingsResult!
+  updateDownloadPath(input: UpdateDownloadPathInput!): UpdateDownloadPathResult!
+  updateDownloadSlotCount(input: UpdateDownloadSlotCountInput!): UpdateDownloadSlotCountResult!
+  updateDownloaderSettings(input: UpdateDownloaderSettingsInput!): UpdateDownloaderSettingsResult!
+  updateLibraryPath(input: UpdateLibraryPathInput!): UpdateLibraryPathResult!
+  updateLogsFolderPath(input: UpdateLogsFolderPathInput!): UpdateLogsFolderPathResult!
+  updateProwlarrSettings(input: UpdateProwlarrSettingsInput!): UpdateProwlarrSettingsResult!
+  updatePublicBaseUrl(input: UpdatePublicBaseUrlInput!): UpdatePublicBaseUrlResult!
+  updateQBittorrentSettings(input: UpdateQBittorrentSettingsInput!): UpdateQBittorrentSettingsResult!
+  updateSoulSeekConnectionSettings(input: UpdateSoulSeekConnectionSettingsInput!): UpdateSoulSeekConnectionSettingsResult!
+  updateSoulSeekNoDataTimeout(input: UpdateSoulSeekNoDataTimeoutInput!): UpdateSoulSeekNoDataTimeoutResult!
+  updateSoulSeekSearchTimeLimit(seconds: Int!): UpdateSoulSeekSearchTimeLimitResult!
+  updateTopTracksServiceSettings(input: UpdateTopTracksServiceSettingsInput!): UpdateTopTracksServiceSettingsResult!
+  updateUserListenBrainzCredentials(input: UpdateUserListenBrainzCredentialsInput!): UpdateUserListenBrainzCredentialsResult!
+  updateUserRoles(input: UpdateUserRolesInput!): UpdateUserRolesResult!
+  updateUserUsername(input: UpdateUserUsernameInput!): UpdateUserUsernameResult!
+}
+
+type OnlineClient {
+  clientId: String!
+  lastSeenAt: DateTime!
+  name: String!
+  playback: ClientPlaybackState
+  userId: UUID!
+}
+
+"""Information about pagination in a connection."""
+type PageInfo {
+  """When paginating forwards, the cursor to continue."""
+  endCursor: String
+
+  """
+  Indicates whether more edges exist following the set defined by the clients arguments.
+  """
+  hasNextPage: Boolean!
+
+  """
+  Indicates whether more edges exist prior the set defined by the clients arguments.
+  """
+  hasPreviousPage: Boolean!
+
+  """When paginating backwards, the cursor to continue."""
+  startCursor: String
+}
+
+type Ping {
+  id: ID!
+}
+
+type Playlist {
+  coverImageUrl: String
+  createdAt: DateTime!
+  id: ID!
+  items: [PlaylistItem!]!
+  modifiedAt: DateTime
+  name: String
+}
+
+type PlaylistItem {
+  addedAt: DateTime!
+  artist: Artist
+  artistName: String
+  coverImageUrl: String
+  externalAlbumId: String
+  externalArtistId: String
+  externalService: ExternalServiceType
+  externalTrackId: String
+  id: ID!
+  localCoverImageUrl: String
+  releaseTitle: String
+  releaseType: String
+  title: String
+  track: Track
+  trackLengthMs: Int
+}
+
+type PlaylistSearchRoot {
+  byId(playlistId: ID!): Playlist
+  importPlaylists: ImportPlaylistSearchRoot!
+  searchPlaylists(limit: Int!, searchTerm: String!): [Playlist!]!
+}
+
+type Query {
+  areThereAnyUsers: Boolean!
+  artist: ArtistSearchRoot!
+  artistImport: ArtistImportSearchRoot!
+  downloads: DownloadsSearchRoot!
+  external: ExternalRoot!
+  externalServices: ExternalServicesSearchRoot!
+  fileSystem: FileSystemSearchRoot!
+  musicBrainz: MusicBrainzSearchRoot!
+  playlist: PlaylistSearchRoot!
+  recommendations: RecommendationsSearchRoot!
+  releasesWithScores(artistId: String!, releaseFolderName: String!, releaseGroupId: String!): [ScoredRelease!]!
+  serverLibrary: ServerLibrarySearchRoot!
+  serverSettings: ServerSettings!
+  soulSeekSharingStatistics: SharingStatistics!
+  spotify: SpotifyArtistSearchRoot!
+  user: UserSearchRoot!
+  viewer: User
+}
+
+type RecommendationsSearchRoot {
+  topArtists: [LastFmArtist!]!
+  topTags: [LastFmTag!]!
+  topTracks: [LastFmTrack!]!
+}
+
+type RedownloadReleaseError {
+  message: String!
+}
+
+input RedownloadReleaseInput {
+  artistId: String!
+  releaseFolderName: String!
+}
+
+union RedownloadReleaseResult = RedownloadReleaseError | RedownloadReleaseSuccess
+
+type RedownloadReleaseSuccess {
+  release: Release!
+}
+
+type RefreshAllReleasesForArtistError {
+  message: String!
+}
+
+union RefreshAllReleasesForArtistResult = RefreshAllReleasesForArtistError | RefreshAllReleasesForArtistSuccess
+
+type RefreshAllReleasesForArtistSuccess {
+  artistId: String!
+  refreshedCount: Int!
+}
+
+type RefreshArtistMetaDataError {
+  message: String!
+}
+
+input RefreshArtistMetaDataInput {
+  artistId: String!
+}
+
+union RefreshArtistMetaDataResult = RefreshArtistMetaDataError | RefreshArtistMetaDataSuccess
+
+type RefreshArtistMetaDataSuccess {
+  artist: Artist!
+}
+
+input RefreshArtistTopTracksInput {
+  artistId: String!
+}
+
+union RefreshArtistTopTracksResult = RefreshArtistTopTracksSuccess | RefreshArtistTopTracksUnknownError
+
+type RefreshArtistTopTracksSuccess {
+  artist: Artist!
+}
+
+type RefreshArtistTopTracksUnknownError {
+  message: String!
+}
+
+type RefreshReleaseError {
+  message: String!
+}
+
+input RefreshReleaseInput {
+  artistId: String!
+  releaseFolderName: String!
+}
+
+union RefreshReleaseResult = RefreshReleaseError | RefreshReleaseSuccess
+
+type RefreshReleaseSuccess {
+  release: Release!
+}
+
+type RefreshSoulSeekSharesError {
+  message: String!
+}
+
+union RefreshSoulSeekSharesResult = RefreshSoulSeekSharesError | RefreshSoulSeekSharesSuccess
+
+type RefreshSoulSeekSharesSuccess {
+  ok: Boolean!
+}
+
+type Release {
+  artist: Artist!
+  artistName: String!
+  coverArtUrl: String!
+  discCount: Int!
+  discs: [Disc!]!
+  downloadStatus: ReleaseDownloadStatus!
+  firstReleaseDate: String
+  firstReleaseYear: String
+  folderName: String!
+  id: ID!
+  isFullyMissing: Boolean!
+  labels: [JsonLabelInfo!]!
+  musicBrainzReleaseGroupId: String
+  musicBrainzReleaseIdOverride: String
+  musicBrainzSelectedReleaseId: String
+  title: String!
+  tracks: [Track!]!
+  type: ReleaseType
+}
+
+enum ReleaseDownloadStatus {
+  DOWNLOADING
+  IDLE
+  NOT_FOUND
+  SEARCHING
+}
+
+type ReleaseServiceConnections {
+  musicBrainzReleaseGroupId: String
+  musicBrainzReleaseIdOverride: String
+  musicBrainzSelectedReleaseId: String
+  spotifyAlbumId: String
+  youtubePlaylistUrl: String
+}
+
+enum ReleaseType {
+  ALBUM
+  EP
+  SINGLE
+}
+
+type RemoveItemFromPlaylistError {
+  message: String!
+}
+
+input RemoveItemFromPlaylistInput {
+  playlistId: ID!
+  playlistItemId: ID!
+}
+
+union RemoveItemFromPlaylistResult = RemoveItemFromPlaylistError | RemoveItemFromPlaylistSuccess
+
+type RemoveItemFromPlaylistSuccess {
+  playlist: Playlist!
+}
+
+input RenamePlaylistInput {
+  newPlaylistName: String!
+  playlistId: ID!
+}
+
+type RenamePlaylistNoWriteAccess {
+  message: String!
+}
+
+union RenamePlaylistResult = RenamePlaylistNoWriteAccess | RenamePlaylistSuccess
+
+type RenamePlaylistSuccess {
+  playlist: Playlist!
+}
+
+union ScanLibraryForMissingJsonResult = ScanLibraryForMissingJsonSuccess
+
+type ScanLibraryForMissingJsonSuccess {
+  artistsCreated: Int!
+  errorMessage: String
+  notes: [String!]!
+  releasesCreated: Int!
+  success: Boolean!
+}
+
+type ScanReleaseFolderForMediaError {
+  message: String!
+}
+
+input ScanReleaseFolderForMediaInput {
+  artistId: String!
+  releaseFolderName: String!
+}
+
+union ScanReleaseFolderForMediaResult = ScanReleaseFolderForMediaError | ScanReleaseFolderForMediaSuccess
+
+type ScanReleaseFolderForMediaSuccess {
+  release: Release!
+}
+
+type ScoredRelease {
+  reasons: [String!]!
+  release: MbRelease!
+  score: Int!
+}
+
+type ServerLibraryManifestStatus {
+  hasLibraryManifest: Boolean!
+  id: ID!
+}
+
+type ServerLibrarySearchRoot {
+  allArtists: [Artist!]!
+  allReleases: [Release!]!
+  allTracks: [Track!]!
+  artistById(id: ID!): Artist
+  libraryStatistics: CacheStatistics!
+  releaseForArtistByFolderName(artistId: ID!, releaseFolderName: String!): Release
+  releasesForArtist(artistId: ID!): [Release!]!
+  searchArtists(limit: Int! = 20, searchTerm: String!): [Artist!]!
+  searchReleases(limit: Int! = 20, searchTerm: String!): [Release!]!
+  searchTracks(limit: Int! = 20, searchTerm: String!): [Track!]!
+  trackById(id: ID!): Track
+  tracksForArtist(artistId: ID!): [Track!]!
+}
+
+type ServerSettings {
+  discographyEnabled: Boolean!
+  discographyStagingPath: String
+  downloadPath: String!
+  downloadSlotCount: Int!
+  enableQBittorrentDownloader: Boolean!
+  enableSabnzbdDownloader: Boolean!
+  enableSoulSeekDownloader: Boolean!
+  fanartConfiguredSource: String!
+  id: ID!
+  isFanartConfigured: Boolean!
+  isLastfmConfigured: Boolean!
+  isListenBrainzConfigured: Boolean!
+  isSpotifyConfigured: Boolean!
+  isYouTubeConfigured: Boolean!
+  lastFmTopTracksEnabled: Boolean!
+  lastfmConfiguredSource: String!
+  libraryPath: String!
+  listenBrainzConfiguredSource: String!
+  listenBrainzTopTracksEnabled: Boolean!
+  logsFolderPath: String
+  prowlarrBaseUrl: String
+  prowlarrEnableDetailedLogging: Boolean!
+  prowlarrMaxConcurrentRequests: Int!
+  prowlarrMaxRetries: Int!
+  prowlarrRetryDelaySeconds: Int!
+  prowlarrTestConnectivityFirst: Boolean!
+  prowlarrTimeoutSeconds: Int!
+  publicBaseUrl: String!
+  qBittorrentBaseUrl: String
+  qBittorrentSavePath: String
+  qBittorrentUsername: String
+  searchEnhanceShortTitles: Boolean!
+  serverLibraryManifestStatus: ServerLibraryManifestStatus!
+  soulSeekBatchDownloadingEnabled: Boolean!
+  soulSeekHost: String!
+  soulSeekLibrarySharingEnabled: Boolean!
+  soulSeekListeningPort: Int!
+  soulSeekMaxReleasesPerUserDiscovery: Int!
+  soulSeekNoDataTimeoutSeconds: Int!
+  soulSeekPort: Int!
+  soulSeekQueueWaitTimeoutSeconds: Int!
+  soulSeekSearchTimeLimitSeconds: Int!
+  soulSeekUsername: String!
+  spotifyConfiguredSource: String!
+  spotifyTopTracksEnabled: Boolean!
+  storageStats: StorageStats
+  youTubeConfiguredSource: String!
+}
+
+type SetArtistMusicBrainzMatchError {
+  message: String!
+}
+
+input SetArtistMusicBrainzMatchInput {
+  artistId: String!
+  musicBrainzArtistId: String!
+}
+
+union SetArtistMusicBrainzMatchResult = SetArtistMusicBrainzMatchError | SetArtistMusicBrainzMatchSuccess
+
+type SetArtistMusicBrainzMatchSuccess {
+  artist: Artist!
+}
+
+type SetArtistSpotifyMatchError {
+  message: String!
+}
+
+input SetArtistSpotifyMatchInput {
+  artistId: String!
+  spotifyArtistId: String!
+}
+
+union SetArtistSpotifyMatchResult = SetArtistSpotifyMatchError | SetArtistSpotifyMatchSuccess
+
+type SetArtistSpotifyMatchSuccess {
+  artist: Artist!
+}
+
+input SetPlaylistItemArtistMatchInput {
+  externalArtistId: String!
+  playlistId: ID!
+  playlistItemId: ID!
+}
+
+type SetPlaylistItemArtistMatchNotFound {
+  message: String!
+}
+
+union SetPlaylistItemArtistMatchResult = SetPlaylistItemArtistMatchNotFound | SetPlaylistItemArtistMatchSuccess
+
+type SetPlaylistItemArtistMatchSuccess {
+  playlistItem: PlaylistItem!
+}
+
+type SetPlaylistItemArtistMusicBrainzMatchError {
+  message: String!
+}
+
+input SetPlaylistItemArtistMusicBrainzMatchInput {
+  musicBrainzArtistId: String!
+  playlistId: ID!
+  playlistItemId: ID!
+}
+
+type SetPlaylistItemArtistMusicBrainzMatchNotFound {
+  message: String!
+}
+
+union SetPlaylistItemArtistMusicBrainzMatchResult = SetPlaylistItemArtistMusicBrainzMatchError | SetPlaylistItemArtistMusicBrainzMatchNotFound | SetPlaylistItemArtistMusicBrainzMatchSuccess
+
+type SetPlaylistItemArtistMusicBrainzMatchSuccess {
+  playlistItem: PlaylistItem!
+}
+
+type SetReleaseGroupError {
+  message: String!
+}
+
+input SetReleaseGroupInput {
+  artistId: String!
+  musicBrainzReleaseGroupId: String!
+  releaseFolderName: String!
+}
+
+union SetReleaseGroupResult = SetReleaseGroupError | SetReleaseGroupSuccess
+
+type SetReleaseGroupSuccess {
+  release: Release!
+}
+
+type SetReleaseMatchOverrideError {
+  message: String!
+}
+
+input SetReleaseMatchOverrideInput {
+  artistId: String!
+  musicBrainzReleaseId: String
+  releaseFolderName: String!
+}
+
+union SetReleaseMatchOverrideResult = SetReleaseMatchOverrideError | SetReleaseMatchOverrideSuccess
+
+type SetReleaseMatchOverrideSuccess {
+  release: Release!
+}
+
+type SetUserPasswordError {
+  message: String!
+}
+
+input SetUserPasswordInput {
+  newPassword: String!
+  userId: UUID!
+}
+
+union SetUserPasswordResult = SetUserPasswordError | SetUserPasswordSuccess
+
+type SetUserPasswordSuccess {
+  user: User!
+}
+
+type SharingStatistics {
+  isPrivateIp: Boolean!
+  isSharingEnabled: Boolean!
+  libraryPath: String!
+  listeningPort: Int!
+  observedAtUtc: DateTime
+  observedIp: String!
+  observedPort: Int
+  portMatches: Boolean!
+  sharedFileCount: Int!
+  totalLibrarySize: Long!
+}
+
+type SignInError {
+  message: String!
+}
+
+input SignInInput {
+  password: String!
+  username: String!
+}
+
+union SignInResult = SignInError | SignInSuccess
+
+type SignInSuccess {
+  user: User!
+}
+
+type SignOutError {
+  message: String!
+}
+
+input SignOutInput {
+  confirm: Boolean!
+}
+
+union SignOutResult = SignOutError | SignOutSuccess
+
+type SignOutSuccess {
+  success: Boolean!
+}
+
+type SimilarArtist {
+  artist: Artist
+  musicBrainzArtistId: String!
+  name: String!
+  similarityScore: Float
+  thumb: String
+}
+
+type SlotProgressUpdate {
+  progress: DownloadProgress
+  slotId: Int!
+}
+
+type SlotStatusUpdate {
+  currentWork: DownloadQueueItem
+  isActive: Boolean!
+  slotId: Int!
+}
+
+type SoulSeekRoot {
+  id: ID!
+  status: SoulSeekStatus!
+}
+
+type SoulSeekStatus {
+  id: ID!
+  status: SoulSeekStatusType!
+}
+
+enum SoulSeekStatusType {
+  CONNECTING
+  OFFLINE
+  ONLINE
+}
+
+type SpotifyArtist {
+  id: String!
+  images: [SpotifyImage!]!
+  name: String!
+}
+
+type SpotifyArtistSearchRoot {
+  byId(id: ID!): SpotifyArtist
+  searchByName(limit: Int! = 25, name: String!, offset: Int! = 0): [SpotifyArtist!]!
+}
+
+type SpotifyImage {
+  url: String!
+}
+
+type SpotifyPlaylist {
+  coverImageUrl: String
+  description: String
+  id: String!
+  name: String!
+  totalTracks: Int
+  tracks: [SpotifyTrack!]!
+}
+
+type SpotifyPlaylistSearchRoot {
+  spotifyPlaylistById(id: String!): SpotifyPlaylist
+  spotifyPlaylistsForUser(username: String!): [SpotifyPlaylist!]!
+}
+
+type SpotifyTrack {
+  albumCoverImageUrl: String
+  artistNames: [String!]!
+  durationMs: Int
+  id: String!
+  previewUrl: String
+  title: String!
+}
+
+type StartBulkDownloadForArtistError {
+  message: String!
+}
+
+input StartBulkDownloadForArtistInput {
+  artistId: String!
+  scope: BulkDownloadScope!
+}
+
+union StartBulkDownloadForArtistResult = StartBulkDownloadForArtistError | StartBulkDownloadForArtistSuccess
+
+type StartBulkDownloadForArtistSuccess {
+  artistId: String!
+  queuedCount: Int!
+}
+
+type StartDownloadReleaseAccepted {
+  artistId: String!
+  releaseFolderName: String!
+}
+
+input StartDownloadReleaseInput {
+  artistId: String!
+  releaseFolderName: String!
+}
+
+union StartDownloadReleaseResult = StartDownloadReleaseAccepted | StartDownloadReleaseSuccess | StartDownloadReleaseUnknownError
+
+type StartDownloadReleaseSuccess {
+  release: Release!
+}
+
+type StartDownloadReleaseUnknownError {
+  message: String!
+}
+
+type StartSoulSeekSharingError {
+  message: String!
+}
+
+union StartSoulSeekSharingResult = StartSoulSeekSharingError | StartSoulSeekSharingSuccess
+
+type StartSoulSeekSharingSuccess {
+  ok: Boolean!
+}
+
+type StopSoulSeekSharingError {
+  message: String!
+}
+
+union StopSoulSeekSharingResult = StopSoulSeekSharingError | StopSoulSeekSharingSuccess
+
+type StopSoulSeekSharingSuccess {
+  ok: Boolean!
+}
+
+type StorageStats {
+  availableFreeBytes: Long
+  estimatedTotalLibrarySizeBytes: Long!
+  librarySizeBytes: Long!
+  totalDiskBytes: Long
+}
+
+type SubmitListenError {
+  message: String!
+}
+
+input SubmitListenInput {
+  albumName: String
+  artistName: String!
+  listenedAt: DateTime
+  trackName: String!
+}
+
+union SubmitListenResult = SubmitListenError | SubmitListenSuccess
+
+type SubmitListenSuccess {
+  success: Boolean!
+}
+
+type Subscription {
+  artistImportBackgroundProgress(artistId: String!): ArtistImportBackgroundProgress!
+  artistImportBackgroundQueueUpdated: ArtistImportBackgroundQueueState!
+  artistImportQueueUpdated: ArtistImportQueueState!
+  artistImported: Artist!
+  currentArtistImportUpdated: ArtistImportProgress!
+  downloadHistoryUpdated: [DownloadHistoryItem!]!
+  downloadQueueUpdated: DownloadQueueState!
+  libraryArtistReleaseUpdated(artistId: String!): Release!
+  libraryArtistTrackUpdated(artistId: String!): Track!
+  libraryArtistUpdated(artistId: String!): Artist!
+  libraryCacheTrackUpdated(artistId: String!, releaseFolderName: String!, trackNumber: Int!): LibraryCacheTrackStatus!
+  libraryCacheTracksInReleaseUpdated(artistId: String!, releaseFolderName: String!): LibraryCacheTrackStatus!
+  libraryReleaseDownloadStatusUpdated(artistId: String!, releaseFolderName: String!): LibraryReleaseDownloadStatusUpdate!
+  libraryReleaseMetadataUpdated(artistId: String!, releaseFolderName: String!): Release!
+  libraryReleaseUpdated(artistId: String!, releaseFolderName: String!): Release!
+  libraryTrackUpdated(artistId: String!, releaseFolderName: String!, trackNumber: Int!): Track!
+  onClientsUpdated: [OnlineClient!]!
+  onPlaybackTriggered: ClientPlaybackCommand!
+  ping: Ping!
+  playlistItemUpdated(playlistId: ID!): PlaylistItem!
+  slotProgressUpdated: SlotProgressUpdate!
+  slotStatusUpdated: SlotStatusUpdate!
+  soulSeekStatusUpdated: SoulSeekStatus!
+}
+
+type Track {
+  credits: [TrackCredit!]!
+  discNumber: Int!
+  id: ID!
+  isMissing: Boolean!
+  media: TrackMedia
+  mediaAvailabilityStatus: MediaAvailabilityStatus!
+  playCount: Long
+  playCountForViewer: Long
+  release: Release!
+  statistics: TrackStatistics
+  title: String!
+  trackLength: Int
+  trackNumber: Int!
+}
+
+type TrackCredit {
+  artist: Artist
+  artistName: String!
+  mbArtist: MbArtist
+}
+
+type TrackMedia {
+  audioBitrateKbps: Int
+  audioFormat: String
+  audioQualityLabel: String!
+  audioUrl: String!
+  id: ID!
+  isLosslessFormat: Boolean!
+}
+
+type TrackStatistics {
+  listeners: Long!
+  playCount: Long!
+}
+
+input TriggerPlaybackInput {
+  artistId: String!
+  artistName: String
+  clientId: String!
+  coverArtUrl: String
+  qualityLabel: String
+  releaseFolderName: String!
+  trackLengthMs: Int
+  trackNumber: Int!
+  trackTitle: String
+}
+
+type TriggerPlaybackPayload {
+  accepted: Boolean!
+  clientId: String!
+  message: String
+}
+
+scalar UUID
+
+type UnlikeSongAlreadyNotLiked {
+  message: String!
+}
+
+union UnlikeSongResult = UnlikeSongAlreadyNotLiked | UnlikeSongSuccess
+
+type UnlikeSongSuccess {
+  viewer: User!
+}
+
+input UnlikedSongInput {
+  recordingId: String!
+}
+
+type UpdateDiscographySettingsError {
+  message: String!
+}
+
+input UpdateDiscographySettingsInput {
+  enabled: Boolean!
+  stagingPath: String
+}
+
+union UpdateDiscographySettingsResult = UpdateDiscographySettingsError | UpdateDiscographySettingsSuccess
+
+type UpdateDiscographySettingsSuccess {
+  serverSettings: ServerSettings!
+}
+
+input UpdateDownloadPathInput {
+  newDownloadPath: String!
+}
+
+union UpdateDownloadPathResult = UpdateDownloadPathSuccess
+
+type UpdateDownloadPathSuccess {
+  serverSettings: ServerSettings!
+}
+
+type UpdateDownloadSlotCountError {
+  message: String!
+}
+
+input UpdateDownloadSlotCountInput {
+  newSlotCount: Int!
+}
+
+union UpdateDownloadSlotCountResult = UpdateDownloadSlotCountError | UpdateDownloadSlotCountSuccess
+
+type UpdateDownloadSlotCountSuccess {
+  serverSettings: ServerSettings!
+}
+
+type UpdateDownloaderSettingsError {
+  message: String!
+}
+
+input UpdateDownloaderSettingsInput {
+  enableQBittorrentDownloader: Boolean!
+  enableSabnzbdDownloader: Boolean!
+  enableSoulSeekDownloader: Boolean!
+}
+
+union UpdateDownloaderSettingsResult = UpdateDownloaderSettingsError | UpdateDownloaderSettingsSuccess
+
+type UpdateDownloaderSettingsSuccess {
+  serverSettings: ServerSettings!
+}
+
+input UpdateLibraryPathInput {
+  newLibraryPath: String!
+}
+
+union UpdateLibraryPathResult = UpdateLibraryPathSuccess
+
+type UpdateLibraryPathSuccess {
+  serverSettings: ServerSettings!
+}
+
+type UpdateLogsFolderPathError {
+  message: String!
+}
+
+input UpdateLogsFolderPathInput {
+  newPath: String
+}
+
+union UpdateLogsFolderPathResult = UpdateLogsFolderPathError | UpdateLogsFolderPathSuccess
+
+type UpdateLogsFolderPathSuccess {
+  serverSettings: ServerSettings!
+}
+
+type UpdateProwlarrSettingsError {
+  message: String!
+}
+
+input UpdateProwlarrSettingsInput {
+  baseUrl: String
+  enableDetailedLogging: Boolean!
+  maxConcurrentRequests: Int!
+  maxRetries: Int!
+  retryDelaySeconds: Int!
+  testConnectivityFirst: Boolean!
+  timeoutSeconds: Int!
+}
+
+union UpdateProwlarrSettingsResult = UpdateProwlarrSettingsError | UpdateProwlarrSettingsSuccess
+
+type UpdateProwlarrSettingsSuccess {
+  serverSettings: ServerSettings!
+}
+
+type UpdatePublicBaseUrlError {
+  message: String!
+}
+
+input UpdatePublicBaseUrlInput {
+  publicBaseUrl: String!
+}
+
+union UpdatePublicBaseUrlResult = UpdatePublicBaseUrlError | UpdatePublicBaseUrlSuccess
+
+type UpdatePublicBaseUrlSuccess {
+  serverSettings: ServerSettings!
+}
+
+type UpdateQBittorrentSettingsError {
+  message: String!
+}
+
+input UpdateQBittorrentSettingsInput {
+  baseUrl: String
+  savePath: String
+  username: String
+}
+
+union UpdateQBittorrentSettingsResult = UpdateQBittorrentSettingsError | UpdateQBittorrentSettingsSuccess
+
+type UpdateQBittorrentSettingsSuccess {
+  serverSettings: ServerSettings!
+}
+
+type UpdateSoulSeekConnectionSettingsError {
+  message: String!
+}
+
+input UpdateSoulSeekConnectionSettingsInput {
+  host: String!
+  port: Int!
+  username: String!
+}
+
+union UpdateSoulSeekConnectionSettingsResult = UpdateSoulSeekConnectionSettingsError | UpdateSoulSeekConnectionSettingsSuccess
+
+type UpdateSoulSeekConnectionSettingsSuccess {
+  serverSettings: ServerSettings!
+}
+
+type UpdateSoulSeekNoDataTimeoutError {
+  message: String!
+}
+
+input UpdateSoulSeekNoDataTimeoutInput {
+  seconds: Int!
+}
+
+union UpdateSoulSeekNoDataTimeoutResult = UpdateSoulSeekNoDataTimeoutError | UpdateSoulSeekNoDataTimeoutSuccess
+
+type UpdateSoulSeekNoDataTimeoutSuccess {
+  serverSettings: ServerSettings!
+}
+
+type UpdateSoulSeekSearchTimeLimitError {
+  message: String!
+}
+
+union UpdateSoulSeekSearchTimeLimitResult = UpdateSoulSeekSearchTimeLimitError | UpdateSoulSeekSearchTimeLimitSuccess
+
+type UpdateSoulSeekSearchTimeLimitSuccess {
+  serverSettings: ServerSettings!
+}
+
+type UpdateTopTracksServiceSettingsError {
+  message: String!
+}
+
+input UpdateTopTracksServiceSettingsInput {
+  lastFmTopTracksEnabled: Boolean!
+  listenBrainzTopTracksEnabled: Boolean!
+  spotifyTopTracksEnabled: Boolean!
+}
+
+union UpdateTopTracksServiceSettingsResult = UpdateTopTracksServiceSettingsError | UpdateTopTracksServiceSettingsSuccess
+
+type UpdateTopTracksServiceSettingsSuccess {
+  message: String!
+  success: Boolean!
+}
+
+type UpdateUserListenBrainzCredentialsError {
+  message: String!
+}
+
+input UpdateUserListenBrainzCredentialsInput {
+  listenBrainzToken: String
+  listenBrainzUserId: String
+  userId: UUID!
+}
+
+union UpdateUserListenBrainzCredentialsResult = UpdateUserListenBrainzCredentialsError | UpdateUserListenBrainzCredentialsSuccess
+
+type UpdateUserListenBrainzCredentialsSuccess {
+  user: User!
+}
+
+type UpdateUserRolesError {
+  message: String!
+}
+
+input UpdateUserRolesInput {
+  roles: Int!
+  userId: UUID!
+}
+
+union UpdateUserRolesResult = UpdateUserRolesError | UpdateUserRolesSuccess
+
+type UpdateUserRolesSuccess {
+  user: User!
+}
+
+type UpdateUserUsernameError {
+  message: String!
+}
+
+input UpdateUserUsernameInput {
+  newUsername: String!
+  userId: UUID!
+}
+
+union UpdateUserUsernameResult = UpdateUserUsernameError | UpdateUserUsernameSuccess
+
+type UpdateUserUsernameSuccess {
+  user: User!
+}
+
+type Url {
+  id: String
+  resource: String
+}
+
+type User {
+  canCreatePlaylists: Boolean!
+  canEditExternalAuth: Boolean!
+  canManageUserRoles: Boolean!
+  canTriggerDownloads: Boolean!
+  canViewDownloads: Boolean!
+  createdAt: DateTime!
+  hasListenBrainzToken: Boolean!
+  id: ID!
+  isAdmin: Boolean!
+  likedSongs: [LikedSong!]!
+  listenBrainzUserId: String
+  playlists: [Playlist!]!
+  roles: Int!
+  updatedAt: DateTime!
+  username: String!
+}
+
+type UserSearchRoot {
+  onlineClients: [OnlineClient!]!
+  users(
+    """Returns the elements in the list that come after the specified cursor."""
+    after: String
+
+    """
+    Returns the elements in the list that come before the specified cursor.
+    """
+    before: String
+
+    """Returns the first _n_ elements from the list."""
+    first: Int
+
+    """Returns the last _n_ elements from the list."""
+    last: Int
+  ): UsersConnection
+}
+
+"""A connection to a list of items."""
+type UsersConnection {
+  """A list of edges."""
+  edges: [UsersEdge!]
+
+  """A flattened list of the nodes."""
+  nodes: [User!]
+
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+}
+
+"""An edge in a connection."""
+type UsersEdge {
+  """A cursor for use in pagination."""
+  cursor: String!
+
+  """The item at the end of the edge."""
+  node: User!
+}

@@ -1,0 +1,66 @@
+fragment ArtistCard on Artist {
+  id
+  name
+  sortName
+  listeners
+  images {
+    banners
+    logos
+    thumbs
+  }
+}
+
+query GetArtists {
+  serverLibrary {
+    allArtists {
+      ...ArtistCard
+    }
+  }
+}
+
+query GetArtistDetail($id: ID!) {
+  serverLibrary {
+    artistById(id: $id) {
+      id
+      name
+      sortName
+      listeners
+      images {
+        banners
+        logos
+        thumbs
+      }
+      topTracks {
+        title
+        trackLength
+        playCount
+        coverArtUrl
+        track {
+          id
+          trackNumber
+          discNumber
+        }
+      }
+      albums {
+        id
+        title
+        type
+        firstReleaseDate
+        coverArtUrl
+        folderName
+      }
+      eps {
+        id
+        title
+        coverArtUrl
+        folderName
+      }
+      singles {
+        id
+        title
+        coverArtUrl
+        folderName
+      }
+    }
+  }
+}

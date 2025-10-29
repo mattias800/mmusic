@@ -1,0 +1,24 @@
+query Search($searchTerm: String!, $limit: Int! = 20) {
+  serverLibrary {
+    searchArtists(searchTerm: $searchTerm, limit: $limit) {
+      ...ArtistCard
+    }
+    searchReleases(searchTerm: $searchTerm, limit: $limit) {
+      ...AlbumCard
+    }
+    searchTracks(searchTerm: $searchTerm, limit: $limit) {
+      id
+      trackNumber
+      title
+      trackLength
+      playCount
+      release {
+        coverArtUrl
+        artist {
+          id
+          name
+        }
+      }
+    }
+  }
+}

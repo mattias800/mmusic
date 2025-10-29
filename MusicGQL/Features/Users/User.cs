@@ -61,4 +61,16 @@ public record User([property: GraphQLIgnore] DbUser Model)
 
         return playlists.Select(p => new Playlist(p));
     }
+
+    public async Task<Playlist?> PlaylistById(
+        [Service] EventDbContext dbContext,
+        [ID] string playlistId
+    )
+    {
+        var playlist = await dbContext
+            .Playlists.Where(p => p.UserId == Model.UserId && p.Id.ToString() == playlistId)
+            .FirstOrDefaultAsync();
+
+        return playlist is null ? null : new Playlist(playlist);
+    }
 }
