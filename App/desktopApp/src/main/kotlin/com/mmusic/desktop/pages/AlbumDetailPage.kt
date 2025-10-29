@@ -1,6 +1,11 @@
 package com.mmusic.desktop.pages
 
+import androidx.compose.animation.*
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.hoverable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -10,6 +15,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.mmusic.shared.graphql.GetAlbumDetailQuery
@@ -81,16 +87,25 @@ fun AlbumDetailPage(
         loadAlbumData()
     }
 
-    when {
-        isLoading -> {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator()
-            }
+    AnimatedVisibility(
+        visible = isLoading,
+        enter = fadeIn(),
+        exit = fadeOut()
+    ) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator()
         }
-        error != null -> {
+    }
+
+    AnimatedVisibility(
+        visible = error != null && !isLoading,
+        enter = fadeIn() + slideInVertically(),
+        exit = fadeOut()
+    ) {
+        error?.let { errorMessage ->
             Box(
                 modifier = Modifier.fillMaxSize().padding(32.dp),
                 contentAlignment = Alignment.Center
@@ -106,7 +121,7 @@ fun AlbumDetailPage(
                         modifier = Modifier.size(48.dp)
                     )
                     Text(
-                        text = error ?: "Unknown error occurred",
+                        text = errorMessage,
                         color = MaterialTheme.colorScheme.error,
                         style = MaterialTheme.typography.bodyLarge,
                         modifier = Modifier.padding(horizontal = 32.dp)
@@ -122,7 +137,14 @@ fun AlbumDetailPage(
                 }
             }
         }
-        album != null -> {
+    }
+
+    AnimatedVisibility(
+        visible = album != null && !isLoading && error == null,
+        enter = fadeIn(animationSpec = tween(300)) + slideInVertically(initialOffsetY = { 40 }),
+        exit = fadeOut()
+    ) {
+        album?.let { albumData ->
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -159,7 +181,7 @@ fun AlbumDetailPage(
                         modifier = Modifier.weight(1f),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        album!!.type?.let { type ->
+                        albumData.type?.let { type ->
                             Text(
                                 text = type.toString(),
                                 style = MaterialTheme.typography.labelMedium,
@@ -168,28 +190,28 @@ fun AlbumDetailPage(
                         }
 
                         Text(
-                            text = album!!.title,
+                            text = albumData.title,
                             style = MaterialTheme.typography.displayMedium
                         )
 
                         Text(
-                            text = album!!.artist.name,
+                            text = albumData.artist.name,
                             style = MaterialTheme.typography.titleLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
 
                         Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                            album!!.firstReleaseYear?.let { year ->
+                            albumData.firstReleaseYear?.let { year ->
                                 Text(
                                     text = year,
                                     style = MaterialTheme.typography.bodyMedium
                                 )
                             }
                             Text(
-                                text = "${album!!.tracks.size} tracks",
+                                text = "${albumData.tracks.size} tracks",
                                 style = MaterialTheme.typography.bodyMedium
                             )
-                            val totalDuration = album!!.tracks.sumOf { it.trackLength ?: 0 }
+                            val totalDuration = albumData.tracks.sumOf { it.trackLength ?: 0 }
                             Text(
                                 text = formatDuration(totalDuration),
                                 style = MaterialTheme.typography.bodyMedium
@@ -200,10 +222,10 @@ fun AlbumDetailPage(
 
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             Button(onClick = {
-                                val tracks = album!!.tracks
+                                val tracks = albumData.tracks
                                     .filter { track -> !track.isMissing }
                                     .sortedBy { it.discNumber * 1000 + it.trackNumber }
-                                    .mapIndexed { _, track -> track.toAudioTrack(album!!.artist.name, album!!.title) }
+                                    .mapIndexed { _, track -> track.toAudioTrack(albumData.artist.name, albumData.title) }
                                     .filter { it.audioUrl.isNotBlank() }
                                 if (tracks.isNotEmpty()) {
                                     audioPlayer.playTracks(tracks)
@@ -212,9 +234,9 @@ fun AlbumDetailPage(
                                 Text("▶ Play")
                             }
                             OutlinedButton(onClick = {
-                                val tracks = album!!.tracks
+                                val tracks = albumData.tracks
                                     .filter { track -> !track.isMissing }
-                                    .map { it.toAudioTrack(album!!.artist.name, album!!.title) }
+                                    .map { it.toAudioTrack(albumData.artist.name, albumData.title) }
                                     .filter { it.audioUrl.isNotBlank() }
                                     .shuffled()
                                 if (tracks.isNotEmpty()) {
@@ -237,11 +259,11 @@ fun AlbumDetailPage(
                 )
 
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    val allTracks = album!!.tracks
+                    val allTracks = albumData.tracks
                         .sortedBy { it.discNumber * 1000 + it.trackNumber }
 
-                    album!!.tracks.groupBy { it.discNumber }.forEach { (discNum, discTracks) ->
-                        if (album!!.tracks.maxOf { it.discNumber } > 1) {
+                    albumData.tracks.groupBy { it.discNumber }.forEach { (discNum, discTracks) ->
+                        if (albumData.tracks.maxOf { it.discNumber } > 1) {
                             Text(
                                 text = "Disc $discNum",
                                 style = MaterialTheme.typography.titleSmall,
@@ -262,7 +284,7 @@ fun AlbumDetailPage(
                                         val trackIndex = allTracks.indexOf(track)
                                         val playableTracks = allTracks
                                             .filter { t -> !t.isMissing }
-                                            .map { it.toAudioTrack(album!!.artist.name, album!!.title) }
+                                            .map { it.toAudioTrack(albumData.artist.name, albumData.title) }
                                             .filter { it.audioUrl.isNotBlank() }
                                         val playableIndex = playableTracks.indexOfFirst {
                                             it.id == track.id
@@ -292,13 +314,25 @@ fun AlbumTrackItem(
 ) {
     var showMenu by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
+    val interactionSource = remember { MutableInteractionSource() }
+    val isHovered by interactionSource.collectIsHoveredAsState()
+
+    val scale by animateFloatAsState(
+        targetValue = if (isHovered && !track.isMissing) 1.02f else 1f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)
+    )
 
     Surface(
         onClick = onClick,
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .scale(scale)
+            .hoverable(interactionSource),
         enabled = !track.isMissing,
         color = if (track.isMissing) {
             MaterialTheme.colorScheme.surface.copy(alpha = 0.5f)
+        } else if (isHovered) {
+            MaterialTheme.colorScheme.surfaceVariant
         } else {
             MaterialTheme.colorScheme.surface
         },
