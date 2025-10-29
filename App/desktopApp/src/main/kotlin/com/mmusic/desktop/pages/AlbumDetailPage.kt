@@ -33,7 +33,9 @@ fun AlbumDetailPage(
     var error by remember { mutableStateOf<String?>(null) }
     val coroutineScope = rememberCoroutineScope()
 
-    LaunchedEffect(artistId, releaseFolderName) {
+    fun loadAlbumData() {
+        isLoading = true
+        error = null
         coroutineScope.launch {
             try {
                 // Fetch album and playlists in parallel
@@ -41,9 +43,19 @@ fun AlbumDetailPage(
                 val playlistsResponse = apolloClient.getPlaylists()
 
                 if (albumResponse.hasErrors()) {
-                    error = albumResponse.errors?.firstOrNull()?.message ?: "Unknown error"
+                    val errorMessage = albumResponse.errors?.firstOrNull()?.message
+                    error = when {
+                        errorMessage?.contains("not found", ignoreCase = true) == true ->
+                            "Album not found. It may have been removed or the link is incorrect."
+                        errorMessage?.contains("unauthorized", ignoreCase = true) == true ->
+                            "You need to be logged in to view this album."
+                        else -> "Failed to load album: ${errorMessage ?: "Unknown error"}"
+                    }
                 } else {
                     album = albumResponse.data?.serverLibrary?.artistById?.releaseByFolderName
+                    if (album == null) {
+                        error = "Album not found in the library."
+                    }
                 }
 
                 if (!playlistsResponse.hasErrors()) {
@@ -52,10 +64,21 @@ fun AlbumDetailPage(
 
                 isLoading = false
             } catch (e: Exception) {
-                error = e.message ?: "Failed to load album"
+                error = when {
+                    e.message?.contains("Unable to resolve host", ignoreCase = true) == true ||
+                    e.message?.contains("Failed to connect", ignoreCase = true) == true ->
+                        "Network error: Unable to connect to server. Please check your connection."
+                    e.message?.contains("timeout", ignoreCase = true) == true ->
+                        "Request timed out. The server might be busy or unavailable."
+                    else -> "Failed to load album: ${e.message ?: "Unknown error"}"
+                }
                 isLoading = false
             }
         }
+    }
+
+    LaunchedEffect(artistId, releaseFolderName) {
+        loadAlbumData()
     }
 
     when {
@@ -72,11 +95,29 @@ fun AlbumDetailPage(
                 modifier = Modifier.fillMaxSize().padding(32.dp),
                 contentAlignment = Alignment.Center
             ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("Error: $error", color = MaterialTheme.colorScheme.error)
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Button(onClick = onBack) {
-                        Text("Go Back")
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.MoreVert, // Using existing icon, ideally would use Error icon
+                        contentDescription = "Error",
+                        tint = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.size(48.dp)
+                    )
+                    Text(
+                        text = error ?: "Unknown error occurred",
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier.padding(horizontal = 32.dp)
+                    )
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Button(onClick = { loadAlbumData() }) {
+                            Text("Retry")
+                        }
+                        OutlinedButton(onClick = onBack) {
+                            Text("Go Back")
+                        }
                     }
                 }
             }

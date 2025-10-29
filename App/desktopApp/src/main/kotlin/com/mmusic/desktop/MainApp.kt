@@ -1,9 +1,11 @@
 package com.mmusic.desktop
 
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.key.*
 import androidx.compose.ui.unit.dp
 import com.mmusic.desktop.navigation.Route
 import com.mmusic.desktop.pages.*
@@ -108,7 +110,59 @@ fun AppScaffold(
     apolloClient: ApolloGraphQLClient,
     audioPlayer: AudioPlayer
 ) {
-    Column(modifier = Modifier.fillMaxSize()) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .onPreviewKeyEvent { event ->
+                if (event.type == KeyEventType.KeyDown) {
+                    when {
+                        // Space - Play/Pause
+                        event.key == Key.Spacebar && !event.isCtrlPressed && !event.isMetaPressed -> {
+                            if (audioPlayer.isPlaying.value) {
+                                audioPlayer.pause()
+                            } else {
+                                audioPlayer.play()
+                            }
+                            true
+                        }
+                        // Cmd/Ctrl + Right Arrow - Next track
+                        event.key == Key.DirectionRight && (event.isCtrlPressed || event.isMetaPressed) -> {
+                            audioPlayer.next()
+                            true
+                        }
+                        // Cmd/Ctrl + Left Arrow - Previous track
+                        event.key == Key.DirectionLeft && (event.isCtrlPressed || event.isMetaPressed) -> {
+                            audioPlayer.previous()
+                            true
+                        }
+                        // Cmd/Ctrl + F - Navigate to search
+                        event.key == Key.F && (event.isCtrlPressed || event.isMetaPressed) -> {
+                            onNavigate("search")
+                            true
+                        }
+                        // Cmd/Ctrl + 1 - Navigate to Artists
+                        event.key == Key.One && (event.isCtrlPressed || event.isMetaPressed) -> {
+                            onNavigate("artists")
+                            true
+                        }
+                        // Cmd/Ctrl + 2 - Navigate to Albums
+                        event.key == Key.Two && (event.isCtrlPressed || event.isMetaPressed) -> {
+                            onNavigate("albums")
+                            true
+                        }
+                        // Cmd/Ctrl + 3 - Navigate to Playlists
+                        event.key == Key.Three && (event.isCtrlPressed || event.isMetaPressed) -> {
+                            onNavigate("playlists")
+                            true
+                        }
+                        else -> false
+                    }
+                } else {
+                    false
+                }
+            }
+            .focusable()
+    ) {
         Row(modifier = Modifier.weight(1f).fillMaxWidth()) {
         // Sidebar (hide on detail pages only)
         val showSidebar = !currentRoute.startsWith("artist/") || currentRoute == "artists"
